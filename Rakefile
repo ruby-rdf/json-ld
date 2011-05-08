@@ -2,6 +2,18 @@ require 'rubygems'
 
 task :default => [ :spec ]
 
+namespace :gem do
+  desc "Build the json-ld-#{File.read('VERSION').chomp}.gem file"
+  task :build do
+    sh "gem build .gemspec"
+  end
+
+  desc "Release the json-ld-#{File.read('VERSION').chomp}.gem file"
+  task :release do
+    sh "gem push json-ld-#{File.read('VERSION').chomp}.gem"
+  end
+end
+
 require 'rspec/core/rake_task'
 desc 'Run specifications'
 RSpec::Core::RakeTask.new(:spec) do |spec|
@@ -20,6 +32,8 @@ RSpec::Core::RakeTask.new("doc:spec") do |spec|
 end
 
 require 'yard'
-YARD::Rake::YardocTask.new
+namespace :doc do
+  YARD::Rake::YardocTask.new
+end
 
 task :default => :spec
