@@ -1,5 +1,5 @@
 $:.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
-require 'rdf'
+require 'rdf' # @see http://rubygems.org/gems/rdf
 
 module JSON
   ##
@@ -20,6 +20,7 @@ module JSON
   #
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   module LD
+    require 'json'
     require 'json/ld/format'
     autoload :Reader,  'json/ld/reader'
     autoload :VERSION, 'json/ld/version'
