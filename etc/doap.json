@@ -1,0 +1,37 @@
+{
+    "@context": {
+        "@base":    "http://rubygems.org/gems/json-ld",
+        "dc":       "http://purl.org/dc/terms/",
+        "@coerce": {
+            "xsd:anyURI":   [
+                "dcterms:creator",
+                "doap:homepage", "doap:bug-database", "doap:blog", "doap:developer",
+                "doap:maintainer", "doap:documenter", "doap:license",
+                "foaf:maker", "foaf:mbox", "foaf:made", "rdfs:isDefinedBy"
+            ],
+            "xsd:date": "doap:created"
+        }
+    },
+    "@":                  "",
+    "a":                  "doap:Project",
+    "doap:name":          "JSON::LD",
+    "doap:homepage":      "http://github.com/gkellogg/json-ld/",
+    "doap:license":       "http://creativecommons.org/licenses/publicdomain/",
+    "doap:shortdesc":     { "@literal": "JSON-LD support for RDF.rb.", "@language": "en"},
+    "doap:description":   { "@literal": "RDF.rb plugin for parsing/serializing JSON-LD data.", "@language": "en"},
+    "doap:created":       "2011-05-07",
+    "doap:platform":      "Ruby",
+    "doap:bug-database":  "http://github.com/gkellogg/json-ld/issues",
+    "doap:blog":          "http://greggkellogg.net/",
+    "doap:developer":     "http://greggkellogg.net/foaf.rdf#me",
+    "doap:maintainer":    "http://greggkellogg.net/foaf.rdf#me",
+    "doap:documenter":    "http://greggkellogg.net/foaf.rdf#me",
+    "foaf:maker":         "http://greggkellogg.net/foaf.rdf#me",
+    "dc:creator":         {
+        "@":                "http://greggkellogg.net/foaf.rdf#me",
+        "foaf:name":        "Gregg Kellogg",
+        "foaf:mbox":         "mailto:gregg@greggkellogg.net",
+        "foaf:made":        "",
+        "rdfs:isDefinedBy": "http://greggkellogg.net/foaf.rdf"
+    }
+}

@@ -1,0 +1,28 @@
+@base         <http://rubygems.org/gems/json-ld> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:   <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+
+<> a doap:Project ;
+  doap:name          "JSON::LD" ;
+  doap:homepage      <http://github.com/gkellogg/json-ld/> ;
+  doap:license       <http://creativecommons.org/licenses/publicdomain/> ;
+  doap:shortdesc     "JSON-LD support for RDF.rb."@en ;
+  doap:description   "RDF.rb plugin for parsing/serializing JSON-LD data."@en ;
+  doap:created       "2011-05-07" ;
+  doap:platform      "Ruby" ;
+  doap:bug-database  <http://github.com/gkellogg/json-ld/issues> ;
+  doap:blog          <http://greggkellogg.net/> ;
+  doap:developer     <http://greggkellogg.net/foaf.rdf#me> ;
+  doap:maintainer    <http://greggkellogg.net/foaf.rdf#me> ;
+  doap:documenter    <http://greggkellogg.net/foaf.rdf#me> ;
+  foaf:maker         <http://greggkellogg.net/foaf.rdf#me> ;
+  dc:creator         <http://greggkellogg.net/foaf.rdf#me> .
+
+<http://greggkellogg.net/foaf.rdf#me> a foaf:Person ;
+  foaf:name          "Gregg Kellogg" ;
+  foaf:mbox          <mailto:gregg@greggkellogg.net> ;
+  foaf:made          <> ;
+  rdfs:isDefinedBy   <http://greggkellogg.net/foaf.rdf> .
