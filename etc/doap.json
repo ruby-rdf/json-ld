@@ -23,15 +23,15 @@
     "doap:platform":      "Ruby",
     "doap:bug-database":  "http://github.com/gkellogg/json-ld/issues",
     "doap:blog":          "http://greggkellogg.net/",
-    "doap:developer":     "http://greggkellogg.net/foaf.rdf#me",
-    "doap:maintainer":    "http://greggkellogg.net/foaf.rdf#me",
-    "doap:documenter":    "http://greggkellogg.net/foaf.rdf#me",
-    "foaf:maker":         "http://greggkellogg.net/foaf.rdf#me",
+    "doap:developer":     "http://greggkellogg.net/foaf#me",
+    "doap:maintainer":    "http://greggkellogg.net/foaf#me",
+    "doap:documenter":    "http://greggkellogg.net/foaf#me",
+    "foaf:maker":         "http://greggkellogg.net/foaf#me",
     "dc:creator":         {
-        "@":                "http://greggkellogg.net/foaf.rdf#me",
+        "@":                "http://greggkellogg.net/foaf#me",
         "foaf:name":        "Gregg Kellogg",
         "foaf:mbox":         "mailto:gregg@greggkellogg.net",
         "foaf:made":        "",
-        "rdfs:isDefinedBy": "http://greggkellogg.net/foaf.rdf"
+        "rdfs:isDefinedBy": "http://greggkellogg.net/foaf"
     }
 }
