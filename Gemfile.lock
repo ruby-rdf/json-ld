@@ -1,0 +1,46 @@
+GIT
+  remote: https://github.com/bendiken/rdf-spec.git
+  revision: 198c03ce4343c7f9921aa44a576f4dda2e5dc30e
+  specs:
+    rdf-spec (0.3.3)
+      rspec (>= 2.1)
+
+GIT
+  remote: https://github.com/bendiken/rdf.git
+  revision: 5221ecb27eaad1ecfcbdbf20197045b2122db34e
+  specs:
+    rdf (0.3.3)
+      addressable (= 2.2.4)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    addressable (2.2.4)
+    diff-lcs (1.1.2)
+    json (1.5.1)
+    rdf-isomorphic (0.3.4)
+      rdf (>= 0.2.3)
+    rdf-n3 (0.3.3.1)
+      rdf (>= 0.3.3)
+    rspec (2.6.0)
+      rspec-core (~> 2.6.0)
+      rspec-expectations (~> 2.6.0)
+      rspec-mocks (~> 2.6.0)
+    rspec-core (2.6.2)
+    rspec-expectations (2.6.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.6.0)
+    yard (0.7.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  addressable (= 2.2.4)
+  json (>= 1.5.1)
+  rdf!
+  rdf-isomorphic (>= 0.3.4)
+  rdf-n3 (>= 0.3.3)
+  rdf-spec!
+  rspec (>= 2.1.0)
+  yard (>= 0.6.4)
