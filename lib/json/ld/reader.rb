@@ -319,23 +319,12 @@ module JSON::LD
     # @raise [RDF::ReaderError] on a syntax error, or a reference to a term which is not defined.
     def parse_context(ec, context)
       context.each do |key, value|
-        #add_debug("parse_context(#{key})", value.inspect)
+        add_debug("parse_context(#{key})", value.inspect)
         case key
         when '@vocab' then ec.vocab = value
         when '@base'  then ec.base  = uri(value)
         when '@coerce'
-          # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
-          # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
-          # (e.g., { "xsd:anyURI": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
-          # of { "xsd:anyURI": "foaf:knows" }, or add to it.
-          add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless value.is_a?(Hash)
-          value.each do |type, property|
-            type_uri = expand_term(type, ec.vocab, ec)
-            [property].flatten.compact.each do |prop|
-              p = expand_term(prop, ec.vocab, ec)
-              ec.coerce[p] = type_uri
-            end
-          end
+          # Process after prefix mapping
         else
           # Spec confusion: The text indicates to merge each key-value pair into the active context. Is any
           # processing performed on the values. For instance, could a value be a CURIE, or {"@iri": <value>}?
@@ -345,6 +334,21 @@ module JSON::LD
         end
       end
       
+      if context['@coerce']
+        # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
+        # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
+        # (e.g., { "xsd:anyURI": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
+        # of { "xsd:anyURI": "foaf:knows" }, or add to it.
+        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
+        context['@coerce'].each do |type, property|
+          type_uri = expand_term(type, ec.vocab, ec)
+          [property].flatten.compact.each do |prop|
+            p = expand_term(prop, ec.vocab, ec)
+            ec.coerce[p] = type_uri
+          end
+        end
+      end
+
       ec
     end
     

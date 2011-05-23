@@ -96,10 +96,6 @@ describe "JSON::LD::Reader" do
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"@": "http://greggkellogg.net/foaf.rdf#me", "a": "foaf:Person"}),
-          %q(<http://greggkellogg.net/foaf.rdf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .)
-        ],
-        [
           %q({"foaf:name": {"@literal": "Gregg Kellogg", "@language": "en-us"}}),
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg"@en-us .)
         ],
@@ -124,6 +120,20 @@ describe "JSON::LD::Reader" do
           %q(
             <http://greggkellogg.net/foaf.rdf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
           )
+        ],
+      ].each do |(js, nt)|
+        it "parses #{js}" do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+        end
+      end
+    end
+
+
+    context "CURIEs" do
+      [
+        [
+          %q({"@": "http://greggkellogg.net/foaf.rdf#me", "a": "foaf:Person"}),
+          %q(<http://greggkellogg.net/foaf.rdf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .)
         ],
       ].each do |(js, nt)|
         it "parses #{js}" do
