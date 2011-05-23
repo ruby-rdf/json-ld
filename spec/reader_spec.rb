@@ -135,6 +135,10 @@ describe "JSON::LD::Reader" do
           %q({"@": "http://greggkellogg.net/foaf.rdf#me", "a": "foaf:Person"}),
           %q(<http://greggkellogg.net/foaf.rdf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .)
         ],
+        [
+          %q({"@context": {"": "http://example.com/default#"}, ":foo": "bar"}),
+          %q(_:a <http://example.com/default#foo> "bar" .)
+        ],
       ].each do |(js, nt)|
         it "parses #{js}" do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
@@ -162,6 +166,39 @@ describe "JSON::LD::Reader" do
           %q(
             <http://greggkellogg.net/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> "Manu Sporny" .
             <http://greggkellogg.net/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> "Ivan Herman" .
+          )
+        ],
+        [
+          %q({"@": "http://greggkellogg.net/foaf.rdf#me", "foaf:knows": [["Manu Sporny", "Ivan Herman"]]}),
+          %q(
+            <http://greggkellogg.net/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Ivan Herman" .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+      ].each do |(js, nt)|
+        it "parses #{js}" do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+        end
+      end
+    end
+
+    context "lists" do
+      [
+        [
+          %q({"@": "http://greggkellogg.net/foaf.rdf#me", "foaf:knows": [[]]}),
+          %q(
+            <http://greggkellogg.net/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+        [
+          %q({"@": "http://greggkellogg.net/foaf.rdf#me", "foaf:knows": [["Manu Sporny"]]}),
+          %q(
+            <http://greggkellogg.net/foaf.rdf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
         [
