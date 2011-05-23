@@ -28,4 +28,20 @@ module JSON::LD
     reader { JSON::LD::Reader }
     writer { JSON::LD::Writer }
   end
+  
+  # Alias for JSON-LD format
+  #
+  # This allows the following:
+  #
+  # @example Obtaining an Notation3 format class
+  #     RDF::Format.for(:jsonld)         #=> JSON::LD::JSONLD
+  #     RDF::Format.for(:jsonld).reader  #=> JSON::LD::Reader
+  #     RDF::Format.for(:jsonld).writer  #=> JSON::LD::Writer
+  class JSONLD < RDF::Format
+    content_type     'application/json',    :extension => :jsonld
+    content_encoding 'utf-8'
+
+    reader { JSON::LD::Reader }
+    writer { JSON::LD::Writer }
+  end
 end
