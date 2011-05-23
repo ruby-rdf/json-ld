@@ -1,0 +1,32 @@
+{
+  "@vocab": {
+    "Release":  "http://example.org/idl-def/release#",
+    "Playlist": "http://example.org/idl-def/release#Playlist",
+    "track":    "http://example.org/idl-def/release#Playlist.track",
+    "Track":    "http://example.org/idl-def/release#Track",
+    "Slot":     "http://purl.org/ontology/olo/core#Slot",
+    "slot":     "http://purl.org/ontology/olo/core#slot",
+    "length":   "http://purl.org/ontology/olo/core#length",
+    "item":     "http://purl.org/ontology/olo/core#item",
+    "@base":    "http://example.com/my_release",
+    "@coerce":  {
+      "Track":  "track"
+    }
+  },
+  "@":      "",
+  "a":      "Release",
+  "track":  [[
+    {
+      "@":              "track1",
+      "a":              "Track",
+      "Track.title":    "Track 1",
+      "Track.duration": 1234
+    },
+    {
+      "@":              "track2",
+      "a":              "Track",
+      "Track.title":    "Track 2",
+      "Track.duration": 5678
+    }
+  ]]
+}
