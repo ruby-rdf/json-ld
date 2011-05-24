@@ -34,5 +34,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-spec',        '>= 0.3.2'
   gem.add_development_dependency 'rdf-n3',          '>= 0.3.3'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
+  gem.add_development_dependency 'sxp',             ">= 0"
+  gem.add_development_dependency 'sparql-algebra',  ">= 0"
+  gem.add_development_dependency 'sparql-grammar',  ">= 0"
   gem.post_install_message  = nil
 end
