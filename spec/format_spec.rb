@@ -2,7 +2,7 @@
 $:.unshift "."
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe "JSON::LD::Format" do
+describe JSON::LD::Format do
   context "discovery" do
     {
       "json"             => RDF::Format.for(:json),
