@@ -2,7 +2,7 @@
 $:.unshift "."
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe "JSON::LD::Reader" do
+describe JSON::LD::Reader do
   context "discovery" do
     {
       "json"             => RDF::Reader.for(:json),
@@ -75,10 +75,6 @@ describe "JSON::LD::Reader" do
   context :parsing do
     context "literals" do
       [
-        [
-          %q({"@": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
-          %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
-        ],
         [
           %q({"@": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
           %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
@@ -223,7 +219,7 @@ describe "JSON::LD::Reader" do
         [
           %q({
             "@context": {
-              "@base":  "http://greggkellogg.net/foaf.rdf"
+              "@base":  "http://greggkellogg.net/foaf"
             },
             "@":  "#me",
             "doap:homepage":  {"@iri": "http://github.com/gkellogg/"}
@@ -247,7 +243,7 @@ describe "JSON::LD::Reader" do
         [
           %q({
             "@context": {
-              "@base":  "http://greggkellogg.net/foaf.rdf",
+              "@base":  "http://greggkellogg.net/foaf",
               "@vocab": "http://usefulinc.com/ns/doap#"
             },
             "@":  "#me",
