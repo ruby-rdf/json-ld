@@ -5,7 +5,7 @@ require 'rdf/n3'
 require 'open-uri'
 
 module Fixtures
-  SUITE = RDF::URI("http://json-ld.digitalbazaar.com/test-suite/")
+  SUITE = RDF::URI("http://json-ld.org/test-suite/")
 
   class TestCase
     HTMLRE = Regexp.new('([0-9]{4,4})\.xhtml')
