@@ -1,130 +1,80 @@
-require 'rdf/isomorphic'
+require 'rspec/matchers'
+require 'sparql/grammar'
 
-module Matchers
-  class BeEquivalentGraph
-    Info = Struct.new(:about, :information, :trace, :compare, :inputDocument, :outputDocument)
-    def normalize(graph)
-      case @info.compare
-      when :array
-        array = case graph
-        when RDF::Graph
-          raise ":compare => :array used with Graph"
-        when Array
-          graph.sort
-        else
-          graph.to_s.split("\n").
-            map {|t| t.gsub(/^\s*(.*)\s*$/, '\1')}.
-            reject {|t2| t2.match(/^\s*$/)}.
-            compact.
-            sort.
-            uniq
-        end
-        
-        # Implement to_ntriples on array, to simplify logic later
-        def array.to_ntriples; self.join("\n") + "\n"; end
-        array
-      else
-        case graph
-        when RDF::Graph then graph
-        when IO, StringIO
-          RDF::Graph.new.load(graph, :base_uri => @info.about)
-        else
-          # Figure out which parser to use
-          g = RDF::Graph.new
-          reader_class = RDF::Reader.for(detect_format(graph))
-          reader_class.new(graph, :base_uri => @info.about).each {|s| g << s}
-          g
-        end
-      end
-    end
-    
-    def initialize(expected, info)
-      @info = if info.respond_to?(:about)
-        info
-      elsif info.is_a?(Hash)
-        identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
-        trace = info[:trace]
-        trace = trace.join("\n") if trace.is_a?(Array)
-        Info.new(identifier, info[:information] || "", trace, info[:compare])
-      else
-        Info.new(expected.is_a?(RDF::Graph) ? expected.context : info, info.to_s)
-      end
-      @expected = normalize(expected)
-    end
+Info = Struct.new(:about, :information, :trace, :compare, :inputDocument, :outputDocument)
 
-    def matches?(actual)
-      @actual = normalize(actual)
-      if @info.compare == :array
-        @actual == @expected
-      else
-        @actual.isomorphic_with?(@expected)
-      end
-    end
+def normalize(graph)
+  case graph
+  when RDF::Graph then graph
+  when IO, StringIO
+    RDF::Graph.new.load(graph, :base_uri => @info.about)
+  else
+    # Figure out which parser to use
+    g = RDF::Graph.new
+    reader_class = detect_format(graph)
+    reader_class.new(graph, :base_uri => @info.about).each {|s| g << s}
+    g
+  end
+end
 
-    def failure_message_for_should
-      info = @info.respond_to?(:information) ? @info.information : @info.inspect
-      if @expected.is_a?(RDF::Graph) && @actual.size != @expected.size
-        "Graph entry count differs:\nexpected: #{@expected.size}\nactual:   #{@actual.size}"
-      elsif @expected.is_a?(Array) && @actual.size != @expected.length
-        "Graph entry count differs:\nexpected: #{@expected.length}\nactual:   #{@actual.size}"
-      else
-        "Graph differs"
-      end +
-      "\n#{info + "\n" unless info.empty?}" +
-      (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
-      (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
-      "Unsorted Expected:\n#{@expected.to_ntriples}" +
-      "Unsorted Results:\n#{@actual.to_ntriples}" +
-#      "Unsorted Expected Dump:\n#{@expected.dump}\n" +
-#      "Unsorted Results Dump:\n#{@actual.dump}" +
-      (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
+RSpec::Matchers.define :be_equivalent_graph do |expected, info|
+  match do |actual|
+    @info = if info.respond_to?(:about)
+      info
+    elsif info.is_a?(Hash)
+      identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
+      trace = info[:trace]
+      trace = trace.join("\n") if trace.is_a?(Array)
+      Info.new(identifier, info[:information] || "", trace, info[:compare])
+    else
+      Info.new(expected.is_a?(RDF::Graph) ? expected.context : info, info.to_s)
     end
-    def negative_failure_message
-      "Graphs do not differ\n"
-    end
+    @expected = normalize(expected)
+    @actual = normalize(actual)
+    @actual.isomorphic_with?(@expected)
   end
   
-  def be_equivalent_graph(expected, info = nil)
-    BeEquivalentGraph.new(expected, info)
+  failure_message_for_should do |actual|
+    info = @info.respond_to?(:information) ? @info.information : @info.inspect
+    if @expected.is_a?(RDF::Graph) && @actual.size != @expected.size
+      "Graph entry count differs:\nexpected: #{@expected.size}\nactual:   #{@actual.size}"
+    elsif @expected.is_a?(Array) && @actual.size != @expected.length
+      "Graph entry count differs:\nexpected: #{@expected.length}\nactual:   #{@actual.size}"
+    else
+      "Graph differs"
+    end +
+    "\n#{info + "\n" unless info.empty?}" +
+    (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
+    (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
+    "Unsorted Expected:\n#{@expected.dump(:ntriples)}" +
+    "Unsorted Results:\n#{@actual.dump(:ntriples)}" +
+    (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
+  end  
+end
+
+RSpec::Matchers.define :pass_query do |expected, info|
+  match do |actual|
+    @expected = expected.read
+    query = SPARQL::Grammar.parse(@expected)
+    @results = query.execute(actual)
+
+    @results.should == info.expectedResults
   end
   
-  class MatchRE
-    Info = Struct.new(:about, :information, :trace, :inputDocument, :outputDocument)
-    def initialize(expected, info)
-      @info = if info.respond_to?(:about)
-        info
-      elsif info.is_a?(Hash)
-        identifier = info[:identifier] || info[:about]
-        trace = info[:trace]
-        trace = trace.join("\n") if trace.is_a?(Array)
-        Info.new(identifier, info[:information] || "", trace, info[:inputDocument], info[:outputDocument])
-      else
-        Info.new(info, info.to_s)
-      end
-      @expected = expected
-    end
-
-    def matches?(actual)
-      @actual = actual
-      @actual.to_s.match(@expected)
-    end
-
-    def failure_message_for_should
-      info = @info.respond_to?(:information) ? @info.information : @info.inspect
-      "Match failed"
-      "\n#{info + "\n" unless info.empty?}" +
-      (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
-      (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
-      "Expression: #{@expected}\n" +
-      "Unsorted Results:\n#{@actual}" +
-      (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
-    end
-    def negative_failure_message
-      "Match succeeded\n"
-    end
-  end
-
-  def match_re(expected, info = nil)
-    MatchRE.new(expected, info)
-  end
+  failure_message_for_should do |actual|
+    information = info.respond_to?(:information) ? info.information : ""
+    "#{information + "\n" unless information.empty?}" +
+    if @results.nil?
+      "Query failed to return results"
+    elsif !@results.is_a?(RDF::Literal::Boolean)
+      "Query returned non-boolean results"
+    elsif info.expectedResults
+      "Query returned false"
+    else
+      "Query returned true (expected false)"
+    end +
+    "\n#{@expected}" +
+    "\nResults:\n#{@actual.dump(:ntriples)}" +
+    "\nDebug:\n#{info.trace}"
+  end  
 end
