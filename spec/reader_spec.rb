@@ -92,8 +92,8 @@ describe JSON::LD::Reader do
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"foaf:name": {"@literal": "Gregg Kellogg", "@language": "en-us"}}),
-          %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg"@en-us .)
+          %q({"rdfs:label": {"@literal": "A plain literal with a lang tag.", "@language": "en-us"}}),
+          %q(_:a <http://www.w3.org/2000/01/rdf-schema#label> "A plain literal with a lang tag."@en-us .)
         ],
         [
           %q([{
@@ -105,7 +105,7 @@ describe JSON::LD::Reader do
           }]),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
-            <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Herman Iván"@hu .
+            <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Herman Iv\u00E1n"@hu .
           )
         ],
         [
@@ -149,12 +149,24 @@ describe JSON::LD::Reader do
             "@": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {
               "@": "http://www.ivan-herman.net/foaf#me",
-              "foaf:name": {"@literal": "Herman Iván", "@language": "hu"}
+              "foaf:name": "Ivan Herman"
             }
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
-            <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Herman Iván"@hu .
+            <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Ivan Herman" .
+          )
+        ],
+        [
+          %q({
+            "@": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": {
+              "foaf:name": "Manu Sporny"
+            }
+          }),
+          %q(
+            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://xmlns.com/foaf/0.1/name> "Manu Sporny" .
           )
         ],
         [
@@ -162,16 +174,6 @@ describe JSON::LD::Reader do
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Manu Sporny" .
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Ivan Herman" .
-          )
-        ],
-        [
-          %q({"@": "http://greggkellogg.net/foaf#me", "foaf:knows": [["Manu Sporny", "Ivan Herman"]]}),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Ivan Herman" .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
       ].each do |(js, nt)|

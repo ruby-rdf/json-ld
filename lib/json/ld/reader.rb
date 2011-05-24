@@ -192,12 +192,14 @@ module JSON::LD
           # Return the IRI found from the value
           object = expand_term(element["@iri"], ec.base, ec)
           add_triple(path, subject, property, object) if subject && property
+          return
         elsif element["@literal"]
           literal_opts = {}
           literal_opts[:datatype] = expand_term(element["@datatype"], ec.vocab.to_s, ec) if element["@datatype"]
           literal_opts[:language] = element["@language"].to_sym if element["@language"]
           object = RDF::Literal.new(element["@literal"], literal_opts)
           add_triple(path, subject, property, object) if subject && property
+          return
         end
         
         # 2.2) ... Otherwise, if the local context is known perform the following steps:
@@ -205,20 +207,20 @@ module JSON::LD
         #         value after Object Processing has been performed.
         if element["@"].is_a?(String)
           active_subject = expand_term(element["@"], ec.base, ec)
-          
-          # 2.2.1.1) If the inherited subject and inherited property values are
-          # specified, generate a triple using the inherited subject for the
-          # subject, the inherited property for the property, and the active
-          # subject for the object.
-          add_triple(path, subject, property, active_subject) if subject && property
-          
-          subject = active_subject
         else
           # 2.2.7) If the end of the associative array is detected, and a active subject
           # was not discovered, then:
           #   2.2.7.1) Generate a blank node identifier and set it as the active subject.
-          subject = RDF::Node.new
+          active_subject = RDF::Node.new
         end
+          
+        # 2.2.1.1) If the inherited subject and inherited property values are
+        # specified, generate a triple using the inherited subject for the
+        # subject, the inherited property for the property, and the active
+        # subject for the object.
+        # 2.2.7.2) Complete any previously incomplete triples by running all substeps of Step 2.2.1.
+        add_triple(path, subject, property, active_subject) if subject && property
+        subject = active_subject
         
         element.each do |key, value|
           # 2.2.3) If a key that is not @context, @, or a, set the active property by
