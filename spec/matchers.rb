@@ -1,3 +1,4 @@
+require 'rdf/isomorphic'
 require 'rspec/matchers'
 require 'sparql/grammar'
 
@@ -50,6 +51,18 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
     "Unsorted Results:\n#{@actual.dump(:ntriples)}" +
     (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
   end  
+end
+
+RSpec::Matchers.define :produce do |expected, info|
+  match do |actual|
+    actual.should == expected
+  end
+  
+  failure_message_for_should do |actual|
+    "Expected: #{expected.inspect}\n" +
+    "Actual: #{actual.inspect}\n" +
+    "Processing results:\n#{info.join("\n")}"
+  end
 end
 
 RSpec::Matchers.define :pass_query do |expected, info|
