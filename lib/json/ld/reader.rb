@@ -7,34 +7,7 @@ module JSON::LD
   class Reader < RDF::Reader
     format Format
     
-    # Default context
-    # @see http://json-ld.org/spec/ED/20110507/#the-default-context
-    DEFAULT_CONTEXT = {
-      "rdf"           => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-      "rdfs"          => "http://www.w3.org/2000/01/rdf-schema#",
-      "owl"           => "http://www.w3.org/2002/07/owl#",
-      "xsd"           => "http://www.w3.org/2001/XMLSchema#",
-      "dcterms"       => "http://purl.org/dc/terms/",
-      "foaf"          => "http://xmlns.com/foaf/0.1/",
-      "cal"           => "http://www.w3.org/2002/12/cal/ical#",
-      "vcard"         => "http://www.w3.org/2006/vcard/ns# ",
-      "geo"           => "http://www.w3.org/2003/01/geo/wgs84_pos#",
-      "cc"            => "http://creativecommons.org/ns#",
-      "sioc"          => "http://rdfs.org/sioc/ns#",
-      "doap"          => "http://usefulinc.com/ns/doap#",
-      "com"           => "http://purl.org/commerce#",
-      "ps"            => "http://purl.org/payswarm#",
-      "gr"            => "http://purl.org/goodrelations/v1#",
-      "sig"           => "http://purl.org/signature#",
-      "ccard"         => "http://purl.org/commerce/creditcard#",
-      "@coerce"       => {
-        # Note: rdf:type is not in the document, but necessary for this implementation
-        "xsd:anyURI"  => ["rdf:type", "foaf:homepage", "foaf:member", "rdf:type"],
-        "xsd:integer" => "foaf:age",
-      }
-    }.freeze
-
-    ##
+   ##
     # The graph constructed when parsing.
     #
     # @return [RDF::Graph]
@@ -207,6 +180,9 @@ module JSON::LD
         #         value after Object Processing has been performed.
         if element["@"].is_a?(String)
           active_subject = expand_term(element["@"], ec.base, ec)
+        elsif element["@"]
+          # Recursively process hash or Array values
+          traverse("#{path}[@]", element["@"], subject, property, ec)
         else
           # 2.2.7) If the end of the associative array is detected, and a active subject
           # was not discovered, then:
