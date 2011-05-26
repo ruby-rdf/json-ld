@@ -8,8 +8,9 @@ rescue
 end
 
 require 'rspec'
-require 'json/ld'
+require 'rdf'
 require 'rdf/isomorphic'
+require 'json/ld'
 require 'rdf/ntriples'
 require 'rdf/n3'
 require 'rdf/spec'
@@ -52,6 +53,7 @@ def detect_format(stream)
   end
   case string
   when /<html/i   then RDF::RDFa::Reader
+  when /{\s*"@"/i then JSON::LD::Reader
   when /@prefix/i then RDF::N3::Reader
   else                 RDF::NTriples::Reader
   end
