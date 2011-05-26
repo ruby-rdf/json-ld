@@ -304,6 +304,40 @@ describe JSON::LD::Reader do
           %q({"@context": { "sensor": "http://example/sensor#"}, "sensor:active": true}),
           %q(_:a <http://example/sensor#active> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .)
         ],
+        [
+          %q([
+            {"@":   "http://example.com/#me", "a": "foaf:Person"},
+            {"@":   "http://example.com/#you", "a": "foaf:Person"}
+          ]),
+          %q(
+            <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+            <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+          )
+        ],
+        [
+          %q({"@": [
+              {"@":   "http://example.com/#me", "a": "foaf:Person"},
+              {"@":   "http://example.com/#you", "a": "foaf:Person"}
+            ]
+          }),
+          %q(
+            <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+            <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+          )
+        ],
+        [
+          %q({
+            "@context": {"@base": "http://example.com/"},
+            "@": [
+              {"@":   "#me", "a": "foaf:Person"},
+              {"@":   "#you", "a": "foaf:Person"}
+            ]
+          }),
+          %q(
+            <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+            <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+          )
+        ],
       ].each do |(js, nt)|
         it "parses #{js}" do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
