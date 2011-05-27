@@ -60,7 +60,7 @@ RSpec::Matchers.define :produce do |expected, info|
   
   failure_message_for_should do |actual|
     "Expected: #{expected.inspect}\n" +
-    "Actual: #{actual.inspect}\n" +
+    "Actual  : #{actual.inspect}\n" +
     "Processing results:\n#{info.join("\n")}"
   end
 end
