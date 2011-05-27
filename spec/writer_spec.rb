@@ -7,47 +7,62 @@ describe JSON::LD::Writer do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       serialize(input).should produce({
-        "@" => "http://a/b",
-        "http://a/c" => {:iri => "http://a/d"}
+        "@context"   => {"@coerce" => {"xsd:anyURI" => "http://a/c"}},
+        "@"          => "http://a/b",
+        "http://a/c" => "http://a/d"
       }, @debug)
     end
 
     it "should use relative URIs with base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       serialize(input, :base_uri => "http://a/").should produce({
-        "@context" => {"@base" => "http://a/"},
-        "@"        => "b",
-        "http://a/c" => {:iri => "d"}
+        "@context"   => {
+          "@base"    => "http://a/",
+          "@coerce"  => {"xsd:anyURI" => "c"}},
+        "@"          => "b",
+        "http://a/c" => "d"
       }, @debug)
     end
 
     it "should use coerced relative URIs with base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      serialize(input,
-        :base_uri => "http://a/",
-        :coerce => {RDF::URI("http://a/c") => RDF::XSD.anyURI}).
+      serialize(input, :base_uri => "http://a/").
       should produce({
-        "@context" => {"@base" => "http://a/", "@coerce" => {"xsd:anyURI" => "c"}},
-        "@"        => "b",
+        "@context"   => {"@base" => "http://a/", "@coerce" => {"xsd:anyURI" => "c"}},
+        "@"          => "b",
         "http://a/c" => "d"
       }, @debug)
     end
 
     it "should use qname URIs with prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
-      serialize(input)
+      serialize(input).
+      should produce({
+        "@context" => {
+          "@coerce"=> {"xsd:anyURI" => "foaf:c"}},
+        "@"        => "foaf:b",
+        "foaf:c"   => "foaf:d"
+      }, @debug)
     end
 
     it "should use qname URIs with empty prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
-      serialize(input, :prefixes => { "" => RDF::FOAF}
-      )
+      serialize(input, :prefixes => { "" => RDF::FOAF}).
+      should produce({
+        "@context" => {""=>"http://xmlns.com/foaf/0.1/", "@coerce"=>{"xsd:anyURI"=>":c"}},
+        "@"        => ":b",
+        ":c"       => ":d"
+      }, @debug)
     end
     
-    # see example-files/arnau-registered-vocab.rb
     it "should use qname URIs with empty suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
-      serialize(input, :prefixes => {"foaf" => RDF::FOAF})
+      serialize(input).
+      should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:"}},
+        "@"     => "foaf:",
+        "foaf:" => "foaf:"
+      }, @debug)
     end
     
     it "should not use qname with illegal local part" do
@@ -59,7 +74,16 @@ describe JSON::LD::Writer do
 
       serialize(input, :prefixes => {
           "db" => RDF::URI("http://dbpedia.org/resource/"),
-          "dbo" => RDF::URI("http://dbpedia.org/ontology/")})
+          "dbo" => RDF::URI("http://dbpedia.org/ontology/")}).
+      should produce({
+        "@context"     => {
+          "db"         => "http://dbpedia.org/resource/",
+          "dbo"        => "http://dbpedia.org/ontology/",
+          "@coerce"    => {"xsd:anyURI"=>"dbo:artistOf"}
+        },
+        "@"            => "db:Michael_Jackson",
+        "dbo:artistOf" => "db:%28I_Can%27t_Make_It%29_Another_Day"
+      }, @debug)
     end
 
     it "should order properties" do
@@ -72,25 +96,186 @@ describe JSON::LD::Writer do
         :b a :class .
         :b rdfs:label "label" .
       )
-      serialize(input, :prefixes => {
-        "" => RDF::FOAF,
-        :dc => "http://purl.org/dc/elements/1.1/",
-        :rdfs => RDF::RDFS})
+      serialize(input, :prefixes => {"" => RDF::FOAF, "dc" => RDF::DC11}).
+      should produce({
+        "@context"   => {
+          ""         => "http://xmlns.com/foaf/0.1/",
+          "dc"       => "http://purl.org/dc/elements/1.1/",
+          "@coerce"  => {"xsd:anyURI" => ":c"}
+        },
+        "@"          => ":b",
+        "dc:title"   => "title",
+        "a"          => ":class",
+        "rdfs:label" => "label",
+        ":c"         => ":d"
+      }, @debug)
     end
     
     it "should generate object list" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :b :c :d, :e .)
-      serialize(input, :prefixes => {"" => RDF::FOAF})
+      serialize(input, :prefixes => {"" => RDF::FOAF}).
+      should produce({
+        "@context" => {
+          ""=>"http://xmlns.com/foaf/0.1/",
+          "@coerce" => {"xsd:anyURI"=>":c"}},
+        "@"        => ":b",
+        ":c"       => [":d", ":e"]
+      }, @debug)
     end
     
     it "should generate property list" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :b :c :d; :e :f .)
-      serialize(input, :prefixes => {"" => RDF::FOAF})
+      serialize(input, :prefixes => {"" => RDF::FOAF}).
+      should produce({
+        "@context" => {
+          ""=>"http://xmlns.com/foaf/0.1/",
+          "@coerce"=>{"xsd:anyURI"=>[":c", ":e"]}},
+        "@"        => ":b",
+        ":c"       => ":d",
+        ":e"       => ":f"
+      }, @debug)
+    end
+  end
+  
+  describe "anons" do
+    it "should generate bare anon" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . [:a :b] .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:a"}},
+        "foaf:a"=>"foaf:b"
+      }, @debug)
+    end
+    
+    it "should generate anon as subject" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . [:a :b] :c :d .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>["foaf:a","foaf:c"]}},
+        "foaf:a"=>"foaf:b",
+        "foaf:c"=>"foaf:d"
+      }, @debug)
+    end
+    
+    it "should generate anon as object" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b [:c :d] .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>["foaf:b","foaf:c"]}},
+        "@"=>"foaf:a",
+        "foaf:b" => {
+          "foaf:c"=>"foaf:d"
+        }
+      }, @debug)
+    end
+  end
+  
+  describe "lists" do
+    it "should generate bare list" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . (:a :b) .)
+      serialize(input).should produce({
+        "@" => [[{"@" => "foaf:a"}, {"@" => "foaf:b"}]]
+      }, @debug)
+    end
+
+    it "should generate literal list" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b ( "apple" "banana" ) .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:b"}},
+        "@" => "foaf:a",
+        "foaf:b" => [["apple", "banana"]]
+      }, @debug)
+    end
+    
+    it "should generate empty list" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b () .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:b"}},
+        "@" => "foaf:a",
+        "foaf:b" => [[]]
+      }, @debug)
+    end
+    
+    it "should generate single element list" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b ( "apple" ) .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:b"}},
+        "@" => "foaf:a",
+        "foaf:b" => [["apple"]]
+      }, @debug)
+    end
+    
+    it "should generate empty list as subject" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . () :a :b .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:a"}},
+        "@" => [[]],
+        "foaf:a" => "foaf:b"
+      }, @debug)
+    end
+    
+    it "should generate list as subject" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . (:a) :b :c .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"foaf:b"}},
+        "@" => [[{"@" => "foaf:a"}]],
+        "foaf:b" => "foaf:c"
+      }, @debug)
+    end
+
+    it "should generate list of lists" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :listOf2Lists = (() (1)) .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"owl:sameAs"}},
+        "@" => "foaf:listOf2Lists",
+        "owl:sameAs" => [[
+          [[]],
+          [[1]]
+        ]]
+      }, @debug)
+    end
+    
+    it "should generate list anon" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :twoAnons = ([a :mother] [a :father]) .)
+      serialize(input).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>"owl:sameAs"}},
+        "@" => "foaf:twoAnons",
+        "owl:sameAs" => [[
+          {"a" => "foaf:mother"},
+          {"a" => "foaf:father"}
+        ]]
+      }, @debug)
+    end
+    
+    it "should generate owl:unionOf list" do
+      input = %(
+        @prefix : <http://xmlns.com/foaf/0.1/> .
+        @prefix owl: <http://www.w3.org/2002/07/owl#> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        :a rdfs:domain [
+          a owl:Class;
+          owl:unionOf [
+            a owl:Class;
+            rdf:first :b;
+            rdf:rest [
+              a owl:Class;
+              rdf:first :c;
+              rdf:rest rdf:nil
+            ]
+          ]
+        ] .
+      )
+      serialize(input, :coerce => {RDF::OWL.unionOf => RDF::XSD.anyURI} ).should produce({
+        "@context"=>{"@coerce"=>{"xsd:anyURI"=>["rdfs:domain", "owl:unionOf"]}}, 
+        "@" => "foaf:a",
+        "rdfs:domain" => {
+          "a" =>            "owl:Class",
+          "owl:unionOf" =>  [["foaf:b", "foaf:c"] ]
+        }
+      }, @debug)
     end
   end
   
   def parse(input, options = {})
-    RDF::Graph.new << RDF::NTriples::Reader.new(input, options)
+    RDF::Graph.new << detect_format(input).new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
