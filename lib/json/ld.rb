@@ -49,7 +49,7 @@ module JSON
       "ccard"         => "http://purl.org/commerce/creditcard#",
       "@coerce"       => {
         # Note: rdf:type is not in the document, but necessary for this implementation
-        "xsd:anyURI"  => ["rdf:type", "foaf:homepage", "foaf:member"],
+        "xsd:anyURI"  => ["rdf:type", "rdf:rest", "foaf:homepage", "foaf:member"],
         "xsd:integer" => "foaf:age",
       }
     }.freeze
@@ -57,6 +57,8 @@ module JSON
     # Default type coercion, in property => datatype order
     DEFAULT_COERCE = {
       RDF.type           => RDF::XSD.anyURI,
+      RDF.first          => false,            # Make sure @coerce isn't generated for this
+      RDF.rest           => RDF::XSD.anyURI,
       RDF::FOAF.homepage => RDF::XSD.anyURI,
       RDF::FOAF.member   => RDF::XSD.anyURI,
       RDF::FOAF.age      => RDF::XSD.integer,
