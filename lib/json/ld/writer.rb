@@ -153,8 +153,8 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
-      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri]
-      @vocab = @options[:vocab]
+      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:canonicalize]
+      @vocab = @options[:vocab] unless @options[:canonicalize]
       @debug = @options[:debug]
 
       reset
@@ -164,7 +164,7 @@ module JSON::LD
       preprocess
       
       # Don't generate context for canonical output
-      json_hash = @options[:canonical] ? {} : start_document
+      json_hash = @options[:canonicalize] ? {} : start_document
 
       elements = []
       order_subjects.each do |subject|
@@ -208,8 +208,7 @@ module JSON::LD
     ##
     # Returns the representation of a IRI reference.
     #
-    # FIXME: IRIs that can't be turned into CURIEs could be returned bare
-    # if we knew the range of the property
+    # Spec confusion: should a subject URI be normalized?
     #
     # @param  [RDF::URI] value
     # @param  [Hash{Symbol => Object}] options
@@ -220,8 +219,6 @@ module JSON::LD
     #   bare strings, rather than {"iri":}
     # @return [Object]
     def format_uri(value, options = {})
-      return {:iri => value.to_s} if @options[:canonical]
-
       result = case options[:position]
       when :subject
         # attempt base_uri replacement
@@ -538,6 +535,10 @@ module JSON::LD
       seen = {}
       subjects = []
       
+      return @subjects.keys.sort do |a,b|
+        format_iri(a, :position => :subject) <=> format_iri(b, :position => :subject)
+      end if @options[:canonicalize]
+
       # Start with base_uri
       if base_uri && @subjects.keys.include?(base_uri)
         subjects << base_uri
@@ -564,7 +565,7 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def iri_range?(predicate)
-      return false if predicate.nil?
+      return false if predicate.nil? || @options[:canonicalize]
 
       unless coerce.has_key?(predicate)
         # objects of all statements with the predicate may not be literal
