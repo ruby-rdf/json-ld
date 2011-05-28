@@ -175,7 +175,7 @@ module JSON::LD
       
       return if elements.empty?
       
-      if elements.first.is_a?(Hash)
+      if elements.length == 1 && elements.first.is_a?(Hash)
         json_hash.merge!(elements.first)
       else
         json_hash["@"] = elements
@@ -186,19 +186,19 @@ module JSON::LD
       else
         json_state = if @options[:canonicalize]
           JSON::State.new(
-            :indent       => "  ",
-            :space        => " ",
-            :space_before => "",
-            :object_nl    => "\n",
-            :array_nl     => "\n",
-          )
-        else
-          JSON::State.new(
             :indent       => "",
             :space        => "",
             :space_before => "",
             :object_nl    => "",
             :array_nl     => "",
+          )
+        else
+          JSON::State.new(
+            :indent       => "  ",
+            :space        => " ",
+            :space_before => "",
+            :object_nl    => "\n",
+            :array_nl     => "\n",
           )
         end
         @output.write(json_hash.to_json(json_state))
@@ -266,7 +266,7 @@ module JSON::LD
         return {
           :literal => literal.value,
           :datatype => (format_uri(literal.datatype, :position => :subject) if literal.has_datatype?),
-          :language => literal.language
+          :language => (literal.language.to_s if literal.has_language?)
         }.delete_if {|k,v| v.nil?}
       end
 
@@ -337,10 +337,13 @@ module JSON::LD
       # Coerce
       add_debug "start_doc: coerce= #{coerce.inspect}"
       unless coerce == DEFAULT_COERCE
-        c_h = ctx["@coerce"] = {}
+        c_h = {}
         coerce.keys.sort.each do |k|
-          next if DEFAULT_COERCE[k] == coerce[k] || coerce[k] == false
-          k_iri = format_uri(k, :position => :subject)
+          next if coerce[k] == DEFAULT_COERCE[k]  ||
+                  coerce[k] == false ||
+                  coerce[k] == RDF::XSD.integer ||
+                  coerce[k] == RDF::XSD.boolean
+          k_iri = format_uri(k, :position => :predicate)
           d_iri = format_uri(coerce[k], :position => :subject)
           add_debug "coerce[#{k_iri}] => #{d_iri}"
           case c_h[d_iri]
@@ -352,6 +355,8 @@ module JSON::LD
             c_h[d_iri] = [c_h[d_iri], k_iri]
           end
         end
+        
+        ctx["@coerce"] = c_h unless c_h.empty?
       end
 
       add_debug "start_doc: context=#{ctx.inspect}"
@@ -516,13 +521,9 @@ module JSON::LD
       # Make sorted list of properties
       prop_list = []
       
-      [RDF.type, RDF::RDFS.label, RDF::DC.title].each do |prop|
-        next unless properties[prop]
-        prop_list << prop.to_s
-      end
-      
-      properties.keys.sort.each do |prop|
-        next if prop_list.include?(prop.to_s)
+      properties.keys.sort do |a,b|
+        format_uri(a, :position => :predicate) <=> format_uri(b, :position => :predicate)
+      end.each do |prop|
         prop_list << prop.to_s
       end
       
