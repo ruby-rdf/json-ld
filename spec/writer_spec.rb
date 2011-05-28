@@ -3,34 +3,13 @@ $:.unshift "."
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe JSON::LD::Writer do
-  describe "simple tests" do
+  context "simple tests" do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       serialize(input).should produce({
         "@context"   => {"@coerce" => {"xsd:anyURI" => "http://a/c"}},
         "@"          => "http://a/b",
         "http://a/c" => "http://a/d"
-      }, @debug)
-    end
-
-    it "should use relative URIs with base" do
-      input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      serialize(input, :base_uri => "http://a/").should produce({
-        "@context"   => {
-          "@base"    => "http://a/",
-          "@coerce"  => {"xsd:anyURI" => "c"}},
-        "@"          => "b",
-        "http://a/c" => "d"
-      }, @debug)
-    end
-
-    it "should use coerced relative URIs with base" do
-      input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      serialize(input, :base_uri => "http://a/").
-      should produce({
-        "@context"   => {"@base" => "http://a/", "@coerce" => {"xsd:anyURI" => "c"}},
-        "@"          => "b",
-        "http://a/c" => "d"
       }, @debug)
     end
 
@@ -45,7 +24,7 @@ describe JSON::LD::Writer do
       }, @debug)
     end
 
-    it "should use qname URIs with empty prefix" do
+    it "should use CURIEs with empty prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
       serialize(input, :prefixes => { "" => RDF::FOAF}).
       should produce({
@@ -55,7 +34,7 @@ describe JSON::LD::Writer do
       }, @debug)
     end
     
-    it "should use qname URIs with empty suffix" do
+    it "should use CURIEs with empty suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       serialize(input).
       should produce({
@@ -65,7 +44,7 @@ describe JSON::LD::Writer do
       }, @debug)
     end
     
-    it "should not use qname with illegal local part" do
+    it "should not use CURIE with illegal local part" do
       input = %(
         @prefix db: <http://dbpedia.org/resource/> .
         @prefix dbo: <http://dbpedia.org/ontology/> .
@@ -104,8 +83,8 @@ describe JSON::LD::Writer do
           "@coerce"  => {"xsd:anyURI" => ":c"}
         },
         "@"          => ":b",
-        "dc:title"   => "title",
         "a"          => ":class",
+        "dc:title"   => "title",
         "rdfs:label" => "label",
         ":c"         => ":d"
       }, @debug)
@@ -135,9 +114,91 @@ describe JSON::LD::Writer do
         ":e"       => ":f"
       }, @debug)
     end
+    
+    it "serializes multiple subjects" do
+      input = %q(
+        @prefix : <http://www.w3.org/2006/03/test-description#> .
+        @prefix dc: <http://purl.org/dc/elements/1.1/> .
+        <test-cases/0001> a :TestCase .
+        <test-cases/0002> a :TestCase .
+      )
+      serialize(input, :prefixes => {"" => "http://www.w3.org/2006/03/test-description#"}).
+      should produce({
+        "@context" => {""=>"http://www.w3.org/2006/03/test-description#"},
+        "@"   => [
+          {"@"=> "test-cases/0001", "a" => ":TestCase"},
+          {"@"=> "test-cases/0002", "a" => ":TestCase"}
+        ]
+      }, @debug)
+    end
   end
   
-  describe "anons" do
+  context "literals" do
+    it "coerces typed literal" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/",
+          "@coerce"  => {"ex:d" => "ex:b"}},
+        "@"          => "ex:a",
+        "ex:b"       => "foo"
+      }, @debug)
+    end
+
+    it "coerces integer" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/"},
+        "@"          => "ex:a",
+        "ex:b"       => 1
+      }, @debug)
+    end
+
+    it "coerces boolean" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/"},
+        "@"          => "ex:a",
+        "ex:b"       => true
+      }, @debug)
+    end
+
+    it "coerces decmal" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/",
+          "@coerce"  => {"xsd:decimal" => "ex:b"}},
+        "@"          => "ex:a",
+        "ex:b"       => "1.0"
+      }, @debug)
+    end
+
+    it "coerces double" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/",
+          "@coerce"  => {"xsd:double" => "ex:b"}},
+        "@"          => "ex:a",
+        "ex:b"       => "1.0e0"
+      }, @debug)
+    end
+    
+    it "encodes language literal" do
+      input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"@en-us .)
+      serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
+        "@context"   => {
+          "ex"       => "http://example.com/"},
+        "@"          => "ex:a",
+        "ex:b"       => {:literal => "foo", :language => "en-us"}
+      }, @debug)
+    end
+  end
+
+  context "anons" do
     it "should generate bare anon" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . [:a :b] .)
       serialize(input).should produce({
@@ -167,7 +228,7 @@ describe JSON::LD::Writer do
     end
   end
   
-  describe "lists" do
+  context "lists" do
     it "should generate bare list" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . (:a :b) .)
       serialize(input).should produce({
@@ -271,6 +332,52 @@ describe JSON::LD::Writer do
           "owl:unionOf" =>  [["foaf:b", "foaf:c"] ]
         }
       }, @debug)
+    end
+  end
+
+  context "context" do
+    context "base" do
+      it "shortens URIs" do
+        input = %(<http://a/b> <http://a/c> <http://a/d> .)
+        serialize(input, :base_uri => "http://a/").should produce({
+          "@context"   => {
+            "@base"    => "http://a/",
+            "@coerce"  => {"xsd:anyURI" => "http://a/c"}},
+          "@"          => "b",
+          "http://a/c" => "d"
+        }, @debug)
+      end
+    end
+    
+    context "vocab" do
+      it "shortens URIs" do
+        input = %(<http://a/b> <http://a/c> <http://a/d> .)
+        serialize(input, :vocab => "http://a/").should produce({
+          "@context"   => {
+            "@vocab"    => "http://a/",
+            "@coerce"  => {"xsd:anyURI" => "c"}},
+          "@"          => "http://a/b",
+          "c" => "http://a/d"
+        }, @debug)
+      end
+    end
+    
+    context "coerce" do
+      it "does not coerce properties with hetrogeneous types" do
+        input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b :c, "d" .)
+        serialize(input).should produce({
+          "@"      => "foaf:a",
+          "foaf:b" => [{:iri=>"foaf:c"}, "d"]
+        }, @debug)
+      end
+      
+      it "does not coerce properties with hetgogeneous literal datatype" do
+        input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b "c", "d"@en, "f"^^:g .)
+        serialize(input).should produce({
+          "@"      => "foaf:a",
+          "foaf:b" => ["c", {:literal => "d", :language => "en"}, {:literal => "f", :datatype => "foaf:g"}]
+        }, @debug)
+      end
     end
   end
   
