@@ -65,6 +65,25 @@ describe JSON::LD::Writer do
       }, @debug)
     end
 
+    it "should order literal values" do
+      input = %(@base <http://a/> . <b> <c> "e", "d" .)
+      serialize(input).
+      should produce({
+        "@"          => "http://a/b",
+        "http://a/c" => ["d", "e"]
+      }, @debug)
+    end
+
+    it "should order URI values" do
+      input = %(@base <http://a/> . <b> <c> <e>, <d> .)
+      serialize(input).
+      should produce({
+        "@context"   => {"@coerce" => {"xsd:anyURI" => "http://a/c"}},
+        "@"          => "http://a/b",
+        "http://a/c" => ["http://a/d", "http://a/e"]
+      }, @debug)
+    end
+
     it "should order properties" do
       input = %(
         @prefix : <http://xmlns.com/foaf/0.1/> .

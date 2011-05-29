@@ -440,6 +440,7 @@ module JSON::LD
         p_iri = format_uri(predicate, :position => :predicate)
         @depth += 1
         defn[p_iri] = property(predicate, properties[prop])
+        add_debug "prop(#{p_iri}) => #{properties[prop]} => #{defn[p_iri].inspect}"
         @depth -= 1
       end
       
@@ -447,7 +448,10 @@ module JSON::LD
       defn
     end
     
+    ##
     # Serialize objects for a property
+    #
+    # Spec confusion: sorting of multi-valued properties not adequately specified.
     #
     # @param [RDF::URI] predicate
     # @param [Array<RDF::URI>, RDF::URI] objects
@@ -457,7 +461,7 @@ module JSON::LD
       objects = objects.first if objects.is_a?(Array) && objects.length == 1
       case objects
       when Array
-        objects.map {|o| property(predicate, o, options)}
+        objects.sort_by(&:to_s).map {|o| property(predicate, o, options)}
       when RDF::Literal
         format_literal(objects, options.merge(:property => predicate))
       else
