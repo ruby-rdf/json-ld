@@ -68,7 +68,7 @@ end
 module OpenURI
   class << self
     REMOTE_PATH = Fixtures::SUITE.to_s + "test-cases/"
-    LOCAL_PATH = File.expand_path(File.dirname(__FILE__)) + "/json-ld-test-suite/tests/"
+    LOCAL_PATH = File.expand_path(File.dirname(__FILE__)) + "/json-ld.org/test-suite/tests/"
 
     alias open_uri_without_local open_uri #:nodoc:
     def open_uri(uri, *rest, &block)

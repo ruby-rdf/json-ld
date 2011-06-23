@@ -18,6 +18,8 @@ require 'rdf/spec/matchers'
 require 'open-uri/cached'
 require 'matchers'
 
+include JSON::LD
+
 # Create and maintain a cache of downloaded URIs
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)
