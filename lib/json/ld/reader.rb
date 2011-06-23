@@ -7,7 +7,7 @@ module JSON::LD
   class Reader < RDF::Reader
     format Format
     
-   ##
+    ##
     # The graph constructed when parsing.
     #
     # @return [RDF::Graph]
@@ -154,23 +154,23 @@ module JSON::LD
         
         # 2.1) If a @context keyword is found, the processor merges each key-value pair in
         # the local context into the active context ...
-        if element["@context"]
+        if element[CONTEXT]
           # Merge context
-          ec = parse_context(ec.dup, element["@context"])
+          ec = parse_context(ec.dup, element[CONTEXT])
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
         # Other shortcuts to allow use of this method for terminal associative arrays
-        if element["@iri"].is_a?(String)
+        if element[IRI].is_a?(String)
           # Return the IRI found from the value
-          object = expand_term(element["@iri"], ec.base, ec)
+          object = expand_term(element[IRI], ec.base, ec)
           add_triple(path, subject, property, object) if subject && property
           return
-        elsif element["@literal"]
+        elsif element[LITERAL]
           literal_opts = {}
-          literal_opts[:datatype] = expand_term(element["@datatype"], ec.vocab.to_s, ec) if element["@datatype"]
-          literal_opts[:language] = element["@language"].to_sym if element["@language"]
-          object = RDF::Literal.new(element["@literal"], literal_opts)
+          literal_opts[:datatype] = expand_term(element[DATATYPE], ec.vocab.to_s, ec) if element[DATATYPE]
+          literal_opts[:language] = element[LANGUAGE].to_sym if element[LANGUAGE]
+          object = RDF::Literal.new(element[LITERAL], literal_opts)
           add_triple(path, subject, property, object) if subject && property
           return
         end
@@ -178,11 +178,11 @@ module JSON::LD
         # 2.2) ... Otherwise, if the local context is known perform the following steps:
         #   2.2.1) If a @ key is found, the processor sets the active subject to the
         #         value after Object Processing has been performed.
-        if element["@"].is_a?(String)
-          active_subject = expand_term(element["@"], ec.base, ec)
-        elsif element["@"]
+        if element[SUBJECT].is_a?(String)
+          active_subject = expand_term(element[SUBJECT], ec.base, ec)
+        elsif element[SUBJECT]
           # Recursively process hash or Array values
-          traverse("#{path}[@]", element["@"], subject, property, ec)
+          traverse("#{path}[@]", element[SUBJECT], subject, property, ec)
         else
           # 2.2.7) If the end of the associative array is detected, and a active subject
           # was not discovered, then:
@@ -299,9 +299,9 @@ module JSON::LD
       context.each do |key, value|
         add_debug("parse_context(#{key})", value.inspect)
         case key
-        when '@vocab' then ec.vocab = value
-        when '@base'  then ec.base  = uri(value)
-        when '@coerce'
+        when VOCAB then ec.vocab = value
+        when BASE  then ec.base  = uri(value)
+        when COERCE
           # Process after prefix mapping
         else
           # Spec confusion: The text indicates to merge each key-value pair into the active context. Is any
@@ -312,13 +312,13 @@ module JSON::LD
         end
       end
       
-      if context['@coerce']
+      if context[COERCE]
         # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
         # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
         # (e.g., { "xsd:anyURI": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
         # of { "xsd:anyURI": "foaf:knows" }, or add to it.
-        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
-        context['@coerce'].each do |type, property|
+        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context[COERCE].is_a?(Hash)
+        context[COERCE].each do |type, property|
           type_uri = expand_term(type, ec.vocab, ec)
           [property].flatten.compact.each do |prop|
             p = expand_term(prop, ec.vocab, ec)

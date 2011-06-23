@@ -106,7 +106,7 @@ module JSON::LD
     def initialize(output = $stdout, options = {}, &block)
       super do
         @graph = RDF::Graph.new
-        @iri_to_prefix = DEFAULT_CONTEXT.dup.delete_if {|k,v| k == "@coerce"}.invert
+        @iri_to_prefix = DEFAULT_CONTEXT.dup.delete_if {|k,v| k == COERCE}.invert
         @coerce = DEFAULT_COERCE.merge(options[:coerce] || {})
         if block_given?
           case block.arity
@@ -178,7 +178,7 @@ module JSON::LD
       if elements.length == 1 && elements.first.is_a?(Hash)
         json_hash.merge!(elements.first)
       else
-        json_hash["@"] = elements
+        json_hash[SUBJECT] = elements
       end
       
       if @output.is_a?(Hash)
@@ -190,7 +190,7 @@ module JSON::LD
             :space        => "",
             :space_before => "",
             :object_nl    => "",
-            :array_nl     => "",
+            :array_nl     => ""
           )
         else
           JSON::State.new(
@@ -198,7 +198,7 @@ module JSON::LD
             :space        => " ",
             :space_before => "",
             :object_nl    => "\n",
-            :array_nl     => "\n",
+            :array_nl     => "\n"
           )
         end
         @output.write(json_hash.to_json(json_state))
@@ -321,8 +321,8 @@ module JSON::LD
     # @return [Hash]
     def start_document
       ctx = {}
-      ctx["@base"] = base_uri.to_s if base_uri
-      ctx["@vocab"] = vocab.to_s if vocab
+      ctx[BASE] = base_uri.to_s if base_uri
+      ctx[VOCAB] = vocab.to_s if vocab
       
       # Prefixes
       prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
@@ -353,12 +353,12 @@ module JSON::LD
           end
         end
         
-        ctx["@coerce"] = c_h unless c_h.empty?
+        ctx[COERCE] = c_h unless c_h.empty?
       end
 
       add_debug "start_doc: context=#{ctx.inspect}"
       # Return hash with @context, or empty
-      ctx.empty? ? {} : {"@context" => ctx}
+      ctx.empty? ? {} : {CONTEXT => ctx}
     end
     
     # Perform any preprocessing of statements required
@@ -417,16 +417,16 @@ module JSON::LD
       # Subject may be a list
       if is_valid_list?(subject)
         add_debug "subject is a list"
-        defn["@"] = format_list(subject)
+        defn[SUBJECT] = format_list(subject)
         properties.delete(RDF.first.to_s)
         properties.delete(RDF.rest.to_s)
         
         # Special case, if there are no properties, then we can just serialize the list itself
-        return defn["@"].first if properties.empty?
+        return defn[SUBJECT].first if properties.empty?
       elsif subject.uri? || ref_count(subject) > 1
         add_debug "subject is a uri"
         # Don't need to set subject if it's a Node without references
-        defn["@"] = format_uri(subject, :position => :subject)
+        defn[SUBJECT] = format_uri(subject, :position => :subject)
       else
         add_debug "subject is an unreferenced BNode"
       end
