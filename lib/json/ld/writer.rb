@@ -226,7 +226,7 @@ module JSON::LD
         short == value.to_s ? (get_curie(value) || value.to_s) : short
       when :predicate
         # attempt vocab replacement
-        short = "a" if value == RDF.type
+        short = TYPE if value == RDF.type
         short ||= value.to_s.sub(@vocab.to_s, "")
         short == value.to_s ? (get_curie(value) || value.to_s) : short
       else

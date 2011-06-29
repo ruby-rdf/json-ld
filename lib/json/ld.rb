@@ -35,8 +35,8 @@ module JSON
     IRI      = '@iri'.freeze
     LANGUAGE = '@language'.freeze
     LITERAL  = '@literal'.freeze
-    SUBJECT  = '@'.freeze
-    TYPE     = 'a'.freeze
+    SUBJECT  = '@subject'.freeze
+    TYPE     = '@type'.freeze
     VOCAB    = '@vocab'.freeze
     
     # Default context

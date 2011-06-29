@@ -1,5 +1,5 @@
 {
-  "@vocab": {
+  "@context": {
     "Release":  "http://example.org/idl-def/release#",
     "Playlist": "http://example.org/idl-def/release#Playlist",
     "track":    "http://example.org/idl-def/release#Playlist.track",
@@ -13,18 +13,18 @@
       "Track":  "track"
     }
   },
-  "@":      "",
-  "a":      "Release",
+  "@subject":   "",
+  "@type":      "Release",
   "track":  [[
     {
-      "@":              "track1",
-      "a":              "Track",
+      "@subject":       "track1",
+      "@type":          "Track",
       "Track.title":    "Track 1",
       "Track.duration": 1234
     },
     {
-      "@":              "track2",
-      "a":              "Track",
+      "@subject":       "track2",
+      "@type":          "Track",
       "Track.title":    "Track 2",
       "Track.duration": 5678
     }

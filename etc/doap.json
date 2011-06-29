@@ -12,8 +12,8 @@
             "xsd:date": "doap:created"
         }
     },
-    "@":                  "",
-    "a":                  "doap:Project",
+    "@subject":           "",
+    "@type":              "doap:Project",
     "doap:name":          "JSON::LD",
     "doap:homepage":      "http://github.com/gkellogg/json-ld/",
     "doap:license":       "http://creativecommons.org/licenses/publicdomain/",
@@ -28,9 +28,9 @@
     "doap:documenter":    "http://greggkellogg.net/foaf#me",
     "foaf:maker":         "http://greggkellogg.net/foaf#me",
     "dc:creator":         {
-        "@":                "http://greggkellogg.net/foaf#me",
+        "@subject":         "http://greggkellogg.net/foaf#me",
         "foaf:name":        "Gregg Kellogg",
-        "foaf:mbox":         "mailto:gregg@greggkellogg.net",
+        "foaf:mbox":        "mailto:gregg@greggkellogg.net",
         "foaf:made":        "",
         "rdfs:isDefinedBy": "http://greggkellogg.net/foaf"
     }
