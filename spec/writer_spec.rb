@@ -404,15 +404,15 @@ describe JSON::LD::Writer do
     [
       [
         %q(<http://a/b> <http://a/c> <http://a/d> .),
-        %q({"@":"http://a/b","http://a/c":{"iri":"http://a/d"}})
+        %q({"@subject":"http://a/b","http://a/c":{"iri":"http://a/d"}})
       ],
       [
         %q(<http://a/b> <http://a/c> "d" .),
-        %q({"@":"http://a/b","http://a/c":{"literal":"d"}})
+        %q({"@subject":"http://a/b","http://a/c":{"literal":"d"}})
       ],
       [
         %q(<http://a/b> <http://a/c> "e", "d" .),
-        %q({"@":"http://a/b","http://a/c":[{"literal":"d"},{"literal":"e"}]})
+        %q({"@subject":"http://a/b","http://a/c":[{"literal":"d"},{"literal":"e"}]})
       ],
     ].each do |(input,output)|
       it "serializes #{input.inspect} to #{output.inspect}" do
