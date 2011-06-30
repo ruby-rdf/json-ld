@@ -212,7 +212,7 @@ describe JSON::LD::Writer do
         CONTEXT   => {
           "ex"       => "http://example.com/"},
         SUBJECT          => "ex:a",
-        "ex:b"       => {:literal => "foo", :language => "en-us"}
+        "ex:b"       => {LITERAL => "foo", LANGUAGE => "en-us"}
       }, @debug)
     end
   end
@@ -386,7 +386,7 @@ describe JSON::LD::Writer do
         input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b :c, "d" .)
         serialize(input).should produce({
           SUBJECT      => "foaf:a",
-          "foaf:b" => [{:iri=>"foaf:c"}, "d"]
+          "foaf:b" => ["d", {IRI=>"foaf:c"}]
         }, @debug)
       end
       
@@ -394,7 +394,7 @@ describe JSON::LD::Writer do
         input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b "c", "d"@en, "f"^^:g .)
         serialize(input).should produce({
           SUBJECT      => "foaf:a",
-          "foaf:b" => ["c", {:literal => "d", :language => "en"}, {:literal => "f", :datatype => "foaf:g"}]
+          "foaf:b" => ["c", {LITERAL => "d", LANGUAGE => "en"}, {LITERAL => "f", DATATYPE => "foaf:g"}]
         }, @debug)
       end
     end
@@ -404,15 +404,15 @@ describe JSON::LD::Writer do
     [
       [
         %q(<http://a/b> <http://a/c> <http://a/d> .),
-        %q({"@subject":"http://a/b","http://a/c":{"iri":"http://a/d"}})
+        %q({"@subject":"http://a/b","http://a/c":{"@iri":"http://a/d"}})
       ],
       [
         %q(<http://a/b> <http://a/c> "d" .),
-        %q({"@subject":"http://a/b","http://a/c":{"literal":"d"}})
+        %q({"@subject":"http://a/b","http://a/c":{"@literal":"d"}})
       ],
       [
         %q(<http://a/b> <http://a/c> "e", "d" .),
-        %q({"@subject":"http://a/b","http://a/c":[{"literal":"d"},{"literal":"e"}]})
+        %q({"@subject":"http://a/b","http://a/c":[{"@literal":"d"},{"@literal":"e"}]})
       ],
     ].each do |(input,output)|
       it "serializes #{input.inspect} to #{output.inspect}" do

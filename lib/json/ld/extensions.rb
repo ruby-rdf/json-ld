@@ -32,3 +32,72 @@ module RDF
     end
   end
 end
+
+if RUBY_VERSION < "1.9"
+  class InsertOrderPreservingHash < Hash
+    include Enumerable
+
+    def initialize(*args, &block)
+      super
+      @ordered_keys = []
+    end
+
+    def []=(key, val)
+      @ordered_keys << key unless has_key? key
+      super
+    end
+
+    def each
+      @ordered_keys.each {|k| yield(k, super[k])}
+    end
+    alias :each_pair :each
+
+    def each_value
+      @ordered_keys.each {|k| yield(super[k])}
+    end
+
+    def each_key
+      @ordered_keys.each {|k| yield k}
+    end
+
+    def keys
+      @ordered_keys
+    end
+
+    def values
+      @ordered_keys.map {|k| super[k]}
+    end
+
+    def clear
+      @ordered_keys.clear
+      super
+    end
+
+    def delete(k, &block)
+      @ordered_keys.delete(k)
+      super
+    end
+
+    def reject!
+      del = []
+      each_pair {|k,v| del << k if yield k,v}
+      del.each {|k| delete k}
+      del.empty? ? nil : self
+    end
+
+    def delete_if(&block)
+      reject!(&block)
+      self
+    end
+
+    def merge!(other)
+      @ordered_keys += other.instance_variable_get(:@ordered_keys) || other.keys
+      super
+      self
+    end
+    
+    def merge(other)
+      self.dup.merge!(other)
+    end
+  end
+end

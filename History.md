@@ -1,3 +1,7 @@
+=== 0.0.5
+* Fix @literal, @language, @datatype, and @iri serialization
+* Use InsertOrderPreservingHash for Ruby 1.8
+
 === 0.0.4
 * Fixed ruby 1.8 hash-order problem when parsing @context.
 * Add .jsonld file extention and format

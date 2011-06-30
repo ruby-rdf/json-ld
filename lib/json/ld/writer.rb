@@ -69,12 +69,21 @@ module JSON::LD
     # @attr [Hash{RDF::URI => RDF::URI}]
     attr :coerce, true
 
+    def self.new_hash
+      if RUBY_VERSION < "1.9"
+        InsertOrderPreservingHash.new
+      else
+        Hash.new
+      end
+    end
+    def new_hash; self.class.new_hash; end
+
     ##
     # Return the pre-serialized Hash before turning into JSON
     #
     # @return [Hash]
     def self.hash(*args, &block)
-      hash = {}
+      hash = new_hash
       self.new(hash, *args, &block)
       hash
     end
@@ -164,7 +173,7 @@ module JSON::LD
       preprocess
       
       # Don't generate context for canonical output
-      json_hash = @options[:canonicalize] ? {} : start_document
+      json_hash = @options[:canonicalize] ? new_hash : start_document
 
       elements = []
       order_subjects.each do |subject|
@@ -233,7 +242,7 @@ module JSON::LD
         # Encode like a subject
         iri_range?(options[:property]) ?
           format_uri(value, :position => :subject) :
-          {:iri => format_uri(value, :position => :subject)}
+          {IRI => format_uri(value, :position => :subject)}
       end
     
       add_debug("format_uri(#{options.inspect}, #{value.inspect}) => #{result.inspect}")
@@ -261,9 +270,9 @@ module JSON::LD
     def format_literal(literal, options = {})
       if options[:canonical] || @options[:canonicalize]
         return {
-          :literal => literal.value,
-          :datatype => (format_uri(literal.datatype, :position => :subject) if literal.has_datatype?),
-          :language => (literal.language.to_s if literal.has_language?)
+          LITERAL => literal.value,
+          DATATYPE => (format_uri(literal.datatype, :position => :subject) if literal.has_datatype?),
+          LANGUAGE => (literal.language.to_s if literal.has_language?)
         }.delete_if {|k,v| v.nil?}
       end
 
@@ -320,7 +329,7 @@ module JSON::LD
     # Generate @context
     # @return [Hash]
     def start_document
-      ctx = {}
+      ctx = new_hash
       ctx[BASE] = base_uri.to_s if base_uri
       ctx[VOCAB] = vocab.to_s if vocab
       
@@ -334,7 +343,7 @@ module JSON::LD
       # Coerce
       add_debug "start_doc: coerce= #{coerce.inspect}"
       unless coerce == DEFAULT_COERCE
-        c_h = {}
+        c_h = new_hash
         coerce.keys.sort.each do |k|
           next if coerce[k] == DEFAULT_COERCE[k]  ||
                   coerce[k] == false ||
@@ -357,8 +366,11 @@ module JSON::LD
       end
 
       add_debug "start_doc: context=#{ctx.inspect}"
+
       # Return hash with @context, or empty
-      ctx.empty? ? {} : {CONTEXT => ctx}
+      r = new_hash
+      r[CONTEXT] = ctx unless ctx.empty?
+      r
     end
     
     # Perform any preprocessing of statements required
@@ -367,7 +379,7 @@ module JSON::LD
       (@options[:prefixes] || {}).each_pair do |k, v|
         @iri_to_prefix[v.to_s] = k
       end
-      @options[:prefixes] = {}  # Will define actual used when matched
+      @options[:prefixes] = new_hash  # Will define actual used when matched
 
       @graph.each {|statement| preprocess_statement(statement)}
     end
@@ -398,7 +410,7 @@ module JSON::LD
     # Option contains referencing property, if this is recursive
     # @return [Hash]
     def subject(subject, options = {})
-      defn = {}
+      defn = new_hash
       
       raise RDF::WriterError, "Illegal use of subject #{subject.inspect}, not supported" unless subject.resource?
 

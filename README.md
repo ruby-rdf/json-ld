@@ -1,64 +1,50 @@
-JSON-LD reader/writer
-==================================
+# JSON-LD reader/writer
 
 [JSON-LD][] reader/writer for [RDF.rb][RDF.rb] .
 
-Features
---------
+## Features
 
 JSON::LD parses and serializes [JSON-LD][] into statements or triples.
 
 Install with `gem install json-ld`
 
-Examples
---------
+## Examples
 
     require 'rubygems'
     require 'json/ld'
 
-Documentation
--------------
+## Documentation
+Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/0.0.4/file/README)
 
-<http://rdf.rubyforge.org/json-ld>
-
+### Principle Classes
 * {JSON::LD}
+  * {JSON::LD::Format}
+  * {JSON::LD::Reader}
+  * {JSON::LD::Writer}
 
-Dependencies
-------------
-
+##Dependencies
 * [Ruby](http://ruby-lang.org/) (>= 1.8.7) or (>= 1.8.1 with [Backports][])
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.3.3)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5.1)
 
-Installation
-------------
-
+## Installation
 The recommended installation method is via [RubyGems](http://rubygems.org/).
 To install the latest official release of the `JSON-LD` gem, do:
 
     % [sudo] gem install json-ld
 
-Download
---------
-
+## Download
 To get a local working copy of the development repository, do:
 
     % git clone git://github.com/gkellogg/json-ld.git
 
-Mailing List
-------------
-
+## Mailing List
 * <http://lists.w3.org/Archives/Public/public-rdf-ruby/>
 
-Author
-------
-
+## Author
 * [Gregg Kellogg](http://github.com/gkellogg) - <http://kellogg-assoc.com/>
 
-
-Contributing
-------------
-
+## Contributing
 * Do your best to adhere to the existing coding conventions and idioms.
 * Don't use hard tabs, and don't leave trailing whitespace on any line.
 * Do document every method you add using [YARD][] annotations. Read the
