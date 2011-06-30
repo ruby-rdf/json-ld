@@ -269,11 +269,11 @@ module JSON::LD
     # @return [Object]
     def format_literal(literal, options = {})
       if options[:canonical] || @options[:canonicalize]
-        return {
-          LITERAL => literal.value,
-          DATATYPE => (format_uri(literal.datatype, :position => :subject) if literal.has_datatype?),
-          LANGUAGE => (literal.language.to_s if literal.has_language?)
-        }.delete_if {|k,v| v.nil?}
+        ret = new_hash
+        ret[LITERAL] = literal.value
+        ret[DATATYPE] = format_uri(literal.datatype, :position => :subject)if literal.has_datatype?
+        ret[LANGUAGE] = literal.language.to_s if literal.has_language?
+        return ret.delete_if {|k,v| v.nil?}
       end
 
       case literal
