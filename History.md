@@ -1,3 +1,6 @@
+=== 0.0.6
+* Another order problem (in literals)
+
 === 0.0.5
 * Fix @literal, @language, @datatype, and @iri serialization
 * Use InsertOrderPreservingHash for Ruby 1.8
