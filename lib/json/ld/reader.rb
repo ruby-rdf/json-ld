@@ -291,11 +291,14 @@ module JSON::LD
 
     ##
     # Parse a JSON context, into a new EvaluationContext
-    # @param [Hash{String => String,Hash}] context
+    # @param [Hash{String => String,Hash}, String] context
     #   JSON representation of @context
     # @return [EvaluationContext]
     # @raise [RDF::ReaderError] on a syntax error, or a reference to a term which is not defined.
     def parse_context(ec, context)
+      # Load context document, if it is a string
+      context = open_uri(context.to_s) {|f| ::JSON.load(f)} if context.is_a?(String)
+      
       context.each do |key, value|
         add_debug("parse_context(#{key})", value.inspect)
         case key
