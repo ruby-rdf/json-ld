@@ -9,14 +9,15 @@ describe JSON::LD::Format do
       "ld"               => RDF::Format.for(:ld),
       "etc/foaf.json"    => RDF::Format.for("etc/foaf.json"),
       "etc/foaf.ld"      => RDF::Format.for("etc/foaf.ld"),
-      "etc/foaf.jsonld"  => RDF::Format.for("etc/foaf.jsonld"),
       "foaf.json"        => RDF::Format.for(:file_name      => "foaf.json"),
       "foaf.ld"          => RDF::Format.for(:file_name      => "foaf.ld"),
       "foaf.jsonld"      => RDF::Format.for(:file_name      => "foaf.jsonld"),
+      "etc/foaf.jsonld"  => RDF::Format.for("etc/foaf.jsonld"),
       ".json"            => RDF::Format.for(:file_extension => "json"),
       ".ld"              => RDF::Format.for(:file_extension => "ld"),
       ".jsonld"          => RDF::Format.for(:file_extension => "jsonld"),
-      "application/json" => RDF::Format.for(:content_type   => "application/json"),
+      "application/ld+json" => RDF::Format.for(:content_type   => "application/ld+json"),
+      "application/x-ld+json" => RDF::Format.for(:content_type   => "application/x-ld+json"),
     }.each_pair do |label, format|
       it "should discover '#{label}'" do
         format.should == JSON::LD::Format

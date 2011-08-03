@@ -398,6 +398,9 @@ describe JSON::LD::Writer do
         }, @debug)
       end
     end
+    
+    context "remote" do
+    end
   end
   
   context "normalization" do

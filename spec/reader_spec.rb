@@ -11,9 +11,12 @@ describe JSON::LD::Reader do
       "etc/foaf.ld"      => RDF::Reader.for("etc/foaf.ld"),
       "foaf.json"        => RDF::Reader.for(:file_name      => "foaf.json"),
       "foaf.ld"          => RDF::Reader.for(:file_name      => "foaf.ld"),
+      "foaf.jsonld"        => RDF::Reader.for(:file_name      => "foaf.jsonld"),
       ".json"            => RDF::Reader.for(:file_extension => "json"),
       ".ld"              => RDF::Reader.for(:file_extension => "ld"),
-      "application/json" => RDF::Reader.for(:content_type   => "application/json"),
+      ".jsonld"              => RDF::Reader.for(:file_extension => "jsonld"),
+      "application/ld+json" => RDF::Reader.for(:content_type   => "application/ld+json"),
+      "application/x-ld+json" => RDF::Reader.for(:content_type   => "application/x-ld+json"),
     }.each_pair do |label, format|
       it "should discover '#{label}'" do
         format.should == JSON::LD::Reader

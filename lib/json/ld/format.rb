@@ -21,8 +21,9 @@ module JSON::LD
   #
   # @see http://www.w3.org/TR/rdf-testcases/#ntriples
   class Format < RDF::Format
-    content_type     'application/json',    :extension => :json
-    content_type     'application/json',    :extension => :ld
+    content_type     'application/ld+json',    :extension => :json
+    content_type     'application/ld+json',    :extension => :ld
+    content_type     'application/x-ld+json'
     content_encoding 'utf-8'
 
     reader { JSON::LD::Reader }
@@ -38,7 +39,7 @@ module JSON::LD
   #     RDF::Format.for(:jsonld).reader  #=> JSON::LD::Reader
   #     RDF::Format.for(:jsonld).writer  #=> JSON::LD::Writer
   class JSONLD < RDF::Format
-    content_type     'application/json',    :extension => :jsonld
+    content_type     'application/ld+json',    :extension => :jsonld
     content_encoding 'utf-8'
 
     reader { JSON::LD::Reader }
