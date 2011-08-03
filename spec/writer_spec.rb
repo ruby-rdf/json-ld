@@ -424,7 +424,7 @@ describe JSON::LD::Writer do
   end
   
   def parse(input, options = {})
-    RDF::Graph.new << detect_format(input).new(input, options)
+    RDF::Graph.new << RDF::N3::Reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
