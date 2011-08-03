@@ -1,3 +1,5 @@
+require 'open-uri'
+
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.
@@ -91,10 +93,15 @@ module JSON::LD
     # @yield  [reader] `self`
     # @yieldparam  [RDF::Reader] reader
     # @yieldreturn [void] ignored
+    # @raise [RDF::ReaderError] if the JSON document cannot be loaded
     def initialize(input = $stdin, options = {}, &block)
       super do
         @base_uri = uri(options[:base_uri]) if options[:base_uri]
-        @doc = ::JSON.load(input)
+        begin
+          @doc = JSON.load(input)
+        rescue JSON::ParserError => e
+          raise RDF::ReaderError, "Failed to parse input document: #{e.message}"
+        end
 
         if block_given?
           case block.arity
@@ -294,10 +301,17 @@ module JSON::LD
     # @param [Hash{String => String,Hash}, String] context
     #   JSON representation of @context
     # @return [EvaluationContext]
-    # @raise [RDF::ReaderError] on a syntax error, or a reference to a term which is not defined.
+    # @raise [RDF::ReaderError]
+    #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse_context(ec, context)
       # Load context document, if it is a string
-      context = open_uri(context.to_s) {|f| ::JSON.load(f)} if context.is_a?(String)
+      if context.is_a?(String)
+        begin
+          context = open(context.to_s) {|f| JSON.load(f)}
+        rescue JSON::ParserError => e
+          raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}"
+        end
+      end
       
       context.each do |key, value|
         add_debug("parse_context(#{key})", value.inspect)
