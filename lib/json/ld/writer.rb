@@ -66,7 +66,7 @@ module JSON::LD
     #
     # Maintained as a reverse mapping of `property` => `type`.
     #
-    # @attr [Hash{RDF::URI => RDF::URI}]
+    # @attr [Hash{String => String}]
     attr :coerce, true
 
     def self.new_hash
@@ -345,13 +345,11 @@ module JSON::LD
       unless coerce == DEFAULT_COERCE
         c_h = new_hash
         coerce.keys.sort.each do |k|
-          next if coerce[k] == DEFAULT_COERCE[k]  ||
-                  coerce[k] == false ||
-                  coerce[k] == RDF::XSD.integer ||
-                  coerce[k] == RDF::XSD.boolean
-          k_iri = format_uri(k, :position => :predicate)
+          next if [TYPE, RDF.type.to_s].include?(k.to_s)
+          next if [DEFAULT_COERCE[k], false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
+          k_iri = k == IRI ? IRI : format_uri(k, :position => :predicate)
           d_iri = format_uri(coerce[k], :position => :subject)
-          add_debug "coerce[#{k_iri}] => #{d_iri}"
+          add_debug "coerce[#{k_iri}] => #{d_iri}, k=#{k.inspect}"
           case c_h[d_iri]
           when nil
             c_h[d_iri] = k_iri
@@ -496,6 +494,10 @@ module JSON::LD
       case resource
       when RDF::Node
         return resource.to_s
+      when String
+        iri = resource
+        resource = RDF::URI(resource)
+        return nil unless resource.absolute?
       when RDF::URI
         iri = resource.to_s
         return iri if options[:canonicalize]
@@ -583,14 +585,14 @@ module JSON::LD
     def iri_range?(predicate)
       return false if predicate.nil? || @options[:canonicalize]
 
-      unless coerce.has_key?(predicate)
+      unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal
-       coerce[predicate] = @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
-          false : RDF::XSD.anyURI
+       coerce[predicate.to_s] = @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
+          false : IRI
       end
       
-      add_debug "iri_range(#{predicate}) = #{coerce[predicate].inspect}"
-      coerce[predicate] == RDF::XSD.anyURI
+      add_debug "iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"
+      coerce[predicate.to_s] == IRI
     end
     
     ##
@@ -598,23 +600,23 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def datatype_range?(predicate)
-      unless coerce.has_key?(predicate)
+      unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate must be literal
         # and have the same non-nil datatype
         dt = nil
         @graph.query(:predicate => predicate) do |st|
           if st.object.literal? && st.object.has_datatype?
-            dt = st.object.datatype if dt.nil?
-            dt = false unless dt == st.object.datatype
+            dt = st.object.datatype.to_s if dt.nil?
+            dt = false unless dt == st.object.datatype.to_s
           else
             dt = false
           end
         end
         add_debug "range(#{predicate}) = #{dt.inspect}"
-        coerce[predicate] = dt
+        coerce[predicate.to_s] = dt
       end
 
-      coerce[predicate]
+      coerce[predicate.to_s]
     end
     
     # Reset internal helper instance variables

@@ -49,9 +49,9 @@ module JSON
 
     # Default type coercion, in property => datatype order
     DEFAULT_COERCE = {
-      TYPE        => IRI
-#      RDF.first    => false,            # Make sure @coerce isn't generated for this
-#      RDF.rest     => IRI
+      TYPE            => IRI,
+      RDF.first.to_s  => false,            # Make sure @coerce isn't generated for this
+      RDF.rest.to_s   => IRI,
     }.freeze
 
     def self.debug?; @debug; end
