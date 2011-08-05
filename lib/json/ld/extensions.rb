@@ -31,6 +31,12 @@ module RDF
       query(:subject => subject, :predicate => RDF.type).map {|st| st.object}
     end
   end
+  
+  class URI
+    def to_s
+      @uri.to_s
+    end
+  end
 end
 
 if RUBY_VERSION < "1.9"

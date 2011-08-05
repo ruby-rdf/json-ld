@@ -26,8 +26,9 @@ describe JSON::LD::Reader do
 
   context :interface do
     subject { %q({
+      "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
        "@subject": "_:bnode1",
-       "a": "foaf:Person",
+       "@type": "foaf:Person",
        "foaf:homepage": "http://example.com/bob/",
        "foaf:name": "Bob"
      }) }
@@ -83,28 +84,28 @@ describe JSON::LD::Reader do
           %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "foaf:name": "Gregg Kellogg"}),
+          %q({"@subject": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
           %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"foaf:name": "Gregg Kellogg"}),
+          %q({"http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"foaf:name": {"@literal": "Gregg Kellogg"}}),
+          %q({"http://xmlns.com/foaf/0.1/name": {"@literal": "Gregg Kellogg"}}),
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         [
-          %q({"rdfs:label": {"@literal": "A plain literal with a lang tag.", "@language": "en-us"}}),
+          %q({"http://www.w3.org/2000/01/rdf-schema#label": {"@literal": "A plain literal with a lang tag.", "@language": "en-us"}}),
           %q(_:a <http://www.w3.org/2000/01/rdf-schema#label> "A plain literal with a lang tag."@en-us .)
         ],
         [
           %q([{
             "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": {"@iri": "http://www.ivan-herman.net/foaf#me"}
+            "http://xmlns.com/foaf/0.1/knows": {"@iri": "http://www.ivan-herman.net/foaf#me"}
           },{
             "@subject": "http://www.ivan-herman.net/foaf#me",
-            "foaf:name": {"@literal": "Herman Iván", "@language": "hu"}
+            "http://xmlns.com/foaf/0.1/name": {"@literal": "Herman Iván", "@language": "hu"}
           }]),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
@@ -114,7 +115,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@subject":  "http://greggkellogg.net/foaf#me",
-            "dcterms:created":  {"@literal": "1957-02-27", "@datatype": "xsd:date"}
+            "http://purl.org/dc/terms/created":  {"@literal": "1957-02-27", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
@@ -127,11 +128,10 @@ describe JSON::LD::Reader do
       end
     end
 
-
     context "CURIEs" do
       [
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "a": "foaf:Person"}),
+          %q({"@subject": "http://greggkellogg.net/foaf#me", "@type": "http://xmlns.com/foaf/0.1/Person"}),
           %q(<http://greggkellogg.net/foaf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .)
         ],
         [
@@ -145,10 +145,32 @@ describe JSON::LD::Reader do
       end
     end
 
+    context "overriding keywords" do
+      [
+        [
+          %q({
+            "@context": {"url": "@subject", "a": "@type", "name": "http://schema.org/name"},
+            "url": "http://example.com/about#gregg",
+            "a": "http://schema.org/Person",
+            "name": "Gregg Kellogg"
+          }),
+          %q(
+            <http://example.com/about#gregg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> .
+            <http://example.com/about#gregg> <http://schema.org/name> "Gregg Kellogg" .
+          )
+        ],
+      ].each do |(js, nt)|
+        it "parses #{js}" do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+        end
+      end
+    end
+
     context "structure" do
       [
         [
           %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {
               "@subject": "http://www.ivan-herman.net/foaf#me",
@@ -162,6 +184,7 @@ describe JSON::LD::Reader do
         ],
         [
           %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {
               "foaf:name": "Manu Sporny"
@@ -173,7 +196,11 @@ describe JSON::LD::Reader do
           )
         ],
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "foaf:knows": ["Manu Sporny", "Ivan Herman"]}),
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": ["Manu Sporny", "Ivan Herman"]
+          }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Manu Sporny" .
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Ivan Herman" .
@@ -189,13 +216,21 @@ describe JSON::LD::Reader do
     context "lists" do
       [
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "foaf:knows": [[]]}),
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": [[]]
+          }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "foaf:knows": [["Manu Sporny"]]}),
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": [["Manu Sporny"]]
+          }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
@@ -203,7 +238,11 @@ describe JSON::LD::Reader do
           )
         ],
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "foaf:knows": [["Manu Sporny", "Ivan Herman"]]}),
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": [["Manu Sporny", "Ivan Herman"]]
+          }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
@@ -224,7 +263,8 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {
-              "@base":  "http://greggkellogg.net/foaf"
+              "@base":  "http://greggkellogg.net/foaf",
+              "doap": "http://usefulinc.com/ns/doap#"
             },
             "@subject":  "#me",
             "doap:homepage":  {"@iri": "http://github.com/gkellogg/"}
@@ -261,7 +301,8 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {
-              "@coerce":  { "xsd:anyURI": "foaf:knows"}
+              "foaf": "http://xmlns.com/foaf/0.1/",
+              "@coerce":  { "@iri": "foaf:knows"}
             },
             "@subject":  "http://greggkellogg.net/foaf#me",
             "foaf:knows":  "http://www.ivan-herman.net/foaf#me"
@@ -273,6 +314,8 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {
+              "dcterms":  "http://purl.org/dc/terms/",
+              "xsd":      "http://www.w3.org/2001/XMLSchema#",
               "@coerce":  { "xsd:date": "dcterms:created"}
             },
             "@subject":  "http://greggkellogg.net/foaf#me",
@@ -296,7 +339,7 @@ describe JSON::LD::Reader do
               "homepage": "http://xmlns.com/foaf/0.1/homepage",
               "avatar": "http://xmlns.com/foaf/0.1/avatar",
               "@coerce": {
-                "xsd:anyURI": ["homepage", "avatar"]
+                "@iri": ["homepage", "avatar"]
               }
             }
           ))
@@ -371,8 +414,8 @@ describe JSON::LD::Reader do
         ],
         [
           %q([
-            {"@subject":   "http://example.com/#me", "a": "foaf:Person"},
-            {"@subject":   "http://example.com/#you", "a": "foaf:Person"}
+            {"@subject":   "http://example.com/#me", "@type": "http://xmlns.com/foaf/0.1/Person"},
+            {"@subject":   "http://example.com/#you", "@type": "http://xmlns.com/foaf/0.1/Person"}
           ]),
           %q(
             <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
@@ -380,9 +423,11 @@ describe JSON::LD::Reader do
           )
         ],
         [
-          %q({"@subject": [
-              {"@subject":   "http://example.com/#me", "a": "foaf:Person"},
-              {"@subject":   "http://example.com/#you", "a": "foaf:Person"}
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@subject": [
+              {"@subject":   "http://example.com/#me", "@type": "foaf:Person"},
+              {"@subject":   "http://example.com/#you", "@type": "foaf:Person"}
             ]
           }),
           %q(
@@ -392,10 +437,13 @@ describe JSON::LD::Reader do
         ],
         [
           %q({
-            "@context": {"@base": "http://example.com/"},
+            "@context": {
+              "@base": "http://example.com/",
+              "foaf": "http://xmlns.com/foaf/0.1/"
+            },
             "@subject": [
-              {"@subject":   "#me", "a": "foaf:Person"},
-              {"@subject":   "#you", "a": "foaf:Person"}
+              {"@subject":   "#me", "@type": "foaf:Person"},
+              {"@subject":   "#you", "@type": "foaf:Person"}
             ]
           }),
           %q(

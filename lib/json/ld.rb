@@ -42,38 +42,16 @@ module JSON
     # Default context
     # @see http://json-ld.org/spec/ED/20110507/#the-default-context
     DEFAULT_CONTEXT = {
-      'rdf'           => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-      'rdfs'          => 'http://www.w3.org/2000/01/rdf-schema#',
-      'owl'           => 'http://www.w3.org/2002/07/owl#',
-      'xsd'           => 'http://www.w3.org/2001/XMLSchema#',
-      'dcterms'       => 'http://purl.org/dc/terms/',
-      'foaf'          => 'http://xmlns.com/foaf/0.1/',
-      'cal'           => 'http://www.w3.org/2002/12/cal/ical#',
-      'vcard'         => 'http://www.w3.org/2006/vcard/ns# ',
-      'geo'           => 'http://www.w3.org/2003/01/geo/wgs84_pos#',
-      'cc'            => 'http://creativecommons.org/ns#',
-      'sioc'          => 'http://rdfs.org/sioc/ns#',
-      'doap'          => 'http://usefulinc.com/ns/doap#',
-      'com'           => 'http://purl.org/commerce#',
-      'ps'            => 'http://purl.org/payswarm#',
-      'gr'            => 'http://purl.org/goodrelations/v1#',
-      'sig'           => 'http://purl.org/signature#',
-      'ccard'         => 'http://purl.org/commerce/creditcard#',
       '@coerce'       => {
-        # Note: rdf:type is not in the document, but necessary for this implementation
-        'xsd:anyURI'  => ['rdf:type', 'rdf:rest', 'foaf:homepage', 'foaf:member'],
-        'xsd:integer' => 'foaf:age',
+        IRI  => [TYPE]
       }
     }.freeze
 
     # Default type coercion, in property => datatype order
     DEFAULT_COERCE = {
-      RDF.type           => RDF::XSD.anyURI,
-      RDF.first          => false,            # Make sure @coerce isn't generated for this
-      RDF.rest           => RDF::XSD.anyURI,
-      RDF::FOAF.homepage => RDF::XSD.anyURI,
-      RDF::FOAF.member   => RDF::XSD.anyURI,
-      RDF::FOAF.age      => RDF::XSD.integer,
+      TYPE        => IRI
+#      RDF.first    => false,            # Make sure @coerce isn't generated for this
+#      RDF.rest     => IRI
     }.freeze
 
     def self.debug?; @debug; end

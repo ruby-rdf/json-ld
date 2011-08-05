@@ -54,7 +54,7 @@ module JSON::LD
       #
       # The @coerce keyword is used to specify type coersion rules for the data. For each key in the map, the
       # key is the type to be coerced to and the value is the vocabulary term to be coerced. Type coersion for
-      # the key `xsd:anyURI` asserts that all vocabulary terms listed should undergo coercion to an IRI,
+      # the key `@iri` asserts that all vocabulary terms listed should undergo coercion to an IRI,
       # including `@base` processing for relative IRIs and CURIE processing for compact URI Expressions like
       # `foaf:homepage`.
       #
@@ -78,8 +78,8 @@ module JSON::LD
 
       def inspect
         v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}='#{self.send(a).inspect}'"}
-        v << "mappings[#{mappings.keys.length}]"
-        v << "coerce[#{coerce.keys.length}]"
+        v << "mappings[#{mappings.keys.length}]=#{mappings}"
+        v << "coerce[#{coerce.keys.length}]=#{coerce}"
         v.join(", ") + "]"
       end
     end
@@ -167,6 +167,17 @@ module JSON::LD
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
+        # 2.2) Create a new associative array by mapping the keys from the current associative array ...
+        new_element = {}
+        element.each do |k, v|
+          k = ec.mappings[k.to_sym] while ec.mappings.has_key?(k.to_sym)
+          new_element[k] = v
+        end
+        unless element == new_element
+          add_debug(path, "traverse: keys after map: #{new_element.keys.inspect}")
+          element = new_element
+        end
+
         # Other shortcuts to allow use of this method for terminal associative arrays
         if element[IRI].is_a?(String)
           # Return the IRI found from the value
@@ -182,39 +193,36 @@ module JSON::LD
           return
         end
         
-        # 2.2) ... Otherwise, if the local context is known perform the following steps:
-        #   2.2.1) If a @ key is found, the processor sets the active subject to the
+        # 2.3) ... Otherwise, if the local context is known perform the following steps:
+        #   2.3.1) If a @ key is found, the processor sets the active subject to the
         #         value after Object Processing has been performed.
         if element[SUBJECT].is_a?(String)
           active_subject = expand_term(element[SUBJECT], ec.base, ec)
         elsif element[SUBJECT]
           # Recursively process hash or Array values
-          traverse("#{path}[@]", element[SUBJECT], subject, property, ec)
+          traverse("#{path}[#{SUBJECT}]", element[SUBJECT], subject, property, ec)
         else
-          # 2.2.7) If the end of the associative array is detected, and a active subject
+          # 2.3.7) If the end of the associative array is detected, and a active subject
           # was not discovered, then:
-          #   2.2.7.1) Generate a blank node identifier and set it as the active subject.
+          #   2.3.7.1) Generate a blank node identifier and set it as the active subject.
           active_subject = RDF::Node.new
         end
           
-        # 2.2.1.1) If the inherited subject and inherited property values are
+        # 2.3.1.1) If the inherited subject and inherited property values are
         # specified, generate a triple using the inherited subject for the
         # subject, the inherited property for the property, and the active
         # subject for the object.
-        # 2.2.7.2) Complete any previously incomplete triples by running all substeps of Step 2.2.1.
+        # 2.3.7.2) Complete any previously incomplete triples by running all substeps of Step 2.2.1.
         add_triple(path, subject, property, active_subject) if subject && property
         subject = active_subject
         
         element.each do |key, value|
-          # 2.2.3) If a key that is not @context, @, or a, set the active property by
+          # 2.3.3) If a key that is not @context, @subject, or @type, set the active property by
           # performing Property Processing on the key.
           property = case key
-          when /^@/
-            nil
-          when 'a'
-            RDF.type
-          else
-            expand_term(key, ec.vocab, ec)
+          when TYPE then TYPE
+          when /^@/ then nil
+          else      expand_term(key, ec.vocab, ec)
           end
 
           traverse("#{path}[#{key}]", value, subject, property, ec) if property
@@ -245,14 +253,15 @@ module JSON::LD
         end
       when String
         # Perform coersion of the value, or generate a literal
-        add_debug(path, "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property].inspect}, ec=#{ec.coerce.inspect}")
-        object = if ec.coerce[property] == RDF::XSD.anyURI
+        add_debug(path, "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, ec=#{ec.coerce.inspect}")
+        object = if ec.coerce[property.to_s] == IRI
           expand_term(element, ec.base, ec)
-        elsif ec.coerce[property]
-          RDF::Literal.new(element, :datatype => ec.coerce[property])
+        elsif ec.coerce[property.to_s]
+          RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
         else
           RDF::Literal.new(element)
         end
+        property = RDF.type if property == TYPE
         add_triple(path, subject, property, object) if subject && property
       when Float
         object = RDF::Literal::Double.new(element)
@@ -332,13 +341,13 @@ module JSON::LD
       if context[COERCE]
         # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
         # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
-        # (e.g., { "xsd:anyURI": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
-        # of { "xsd:anyURI": "foaf:knows" }, or add to it.
+        # (e.g., { "@iri": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
+        # of { "@iri": "foaf:knows" }, or add to it.
         add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context[COERCE].is_a?(Hash)
         context[COERCE].each do |type, property|
-          type_uri = expand_term(type, ec.vocab, ec)
+          type_uri = expand_term(type, ec.vocab, ec).to_s
           [property].flatten.compact.each do |prop|
-            p = expand_term(prop, ec.vocab, ec)
+            p = expand_term(prop, ec.vocab, ec).to_s
             ec.coerce[p] = type_uri
           end
         end
