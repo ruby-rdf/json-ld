@@ -1,3 +1,10 @@
+=== 0.0.7
+* Change MIME Type and extension from application/json, .json to application/ld+json, .jsonld.
+  * Also added application/x-ld+json
+* Process a remote @context
+* Updated to current state of spec, including support for aliased keywords
+* Update Writer to output consistent with current spec.
+
 === 0.0.6
 * Another order problem (in literals)
 
