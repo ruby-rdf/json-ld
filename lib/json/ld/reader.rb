@@ -60,8 +60,15 @@ module JSON::LD
       #
       # As the value may be an array, this is maintained as a reverse mapping of `property` => `type`.
       #
-      # @attr [Hash{RDF::URI => RDF::URI}]
-      attr :coerce, true
+      # @attr [Hash{String => String}]
+      attr :coerce
+
+      # List coercion
+      #
+      # The @list keyword is used to specify that properties having an array value are to be treated
+      # as an ordered list, rather than a normal unordered list
+      # @attr [Array<String>]
+      attr :list
 
       ##
       # Create new evaluation context
@@ -73,6 +80,7 @@ module JSON::LD
         @mappings =  {}
         @vocab = nil
         @coerce = {}
+        @list = []
         yield(self) if block_given?
       end
 
@@ -80,6 +88,7 @@ module JSON::LD
         v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}='#{self.send(a).inspect}'"}
         v << "mappings[#{mappings.keys.length}]=#{mappings}"
         v << "coerce[#{coerce.keys.length}]=#{coerce}"
+        v << "list[#{list.length}]=#{list}"
         v.join(", ") + "]"
       end
     end
@@ -119,9 +128,9 @@ module JSON::LD
       @callback = block
 
       # initialize the evaluation context with the appropriate base
-      ec = EvaluationContext.new do |ec|
-        ec.base = @base_uri if @base_uri
-        parse_context(ec, DEFAULT_CONTEXT)
+      ec = EvaluationContext.new do |e|
+        e.base = @base_uri if @base_uri
+        parse_context(e, DEFAULT_CONTEXT)
       end
 
       traverse("", @doc, nil, nil, ec)
@@ -180,76 +189,59 @@ module JSON::LD
 
         # Other shortcuts to allow use of this method for terminal associative arrays
         if element[IRI].is_a?(String)
-          # Return the IRI found from the value
+          # 2.3 Return the IRI found from the value
           object = expand_term(element[IRI], ec.base, ec)
           add_triple(path, subject, property, object) if subject && property
           return
         elsif element[LITERAL]
+          # 2.4
           literal_opts = {}
           literal_opts[:datatype] = expand_term(element[DATATYPE], ec.vocab.to_s, ec) if element[DATATYPE]
           literal_opts[:language] = element[LANGUAGE].to_sym if element[LANGUAGE]
           object = RDF::Literal.new(element[LITERAL], literal_opts)
           add_triple(path, subject, property, object) if subject && property
           return
-        end
-        
-        # 2.3) ... Otherwise, if the local context is known perform the following steps:
-        #   2.3.1) If a @ key is found, the processor sets the active subject to the
-        #         value after Object Processing has been performed.
-        if element[SUBJECT].is_a?(String)
+        elsif element[LIST]
+          # 2.4a (Lists)
+          parse_list("#{path}[#{LIST}]", element[LIST], subject, property, ec)
+          return
+        elsif element[SUBJECT].is_a?(String)
+          # 2.5 Subject
+          # 2.5.1 Set active object (subject)
           active_subject = expand_term(element[SUBJECT], ec.base, ec)
         elsif element[SUBJECT]
-          # Recursively process hash or Array values
+          # 2.5.2 Recursively process hash or Array values
           traverse("#{path}[#{SUBJECT}]", element[SUBJECT], subject, property, ec)
         else
-          # 2.3.7) If the end of the associative array is detected, and a active subject
-          # was not discovered, then:
-          #   2.3.7.1) Generate a blank node identifier and set it as the active subject.
+          # 2.6) Generate a blank node identifier and set it as the active subject.
           active_subject = RDF::Node.new
         end
-          
-        # 2.3.1.1) If the inherited subject and inherited property values are
-        # specified, generate a triple using the inherited subject for the
-        # subject, the inherited property for the property, and the active
-        # subject for the object.
-        # 2.3.7.2) Complete any previously incomplete triples by running all substeps of Step 2.2.1.
+
         add_triple(path, subject, property, active_subject) if subject && property
         subject = active_subject
         
         element.each do |key, value|
-          # 2.3.3) If a key that is not @context, @subject, or @type, set the active property by
+          # 2.7) If a key that is not @context, @subject, or @type, set the active property by
           # performing Property Processing on the key.
           property = case key
           when TYPE then TYPE
-          when /^@/ then nil
+          when /^@/ then next
           else      expand_term(key, ec.vocab, ec)
           end
 
-          traverse("#{path}[#{key}]", value, subject, property, ec) if property
+          # 2.7.3
+          if ec.list.include?(property.to_s) && value.is_a?(Array)
+            # 2.7.3.1 (Lists) If the active property is the target of a @list coercion, and the value is an array,
+            #         process the value as a list starting at Step 3a.
+            parse_list("#{path}[#{key}]", value, subject, property, ec)
+          else
+            traverse("#{path}[#{key}]", value, subject, property, ec)
+          end
         end
       when Array
         # 3) If a regular array is detected, process each value in the array by doing the following:
         element.each_with_index do |v, i|
-          case v
-          when Hash, String
-            traverse("#{path}[#{i}]", v, subject, property, ec)
-          when Array
-            # 3.3) If the value is a regular array, should we support RDF List/Sequence Processing?
-            last = v.pop
-            first_bnode = last ? RDF::Node.new : RDF.nil            
-            add_triple("#{path}[#{i}][]", subject, property, first_bnode)
-
-            v.each do |list_item|
-              traverse("#{path}[#{i}][]", list_item, first_bnode, RDF.first, ec)
-              rest_bnode = RDF::Node.new
-              add_triple("#{path}[#{i}][]", first_bnode, RDF.rest, rest_bnode)
-              first_bnode = rest_bnode
-            end
-            if last
-              traverse("#{path}[#{i}][]", last, first_bnode, RDF.first, ec)
-              add_triple("#{path}[#{i}][]", first_bnode, RDF.rest, RDF.nil)
-            end
-          end
+          traverse("#{path}[#{i}]", v, subject, property, ec)
         end
       when String
         # Perform coersion of the value, or generate a literal
@@ -345,17 +337,55 @@ module JSON::LD
         # of { "@iri": "foaf:knows" }, or add to it.
         add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context[COERCE].is_a?(Hash)
         context[COERCE].each do |type, property|
+          add_debug("parse_context: @coerce", "type=#{type}, prop=#{property}")
           type_uri = expand_term(type, ec.vocab, ec).to_s
           [property].flatten.compact.each do |prop|
             p = expand_term(prop, ec.vocab, ec).to_s
-            ec.coerce[p] = type_uri
+            if type == LIST
+              # List is managed separate from types, as it is maintained in normal form.
+              ec.list << p unless ec.list.include?(p)
+            else
+              ec.coerce[p] = type_uri
+            end
           end
         end
       end
 
       ec
     end
-    
+
+    ##
+    # Parse a List
+    #
+    # @param [String] path
+    #   location within JSON hash
+    # @param [Array] list
+    #   The Array to serialize as a list
+    # @param [RDF::URI] subject
+    #   Inherited subject
+    # @param [RDF::URI] property
+    #   Inherited property
+    # @param [EvaluationContext] ec
+    #   The active context
+    def parse_list(path, list, subject, property, ec)
+      add_debug(path, "list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}")
+
+      last = list.pop
+      first_bnode = last ? RDF::Node.new : RDF.nil            
+      add_triple("#{path}", subject, property, first_bnode)
+
+      list.each do |list_item|
+        traverse("#{path}", list_item, first_bnode, RDF.first, ec)
+        rest_bnode = RDF::Node.new
+        add_triple("#{path}", first_bnode, RDF.rest, rest_bnode)
+        first_bnode = rest_bnode
+      end
+      if last
+        traverse("#{path}", last, first_bnode, RDF.first, ec)
+        add_triple("#{path}", first_bnode, RDF.rest, RDF.nil)
+      end
+    end
+
     ##
     # Expand a term using the specified context
     #

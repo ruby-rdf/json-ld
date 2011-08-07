@@ -219,7 +219,7 @@ describe JSON::LD::Reader do
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": [[]]
+            "foaf:knows": {"@list": []}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
@@ -229,7 +229,7 @@ describe JSON::LD::Reader do
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": [["Manu Sporny"]]
+            "foaf:knows": {"@list": ["Manu Sporny"]}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
@@ -241,13 +241,49 @@ describe JSON::LD::Reader do
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": [["Manu Sporny", "Ivan Herman"]]
+            "foaf:knows": {"@list": ["Manu Sporny", "Dave Longley"]}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Ivan Herman" .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Dave Longley" .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+        [
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": []
+          }),
+          %q(
+            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+        [
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": ["Manu Sporny"]
+          }),
+          %q(
+            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+        [
+          %q({
+            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
+            "@subject": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": ["Manu Sporny", "Dave Longley"]
+          }),
+          %q(
+            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Dave Longley" .
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],

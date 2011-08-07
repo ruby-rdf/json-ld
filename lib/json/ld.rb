@@ -34,6 +34,7 @@ module JSON
     DATATYPE = '@datatype'.freeze
     IRI      = '@iri'.freeze
     LANGUAGE = '@language'.freeze
+    LIST     = '@list'.freeze
     LITERAL  = '@literal'.freeze
     SUBJECT  = '@subject'.freeze
     TYPE     = '@type'.freeze
