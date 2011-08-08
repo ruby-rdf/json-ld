@@ -422,9 +422,12 @@ module JSON::LD
     end
 
     # Keep track of allocated BNodes
+    #
+    # Don't actually use the name provided, to prevent name alias issues.
+    # @return [RDF::Node]
     def bnode(value = nil)
       @bnode_cache ||= {}
-      @bnode_cache[value.to_s] ||= RDF::Node.new(value)
+      @bnode_cache[value.to_s] ||= RDF::Node.new
     end
   end
 end
