@@ -266,9 +266,9 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         CONTEXT   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
-          "rdf"   => "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+          "rdf"   => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
         },
-        SUBJECT => [[{SUBJECT => "foaf:a"}, {SUBJECT => "foaf:b"}]]
+        SUBJECT => {LIST => [{SUBJECT => "foaf:a"}, {SUBJECT => "foaf:b"}]}
       }, @debug)
     end
 
@@ -281,7 +281,7 @@ describe JSON::LD::Writer do
           COERCE  => {IRI=>"foaf:b"}
         },
         SUBJECT   => "foaf:a",
-        "foaf:b"  => [["apple", "banana"]]
+        "foaf:b"  => {LIST => ["apple", "banana"]}
       }, @debug)
     end
     
@@ -294,7 +294,7 @@ describe JSON::LD::Writer do
           COERCE  => {IRI=>"foaf:b"}
         },
         SUBJECT   => "foaf:a",
-        "foaf:b"  => [[]]
+        "foaf:b"  => {LIST => []}
       }, @debug)
     end
     
@@ -307,10 +307,22 @@ describe JSON::LD::Writer do
           COERCE  => {IRI=>"foaf:b"}
         },
         SUBJECT   => "foaf:a",
-        "foaf:b"  => [["apple"]]
+        "foaf:b"  => {LIST => ["apple"]}
       }, @debug)
     end
     
+    it "should generate single element list without @coerce" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b ( [ :b "foo" ] ) .)
+      serialize(input, :standard_prefixes => true).should produce({
+        CONTEXT   => {
+          "foaf"  => "http://xmlns.com/foaf/0.1/",
+          "rdf"   => "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        },
+        SUBJECT   => "foaf:a",
+        "foaf:b"  => {"@list" => [{"foaf:b" => "foo"}]}
+      }, @debug)
+    end
+
     it "should generate empty list as subject" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . () :a :b .)
       serialize(input, :standard_prefixes => true).should produce({
@@ -319,7 +331,7 @@ describe JSON::LD::Writer do
           "rdf"   => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
           COERCE  => {IRI=>"foaf:a"}
         },
-        SUBJECT   => [[]],
+        SUBJECT   => {LIST => []},
         "foaf:a"  => "foaf:b"
       }, @debug)
     end
@@ -332,7 +344,7 @@ describe JSON::LD::Writer do
           "rdf"   => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
           COERCE  => {IRI=>"foaf:b"}
         },
-        SUBJECT   => [[{SUBJECT => "foaf:a"}]],
+        SUBJECT   => {LIST => [{SUBJECT => "foaf:a"}]},
         "foaf:b"  => "foaf:c"
       }, @debug)
     end
@@ -347,10 +359,10 @@ describe JSON::LD::Writer do
           COERCE  => {IRI=>"owl:sameAs"}
         },
         SUBJECT       => "foaf:listOf2Lists",
-        "owl:sameAs"  => [[
-          [[]],
-          [[1]]
-        ]]
+        "owl:sameAs"  => {LIST => [
+          {LIST => []},
+          {LIST => [1]}
+        ]}
       }, @debug)
     end
     
@@ -364,10 +376,10 @@ describe JSON::LD::Writer do
           COERCE  => {IRI=>"owl:sameAs"}
         },
         SUBJECT       => "foaf:twoAnons",
-        "owl:sameAs"  => [[
+        "owl:sameAs"  => {LIST => [
           {TYPE => "foaf:mother"},
           {TYPE => "foaf:father"}
-        ]]
+        ]}
       }, @debug)
     end
     
@@ -401,7 +413,7 @@ describe JSON::LD::Writer do
         SUBJECT         => "foaf:a",
         "rdfs:domain"   => {
           TYPE          => "owl:Class",
-          "owl:unionOf" => [["foaf:b", "foaf:c"] ]
+          "owl:unionOf" => {LIST => ["foaf:b", "foaf:c"]}
         }
       }, @debug)
     end

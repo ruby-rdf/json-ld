@@ -295,7 +295,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     # @option options [RDF::URI] property
     #   Property referencing literal for type coercion
-    # @return [Array<Array<Object>>]
+    # @return [Hash{"@list" => Array<Object>}]
     def format_list(object, options = {})
       predicate = options[:property]
       list = []
@@ -320,8 +320,8 @@ module JSON::LD
       @depth -= 1
     
       # Returns 
-      add_debug "format_list => #{[list].inspect}"
-      [list]
+      add_debug "format_list => #{{LIST => list}.inspect}"
+      {LIST => list}
     end
 
     private
@@ -432,7 +432,7 @@ module JSON::LD
         properties.delete(RDF.rest.to_s)
         
         # Special case, if there are no properties, then we can just serialize the list itself
-        return defn[SUBJECT].first if properties.empty?
+        return defn if properties.empty?
       elsif subject.uri? || ref_count(subject) > 1
         add_debug "subject is a uri"
         # Don't need to set subject if it's a Node without references
