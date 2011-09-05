@@ -47,7 +47,7 @@ module JSON::LD
   #     end
   #   end
   #
-  # Select the :canonicalize option to output JSON-LD in canonical form
+  # Select the :normalize option to output JSON-LD in canonical form
   #
   # @see http://json-ld.org/spec/ED/20110507/
   # @see http://json-ld.org/spec/ED/20110507/#the-normalization-algorithm
@@ -69,6 +69,10 @@ module JSON::LD
     # @attr [Hash{String => String}]
     attr :coerce, true
 
+    ##
+    # Local implementation of ruby Hash class to allow for ordering in 1.8.x implementations.
+    #
+    # @return [Hash, InsertOrderPreservingHash]
     def self.new_hash
       if RUBY_VERSION < "1.9"
         InsertOrderPreservingHash.new
@@ -99,6 +103,8 @@ module JSON::LD
     #   the encoding to use on the output stream (Ruby 1.9+)
     # @option options [Boolean]  :canonicalize (false)
     #   whether to canonicalize literals when serializing
+    # @option options [Boolean] :normalize (false)
+    #   Output document in [normalized form](http://json-ld.org/spec/latest/#normalization-1)
     # @option options [Hash]     :prefixes     (Hash.new)
     #   the prefix mappings to use (not supported by all writers)
     # @option options [#to_s]    :base_uri     (nil)
@@ -162,8 +168,8 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
-      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:canonicalize]
-      @vocab = @options[:vocab] unless @options[:canonicalize]
+      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:normalize]
+      @vocab = @options[:vocab] unless @options[:normalize]
       @debug = @options[:debug]
 
       reset
@@ -173,7 +179,7 @@ module JSON::LD
       preprocess
       
       # Don't generate context for canonical output
-      json_hash = @options[:canonicalize] ? new_hash : start_document
+      json_hash = @options[:normalize] ? new_hash : start_document
 
       elements = []
       order_subjects.each do |subject|
@@ -193,7 +199,7 @@ module JSON::LD
       if @output.is_a?(Hash)
         @output.merge!(json_hash)
       else
-        json_state = if @options[:canonicalize]
+        json_state = if @options[:normalize]
           JSON::State.new(
             :indent       => "",
             :space        => "",
@@ -268,7 +274,7 @@ module JSON::LD
     #   Property referencing literal for type coercion
     # @return [Object]
     def format_literal(literal, options = {})
-      if options[:canonical] || @options[:canonicalize]
+      if options[:normal] || @options[:normalize]
         ret = new_hash
         ret[LITERAL] = literal.value
         ret[DATATYPE] = format_uri(literal.datatype, :position => :subject)if literal.has_datatype?
@@ -284,7 +290,7 @@ module JSON::LD
           # Datatype coercion where literal has the same datatype
           literal.value
         else
-          format_literal(literal, :canonical => true)
+          format_literal(literal, :normal => true)
         end
       end
     end
@@ -420,7 +426,7 @@ module JSON::LD
         raise RDF::WriterError, "Illegal use of predicate #{st.predicate.inspect}, not supported in RDF/XML" unless st.predicate.uri?
       end
 
-      if subject.node? && ref_count(subject) > (options[:property] ? 1 : 0) && options[:canonicalize]
+      if subject.node? && ref_count(subject) > (options[:property] ? 1 : 0) && options[:normalize]
         raise RDF::WriterError, "Can't serialize named node when normalizing"
       end
 
@@ -500,7 +506,7 @@ module JSON::LD
         return nil unless resource.absolute?
       when RDF::URI
         iri = resource.to_s
-        return iri if options[:canonicalize]
+        return iri if options[:normalize]
       else
         return nil
       end
@@ -555,7 +561,7 @@ module JSON::LD
       
       return @subjects.keys.sort do |a,b|
         format_iri(a, :position => :subject) <=> format_iri(b, :position => :subject)
-      end if @options[:canonicalize]
+      end if @options[:normalize]
 
       # Start with base_uri
       if base_uri && @subjects.keys.include?(base_uri)
@@ -583,7 +589,7 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def iri_range?(predicate)
-      return false if predicate.nil? || @options[:canonicalize]
+      return false if predicate.nil? || @options[:normalize]
 
       unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal

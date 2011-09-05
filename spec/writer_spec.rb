@@ -484,7 +484,7 @@ describe JSON::LD::Writer do
     ].each do |(input,output)|
       it "serializes #{input.inspect} to #{output.inspect}" do
         g = parse(input)
-        result = JSON::LD::Writer.buffer(:canonicalize => true) {|writer| writer << g}
+        result = JSON::LD::Writer.buffer(:normalize => true) {|writer| writer << g}
         result.should == output
       end
     end
