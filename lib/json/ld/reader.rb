@@ -160,7 +160,7 @@ module JSON::LD
     # @param [EvaluationContext] ec
     #   The active context
     def traverse(path, element, subject, property, ec)
-      add_debug(path, "traverse: s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}")
+      add_debug(path) {"traverse: s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
       object = nil
 
       case element
@@ -184,7 +184,7 @@ module JSON::LD
           new_element[k] = v
         end
         unless element == new_element
-          add_debug(path, "traverse: keys after map: #{new_element.keys.inspect}")
+          add_debug(path) {"traverse: keys after map: #{new_element.keys.inspect}"}
           element = new_element
         end
 
@@ -246,7 +246,10 @@ module JSON::LD
         end
       when String
         # Perform coersion of the value, or generate a literal
-        add_debug(path, "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, ec=#{ec.coerce.inspect}")
+        add_debug(path) do
+          "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, " +
+          "ec=#{ec.coerce.inspect}"
+        end
         object = if ec.coerce[property.to_s] == '@iri'
           expand_term(element, ec.base, ec)
         elsif ec.coerce[property.to_s]
@@ -258,15 +261,15 @@ module JSON::LD
         add_triple(path, subject, property, object) if subject && property
       when Float
         object = RDF::Literal::Double.new(element)
-        add_debug(path, "traverse(#{element}): native: #{object.inspect}")
+        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         add_triple(path, subject, property, object) if subject && property
       when Fixnum
         object = RDF::Literal.new(element)
-        add_debug(path, "traverse(#{element}): native: #{object.inspect}")
+        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         add_triple(path, subject, property, object) if subject && property
       when TrueClass, FalseClass
         object = RDF::Literal::Boolean.new(element)
-        add_debug(path, "traverse(#{element}): native: #{object.inspect}")
+        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         add_triple(path, subject, property, object) if subject && property
       else
         raise RDF::ReaderError, "Traverse to unknown element: #{element.inspect} of type #{element.class}"
@@ -284,7 +287,7 @@ module JSON::LD
     # @raise [ReaderError] Checks parameter types and raises if they are incorrect if parsing mode is _validate_.
     def add_triple(path, subject, predicate, object)
       statement = RDF::Statement.new(subject, predicate, object)
-      add_debug(path, "statement: #{statement.to_ntriples}")
+      add_debug(path) {"statement: #{statement.to_ntriples}"}
       @callback.call(statement)
     end
 
@@ -292,8 +295,11 @@ module JSON::LD
     # Add debug event to debug array, if specified
     #
     # @param [XML Node, any] node:: XML Node or string for showing context
-    # @param [String] message::
-    def add_debug(node, message)
+    # @param [String] message
+    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    def add_debug(node, message = "")
+      return unless ::JSON::LD.debug? || @options[:debug]
+      message = message + yield if block_given?
       puts "#{node}: #{message}" if JSON::LD::debug?
       @options[:debug] << "#{node}: #{message}" if @options[:debug].is_a?(Array)
     end
@@ -316,7 +322,7 @@ module JSON::LD
       end
       
       context.each do |key, value|
-        add_debug("parse_context(#{key})", value.inspect)
+        add_debug("parse_context(#{key})") {value.inspect}
         case key
         when '@vocab' then ec.vocab = value
         when '@base'  then ec.base  = uri(value)
@@ -338,7 +344,7 @@ module JSON::LD
         # of { "@iri": "foaf:knows" }, or add to it.
         add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
         context['@coerce'].each do |type, property|
-          add_debug("parse_context: @coerce", "type=#{type}, prop=#{property}")
+          add_debug("parse_context: @coerce") {"type=#{type}, prop=#{property}"}
           type_uri = expand_term(type, ec.vocab, ec).to_s
           [property].flatten.compact.each do |prop|
             p = expand_term(prop, ec.vocab, ec).to_s
@@ -369,7 +375,7 @@ module JSON::LD
     # @param [EvaluationContext] ec
     #   The active context
     def parse_list(path, list, subject, property, ec)
-      add_debug(path, "list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}")
+      add_debug(path) {"list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
 
       last = list.pop
       first_bnode = last ? RDF::Node.new : RDF.nil            
@@ -398,7 +404,7 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the term cannot be expanded
     # @see http://json-ld.org/spec/ED/20110507/#markup-of-rdf-concepts
     def expand_term(term, base, ec)
-      #add_debug("expand_term", "term=#{term.inspect}, base=#{base.inspect}, ec=#{ec.inspect}")
+      #add_debug("expand_term", {"term=#{term.inspect}, base=#{base.inspect}, ec=#{ec.inspect}"}
       prefix, suffix = term.split(":", 2)
       if prefix == '_'
         bnode(suffix)

@@ -138,7 +138,7 @@ module JSON::LD
     # @param  [Graph] graph
     # @return [void]
     def write_graph(graph)
-      add_debug "Add graph #{graph.inspect}"
+      add_debug {"Add graph #{graph.inspect}"}
       @graph = graph
     end
 
@@ -174,7 +174,7 @@ module JSON::LD
 
       reset
 
-      add_debug "\nserialize: graph: #{@graph.size}"
+      add_debug {"\nserialize: graph: #{@graph.size}"}
 
       preprocess
       
@@ -251,7 +251,7 @@ module JSON::LD
           {'@iri' => format_uri(value, :position => :subject)}
       end
     
-      add_debug("format_uri(#{options.inspect}, #{value.inspect}) => #{result.inspect}")
+      add_debug {"format_uri(#{options.inspect}, #{value.inspect}) => #{result.inspect}"}
       result
     end
     
@@ -306,7 +306,7 @@ module JSON::LD
       predicate = options[:property]
       list = []
 
-      add_debug "format_list(#{object}, #{predicate})"
+      add_debug {"format_list(#{object}, #{predicate})"}
 
       @depth += 1
       while object do
@@ -314,7 +314,7 @@ module JSON::LD
         p = @graph.properties(object)
         item = p.fetch(RDF.first.to_s, []).first
         if item
-          add_debug "format_list serialize #{item.inspect}"
+          add_debug {"format_list serialize #{item.inspect}"}
           list << if predicate || item.literal?
             property(predicate, item)
           else
@@ -326,7 +326,7 @@ module JSON::LD
       @depth -= 1
     
       # Returns 
-      add_debug "format_list => #{{'@list' => list}.inspect}"
+      add_debug {"format_list => #{{'@list' => list}.inspect}"}
       {'@list' => list}
     end
 
@@ -342,12 +342,12 @@ module JSON::LD
       # Prefixes
       prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
         next if DEFAULT_CONTEXT.has_key?(k.to_s)
-        add_debug "prefix[#{k}] => #{prefixes[k]}"
+        add_debug {"prefix[#{k}] => #{prefixes[k]}"}
         ctx[k.to_s] = prefixes[k].to_s
       end
       
       # Coerce
-      add_debug "start_doc: coerce= #{coerce.inspect}"
+      add_debug {"start_doc: coerce= #{coerce.inspect}"}
       unless coerce == DEFAULT_COERCE
         c_h = new_hash
         coerce.keys.sort.each do |k|
@@ -355,7 +355,7 @@ module JSON::LD
           next if [DEFAULT_COERCE[k], false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
           k_iri = k == '@iri' ? '@iri' : format_uri(k, :position => :predicate)
           d_iri = format_uri(coerce[k], :position => :subject)
-          add_debug "coerce[#{k_iri}] => #{d_iri}, k=#{k.inspect}"
+          add_debug {"coerce[#{k_iri}] => #{d_iri}, k=#{k.inspect}"}
           case c_h[d_iri]
           when nil
             c_h[d_iri] = k_iri
@@ -369,7 +369,7 @@ module JSON::LD
         ctx['@coerce'] = c_h unless c_h.empty?
       end
 
-      add_debug "start_doc: context=#{ctx.inspect}"
+      add_debug {"start_doc: context=#{ctx.inspect}"}
 
       # Return hash with @context, or empty
       r = new_hash
@@ -392,7 +392,7 @@ module JSON::LD
     # prefixes.
     # @param [Statement] statement
     def preprocess_statement(statement)
-      add_debug "preprocess: #{statement.inspect}"
+      add_debug {"preprocess: #{statement.inspect}"}
       references = ref_count(statement.object) + 1
       @references[statement.object] = references
       @subjects[statement.subject] = true
@@ -420,7 +420,7 @@ module JSON::LD
 
       subject_done(subject)
       properties = @graph.properties(subject)
-      add_debug "subject: #{subject.inspect}, props: #{properties.inspect}"
+      add_debug {"subject: #{subject.inspect}, props: #{properties.inspect}"}
 
       @graph.query(:subject => subject).each do |st|
         raise RDF::WriterError, "Illegal use of predicate #{st.predicate.inspect}, not supported in RDF/XML" unless st.predicate.uri?
@@ -448,7 +448,7 @@ module JSON::LD
       end
 
       prop_list = order_properties(properties)
-      #add_debug "=> property order: #{prop_list.to_sentence}"
+      #add_debug {"=> property order: #{prop_list.to_sentence}"}
 
       prop_list.each do |prop|
         predicate = RDF::URI.intern(prop)
@@ -456,11 +456,11 @@ module JSON::LD
         p_iri = format_uri(predicate, :position => :predicate)
         @depth += 1
         defn[p_iri] = property(predicate, properties[prop])
-        add_debug "prop(#{p_iri}) => #{properties[prop]} => #{defn[p_iri].inspect}"
+        add_debug {"prop(#{p_iri}) => #{properties[prop]} => #{defn[p_iri].inspect}"}
         @depth -= 1
       end
       
-      add_debug "subject: #{subject} has defn: #{defn.inspect}"
+      add_debug {"subject: #{subject} has defn: #{defn.inspect}"}
       defn
     end
     
@@ -496,7 +496,7 @@ module JSON::LD
     # @param [RDF::Resource] resource
     # @return [String, nil] value to use to identify IRI
     def get_curie(resource)
-      add_debug "get_curie(#{resource.inspect})"
+      add_debug {"get_curie(#{resource.inspect})"}
       case resource
       when RDF::Node
         return resource.to_s
@@ -597,7 +597,7 @@ module JSON::LD
           false : '@iri'
       end
       
-      add_debug "iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"
+      add_debug {"iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"}
       coerce[predicate.to_s] == '@iri'
     end
     
@@ -612,14 +612,13 @@ module JSON::LD
         dt = nil
         @graph.query(:predicate => predicate) do |st|
           if st.object.literal? && st.object.has_datatype?
-            add_debug "range? #{st.object.instance_variable_get(:@datatype).inspect}"
             dt = st.object.datatype.to_s if dt.nil?
             dt = false unless dt == st.object.datatype.to_s
           else
             dt = false
           end
         end
-        add_debug "range(#{predicate}) = #{dt.inspect}"
+        add_debug {"range(#{predicate}) = #{dt.inspect}"}
         coerce[predicate.to_s] = dt
       end
 
@@ -637,8 +636,11 @@ module JSON::LD
 
     # Add debug event to debug array, if specified
     #
-    # @param [String] message::
-    def add_debug(message)
+    # @param [String] message
+    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    def add_debug(message = "")
+      return unless ::JSON::LD.debug? || @options[:debug]
+      message = message + yield if block_given?
       msg = "#{" " * @depth * 2}#{message}"
       STDERR.puts msg if ::JSON::LD::debug?
       @debug << msg if @debug.is_a?(Array)
@@ -648,26 +650,26 @@ module JSON::LD
     def is_valid_list?(l)
       props = @graph.properties(l)
       unless l.node? && props.has_key?(RDF.first.to_s) || l == RDF.nil
-        add_debug "is_valid_list: false, #{l.inspect}: #{props.inspect}"
+        add_debug {"is_valid_list: false, #{l.inspect}: #{props.inspect}"}
         return false
       end
 
       while l && l != RDF.nil do
-        #add_debug "is_valid_list(length): #{props.length}"
+        #add_debug {"is_valid_list(length): #{props.length}"}
         return false unless props.has_key?(RDF.first.to_s) && props.has_key?(RDF.rest.to_s)
         n = props[RDF.rest.to_s]
         unless n.is_a?(Array) && n.length == 1
-          add_debug "is_valid_list: false, #{n.inspect}"
+          add_debug {"is_valid_list: false, #{n.inspect}"}
           return false
         end
         l = n.first
         unless l.node? || l == RDF.nil
-          add_debug "is_valid_list: false, #{l.inspect}"
+          add_debug {"is_valid_list: false, #{l.inspect}"}
           return false
         end
         props = @graph.properties(l)
       end
-      add_debug "is_valid_list: valid"
+      add_debug {"is_valid_list: valid"}
       true
     end
 
