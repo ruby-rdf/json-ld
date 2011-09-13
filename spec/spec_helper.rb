@@ -2,23 +2,17 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $:.unshift File.dirname(__FILE__)
 
 require 'rubygems'
-begin
-  require "bundler/setup"
-rescue
-end
-
 require 'rspec'
 require 'rdf'
 require 'rdf/isomorphic'
 require 'json/ld'
 require 'rdf/ntriples'
-require 'rdf/n3'
+require 'rdf/turtle'
 require 'rdf/spec'
 require 'rdf/spec/matchers'
+require 'yaml'
 require 'open-uri/cached'
 require 'matchers'
-
-include JSON::LD
 
 # Create and maintain a cache of downloaded URIs
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
@@ -45,10 +39,10 @@ def detect_format(stream)
     string = stream.to_s
   end
   case string
-  when /<html/i   then RDF::RDFa::Reader
-  when /\{\s*\"@\"/i then JSON::LD::Reader
-  when /@(prefix|base)/i then RDF::N3::Reader
-  else                 RDF::NTriples::Reader
+  when /<html/i           then RDF::RDFa::Reader
+  when /\{\s*\"@\"/i      then JSON::LD::Reader
+  when /@(prefix|base)/i  then RDF::Turtle::Reader
+  else                         RDF::NTriples::Reader
   end
 end
 

@@ -38,7 +38,7 @@ module JSON::LD
 
       # A list of current, in-scope URI mappings.
       #
-      # @attr [Hash{Symbol => String}]
+      # @attr [Hash{String => String}]
       attr :mappings, true
 
       # The default vocabulary
@@ -109,7 +109,8 @@ module JSON::LD
         begin
           @doc = JSON.load(input)
         rescue JSON::ParserError => e
-          raise RDF::ReaderError, "Failed to parse input document: #{e.message}"
+          raise RDF::ReaderError, "Failed to parse input document: #{e.message}" if validate?
+          @doc = JSON.parse("{}")
         end
 
         if block_given?
@@ -170,16 +171,16 @@ module JSON::LD
         
         # 2.1) If a @context keyword is found, the processor merges each key-value pair in
         # the local context into the active context ...
-        if element[CONTEXT]
+        if element['@context']
           # Merge context
-          ec = parse_context(ec.dup, element[CONTEXT])
+          ec = parse_context(ec.dup, element['@context'])
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
         # 2.2) Create a new associative array by mapping the keys from the current associative array ...
         new_element = {}
         element.each do |k, v|
-          k = ec.mappings[k.to_sym] while ec.mappings.has_key?(k.to_sym)
+          k = ec.mappings[k.to_s] while ec.mappings.has_key?(k.to_s)
           new_element[k] = v
         end
         unless element == new_element
@@ -188,30 +189,30 @@ module JSON::LD
         end
 
         # Other shortcuts to allow use of this method for terminal associative arrays
-        if element[IRI].is_a?(String)
+        if element['@iri'].is_a?(String)
           # 2.3 Return the IRI found from the value
-          object = expand_term(element[IRI], ec.base, ec)
+          object = expand_term(element['@iri'], ec.base, ec)
           add_triple(path, subject, property, object) if subject && property
           return
-        elsif element[LITERAL]
+        elsif element['@literal']
           # 2.4
           literal_opts = {}
-          literal_opts[:datatype] = expand_term(element[DATATYPE], ec.vocab.to_s, ec) if element[DATATYPE]
-          literal_opts[:language] = element[LANGUAGE].to_sym if element[LANGUAGE]
-          object = RDF::Literal.new(element[LITERAL], literal_opts)
+          literal_opts[:datatype] = expand_term(element['@datatype'], ec.vocab.to_s, ec) if element['@datatype']
+          literal_opts[:language] = element['@language'].to_sym if element['@language']
+          object = RDF::Literal.new(element['@literal'], literal_opts)
           add_triple(path, subject, property, object) if subject && property
           return
-        elsif element[LIST]
+        elsif element['@list']
           # 2.4a (Lists)
-          parse_list("#{path}[#{LIST}]", element[LIST], subject, property, ec)
+          parse_list("#{path}[#{'@list'}]", element['@list'], subject, property, ec)
           return
-        elsif element[SUBJECT].is_a?(String)
+        elsif element['@subject'].is_a?(String)
           # 2.5 Subject
           # 2.5.1 Set active object (subject)
-          active_subject = expand_term(element[SUBJECT], ec.base, ec)
-        elsif element[SUBJECT]
+          active_subject = expand_term(element['@subject'], ec.base, ec)
+        elsif element['@subject']
           # 2.5.2 Recursively process hash or Array values
-          traverse("#{path}[#{SUBJECT}]", element[SUBJECT], subject, property, ec)
+          traverse("#{path}[#{'@subject'}]", element['@subject'], subject, property, ec)
         else
           # 2.6) Generate a blank node identifier and set it as the active subject.
           active_subject = RDF::Node.new
@@ -224,7 +225,7 @@ module JSON::LD
           # 2.7) If a key that is not @context, @subject, or @type, set the active property by
           # performing Property Processing on the key.
           property = case key
-          when TYPE then TYPE
+          when '@type' then '@type'
           when /^@/ then next
           else      expand_term(key, ec.vocab, ec)
           end
@@ -246,14 +247,14 @@ module JSON::LD
       when String
         # Perform coersion of the value, or generate a literal
         add_debug(path, "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, ec=#{ec.coerce.inspect}")
-        object = if ec.coerce[property.to_s] == IRI
+        object = if ec.coerce[property.to_s] == '@iri'
           expand_term(element, ec.base, ec)
         elsif ec.coerce[property.to_s]
           RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
         else
           RDF::Literal.new(element)
         end
-        property = RDF.type if property == TYPE
+        property = RDF.type if property == '@type'
         add_triple(path, subject, property, object) if subject && property
       when Float
         object = RDF::Literal::Double.new(element)
@@ -317,31 +318,31 @@ module JSON::LD
       context.each do |key, value|
         add_debug("parse_context(#{key})", value.inspect)
         case key
-        when VOCAB then ec.vocab = value
-        when BASE  then ec.base  = uri(value)
-        when COERCE
+        when '@vocab' then ec.vocab = value
+        when '@base'  then ec.base  = uri(value)
+        when '@coerce'
           # Process after prefix mapping
         else
           # Spec confusion: The text indicates to merge each key-value pair into the active context. Is any
           # processing performed on the values. For instance, could a value be a CURIE, or {"@iri": <value>}?
           # Examples indicate that there is no such processing, and each value should be an absolute IRI. The
           # wording makes this unclear.
-          ec.mappings[key.to_sym] = value
+          ec.mappings[key.to_s] = value
         end
       end
       
-      if context[COERCE]
+      if context['@coerce']
         # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
         # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
         # (e.g., { "@iri": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
         # of { "@iri": "foaf:knows" }, or add to it.
-        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context[COERCE].is_a?(Hash)
-        context[COERCE].each do |type, property|
+        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
+        context['@coerce'].each do |type, property|
           add_debug("parse_context: @coerce", "type=#{type}, prop=#{property}")
           type_uri = expand_term(type, ec.vocab, ec).to_s
           [property].flatten.compact.each do |prop|
             p = expand_term(prop, ec.vocab, ec).to_s
-            if type == LIST
+            if type == '@list'
               # List is managed separate from types, as it is maintained in normal form.
               ec.list << p unless ec.list.include?(p)
             else
@@ -399,9 +400,7 @@ module JSON::LD
     def expand_term(term, base, ec)
       #add_debug("expand_term", "term=#{term.inspect}, base=#{base.inspect}, ec=#{ec.inspect}")
       prefix, suffix = term.split(":", 2)
-      prefix = prefix.to_sym if prefix
-      return  if prefix == '_'
-      if prefix == :_
+      if prefix == '_'
         bnode(suffix)
       elsif ec.mappings.has_key?(prefix)
         uri(ec.mappings[prefix] + suffix.to_s)

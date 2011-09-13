@@ -1,39 +1,72 @@
 # coding: utf-8
 $:.unshift "."
-require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'spec_helper'
+require 'rdf/spec/format'
 
 describe JSON::LD::Format do
-  context "discovery" do
-    {
-      "json"             => RDF::Format.for(:json),
-      "ld"               => RDF::Format.for(:ld),
-      "etc/foaf.json"    => RDF::Format.for("etc/foaf.json"),
-      "etc/foaf.ld"      => RDF::Format.for("etc/foaf.ld"),
-      "foaf.json"        => RDF::Format.for(:file_name      => "foaf.json"),
-      "foaf.ld"          => RDF::Format.for(:file_name      => "foaf.ld"),
-      "foaf.jsonld"      => RDF::Format.for(:file_name      => "foaf.jsonld"),
-      "etc/foaf.jsonld"  => RDF::Format.for("etc/foaf.jsonld"),
-      ".json"            => RDF::Format.for(:file_extension => "json"),
-      ".ld"              => RDF::Format.for(:file_extension => "ld"),
-      ".jsonld"          => RDF::Format.for(:file_extension => "jsonld"),
-      "application/ld+json" => RDF::Format.for(:content_type   => "application/ld+json"),
-      "application/x-ld+json" => RDF::Format.for(:content_type   => "application/x-ld+json"),
-    }.each_pair do |label, format|
-      it "should discover '#{label}'" do
-        format.should == JSON::LD::Format
+  before :each do
+    @format_class = JSON::LD::Format
+  end
+
+  it_should_behave_like RDF_Format
+
+  describe ".for" do
+    formats = [
+      :json, :ld, :jsonld,
+      'etc/doap.json', "etc/doap.jsonld",
+      {:file_name      => 'etc/doap.json'},
+      {:file_name      => 'etc/doap.jsonld'},
+      {:file_extension => 'json'},
+      {:file_extension => 'jsonld'},
+      {:content_type   => 'application/ld+json'},
+      {:content_type   => 'application/x-ld+json'},
+    ].each do |arg|
+      it "discovers with #{arg.inspect}" do
+        RDF::Format.for(arg).should == @format_class
       end
+    end
+
+    {
+      :jsonld => '{"@context" => "foo"}',
+      :context => %({\n"@context": {),
+      :subject => %({\n"@subject": {),
+      :iri     => %({\n"@iri": {),
+    }.each do |sym, str|
+      it "detects #{sym}" do
+        @format_class.for {str}.should == @format_class
+      end
+    end
+
+    it "should discover 'jsonld'" do
+      RDF::Format.for(:jsonld).reader.should == JSON::LD::Reader
     end
   end
 
+  describe "#to_sym" do
+    specify {@format_class.to_sym.should == :jsonld}
+  end
 
-  describe "JSON::LD::JSONLD" do
-    context "discovery" do
-      {
-        "jsonld"           => RDF::Format.for(:jsonld),
-      }.each_pair do |label, format|
-        it "should discover '#{label}'" do
-          format.should == JSON::LD::JSONLD
-        end
+  describe ".detect" do
+    {
+      :jsonld => '{"@context" => "foo"}',
+    }.each do |sym, str|
+      it "detects #{sym}" do
+        @format_class.detect(str).should be_true
+      end
+    end
+
+    {
+      :n3             => "@prefix foo: <bar> .\nfoo:bar = {<a> <b> <c>} .",
+      :nquads => "<a> <b> <c> <d> . ",
+      :rdfxml => '<rdf:RDF about="foo"></rdf:RDF>',
+      :rdfa   => '<div about="foo"></div>',
+      :microdata => '<div itemref="bar"></div>',
+      :ntriples         => "<a> <b> <c> .",
+      :multi_line       => '<a>\n  <b>\n  "literal"\n .',
+      :turtle           => "@prefix foo: <bar> .\n foo:a foo:b <c> .",
+    }.each do |sym, str|
+      it "does not detect #{sym}" do
+        @format_class.detect(str).should be_false
       end
     end
   end

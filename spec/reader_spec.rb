@@ -1,25 +1,28 @@
 # coding: utf-8
 $:.unshift "."
-require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'spec_helper'
+require 'rdf/spec/reader'
 
 describe JSON::LD::Reader do
-  context "discovery" do
-    {
-      "json"             => RDF::Reader.for(:json),
-      "ld"               => RDF::Reader.for(:ld),
-      "etc/foaf.json"    => RDF::Reader.for("etc/foaf.json"),
-      "etc/foaf.ld"      => RDF::Reader.for("etc/foaf.ld"),
-      "foaf.json"        => RDF::Reader.for(:file_name      => "foaf.json"),
-      "foaf.ld"          => RDF::Reader.for(:file_name      => "foaf.ld"),
-      "foaf.jsonld"        => RDF::Reader.for(:file_name      => "foaf.jsonld"),
-      ".json"            => RDF::Reader.for(:file_extension => "json"),
-      ".ld"              => RDF::Reader.for(:file_extension => "ld"),
-      ".jsonld"              => RDF::Reader.for(:file_extension => "jsonld"),
-      "application/ld+json" => RDF::Reader.for(:content_type   => "application/ld+json"),
-      "application/x-ld+json" => RDF::Reader.for(:content_type   => "application/x-ld+json"),
-    }.each_pair do |label, format|
-      it "should discover '#{label}'" do
-        format.should == JSON::LD::Reader
+  before :each do
+    @reader = JSON::LD::Reader.new(StringIO.new(""))
+  end
+
+  it_should_behave_like RDF_Reader
+
+  describe ".for" do
+    formats = [
+      :json, :ld, :jsonld,
+      'etc/doap.json', "etc/doap.jsonld",
+      {:file_name      => 'etc/doap.json'},
+      {:file_name      => 'etc/doap.jsonld'},
+      {:file_extension => 'json'},
+      {:file_extension => 'jsonld'},
+      {:content_type   => 'application/ld+json'},
+      {:content_type   => 'application/x-ld+json'},
+    ].each do |arg|
+      it "discovers with #{arg.inspect}" do
+        RDF::Reader.for(arg).should == JSON::LD::Reader
       end
     end
   end

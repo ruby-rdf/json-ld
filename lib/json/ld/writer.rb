@@ -7,7 +7,7 @@ module JSON::LD
   # and then serialize the graph.
   #
   # @example Obtaining a JSON-LD writer class
-  #   RDF::Writer.for(:jsonld)         #=> RDF::N3::Writer
+  #   RDF::Writer.for(:jsonld)         #=> JSON::LD::Writer
   #   RDF::Writer.for("etc/test.json")
   #   RDF::Writer.for(:file_name      => "etc/test.json")
   #   RDF::Writer.for(:file_extension => "json")
@@ -121,7 +121,7 @@ module JSON::LD
     def initialize(output = $stdout, options = {}, &block)
       super do
         @graph = RDF::Graph.new
-        @iri_to_prefix = DEFAULT_CONTEXT.dup.delete_if {|k,v| k == COERCE}.invert
+        @iri_to_prefix = DEFAULT_CONTEXT.dup.delete_if {|k,v| k == '@coerce'}.invert
         @coerce = DEFAULT_COERCE.merge(options[:coerce] || {})
         if block_given?
           case block.arity
@@ -193,7 +193,7 @@ module JSON::LD
       if elements.length == 1 && elements.first.is_a?(Hash)
         json_hash.merge!(elements.first)
       else
-        json_hash[SUBJECT] = elements
+        json_hash['@subject'] = elements
       end
       
       if @output.is_a?(Hash)
@@ -241,14 +241,14 @@ module JSON::LD
         short == value.to_s ? (get_curie(value) || value.to_s) : short
       when :predicate
         # attempt vocab replacement
-        short = TYPE if value == RDF.type
+        short = '@type' if value == RDF.type
         short ||= value.to_s.sub(@vocab.to_s, "")
         short == value.to_s ? (get_curie(value) || value.to_s) : short
       else
         # Encode like a subject
         iri_range?(options[:property]) ?
           format_uri(value, :position => :subject) :
-          {IRI => format_uri(value, :position => :subject)}
+          {'@iri' => format_uri(value, :position => :subject)}
       end
     
       add_debug("format_uri(#{options.inspect}, #{value.inspect}) => #{result.inspect}")
@@ -276,9 +276,9 @@ module JSON::LD
     def format_literal(literal, options = {})
       if options[:normal] || @options[:normalize]
         ret = new_hash
-        ret[LITERAL] = literal.value
-        ret[DATATYPE] = format_uri(literal.datatype, :position => :subject)if literal.has_datatype?
-        ret[LANGUAGE] = literal.language.to_s if literal.has_language?
+        ret['@literal'] = literal.value
+        ret['@datatype'] = format_uri(literal.datatype, :position => :subject) if literal.has_datatype?
+        ret['@language'] = literal.language.to_s if literal.has_language?
         return ret.delete_if {|k,v| v.nil?}
       end
 
@@ -326,8 +326,8 @@ module JSON::LD
       @depth -= 1
     
       # Returns 
-      add_debug "format_list => #{{LIST => list}.inspect}"
-      {LIST => list}
+      add_debug "format_list => #{{'@list' => list}.inspect}"
+      {'@list' => list}
     end
 
     private
@@ -336,8 +336,8 @@ module JSON::LD
     # @return [Hash]
     def start_document
       ctx = new_hash
-      ctx[BASE] = base_uri.to_s if base_uri
-      ctx[VOCAB] = vocab.to_s if vocab
+      ctx['@base'] = base_uri.to_s if base_uri
+      ctx['@vocab'] = vocab.to_s if vocab
       
       # Prefixes
       prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
@@ -351,9 +351,9 @@ module JSON::LD
       unless coerce == DEFAULT_COERCE
         c_h = new_hash
         coerce.keys.sort.each do |k|
-          next if [TYPE, RDF.type.to_s].include?(k.to_s)
+          next if ['@type', RDF.type.to_s].include?(k.to_s)
           next if [DEFAULT_COERCE[k], false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
-          k_iri = k == IRI ? IRI : format_uri(k, :position => :predicate)
+          k_iri = k == '@iri' ? '@iri' : format_uri(k, :position => :predicate)
           d_iri = format_uri(coerce[k], :position => :subject)
           add_debug "coerce[#{k_iri}] => #{d_iri}, k=#{k.inspect}"
           case c_h[d_iri]
@@ -366,14 +366,14 @@ module JSON::LD
           end
         end
         
-        ctx[COERCE] = c_h unless c_h.empty?
+        ctx['@coerce'] = c_h unless c_h.empty?
       end
 
       add_debug "start_doc: context=#{ctx.inspect}"
 
       # Return hash with @context, or empty
       r = new_hash
-      r[CONTEXT] = ctx unless ctx.empty?
+      r['@context'] = ctx unless ctx.empty?
       r
     end
     
@@ -433,7 +433,7 @@ module JSON::LD
       # Subject may be a list
       if is_valid_list?(subject)
         add_debug "subject is a list"
-        defn[SUBJECT] = format_list(subject)
+        defn['@subject'] = format_list(subject)
         properties.delete(RDF.first.to_s)
         properties.delete(RDF.rest.to_s)
         
@@ -442,7 +442,7 @@ module JSON::LD
       elsif subject.uri? || ref_count(subject) > 1
         add_debug "subject is a uri"
         # Don't need to set subject if it's a Node without references
-        defn[SUBJECT] = format_uri(subject, :position => :subject)
+        defn['@subject'] = format_uri(subject, :position => :subject)
       else
         add_debug "subject is an unreferenced BNode"
       end
@@ -594,11 +594,11 @@ module JSON::LD
       unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal
        coerce[predicate.to_s] = @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
-          false : IRI
+          false : '@iri'
       end
       
       add_debug "iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"
-      coerce[predicate.to_s] == IRI
+      coerce[predicate.to_s] == '@iri'
     end
     
     ##
@@ -612,6 +612,7 @@ module JSON::LD
         dt = nil
         @graph.query(:predicate => predicate) do |st|
           if st.object.literal? && st.object.has_datatype?
+            add_debug "range? #{st.object.instance_variable_get(:@datatype).inspect}"
             dt = st.object.datatype.to_s if dt.nil?
             dt = false unless dt == st.object.datatype.to_s
           else

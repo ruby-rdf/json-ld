@@ -23,36 +23,24 @@ module JSON
     require 'json'
     require 'json/ld/extensions'
     require 'json/ld/format'
-    autoload :Reader,  'json/ld/reader'
-    autoload :VERSION, 'json/ld/version'
-    autoload :Writer,  'json/ld/writer'
-    
-    # Keywords
-    BASE     = '@base'.freeze
-    COERCE   = '@coerce'.freeze
-    CONTEXT  = '@context'.freeze
-    DATATYPE = '@datatype'.freeze
-    IRI      = '@iri'.freeze
-    LANGUAGE = '@language'.freeze
-    LIST     = '@list'.freeze
-    LITERAL  = '@literal'.freeze
-    SUBJECT  = '@subject'.freeze
-    TYPE     = '@type'.freeze
-    VOCAB    = '@vocab'.freeze
+    autoload :Normalize,  'json/ld/normalize'
+    autoload :Reader,     'json/ld/reader'
+    autoload :VERSION,    'json/ld/version'
+    autoload :Writer,     'json/ld/writer'
     
     # Default context
     # @see http://json-ld.org/spec/ED/20110507/#the-default-context
     DEFAULT_CONTEXT = {
       '@coerce'       => {
-        IRI  => [TYPE]
+      '@iri'          => ['@type']
       }
     }.freeze
 
     # Default type coercion, in property => datatype order
     DEFAULT_COERCE = {
-      TYPE            => IRI,
+      '@type'            => '@iri',
       RDF.first.to_s  => false,            # Make sure @coerce isn't generated for this
-      RDF.rest.to_s   => IRI,
+      RDF.rest.to_s   => '@iri',
     }.freeze
 
     def self.debug?; @debug; end

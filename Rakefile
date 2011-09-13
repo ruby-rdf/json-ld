@@ -5,12 +5,12 @@ task :default => [ :spec ]
 namespace :gem do
   desc "Build the json-ld-#{File.read('VERSION').chomp}.gem file"
   task :build do
-    sh "gem build .gemspec"
+    sh "gem build json-ld.gemspec && mv rdf-turtle-#{File.read('VERSION').chomp}.gem pkg/"
   end
 
   desc "Release the json-ld-#{File.read('VERSION').chomp}.gem file"
   task :release do
-    sh "gem push json-ld-#{File.read('VERSION').chomp}.gem"
+    sh "gem push pkg/json-ld-#{File.read('VERSION').chomp}.gem"
   end
 end
 
@@ -37,3 +37,4 @@ namespace :doc do
 end
 
 task :default => :spec
+task :specs => :spec
