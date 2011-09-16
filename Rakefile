@@ -5,7 +5,7 @@ task :default => [ :spec ]
 namespace :gem do
   desc "Build the json-ld-#{File.read('VERSION').chomp}.gem file"
   task :build do
-    sh "gem build json-ld.gemspec && mv rdf-turtle-#{File.read('VERSION').chomp}.gem pkg/"
+    sh "gem build json-ld.gemspec && mv json-ld-#{File.read('VERSION').chomp}.gem pkg/"
   end
 
   desc "Release the json-ld-#{File.read('VERSION').chomp}.gem file"
