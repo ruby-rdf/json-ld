@@ -37,7 +37,7 @@ module JSON::LD
     # between other similar formats.
     #
     # @param [String] sample Beginning several bytes (~ 1K) of input.
-    # @result [Boolean]
+    # @return [Boolean]
     def self.detect(sample)
       !!sample.match(/\{\s*"@(subject|context|type|iri)"/m)
     end
