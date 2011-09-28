@@ -1,3 +1,10 @@
+=== 0.0.8
+* RDF.rb 0.3.4 compatibility.
+* Format detection.
+* Use new @list syntax for parsing ordered collections.
+* Separate normalize from canonicalize
+
+
 === 0.0.7
 * Change MIME Type and extension from application/json, .json to application/ld+json, .jsonld.
   * Also added application/x-ld+json
