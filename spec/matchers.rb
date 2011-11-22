@@ -1,7 +1,7 @@
 require 'rdf/isomorphic'
 require 'rspec/matchers'
 
-Info = Struct.new(:about, :information, :trace, :compare, :inputDocument, :outputDocument)
+Info = Struct.new(:about, :information, :trace, :inputDocument, :outputDocument)
 
 def normalize(graph)
   case graph
@@ -25,7 +25,7 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
       identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
       trace = info[:trace]
       trace = trace.join("\n") if trace.is_a?(Array)
-      Info.new(identifier, info[:information] || "", trace, info[:compare])
+      Info.new(identifier, info[:information] || "", trace, info[:inputDocument])
     else
       Info.new(expected.is_a?(RDF::Graph) ? expected.context : info, info.to_s)
     end
@@ -44,10 +44,10 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
       "Graph differs"
     end +
     "\n#{info + "\n" unless info.empty?}" +
-    (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
-    (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
     "Unsorted Expected:\n#{@expected.dump(:ttl, :standard_prefixes => true)}" +
     "Unsorted Results:\n#{@actual.dump(:ttl, :standard_prefixes => true)}" +
+    (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
+    (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
     (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
   end  
 end
