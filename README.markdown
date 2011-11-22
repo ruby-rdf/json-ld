@@ -22,7 +22,7 @@ Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/0.0.4
   * {JSON::LD::Reader}
   * {JSON::LD::Writer}
 
-##Dependencies
+## Dependencies
 * [Ruby](http://ruby-lang.org/) (>= 1.8.7) or (>= 1.8.1 with [Backports][])
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.3.4)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5.1)

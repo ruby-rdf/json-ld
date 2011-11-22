@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.email                 = 'public-rdf-ruby@w3.org'
 
   gem.platform              = Gem::Platform::RUBY
-  gem.files                 = %w(AUTHORS README UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
+  gem.files                 = %w(AUTHORS README.markdown History.markdown UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
   #gem.bindir               = %q(bin)
   #gem.executables          = %w(json_ld)
   #gem.default_executable   = gem.executables.first
@@ -29,13 +29,11 @@ Gem::Specification.new do |gem|
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '>= 0.3.4'
   gem.add_runtime_dependency     'json',            '>= 1.5.1'
+  gem.add_development_dependency 'open-uri-cached', '>= 0.0.4'
   gem.add_development_dependency 'yard' ,           '>= 0.6.0'
   gem.add_development_dependency 'rspec',           '>= 2.5.0'
   gem.add_development_dependency 'rdf-spec',        '>= 0.3.4'
-  gem.add_development_dependency 'rdf-n3',          '>= 0.3.3'
+  gem.add_development_dependency 'rdf-turtle',      '>= 0.1.0'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
-  gem.add_development_dependency 'sxp',             ">= 0"
-  gem.add_development_dependency 'sparql-algebra',  ">= 0"
-  gem.add_development_dependency 'sparql-grammar',  ">= 0"
   gem.post_install_message  = nil
 end
