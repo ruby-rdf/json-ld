@@ -81,27 +81,23 @@ describe JSON::LD::Reader do
 
   context :parsing do
     context "literals" do
-      [
+      {
+        "plain literal" =>
         [
           %q({"@subject": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
           %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
-        [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
-          %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
-        ],
-        [
-          %q({"http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
-          %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
-        ],
+        "explicit plain literal" =>
         [
           %q({"http://xmlns.com/foaf/0.1/name": {"@literal": "Gregg Kellogg"}}),
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
+        "language tagged literal" =>
         [
           %q({"http://www.w3.org/2000/01/rdf-schema#label": {"@literal": "A plain literal with a lang tag.", "@language": "en-us"}}),
           %q(_:a <http://www.w3.org/2000/01/rdf-schema#label> "A plain literal with a lang tag."@en-us .)
         ],
+        "I18N literal with language" =>
         [
           %q([{
             "@subject": "http://greggkellogg.net/foaf#me",
@@ -115,6 +111,7 @@ describe JSON::LD::Reader do
             <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Herman Iv\u00E1n"@hu .
           )
         ],
+        "explicit datatyped literal" =>
         [
           %q({
             "@subject":  "http://greggkellogg.net/foaf#me",
@@ -124,32 +121,37 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
           )
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
     end
 
-    context "CURIEs" do
-      [
-        [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "@type": "http://xmlns.com/foaf/0.1/Person"}),
-          %q(<http://greggkellogg.net/foaf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .)
-        ],
-        [
+    context "prefixes" do
+      {
+        "empty prefix" => [
           %q({"@context": {"": "http://example.com/default#"}, ":foo": "bar"}),
           %q(_:a <http://example.com/default#foo> "bar" .)
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+        "empty suffix" => [
+          %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:": "bar"}),
+          %q(_:a <http://example.com/default#> "bar" .)
+        ],
+        "prefix:suffix" => [
+          %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:foo": "bar"}),
+          %q(_:a <http://example.com/default#foo> "bar" .)
+        ]
+      }.each_pair do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
     end
 
     context "overriding keywords" do
-      [
+      {
+        "'url' for @subject, 'a' for @type" =>
         [
           %q({
             "@context": {"url": "@subject", "a": "@type", "name": "http://schema.org/name"},
@@ -162,15 +164,16 @@ describe JSON::LD::Reader do
             <http://example.com/about#gregg> <http://schema.org/name> "Gregg Kellogg" .
           )
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
     end
 
-    context "structure" do
-      [
+    context "chaining" do
+      {
+        "explicit subject" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -185,6 +188,7 @@ describe JSON::LD::Reader do
             <http://www.ivan-herman.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Ivan Herman" .
           )
         ],
+        "implicit subject" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -198,6 +202,16 @@ describe JSON::LD::Reader do
             _:a <http://xmlns.com/foaf/0.1/name> "Manu Sporny" .
           )
         ],
+      }.each do |title, (js, nt)|
+        it title do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+        end
+      end
+    end
+
+    context "multiple values" do
+      {
+        "literals" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -209,15 +223,16 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Ivan Herman" .
           )
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
     end
 
     context "lists" do
-      [
+      {
+        "Empty explicit list" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -228,6 +243,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "Explicit list single value" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -240,6 +256,7 @@ describe JSON::LD::Reader do
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "Explicit list with multiple values" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -254,6 +271,7 @@ describe JSON::LD::Reader do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "List coercion (empty)" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
@@ -264,6 +282,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "List coercion (single)" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
@@ -276,6 +295,7 @@ describe JSON::LD::Reader do
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "List coercion (multiple)" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
@@ -290,15 +310,16 @@ describe JSON::LD::Reader do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
     end
 
     context "context" do
-      [
+      {
+        "@base expansion" =>
         [
           %q({
             "@context": {
@@ -312,6 +333,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
           )
         ],
+        "@vocab expansion" =>
         [
           %q({
             "@context": {
@@ -324,6 +346,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
           )
         ],
+        "@base and @vocab expansion" =>
         [
           %q({
             "@context": {
@@ -337,6 +360,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
           )
         ],
+        "@iri coersion" =>
         [
           %q({
             "@context": {
@@ -350,6 +374,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
           )
         ],
+        "datatype coersion" =>
         [
           %q({
             "@context": {
@@ -364,8 +389,8 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
           )
         ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
@@ -435,23 +460,28 @@ describe JSON::LD::Reader do
     end
 
     context "advanced features" do
-      [
+      {
+        "number syntax (decimal)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3}),
           %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
+        "number syntax (double)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3e0}),
           %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
+        "number syntax (integer)" =>
         [
           %q({"@context": { "chem": "http://example/chem#"}, "chem:protons": 12}),
           %q(_:a <http://example/chem#protons> "12"^^<http://www.w3.org/2001/XMLSchema#integer> .)
         ],
+        "boolan syntax" =>
         [
           %q({"@context": { "sensor": "http://example/sensor#"}, "sensor:active": true}),
           %q(_:a <http://example/sensor#active> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .)
         ],
+        "Array top element" =>
         [
           %q([
             {"@subject":   "http://example.com/#me", "@type": "http://xmlns.com/foaf/0.1/Person"},
@@ -462,6 +492,7 @@ describe JSON::LD::Reader do
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
+        "@subject with array of objects value" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -475,24 +506,8 @@ describe JSON::LD::Reader do
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
-        [
-          %q({
-            "@context": {
-              "@base": "http://example.com/",
-              "foaf": "http://xmlns.com/foaf/0.1/"
-            },
-            "@subject": [
-              {"@subject":   "#me", "@type": "foaf:Person"},
-              {"@subject":   "#you", "@type": "foaf:Person"}
-            ]
-          }),
-          %q(
-            <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
-            <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
-          )
-        ],
-      ].each do |(js, nt)|
-        it "parses #{js}" do
+      }.each do |title, (js, nt)|
+        it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug)
         end
       end
