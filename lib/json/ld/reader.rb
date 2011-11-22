@@ -91,6 +91,13 @@ module JSON::LD
         v << "list[#{list.length}]=#{list}"
         v.join(", ") + "]"
       end
+      
+      def dup
+        # Also duplicate mappings
+        ec = super
+        ec.mappings = mappings.dup
+        ec
+      end
     end
 
     ##
@@ -173,8 +180,7 @@ module JSON::LD
         # the local context into the active context ...
         if element['@context']
           # Merge context
-          ec = parse_context(ec.dup, element['@context'])
-          prefixes.merge!(ec.mappings)  # Update parsed prefixes
+          ec = parse_context(ec, element['@context'])
         end
         
         # 2.2) Create a new associative array by mapping the keys from the current associative array ...
@@ -312,51 +318,65 @@ module JSON::LD
     # @raise [RDF::ReaderError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse_context(ec, context)
-      # Load context document, if it is a string
-      if context.is_a?(String)
-        begin
-          context = open(context.to_s) {|f| JSON.load(f)}
+      case context
+      when String
+        add_debug("parse_context", "remote: #{context}")
+        # Load context document, if it is a string
+        ctx = begin
+          open(context.to_s) {|f| JSON.load(f)}
         rescue JSON::ParserError => e
           raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}"
         end
-      end
-      
-      context.each do |key, value|
-        add_debug("parse_context(#{key})") {value.inspect}
-        case key
-        when '@vocab' then ec.vocab = value
-        when '@base'  then ec.base  = uri(value)
-        when '@coerce'
-          # Process after prefix mapping
-        else
-          raise RDF::ReaderError, "Term definition for #{key.inspect} is not an NCName" if
-            validate? && !key.empty? && !key.match(NC_REGEXP)
-          ec.mappings[key.to_s] = value
+        parse_context(ec, ctx)
+      when Array
+        # Process each member of the array in order, updating the active context
+        # Updates evaluation context serially during parsing
+        add_debug("parse_context", "Array")
+        context.each do |ctx|
+          ec = parse_context(ec, ctx)
         end
-      end
+        ec
+      when Hash
+        new_ec = ec.dup
+        context.each do |key, value|
+          value = expand_term(value, ec.base, ec) if value.is_a?(String) && value[0,1] != '@'
+          add_debug("parse_context(#{key})") {value.inspect}
+          case key
+          when '@vocab' then new_ec.vocab = value.to_s
+          when '@base'  then new_ec.base  = uri(value)
+          when '@coerce'
+            # Process after prefix mapping
+          else
+            raise RDF::ReaderError, "Term definition for #{key.inspect} is not an NCName" if
+              validate? && !key.empty? && !key.match(NC_REGEXP)
+            new_ec.mappings[key.to_s] = value
+          end
+        end
       
-      if context['@coerce']
-        # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
-        # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
-        # (e.g., { "@iri": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
-        # of { "@iri": "foaf:knows" }, or add to it.
-        add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
-        context['@coerce'].each do |type, property|
-          add_debug("parse_context: @coerce") {"type=#{type}, prop=#{property}"}
-          type_uri = expand_term(type, ec.vocab, ec).to_s
-          [property].flatten.compact.each do |prop|
-            p = expand_term(prop, ec.vocab, ec).to_s
-            if type == '@list'
-              # List is managed separate from types, as it is maintained in normal form.
-              ec.list << p unless ec.list.include?(p)
-            else
-              ec.coerce[p] = type_uri
+        if context['@coerce']
+          # Spec confusion: doc says to merge each key-value mapping to the local context's @coerce mapping,
+          # overwriting duplicate values. In the case where a mapping is indicated to a list of properties
+          # (e.g., { "@iri": ["foaf:homepage", "foaf:member"] }, does this overwrite a previous mapping
+          # of { "@iri": "foaf:knows" }, or add to it.
+          add_error RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
+          context['@coerce'].each do |type, property|
+            add_debug("parse_context: @coerce") {"type=#{type}, prop=#{property}"}
+            type_uri = expand_term(type, new_ec.vocab, new_ec).to_s
+            [property].flatten.compact.each do |prop|
+              p = expand_term(prop, new_ec.vocab, new_ec).to_s
+              if type == '@list'
+                # List is managed separate from types, as it is maintained in normal form.
+                new_ec.list << p unless new_ec.list.include?(p)
+              else
+                ec.coerce[p] = type_uri
+              end
             end
           end
         end
-      end
 
-      ec
+        prefixes.merge!(new_ec.mappings)  # Update parsed prefixes
+        new_ec
+      end
     end
 
     ##
@@ -403,14 +423,19 @@ module JSON::LD
     # @see http://json-ld.org/spec/ED/20110507/#markup-of-rdf-concepts
     def expand_term(term, base, ec)
       #add_debug("expand_term", {"term=#{term.inspect}, base=#{base.inspect}, ec=#{ec.inspect}"}
+      return term unless term.is_a?(String)
       prefix, suffix = term.split(":", 2)
       if prefix == '_'
+        add_debug("expand_term") { "bnode: #{term}"}
         bnode(suffix)
       elsif ec.mappings.has_key?(prefix)
+        add_debug("expand_term") { "prefix: #{prefix} => #{ec.mappings[prefix]} + #{suffix}"}
         uri(ec.mappings[prefix] + suffix.to_s)
       elsif base
+        add_debug("expand_term") { "base: #{base.inspect} + #{term}"}
         base.respond_to?(:join) ? base.join(term) : uri(base + term)
       else
+        add_debug("expand_term") { "uri: #{term}"}
         uri(term)
       end
     end

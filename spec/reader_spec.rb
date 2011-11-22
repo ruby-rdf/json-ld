@@ -123,7 +123,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -144,7 +144,7 @@ describe JSON::LD::Reader do
         ]
       }.each_pair do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -166,7 +166,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -204,7 +204,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -225,7 +225,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -312,7 +312,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -389,9 +389,73 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
           )
         ],
+        "sub-objects with context" => [
+          %q({
+            "@context": {"foo": "http://example.com/foo"},
+            "foo":  {
+              "@context": {"foo": "http://example.org/foo"},
+              "foo": "bar"
+            }
+          }),
+          %q(
+            _:a <http://example.com/foo> _:b .
+            _:b <http://example.org/foo> "bar" .
+          )
+        ],
+        "contexts with a list processed in order" => [
+          %q({
+            "@context": [
+              {"foo": "http://example.com/foo"},
+              {"foo": "http://example.org/foo"}
+            ],
+            "foo":  "bar"
+          }),
+          %q(
+            _:b <http://example.org/foo> "bar" .
+          )
+        ],
+        "term definition resolves term as IRI" => [
+          %q({
+            "@context": [
+              {"foo": "http://example.com/foo"},
+              {"bar": "foo"}
+            ],
+            "bar":  "bar"
+          }),
+          %q(
+            _:b <http://example.com/foo> "bar" .
+          )
+        ],
+        "term definition resolves prefix as IRI" => [
+          %q({
+            "@context": [
+              {"foo": "http://example.com/foo#"},
+              {"bar": "foo:bar"}
+            ],
+            "bar":  "bar"
+          }),
+          %q(
+            _:b <http://example.com/foo#bar> "bar" .
+          )
+        ],
+        "IRI resolution uses term from active context, not current context" => [
+          %q({
+            "@context": [
+              {"foo": "http://example.com/foo#"},
+              {
+                "foo": "not-this#",
+                "bar": "foo:bar"
+              }
+            ],
+            "bar":  "bar"
+          }),
+          %q(
+            _:b <http://example.com/foo#bar> "bar" .
+          )
+        ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
       
@@ -412,9 +476,129 @@ describe JSON::LD::Reader do
             end
 
             it "generates triples anyway" do
-              parse(js, :validate => false).should be_equivalent_graph(nt, :trace => @debug)
+              parse(js, :validate => false).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
             end
           end
+        end
+      end
+
+      context "coercion" do
+        context "@coerce block DEPRECATED" do
+          {
+            "dt with term" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "xsd:date": "foo"
+                  }
+                },
+                "foo": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#> "bar"^^xsd:date ] .
+              )
+            ],
+            "dt with prefix:suffix" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "xsd:date": "foo:bar"
+                  }
+                },
+                "foo:bar": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
+              )
+            ],
+            "dt with IRI" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#bar",
+                  "@coerce": {
+                    "xsd:date": "http://example.org/foo#bar"
+                  }
+                },
+                "http://example.org/foo#bar": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
+              )
+            ],
+            "dt with list" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#",
+                  "bar": "http://example.org/bar#",
+                  "@coerce": {
+                    "xsd:date": ["foo", "bar"]
+                  }
+                },
+                "foo": "bar",
+                "bar": "baz"
+              }),
+              %q(
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [
+                <http://example.org/foo#> "bar"^^xsd:date;
+                <http://example.org/bar#> "baz"^^xsd:date;
+              ] .
+              )
+            ],
+            "@iri with term" => [
+              %q({
+                "@context": {
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "@iri": "foo"
+                  }
+                },
+                "foo": "bar"
+              }),
+              %q(
+                _:a <http://example.org/foo#> <bar> .
+              )
+            ],
+          }.each do |title, (js, nt)|
+            it title do
+              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            end
+          end
+        end
+
+        context "term def with @iri + @coerce" do
+          {
+          }.each do |title, (js, nt)|
+            it title do
+              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            end
+          end
+        end
+
+        context "term def with iri => datatype" do
+        end
+      end
+
+      context "lists" do
+        context "@coerce block DEPRECATED" do
+        end
+
+        context "term def with @iri + @coerce + @list" do
+        end
+
+        context "term def with iri => {@list => datatype}" do
+        end
+
+        context "term def with iri => {@list => datatype}" do
         end
       end
 
@@ -531,7 +715,7 @@ describe JSON::LD::Reader do
         ],
       }.each do |title, (js, nt)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug)
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
     end
