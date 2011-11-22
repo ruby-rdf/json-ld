@@ -395,6 +395,29 @@ describe JSON::LD::Reader do
         end
       end
       
+      context "negative tests" do
+        {
+          "A term MUST have the lexical form of NCName" => [
+            %q({
+              "@context": {"1term": "http://example.com/foo"},
+              "1term": "bar"
+            }),
+            %q(_:a <http://example.com/foo> "bar"),
+            %q(Term definition for "1term" is not an NCName)
+          ],
+        }.each_pair do |title, (js, nt, message)|
+          context title do
+            it "raises #{message.inspect}" do
+              lambda { parse(js, :validate => true)}.should raise_error(RDF::ReaderError, message)
+            end
+
+            it "generates triples anyway" do
+              parse(js, :validate => false).should be_equivalent_graph(nt, :trace => @debug)
+            end
+          end
+        end
+      end
+
       context "remote" do
         before(:all) do
           @ctx = StringIO.new(%q(

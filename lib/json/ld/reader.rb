@@ -329,10 +329,8 @@ module JSON::LD
         when '@coerce'
           # Process after prefix mapping
         else
-          # Spec confusion: The text indicates to merge each key-value pair into the active context. Is any
-          # processing performed on the values. For instance, could a value be a CURIE, or {"@iri": <value>}?
-          # Examples indicate that there is no such processing, and each value should be an absolute IRI. The
-          # wording makes this unclear.
+          raise RDF::ReaderError, "Term definition for #{key.inspect} is not an NCName" if
+            validate? && !key.empty? && !key.match(NC_REGEXP)
           ec.mappings[key.to_s] = value
         end
       end
