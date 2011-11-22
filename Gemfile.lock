@@ -1,0 +1,45 @@
+PATH
+  remote: .
+  specs:
+    json-ld (0.0.8)
+      json (>= 1.5.1)
+      rdf (>= 0.3.4)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    addressable (2.2.6)
+    diff-lcs (1.1.3)
+    json (1.6.1)
+    open-uri-cached (0.0.4)
+    rdf (0.3.4.1)
+      addressable (>= 2.2.6)
+    rdf-isomorphic (0.3.4)
+      rdf (>= 0.3.4)
+    rdf-spec (0.3.4)
+      rspec (>= 2.6.0)
+    rdf-turtle (0.1.0)
+      rdf (>= 0.3.4)
+    rspec (2.7.0)
+      rspec-core (~> 2.7.0)
+      rspec-expectations (~> 2.7.0)
+      rspec-mocks (~> 2.7.0)
+    rspec-core (2.7.1)
+    rspec-expectations (2.7.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.7.0)
+    wirble (0.1.3)
+    yard (0.7.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  json-ld!
+  open-uri-cached (>= 0.0.4)
+  rdf-isomorphic (>= 0.3.4)
+  rdf-spec (>= 0.3.4)
+  rdf-turtle (>= 0.1.0)
+  rspec (>= 2.5.0)
+  wirble
+  yard (>= 0.6.0)
