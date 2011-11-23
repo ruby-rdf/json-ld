@@ -1,7 +1,7 @@
 # Spira class for manipulating test-manifest style test suites.
 # Used for SWAP tests
 require 'spira'
-require 'rdf/n3'
+require 'rdf/turtle'
 require 'open-uri'
 
 module Fixtures

@@ -232,7 +232,7 @@ describe JSON::LD::Reader do
 
     context "lists" do
       {
-        "Empty explicit list" =>
+        "Empty" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -243,7 +243,7 @@ describe JSON::LD::Reader do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-        "Explicit list single value" =>
+        "single value" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -256,51 +256,12 @@ describe JSON::LD::Reader do
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-        "Explicit list with multiple values" =>
+        "multiple values" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@subject": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {"@list": ["Manu Sporny", "Dave Longley"]}
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Dave Longley" .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
-          )
-        ],
-        "List coercion (empty)" =>
-        [
-          %q({
-            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
-            "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": []
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
-          )
-        ],
-        "List coercion (single)" =>
-        [
-          %q({
-            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
-            "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": ["Manu Sporny"]
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
-          )
-        ],
-        "List coercion (multiple)" =>
-        [
-          %q({
-            "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "@coerce": {"@list" : "foaf:knows"}},
-            "@subject": "http://greggkellogg.net/foaf#me",
-            "foaf:knows": ["Manu Sporny", "Dave Longley"]
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
@@ -577,6 +538,144 @@ describe JSON::LD::Reader do
 
         context "term def with @iri + @coerce" do
           {
+            "vocab expansion" => [
+              %q({
+                "@context": [
+                  {"@vocab": "http://example.org/"},
+                  {"foo": {}}
+                ],
+                "foo": "bar"
+              }),
+              %q(
+                _:a <http://example.org/foo> "bar" .
+              )
+            ],
+            "dt with term" => [
+              %q({
+                "@context": [
+                  {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
+                  {"foo": {"@iri": "term", "@coerce": "date"}}
+                ],
+                "foo": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#> "bar"^^xsd:date ] .
+              )
+            ],
+            "dt with prefix:suffix" => [
+              %q({
+                "@context": [
+                  {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
+                  {"foo": {"@iri": "prefix:bar", "@coerce": "xsd:date"}}
+                ],
+                "prefix:bar": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
+              )
+            ],
+            "dt with IRI" => [
+              %q({
+                "@context": [
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "http://www.w3.org/2001/XMLSchema#date"}}
+                ],
+                "http://example.org/foo#bar": "bar"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
+              )
+            ],
+            "@iri with term" => [
+              %q({
+                "@context": [
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri"}}
+                ],
+                "foo": "bar"
+              }),
+              %q(
+                _:a <http://example.org/foo#bar> <bar> .
+              )
+            ],
+          }.each do |title, (js, nt)|
+            it title do
+              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            end
+          end
+        end
+      end
+
+      context "lists" do
+        context "@coerce block DEPRECATED" do
+          {
+            "dt with term" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "xsd:date": "foo",
+                    "@list":    "foo"
+                  }
+                },
+                "foo": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "dt with prefix:suffix" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "xsd:date": "foo:bar",
+                    "@list":    "foo:bar"
+                  }
+                },
+                "foo:bar": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "dt with IRI" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "foo": "http://example.org/foo#bar",
+                  "@coerce": {
+                    "xsd:date": "http://example.org/foo#bar",
+                    "@list":    "http://example.org/foo#bar"
+                  }
+                },
+                "http://example.org/foo#bar": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "@iri with term" => [
+              %q({
+                "@context": {
+                  "foo": "http://example.org/foo#",
+                  "@coerce": {
+                    "@iri": "foo",
+                    "@list": "foo"
+                  }
+                },
+                "foo": ["bar"]
+              }),
+              %q(
+                _:a <http://example.org/foo#> (<bar>) .
+              )
+            ],
           }.each do |title, (js, nt)|
             it title do
               parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
@@ -584,21 +683,74 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with iri => datatype" do
-        end
-      end
-
-      context "lists" do
-        context "@coerce block DEPRECATED" do
-        end
-
         context "term def with @iri + @coerce + @list" do
-        end
-
-        context "term def with iri => {@list => datatype}" do
-        end
-
-        context "term def with iri => {@list => datatype}" do
+          {
+            "vocab expansion" => [
+              %q({
+                "@context": [
+                  {"@vocab": "http://example.org/"},
+                  {"foo": {"@list": true}}
+                ],
+                "foo": ["bar"]
+              }),
+              %q(
+                _:a <http://example.org/foo> ("bar") .
+              )
+            ],
+            "dt with term" => [
+              %q({
+                "@context": [
+                  {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
+                  {"foo": {"@iri": "term", "@coerce": "date", "@list": true}}
+                ],
+                "foo": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "dt with prefix:suffix" => [
+              %q({
+                "@context": [
+                  {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
+                  {"foo": {"@iri": "prefix:bar", "@coerce": "xsd:date", "@list": true}}
+                ],
+                "prefix:bar": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "dt with IRI" => [
+              %q({
+                "@context": [
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
+                ],
+                "http://example.org/foo#bar": ["bar"]
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
+              )
+            ],
+            "@iri with term" => [
+              %q({
+                "@context": [
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri", "@list": true}}
+                ],
+                "foo": ["bar"]
+              }),
+              %q(
+                _:a <http://example.org/foo#bar> (<bar>) .
+              )
+            ],
+          }.each do |title, (js, nt)|
+            it title do
+              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            end
+          end
         end
       end
 

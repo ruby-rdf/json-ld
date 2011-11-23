@@ -32,7 +32,7 @@ module JSON
     # @see http://json-ld.org/spec/ED/20110507/#the-default-context
     DEFAULT_CONTEXT = {
       '@coerce'       => {
-      '@iri'          => ['@type']
+        '@iri'          => ['@type']
       }
     }.freeze
 

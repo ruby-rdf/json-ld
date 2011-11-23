@@ -41,8 +41,7 @@ def detect_format(stream)
   case string
   when /<html/i           then RDF::RDFa::Reader
   when /\{\s*\"@\"/i      then JSON::LD::Reader
-  when /@(prefix|base)/i  then RDF::Turtle::Reader
-  else                         RDF::NTriples::Reader
+  else                         RDF::Turtle::Reader
   end
 end
 
