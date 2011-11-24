@@ -408,6 +408,7 @@ module JSON::LD
       when Hash
         new_ec = ec.dup
         context.each do |key, value|
+          # Expand a string value, unless it matches a keyword
           value = expand_term(value, ec.base, ec) if value.is_a?(String) && value[0,1] != '@'
           add_debug("#{path}parse_context(#{key})") {value.inspect}
           case key
@@ -417,23 +418,27 @@ module JSON::LD
             # Process after prefix mapping.
             # FIXME: deprectaed
           else
-            raise RDF::ReaderError, "Term definition for #{key.inspect} is not an NCName" if
-              validate? && !key.empty? && !key.match(NC_REGEXP)
-
             # If value is a Hash process contents
             case value
             when Hash
-              # Given @iri, expand it, otherwise resolve key relative to @vocab
-              new_ec.mappings[key.to_s] = if value["@iri"]
-                expand_term(value["@iri"], ec.base, ec)
-              else
-                # Expand term using vocab
-                expand_term(key.to_s, ec.vocab, ec)
-              end
+              if key.match(NC_REGEXP) || key.empty?
+                # It defines a term, look up @iri, or do vocab expansion
+                # Given @iri, expand it, otherwise resolve key relative to @vocab
+                new_ec.mappings[key] = if value["@iri"]
+                  expand_term(value["@iri"], ec.base, ec)
+                else
+                  # Expand term using vocab
+                  expand_term(key, ec.vocab, ec)
+                end
               
-              prop = new_ec.mappings[key.to_s].to_s
+                prop = new_ec.mappings[key].to_s
 
-              add_debug("#{path}parse_context") {"#{key} => #{prop.inspect}"}
+                add_debug("#{path}parse_context") {"Term definition #{key} => #{prop.inspect}"}
+              else
+                # It is not a term definition, and must be a prefix:suffix or IRI
+                prop = expand_term(key, ec.vocab, ec).to_s
+                add_debug("#{path}parse_context") {"No term definition #{key} => #{prop.inspect}"}
+              end
 
               # List inclusion
               if value["@list"]
@@ -490,7 +495,7 @@ module JSON::LD
               end
             else
               # Given a string (or URI), us it
-              new_ec.mappings[key.to_s] = value
+              new_ec.mappings[key] = value
             end
           end
         end

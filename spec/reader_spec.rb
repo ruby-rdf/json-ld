@@ -420,29 +420,6 @@ describe JSON::LD::Reader do
         end
       end
       
-      context "negative tests" do
-        {
-          "A term MUST have the lexical form of NCName" => [
-            %q({
-              "@context": {"1term": "http://example.com/foo"},
-              "1term": "bar"
-            }),
-            %q(_:a <http://example.com/foo> "bar"),
-            %q(Term definition for "1term" is not an NCName)
-          ],
-        }.each_pair do |title, (js, nt, message)|
-          context title do
-            it "raises #{message.inspect}" do
-              lambda { parse(js, :validate => true)}.should raise_error(RDF::ReaderError, message)
-            end
-
-            it "generates triples anyway" do
-              parse(js, :validate => false).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
-            end
-          end
-        end
-      end
-
       context "coercion" do
         context "@coerce block DEPRECATED" do
           {
@@ -529,6 +506,23 @@ describe JSON::LD::Reader do
                 _:a <http://example.org/foo#> <bar> .
               )
             ],
+            "coercion without term definition" => [
+              %q({
+                "@context": {
+                  "xsd": "http://www.w3.org/2001/XMLSchema#",
+                  "dc": "http://purl.org/dc/terms/",
+                  "@coerce": {
+                    "xsd:date": "dc:date"
+                  }
+                },
+                "dc:date": "2011-11-23"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                @prefix dc: <http://purl.org/dc/terms/> .
+                [ dc:date "2011-11-23"^^xsd:date] .
+              )
+            ],
           }.each do |title, (js, nt)|
             it title do
               parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
@@ -597,6 +591,25 @@ describe JSON::LD::Reader do
               }),
               %q(
                 _:a <http://example.org/foo#bar> <bar> .
+              )
+            ],
+            "coercion without term definition" => [
+              %q({
+                "@context": [
+                  {
+                    "xsd": "http://www.w3.org/2001/XMLSchema#",
+                    "dc": "http://purl.org/dc/terms/"
+                  },
+                  {
+                    "dc:date": {"@coerce": "xsd:date"}
+                  }
+                ],
+                "dc:date": "2011-11-23"
+              }),
+              %q(
+                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+                @prefix dc: <http://purl.org/dc/terms/> .
+                [ dc:date "2011-11-23"^^xsd:date] .
               )
             ],
           }.each do |title, (js, nt)|
