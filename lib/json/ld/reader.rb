@@ -392,9 +392,13 @@ module JSON::LD
         ctx = begin
           open(context.to_s) {|f| JSON.load(f)}
         rescue JSON::ParserError => e
-          raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}"
+          raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}" if validate?
         end
-        parse_context(path, ec, ctx)
+        if ctx.is_a?(Hash) && ctx["@context"]
+          parse_context(path, ec, ctx["@context"])
+        else
+          raise RDF::ReaderError, "Failed to retrieve @context from remote document at #{context}: #{e.message}" if validate?
+        end
       when Array
         # Process each member of the array in order, updating the active context
         # Updates evaluation context serially during parsing

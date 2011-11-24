@@ -756,8 +756,8 @@ describe JSON::LD::Reader do
 
       context "remote" do
         before(:all) do
-          @ctx = StringIO.new(%q(
-            {
+          @ctx = StringIO.new(%q({
+            "@context": {
               "name": "http://xmlns.com/foaf/0.1/name",
               "homepage": "http://xmlns.com/foaf/0.1/homepage",
               "avatar": "http://xmlns.com/foaf/0.1/avatar",
@@ -765,7 +765,7 @@ describe JSON::LD::Reader do
                 "@iri": ["homepage", "avatar"]
               }
             }
-          ))
+          }))
           def @ctx.content_type; "application/json"; end
           def @ctx.base_uri; "http://example.com/context"; end
         end
@@ -810,7 +810,7 @@ describe JSON::LD::Reader do
           )
           dbg = []
           graph = RDF::Graph.new
-          r = JSON::LD::Reader.new(js, :debug => dbg)
+          r = JSON::LD::Reader.new(js, :debug => dbg, :validate => true)
           r.stub!(:open).with("http://example.org/missing-context").and_raise(JSON::ParserError)
           
           lambda { graph << r }.should raise_error(RDF::ReaderError, /Failed to parse remote context/)
