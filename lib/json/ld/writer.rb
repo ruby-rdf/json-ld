@@ -61,13 +61,22 @@ module JSON::LD
     attr :base_uri
     # @attr [String] Vocabulary prefix used for relativizing IRIs
     attr :vocab
+    # @attr [Symbol] Default language used in context
+    attr :language
 
-    # Type coersion to use for serialization. Defaults to DEFAULT_COERCION
+    # Type coersion to use for serialization.
     #
-    # Maintained as a reverse mapping of `property` => `type`.
+    # Maintained as a mapping of `property IRI` => `datatype`.
     #
     # @attr [Hash{String => String}]
     attr :coerce, true
+
+    # List coersion to use for serialization.
+    #
+    # Maintained as a mapping of `property IRI` => `datatype`.
+    #
+    # @attr [Hash{String => String}]
+    attr :coerce_list, true
 
     ##
     # Local implementation of ruby Hash class to allow for ordering in 1.8.x implementations.
@@ -113,6 +122,9 @@ module JSON::LD
     #   Vocabulary prefix used for relativizing IRIs
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
+    # @option options [String, Hash{String => Object}] :context (DEFAULT_COERCE)
+    #   Context to use when serializing document, can be a string to reference are
+    #   remote context document. 
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer
     # @yieldreturn [void]
@@ -121,8 +133,13 @@ module JSON::LD
     def initialize(output = $stdout, options = {}, &block)
       super do
         @graph = RDF::Graph.new
-        @iri_to_prefix = DEFAULT_CONTEXT.dup.delete_if {|k,v| k == '@coerce'}.invert
-        @coerce = DEFAULT_COERCE.merge(options[:coerce] || {})
+        @language = options[:language].to_sym if options[:language]
+        @iri_to_prefix = {
+          RDF.to_uri.to_s => "rdf",
+          RDF::XSD.to_uri.to_s => "xsd"
+        }
+        @coerce = {}
+        @coerce_list = {}
         if block_given?
           case block.arity
             when 0 then instance_eval(&block)
@@ -138,7 +155,7 @@ module JSON::LD
     # @param  [Graph] graph
     # @return [void]
     def write_graph(graph)
-      add_debug {"Add graph #{graph.inspect}"}
+      debug {"Add graph #{graph.inspect}"}
       @graph = graph
     end
 
@@ -174,7 +191,7 @@ module JSON::LD
 
       reset
 
-      add_debug {"\nserialize: graph: #{@graph.size}"}
+      debug {"\nserialize: graph: #{@graph.size}, options: #{options.inspect}"}
 
       preprocess
       
@@ -223,35 +240,40 @@ module JSON::LD
     ##
     # Returns the representation of a IRI reference.
     #
-    # Spec confusion: should a subject URI be normalized?
+    # Spec confusion: should a subject IRI be normalized?
     #
     # @param  [RDF::URI] value
     # @param  [Hash{Symbol => Object}] options
     # @option options [:subject, :predicate, :object] position
     #   Useful when determining how to serialize.
     # @option options [RDF::URI] property
-    #   Property for object reference, which can be used to return
-    #   bare strings, rather than {"iri":}
+    #   Property for object reference, which can be used to return bare strings
     # @return [Object]
-    def format_uri(value, options = {})
-      result = case options[:position]
-      when :subject
-        # attempt base_uri replacement
-        short = value.to_s.sub(base_uri.to_s, "")
-        short == value.to_s ? (get_curie(value) || value.to_s) : short
-      when :predicate
-        # attempt vocab replacement
-        short = '@type' if value == RDF.type
-        short ||= value.to_s.sub(@vocab.to_s, "")
-        short == value.to_s ? (get_curie(value) || value.to_s) : short
-      else
-        # Encode like a subject
-        iri_range?(options[:property]) ?
-          format_uri(value, :position => :subject) :
-          {'@iri' => format_uri(value, :position => :subject)}
+    def format_iri(value, options = {})
+      return if [RDF.first, RDF.rest, RDF.nil].include?(value)
+
+      debug {"format_iri(#{options.inspect}, #{value.inspect})"}
+
+      result = depth do
+        case options[:position]
+        when :subject
+          # attempt base_uri replacement
+          short = value.to_s.sub(base_uri.to_s, "")
+          short == value.to_s ? (get_curie(value) || value.to_s) : short
+        when :predicate
+          # attempt vocab replacement
+          short = '@type' if value == RDF.type
+          short ||= value.to_s.sub(@vocab.to_s, "")
+          short == value.to_s ? (get_curie(value) || value.to_s) : short
+        else
+          # Encode like a subject
+          iri_range?(options[:property]) ?
+            format_iri(value, :position => :subject) :
+            {'@iri' => format_iri(value, :position => :subject)}
+        end
       end
     
-      add_debug {"format_uri(#{options.inspect}, #{value.inspect}) => #{result.inspect}"}
+      debug {"=> #{result.inspect}"}
       result
     end
     
@@ -262,7 +284,7 @@ module JSON::LD
     # @raise  [NotImplementedError] unless implemented in subclass
     # @abstract
     def format_node(value, options = {})
-      format_uri(value, options)
+      format_iri(value, options)
     end
 
     ##
@@ -274,60 +296,69 @@ module JSON::LD
     #   Property referencing literal for type coercion
     # @return [Object]
     def format_literal(literal, options = {})
-      if options[:normal] || @options[:normalize]
-        ret = new_hash
-        ret['@literal'] = literal.value
-        ret['@datatype'] = format_uri(literal.datatype, :position => :subject) if literal.has_datatype?
-        ret['@language'] = literal.language.to_s if literal.has_language?
-        return ret.delete_if {|k,v| v.nil?}
-      end
-
-      case literal
-      when RDF::Literal::Integer, RDF::Literal::Boolean
-        literal.object
-      when RDF::Literal
-        if datatype_range?(options[:property]) || !(literal.has_datatype? || literal.has_language?)
+      debug {"format_literal(#{options.inspect}, #{literal.inspect}): language: #{literal.language.inspect} vs #{language.inspect}"}
+      result = depth do
+        if options[:normal] || @options[:normalize]
+          debug {"=> normalize"}
+          ret = new_hash
+          ret['@literal'] = literal.value
+          ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
+          ret['@language'] = literal.language.to_s if literal.has_language?
+          ret.delete_if {|k,v| v.nil?}
+        elsif literal.is_a?(RDF::Literal::Integer) || literal.is_a?(RDF::Literal::Boolean)
+          debug {"=> object"}
+          literal.object
+        elsif datatype_range?(options[:property]) || (!literal.has_datatype? && literal.language == language)
           # Datatype coercion where literal has the same datatype
+          debug {"=> value"}
           literal.value
+        elsif literal.plain? && language
+          debug {"=> language = null"}
+          ret = new_hash
+          ret['@literal'] = literal.value
+          ret['@language'] = nil
+          ret
         else
-          format_literal(literal, :normal => true)
+          return format_literal(literal, :normal => true)
         end
       end
+
+      debug {"=> #{result.inspect}"}
+      result
     end
     
     ##
     # Serialize an RDF list
+    #
     # @param [RDF::URI] object
     # @param  [Hash{Symbol => Object}] options
     # @option options [RDF::URI] property
-    #   Property referencing literal for type coercion
+    #   Property referencing literal for type and list coercion
     # @return [Hash{"@list" => Array<Object>}]
     def format_list(object, options = {})
       predicate = options[:property]
-      list = []
+      list = RDF::List.new(object, @graph)
+      ary = []
 
-      add_debug {"format_list(#{object}, #{predicate})"}
+      debug {"format_list(#{list.inspect}, #{predicate})"}
 
-      @depth += 1
-      while object do
-        subject_done(object)
-        p = @graph.properties(object)
-        item = p.fetch(RDF.first.to_s, []).first
-        if item
-          add_debug {"format_list serialize #{item.inspect}"}
-          list << if predicate || item.literal?
-            property(predicate, item)
+      depth do
+        list.each_statement do |st|
+          next unless st.predicate == RDF.first
+          debug {" format_list this: #{st.subject} first: #{st.object}"}
+          ary << if predicate || st.object.literal?
+            property(predicate, st.object)
           else
-            subject(item)
+            subject(st.object)
           end
+          subject_done(st.subject)
         end
-        object = p.fetch(RDF.rest.to_s, []).first
       end
-      @depth -= 1
     
-      # Returns 
-      add_debug {"format_list => #{{'@list' => list}.inspect}"}
-      {'@list' => list}
+      # Returns
+      ary = {'@list' => ary} unless predicate && list_range?(predicate)
+      debug {"format_list => #{ary.inspect}"}
+      ary
     end
 
     private
@@ -335,41 +366,55 @@ module JSON::LD
     # Generate @context
     # @return [Hash]
     def start_document
+      debug("start_doc: create context")
+      debug {"=> base: #{base_uri.inspect}, vocab: #{vocab.inspect}, language: #{language.inspect}"}
+      debug {"=> prefixes: #{prefixes.inspect}"}
+      debug {"=> coerce: #{coerce.inspect}"}
+      debug {"=> coerce_list: #{coerce_list.inspect}"}
       ctx = new_hash
       ctx['@base'] = base_uri.to_s if base_uri
       ctx['@vocab'] = vocab.to_s if vocab
+      ctx['@language'] = language.to_s if language
       
       # Prefixes
       prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
-        next if DEFAULT_CONTEXT.has_key?(k.to_s)
-        add_debug {"prefix[#{k}] => #{prefixes[k]}"}
+        debug {"=> prefix[#{k}] => #{prefixes[k]}"}
         ctx[k.to_s] = prefixes[k].to_s
       end
       
-      # Coerce
-      add_debug {"start_doc: coerce= #{coerce.inspect}"}
-      unless coerce == DEFAULT_COERCE
-        c_h = new_hash
-        coerce.keys.sort.each do |k|
+      unless coerce.empty? && coerce_list.empty?
+        ctx2 = new_hash
+
+        # Coerce
+        (coerce.keys + coerce_list.keys).uniq.sort.each do |k|
           next if ['@type', RDF.type.to_s].include?(k.to_s)
-          next if [DEFAULT_COERCE[k], false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
-          k_iri = k == '@iri' ? '@iri' : format_uri(k, :position => :predicate)
-          d_iri = format_uri(coerce[k], :position => :subject)
-          add_debug {"coerce[#{k_iri}] => #{d_iri}, k=#{k.inspect}"}
-          case c_h[d_iri]
-          when nil
-            c_h[d_iri] = k_iri
-          when Array
-            c_h[d_iri] << k_iri
-          else
-            c_h[d_iri] = [c_h[d_iri], k_iri]
+
+          k_iri = format_iri(k, :position => :predicate)
+
+          if coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
+            ctx2[k_iri.to_s] = new_hash
+            ctx2[k_iri.to_s]['@coerce'] = format_iri(coerce[k], :position => :subject)
+            debug {"=> coerce[#{k_iri}] => #{ctx2[k_iri.to_s]['@coerce']}"}
+          end
+        
+          if coerce_list[k]
+            ctx2[k_iri.to_s] ||= new_hash
+            ctx2[k_iri.to_s]['@list'] = true
+            debug {"=> coerce_list[#{k_iri}] => true"}
           end
         end
         
-        ctx['@coerce'] = c_h unless c_h.empty?
+        # Separate contexts, so uses of prefixes are defined after the definitions of prefixes
+        ctx = if ctx.empty?
+          ctx2
+        elsif ctx2.empty?
+          ctx
+        else
+          [ctx, ctx2]
+        end
       end
 
-      add_debug {"start_doc: context=#{ctx.inspect}"}
+      debug {"start_doc: context=#{ctx.inspect}"}
 
       # Return hash with @context, or empty
       r = new_hash
@@ -390,21 +435,28 @@ module JSON::LD
     
     # Perform any statement preprocessing required. This is used to perform reference counts and determine required
     # prefixes.
+    #
     # @param [Statement] statement
     def preprocess_statement(statement)
-      add_debug {"preprocess: #{statement.inspect}"}
+      debug {"preprocess: #{statement.inspect}"}
       references = ref_count(statement.object) + 1
       @references[statement.object] = references
       @subjects[statement.subject] = true
       
-      # Pre-fetch qnames, to fill prefixes
-      get_curie(statement.subject)
-      get_curie(statement.predicate)
-      if statement.object.literal?
-        datatype_range?(statement.predicate)  # To figure out coercion requirements
-      else
-        iri_range?(statement.predicate)
-        get_curie(statement.object)
+      depth do
+        # Pre-fetch qnames, to fill prefixes
+        format_iri(statement.subject, :position => :subject)
+        format_iri(statement.predicate, :position => :predicate)
+      
+        # To figure out coercion requirements
+        if statement.object.literal?
+          format_literal(statement.object, :property => statement.predicate)
+          datatype_range?(statement.predicate)
+        else
+          format_iri(statement.object, :position => :subject)
+          iri_range?(statement.predicate)
+        end
+        list_range?(statement.predicate)
       end
 
       @references[statement.predicate] = ref_count(statement.predicate) + 1
@@ -420,7 +472,7 @@ module JSON::LD
 
       subject_done(subject)
       properties = @graph.properties(subject)
-      add_debug {"subject: #{subject.inspect}, props: #{properties.inspect}"}
+      debug {"subject: #{subject.inspect}, props: #{properties.inspect}"}
 
       @graph.query(:subject => subject).each do |st|
         raise RDF::WriterError, "Illegal use of predicate #{st.predicate.inspect}, not supported in RDF/XML" unless st.predicate.uri?
@@ -432,7 +484,7 @@ module JSON::LD
 
       # Subject may be a list
       if is_valid_list?(subject)
-        add_debug "subject is a list"
+        debug "subject is a list"
         defn['@subject'] = format_list(subject)
         properties.delete(RDF.first.to_s)
         properties.delete(RDF.rest.to_s)
@@ -440,27 +492,27 @@ module JSON::LD
         # Special case, if there are no properties, then we can just serialize the list itself
         return defn if properties.empty?
       elsif subject.uri? || ref_count(subject) > 1
-        add_debug "subject is a uri"
+        debug "subject is a uri"
         # Don't need to set subject if it's a Node without references
-        defn['@subject'] = format_uri(subject, :position => :subject)
+        defn['@subject'] = format_iri(subject, :position => :subject)
       else
-        add_debug "subject is an unreferenced BNode"
+        debug "subject is an unreferenced BNode"
       end
 
       prop_list = order_properties(properties)
-      #add_debug {"=> property order: #{prop_list.to_sentence}"}
+      debug {"=> property order: #{prop_list.inspect}"}
 
       prop_list.each do |prop|
         predicate = RDF::URI.intern(prop)
 
-        p_iri = format_uri(predicate, :position => :predicate)
-        @depth += 1
-        defn[p_iri] = property(predicate, properties[prop])
-        add_debug {"prop(#{p_iri}) => #{properties[prop]} => #{defn[p_iri].inspect}"}
-        @depth -= 1
+        p_iri = format_iri(predicate, :position => :predicate)
+        depth do
+          defn[p_iri] = property(predicate, properties[prop])
+          debug {"prop(#{p_iri}) => #{properties[prop]} => #{defn[p_iri].inspect}"}
+        end
       end
       
-      add_debug {"subject: #{subject} has defn: #{defn.inspect}"}
+      debug {"subject: #{subject} has defn: #{defn.inspect}"}
       defn
     end
     
@@ -484,7 +536,7 @@ module JSON::LD
         if is_valid_list?(objects)
           format_list(objects, :property => predicate)
         elsif is_done?(objects) || !@subjects.include?(objects)
-          format_uri(objects, :position => :object, :property => predicate)
+          format_iri(objects, :position => :object, :property => predicate)
         else
           subject(objects, :property => predicate)
         end
@@ -496,7 +548,7 @@ module JSON::LD
     # @param [RDF::Resource] resource
     # @return [String, nil] value to use to identify IRI
     def get_curie(resource)
-      add_debug {"get_curie(#{resource.inspect})"}
+      debug {"get_curie(#{resource.inspect})"}
       case resource
       when RDF::Node
         return resource.to_s
@@ -517,11 +569,13 @@ module JSON::LD
       when u = @iri_to_prefix.keys.detect {|u| iri.index(u.to_s) == 0}
         # Use a defined prefix
         prefix = @iri_to_prefix[u]
+        debug {"add prefix #{prefix} for #{u}"}
         prefix(prefix, u)  # Define for output
         iri.sub(u.to_s, "#{prefix}:")
       when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
         prefix = vocab.__name__.to_s.split('::').last.downcase
         @iri_to_prefix[vocab.to_uri.to_s] = prefix
+        debug {"add prefix #{prefix} for #{u}"}
         prefix(prefix, vocab.to_uri) # Define for output
         iri.sub(vocab.to_uri.to_s, "#{prefix}:")
       else
@@ -543,7 +597,7 @@ module JSON::LD
       prop_list = []
       
       properties.keys.sort do |a,b|
-        format_uri(a, :position => :predicate) <=> format_uri(b, :position => :predicate)
+        format_iri(a, :position => :predicate) <=> format_iri(b, :position => :predicate)
       end.each do |prop|
         prop_list << prop.to_s
       end
@@ -589,7 +643,7 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def iri_range?(predicate)
-      return false if predicate.nil? || @options[:normalize]
+      return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:normalize]
 
       unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal
@@ -597,7 +651,7 @@ module JSON::LD
           false : '@iri'
       end
       
-      add_debug {"iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"}
+      debug {"iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"}
       coerce[predicate.to_s] == '@iri'
     end
     
@@ -611,18 +665,41 @@ module JSON::LD
         # and have the same non-nil datatype
         dt = nil
         @graph.query(:predicate => predicate) do |st|
+          debug {"datatype_range? literal? #{st.object.literal?.inspect} dt? #{(st.object.literal? && st.object.has_datatype?).inspect}"}
           if st.object.literal? && st.object.has_datatype?
             dt = st.object.datatype.to_s if dt.nil?
+            debug {"=> dt: #{st.object.datatype}"}
             dt = false unless dt == st.object.datatype.to_s
           else
             dt = false
           end
         end
-        add_debug {"range(#{predicate}) = #{dt.inspect}"}
+        get_curie(dt) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
+        debug {"range(#{predicate}) = #{dt.inspect}"}
         coerce[predicate.to_s] = dt
       end
 
       coerce[predicate.to_s]
+    end
+    
+    ##
+    # Is every use of the predicate an RDF Collection?
+    #
+    # @param [RDF::URI] predicate
+    # @return [Boolean]
+    def list_range?(predicate)
+      return false if [RDF.first, RDF.rest].include?(predicate)
+
+      unless coerce_list.has_key?(predicate.to_s)
+        # objects of all statements with the predicate must be a list
+         # objects of all statements with the predicate may not be literal
+        coerce_list[predicate.to_s] = @graph.query(:predicate => predicate).to_a.all? do |st|
+          is_valid_list?(st.object)
+        end
+        debug {"list(#{predicate}) = #{coerce_list[predicate.to_s].inspect}"}
+      end
+
+      coerce_list[predicate.to_s]
     end
     
     # Reset internal helper instance variables
@@ -634,43 +711,10 @@ module JSON::LD
       @iri_to_curie = {}
     end
 
-    # Add debug event to debug array, if specified
-    #
-    # @param [String] message
-    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
-    def add_debug(message = "")
-      return unless ::JSON::LD.debug? || @options[:debug]
-      message = message + yield if block_given?
-      msg = "#{" " * @depth * 2}#{message}"
-      STDERR.puts msg if ::JSON::LD::debug?
-      @debug << msg if @debug.is_a?(Array)
-    end
-    
     # Checks if l is a valid RDF list, i.e. no nodes have other properties.
     def is_valid_list?(l)
-      props = @graph.properties(l)
-      unless l.node? && props.has_key?(RDF.first.to_s) || l == RDF.nil
-        add_debug {"is_valid_list: false, #{l.inspect}: #{props.inspect}"}
-        return false
-      end
-
-      while l && l != RDF.nil do
-        #add_debug {"is_valid_list(length): #{props.length}"}
-        return false unless props.has_key?(RDF.first.to_s) && props.has_key?(RDF.rest.to_s)
-        n = props[RDF.rest.to_s]
-        unless n.is_a?(Array) && n.length == 1
-          add_debug {"is_valid_list: false, #{n.inspect}"}
-          return false
-        end
-        l = n.first
-        unless l.node? || l == RDF.nil
-          add_debug {"is_valid_list: false, #{l.inspect}"}
-          return false
-        end
-        props = @graph.properties(l)
-      end
-      add_debug {"is_valid_list: valid"}
-      true
+      #debug {"is_valid_list: #{l.inspect}"}
+      return RDF::List.new(l, @graph).valid?
     end
 
     def is_done?(subject)
@@ -680,6 +724,26 @@ module JSON::LD
     # Mark a subject as done.
     def subject_done(subject)
       @serialized[subject] = true
+    end
+
+    # Add debug event to debug array, if specified
+    #
+    # @param [String] message
+    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    def debug(message = "")
+      return unless ::JSON::LD.debug? || @options[:debug]
+      message = message + yield if block_given?
+      msg = "#{" " * @depth * 2}#{message}"
+      STDERR.puts msg if ::JSON::LD::debug?
+      @debug << msg if @debug.is_a?(Array)
+    end
+    
+    # Increase depth around a method invocation
+    def depth
+      @depth += 1
+      ret = yield
+      @depth -= 1
+      ret
     end
   end
 end

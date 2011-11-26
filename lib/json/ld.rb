@@ -28,22 +28,6 @@ module JSON
     autoload :VERSION,    'json/ld/version'
     autoload :Writer,     'json/ld/writer'
     
-    # Default context
-    # @see http://json-ld.org/spec/ED/20110507/#the-default-context
-    DEFAULT_CONTEXT = {
-      '@coerce'       => {
-        '@iri'          => ['@type']
-      }
-    }.freeze
-
-    # Default type coercion, in property => datatype order
-    DEFAULT_COERCE = {
-      '@type'            => '@iri',
-      RDF.first.to_s  => false,            # Make sure @coerce isn't generated for this
-      RDF.rest.to_s   => '@iri',
-    }.freeze
-
-
     # Regexp matching an NCName.
     NC_REGEXP = Regexp.new(
       %{^
