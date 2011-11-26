@@ -53,12 +53,11 @@ module JSON::LD
       # Type coersion
       #
       # The @coerce keyword is used to specify type coersion rules for the data. For each key in the map, the
-      # key is the type to be coerced to and the value is the vocabulary term to be coerced. Type coersion for
-      # the key `@iri` asserts that all vocabulary terms listed should undergo coercion to an IRI,
-      # including `@base` processing for relative IRIs and CURIE processing for compact URI Expressions like
+      # key is a String representation of the property for which String values will be coerced and
+      # the value is the datatype (or @iri) to coerce to. Type coersion for
+      # the value `@iri` asserts that all vocabulary terms listed should undergo coercion to an IRI,
+      # including `@base` processing for relative IRIs and CURIE processing for compact IRI Expressions like
       # `foaf:homepage`.
-      #
-      # As the value may be an array, this is maintained as a reverse mapping of `property` => `type`.
       #
       # @attr [Hash{String => String}]
       attr :coerce, true
@@ -69,6 +68,12 @@ module JSON::LD
       # as an ordered list, rather than a normal unordered list
       # @attr [Array<String>]
       attr :list, true
+      
+      # Default language
+      #
+      # This adds a language to plain strings that aren't otherwise coerced
+      # @attrs [Symbol]
+      attr :language, true
 
       ##
       # Create new evaluation context
@@ -281,7 +286,7 @@ module JSON::LD
         elsif ec.coerce[property.to_s]
           RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
         else
-          RDF::Literal.new(element)
+          RDF::Literal.new(element, :language => ec.language)
         end
       when Float
         object = RDF::Literal::Double.new(element)
@@ -412,8 +417,9 @@ module JSON::LD
           value = expand_term(value, ec.base, ec) if value.is_a?(String) && value[0,1] != '@'
           add_debug("#{path}parse_context(#{key})") {value.inspect}
           case key
-          when '@vocab' then new_ec.vocab = value.to_s
-          when '@base'  then new_ec.base  = uri(value)
+          when '@vocab'    then new_ec.vocab = value.to_s
+          when '@base'     then new_ec.base  = uri(value)
+          when '@language' then new_ec.language = value.to_s.to_sym
           when '@coerce'
             # Process after prefix mapping.
             # FIXME: deprectaed

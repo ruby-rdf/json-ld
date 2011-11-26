@@ -414,6 +414,18 @@ describe JSON::LD::Reader do
             _:b <http://example.com/foo#bar> "bar" .
           )
         ],
+        "@language" => [
+          %q({
+            "@context": {
+              "foo": "http://example.com/foo#",
+              "@language": "en"
+            },
+            "foo:bar":  "baz"
+          }),
+          %q(
+            _:a <http://example.com/foo#bar> "baz"@en .
+          )
+        ],
       }.each do |title, (js, nt)|
         it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
