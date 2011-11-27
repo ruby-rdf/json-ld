@@ -69,18 +69,6 @@ module JSON::LD
       yield(self) if block_given?
     end
 
-    # Create an Evaluation Context by parsing the input.
-    #
-    # @param [IO, Array, Hash, String] input
-    # @return [EvaluationContext] context
-    # @raise [IOError]
-    #   on a remote context load error, syntax error, or a reference to a term which is not defined.
-    # @yield debug
-    # @yieldparam [Proc] block to call for debug output
-    def self.parse(context)
-      EvaluationContext.new.parse(context)
-    end
-
     # Create an Evaluation Context using an existing context as a start by parsing the input.
     #
     # @param [IO, Array, Hash, String] input
@@ -92,6 +80,7 @@ module JSON::LD
     def parse(context)
       case context
       when EvaluationContext
+        yield lambda {"context: #{context.inspect}"}
         context.dup
       when IO, StringIO
         yield lambda {"io: #{context}"} if block_given?
@@ -164,6 +153,7 @@ module JSON::LD
               end
 
               # Coercion
+              value["@coerce"] = value["@datatype"] if value.has_key?("@datatype") && !value.has_key?("@coerce")
               case value["@coerce"]
               when Array
                 # With an array, there can be two items, one of which must be @list

@@ -629,6 +629,17 @@ describe JSON::LD::Reader do
                 _:a <http://example.org/foo#bar> <bar> .
               )
             ],
+            "@datatype as synonym for @coerce" => [
+              %q({
+                "@context": [
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri"}}
+                ],
+                "foo": "bar"
+              }),
+              %q(
+                _:a <http://example.org/foo#bar> <bar> .
+              )
+            ],
             "coercion without term definition" => [
               %q({
                 "@context": [
