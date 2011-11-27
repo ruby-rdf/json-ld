@@ -59,7 +59,7 @@ module JSON::LD
     # @yield [ec]
     # @yieldparam [EvaluationContext]
     # @return [EvaluationContext]
-    def initialize(options)
+    def initialize(options = {})
       @base = nil
       @mappings =  {}
       @vocab = nil
@@ -91,6 +91,8 @@ module JSON::LD
     # @yieldparam [Proc] block to call for debug output
     def parse(context)
       case context
+      when EvaluationContext
+        context.dup
       when IO, StringIO
         yield lambda {"io: #{context}"} if block_given?
         # Load context document, if it is a string
@@ -305,7 +307,7 @@ module JSON::LD
     end
 
     def inspect
-      v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}='#{self.send(a).inspect}'"}
+      v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}=#{self.send(a).inspect}"}
       v << "mappings[#{mappings.keys.length}]=#{mappings}"
       v << "coerce[#{coerce.keys.length}]=#{coerce}"
       v << "list[#{list.length}]=#{list}"
