@@ -23,10 +23,11 @@ module JSON
     require 'json'
     require 'json/ld/extensions'
     require 'json/ld/format'
-    autoload :Normalize,  'json/ld/normalize'
-    autoload :Reader,     'json/ld/reader'
-    autoload :VERSION,    'json/ld/version'
-    autoload :Writer,     'json/ld/writer'
+    autoload :EvaluationContext,  'json/ld/evaluation_context'
+    autoload :Normalize,          'json/ld/normalize'
+    autoload :Reader,             'json/ld/reader'
+    autoload :VERSION,            'json/ld/version'
+    autoload :Writer,             'json/ld/writer'
     
     # Regexp matching an NCName.
     NC_REGEXP = Regexp.new(

@@ -817,7 +817,9 @@ describe JSON::LD::Reader do
           dbg = []
           graph = RDF::Graph.new
           r = JSON::LD::Reader.new(js, :debug => dbg)
-          r.stub!(:open).with("http://example.org/json-ld-contexts/person").and_yield(@ctx)
+          JSON::LD::EvaluationContext.any_instance.
+            stub(:open).with("http://example.org/json-ld-contexts/person").
+            and_yield(@ctx)
           
           graph << r
           graph.should be_equivalent_graph(ttl, :trace => dbg)
@@ -836,7 +838,9 @@ describe JSON::LD::Reader do
           dbg = []
           graph = RDF::Graph.new
           r = JSON::LD::Reader.new(js, :debug => dbg, :validate => true)
-          r.stub!(:open).with("http://example.org/missing-context").and_raise(JSON::ParserError)
+          JSON::LD::EvaluationContext.any_instance.
+            stub(:open).with("http://example.org/missing-context").
+            and_raise(JSON::ParserError)
           
           lambda { graph << r }.should raise_error(RDF::ReaderError, /Failed to parse remote context/)
         end
