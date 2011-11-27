@@ -47,7 +47,7 @@ module JSON::LD
   #     end
   #   end
   #
-  # Select the :normalize option to output JSON-LD in canonical form
+  # Select the :expand option to output JSON-LD in expanded form
   #
   # @see http://json-ld.org/spec/ED/20110507/
   # @see http://json-ld.org/spec/ED/20110507/#the-normalization-algorithm
@@ -112,8 +112,8 @@ module JSON::LD
     #   the encoding to use on the output stream (Ruby 1.9+)
     # @option options [Boolean]  :canonicalize (false)
     #   whether to canonicalize literals when serializing
-    # @option options [Boolean] :normalize (false)
-    #   Output document in [normalized form](http://json-ld.org/spec/latest/#normalization-1)
+    # @option options [Boolean] :expand (false)
+    #   Output document in [expanded form](http://json-ld.org/spec/latest/json-ld-api/#expansion)
     # @option options [Hash]     :prefixes     (Hash.new)
     #   the prefix mappings to use (not supported by all writers)
     # @option options [#to_s]    :base_uri     (nil)
@@ -185,8 +185,8 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
-      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:normalize]
-      @vocab = @options[:vocab] unless @options[:normalize]
+      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:expand]
+      @vocab = @options[:vocab] unless @options[:expand]
       @debug = @options[:debug]
 
       reset
@@ -196,7 +196,7 @@ module JSON::LD
       preprocess
       
       # Don't generate context for canonical output
-      json_hash = @options[:normalize] ? new_hash : start_document
+      json_hash = @options[:expand] ? new_hash : start_document
 
       elements = []
       order_subjects.each do |subject|
@@ -296,10 +296,10 @@ module JSON::LD
     #   Property referencing literal for type coercion
     # @return [Object]
     def format_literal(literal, options = {})
-      debug {"format_literal(#{options.inspect}, #{literal.inspect}): language: #{literal.language.inspect} vs #{language.inspect}"}
+      debug {"format_literal(#{options.inspect}, #{literal.inspect})"}
       result = depth do
-        if options[:normal] || @options[:normalize]
-          debug {"=> normalize"}
+        if options[:expand] || @options[:normalize]
+          debug {"=> expand"}
           ret = new_hash
           ret['@literal'] = literal.value
           ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
@@ -319,7 +319,12 @@ module JSON::LD
           ret['@language'] = nil
           ret
         else
-          return format_literal(literal, :normal => true)
+          debug {"=> @literal"}
+          ret = new_hash
+          ret['@literal'] = literal.value
+          ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
+          ret['@language'] = literal.language.to_s if literal.has_language?
+          ret
         end
       end
 
@@ -478,7 +483,7 @@ module JSON::LD
         raise RDF::WriterError, "Illegal use of predicate #{st.predicate.inspect}, not supported in RDF/XML" unless st.predicate.uri?
       end
 
-      if subject.node? && ref_count(subject) > (options[:property] ? 1 : 0) && options[:normalize]
+      if subject.node? && ref_count(subject) > (options[:property] ? 1 : 0) && options[:expand]
         raise RDF::WriterError, "Can't serialize named node when normalizing"
       end
 
@@ -558,7 +563,7 @@ module JSON::LD
         return nil unless resource.absolute?
       when RDF::URI
         iri = resource.to_s
-        return iri if options[:normalize]
+        return iri if options[:expand]
       else
         return nil
       end
@@ -571,13 +576,13 @@ module JSON::LD
         prefix = @iri_to_prefix[u]
         debug {"add prefix #{prefix} for #{u}"}
         prefix(prefix, u)  # Define for output
-        iri.sub(u.to_s, "#{prefix}:")
+        iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
       when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
         prefix = vocab.__name__.to_s.split('::').last.downcase
         @iri_to_prefix[vocab.to_uri.to_s] = prefix
-        debug {"add prefix #{prefix} for #{u}"}
+        debug {"add prefix #{prefix} for #{vocab.to_uri}"}
         prefix(prefix, vocab.to_uri) # Define for output
-        iri.sub(vocab.to_uri.to_s, "#{prefix}:")
+        iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
       else
         nil
       end
@@ -615,7 +620,7 @@ module JSON::LD
       
       return @subjects.keys.sort do |a,b|
         format_iri(a, :position => :subject) <=> format_iri(b, :position => :subject)
-      end if @options[:normalize]
+      end if @options[:expand]
 
       # Start with base_uri
       if base_uri && @subjects.keys.include?(base_uri)
@@ -643,7 +648,7 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def iri_range?(predicate)
-      return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:normalize]
+      return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:expand]
 
       unless coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal

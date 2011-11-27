@@ -80,16 +80,16 @@ describe JSON::LD::Writer do
       }, @debug)
     end
     
-    it "should use CURIEs with empty suffix" do
+    it "should use terms if no suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       serialize(input, :standard_prefixes => true).
       should produce({
         "@context" => [
           {"foaf" => "http://xmlns.com/foaf/0.1/"},
-          {"foaf:" => {"@coerce" => "@iri"}}
+          {"foaf" => {"@coerce" => "@iri"}}
         ],
-        '@subject'   => "foaf:",
-        "foaf:"   => "foaf:"
+        '@subject'   => "foaf",
+        "foaf"   => "foaf"
       }, @debug)
     end
     
@@ -613,39 +613,83 @@ describe JSON::LD::Writer do
     end
   end
   
-  context "normalization" do
+  context "expansion" do
     [
       [
         %q(<http://a/b> <http://a/c> <http://a/d> .),
-        %q({"@subject":"http://a/b","http://a/c":{"@iri":"http://a/d"}})
+        {"@subject" => "http://a/b", "http://a/c" => {"@iri" => "http://a/d"}}
       ],
       [
         %q(<http://a/b> <http://a/c> "d" .),
-        %q({"@subject":"http://a/b","http://a/c":{"@literal":"d"}})
+        {"@subject" => "http://a/b", "http://a/c" => "d"}
       ],
       [
         %q(<http://a/b> <http://a/c> "e", "d" .),
-        %q({"@subject":"http://a/b","http://a/c":[{"@literal":"d"},{"@literal":"e"}]})
+        {"@subject" => "http://a/b", "http://a/c" => ["d", "e"]}
       ],
     ].each do |(input,output)|
-      it "serializes #{input.inspect} to #{output.inspect}" do
-        g = parse(input)
-        result = JSON::LD::Writer.buffer(:normalize => true) {|writer| writer << g}
-        result.should == output
+      it "serializes #{input.inspect} to #{output}" do
+        serialize(input, :expand => true).should produce(output, @debug)
       end
     end
   end
   
+  context "Test Files" do
+    Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
+      test = File.basename(filename).sub(/-input\..*$/, '')
+      compacted = filename.sub(/-input\..*$/, '-compacted.json')
+      expanded = filename.sub(/-input\..*$/, '-expanded.json')
+      native = filename.sub(/-input\..*$/, '-native.json')
+      ttl = filename.sub(/-input\..*$/, '-ttl.ttl')
+      
+      context test do
+        before(:all) do
+          @prefixes = {}
+          @graph = RDF::Graph.load(filename, :prefixes => @prefixes)
+        end
+
+        it "parses input" do
+          @graph.should_not be_empty
+        end
+        
+        it "compacts" do
+          r = serialize(@graph, :compact => true, :prefixes => @prefixes)
+          r.should produce(JSON.load(File.open(compacted)), @debug)
+        end if File.exist?(compacted)
+        
+        it "expands" do
+          r = serialize(@graph, :expand => true, :prefixes => @prefixes)
+          r.should produce(JSON.load(File.open(expanded)), @debug)
+        end if File.exist?(expanded)
+        
+        it "native" do
+          r = serialize(@graph, :prefixes => @prefixes, :standard_prefixes => true)
+          r.should produce(JSON.load(File.open(native)), @debug)
+        end if File.exist?(native)
+        
+        it "Turtle" do
+          @graph.should be_equivalent_graph(RDF::Graph.load(ttl))
+        end if File.exist?(ttl)
+      end
+    end
+  end
+
   def parse(input, options = {})
     RDF::Graph.new << RDF::Turtle::Reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
-    g = parse(ntstr, options)
+    g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug = [] << g.dump(:ttl)
-    result = JSON::LD::Writer.hash(options.merge(:debug => @debug)) do |writer|
-      writer << g
+    result = if options[:to_string]
+      JSON::LD::Writer.buffer(options.merge(:debug => @debug)) do |writer|
+        writer << g
+      end
+    else
+      JSON::LD::Writer.hash(options.merge(:debug => @debug)) do |writer|
+        writer << g
+      end
     end
     if $verbose
       #puts hash.to_json
