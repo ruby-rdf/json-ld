@@ -84,7 +84,7 @@ module JSON::LD
     # @yield :resource
     # @yieldparam [RDF::Resource] :resource
     def traverse(path, element, subject, property, ec)
-      add_debug(path) {"traverse: s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
+      debug(path) {"traverse: s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
 
       traverse_result = case element
       when Hash
@@ -92,7 +92,7 @@ module JSON::LD
         # the local context into the active context ...
         if element['@context']
           # Merge context
-          ec = ec.parse(element['@context']) {|block| add_debug("#{path}[@context]", &block)}
+          ec = ec.parse(element['@context']) {|block| debug("#{path}[@context]", &block)}
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
@@ -103,7 +103,7 @@ module JSON::LD
           new_element[k] = v
         end
         unless element == new_element
-          add_debug(path) {"traverse: keys after map: #{new_element.keys.inspect}"}
+          debug(path) {"traverse: keys after map: #{new_element.keys.inspect}"}
           element = new_element
         end
 
@@ -182,7 +182,7 @@ module JSON::LD
         nil # No real value returned from an array
       when String
         # Perform coersion of the value, or generate a literal
-        add_debug(path) do
+        debug(path) do
           "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, " +
           "ec=#{ec.coerce.inspect}"
         end
@@ -199,15 +199,15 @@ module JSON::LD
         end
       when Float
         object = RDF::Literal::Double.new(element)
-        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
+        debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         object
       when Fixnum
         object = RDF::Literal.new(element)
-        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
+        debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         object
       when TrueClass, FalseClass
         object = RDF::Literal::Boolean.new(element)
-        add_debug(path) {"traverse(#{element}): native: #{object.inspect}"}
+        debug(path) {"traverse(#{element}): native: #{object.inspect}"}
         object
       else
         raise RDF::ReaderError, "Traverse to unknown element: #{element.inspect} of type #{element.class}"
@@ -236,7 +236,7 @@ module JSON::LD
     #   BNode or nil for head of list
     # @yieldparam [RDF::Resource] :resource
     def parse_list(path, list, subject, property, ec)
-      add_debug(path) {"list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
+      debug(path) {"list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? RDF::Node.new : RDF.nil
@@ -274,7 +274,7 @@ module JSON::LD
     def add_triple(path, subject, predicate, object)
       predicate = RDF.type if predicate == '@type'
       statement = RDF::Statement.new(subject, predicate, object)
-      add_debug(path) {"statement: #{statement.to_ntriples}"}
+      debug(path) {"statement: #{statement.to_ntriples}"}
       @callback.call(statement)
     end
 
@@ -284,7 +284,7 @@ module JSON::LD
     # @param [XML Node, any] node:: XML Node or string for showing context
     # @param [String] message
     # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
-    def add_debug(node, message = "")
+    def debug(node, message = "")
       return unless ::JSON::LD.debug? || @options[:debug]
       message = message + yield if block_given?
       puts "#{node}: #{message}" if JSON::LD::debug?

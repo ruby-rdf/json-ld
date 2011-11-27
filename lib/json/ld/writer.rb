@@ -55,28 +55,11 @@ module JSON::LD
   class Writer < RDF::Writer
     format Format
 
-    # @attr [Graph] Graph of statements serialized
+    # @attr [RDF::Graph] Graph of statements serialized
     attr :graph
-    # @attr [URI] Base IRI used for relativizing IRIs
-    attr :base_uri
-    # @attr [String] Vocabulary prefix used for relativizing IRIs
-    attr :vocab
-    # @attr [Symbol] Default language used in context
-    attr :language
-
-    # Type coersion to use for serialization.
-    #
-    # Maintained as a mapping of `property IRI` => `datatype`.
-    #
-    # @attr [Hash{String => String}]
-    attr :coerce, true
-
-    # List coersion to use for serialization.
-    #
-    # Maintained as a mapping of `property IRI` => `datatype`.
-    #
-    # @attr [Hash{String => String}]
-    attr :coerce_list, true
+    
+    # @attr [EvaluationContext] context used to load and administer contexts
+    attr :context
 
     ##
     # Local implementation of ruby Hash class to allow for ordering in 1.8.x implementations.
@@ -112,8 +95,6 @@ module JSON::LD
     #   the encoding to use on the output stream (Ruby 1.9+)
     # @option options [Boolean]  :canonicalize (false)
     #   whether to canonicalize literals when serializing
-    # @option options [Boolean] :expand (false)
-    #   Output document in [expanded form](http://json-ld.org/spec/latest/json-ld-api/#expansion)
     # @option options [Hash]     :prefixes     (Hash.new)
     #   the prefix mappings to use (not supported by all writers)
     # @option options [#to_s]    :base_uri     (nil)
@@ -122,9 +103,20 @@ module JSON::LD
     #   Vocabulary prefix used for relativizing IRIs
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
-    # @option options [String, Hash{String => Object}] :context (DEFAULT_COERCE)
-    #   Context to use when serializing document, can be a string to reference are
-    #   remote context document. 
+    # @option options [IO, Array, Hash, String, EvaluationContext]     :context     (Hash.new)
+    #   context to use when serializing. Constructed context for native serialization.
+    # @option options [Boolean] :automatic (true)
+    #   Automatically create context coercions and generate compacted form
+    # @option options [Boolean] :expand (false)
+    #   Output document in [expanded form](http://json-ld.org/spec/latest/json-ld-api/#expansion)
+    # @option options [Boolean] :compact (false)
+    #   Output document in [compacted form](http://json-ld.org/spec/latest/json-ld-api/#compaction).
+    #   Requires a referenced evaluation context
+    # @option options [Boolean] :normalize (false)
+    #   Output document in [normalized form](http://json-ld.org/spec/latest/json-ld-api/#normalization)
+    # @option options [IO, Array, Hash, String] :framed
+    #   Output document in [framed form](http://json-ld.org/spec/latest/json-ld-api/#framing)
+    #   using the referenced document as a frame.
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer
     # @yieldreturn [void]
@@ -133,13 +125,18 @@ module JSON::LD
     def initialize(output = $stdout, options = {}, &block)
       super do
         @graph = RDF::Graph.new
-        @language = options[:language].to_sym if options[:language]
+        @context = EvaluationContext.parse(options[:context] || {})
+        @context.language = options[:language].to_sym if options[:language]
+        @context.base = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !(@options[:expand] || @options[:normalize])
+        @context.vocab = @options[:vocab] if @options[:vocab] && !(@options[:expand] || @options[:normalize])
+        @list_range = {}
+        @context.list.each {|p| @list_range[p] = true}
         @iri_to_prefix = {
           RDF.to_uri.to_s => "rdf",
           RDF::XSD.to_uri.to_s => "xsd"
         }
-        @coerce = {}
-        @coerce_list = {}
+        @options[:automatic] = true unless options.has_key?(:automatic)
+
         if block_given?
           case block.arity
             when 0 then instance_eval(&block)
@@ -185,18 +182,16 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
-      @base_uri = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !@options[:expand]
-      @vocab = @options[:vocab] unless @options[:expand]
       @debug = @options[:debug]
 
       reset
 
-      debug {"\nserialize: graph: #{@graph.size}, options: #{options.inspect}"}
+      debug {"\nserialize: graph: #{@graph.size}, options: #{options.reject {|k,v| k == :debug}.inspect}"}
 
       preprocess
       
-      # Don't generate context for canonical output
-      json_hash = @options[:expand] ? new_hash : start_document
+      # Don't generate context for expanded or normalized output
+      json_hash = (@options[:expand] || @options[:normalize]) ? new_hash : start_document
 
       elements = []
       order_subjects.each do |subject|
@@ -258,12 +253,12 @@ module JSON::LD
         case options[:position]
         when :subject
           # attempt base_uri replacement
-          short = value.to_s.sub(base_uri.to_s, "")
+          short = value.to_s.sub(context.base.to_s, "")
           short == value.to_s ? (get_curie(value) || value.to_s) : short
         when :predicate
           # attempt vocab replacement
           short = '@type' if value == RDF.type
-          short ||= value.to_s.sub(@vocab.to_s, "")
+          short ||= value.to_s.sub(context.vocab.to_s, "")
           short == value.to_s ? (get_curie(value) || value.to_s) : short
         else
           # Encode like a subject
@@ -308,11 +303,11 @@ module JSON::LD
         elsif literal.is_a?(RDF::Literal::Integer) || literal.is_a?(RDF::Literal::Boolean)
           debug {"=> object"}
           literal.object
-        elsif datatype_range?(options[:property]) || (!literal.has_datatype? && literal.language == language)
+        elsif datatype_range?(options[:property]) || (!literal.has_datatype? && literal.language == context.language)
           # Datatype coercion where literal has the same datatype
           debug {"=> value"}
           literal.value
-        elsif literal.plain? && language
+        elsif literal.plain? && context.language
           debug {"=> language = null"}
           ret = new_hash
           ret['@literal'] = literal.value
@@ -372,14 +367,12 @@ module JSON::LD
     # @return [Hash]
     def start_document
       debug("start_doc: create context")
-      debug {"=> base: #{base_uri.inspect}, vocab: #{vocab.inspect}, language: #{language.inspect}"}
       debug {"=> prefixes: #{prefixes.inspect}"}
-      debug {"=> coerce: #{coerce.inspect}"}
-      debug {"=> coerce_list: #{coerce_list.inspect}"}
+      debug {"=> context: #{context.inspect}"}
       ctx = new_hash
-      ctx['@base'] = base_uri.to_s if base_uri
-      ctx['@vocab'] = vocab.to_s if vocab
-      ctx['@language'] = language.to_s if language
+      ctx['@base'] = context.base.to_s if context.base
+      ctx['@vocab'] = context.vocab.to_s if context.vocab
+      ctx['@language'] = context.language.to_s if context.language
       
       # Prefixes
       prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
@@ -387,25 +380,25 @@ module JSON::LD
         ctx[k.to_s] = prefixes[k].to_s
       end
       
-      unless coerce.empty? && coerce_list.empty?
+      unless context.coerce.empty? && @list_range.empty?
         ctx2 = new_hash
 
         # Coerce
-        (coerce.keys + coerce_list.keys).uniq.sort.each do |k|
+        (context.coerce.keys + @list_range.keys).uniq.sort.each do |k|
           next if ['@type', RDF.type.to_s].include?(k.to_s)
 
           k_iri = format_iri(k, :position => :predicate)
 
-          if coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
+          if context.coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(context.coerce[k])
             ctx2[k_iri.to_s] = new_hash
-            ctx2[k_iri.to_s]['@coerce'] = format_iri(coerce[k], :position => :subject)
+            ctx2[k_iri.to_s]['@coerce'] = format_iri(context.coerce[k], :position => :subject)
             debug {"=> coerce[#{k_iri}] => #{ctx2[k_iri.to_s]['@coerce']}"}
           end
         
-          if coerce_list[k]
+          if @list_range[k]
             ctx2[k_iri.to_s] ||= new_hash
             ctx2[k_iri.to_s]['@list'] = true
-            debug {"=> coerce_list[#{k_iri}] => true"}
+            debug {"=> list_range[#{k_iri}] => true"}
           end
         end
         
@@ -433,7 +426,15 @@ module JSON::LD
       (@options[:prefixes] || {}).each_pair do |k, v|
         @iri_to_prefix[v.to_s] = k
       end
+      
       @options[:prefixes] = new_hash  # Will define actual used when matched
+
+      # Load from context
+      context.mappings.each_pair do |k, v|
+        # Only map NCName prefixes
+        next unless k.match(NC_REGEXP)
+        @iri_to_prefix[v.to_s] = k
+      end
 
       @graph.each {|statement| preprocess_statement(statement)}
     end
@@ -571,7 +572,7 @@ module JSON::LD
       curie = case
       when @iri_to_curie.has_key?(iri)
         return @iri_to_curie[iri]
-      when u = @iri_to_prefix.keys.detect {|u| iri.index(u.to_s) == 0}
+      when u = @iri_to_prefix.keys.detect {|i| iri.index(i.to_s) == 0}
         # Use a defined prefix
         prefix = @iri_to_prefix[u]
         debug {"add prefix #{prefix} for #{u}"}
@@ -612,7 +613,7 @@ module JSON::LD
 
     # Order subjects for output. Override this to output subjects in another order.
     #
-    # Uses #base_uri.
+    # Uses context.base.
     # @return [Array<Resource>] Ordered list of subjects
     def order_subjects
       seen = {}
@@ -620,12 +621,12 @@ module JSON::LD
       
       return @subjects.keys.sort do |a,b|
         format_iri(a, :position => :subject) <=> format_iri(b, :position => :subject)
-      end if @options[:expand]
+      end unless @options[:automatic]
 
-      # Start with base_uri
-      if base_uri && @subjects.keys.include?(base_uri)
-        subjects << base_uri
-        seen[base_uri] = true
+      # Start with 
+      if context.base && @subjects.keys.include?(context.base)
+        subjects << context.base
+        seen[context.base] = true
       end
       
       # Sort subjects by resources over bnodes, ref_counts and the subject URI itself
@@ -650,14 +651,16 @@ module JSON::LD
     def iri_range?(predicate)
       return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:expand]
 
-      unless coerce.has_key?(predicate.to_s)
+      unless context.coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal
-       coerce[predicate.to_s] = @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
-          false : '@iri'
+        context.coerce[predicate.to_s] = !@options[:automatic] ||
+          @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
+            false :
+            '@iri'
       end
       
-      debug {"iri_range(#{predicate}) = #{coerce[predicate.to_s].inspect}"}
-      coerce[predicate.to_s] == '@iri'
+      debug {"iri_range(#{predicate}) = #{context.coerce[predicate.to_s].inspect}"}
+      context.coerce[predicate.to_s] == '@iri'
     end
     
     ##
@@ -665,26 +668,31 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def datatype_range?(predicate)
-      unless coerce.has_key?(predicate.to_s)
+      unless context.coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate must be literal
         # and have the same non-nil datatype
         dt = nil
-        @graph.query(:predicate => predicate) do |st|
-          debug {"datatype_range? literal? #{st.object.literal?.inspect} dt? #{(st.object.literal? && st.object.has_datatype?).inspect}"}
-          if st.object.literal? && st.object.has_datatype?
-            dt = st.object.datatype.to_s if dt.nil?
-            debug {"=> dt: #{st.object.datatype}"}
-            dt = false unless dt == st.object.datatype.to_s
-          else
-            dt = false
+        if @options[:automatic]
+          @graph.query(:predicate => predicate) do |st|
+            debug {"datatype_range? literal? #{st.object.literal?.inspect} dt? #{(st.object.literal? && st.object.has_datatype?).inspect}"}
+            if st.object.literal? && st.object.has_datatype?
+              dt = st.object.datatype.to_s if dt.nil?
+              debug {"=> dt: #{st.object.datatype}"}
+              dt = false unless dt == st.object.datatype.to_s
+            else
+              dt = false
+            end
           end
+          # Cause necessary prefixes to be output
+          get_curie(dt) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
+          debug {"range(#{predicate}) = #{dt.inspect}"}
+        else
+          dt = false
         end
-        get_curie(dt) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
-        debug {"range(#{predicate}) = #{dt.inspect}"}
-        coerce[predicate.to_s] = dt
+        context.coerce[predicate.to_s] = dt
       end
 
-      coerce[predicate.to_s]
+      context.coerce[predicate.to_s]
     end
     
     ##
@@ -695,16 +703,21 @@ module JSON::LD
     def list_range?(predicate)
       return false if [RDF.first, RDF.rest].include?(predicate)
 
-      unless coerce_list.has_key?(predicate.to_s)
+      unless @list_range.include?(predicate.to_s)
         # objects of all statements with the predicate must be a list
-         # objects of all statements with the predicate may not be literal
-        coerce_list[predicate.to_s] = @graph.query(:predicate => predicate).to_a.all? do |st|
-          is_valid_list?(st.object)
+        @list_range[predicate.to_s] = if @options[:automatic]
+          @graph.query(:predicate => predicate).to_a.all? do |st|
+            is_valid_list?(st.object)
+          end
+        else
+          false
         end
-        debug {"list(#{predicate}) = #{coerce_list[predicate.to_s].inspect}"}
+        context.list << predicate.to_s if @list_range[predicate.to_s]
+
+        debug {"list(#{predicate}) = #{@list_range[predicate.to_s].inspect}"}
       end
 
-      coerce_list[predicate.to_s]
+      @list_range[predicate.to_s]
     end
     
     # Reset internal helper instance variables
