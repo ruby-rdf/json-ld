@@ -607,7 +607,7 @@ describe JSON::LD::Writer do
         serialize(input, :language => "en").should produce({
           '@context'   => {"@language"  => "en"},
           '@subject'   => "a",
-          "b"          => {"@literal" => "c", "@language"  => nil}
+          "b"          => {"@literal" => "c"}
         }, @debug)
       end
     end

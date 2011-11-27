@@ -311,7 +311,6 @@ module JSON::LD
           debug {"=> language = null"}
           ret = new_hash
           ret['@literal'] = literal.value
-          ret['@language'] = nil
           ret
         else
           debug {"=> @literal"}

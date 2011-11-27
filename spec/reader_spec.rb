@@ -426,6 +426,30 @@ describe JSON::LD::Reader do
             _:a <http://example.com/foo#bar> "baz"@en .
           )
         ],
+        "@language with override" => [
+          %q({
+            "@context": {
+              "foo": "http://example.com/foo#",
+              "@language": "en"
+            },
+            "foo:bar":  {"@literal": "baz", "@language": "fr"}
+          }),
+          %q(
+            _:a <http://example.com/foo#bar> "baz"@fr .
+          )
+        ],
+        "@language with plain" => [
+          %q({
+            "@context": {
+              "foo": "http://example.com/foo#",
+              "@language": "en"
+            },
+            "foo:bar":  {"@literal": "baz"}
+          }),
+          %q(
+            _:a <http://example.com/foo#bar> "baz" .
+          )
+        ],
       }.each do |title, (js, nt)|
         it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
