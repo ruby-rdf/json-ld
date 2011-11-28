@@ -106,4 +106,12 @@ if RUBY_VERSION < "1.9"
       self.dup.merge!(other)
     end
   end
+  
+  class Hash
+    def new_with_unordered(obj = nil, &block)
+      InsertOrderPreservingHash.new(obj, &block)
+    end
+    alias_method :new_without_order, :new
+    alias_method :new, :new_with_order
+  end
 end

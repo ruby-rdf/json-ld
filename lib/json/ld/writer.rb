@@ -62,24 +62,11 @@ module JSON::LD
     attr :context
 
     ##
-    # Local implementation of ruby Hash class to allow for ordering in 1.8.x implementations.
-    #
-    # @return [Hash, InsertOrderPreservingHash]
-    def self.new_hash
-      if RUBY_VERSION < "1.9"
-        InsertOrderPreservingHash.new
-      else
-        Hash.new
-      end
-    end
-    def new_hash; self.class.new_hash; end
-
-    ##
     # Return the pre-serialized Hash before turning into JSON
     #
     # @return [Hash]
     def self.hash(*args, &block)
-      hash = new_hash
+      hash = Hash.new
       self.new(hash, *args, &block)
       hash
     end
@@ -198,7 +185,7 @@ module JSON::LD
       end
 
       # Don't generate context for expanded or normalized output
-      json_hash = (@options[:expand] || @options[:normalize]) ? new_hash : start_document
+      json_hash = (@options[:expand] || @options[:normalize]) ? Hash.new : context.serialize(:depth => @depth)
 
       elements = []
       order_subjects.each do |subject|
@@ -286,7 +273,7 @@ module JSON::LD
       result = depth do
         if options[:expand] || @options[:normalize]
           debug {"=> expand"}
-          ret = new_hash
+          ret = Hash.new
           ret['@literal'] = literal.value
           ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
           ret['@language'] = literal.language.to_s if literal.has_language?
@@ -300,12 +287,12 @@ module JSON::LD
           literal.value
         elsif literal.plain? && context.language
           debug {"=> language = null"}
-          ret = new_hash
+          ret = Hash.new
           ret['@literal'] = literal.value
           ret
         else
           debug {"=> @literal"}
-          ret = new_hash
+          ret = Hash.new
           ret['@literal'] = literal.value
           ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
           ret['@language'] = literal.language.to_s if literal.has_language?
@@ -352,96 +339,6 @@ module JSON::LD
     end
 
     private
-    ##
-    # Generate @context
-    # @return [Hash]
-    def start_document
-      use_context = case @options[:context]
-      when Hash, String
-        debug "start:doc: reuse context"
-        @options[:context]
-      else
-        debug("start_doc: create context")
-        debug {"=> context: #{context.inspect}"}
-        ctx = new_hash
-        ctx['@base'] = context.base.to_s if context.base
-        ctx['@vocab'] = context.vocab.to_s if context.vocab
-        ctx['@language'] = context.language.to_s if context.language
-
-        # Prefixes
-        context.mappings.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
-          next unless context.term_valid?(k.to_s)
-          debug {"=> context.mappings[#{k}] => #{context.mappings[k]}"}
-          ctx[k.to_s] = context.mappings[k].to_s
-        end
-
-        unless context.coerce.empty? && @list_range.empty?
-          ctx2 = new_hash
-
-          # Coerce
-          (context.coerce.keys + @list_range.keys).uniq.sort.each do |k|
-            next if ['@type', RDF.type.to_s].include?(k.to_s)
-
-            k_iri = context.compact_iri(k, :position => :predicate, :depth => @depth)
-            k_prefix = k_iri.to_s.split(':').first
-
-            if context.coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(context.coerce[k])
-              # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
-              dt = context.compact_iri(context.coerce[k], :position => :datatype, :depth => @depth)
-              dt_prefix = dt.split(':').first
-              if ctx[dt_prefix] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
-                # It uses a prefix defined above, place in new context block
-                ctx2[k_iri.to_s] = new_hash
-                ctx2[k_iri.to_s]['@coerce'] = dt
-                debug {"=> new coerce[#{k_iri}] => #{dt}"}
-              else
-                # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k_iri] ||= new_hash
-                if ctx[k_iri].is_a?(String)
-                  defn = new_hash
-                  defn["@iri"] = ctx[k_iri]
-                  ctx[k_iri] = defn
-                end
-                ctx[k_iri]["@coerce"] = dt
-                debug {"=> reuse coerce[#{k_iri}] => #{dt}"}
-              end
-            end
-
-            if @list_range[k]
-              if ctx2[k_iri.to_s] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
-                # Place in second context block
-                ctx2[k_iri.to_s] ||= new_hash
-                ctx2[k_iri.to_s]['@list'] = true
-                debug {"=> new list_range[#{k_iri}] => true"}
-              else
-                # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k_iri] ||= new_hash
-                if ctx[k_iri].is_a?(String)
-                  defn = new_hash
-                  defn["@iri"] = ctx[k_iri]
-                  ctx[k_iri] = defn
-                end
-                ctx[k_iri]["@list"] = true
-                debug {"=> reuse list_range[#{k_iri}] => true"}
-              end
-            end
-          end
-
-          # Separate contexts, so uses of prefixes are defined after the definitions of prefixes
-          ctx = [ctx, ctx2].reject(&:empty?)
-          ctx = ctx.first if ctx.length == 1
-        end
-
-        debug {"start_doc: context=#{ctx.inspect}"}
-        ctx
-      end
-
-      # Return hash with @context, or empty
-      r = new_hash
-      r['@context'] = use_context unless use_context.nil? || use_context.empty?
-      r
-    end
-    
     # Perform any preprocessing of statements required
     def preprocess
       @graph.each {|statement| preprocess_statement(statement)}
@@ -480,7 +377,7 @@ module JSON::LD
     # Option contains referencing property, if this is recursive
     # @return [Hash]
     def subject(subject, options = {})
-      defn = new_hash
+      defn = Hash.new
       
       raise RDF::WriterError, "Illegal use of subject #{subject.inspect}, not supported" unless subject.resource?
 
@@ -677,7 +574,7 @@ module JSON::LD
         else
           false
         end
-        context.list << predicate.to_s if @list_range[predicate.to_s]
+        context.add_list(predicate.to_s) if @list_range[predicate.to_s]
 
         debug {"list(#{predicate}) = #{@list_range[predicate.to_s].inspect}"}
       end

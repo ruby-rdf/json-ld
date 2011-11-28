@@ -51,7 +51,7 @@ module JSON::LD
     #
     # The @list keyword is used to specify that properties having an array value are to be treated
     # as an ordered list, rather than a normal unordered list
-    # @attr [Array<String>]
+    # @attr [Hash{String => true}]
     attr :list, true
     
     # Default language
@@ -74,7 +74,7 @@ module JSON::LD
       @mappings =  {}
       @vocab = nil
       @coerce = {}
-      @list = []
+      @list = {}
       @iri_to_curie = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -165,7 +165,7 @@ module JSON::LD
 
               # List inclusion
               if value["@list"]
-                new_ec.list << prop unless new_ec.list.include?(prop)
+                new_ec.add_list(prop)
               end
 
               # Coercion
@@ -192,7 +192,7 @@ module JSON::LD
                 elsif @options[:validate]
                   raise RDF::ReaderError, "Coerce array for #{key} must contain @list: #{value['@coerce'].inspect}"
                 end
-                new_ec.list << prop unless new_ec.list.include?(prop)
+                new_ec.add_list(prop)
               when Hash
                 # Must be of the form { "term" => { "@coerce" => {"@list" => "xsd:string"}}}
                 case value["@coerce"]["@list"]
@@ -206,7 +206,7 @@ module JSON::LD
                 when nil
                   raise RDF::ReaderError, "Unknown coerce hash for #{key}: #{value['@coerce'].inspect}" if @options[:validate]
                 end
-                new_ec.list << prop unless new_ec.list.include?(prop)
+                new_ec.add_list(prop)
               when "@iri"
                 # Must be of the form { "term" => { "@coerce" => "@iri"}}
                 debug("parse") {"@coerce @iri"}
@@ -215,7 +215,7 @@ module JSON::LD
                 # Must be of the form { "term" => { "@coerce" => "@list"}}
                 dt = expand_iri(value["@coerce"], :position => :predicate)
                 debug("parse") {"@coerce @list"}
-                new_ec.list << prop unless new_ec.list.include?(prop)
+                new_ec.add_list(prop)
               when String
                 # Must be of the form { "term" => { "@coerce" => "xsd:string"}}
                 dt = expand_iri(value["@coerce"], :position => :predicate)
@@ -239,7 +239,7 @@ module JSON::LD
               p = new_ec.expand_iri(prop, :position => :predicate).to_s
               if type == '@list'
                 # List is managed separate from types, as it is maintained in normal form.
-                new_ec.list << p unless new_ec.list.include?(p)
+                new_ec.add_list(p)
               else
                 new_ec.coerce[p] = type_uri
               end
@@ -254,6 +254,102 @@ module JSON::LD
     end
 
     ##
+    # Generate @context
+    #
+    # If a context was supplied in global options, use that, otherwise, generate one
+    # from this representation.
+    #
+    # @return [Hash]
+    def serialize(options)
+      depth(options) do
+        use_context = case @options[:context]
+        when Hash, String
+          debug "serlialize: reuse context"
+          @options[:context]
+        else
+          debug("serlialize: generate context")
+          debug {"=> context: #{inspect}"}
+          ctx = Hash.new
+          ctx['@base'] = base.to_s if base
+          ctx['@vocab'] = vocab.to_s if vocab
+          ctx['@language'] = language.to_s if language
+
+          # Prefixes
+          mappings.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
+            next unless term_valid?(k.to_s)
+            debug {"=> mappings[#{k}] => #{mappings[k]}"}
+            ctx[k.to_s] = mappings[k].to_s
+          end
+
+          unless coerce.empty? && list.empty?
+            ctx2 = Hash.new
+
+            # Coerce
+            (coerce.keys + list.keys).uniq.sort.each do |k|
+              next if ['@type', RDF.type.to_s].include?(k.to_s)
+
+              k_iri = compact_iri(k, :position => :predicate, :depth => @depth)
+              k_prefix = k_iri.to_s.split(':').first
+
+              if coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
+                # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
+                dt = compact_iri(coerce[k], :position => :datatype, :depth => @depth)
+                dt_prefix = dt.split(':').first
+                if ctx[dt_prefix] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
+                  # It uses a prefix defined above, place in new context block
+                  ctx2[k_iri.to_s] = Hash.new
+                  ctx2[k_iri.to_s]['@coerce'] = dt
+                  debug {"=> new coerce[#{k_iri}] => #{dt}"}
+                else
+                  # It is not dependent on previously defined terms, fold into existing definition
+                  ctx[k_iri] ||= Hash.new
+                  if ctx[k_iri].is_a?(String)
+                    defn = Hash.new
+                    defn["@iri"] = ctx[k_iri]
+                    ctx[k_iri] = defn
+                  end
+                  ctx[k_iri]["@coerce"] = dt
+                  debug {"=> reuse coerce[#{k_iri}] => #{dt}"}
+                end
+              end
+
+              if list[k]
+                if ctx2[k_iri.to_s] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
+                  # Place in second context block
+                  ctx2[k_iri.to_s] ||= Hash.new
+                  ctx2[k_iri.to_s]['@list'] = true
+                  debug {"=> new list_range[#{k_iri}] => true"}
+                else
+                  # It is not dependent on previously defined terms, fold into existing definition
+                  ctx[k_iri] ||= Hash.new
+                  if ctx[k_iri].is_a?(String)
+                    defn = Hash.new
+                    defn["@iri"] = ctx[k_iri]
+                    ctx[k_iri] = defn
+                  end
+                  ctx[k_iri]["@list"] = true
+                  debug {"=> reuse list_range[#{k_iri}] => true"}
+                end
+              end
+            end
+
+            # Separate contexts, so uses of prefixes are defined after the definitions of prefixes
+            ctx = [ctx, ctx2].reject(&:empty?)
+            ctx = ctx.first if ctx.length == 1
+          end
+
+          debug {"start_doc: context=#{ctx.inspect}"}
+          ctx
+        end
+
+        # Return hash with @context, or empty
+        r = Hash.new
+        r['@context'] = use_context unless use_context.nil? || use_context.empty?
+        r
+      end
+    end
+    
+    ##
     # Add a term mapping
     #
     # @param [String] term
@@ -262,6 +358,15 @@ module JSON::LD
       debug {"map #{term.inspect} to #{value}"} unless mappings[term] == value
       mappings[term] = value
       iri_to_term[value.to_s] = term
+    end
+
+    ##
+    # Add a list coercion
+    #
+    # @param [String] property in full IRI string representation
+    def add_list(property)
+      debug {"coerce #{property.inspect} to @list"} unless list[property]
+      list[property] = true
     end
 
     ##
