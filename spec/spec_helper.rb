@@ -14,6 +14,14 @@ require 'yaml'
 require 'open-uri/cached'
 require 'matchers'
 
+JSON_STATE = JSON::State.new(
+  :indent       => "  ",
+  :space        => " ",
+  :space_before => "",
+  :object_nl    => "\n",
+  :array_nl     => "\n"
+)
+
 # Create and maintain a cache of downloaded URIs
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)

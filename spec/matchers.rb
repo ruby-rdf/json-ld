@@ -1,5 +1,6 @@
 require 'rdf/isomorphic'
 require 'rspec/matchers'
+require 'json'
 
 Info = Struct.new(:about, :information, :trace, :inputDocument, :outputDocument)
 
@@ -58,8 +59,8 @@ RSpec::Matchers.define :produce do |expected, info|
   end
   
   failure_message_for_should do |actual|
-    "Expected: #{expected.is_a?(String) ? expected : expected.inspect}\n" +
-    "Actual  : #{actual.is_a?(String) ? actual : actual.inspect}\n" +
+    "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE)}\n" +
+    "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE)}\n" +
     "Processing results:\n#{info.join("\n")}"
   end
 end
