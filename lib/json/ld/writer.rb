@@ -114,7 +114,7 @@ module JSON::LD
     #   Requires a referenced evaluation context
     # @option options [Boolean] :normalize (false)
     #   Output document in [normalized form](http://json-ld.org/spec/latest/json-ld-api/#normalization)
-    # @option options [IO, Array, Hash, String] :framed
+    # @option options [IO, Array, Hash, String] :frame
     #   Output document in [framed form](http://json-ld.org/spec/latest/json-ld-api/#framing)
     #   using the referenced document as a frame.
     # @yield  [writer] `self`
@@ -125,17 +125,7 @@ module JSON::LD
     def initialize(output = $stdout, options = {}, &block)
       super do
         @graph = RDF::Graph.new
-        @context = EvaluationContext.parse(options[:context] || {})
-        @context.language = options[:language].to_sym if options[:language]
-        @context.base = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !(@options[:expand] || @options[:normalize])
-        @context.vocab = @options[:vocab] if @options[:vocab] && !(@options[:expand] || @options[:normalize])
-        @list_range = {}
-        @context.list.each {|p| @list_range[p] = true}
-        @iri_to_prefix = {
-          RDF.to_uri.to_s => "rdf",
-          RDF::XSD.to_uri.to_s => "xsd"
-        }
-        @options[:automatic] = true unless options.has_key?(:automatic)
+        @options[:automatic] = true unless [:automatic, :expand, :compact, :frame, :normalize].any? {|k| options.has_key?(k)}
 
         if block_given?
           case block.arity
@@ -185,11 +175,28 @@ module JSON::LD
       @debug = @options[:debug]
 
       reset
+      
+      raise RDF::WriterError, "Compaction requres a context" if @options[:compact] && !@options[:context]
 
-      debug {"\nserialize: graph: #{@graph.size}, options: #{options.reject {|k,v| k == :debug}.inspect}"}
+      @context = EvaluationContext.new(@options).parse(@options[:context] || {})
+      @context.language = @options[:language].to_sym if @options[:language]
+      @context.base = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !(@options[:expand] || @options[:normalize])
+      @context.vocab = @options[:vocab] if @options[:vocab] && !(@options[:expand] || @options[:normalize])
+      @context.list.each {|p| @list_range[p] = true}
+
+      debug {"\nserialize: graph: #{@graph.size}"}
+      debug {"=> options: #{@options.reject {|k,v| k == :debug}.inspect}"}
+      debug {"=> context: #{@context.inspect}"}
 
       preprocess
-      
+
+      # Update prefix mappings to those defined in context
+      @options[:prefixes] = {}
+      @context.iri_to_term.each_pair do |iri, term|
+        debug {"add prefix #{term.inspect} for #{iri}"}
+        prefix(term, iri)  # Define for output
+      end
+
       # Don't generate context for expanded or normalized output
       json_hash = (@options[:expand] || @options[:normalize]) ? new_hash : start_document
 
@@ -245,27 +252,11 @@ module JSON::LD
     #   Property for object reference, which can be used to return bare strings
     # @return [Object]
     def format_iri(value, options = {})
-      return if [RDF.first, RDF.rest, RDF.nil].include?(value)
-
       debug {"format_iri(#{options.inspect}, #{value.inspect})"}
 
-      result = depth do
-        case options[:position]
-        when :subject
-          # attempt base_uri replacement
-          short = value.to_s.sub(context.base.to_s, "")
-          short == value.to_s ? (get_curie(value) || value.to_s) : short
-        when :predicate
-          # attempt vocab replacement
-          short = '@type' if value == RDF.type
-          short ||= value.to_s.sub(context.vocab.to_s, "")
-          short == value.to_s ? (get_curie(value) || value.to_s) : short
-        else
-          # Encode like a subject
-          iri_range?(options[:property]) ?
-            format_iri(value, :position => :subject) :
-            {'@iri' => format_iri(value, :position => :subject)}
-        end
+      result = context.compact_iri(value, {:depth => @depth}.merge(options))
+      unless options[:position] != :object || iri_range?(options[:property])
+        result = {"@iri" => result}
       end
     
       debug {"=> #{result.inspect}"}
@@ -365,76 +356,94 @@ module JSON::LD
     # Generate @context
     # @return [Hash]
     def start_document
-      debug("start_doc: create context")
-      debug {"=> prefixes: #{prefixes.inspect}"}
-      debug {"=> context: #{context.inspect}"}
-      ctx = new_hash
-      ctx['@base'] = context.base.to_s if context.base
-      ctx['@vocab'] = context.vocab.to_s if context.vocab
-      ctx['@language'] = context.language.to_s if context.language
-      
-      # Prefixes
-      prefixes.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
-        debug {"=> prefix[#{k}] => #{prefixes[k]}"}
-        ctx[k.to_s] = prefixes[k].to_s
-      end
-      
-      unless context.coerce.empty? && @list_range.empty?
-        ctx2 = new_hash
+      use_context = case @options[:context]
+      when Hash, String
+        debug "start:doc: reuse context"
+        @options[:context]
+      else
+        debug("start_doc: create context")
+        debug {"=> context: #{context.inspect}"}
+        ctx = new_hash
+        ctx['@base'] = context.base.to_s if context.base
+        ctx['@vocab'] = context.vocab.to_s if context.vocab
+        ctx['@language'] = context.language.to_s if context.language
 
-        # Coerce
-        (context.coerce.keys + @list_range.keys).uniq.sort.each do |k|
-          next if ['@type', RDF.type.to_s].include?(k.to_s)
-
-          k_iri = format_iri(k, :position => :predicate)
-
-          if context.coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(context.coerce[k])
-            ctx2[k_iri.to_s] = new_hash
-            ctx2[k_iri.to_s]['@coerce'] = format_iri(context.coerce[k], :position => :subject)
-            debug {"=> coerce[#{k_iri}] => #{ctx2[k_iri.to_s]['@coerce']}"}
-          end
-        
-          if @list_range[k]
-            ctx2[k_iri.to_s] ||= new_hash
-            ctx2[k_iri.to_s]['@list'] = true
-            debug {"=> list_range[#{k_iri}] => true"}
-          end
+        # Prefixes
+        context.mappings.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
+          next unless context.term_valid?(k.to_s)
+          debug {"=> context.mappings[#{k}] => #{context.mappings[k]}"}
+          ctx[k.to_s] = context.mappings[k].to_s
         end
-        
-        # Separate contexts, so uses of prefixes are defined after the definitions of prefixes
-        ctx = if ctx.empty?
-          ctx2
-        elsif ctx2.empty?
-          ctx
-        else
-          [ctx, ctx2]
-        end
-      end
 
-      debug {"start_doc: context=#{ctx.inspect}"}
+        unless context.coerce.empty? && @list_range.empty?
+          ctx2 = new_hash
+
+          # Coerce
+          (context.coerce.keys + @list_range.keys).uniq.sort.each do |k|
+            next if ['@type', RDF.type.to_s].include?(k.to_s)
+
+            k_iri = context.compact_iri(k, :position => :predicate, :depth => @depth)
+            k_prefix = k_iri.to_s.split(':').first
+
+            if context.coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(context.coerce[k])
+              # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
+              dt = context.compact_iri(context.coerce[k], :position => :datatype, :depth => @depth)
+              dt_prefix = dt.split(':').first
+              if ctx[dt_prefix] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
+                # It uses a prefix defined above, place in new context block
+                ctx2[k_iri.to_s] = new_hash
+                ctx2[k_iri.to_s]['@coerce'] = dt
+                debug {"=> new coerce[#{k_iri}] => #{dt}"}
+              else
+                # It is not dependent on previously defined terms, fold into existing definition
+                ctx[k_iri] ||= new_hash
+                if ctx[k_iri].is_a?(String)
+                  defn = new_hash
+                  defn["@iri"] = ctx[k_iri]
+                  ctx[k_iri] = defn
+                end
+                ctx[k_iri]["@coerce"] = dt
+                debug {"=> reuse coerce[#{k_iri}] => #{dt}"}
+              end
+            end
+
+            if @list_range[k]
+              if ctx2[k_iri.to_s] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
+                # Place in second context block
+                ctx2[k_iri.to_s] ||= new_hash
+                ctx2[k_iri.to_s]['@list'] = true
+                debug {"=> new list_range[#{k_iri}] => true"}
+              else
+                # It is not dependent on previously defined terms, fold into existing definition
+                ctx[k_iri] ||= new_hash
+                if ctx[k_iri].is_a?(String)
+                  defn = new_hash
+                  defn["@iri"] = ctx[k_iri]
+                  ctx[k_iri] = defn
+                end
+                ctx[k_iri]["@list"] = true
+                debug {"=> reuse list_range[#{k_iri}] => true"}
+              end
+            end
+          end
+
+          # Separate contexts, so uses of prefixes are defined after the definitions of prefixes
+          ctx = [ctx, ctx2].reject(&:empty?)
+          ctx = ctx.first if ctx.length == 1
+        end
+
+        debug {"start_doc: context=#{ctx.inspect}"}
+        ctx
+      end
 
       # Return hash with @context, or empty
       r = new_hash
-      r['@context'] = ctx unless ctx.empty?
+      r['@context'] = use_context unless use_context.nil? || use_context.empty?
       r
     end
     
     # Perform any preprocessing of statements required
     def preprocess
-      # Load defined prefixes
-      (@options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_prefix[v.to_s] = k
-      end
-      
-      @options[:prefixes] = new_hash  # Will define actual used when matched
-
-      # Load from context
-      context.mappings.each_pair do |k, v|
-        # Only map NCName prefixes
-        next unless k.match(NC_REGEXP)
-        @iri_to_prefix[v.to_s] = k
-      end
-
       @graph.each {|statement| preprocess_statement(statement)}
     end
     
@@ -458,7 +467,7 @@ module JSON::LD
           format_literal(statement.object, :property => statement.predicate)
           datatype_range?(statement.predicate)
         else
-          format_iri(statement.object, :position => :subject)
+          format_iri(statement.object, :position => :object)
           iri_range?(statement.predicate)
         end
         list_range?(statement.predicate)
@@ -497,7 +506,7 @@ module JSON::LD
         # Special case, if there are no properties, then we can just serialize the list itself
         return defn if properties.empty?
       elsif subject.uri? || ref_count(subject) > 1
-        debug "subject is a uri"
+        debug "subject is an iri or it's a node referenced multiple times"
         # Don't need to set subject if it's a Node without references
         defn['@subject'] = format_iri(subject, :position => :subject)
       else
@@ -549,50 +558,6 @@ module JSON::LD
     end
 
     ##
-    # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes
-    # @param [RDF::Resource] resource
-    # @return [String, nil] value to use to identify IRI
-    def get_curie(resource)
-      debug {"get_curie(#{resource.inspect})"}
-      case resource
-      when RDF::Node
-        return resource.to_s
-      when String
-        iri = resource
-        resource = RDF::URI(resource)
-        return nil unless resource.absolute?
-      when RDF::URI
-        iri = resource.to_s
-        return iri if options[:expand]
-      else
-        return nil
-      end
-
-      curie = case
-      when @iri_to_curie.has_key?(iri)
-        return @iri_to_curie[iri]
-      when u = @iri_to_prefix.keys.detect {|i| iri.index(i.to_s) == 0}
-        # Use a defined prefix
-        prefix = @iri_to_prefix[u]
-        debug {"add prefix #{prefix} for #{u}"}
-        prefix(prefix, u)  # Define for output
-        iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
-      when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
-        prefix = vocab.__name__.to_s.split('::').last.downcase
-        @iri_to_prefix[vocab.to_uri.to_s] = prefix
-        debug {"add prefix #{prefix} for #{vocab.to_uri}"}
-        prefix(prefix, vocab.to_uri) # Define for output
-        iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
-      else
-        nil
-      end
-      
-      @iri_to_curie[iri] = curie
-    rescue Addressable::URI::InvalidURIError => e
-      raise RDF::WriterError, "Invalid IRI #{resource.inspect}: #{e.message}"
-    end
-
-    ##
     # Take a hash from predicate IRIs to lists of values.
     # Sort the lists of values.  Return a sorted list of properties.
     # @param [Hash{String => Array<Resource>}] properties A hash of Property to Resource mappings
@@ -601,7 +566,7 @@ module JSON::LD
       # Make sorted list of properties
       prop_list = []
       
-      properties.keys.sort do |a,b|
+      properties.keys.sort do |a, b|
         format_iri(a, :position => :predicate) <=> format_iri(b, :position => :predicate)
       end.each do |prop|
         prop_list << prop.to_s
@@ -649,6 +614,7 @@ module JSON::LD
     # @return [Boolean]
     def iri_range?(predicate)
       return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:expand]
+      return true if predicate == RDF.type
 
       unless context.coerce.has_key?(predicate.to_s)
         # objects of all statements with the predicate may not be literal
@@ -683,7 +649,7 @@ module JSON::LD
             end
           end
           # Cause necessary prefixes to be output
-          get_curie(dt) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
+          format_iri(dt, :position => :datatype) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
           debug {"range(#{predicate}) = #{dt.inspect}"}
         else
           dt = false
@@ -725,7 +691,7 @@ module JSON::LD
       @references = {}
       @serialized = {}
       @subjects = {}
-      @iri_to_curie = {}
+      @list_range = {}
     end
 
     # Checks if l is a valid RDF list, i.e. no nodes have other properties.
@@ -747,12 +713,12 @@ module JSON::LD
     #
     # @param [String] message
     # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
-    def debug(message = "")
+    def debug(*args)
       return unless ::JSON::LD.debug? || @options[:debug]
-      message = message + yield if block_given?
-      msg = "#{" " * @depth * 2}#{message}"
-      STDERR.puts msg if ::JSON::LD::debug?
-      @debug << msg if @debug.is_a?(Array)
+      message = " " * @depth * 2 + (args.empty? ? "" : args.join(": "))
+      message += yield if block_given?
+      puts message if JSON::LD::debug?
+      @options[:debug] << message if @options[:debug].is_a?(Array)
     end
     
     # Increase depth around a method invocation

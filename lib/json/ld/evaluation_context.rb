@@ -11,10 +11,20 @@ module JSON::LD
     # @attr [RDF::URI]
     attr :base, true
 
-    # A list of current, in-scope URI mappings.
+    # A list of current, in-scope mappings from term to IRI.
     #
     # @attr [Hash{String => String}]
     attr :mappings, true
+
+    # Reverse mappings from IRI to a term or CURIE
+    #
+    # @attr [Hash{RDF::URI => String}]
+    attr :iri_to_curie, true
+
+    # Reverse mappings from IRI to term only for terms, not CURIEs
+    #
+    # @attr [Hash{RDF::URI => String}]
+    attr :iri_to_term, true
 
     # The default vocabulary
     #
@@ -65,7 +75,20 @@ module JSON::LD
       @vocab = nil
       @coerce = {}
       @list = []
+      @iri_to_curie = {}
+      @iri_to_term = {
+        RDF.to_uri.to_s => "rdf",
+        RDF::XSD.to_uri.to_s => "xsd"
+      }
       @options = options
+
+      # Load any defined prefixes
+      (options[:prefixes] || {}).each_pair do |k, v|
+        @iri_to_term[v.to_s] = k
+      end
+
+      debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
+      
       yield(self) if block_given?
     end
 
@@ -75,39 +98,37 @@ module JSON::LD
     # @return [EvaluationContext] context
     # @raise [IOError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
-    # @yield debug
-    # @yieldparam [Proc] block to call for debug output
     def parse(context)
       case context
       when EvaluationContext
-        yield lambda {"context: #{context.inspect}"}
+        debug("parse") {"context: #{context.inspect}"}
         context.dup
       when IO, StringIO
-        yield lambda {"io: #{context}"} if block_given?
+        debug("parse") {"io: #{context}"}
         # Load context document, if it is a string
         ctx = JSON.load(context)
         if ctx.is_a?(Hash) && ctx["@context"]
           parse(ctx["@context"])
         else
-          yield lambda {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
+          debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
           raise RDF::ReaderError, "Failed to retrieve @context from remote document at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
       when String
-        yield lambda {"remote: #{context}"} if block_given?
+        debug("parse") {"remote: #{context}"}
         # Load context document, if it is a string
         ctx = nil
         begin
           open(context.to_s) {|f| ctx = parse(f)}
         rescue JSON::ParserError => e
-          yield lambda {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
+          debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
           raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
       when Array
         # Process each member of the array in order, updating the active context
         # Updates evaluation context serially during parsing
-        yield lambda {"Array"} if block_given?
+        debug("parse") {"Array"}
         ec = self
         context.each {|c| ec = ec.parse(c)}
         ec
@@ -115,8 +136,8 @@ module JSON::LD
         new_ec = self.dup
         context.each do |key, value|
           # Expand a string value, unless it matches a keyword
-          value = expand_base(value) if value.is_a?(String) && value[0,1] != '@'
-          yield lambda {"Hash[#{key}] = #{value.inspect}"} if block_given?
+          value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
+          debug("parse") {"Hash[#{key}] = #{value.inspect}"}
           case key
           when '@vocab'    then new_ec.vocab = value.to_s
           when '@base'     then new_ec.base  = uri(value)
@@ -128,23 +149,18 @@ module JSON::LD
             # If value is a Hash process contents
             case value
             when Hash
-              if key.match(NC_REGEXP) || key.empty?
+              if term_valid?(key)
                 # It defines a term, look up @iri, or do vocab expansion
                 # Given @iri, expand it, otherwise resolve key relative to @vocab
-                new_ec.mappings[key] = if value["@iri"]
-                  expand_base(value["@iri"])
-                else
-                  # Expand term using vocab
-                  expand_vocab(key)
-                end
+                new_ec.add_mapping(key, expand_iri(value["@iri"] || key, :position => :predicate))
               
                 prop = new_ec.mappings[key].to_s
 
-                yield lambda {"Term definition #{key} => #{prop.inspect}"} if block_given?
+                debug("parse") {"Term definition #{key} => #{prop.inspect}"}
               else
                 # It is not a term definition, and must be a prefix:suffix or IRI
-                prop = expand_vocab(key).to_s
-                yield lambda {"No term definition #{key} => #{prop.inspect}"} if block_given?
+                prop = expand_iri(key, :position => :predicate).to_s
+                debug("parse") {"No term definition #{key} => #{prop.inspect}"}
               end
 
               # List inclusion
@@ -156,7 +172,9 @@ module JSON::LD
               value["@coerce"] = value["@datatype"] if value.has_key?("@datatype") && !value.has_key?("@coerce")
               case value["@coerce"]
               when Array
+                # Form is { "term" => { "@coerce" => ["@list", "xsd:string"]}}
                 # With an array, there can be two items, one of which must be @list
+                # FIXME: this alternative unlikely
                 if value["@coerce"].include?(@list)
                   dtl = value["@coerce"] - "@list"
                   raise RDF::ReaderError,
@@ -164,11 +182,11 @@ module JSON::LD
                     dtl.length == 1
                   case dtl.first
                   when "@iri"
-                    yield lambda {"@coerce @iri"} if block_given?
+                    debug("parse") {"@coerce @iri"}
                     new_ec.coerce[prop] = '@iri'
                   when String
-                    dt = expand_vocab(dtl.first)
-                    yield lambda {"@coerce #{dt}"} if block_given?
+                    dt = expand_iri(dtl.first, :position => :datatype)
+                    debug("parse") {"@coerce #{dt}"}
                     new_ec.coerce[prop] = dt
                   end
                 elsif @options[:validate]
@@ -176,34 +194,37 @@ module JSON::LD
                 end
                 new_ec.list << prop unless new_ec.list.include?(prop)
               when Hash
-                # Must be of the form {"@list" => dt}
+                # Must be of the form { "term" => { "@coerce" => {"@list" => "xsd:string"}}}
                 case value["@coerce"]["@list"]
                 when "@iri"
-                  yield lambda {"@coerce @iri"} if block_given?
+                  debug("parse") {"@coerce @iri"}
                   new_ec.coerce[prop] = '@iri'
                 when String
-                  dt = expand_vocab(value["@coerce"]["@list"])
-                  yield lambda {"@coerce #{dt}"} if block_given?
+                  dt = expand_iri(value["@coerce"]["@list"], :position => :datatype)
+                  debug("parse") {"@coerce #{dt}"}
                   new_ec.coerce[prop] = dt
                 when nil
                   raise RDF::ReaderError, "Unknown coerce hash for #{key}: #{value['@coerce'].inspect}" if @options[:validate]
                 end
                 new_ec.list << prop unless new_ec.list.include?(prop)
               when "@iri"
-                yield lambda {"@coerce @iri"} if block_given?
+                # Must be of the form { "term" => { "@coerce" => "@iri"}}
+                debug("parse") {"@coerce @iri"}
                 new_ec.coerce[prop] = '@iri'
               when "@list"
-                dt = expand_vocab(value["@coerce"])
-                yield lambda {"@coerce @list"} if block_given?
+                # Must be of the form { "term" => { "@coerce" => "@list"}}
+                dt = expand_iri(value["@coerce"], :position => :predicate)
+                debug("parse") {"@coerce @list"}
                 new_ec.list << prop unless new_ec.list.include?(prop)
               when String
-                dt = expand_vocab(value["@coerce"])
-                yield lambda {"@coerce #{dt}"} if block_given?
+                # Must be of the form { "term" => { "@coerce" => "xsd:string"}}
+                dt = expand_iri(value["@coerce"], :position => :predicate)
+                debug("parse") {"@coerce #{dt}"}
                 new_ec.coerce[prop] = dt
               end
             else
               # Given a string (or URI), us it
-              new_ec.mappings[key] = value
+              new_ec.add_mapping(key, value)
             end
           end
         end
@@ -212,10 +233,10 @@ module JSON::LD
           # This is deprecated code
           raise RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
           context['@coerce'].each do |type, property|
-            yield lambda {"type=#{type}, prop=#{property}"} if block_given?
-            type_uri = new_ec.expand_vocab(type).to_s
+            debug("parse") {"type=#{type}, prop=#{property}"}
+            type_uri = new_ec.expand_iri(type, :position => :predicate).to_s
             [property].flatten.compact.each do |prop|
-              p = new_ec.expand_vocab(prop).to_s
+              p = new_ec.expand_iri(prop, :position => :predicate).to_s
               if type == '@list'
                 # List is managed separate from types, as it is maintained in normal form.
                 new_ec.list << p unless new_ec.list.include?(p)
@@ -226,58 +247,126 @@ module JSON::LD
           end
         end
 
+        debug("parse") {"iri_to_term: #{new_ec.iri_to_term.inspect}"}
+
         new_ec
       end
     end
 
-
     ##
-    # Expand a term
+    # Add a term mapping
     #
     # @param [String] term
-    # @param [String] base Base to apply to URIs
+    # @param [String] value
+    def add_mapping(term, value)
+      debug {"map #{term.inspect} to #{value}"} unless mappings[term] == value
+      mappings[term] = value
+      iri_to_term[value.to_s] = term
+    end
+
+    ##
+    # Determine if `term` is a suitable term
     #
-    # @return [RDF::URI]
-    # @raise [RDF::ReaderError] if the term cannot be expanded
-    # @see http://json-ld.org/spec/ED/20110507/#markup-of-rdf-concepts
-    def expand_term(term, base)
-      return term unless term.is_a?(String)
-      prefix, suffix = term.split(":", 2)
-      if prefix == '_'
+    # @param [String] term
+    # @return [Boolean]
+    def term_valid?(term)
+      term.empty? || term.match(NC_REGEXP)
+    end
+
+    ##
+    # Expand an IRI
+    #
+    # @param [String] iri
+    #   A keyword, term, prefix:suffix or possibly relative IRI
+    # @param [String] base Base to apply to URIs
+    # @param  [Hash{Symbol => Object}] options
+    # @option options [:subject, :predicate, :object, :datatype] position
+    #   Useful when determining how to serialize.
+    #
+    # @return [RDF::URI, String] IRI or String, if it's a keyword
+    # @raise [RDF::ReaderError] if the iri cannot be expanded
+    # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
+    def expand_iri(iri, options = {})
+      return iri unless iri.is_a?(String)
+      prefix, suffix = iri.split(":", 2)
+      case
+      when prefix == '_'
         bnode(suffix)
-      elsif self.mappings.has_key?(prefix)
+      when iri.to_s[0,1] == "@"
+        iri
+      when self.mappings.has_key?(prefix)
         uri(self.mappings[prefix] + suffix.to_s)
-      elsif base
-        base.respond_to?(:join) ? base.join(term) : uri(base + term)
-      elsif term.to_s[0,1] == "@"
-        term
+      when [:subject, :object].include?(options[:position]) && base
+        base.join(iri)
+      when options[:position] == :predicate && vocab
+        t_uri = uri(iri)
+        t_uri.absolute? ? t_uri : uri(vocab + iri)
       else
-        uri(term)
+        uri(iri)
       end
     end
 
     ##
-    # Expand a term relative to the current base
-    # @param [String] term
+    # Compact an IRI
     #
-    # @return [RDF::URI]
-    # @raise [RDF::ReaderError] if the term cannot be expanded
-    # @see http://json-ld.org/spec/ED/20110507/#markup-of-rdf-concepts
-    def expand_base(term)
-      expand_term(term, self.base)
+    # @param [RDF::URI] iri
+    # @param [String] base Base to apply to URIs
+    # @param  [Hash{Symbol => Object}] options
+    # @option options [:subject, :predicate, :object, :datatype] position
+    #   Useful when determining how to serialize.
+    #
+    # @return [String] compacted form of IRI
+    # @see http://json-ld.org/spec/latest/json-ld-api/#iri-compaction
+    def compact_iri(iri, options)
+      return iri.to_s if [RDF.first, RDF.rest, RDF.nil].include?(iri)  # Don't cause these to be compacted
+
+      depth(options) do
+        debug {"compact_iri(#{options.inspect}, #{iri.inspect})"}
+
+        result = depth do
+          res = case options[:position]
+          when :subject, :object
+            # attempt base_uri replacement
+            iri.to_s.sub(base.to_s, "")
+          when :predicate
+            # attempt vocab replacement
+            iri == RDF.type ? '@type' : iri.to_s.sub(vocab.to_s, "")
+          else # :datatype
+            iri.to_s
+          end
+        
+          # If the above didn't result in a compacted representation, try a CURIE
+          res == iri.to_s ? (get_curie(iri) || iri.to_s) : res
+        end
+
+        debug {"=> #{result.inspect}"}
+        result
+      end
     end
     
-    ##
-    # Expand a term relative to the current vocabulary
-    # @param [String] term
-    #
-    # @return [RDF::URI]
-    # @raise [RDF::ReaderError] if the term cannot be expanded
-    # @see http://json-ld.org/spec/ED/20110507/#markup-of-rdf-concepts
-    def expand_vocab(term)
-      expand_term(term, self.vocab)
+    def inspect
+      v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}=#{self.send(a).inspect}"}
+      v << "mappings[#{mappings.keys.length}]=#{mappings}"
+      v << "coerce[#{coerce.keys.length}]=#{coerce}"
+      v << "list[#{list.length}]=#{list}"
+      v.join(", ") + "]"
     end
     
+    def dup
+      # Also duplicate mappings, coerce and list
+      ec = super
+      ec.mappings = mappings.dup
+      ec.coerce = coerce.dup
+      ec.list = list.dup
+      ec.language = language
+      ec.options = options
+      ec.iri_to_term = iri_to_term.dup
+      ec.iri_to_curie = iri_to_curie.dup
+      ec
+    end
+
+    private
+
     def uri(value, append = nil)
       value = RDF::URI.new(value)
       value = value.join(append) if append
@@ -296,23 +385,68 @@ module JSON::LD
       @@bnode_cache[value.to_s] ||= RDF::Node.new
     end
 
-    def inspect
-      v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}=#{self.send(a).inspect}"}
-      v << "mappings[#{mappings.keys.length}]=#{mappings}"
-      v << "coerce[#{coerce.keys.length}]=#{coerce}"
-      v << "list[#{list.length}]=#{list}"
-      v.join(", ") + "]"
+    ##
+    # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes
+    # @param [RDF::Resource] resource
+    # @return [String, nil] value to use to identify IRI
+    def get_curie(resource)
+      debug {"get_curie(#{resource.inspect})"}
+      case resource
+      when RDF::Node
+        return resource.to_s
+      when String
+        iri = resource
+        resource = RDF::URI(resource)
+        return nil unless resource.absolute?
+      when RDF::URI
+        iri = resource.to_s
+        return iri if options[:expand]
+      else
+        return nil
+      end
+
+      curie = case
+      when iri_to_curie.has_key?(iri)
+        return iri_to_curie[iri]
+      when u = iri_to_term.keys.detect {|i| iri.index(i.to_s) == 0}
+        # Use a defined prefix
+        prefix = iri_to_term[u]
+        add_mapping(prefix, u)
+        iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
+      when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
+        prefix = vocab.__name__.to_s.split('::').last.downcase
+        add_mapping(prefix, vocab.to_uri.to_s)
+        iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
+      else
+        debug "no mapping found for #{iri} in #{iri_to_term.inspect}"
+        nil
+      end
+      
+      iri_to_curie[iri] = curie
+    rescue Addressable::URI::InvalidURIError => e
+      raise RDF::WriterError, "Invalid IRI #{resource.inspect}: #{e.message}"
     end
-    
-    def dup
-      # Also duplicate mappings, coerce and list
-      ec = super
-      ec.mappings = mappings.dup
-      ec.coerce = coerce.dup
-      ec.list = list.dup
-      ec.language = language
-      ec.options = options
-      ec
+
+    # Add debug event to debug array, if specified
+    #
+    # @param [String] message
+    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    def debug(*args)
+      return unless ::JSON::LD.debug? || @options[:debug]
+      list = args
+      list << yield if block_given?
+      message = " " * (@depth || 0) * 2 + (list.empty? ? "" : list.join(": "))
+      puts message if JSON::LD::debug?
+      @options[:debug] << message if @options[:debug].is_a?(Array)
+    end
+
+    # Increase depth around a method invocation
+    def depth(options = {})
+      old_depth = @depth || 0
+      @depth = (options[:depth] || old_depth) + 1
+      ret = yield
+      @depth = old_depth
+      ret
     end
   end
 end

@@ -92,7 +92,7 @@ module JSON::LD
         # the local context into the active context ...
         if element['@context']
           # Merge context
-          ec = ec.parse(element['@context']) {|block| debug("#{path}[@context]", &block)}
+          ec = ec.parse(element['@context'])
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
@@ -110,11 +110,11 @@ module JSON::LD
         # Other shortcuts to allow use of this method for terminal associative arrays
         object = if element['@iri'].is_a?(String)
           # 2.3 Return the IRI found from the value
-          ec.expand_base(element['@iri'])
+          ec.expand_iri(element['@iri'], :position => :objeect)
         elsif element['@literal']
           # 2.4
           literal_opts = {}
-          literal_opts[:datatype] = ec.expand_vocab(element['@datatype']) if element['@datatype']
+          literal_opts[:datatype] = ec.expand_iri(element['@datatype'], :position => :datatype) if element['@datatype']
           literal_opts[:language] = element['@language'].to_sym if element['@language']
           RDF::Literal.new(element['@literal'], literal_opts)
         elsif element['@list']
@@ -132,7 +132,7 @@ module JSON::LD
         active_subject = if element['@subject'].is_a?(String)
           # 2.6 Subject
           # 2.6.1 Set active object (subject)
-          ec.expand_base(element['@subject'])
+          ec.expand_iri(element['@subject'], :position => :subject)
         elsif element['@subject']
           # 2.6.2 Recursively process hash or Array values
           traverse("#{path}[#{'@subject'}]", element['@subject'], subject, property, ec) do |resource|
@@ -151,7 +151,7 @@ module JSON::LD
           property = case key
           when '@type' then '@type'
           when /^@/ then next
-          else      ec.expand_vocab(key)
+          else      ec.expand_iri(key, :position => :predicate)
           end
 
           # 2.8.3
@@ -187,11 +187,11 @@ module JSON::LD
           "ec=#{ec.coerce.inspect}"
         end
         if ec.coerce[property.to_s] == '@iri'
-          ec.expand_base(element)
+          ec.expand_iri(element, :position => :object)
         elsif property == '@type'
           # @type value is an IRI resolved relative to @vocab, or a term/prefix
           property = RDF.type
-          ec.expand_vocab(element)
+          ec.expand_iri(element, :position => :predicate)
         elsif ec.coerce[property.to_s]
           RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
         else
@@ -284,11 +284,12 @@ module JSON::LD
     # @param [XML Node, any] node:: XML Node or string for showing context
     # @param [String] message
     # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
-    def debug(node, message = "")
+    def debug(*args)
       return unless ::JSON::LD.debug? || @options[:debug]
-      message = message + yield if block_given?
-      puts "#{node}: #{message}" if JSON::LD::debug?
-      @options[:debug] << "#{node}: #{message}" if @options[:debug].is_a?(Array)
+      message = " " * (@depth || 0) * 2 + (args.empty? ? "" : args.join(": "))
+      message += yield if block_given?
+      puts message if JSON::LD::debug?
+      @options[:debug] << message if @options[:debug].is_a?(Array)
     end
   end
 end

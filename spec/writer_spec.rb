@@ -84,10 +84,7 @@ describe JSON::LD::Writer do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       serialize(input, :standard_prefixes => true).
       should produce({
-        "@context" => [
-          {"foaf" => "http://xmlns.com/foaf/0.1/"},
-          {"foaf" => {"@coerce" => "@iri"}}
-        ],
+        "@context" => {"foaf" => {"@iri" => "http://xmlns.com/foaf/0.1/", "@coerce" => "@iri"}},
         '@subject'   => "foaf",
         "foaf"   => "foaf"
       }, @debug)
@@ -527,14 +524,10 @@ describe JSON::LD::Writer do
       it "shortens URIs" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
         serialize(input, :base_uri => "http://a/").should produce({
-          '@context'       => [
-            {
-              '@base'        => "http://a/"
-            },
-            {
-              "http://a/c"   => {"@coerce" => "@iri"}
-            }
-          ],
+          '@context'       => {
+            '@base'        => "http://a/",
+            "http://a/c"   => {"@coerce" => "@iri"}
+          },
           '@subject'    => "b",
           "http://a/c"  => "d"
         }, @debug)
@@ -545,10 +538,10 @@ describe JSON::LD::Writer do
       it "shortens URIs" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
         serialize(input, :vocab => "http://a/").should produce({
-          "@context"  => [
-            {"@vocab" => "http://a/"},
-            {"c"      => {"@coerce" => "@iri"}}
-          ],
+          "@context"  => {
+            "@vocab" => "http://a/",
+            "c"      => {"@coerce" => "@iri"}
+          },
           '@subject'  => "http://a/b",
           "c"         => "http://a/d"
         }, @debug)
@@ -634,13 +627,71 @@ describe JSON::LD::Writer do
     end
   end
   
+  context "compaction" do
+    it "requires a frame" do
+      lambda {serialize("", :compact => true)}.should raise_error(RDF::WriterError, "Compaction requres a context")
+    end
+    
+    {
+      "prefix" => [
+        %q(
+          @prefix ex: <http://example.com/>
+          ex:a ex:b ex:c
+        ),
+        %q({"ex": "http://example.com/"}),
+        %q({
+          "@context": {"ex": "http://example.com/"},
+          "@subject": "ex:a",
+          "ex:b": {"@iri": "ex:c"}
+        })
+      ],
+      "term" => [
+        %q({
+          @prefix ex: <http://example.com/>
+          ex:a ex:b ex:c
+        }),
+        %q({"b": "http://example.com/b"}),
+        %q({
+          "@context": {"b": "http://example.com/b"},
+          "@subject": "http://example.com/a",
+          "b": {"@iri": "http://example.com/c"}
+        })
+      ],
+      "@iri coercion" => [
+        %q({
+          @prefix ex: <http://example.com/>
+          ex:a ex:b ex:c
+        }),
+        %q({"b": {"@iri": "http://example.com/b", "@coerce": "@iri"}}),
+        %q({
+          "@context": {"b": {"@iri": "http://example.com/b", "@coerce": "@iri"}},
+          "@subject": "http://example.com/a",
+          "b": "http://example.com/c"
+        })
+      ],
+    }.each_pair do |name, (input, context, result)|
+      it name do
+        r = serialize(input, :context => JSON.parse(context), :compact => true)
+        r.should produce(JSON.parse(result), @debug)
+      end
+    end
+
+    it "uses an @iri coercion"
+    it "uses a datatype coercion"
+    it "uses a @list coercion"
+    it "uses referenced context"
+  end
+
   context "Test Files" do
     Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
       test = File.basename(filename).sub(/-input\..*$/, '')
+      frame = filename.sub(/-input\..*$/, '-frame.json')
+      framed = filename.sub(/-input\..*$/, '-framed.json')
       compacted = filename.sub(/-input\..*$/, '-compacted.json')
+      context = filename.sub(/-input\..*$/, '-context.json')
       expanded = filename.sub(/-input\..*$/, '-expanded.json')
-      native = filename.sub(/-input\..*$/, '-native.json')
-      ttl = filename.sub(/-input\..*$/, '-ttl.ttl')
+      automatic = filename.sub(/-input\..*$/, '-automatic.json')
+      ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
       context test do
         before(:all) do
@@ -653,19 +704,19 @@ describe JSON::LD::Writer do
         end
         
         it "compacts" do
-          r = serialize(@graph, :compact => true, :prefixes => @prefixes)
+          r = serialize(@graph, :compact => true, :context => JSON.load(File.open(context)), :prefixes => @prefixes)
           r.should produce(JSON.load(File.open(compacted)), @debug)
-        end if File.exist?(compacted)
+        end if File.exist?(compacted) && File.exist?(context)
         
         it "expands" do
           r = serialize(@graph, :expand => true, :prefixes => @prefixes)
           r.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
-        it "native" do
+        it "automatic" do
           r = serialize(@graph, :prefixes => @prefixes, :standard_prefixes => true)
-          r.should produce(JSON.load(File.open(native)), @debug)
-        end if File.exist?(native)
+          r.should produce(JSON.load(File.open(automatic)), @debug)
+        end if File.exist?(automatic)
         
         it "Turtle" do
           @graph.should be_equivalent_graph(RDF::Graph.load(ttl))
