@@ -23,6 +23,7 @@ module JSON
     require 'json'
     require 'json/ld/extensions'
     require 'json/ld/format'
+    autoload :API,                'json/ld/api'
     autoload :EvaluationContext,  'json/ld/evaluation_context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
