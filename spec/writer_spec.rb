@@ -22,23 +22,6 @@ describe JSON::LD::Writer do
       {:content_type   => 'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        RDF::Writer.for(arg).should == JSON::LD::Writer
-      end
-    end
-  end
-
-  describe ".for" do
-    formats = [
-      :json, :ld, :jsonld,
-      'etc/doap.json', "etc/doap.jsonld",
-      {:file_name      => 'etc/doap.json'},
-      {:file_name      => 'etc/doap.jsonld'},
-      {:file_extension => 'json'},
-      {:file_extension => 'jsonld'},
-      {:content_type   => 'application/ld+json'},
-      {:content_type   => 'application/x-ld+json'},
-    ].each do |arg|
-      it "discovers with #{arg.inspect}" do
         RDF::Reader.for(arg).should == JSON::LD::Reader
       end
     end
@@ -263,17 +246,9 @@ describe JSON::LD::Writer do
     it "coerces double" do
       input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
       serialize(input, :prefixes => {:ex => "http://example.com/", :xsd => RDF::XSD}).should produce({
-        '@context'   => [
-          {
-            "ex" => "http://example.com/",
-            "xsd" => RDF::XSD.to_s
-          },
-          {
-            'ex:b'  => {"@coerce" => "xsd:double"}
-          }
-        ],
+        '@context'   => { "ex" => "http://example.com/" },
         '@subject'   => "ex:a",
-        "ex:b"    => "1.0e0"
+        "ex:b"    => 1.0e0
       }, @debug)
     end
     
@@ -351,11 +326,27 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/"
           },
           {
-            "foaf:b" => {"@coerce" => "@iri", "@list" => true}
+            "foaf:b" => {"@list" => true}
           }
         ],
         '@subject'   => "foaf:a",
         "foaf:b"  => ["apple", "banana"]
+      }, @debug)
+    end
+    
+    it "should generate iri list" do
+      input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b ( :c ) .)
+      serialize(input, :standard_prefixes => true).should produce({
+        "@context"   => [
+          {
+            "foaf"  => "http://xmlns.com/foaf/0.1/"
+          },
+          {
+            "foaf:b" => {"@coerce" => "@iri", "@list" => true}
+          }
+        ],
+        '@subject'   => "foaf:a",
+        "foaf:b"  => [ "foaf:c" ]
       }, @debug)
     end
     
@@ -383,7 +374,7 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/",
           },
           {
-            "foaf:b" => {"@coerce" => "@iri", "@list" => true}
+            "foaf:b" => {"@list" => true}
           }
         ],
         '@subject'   => "foaf:a",
@@ -487,15 +478,7 @@ describe JSON::LD::Writer do
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
         :a rdfs:domain [
           a owl:Class;
-          owl:unionOf [
-            a owl:Class;
-            rdf:first :b;
-            rdf:rest [
-              a owl:Class;
-              rdf:first :c;
-              rdf:rest rdf:nil
-            ]
-          ]
+          owl:unionOf (:b :c)
         ] .
       )
       serialize(input, :standard_prefixes => true ).should produce({
@@ -606,125 +589,6 @@ describe JSON::LD::Writer do
     end
   end
   
-  context "expansion" do
-    [
-      [
-        %q(<http://a/b> <http://a/c> <http://a/d> .),
-        {"@subject" => "http://a/b", "http://a/c" => {"@iri" => "http://a/d"}}
-      ],
-      [
-        %q(<http://a/b> <http://a/c> "d" .),
-        {"@subject" => "http://a/b", "http://a/c" => "d"}
-      ],
-      [
-        %q(<http://a/b> <http://a/c> "e", "d" .),
-        {"@subject" => "http://a/b", "http://a/c" => ["d", "e"]}
-      ],
-    ].each do |(input,output)|
-      it "serializes #{input.inspect} to #{output}" do
-        serialize(input, :expand => true).should produce(output, @debug)
-      end
-    end
-  end
-  
-  context "compaction" do
-    it "requires a frame" do
-      lambda {serialize("", :compact => true)}.should raise_error(RDF::WriterError, "Compaction requres a context")
-    end
-    
-    {
-      "prefix" => [
-        %q(
-          @prefix ex: <http://example.com/>
-          ex:a ex:b ex:c
-        ),
-        %q({"ex": "http://example.com/"}),
-        %q({
-          "@context": {"ex": "http://example.com/"},
-          "@subject": "ex:a",
-          "ex:b": {"@iri": "ex:c"}
-        })
-      ],
-      "term" => [
-        %q({
-          @prefix ex: <http://example.com/>
-          ex:a ex:b ex:c
-        }),
-        %q({"b": "http://example.com/b"}),
-        %q({
-          "@context": {"b": "http://example.com/b"},
-          "@subject": "http://example.com/a",
-          "b": {"@iri": "http://example.com/c"}
-        })
-      ],
-      "@iri coercion" => [
-        %q({
-          @prefix ex: <http://example.com/>
-          ex:a ex:b ex:c
-        }),
-        %q({"b": {"@iri": "http://example.com/b", "@coerce": "@iri"}}),
-        %q({
-          "@context": {"b": {"@iri": "http://example.com/b", "@coerce": "@iri"}},
-          "@subject": "http://example.com/a",
-          "b": "http://example.com/c"
-        })
-      ],
-    }.each_pair do |name, (input, context, result)|
-      it name do
-        r = serialize(input, :context => JSON.parse(context), :compact => true)
-        r.should produce(JSON.parse(result), @debug)
-      end
-    end
-
-    it "uses an @iri coercion"
-    it "uses a datatype coercion"
-    it "uses a @list coercion"
-    it "uses referenced context"
-  end
-
-  context "Test Files" do
-    Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
-      test = File.basename(filename).sub(/-input\..*$/, '')
-      frame = filename.sub(/-input\..*$/, '-frame.json')
-      framed = filename.sub(/-input\..*$/, '-framed.json')
-      compacted = filename.sub(/-input\..*$/, '-compacted.json')
-      context = filename.sub(/-input\..*$/, '-context.json')
-      expanded = filename.sub(/-input\..*$/, '-expanded.json')
-      automatic = filename.sub(/-input\..*$/, '-automatic.json')
-      ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
-      
-      context test do
-        before(:all) do
-          @prefixes = {}
-          @graph = RDF::Graph.load(filename, :prefixes => @prefixes)
-        end
-
-        it "parses input" do
-          @graph.should_not be_empty
-        end
-        
-        it "compacts" do
-          r = serialize(@graph, :compact => true, :context => JSON.load(File.open(context)), :prefixes => @prefixes)
-          r.should produce(JSON.load(File.open(compacted)), @debug)
-        end if File.exist?(compacted) && File.exist?(context)
-        
-        it "expands" do
-          r = serialize(@graph, :expand => true, :prefixes => @prefixes)
-          r.should produce(JSON.load(File.open(expanded)), @debug)
-        end if File.exist?(expanded)
-        
-        it "automatic" do
-          r = serialize(@graph, :prefixes => @prefixes, :standard_prefixes => true)
-          r.should produce(JSON.load(File.open(automatic)), @debug)
-        end if File.exist?(automatic)
-        
-        it "Turtle" do
-          @graph.should be_equivalent_graph(RDF::Graph.load(ttl))
-        end if File.exist?(ttl)
-      end
-    end
-  end
-
   def parse(input, options = {})
     RDF::Graph.new << RDF::Turtle::Reader.new(input, options)
   end

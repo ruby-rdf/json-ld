@@ -44,7 +44,59 @@ module JSON
       $},
       Regexp::EXTENDED)
 
+    # Datatypes that are expressed in a native form and don't expand or compact
+    NATIVE_DATATYPES = [RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s, RDF::XSD.double.to_s]
+
     def self.debug?; @debug; end
     def self.debug=(value); @debug = value; end
+    
+    class ProcessingError < Exception
+      # The compaction would lead to a loss of information, such as a @language value.
+      LOSSY_COMPACTION = 1
+
+      # The target datatype specified in the coercion rule and the datatype for the typed literal do not match.
+      CONFLICTING_DATATYPES = 2
+      
+      attr :code
+      
+      def intialize(message, code = nil)
+        super(message)
+        @code = code
+      end
+    end
+    
+    class InvalidContext < Exception
+      # A general syntax error was detected in the @context. For example, if a @coerce key maps to anything
+      # other than a string or an array of strings, this exception would be raised.
+      INVALID_SYNTAX	= 1
+
+      # There is more than one target datatype specified for a single property in the list of coercion rules.
+      # This means that the processor does not know what the developer intended for the target datatype for a property.
+      MULTIPLE_DATATYPES = 2
+      
+      attr :code
+      
+      def intialize(message, code = nil)
+        super(message)
+        @code = code
+      end
+    end
+    
+    class InvalidFrame < Exception
+      # A frame must be either an object or an array of objects, if the frame is neither of these types,
+      # this exception is thrown.
+      INVALID_SYNTAX	= 1
+
+      # A subject IRI was specified in more than one place in the input frame.
+      # More than one embed of a given subject IRI is not allowed, and if requested, must result in this exception.
+      MULTIPLE_EMBEDS = 2
+      
+      attr :code
+      
+      def intialize(message, code = nil)
+        super(message)
+        @code = code
+      end
+    end
   end
 end

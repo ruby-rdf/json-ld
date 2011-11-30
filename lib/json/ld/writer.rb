@@ -165,8 +165,9 @@ module JSON::LD
       
       raise RDF::WriterError, "Compaction requres a context" if @options[:compact] && !@options[:context]
 
-      @context = EvaluationContext.new(@options).parse(@options[:context] || {})
-      @context.language = @options[:language].to_sym if @options[:language]
+      @context = EvaluationContext.new(@options)
+      @context = @context.parse(@options[:context]) if @options[:context]
+      @context.language = @options[:language] if @options[:language]
       @context.base = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !(@options[:expand] || @options[:normalize])
       @context.vocab = @options[:vocab] if @options[:vocab] && !(@options[:expand] || @options[:normalize])
       @context.list.each {|p| @list_range[p] = true}
@@ -196,6 +197,7 @@ module JSON::LD
       
       return if elements.empty?
       
+      # If there are more than one top-level subjects, place in an array form
       if elements.length == 1 && elements.first.is_a?(Hash)
         json_hash.merge!(elements.first)
       else
@@ -206,6 +208,7 @@ module JSON::LD
         @output.merge!(json_hash)
       else
         json_state = if @options[:normalize]
+          # Normalization uses a compressed form
           JSON::State.new(
             :indent       => "",
             :space        => "",
@@ -255,7 +258,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     # @return [String]
     # @raise  [NotImplementedError] unless implemented in subclass
-    # @abstract
+    # @see {#format\_iri}
     def format_node(value, options = {})
       format_iri(value, options)
     end
@@ -270,34 +273,17 @@ module JSON::LD
     # @return [Object]
     def format_literal(literal, options = {})
       debug {"format_literal(#{options.inspect}, #{literal.inspect})"}
-      result = depth do
-        if options[:expand] || @options[:normalize]
-          debug {"=> expand"}
-          ret = Hash.new
-          ret['@literal'] = literal.value
-          ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
-          ret['@language'] = literal.language.to_s if literal.has_language?
-          ret.delete_if {|k,v| v.nil?}
-        elsif literal.is_a?(RDF::Literal::Integer) || literal.is_a?(RDF::Literal::Boolean)
-          debug {"=> object"}
-          literal.object
-        elsif datatype_range?(options[:property]) || (!literal.has_datatype? && literal.language == context.language)
-          # Datatype coercion where literal has the same datatype
-          debug {"=> value"}
-          literal.value
-        elsif literal.plain? && context.language
-          debug {"=> language = null"}
-          ret = Hash.new
-          ret['@literal'] = literal.value
-          ret
-        else
-          debug {"=> @literal"}
-          ret = Hash.new
-          ret['@literal'] = literal.value
-          ret['@datatype'] = format_iri(literal.datatype, :position => :subject) if literal.has_datatype?
-          ret['@language'] = literal.language.to_s if literal.has_language?
-          ret
-        end
+
+      value = Hash.new
+      value['@literal'] = literal.value
+      value['@datatype'] = literal.datatype.to_s if literal.has_datatype?
+      value['@language'] = literal.language.to_s if literal.has_language?
+
+      result = case literal
+      when RDF::Literal::Boolean, RDF::Literal::Integer, RDF::Literal::Double
+        literal.object
+      else
+        context.compact_value(options[:property], value, {:depth => @depth}.merge(options))
       end
 
       debug {"=> #{result.inspect}"}
@@ -514,11 +500,22 @@ module JSON::LD
       return true if predicate == RDF.type
 
       unless context.coerce.has_key?(predicate.to_s)
-        # objects of all statements with the predicate may not be literal
-        context.coerce[predicate.to_s] = !@options[:automatic] ||
-          @graph.query(:predicate => predicate).to_a.any? {|st| st.object.literal?} ?
-            false :
-            '@iri'
+        not_iri = !@options[:automatic]
+        #debug {"  (automatic) = #{(!not_iri).inspect}"}
+        
+        # Any literal object makes it not so
+        not_iri ||= @graph.query(:predicate => predicate).to_a.any? do |st|
+          l = RDF::List.new(st.object, @graph)
+          #debug {"  o.literal? #{st.object.literal?.inspect}"}
+          #debug {"  l.valid? #{l.valid?.inspect}"}
+          #debug {"  l.any.valid? #{l.to_a.any?(&:literal?).inspect}"}
+          st.object.literal? || (l.valid? && l.to_a.any?(&:literal?))
+        end
+        #debug {"  (literal) = #{(!not_iri).inspect}"}
+        
+        # FIXME: detect when values are all represented through chaining
+        
+        context.coerce[predicate.to_s] = not_iri ? false : '@iri'
       end
       
       debug {"iri_range(#{predicate}) = #{context.coerce[predicate.to_s].inspect}"}
@@ -546,7 +543,7 @@ module JSON::LD
             end
           end
           # Cause necessary prefixes to be output
-          format_iri(dt, :position => :datatype) if dt && ![RDF::XSD.boolean, RDF::XSD.integer].include?(dt)
+          format_iri(dt, :position => :datatype) if dt && !NATIVE_DATATYPES.include?(dt.to_s)
           debug {"range(#{predicate}) = #{dt.inspect}"}
         else
           dt = false

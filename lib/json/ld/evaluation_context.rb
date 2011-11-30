@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'json'
+require 'bigdecimal'
 
 module JSON::LD
   class EvaluationContext # :nodoc:
@@ -57,12 +58,15 @@ module JSON::LD
     # Default language
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @attr [Symbol]
+    # @attr [String]
     attr :language, true
     
     # Global options used in generating IRIs
     # @attr [Hash] options
     attr :options, true
+
+    # A context provided to us that we can use without re-serializing
+    attr :provided_context, true
 
     ##
     # Create new evaluation context
@@ -106,23 +110,27 @@ module JSON::LD
       when IO, StringIO
         debug("parse") {"io: #{context}"}
         # Load context document, if it is a string
-        ctx = JSON.load(context)
-        if ctx.is_a?(Hash) && ctx["@context"]
+        begin
+          ctx = JSON.load(context)
+          raise JSON::ParserError, "missing @context" unless ctx.is_a?(Hash) && ctx["@context"]
           parse(ctx["@context"])
-        else
-          debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
-          raise RDF::ReaderError, "Failed to retrieve @context from remote document at #{context}: #{e.message}" if @options[:validate]
+        rescue JSON::ParserError => e
+          debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
+          raise JSON::ParserError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
       when String
         debug("parse") {"remote: #{context}"}
         # Load context document, if it is a string
-        ctx = nil
+        ec = nil
         begin
-          open(context.to_s) {|f| ctx = parse(f)}
-        rescue JSON::ParserError => e
+          open(context.to_s) {|f| ec = parse(f)}
+          ec.provided_context = context
+          debug("parse") {"=> provided_context: #{context.inspect}"}
+          ec
+        rescue IOError => e
           debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
-          raise RDF::ReaderError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
+          raise IOError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
       when Array
@@ -131,9 +139,13 @@ module JSON::LD
         debug("parse") {"Array"}
         ec = self
         context.each {|c| ec = ec.parse(c)}
+        ec.provided_context = context
+        debug("parse") {"=> provided_context: #{context.inspect}"}
         ec
       when Hash
         new_ec = self.dup
+        new_ec.provided_context = context
+        debug("parse") {"=> provided_context: #{context.inspect}"}
         context.each do |key, value|
           # Expand a string value, unless it matches a keyword
           value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
@@ -141,7 +153,7 @@ module JSON::LD
           case key
           when '@vocab'    then new_ec.vocab = value.to_s
           when '@base'     then new_ec.base  = uri(value)
-          when '@language' then new_ec.language = value.to_s.to_sym
+          when '@language' then new_ec.language = value.to_s
           when '@coerce'
             # Process after prefix mapping.
             # FIXME: deprectaed
@@ -262,10 +274,9 @@ module JSON::LD
     # @return [Hash]
     def serialize(options)
       depth(options) do
-        use_context = case @options[:context]
-        when Hash, String
-          debug "serlialize: reuse context"
-          @options[:context]
+        use_context = if provided_context
+          debug "serlialize: reuse context: #{provided_context.inspect}"
+          provided_context
         else
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
@@ -291,7 +302,7 @@ module JSON::LD
               k_iri = compact_iri(k, :position => :predicate, :depth => @depth)
               k_prefix = k_iri.to_s.split(':').first
 
-              if coerce[k] && ![false, RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s].include?(coerce[k])
+              if coerce[k] && !NATIVE_DATATYPES.include?(coerce[k])
                 # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
                 dt = compact_iri(coerce[k], :position => :datatype, :depth => @depth)
                 dt_prefix = dt.split(':').first
@@ -383,7 +394,6 @@ module JSON::LD
     #
     # @param [String] iri
     #   A keyword, term, prefix:suffix or possibly relative IRI
-    # @param [String] base Base to apply to URIs
     # @param  [Hash{Symbol => Object}] options
     # @option options [:subject, :predicate, :object, :datatype] position
     #   Useful when determining how to serialize.
@@ -448,7 +458,121 @@ module JSON::LD
         result
       end
     end
-    
+
+    ##
+    # Expand a value
+    #
+    # @param [String] key
+    #   Associated key used to find coercion rules
+    # @param [Hash, String] value
+    #   Value (literal or IRI) to be expanded
+    # @param  [Hash{Symbol => Object}] options
+    #
+    # @return [Hash] Object representation of value
+    # @raise [RDF::ReaderError] if the iri cannot be expanded
+    # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
+    def expand_value(key, value, options = {})
+      predicate = expand_iri(key, :position => :predicate)
+
+      depth(options) do
+        debug("expand_value") {"predicate: #{predicate}, value: #{value.inspect}"}
+        result = case value
+        when Hash
+          res = Hash.new
+          value.each_pair do |k, v|
+            res[k] = expand_value(k, v)
+          end
+          res
+        when Array
+          # Expand individual elements
+          members = value.map {|v| expand_value(key, v, options)}
+
+          # Use expanded list form if lists are coerced
+          list[predicate] ? {'@list' => members} : members
+        when TrueClass, FalseClass, Integer, BigDecimal, Double
+          value
+        when RDF::URI
+          {'@iri' => value.to_s}
+        when RDF::Literal::Integer, RDF::Literal::Double
+          value.object
+        when RDF::Literal
+          res = Hash.new
+          res['@literal'] = value.to_s
+          res['@datatype'] = value.datatype.to_s if value.has_datatype?
+          res['@language'] = value.language.to_s if value.has_language?
+          res
+        else
+          case coerce[predicate]
+          when '@iri'
+            {'@iri' => expand_iri(value, :position => :object)}
+          when String, RDF::URI
+            res = Hash.new
+            res['@literal'] = value.to_s
+            res['@language'] = language if language
+          else
+            value.to_s
+          end
+        end
+        
+        debug {"=> #{result.inspect}"}
+        result
+      end
+    end
+
+    ##
+    # Compact a value
+    #
+    # @param [String] key
+    #   Associated key used to find coercion rules
+    # @param [Hash] value
+    #   Value (literal or IRI), in full object representation, to be compacted
+    # @param  [Hash{Symbol => Object}] options
+    #
+    # @return [Hash] Object representation of value
+    # @raise [ProcessingError] if the iri cannot be expanded
+    # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
+    def compact_value(key, value, options = {})
+      predicate = expand_iri(key, :position => :predicate).to_s
+      raise ProcessingError, "attempt to compact a non-object value" unless value.is_a?(Hash)
+
+      depth(options) do
+        debug("compact_value") {"predicate: #{predicate.inspect}, value: #{value.inspect}\n"}
+        result = case
+        when list[predicate] && value['@list']
+          # Compact an expanded list representation
+          debug {" (list)"}
+          value['@list']
+        when list[predicate] == '@iri'
+          # Compact an @iri coercion
+          debug {" (@iri)"}
+          value = value['@iri']
+        when value['@language'] && value['@language'] == language
+          # Compact language
+          debug {" (@language) == #{language}"}
+          value = value['@literal']
+        when value['@datatype'] && expand_iri(value['@datatype'], :position => :datatype) == coerce[predicate]
+          # Compact common datatype
+          debug {" (@datatype) == #{coerce[predicate]}"}
+          value = value['@literal']
+        when !value['@language'] && !value['@datatype'] && !coerce[predicate] && !language
+          # Compact simple literal to string
+          debug {" (!@language && !@datatype && !coerce && !language)"}
+          value = value['@literal']
+        when value['@datatype']
+          # Compact datatype
+          debug {" (@datatype)"}
+          value['@datatype'] = compact_iri(value['@datatype'], :position => :datatype)
+          value
+        else
+          # Otherwise, use original value
+          value
+        end
+        
+        debug {"=> #{result.inspect}"}
+        result
+      end
+    end
+
     def inspect
       v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}=#{self.send(a).inspect}"}
       v << "mappings[#{mappings.keys.length}]=#{mappings}"
