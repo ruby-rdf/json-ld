@@ -1,0 +1,63 @@
+{
+	"@context": [
+	{
+		"@vocab": "http://www.bibkn.org/bibjson/terms/",
+		"@base": "http://bibserver.berkeley.edu/",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"dc": "http://purl.org/dc/terms/",
+		"bibjson": "http://www.bibkn.org/bibjson/terms/",
+		"foaf": "http://xmlns.com/foaf/0.1/",
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	},
+	{
+		"dc:created":     {"@datatype": "xsd:dateTime"},
+		"bibjson:id":     {"@datatype": "@iri"},
+		"dc:identifier":  {"@datatype": "@iri"}
+	}
+	],
+	"@subject": 
+	[
+		{
+			"@subject": "this",
+			"bibjson:id" : "http://bibserver.berkeley.edu/datasets/",
+			"bibjson:prefLabel" : "Publications of James Pitman",
+			"dc:description" : "Publications of James Pitman",
+			"dc:source" : "_:bnode1",
+			"dc:created" : "2008-01-01T00:00:00Z",
+			"dc:creator" : {
+				"dc:title": "Stanford University",
+				"dc:identifier": "http://www.stanford.edu/",
+				"dc:identifier": "@ustanford"
+			},
+			"bibjson:hasRecord" : "_:MR2276901"
+		},
+		{
+			"@subject" : "_:bnode2",
+			"foaf:name": "Jim Pitman",
+			"dc:identifier": "http://www.stat.berkeley.edu/~pitman/",
+			"dc:identifier": "@jpitman"
+		},
+		{
+			"@subject" : "_:bnode3",
+			"dc:title": "In memoriam Paul-AndrÃ© Meyer: SÃ©eminaire de ProbabilitÃ©s",
+			"dc:identifier": "@book_id"
+		},
+		{
+			"@subject" : "_:MR2276901",
+			"bibjson:id" : "MR2276901",
+			"@type" : "Article",
+			"bibjson:prefLabel" : "Two recursive decompositions of Brownian bridge related to the asymptotics of random mappings",
+			"dc:description" : "Aldous and Pitman (1994) studied asymptotic distributions,....",
+			"bibjson:year": 2006,
+			"bibjson:pages" : "269--303",
+			"dc:identifier" : "math.PR/0402399",
+			"dc:subject" : ["Path decomposition", "Path rearrangement", "Random mapping", "Combinatorial stochastic process"],
+			"bibjson:bibnumber" : 117,
+			"bibjson:volume" : "1874",
+			"bibjson:address" : "Berlin",
+			"bibjson:mrclass" : "60C05 (60J65)",
+			"dc:creator" : ["Aldous, David", {"@iri": "_:bnode2"}],
+			"dc:ispartof" : "_:bnode3"
+		}
+	]
+}

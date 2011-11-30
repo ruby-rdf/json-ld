@@ -1,0 +1,12 @@
+{
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "foaf:birthday": {"@datatype": "xsd:date"}
+  },
+  "@subject": "http://greggkellogg.net/foaf#me",
+  "@type": "foaf:Person",
+  "foaf:name": "Gregg Kellogg",
+  "foaf:birthday": "1957-02-27",
+  "foaf:homepage": "http://greggkellogg.net/"
+}

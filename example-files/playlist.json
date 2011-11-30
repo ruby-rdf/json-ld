@@ -2,7 +2,7 @@
   "@context": {
     "Release":  "http://example.org/idl-def/release#",
     "Playlist": "http://example.org/idl-def/release#Playlist",
-    "track":    "http://example.org/idl-def/release#Playlist.track",
+    "track":    {"@iri": "http://example.org/idl-def/release#Playlist.track", "@list": true},
     "Track":    "http://example.org/idl-def/release#Track",
     "Slot":     "http://purl.org/ontology/olo/core#Slot",
     "slot":     "http://purl.org/ontology/olo/core#slot",
@@ -15,7 +15,7 @@
   },
   "@subject":   "",
   "@type":      "Release",
-  "track":  [[
+  "track":  [
     {
       "@subject":       "track1",
       "@type":          "Track",
@@ -28,5 +28,5 @@
       "Track.title":    "Track 2",
       "Track.duration": 5678
     }
-  ]]
+  ]
 }
