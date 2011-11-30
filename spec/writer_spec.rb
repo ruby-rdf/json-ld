@@ -31,7 +31,7 @@ describe JSON::LD::Writer do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       serialize(input).should produce({
-        '@context'       => {'http://a/c' => {'@coerce' => '@iri'}},
+        '@context'       => {'http://a/c' => {'@datatype' => '@iri'}},
         '@subject'       => "http://a/b",
         "http://a/c"     => "http://a/d"
       }, @debug)
@@ -43,7 +43,7 @@ describe JSON::LD::Writer do
       should produce({
         '@context' => [
           {"foaf"  => "http://xmlns.com/foaf/0.1/"},
-          {"foaf:c" => {"@coerce" => "@iri"}}
+          {"foaf:c" => {"@datatype" => "@iri"}}
         ],
         '@subject'   => "foaf:b",
         "foaf:c"  => "foaf:d"
@@ -56,7 +56,7 @@ describe JSON::LD::Writer do
       should produce({
         "@context" => [
           {"" => "http://xmlns.com/foaf/0.1/"},
-          {":c" => {"@coerce" => "@iri"}}
+          {":c" => {"@datatype" => "@iri"}}
         ],
         '@subject' => ":b",
         ":c"    => ":d"
@@ -67,7 +67,7 @@ describe JSON::LD::Writer do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       serialize(input, :standard_prefixes => true).
       should produce({
-        "@context" => {"foaf" => {"@iri" => "http://xmlns.com/foaf/0.1/", "@coerce" => "@iri"}},
+        "@context" => {"foaf" => {"@iri" => "http://xmlns.com/foaf/0.1/", "@datatype" => "@iri"}},
         '@subject'   => "foaf",
         "foaf"   => "foaf"
       }, @debug)
@@ -90,7 +90,7 @@ describe JSON::LD::Writer do
             "dbo"   => "http://dbpedia.org/ontology/",
           },
           {
-            "dbo:artistOf" => {"@coerce" => "@iri"}
+            "dbo:artistOf" => {"@datatype" => "@iri"}
           }
         ],
         '@subject'   => "db:Michael_Jackson",
@@ -111,7 +111,7 @@ describe JSON::LD::Writer do
       input = %(@base <http://a/> . <b> <c> <e>, <d> .)
       serialize(input).
       should produce({
-        '@context'       => {'http://a/c' => {'@coerce' => "@iri"}},
+        '@context'       => {'http://a/c' => {'@datatype' => "@iri"}},
         '@subject'       => "http://a/b",
         "http://a/c"  => ["http://a/d", "http://a/e"]
       }, @debug)
@@ -136,7 +136,7 @@ describe JSON::LD::Writer do
             "rdfs"  => "http://www.w3.org/2000/01/rdf-schema#",
           },
           {
-            ":c"    => {"@coerce" => "@iri"}
+            ":c"    => {"@datatype" => "@iri"}
           }
         ],
         '@subject'       => ":b",
@@ -153,7 +153,7 @@ describe JSON::LD::Writer do
       should produce({
         "@context" => [
           {"" => "http://xmlns.com/foaf/0.1/"},
-          {":c" => {"@coerce" => "@iri"}}
+          {":c" => {"@datatype" => "@iri"}}
         ],
         '@subject'        => ":b",
         ":c"       => [":d", ":e"]
@@ -167,8 +167,8 @@ describe JSON::LD::Writer do
         "@context" => [
           {"" => "http://xmlns.com/foaf/0.1/"},
           {
-            ":c" => {"@coerce" => "@iri"},
-            ":e" => {"@coerce" => "@iri"}
+            ":c" => {"@datatype" => "@iri"},
+            ":e" => {"@datatype" => "@iri"}
           }
         ],
         '@subject'   => ":b",
@@ -201,7 +201,7 @@ describe JSON::LD::Writer do
       serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
         "@context"   => [
           {"ex"    => "http://example.com/"},
-          {"ex:b" => {"@coerce" => "ex:d"}}
+          {"ex:b" => {"@datatype" => "ex:d"}}
         ],
         '@subject'   => "ex:a",
         "ex:b"    => "foo"
@@ -235,7 +235,7 @@ describe JSON::LD::Writer do
             "xsd" => RDF::XSD.to_s
           },
           {
-            'ex:b'  => {"@coerce" => "xsd:decimal"}
+            'ex:b'  => {"@datatype" => "xsd:decimal"}
           }
         ],
         '@subject'   => "ex:a",
@@ -268,7 +268,7 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         "@context"   => [
           {"foaf"  => "http://xmlns.com/foaf/0.1/"},
-          {"foaf:a" => {"@coerce" => "@iri"}}
+          {"foaf:a" => {"@datatype" => "@iri"}}
         ],
         "foaf:a"  => "foaf:b"
       }, @debug)
@@ -280,8 +280,8 @@ describe JSON::LD::Writer do
         "@context"   => [
           {"foaf"  => "http://xmlns.com/foaf/0.1/"},
           {
-            "foaf:a" => {"@coerce" => "@iri"},
-            "foaf:c" => {"@coerce" => "@iri"}
+            "foaf:a" => {"@datatype" => "@iri"},
+            "foaf:c" => {"@datatype" => "@iri"}
           }
         ],
         "foaf:a"  => "foaf:b",
@@ -295,8 +295,8 @@ describe JSON::LD::Writer do
         "@context"   => [
           {"foaf"  => "http://xmlns.com/foaf/0.1/"},
           {
-            "foaf:b" => {"@coerce" => "@iri"},
-            "foaf:c" => {"@coerce" => "@iri"}
+            "foaf:b" => {"@datatype" => "@iri"},
+            "foaf:c" => {"@datatype" => "@iri"}
           }
         ],
         '@subject'     => "foaf:a",
@@ -342,7 +342,7 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/"
           },
           {
-            "foaf:b" => {"@coerce" => "@iri", "@list" => true}
+            "foaf:b" => {"@datatype" => "@iri", "@list" => true}
           }
         ],
         '@subject'   => "foaf:a",
@@ -358,7 +358,7 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/",
           },
           {
-            "foaf:b" => {"@coerce" => "@iri", "@list" => true}
+            "foaf:b" => {"@datatype" => "@iri", "@list" => true}
           }
         ],
         '@subject'   => "foaf:a",
@@ -382,7 +382,7 @@ describe JSON::LD::Writer do
       }, @debug)
     end
     
-    it "should generate single element list without @coerce" do
+    it "should generate single element list without @datatype" do
       input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b ( [ :b "foo" ] ) .)
       serialize(input, :standard_prefixes => true).should produce({
         '@context'   => {
@@ -401,7 +401,7 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/",
           },
           {
-            "foaf:a" => {"@coerce" => "@iri"}
+            "foaf:a" => {"@datatype" => "@iri"}
           }
         ],
         '@subject'   => {'@list' => []},
@@ -417,7 +417,7 @@ describe JSON::LD::Writer do
             "foaf"  => "http://xmlns.com/foaf/0.1/",
           },
           {
-            "foaf:b" => {"@coerce" => "@iri"}
+            "foaf:b" => {"@datatype" => "@iri"}
           }
         ],
         '@subject'   => {'@list' => [{'@subject' => "foaf:a"}]},
@@ -438,7 +438,7 @@ describe JSON::LD::Writer do
             "owl"   => "http://www.w3.org/2002/07/owl#",
           },
           {
-            "owl:sameAs" => {"@coerce" => "@iri", "@list" => true}
+            "owl:sameAs" => {"@datatype" => "@iri", "@list" => true}
           }
         ],
         '@subject'       => "foaf:listOf2Lists",
@@ -459,7 +459,7 @@ describe JSON::LD::Writer do
             "owl"   => "http://www.w3.org/2002/07/owl#",
           },
           {
-            "owl:sameAs" => {"@coerce" => "@iri", "@list" => true}
+            "owl:sameAs" => {"@datatype" => "@iri", "@list" => true}
           }
         ],
         '@subject'       => "foaf:twoAnons",
@@ -489,8 +489,8 @@ describe JSON::LD::Writer do
             "rdfs"  => "http://www.w3.org/2000/01/rdf-schema#",
           },
           {
-            "rdfs:domain" => {"@coerce" => "@iri"},
-            "owl:unionOf" => {"@coerce" => "@iri", "@list" => true}
+            "rdfs:domain" => {"@datatype" => "@iri"},
+            "owl:unionOf" => {"@datatype" => "@iri", "@list" => true}
           }
         ],
         '@subject'         => "foaf:a",
@@ -509,7 +509,7 @@ describe JSON::LD::Writer do
         serialize(input, :base_uri => "http://a/").should produce({
           '@context'       => {
             '@base'        => "http://a/",
-            "http://a/c"   => {"@coerce" => "@iri"}
+            "http://a/c"   => {"@datatype" => "@iri"}
           },
           '@subject'    => "b",
           "http://a/c"  => "d"
@@ -523,7 +523,7 @@ describe JSON::LD::Writer do
         serialize(input, :vocab => "http://a/").should produce({
           "@context"  => {
             "@vocab" => "http://a/",
-            "c"      => {"@coerce" => "@iri"}
+            "c"      => {"@datatype" => "@iri"}
           },
           '@subject'  => "http://a/b",
           "c"         => "http://a/d"
@@ -531,7 +531,7 @@ describe JSON::LD::Writer do
       end
     end
     
-    context "@coerce" do
+    context "@datatype" do
       it "does not coerce properties with hetrogeneous types" do
         input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b :c, "d" .)
         serialize(input, :standard_prefixes => true).should produce({

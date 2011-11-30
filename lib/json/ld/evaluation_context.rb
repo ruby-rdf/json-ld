@@ -38,7 +38,7 @@ module JSON::LD
 
     # Type coersion
     #
-    # The @coerce keyword is used to specify type coersion rules for the data. For each key in the map, the
+    # The @datatype keyword is used to specify type coersion rules for the data. For each key in the map, the
     # key is a String representation of the property for which String values will be coerced and
     # the value is the datatype (or @iri) to coerce to. Type coersion for
     # the value `@iri` asserts that all vocabulary terms listed should undergo coercion to an IRI,
@@ -146,6 +146,8 @@ module JSON::LD
         new_ec = self.dup
         new_ec.provided_context = context
         debug("parse") {"=> provided_context: #{context.inspect}"}
+        
+        # Map terms to IRIs first
         context.each do |key, value|
           # Expand a string value, unless it matches a keyword
           value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
@@ -154,26 +156,47 @@ module JSON::LD
           when '@vocab'    then new_ec.vocab = value.to_s
           when '@base'     then new_ec.base  = uri(value)
           when '@language' then new_ec.language = value.to_s
+          when '@coerce'   then #not yet
+          else
+            # If value is a Hash process contents
+            value = value['@iri'] if value.is_a?(Hash)
+            iri = expand_iri(value || key, :position => :predicate) if term_valid?(key)
+
+            # Record term definition
+            new_ec.add_mapping(key, iri) if term_valid?(key)
+          end
+        end
+
+        # Next, look for coercion using new_ec
+        context.each do |key, value|
+          # Expand a string value, unless it matches a keyword
+          value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
+          debug("parse") {"Hash[#{key}] = #{value.inspect}"}
+          case key
+          when '@vocab'    then # done
+          when '@base'     then # done
+          when '@language' then # done
           when '@coerce'
-            # Process after prefix mapping.
             # FIXME: deprectaed
+            raise RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
+            context['@coerce'].each do |type, property|
+              debug("parse") {"type=#{type}, prop=#{property}"}
+              type_uri = new_ec.expand_iri(type, :position => :predicate).to_s
+              [property].flatten.compact.each do |prop|
+                p = new_ec.expand_iri(prop, :position => :predicate).to_s
+                if type == '@list'
+                  # List is managed separate from types, as it is maintained in normal form.
+                  new_ec.add_list(p)
+                else
+                  new_ec.coerce[p] = type_uri
+                end
+              end
+            end
           else
             # If value is a Hash process contents
             case value
             when Hash
-              if term_valid?(key)
-                # It defines a term, look up @iri, or do vocab expansion
-                # Given @iri, expand it, otherwise resolve key relative to @vocab
-                new_ec.add_mapping(key, expand_iri(value["@iri"] || key, :position => :predicate))
-              
-                prop = new_ec.mappings[key].to_s
-
-                debug("parse") {"Term definition #{key} => #{prop.inspect}"}
-              else
-                # It is not a term definition, and must be a prefix:suffix or IRI
-                prop = expand_iri(key, :position => :predicate).to_s
-                debug("parse") {"No term definition #{key} => #{prop.inspect}"}
-              end
+              prop = new_ec.expand_iri(key, :position => :predicate).to_s
 
               # List inclusion
               if value["@list"]
@@ -181,80 +204,21 @@ module JSON::LD
               end
 
               # Coercion
-              value["@coerce"] = value["@datatype"] if value.has_key?("@datatype") && !value.has_key?("@coerce")
-              case value["@coerce"]
-              when Array
-                # Form is { "term" => { "@coerce" => ["@list", "xsd:string"]}}
-                # With an array, there can be two items, one of which must be @list
-                # FIXME: this alternative unlikely
-                if value["@coerce"].include?(@list)
-                  dtl = value["@coerce"] - "@list"
-                  raise RDF::ReaderError,
-                    "Coerce array for #{key} must only contain @list and a datatype: #{value['@coerce'].inspect}" unless
-                    dtl.length == 1
-                  case dtl.first
-                  when "@iri"
-                    debug("parse") {"@coerce @iri"}
-                    new_ec.coerce[prop] = '@iri'
-                  when String
-                    dt = expand_iri(dtl.first, :position => :datatype)
-                    debug("parse") {"@coerce #{dt}"}
-                    new_ec.coerce[prop] = dt
-                  end
-                elsif @options[:validate]
-                  raise RDF::ReaderError, "Coerce array for #{key} must contain @list: #{value['@coerce'].inspect}"
-                end
-                new_ec.add_list(prop)
-              when Hash
-                # Must be of the form { "term" => { "@coerce" => {"@list" => "xsd:string"}}}
-                case value["@coerce"]["@list"]
-                when "@iri"
-                  debug("parse") {"@coerce @iri"}
-                  new_ec.coerce[prop] = '@iri'
-                when String
-                  dt = expand_iri(value["@coerce"]["@list"], :position => :datatype)
-                  debug("parse") {"@coerce #{dt}"}
-                  new_ec.coerce[prop] = dt
-                when nil
-                  raise RDF::ReaderError, "Unknown coerce hash for #{key}: #{value['@coerce'].inspect}" if @options[:validate]
-                end
-                new_ec.add_list(prop)
+              value["@datatype"] = value["@coerce"] if value.has_key?("@coerce") && !value.has_key?("@datatype")
+              case value["@datatype"]
               when "@iri"
-                # Must be of the form { "term" => { "@coerce" => "@iri"}}
-                debug("parse") {"@coerce @iri"}
+                # Must be of the form { "term" => { "@datatype" => "@iri"}}
+                debug("parse") {"@datatype @iri"}
                 new_ec.coerce[prop] = '@iri'
-              when "@list"
-                # Must be of the form { "term" => { "@coerce" => "@list"}}
-                dt = expand_iri(value["@coerce"], :position => :predicate)
-                debug("parse") {"@coerce @list"}
-                new_ec.add_list(prop)
               when String
-                # Must be of the form { "term" => { "@coerce" => "xsd:string"}}
-                dt = expand_iri(value["@coerce"], :position => :predicate)
-                debug("parse") {"@coerce #{dt}"}
+                # Must be of the form { "term" => { "@datatype" => "xsd:string"}}
+                dt = new_ec.expand_iri(value["@datatype"], :position => :predicate)
+                debug("parse") {"@datatype #{dt}"}
                 new_ec.coerce[prop] = dt
               end
             else
               # Given a string (or URI), us it
               new_ec.add_mapping(key, value)
-            end
-          end
-        end
-      
-        if context['@coerce']
-          # This is deprecated code
-          raise RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
-          context['@coerce'].each do |type, property|
-            debug("parse") {"type=#{type}, prop=#{property}"}
-            type_uri = new_ec.expand_iri(type, :position => :predicate).to_s
-            [property].flatten.compact.each do |prop|
-              p = new_ec.expand_iri(prop, :position => :predicate).to_s
-              if type == '@list'
-                # List is managed separate from types, as it is maintained in normal form.
-                new_ec.add_list(p)
-              else
-                new_ec.coerce[p] = type_uri
-              end
             end
           end
         end
@@ -309,8 +273,8 @@ module JSON::LD
                 if ctx[dt_prefix] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
                   # It uses a prefix defined above, place in new context block
                   ctx2[k_iri.to_s] = Hash.new
-                  ctx2[k_iri.to_s]['@coerce'] = dt
-                  debug {"=> new coerce[#{k_iri}] => #{dt}"}
+                  ctx2[k_iri.to_s]['@datatype'] = dt
+                  debug {"=> new datatype[#{k_iri}] => #{dt}"}
                 else
                   # It is not dependent on previously defined terms, fold into existing definition
                   ctx[k_iri] ||= Hash.new
@@ -319,8 +283,8 @@ module JSON::LD
                     defn["@iri"] = ctx[k_iri]
                     ctx[k_iri] = defn
                   end
-                  ctx[k_iri]["@coerce"] = dt
-                  debug {"=> reuse coerce[#{k_iri}] => #{dt}"}
+                  ctx[k_iri]["@datatype"] = dt
+                  debug {"=> reuse datatype[#{k_iri}] => #{dt}"}
                 end
               end
 

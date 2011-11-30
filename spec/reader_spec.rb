@@ -326,7 +326,7 @@ describe JSON::LD::Reader do
           %q({
             "@context": {
               "foaf": "http://xmlns.com/foaf/0.1/",
-              "@coerce":  { "@iri": "foaf:knows"}
+              "knows": {"@iri": "http://xmlns.com/foaf/0.1/knows", "@datatype": "@iri"}
             },
             "@subject":  "http://greggkellogg.net/foaf#me",
             "foaf:knows":  "http://www.ivan-herman.net/foaf#me"
@@ -341,7 +341,7 @@ describe JSON::LD::Reader do
             "@context": {
               "dcterms":  "http://purl.org/dc/terms/",
               "xsd":      "http://www.w3.org/2001/XMLSchema#",
-              "@coerce":  { "xsd:date": "dcterms:created"}
+              "created":  {"@iri": "http://purl.org/dc/terms/created", "@datatype": "xsd:date"}
             },
             "@subject":  "http://greggkellogg.net/foaf#me",
             "dcterms:created":  "1957-02-27"
@@ -566,7 +566,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @iri + @coerce" do
+        context "term def with @iri + @datatype" do
           {
             "vocab expansion" => [
               %q({
@@ -584,7 +584,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@iri": "term", "@coerce": "date"}}
+                  {"foo": {"@iri": "term", "@datatype": "date"}}
                 ],
                 "foo": "bar"
               }),
@@ -597,7 +597,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@iri": "prefix:bar", "@coerce": "xsd:date"}}
+                  {"foo": {"@iri": "prefix:bar", "@datatype": "xsd:date"}}
                 ],
                 "prefix:bar": "bar"
               }),
@@ -609,7 +609,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "http://www.w3.org/2001/XMLSchema#date"}}
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}}
                 ],
                 "http://example.org/foo#bar": "bar"
               }),
@@ -621,7 +621,7 @@ describe JSON::LD::Reader do
             "@iri with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri"}}
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri"}}
                 ],
                 "foo": "bar"
               }),
@@ -629,10 +629,10 @@ describe JSON::LD::Reader do
                 _:a <http://example.org/foo#bar> <bar> .
               )
             ],
-            "@datatype as synonym for @coerce" => [
+            "@coerce as synonym for @datatype" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri"}}
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri"}}
                 ],
                 "foo": "bar"
               }),
@@ -648,7 +648,7 @@ describe JSON::LD::Reader do
                     "dc": "http://purl.org/dc/terms/"
                   },
                   {
-                    "dc:date": {"@coerce": "xsd:date"}
+                    "dc:date": {"@datatype": "xsd:date"}
                   }
                 ],
                 "dc:date": "2011-11-23"
@@ -743,7 +743,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @iri + @coerce + @list" do
+        context "term def with @iri + @datatype + @list" do
           {
             "vocab expansion" => [
               %q({
@@ -761,7 +761,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@iri": "term", "@coerce": "date", "@list": true}}
+                  {"foo": {"@iri": "term", "@datatype": "date", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),
@@ -774,7 +774,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@iri": "prefix:bar", "@coerce": "xsd:date", "@list": true}}
+                  {"foo": {"@iri": "prefix:bar", "@datatype": "xsd:date", "@list": true}}
                 ],
                 "prefix:bar": ["bar"]
               }),
@@ -786,7 +786,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
                 ],
                 "http://example.org/foo#bar": ["bar"]
               }),
@@ -798,7 +798,7 @@ describe JSON::LD::Reader do
             "@iri with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri", "@list": true}}
+                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),
