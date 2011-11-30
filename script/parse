@@ -16,11 +16,7 @@ def run(input, options)
   r = reader_class.new(input, :base_uri => options[:base_uri], :strict => true)
   g = RDF::Graph.new << r
   num = g.count
-  options[:output].puts g.dump(options[:output_format],
-    :base_uri     => options[:base_uri],
-    :vocab        => options[:vocab],
-    :prefixes     => r.prefixes,
-    :canonicalize => options[:normalize])
+  options[:output].puts g.dump(options[:output_format], options.merge(:prefixes => r.prefixes))
   puts
   secs = Time.new - start
   puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
@@ -33,21 +29,19 @@ end
 options = {
   :validate      => false,
   :strict        => true,
-  :normalize     => false,
   :output        => STDOUT,
-  :output_format => :ntriples,
+  :output_format => :ttl,
   :input_format  => :ld,
-  :vocab         => nil,
-  :base_uri      => nil,
 }
 input = nil
 
 opts = GetoptLong.new(
   ["--dbg", GetoptLong::NO_ARGUMENT],
+  ["--automatic", GetoptLong::NO_ARGUMENT],
+  ["--context", GetoptLong::REQUIRED_ARGUMENT],
   ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT],
   ["--format", GetoptLong::REQUIRED_ARGUMENT],
   ["--input-format", GetoptLong::REQUIRED_ARGUMENT],
-  ["--normalize", GetoptLong::NO_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
   ["--parse-only", GetoptLong::NO_ARGUMENT],
   ["--quiet", GetoptLong::NO_ARGUMENT],
@@ -57,10 +51,10 @@ opts = GetoptLong.new(
 opts.each do |opt, arg|
   case opt
   when '--dbg'          then ::JSON::LD::debug = true
+  when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
   when '--format'       then options[:output_format] = arg.to_sym
   when '--input-format' then options[:input_format] = arg.to_sym
-  when '--normalize'    then options[:normalize] = true
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--quiet'        then options[:quiet] = true
