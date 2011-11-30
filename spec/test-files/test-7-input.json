@@ -1,0 +1,23 @@
+{
+  "@context": { "foaf": "http://xmlns.com/foaf/0.1/" },
+  "@subject": [
+    {
+      "@subject": "_:bnode1",
+      "@type": "foaf:Person",
+      "foaf:homepage": "http://example.com/bob/",
+      "foaf:name": "Bob"
+    },
+    {
+      "@subject": "_:bnode2",
+      "@type": "foaf:Person",
+      "foaf:homepage": "http://example.com/eve/",
+      "foaf:name": "Eve"
+    },
+    {
+      "@subject": "_:bnode3",
+      "@type": "foaf:Person",
+      "foaf:homepage": "http://example.com/manu/",
+      "foaf:name": "Manu"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "@type": "http://xmlns.com/foaf/0.1/Person",
+    "http://xmlns.com/foaf/0.1/homepage": "http://example.com/bob/",
+    "http://xmlns.com/foaf/0.1/name": "Bob"
+  }
+  {
+    "@type": "http://xmlns.com/foaf/0.1/Person",
+    "http://xmlns.com/foaf/0.1/homepage": "http://example.com/eve/",
+    "http://xmlns.com/foaf/0.1/name": "Eve"
+  },
+  {
+    "@type": "http://xmlns.com/foaf/0.1/Person",
+    "http://xmlns.com/foaf/0.1/homepage": "http://example.com/manu/",
+    "http://xmlns.com/foaf/0.1/name": "Manu"
+  }
+]

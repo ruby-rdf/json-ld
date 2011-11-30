@@ -1,0 +1,10 @@
+{
+    "http://xmlns.com/foaf/0.1/name": "Manu Sporny",
+    "http://xmlns.com/foaf/0.1/age": {
+        "@datatype": "http://www.w3.org/2001/XMLSchema#integer",
+        "@literal": "41"
+    },
+    "http://xmlns.com/foaf/0.1/homepage": {
+        "@iri": "http://manu.sporny.org/"
+    }
+}

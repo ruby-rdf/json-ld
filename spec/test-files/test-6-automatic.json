@@ -1,0 +1,10 @@
+{
+  "@context": [
+    { "foaf": "http://xmlns.com/foaf/0.1/" },
+    { "foaf:nick": { "@coerce": "@iri", "@list": true } }
+  ],
+  "@subject": "http://example.org/people#joebob",
+  "@type": "foaf:Person",
+  "foaf:name": "Joe Bob",
+  "foaf:nick": [ "joe", "bob", "jaybe" ]
+}
