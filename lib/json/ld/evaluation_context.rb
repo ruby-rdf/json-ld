@@ -40,8 +40,8 @@ module JSON::LD
     #
     # The @datatype keyword is used to specify type coersion rules for the data. For each key in the map, the
     # key is a String representation of the property for which String values will be coerced and
-    # the value is the datatype (or @iri) to coerce to. Type coersion for
-    # the value `@iri` asserts that all vocabulary terms listed should undergo coercion to an IRI,
+    # the value is the datatype (or @id) to coerce to. Type coersion for
+    # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
     # including `@base` processing for relative IRIs and CURIE processing for compact IRI Expressions like
     # `foaf:homepage`.
     #
@@ -159,7 +159,7 @@ module JSON::LD
           when '@coerce'   then #not yet
           else
             # If value is a Hash process contents
-            value = value['@iri'] if value.is_a?(Hash)
+            value = value['@id'] if value.is_a?(Hash)
             iri = expand_iri(value || key, :position => :predicate) if term_valid?(key)
 
             # Record term definition
@@ -206,10 +206,10 @@ module JSON::LD
               # Coercion
               value["@datatype"] = value["@coerce"] if value.has_key?("@coerce") && !value.has_key?("@datatype")
               case value["@datatype"]
-              when "@iri"
-                # Must be of the form { "term" => { "@datatype" => "@iri"}}
-                debug("parse") {"@datatype @iri"}
-                new_ec.coerce[prop] = '@iri'
+              when "@id"
+                # Must be of the form { "term" => { "@datatype" => "@id"}}
+                debug("parse") {"@datatype @id"}
+                new_ec.coerce[prop] = '@id'
               when String
                 # Must be of the form { "term" => { "@datatype" => "xsd:string"}}
                 dt = new_ec.expand_iri(value["@datatype"], :position => :predicate)
@@ -280,7 +280,7 @@ module JSON::LD
                   ctx[k_iri] ||= Hash.new
                   if ctx[k_iri].is_a?(String)
                     defn = Hash.new
-                    defn["@iri"] = ctx[k_iri]
+                    defn["@id"] = ctx[k_iri]
                     ctx[k_iri] = defn
                   end
                   ctx[k_iri]["@datatype"] = dt
@@ -299,7 +299,7 @@ module JSON::LD
                   ctx[k_iri] ||= Hash.new
                   if ctx[k_iri].is_a?(String)
                     defn = Hash.new
-                    defn["@iri"] = ctx[k_iri]
+                    defn["@id"] = ctx[k_iri]
                     ctx[k_iri] = defn
                   end
                   ctx[k_iri]["@list"] = true
@@ -456,7 +456,7 @@ module JSON::LD
         when TrueClass, FalseClass, Integer, BigDecimal, Double
           value
         when RDF::URI
-          {'@iri' => value.to_s}
+          {'@id' => value.to_s}
         when RDF::Literal::Integer, RDF::Literal::Double
           value.object
         when RDF::Literal
@@ -467,8 +467,8 @@ module JSON::LD
           res
         else
           case coerce[predicate]
-          when '@iri'
-            {'@iri' => expand_iri(value, :position => :object)}
+          when '@id'
+            {'@id' => expand_iri(value, :position => :object)}
           when String, RDF::URI
             res = Hash.new
             res['@literal'] = value.to_s
@@ -506,10 +506,10 @@ module JSON::LD
           # Compact an expanded list representation
           debug {" (list)"}
           value['@list']
-        when list[predicate] == '@iri'
-          # Compact an @iri coercion
-          debug {" (@iri)"}
-          value = value['@iri']
+        when list[predicate] == '@id'
+          # Compact an @id coercion
+          debug {" (@id)"}
+          value = value['@id']
         when value['@language'] && value['@language'] == language
           # Compact language
           debug {" (@language) == #{language}"}

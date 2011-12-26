@@ -96,7 +96,8 @@ module JSON::LD
           prefixes.merge!(ec.mappings)  # Update parsed prefixes
         end
         
-        # 2.2) Create a new associative array by mapping the keys from the current associative array ...
+        # 2.2) Create a copy of the current JSON object, changing keys that map to JSON-LD keywords with those keywords.
+        #      Use the new JSON object in subsequent steps
         new_element = {}
         element.each do |k, v|
           k = ec.mappings[k.to_s] if ec.mappings[k.to_s].to_s[0,1] == '@'
@@ -108,17 +109,14 @@ module JSON::LD
         end
 
         # Other shortcuts to allow use of this method for terminal associative arrays
-        object = if element['@iri'].is_a?(String)
-          # 2.3 Return the IRI found from the value
-          ec.expand_iri(element['@iri'], :position => :objeect)
-        elsif element['@literal']
-          # 2.4
+        object = if element['@literal']
+          # 2.3) If the JSON object has a @literal key, set the active object to a literal value as follows ...
           literal_opts = {}
           literal_opts[:datatype] = ec.expand_iri(element['@datatype'], :position => :datatype) if element['@datatype']
           literal_opts[:language] = element['@language'].to_sym if element['@language']
           RDF::Literal.new(element['@literal'], literal_opts)
         elsif element['@list']
-          # 2.5 (Lists)
+          # 2.4 (Lists)
           parse_list("#{path}[#{'@list'}]", element['@list'], subject, property, ec) do |resource|
             add_triple(path, subject, property, resource) if subject && property
           end
@@ -129,24 +127,25 @@ module JSON::LD
           return object
         end
         
-        active_subject = if element['@subject'].is_a?(String)
-          # 2.6 Subject
-          # 2.6.1 Set active object (subject)
-          ec.expand_iri(element['@subject'], :position => :subject)
-        elsif element['@subject']
-          # 2.6.2 Recursively process hash or Array values
-          traverse("#{path}[#{'@subject'}]", element['@subject'], subject, property, ec) do |resource|
+        active_subject = if element['@id'].is_a?(String)
+          # 2.5 Subject
+          # 2.5.1 Set active object (subject)
+          ec.expand_iri(element['@id'], :position => :subject)
+        elsif element['@id']
+          # 2.5.2 Recursively process hash or Array values
+          traverse("#{path}[#{'@id'}]", element['@id'], subject, property, ec) do |resource|
             add_triple(path, subject, property, resource) if subject && property
           end
         else
-          # 2.7) Generate a blank node identifier and set it as the active subject.
+          # 2.6) Generate a blank node identifier and set it as the active subject.
           RDF::Node.new
         end
 
         subject = active_subject
         
+        # 2.7) For each key in the JSON object that has not already been processed, perform the following steps:
         element.each do |key, value|
-          # 2.8.1) If a key that is not @context, @subject, or @type, set the active property by
+          # 2.7.1) If a key that is not @context, @id, or @type, set the active property by
           # performing Property Processing on the key.
           property = case key
           when '@type' then '@type'
@@ -154,10 +153,10 @@ module JSON::LD
           else      ec.expand_iri(key, :position => :predicate)
           end
 
-          # 2.8.3
+          # 2.7.3) List expansion
           object = if ec.list.include?(property.to_s) && value.is_a?(Array)
-            # 2.8.3.1 (Lists) If the active property is the target of a @list coercion, and the value is an array,
-            #         process the value as a list starting at Step 3a.
+            # If the active property is the target of a @list coercion, and the value is an array,
+            # process the value as a list starting at Step 3.1.
             parse_list("#{path}[#{key}]", value, subject, property, ec) do |resource|
               # Adds triple for head BNode only, the rest of the list is done within the method
               add_triple(path, subject, property, resource) if subject && property
@@ -170,10 +169,10 @@ module JSON::LD
           end
         end
         
-        # The subject is returned
+        # 2.8) The subject is returned
         subject
       when Array
-        # 3) If a regular array is detected, process each value in the array by doing the following:
+        # 3) If a regular array is detected ...
         element.each_with_index do |v, i|
           traverse("#{path}[#{i}]", v, subject, property, ec) do |resource|
             add_triple(path, subject, property, resource) if subject && property
@@ -186,7 +185,7 @@ module JSON::LD
           "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, " +
           "ec=#{ec.coerce.inspect}"
         end
-        if ec.coerce[property.to_s] == '@iri'
+        if ec.coerce[property.to_s] == '@id'
           ec.expand_iri(element, :position => :object)
         elsif property == '@type'
           # @type value is an IRI resolved relative to @vocab, or a term/prefix

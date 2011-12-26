@@ -30,7 +30,7 @@ describe JSON::LD::Reader do
   context :interface do
     subject { %q({
       "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-       "@subject": "_:bnode1",
+       "@id": "_:bnode1",
        "@type": "foaf:Person",
        "foaf:homepage": "http://example.com/bob/",
        "foaf:name": "Bob"
@@ -84,7 +84,7 @@ describe JSON::LD::Reader do
       {
         "plain literal" =>
         [
-          %q({"@subject": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
+          %q({"@id": "http://greggkellogg.net/foaf#me", "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"}),
           %q(<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         "explicit plain literal" =>
@@ -100,10 +100,10 @@ describe JSON::LD::Reader do
         "I18N literal with language" =>
         [
           %q([{
-            "@subject": "http://greggkellogg.net/foaf#me",
-            "http://xmlns.com/foaf/0.1/knows": {"@iri": "http://www.ivan-herman.net/foaf#me"}
+            "@id": "http://greggkellogg.net/foaf#me",
+            "http://xmlns.com/foaf/0.1/knows": {"@id": "http://www.ivan-herman.net/foaf#me"}
           },{
-            "@subject": "http://www.ivan-herman.net/foaf#me",
+            "@id": "http://www.ivan-herman.net/foaf#me",
             "http://xmlns.com/foaf/0.1/name": {"@literal": "Herman Iván", "@language": "hu"}
           }]),
           %q(
@@ -114,7 +114,7 @@ describe JSON::LD::Reader do
         "explicit datatyped literal" =>
         [
           %q({
-            "@subject":  "http://greggkellogg.net/foaf#me",
+            "@id":  "http://greggkellogg.net/foaf#me",
             "http://purl.org/dc/terms/created":  {"@literal": "1957-02-27", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}
           }),
           %q(
@@ -151,10 +151,10 @@ describe JSON::LD::Reader do
 
     context "overriding keywords" do
       {
-        "'url' for @subject, 'a' for @type" =>
+        "'url' for @id, 'a' for @type" =>
         [
           %q({
-            "@context": {"url": "@subject", "a": "@type", "name": "http://schema.org/name"},
+            "@context": {"url": "@id", "a": "@type", "name": "http://schema.org/name"},
             "url": "http://example.com/about#gregg",
             "a": "http://schema.org/Person",
             "name": "Gregg Kellogg"
@@ -177,9 +177,9 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {
-              "@subject": "http://www.ivan-herman.net/foaf#me",
+              "@id": "http://www.ivan-herman.net/foaf#me",
               "foaf:name": "Ivan Herman"
             }
           }),
@@ -192,7 +192,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {
               "foaf:name": "Manu Sporny"
             }
@@ -215,7 +215,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": ["Manu Sporny", "Ivan Herman"]
           }),
           %q(
@@ -236,7 +236,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {"@list": []}
           }),
           %q(
@@ -247,7 +247,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {"@list": ["Manu Sporny"]}
           }),
           %q(
@@ -260,7 +260,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": "http://greggkellogg.net/foaf#me",
+            "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {"@list": ["Manu Sporny", "Dave Longley"]}
           }),
           %q(
@@ -287,8 +287,8 @@ describe JSON::LD::Reader do
               "@base":  "http://greggkellogg.net/foaf",
               "doap": "http://usefulinc.com/ns/doap#"
             },
-            "@subject":  "#me",
-            "doap:homepage":  {"@iri": "http://github.com/gkellogg/"}
+            "@id":  "#me",
+            "doap:homepage":  {"@id": "http://github.com/gkellogg/"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
@@ -300,8 +300,8 @@ describe JSON::LD::Reader do
             "@context": {
               "@vocab": "http://usefulinc.com/ns/doap#"
             },
-            "@subject":  "http://greggkellogg.net/foaf#me",
-            "homepage":  {"@iri": "http://github.com/gkellogg/"}
+            "@id":  "http://greggkellogg.net/foaf#me",
+            "homepage":  {"@id": "http://github.com/gkellogg/"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
@@ -314,21 +314,21 @@ describe JSON::LD::Reader do
               "@base":  "http://greggkellogg.net/foaf",
               "@vocab": "http://usefulinc.com/ns/doap#"
             },
-            "@subject":  "#me",
-            "homepage":  {"@iri": "http://github.com/gkellogg/"}
+            "@id":  "#me",
+            "homepage":  {"@id": "http://github.com/gkellogg/"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
           )
         ],
-        "@iri coersion" =>
+        "@id coersion" =>
         [
           %q({
             "@context": {
               "foaf": "http://xmlns.com/foaf/0.1/",
-              "knows": {"@iri": "http://xmlns.com/foaf/0.1/knows", "@datatype": "@iri"}
+              "knows": {"@id": "http://xmlns.com/foaf/0.1/knows", "@datatype": "@id"}
             },
-            "@subject":  "http://greggkellogg.net/foaf#me",
+            "@id":  "http://greggkellogg.net/foaf#me",
             "foaf:knows":  "http://www.ivan-herman.net/foaf#me"
           }),
           %q(
@@ -341,9 +341,9 @@ describe JSON::LD::Reader do
             "@context": {
               "dcterms":  "http://purl.org/dc/terms/",
               "xsd":      "http://www.w3.org/2001/XMLSchema#",
-              "created":  {"@iri": "http://purl.org/dc/terms/created", "@datatype": "xsd:date"}
+              "created":  {"@id": "http://purl.org/dc/terms/created", "@datatype": "xsd:date"}
             },
-            "@subject":  "http://greggkellogg.net/foaf#me",
+            "@id":  "http://greggkellogg.net/foaf#me",
             "dcterms:created":  "1957-02-27"
           }),
           %q(
@@ -528,12 +528,12 @@ describe JSON::LD::Reader do
               ] .
               )
             ],
-            "@iri with term" => [
+            "@id with term" => [
               %q({
                 "@context": {
                   "foo": "http://example.org/foo#",
                   "@coerce": {
-                    "@iri": "foo"
+                    "@id": "foo"
                   }
                 },
                 "foo": "bar"
@@ -566,7 +566,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @iri + @datatype" do
+        context "term def with @id + @datatype" do
           {
             "vocab expansion" => [
               %q({
@@ -584,7 +584,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@iri": "term", "@datatype": "date"}}
+                  {"foo": {"@id": "term", "@datatype": "date"}}
                 ],
                 "foo": "bar"
               }),
@@ -597,7 +597,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@iri": "prefix:bar", "@datatype": "xsd:date"}}
+                  {"foo": {"@id": "prefix:bar", "@datatype": "xsd:date"}}
                 ],
                 "prefix:bar": "bar"
               }),
@@ -609,7 +609,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}}
                 ],
                 "http://example.org/foo#bar": "bar"
               }),
@@ -618,10 +618,10 @@ describe JSON::LD::Reader do
                 [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
               )
             ],
-            "@iri with term" => [
+            "@id with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri"}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "@id"}}
                 ],
                 "foo": "bar"
               }),
@@ -632,7 +632,7 @@ describe JSON::LD::Reader do
             "@coerce as synonym for @datatype" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@coerce": "@iri"}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@coerce": "@id"}}
                 ],
                 "foo": "bar"
               }),
@@ -721,12 +721,12 @@ describe JSON::LD::Reader do
                 [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
               )
             ],
-            "@iri with term" => [
+            "@id with term" => [
               %q({
                 "@context": {
                   "foo": "http://example.org/foo#",
                   "@coerce": {
-                    "@iri": "foo",
+                    "@id": "foo",
                     "@list": "foo"
                   }
                 },
@@ -743,7 +743,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @iri + @datatype + @list" do
+        context "term def with @id + @datatype + @list" do
           {
             "vocab expansion" => [
               %q({
@@ -761,7 +761,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@iri": "term", "@datatype": "date", "@list": true}}
+                  {"foo": {"@id": "term", "@datatype": "date", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),
@@ -774,7 +774,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@iri": "prefix:bar", "@datatype": "xsd:date", "@list": true}}
+                  {"foo": {"@id": "prefix:bar", "@datatype": "xsd:date", "@list": true}}
                 ],
                 "prefix:bar": ["bar"]
               }),
@@ -786,7 +786,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
                 ],
                 "http://example.org/foo#bar": ["bar"]
               }),
@@ -795,10 +795,10 @@ describe JSON::LD::Reader do
                 [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
               )
             ],
-            "@iri with term" => [
+            "@id with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@iri": "http://example.org/foo#bar", "@datatype": "@iri", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "@id", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),
@@ -840,21 +840,21 @@ describe JSON::LD::Reader do
         "Array top element" =>
         [
           %q([
-            {"@subject":   "http://example.com/#me", "@type": "http://xmlns.com/foaf/0.1/Person"},
-            {"@subject":   "http://example.com/#you", "@type": "http://xmlns.com/foaf/0.1/Person"}
+            {"@id":   "http://example.com/#me", "@type": "http://xmlns.com/foaf/0.1/Person"},
+            {"@id":   "http://example.com/#you", "@type": "http://xmlns.com/foaf/0.1/Person"}
           ]),
           %q(
             <http://example.com/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
-        "@subject with array of objects value" =>
+        "@id with array of objects value" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@subject": [
-              {"@subject":   "http://example.com/#me", "@type": "foaf:Person"},
-              {"@subject":   "http://example.com/#you", "@type": "foaf:Person"}
+            "@id": [
+              {"@id":   "http://example.com/#me", "@type": "foaf:Person"},
+              {"@id":   "http://example.com/#you", "@type": "foaf:Person"}
             ]
           }),
           %q(

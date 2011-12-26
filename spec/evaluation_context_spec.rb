@@ -17,8 +17,8 @@ describe JSON::LD::EvaluationContext do
         @ctx = StringIO.new(%q({
           "@context": {
             "name": "http://xmlns.com/foaf/0.1/name",
-            "homepage": {"@iri": "http://xmlns.com/foaf/0.1/homepage", "@coerce": "@iri"},
-            "avatar": {"@iri": "http://xmlns.com/foaf/0.1/avatar", "@coerce": "@iri"}
+            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@coerce": "@id"},
+            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@coerce": "@id"}
           }
         }))
         def @ctx.content_type; "application/ld+json"; end
@@ -102,9 +102,9 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "maps term with @iri" do
+      it "maps term with @id" do
         subject.parse({
-          "foo" => {"@iri" => "http://example.com/"}
+          "foo" => {"@id" => "http://example.com/"}
         }).mappings.should produce({
           "foo" => "http://example.com/"
         }, @debug)
@@ -112,23 +112,23 @@ describe JSON::LD::EvaluationContext do
 
       it "Associates list coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@iri" => "http://example.com/", "@list" => true}
+          "foo" => {"@id" => "http://example.com/", "@list" => true}
         }).list.should produce({
           "http://example.com/" => true
         }, @debug)
       end
 
-      it "Associates @iri coercion with predicate IRI" do
+      it "Associates @id coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@iri" => "http://example.com/", "@coerce" => "@iri"}
+          "foo" => {"@id" => "http://example.com/", "@coerce" => "@id"}
         }).coerce.should produce({
-          "http://example.com/" => "@iri"
+          "http://example.com/" => "@id"
         }, @debug)
       end
 
       it "Associates datatype coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@iri" => "http://example.com/", "@coerce" => RDF::XSD.string.to_s}
+          "foo" => {"@id" => "http://example.com/", "@coerce" => RDF::XSD.string.to_s}
         }).coerce.should produce({
           "http://example.com/" => RDF::XSD.string.to_s
         }, @debug)

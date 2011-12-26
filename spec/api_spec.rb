@@ -14,30 +14,30 @@ describe JSON::LD::API, :pending => true do
       "coerced IRI" => {
         :input => {
           "@context" => {
-            "a" => {"@iri" => "http://example.com/a"},
-            "b" => {"@iri" => "http://example.com/b", "@datatype" => "@iri"},
-            "c" => {"@iri" => "http://example.com/c"},
+            "a" => {"@id" => "http://example.com/a"},
+            "b" => {"@id" => "http://example.com/b", "@datatype" => "@id"},
+            "c" => {"@id" => "http://example.com/c"},
           },
-          "@subject" => "a",
+          "@id" => "a",
           "b"        => "c"
         },
         :output => {
-          "@subject" => "http://example.com/a",
+          "@id" => "http://example.com/a",
           "http://example.com/b" => "http://example.com/c"
         }
       },
       "coerced IRI in array" => {
         :input => {
           "@context" => {
-            "a" => {"@iri" => "http://example.com/a"},
-            "b" => {"@iri" => "http://example.com/b", "@datatype" => "@iri"},
-            "c" => {"@iri" => "http://example.com/c"},
+            "a" => {"@id" => "http://example.com/a"},
+            "b" => {"@id" => "http://example.com/b", "@datatype" => "@id"},
+            "c" => {"@id" => "http://example.com/c"},
           },
-          "@subject" => "a",
+          "@id" => "a",
           "b"        => "c"
         },
         :output => {
-          "@subject" => "http://example.com/a",
+          "@id" => "http://example.com/a",
           "http://example.com/b" => "http://example.com/c"
         }
       },
@@ -52,37 +52,37 @@ describe JSON::LD::API, :pending => true do
     {
       "prefix" => {
         :input => {
-          "@subject" => "http://example.com/a",
-          "http://example.com/b" => {"@iri" => "http://example.com/c"}
+          "@id" => "http://example.com/a",
+          "http://example.com/b" => {"@id" => "http://example.com/c"}
         },
         :context => {"ex" => "http://example.com/"},
         :output => {
           "@context" => {"ex" => "http://example.com/"},
-          "@subject" => "ex:a",
-          "ex:b" => {"@iri" => "ex:c"}
+          "@id" => "ex:a",
+          "ex:b" => {"@id" => "ex:c"}
         }
       },
       "term" => {
         :input => {
-          "@subject" => "http://example.com/a",
-          "http://example.com/c" => {"@iri" => "http://example.com/c"}
+          "@id" => "http://example.com/a",
+          "http://example.com/c" => {"@id" => "http://example.com/c"}
         },
         :context => {"b" => "http://example.com/b"},
         :output => {
           "@context" => {"b" => "http://example.com/b"},
-          "@subject" => "http://example.com/a",
-          "b" => {"@iri" => "http://example.com/c"}
+          "@id" => "http://example.com/a",
+          "b" => {"@id" => "http://example.com/c"}
         }
       },
-      "@iri coercion" => {
+      "@id coercion" => {
         :input => {
-          "@subject" => "http://example.com/a",
+          "@id" => "http://example.com/a",
           "http://example.com/b" => "http://example.com/c"
         },
-        :context => {"b" => {"@iri" => "http://example.com/b", "@datatype" => "@iri"}},
+        :context => {"b" => {"@id" => "http://example.com/b", "@datatype" => "@id"}},
         :output => {
-          "@context" => {"b" => {"@iri" => "http://example.com/b", "@datatype" => "@iri"}},
-          "@subject" => "http://example.com/a",
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@datatype" => "@id"}},
+          "@id" => "http://example.com/a",
           "b" => "http://example.com/c"
         }
       },
@@ -100,7 +100,7 @@ describe JSON::LD::API, :pending => true do
       end
     end
 
-    it "uses an @iri coercion"
+    it "uses an @id coercion"
     it "uses a datatype coercion"
     it "uses a @list coercion"
     it "uses referenced context"

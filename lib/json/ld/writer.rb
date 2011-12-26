@@ -201,7 +201,7 @@ module JSON::LD
       if elements.length == 1 && elements.first.is_a?(Hash)
         json_hash.merge!(elements.first)
       else
-        json_hash['@subject'] = elements
+        json_hash['@id'] = elements
       end
       
       if @output.is_a?(Hash)
@@ -246,7 +246,7 @@ module JSON::LD
 
       result = context.compact_iri(value, {:depth => @depth}.merge(options))
       unless options[:position] != :object || iri_range?(options[:property])
-        result = {"@iri" => result}
+        result = {"@id" => result}
       end
     
       debug {"=> #{result.inspect}"}
@@ -382,7 +382,7 @@ module JSON::LD
       # Subject may be a list
       if is_valid_list?(subject)
         debug "subject is a list"
-        defn['@subject'] = format_list(subject)
+        defn['@id'] = format_list(subject)
         properties.delete(RDF.first.to_s)
         properties.delete(RDF.rest.to_s)
         
@@ -391,7 +391,7 @@ module JSON::LD
       elsif subject.uri? || ref_count(subject) > 1
         debug "subject is an iri or it's a node referenced multiple times"
         # Don't need to set subject if it's a Node without references
-        defn['@subject'] = format_iri(subject, :position => :subject)
+        defn['@id'] = format_iri(subject, :position => :subject)
       else
         debug "subject is an unreferenced BNode"
       end
@@ -515,11 +515,11 @@ module JSON::LD
         
         # FIXME: detect when values are all represented through chaining
         
-        context.coerce[predicate.to_s] = not_iri ? false : '@iri'
+        context.coerce[predicate.to_s] = not_iri ? false : '@id'
       end
       
       debug {"iri_range(#{predicate}) = #{context.coerce[predicate.to_s].inspect}"}
-      context.coerce[predicate.to_s] == '@iri'
+      context.coerce[predicate.to_s] == '@id'
     end
     
     ##
