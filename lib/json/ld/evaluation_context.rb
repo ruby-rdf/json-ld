@@ -156,7 +156,6 @@ module JSON::LD
           when '@vocab'    then new_ec.vocab = value.to_s
           when '@base'     then new_ec.base  = uri(value)
           when '@language' then new_ec.language = value.to_s
-          when '@coerce'   then #not yet
           else
             # If value is a Hash process contents
             value = value['@id'] if value.is_a?(Hash)
@@ -176,22 +175,6 @@ module JSON::LD
           when '@vocab'    then # done
           when '@base'     then # done
           when '@language' then # done
-          when '@coerce'
-            # FIXME: deprectaed
-            raise RDF::ReaderError, "Expected @coerce to reference an associative array" unless context['@coerce'].is_a?(Hash)
-            context['@coerce'].each do |type, property|
-              debug("parse") {"type=#{type}, prop=#{property}"}
-              type_uri = new_ec.expand_iri(type, :position => :predicate).to_s
-              [property].flatten.compact.each do |prop|
-                p = new_ec.expand_iri(prop, :position => :predicate).to_s
-                if type == '@list'
-                  # List is managed separate from types, as it is maintained in normal form.
-                  new_ec.add_list(p)
-                else
-                  new_ec.coerce[p] = type_uri
-                end
-              end
-            end
           else
             # If value is a Hash process contents
             case value
@@ -204,7 +187,6 @@ module JSON::LD
               end
 
               # Coercion
-              value["@type"] = value["@coerce"] if value.has_key?("@coerce") && !value.has_key?("@type")
               case value["@type"]
               when "@id"
                 # Must be of the form { "term" => { "@type" => "@id"}}

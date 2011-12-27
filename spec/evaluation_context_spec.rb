@@ -17,8 +17,8 @@ describe JSON::LD::EvaluationContext do
         @ctx = StringIO.new(%q({
           "@context": {
             "name": "http://xmlns.com/foaf/0.1/name",
-            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@coerce": "@id"},
-            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@coerce": "@id"}
+            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
           }
         }))
         def @ctx.content_type; "application/ld+json"; end
@@ -120,7 +120,7 @@ describe JSON::LD::EvaluationContext do
 
       it "Associates @id coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@coerce" => "@id"}
+          "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coerce.should produce({
           "http://example.com/" => "@id"
         }, @debug)
@@ -128,7 +128,7 @@ describe JSON::LD::EvaluationContext do
 
       it "Associates datatype coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@coerce" => RDF::XSD.string.to_s}
+          "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coerce.should produce({
           "http://example.com/" => RDF::XSD.string.to_s
         }, @debug)
@@ -146,17 +146,17 @@ describe JSON::LD::EvaluationContext do
       
       it "serializes term mappings"
       
-      it "serializes @coerce with dependent prefixes in two contexts"
+      it "serializes @type with dependent prefixes in two contexts"
       
-      it "serializes @coerce without dependend prefixes in a single context"
+      it "serializes @type without dependend prefixes in a single context"
       
       it "serializes @list with dependent prefixes in two contexts"
       
       it "serializes @list without dependend prefixes in a single context"
       
-      it "serializes prefix with @coerce and @list"
+      it "serializes prefix with @type and @list"
       
-      it "serializes CURIE with @coerce"
+      it "serializes CURIE with @type"
     end
     
     describe "#expand_iri" do
