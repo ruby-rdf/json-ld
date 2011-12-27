@@ -33,7 +33,7 @@ module JSON
     # Initial context
     # @see http://json-ld.org/spec/latest/json-ld-api/#appendix-b
     INITIAL_CONTEXT = {
-      RDF.type.to_s => {"@datatype" => "@id"}
+      RDF.type.to_s => {"@type" => "@id"}
     }.freeze
 
     # Regexp matching an NCName.

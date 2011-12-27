@@ -84,7 +84,7 @@ module JSON::LD
     # @yield :resource
     # @yieldparam [RDF::Resource] :resource
     def traverse(path, element, subject, property, ec)
-      debug(path) {"traverse: s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
+      debug(path) {"traverse: e=#{element.class.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
 
       traverse_result = case element
       when Hash
@@ -112,7 +112,7 @@ module JSON::LD
         object = if element['@literal']
           # 2.3) If the JSON object has a @literal key, set the active object to a literal value as follows ...
           literal_opts = {}
-          literal_opts[:datatype] = ec.expand_iri(element['@datatype'], :position => :datatype) if element['@datatype']
+          literal_opts[:datatype] = ec.expand_iri(element['@type'], :position => :type) if element['@type']
           literal_opts[:language] = element['@language'].to_sym if element['@language']
           RDF::Literal.new(element['@literal'], literal_opts)
         elsif element['@list']

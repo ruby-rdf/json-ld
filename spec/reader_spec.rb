@@ -207,7 +207,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@id":  "http://greggkellogg.net/foaf#me",
-            "http://purl.org/dc/terms/created":  {"@literal": "1957-02-27", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}
+            "http://purl.org/dc/terms/created":  {"@literal": "1957-02-27", "@type": "http://www.w3.org/2001/XMLSchema#date"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
@@ -434,7 +434,7 @@ describe JSON::LD::Reader do
           %q({
             "@context": {
               "foaf": "http://xmlns.com/foaf/0.1/",
-              "knows": {"@id": "http://xmlns.com/foaf/0.1/knows", "@datatype": "@id"}
+              "knows": {"@id": "http://xmlns.com/foaf/0.1/knows", "@type": "@id"}
             },
             "@id":  "http://greggkellogg.net/foaf#me",
             "foaf:knows":  "http://www.ivan-herman.net/foaf#me"
@@ -449,7 +449,7 @@ describe JSON::LD::Reader do
             "@context": {
               "dcterms":  "http://purl.org/dc/terms/",
               "xsd":      "http://www.w3.org/2001/XMLSchema#",
-              "created":  {"@id": "http://purl.org/dc/terms/created", "@datatype": "xsd:date"}
+              "created":  {"@id": "http://purl.org/dc/terms/created", "@type": "xsd:date"}
             },
             "@id":  "http://greggkellogg.net/foaf#me",
             "dcterms:created":  "1957-02-27"
@@ -674,7 +674,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @id + @datatype" do
+        context "term def with @id + @type" do
           {
             "vocab expansion" => [
               %q({
@@ -692,7 +692,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@id": "term", "@datatype": "date"}}
+                  {"foo": {"@id": "term", "@type": "date"}}
                 ],
                 "foo": "bar"
               }),
@@ -705,7 +705,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@id": "prefix:bar", "@datatype": "xsd:date"}}
+                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date"}}
                 ],
                 "prefix:bar": "bar"
               }),
@@ -717,7 +717,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date"}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date"}}
                 ],
                 "http://example.org/foo#bar": "bar"
               }),
@@ -729,7 +729,7 @@ describe JSON::LD::Reader do
             "@id with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "@id"}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id"}}
                 ],
                 "foo": "bar"
               }),
@@ -737,7 +737,7 @@ describe JSON::LD::Reader do
                 _:a <http://example.org/foo#bar> <bar> .
               )
             ],
-            "@coerce as synonym for @datatype" => [
+            "@coerce as synonym for @type" => [
               %q({
                 "@context": [
                   {"foo": {"@id": "http://example.org/foo#bar", "@coerce": "@id"}}
@@ -756,7 +756,7 @@ describe JSON::LD::Reader do
                     "dc": "http://purl.org/dc/terms/"
                   },
                   {
-                    "dc:date": {"@datatype": "xsd:date"}
+                    "dc:date": {"@type": "xsd:date"}
                   }
                 ],
                 "dc:date": "2011-11-23"
@@ -851,7 +851,7 @@ describe JSON::LD::Reader do
           end
         end
 
-        context "term def with @id + @datatype + @list" do
+        context "term def with @id + @type + @list" do
           {
             "vocab expansion" => [
               %q({
@@ -869,7 +869,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@id": "term", "@datatype": "date", "@list": true}}
+                  {"foo": {"@id": "term", "@type": "date", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),
@@ -882,7 +882,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@id": "prefix:bar", "@datatype": "xsd:date", "@list": true}}
+                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date", "@list": true}}
                 ],
                 "prefix:bar": ["bar"]
               }),
@@ -894,7 +894,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
                 ],
                 "http://example.org/foo#bar": ["bar"]
               }),
@@ -906,7 +906,7 @@ describe JSON::LD::Reader do
             "@id with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@datatype": "@id", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id", "@list": true}}
                 ],
                 "foo": ["bar"]
               }),

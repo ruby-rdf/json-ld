@@ -3,7 +3,7 @@
         "@iri": "_:c14n0"
     },
     "http://xmlns.com/foaf/0.1/age": {
-        "@datatype": "http://www.w3.org/2001/XMLSchema#integer",
+        "@type": "http://www.w3.org/2001/XMLSchema#integer",
         "@literal": "41"
     },
     "http://xmlns.com/foaf/0.1/homepage": {

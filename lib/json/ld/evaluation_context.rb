@@ -38,7 +38,7 @@ module JSON::LD
 
     # Type coersion
     #
-    # The @datatype keyword is used to specify type coersion rules for the data. For each key in the map, the
+    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the
     # key is a String representation of the property for which String values will be coerced and
     # the value is the datatype (or @id) to coerce to. Type coersion for
     # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
@@ -204,16 +204,16 @@ module JSON::LD
               end
 
               # Coercion
-              value["@datatype"] = value["@coerce"] if value.has_key?("@coerce") && !value.has_key?("@datatype")
-              case value["@datatype"]
+              value["@type"] = value["@coerce"] if value.has_key?("@coerce") && !value.has_key?("@type")
+              case value["@type"]
               when "@id"
-                # Must be of the form { "term" => { "@datatype" => "@id"}}
-                debug("parse") {"@datatype @id"}
+                # Must be of the form { "term" => { "@type" => "@id"}}
+                debug("parse") {"@type @id"}
                 new_ec.coerce[prop] = '@id'
               when String
-                # Must be of the form { "term" => { "@datatype" => "xsd:string"}}
-                dt = new_ec.expand_iri(value["@datatype"], :position => :predicate)
-                debug("parse") {"@datatype #{dt}"}
+                # Must be of the form { "term" => { "@type" => "xsd:string"}}
+                dt = new_ec.expand_iri(value["@type"], :position => :predicate)
+                debug("parse") {"@type #{dt}"}
                 new_ec.coerce[prop] = dt
               end
             else
@@ -273,7 +273,7 @@ module JSON::LD
                 if ctx[dt_prefix] || (ctx[k_prefix] && k_prefix != k_iri.to_s)
                   # It uses a prefix defined above, place in new context block
                   ctx2[k_iri.to_s] = Hash.new
-                  ctx2[k_iri.to_s]['@datatype'] = dt
+                  ctx2[k_iri.to_s]['@type'] = dt
                   debug {"=> new datatype[#{k_iri}] => #{dt}"}
                 else
                   # It is not dependent on previously defined terms, fold into existing definition
@@ -283,7 +283,7 @@ module JSON::LD
                     defn["@id"] = ctx[k_iri]
                     ctx[k_iri] = defn
                   end
-                  ctx[k_iri]["@datatype"] = dt
+                  ctx[k_iri]["@type"] = dt
                   debug {"=> reuse datatype[#{k_iri}] => #{dt}"}
                 end
               end
@@ -462,7 +462,7 @@ module JSON::LD
         when RDF::Literal
           res = Hash.new
           res['@literal'] = value.to_s
-          res['@datatype'] = value.datatype.to_s if value.has_datatype?
+          res['@type'] = value.datatype.to_s if value.has_datatype?
           res['@language'] = value.language.to_s if value.has_language?
           res
         else
@@ -514,18 +514,18 @@ module JSON::LD
           # Compact language
           debug {" (@language) == #{language}"}
           value = value['@literal']
-        when value['@datatype'] && expand_iri(value['@datatype'], :position => :datatype) == coerce[predicate]
+        when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce[predicate]
           # Compact common datatype
-          debug {" (@datatype) == #{coerce[predicate]}"}
+          debug {" (@type) == #{coerce[predicate]}"}
           value = value['@literal']
-        when !value['@language'] && !value['@datatype'] && !coerce[predicate] && !language
+        when !value['@language'] && !value['@type'] && !coerce[predicate] && !language
           # Compact simple literal to string
-          debug {" (!@language && !@datatype && !coerce && !language)"}
+          debug {" (!@language && !@type && !coerce && !language)"}
           value = value['@literal']
-        when value['@datatype']
+        when value['@type']
           # Compact datatype
-          debug {" (@datatype)"}
-          value['@datatype'] = compact_iri(value['@datatype'], :position => :datatype)
+          debug {" (@type)"}
+          value['@type'] = compact_iri(value['@type'], :position => :datatype)
           value
         else
           # Otherwise, use original value

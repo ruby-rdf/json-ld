@@ -276,7 +276,7 @@ module JSON::LD
 
       value = Hash.new
       value['@literal'] = literal.value
-      value['@datatype'] = literal.datatype.to_s if literal.has_datatype?
+      value['@type'] = literal.datatype.to_s if literal.has_datatype?
       value['@language'] = literal.language.to_s if literal.has_language?
 
       result = case literal

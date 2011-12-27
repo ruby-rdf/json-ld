@@ -10,9 +10,9 @@
 		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	},
 	{
-		"dc:created":     {"@datatype": "xsd:dateTime"},
-		"bibjson:id":     {"@datatype": "@id"},
-		"dc:identifier":  {"@datatype": "@id"}
+		"dc:created":     {"@type": "xsd:dateTime"},
+		"bibjson:id":     {"@type": "@id"},
+		"dc:identifier":  {"@type": "@id"}
 	}
 	],
 	"@id": 

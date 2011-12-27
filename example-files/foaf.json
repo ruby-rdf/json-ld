@@ -2,7 +2,7 @@
   "@context": {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "foaf": "http://xmlns.com/foaf/0.1/",
-    "foaf:birthday": {"@datatype": "xsd:date"}
+    "foaf:birthday": {"@type": "xsd:date"}
   },
   "@id": "http://greggkellogg.net/foaf#me",
   "@type": "foaf:Person",

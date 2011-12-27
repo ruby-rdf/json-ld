@@ -15,7 +15,7 @@ describe JSON::LD::API, :pending => true do
         :input => {
           "@context" => {
             "a" => {"@id" => "http://example.com/a"},
-            "b" => {"@id" => "http://example.com/b", "@datatype" => "@id"},
+            "b" => {"@id" => "http://example.com/b", "@type" => "@id"},
             "c" => {"@id" => "http://example.com/c"},
           },
           "@id" => "a",
@@ -30,7 +30,7 @@ describe JSON::LD::API, :pending => true do
         :input => {
           "@context" => {
             "a" => {"@id" => "http://example.com/a"},
-            "b" => {"@id" => "http://example.com/b", "@datatype" => "@id"},
+            "b" => {"@id" => "http://example.com/b", "@type" => "@id"},
             "c" => {"@id" => "http://example.com/c"},
           },
           "@id" => "a",
@@ -79,9 +79,9 @@ describe JSON::LD::API, :pending => true do
           "@id" => "http://example.com/a",
           "http://example.com/b" => "http://example.com/c"
         },
-        :context => {"b" => {"@id" => "http://example.com/b", "@datatype" => "@id"}},
+        :context => {"b" => {"@id" => "http://example.com/b", "@type" => "@id"}},
         :output => {
-          "@context" => {"b" => {"@id" => "http://example.com/b", "@datatype" => "@id"}},
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@type" => "@id"}},
           "@id" => "http://example.com/a",
           "b" => "http://example.com/c"
         }
