@@ -34,10 +34,8 @@ module JSON::LD
   #
   # The writer will add prefix definitions, and use them for creating @context definitions, and minting CURIEs
   #
-  # @example Creating @base, @vocab and @context prefix definitions in output
+  # @example Creating @@context prefix definitions in output
   #   JSON::LD::Writer.buffer(
-  #     :base_uri => "http://example.com/",
-  #     :vocab => "http://example.net/"
   #     :prefixes => {
   #       nil => "http://example.com/ns#",
   #       :foaf => "http://xmlns.com/foaf/0.1/"}
@@ -84,10 +82,6 @@ module JSON::LD
     #   whether to canonicalize literals when serializing
     # @option options [Hash]     :prefixes     (Hash.new)
     #   the prefix mappings to use (not supported by all writers)
-    # @option options [#to_s]    :base_uri     (nil)
-    #   Base IRI used for relativizing IRIs
-    # @option options [#to_s]    :vocab     (nil)
-    #   Vocabulary prefix used for relativizing IRIs
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
     # @option options [IO, Array, Hash, String, EvaluationContext]     :context     (Hash.new)
@@ -168,8 +162,6 @@ module JSON::LD
       @context = EvaluationContext.new(@options)
       @context = @context.parse(@options[:context]) if @options[:context]
       @context.language = @options[:language] if @options[:language]
-      @context.base = RDF::URI(@options[:base_uri]) if @options[:base_uri] && !(@options[:expand] || @options[:normalize])
-      @context.vocab = @options[:vocab] if @options[:vocab] && !(@options[:expand] || @options[:normalize])
       @context.list.each {|p| @list_range[p] = true}
 
       debug {"\nserialize: graph: #{@graph.size}"}
@@ -460,7 +452,6 @@ module JSON::LD
 
     # Order subjects for output. Override this to output subjects in another order.
     #
-    # Uses context.base.
     # @return [Array<Resource>] Ordered list of subjects
     def order_subjects
       seen = {}
@@ -470,12 +461,6 @@ module JSON::LD
         format_iri(a, :position => :subject) <=> format_iri(b, :position => :subject)
       end unless @options[:automatic]
 
-      # Start with 
-      if context.base && @subjects.keys.include?(context.base)
-        subjects << context.base
-        seen[context.base] = true
-      end
-      
       # Sort subjects by resources over bnodes, ref_counts and the subject URI itself
       recursable = @subjects.keys.
         select {|s| !seen.include?(s)}.

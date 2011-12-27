@@ -27,7 +27,6 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
     def initialize(input = $stdin, options = {}, &block)
       super do
-        @base_uri = RDF::URI(options[:base_uri]) if options[:base_uri]
         begin
           @doc = JSON.load(input)
         rescue JSON::ParserError => e
@@ -50,10 +49,8 @@ module JSON::LD
     def each_statement(&block)
       @callback = block
 
-      # initialize the evaluation context with the appropriate base
-      ec = EvaluationContext.new(@options) do |e|
-        e.base = @base_uri if @base_uri
-      end.parse(INITIAL_CONTEXT)
+      # initialize the evaluation context with initial context
+      ec = EvaluationContext.new(@options).parse(INITIAL_CONTEXT)
 
       traverse("", @doc, nil, nil, ec)
     end
@@ -112,7 +109,7 @@ module JSON::LD
         object = if element['@literal']
           # 2.3) If the JSON object has a @literal key, set the active object to a literal value as follows ...
           literal_opts = {}
-          literal_opts[:datatype] = ec.expand_iri(element['@type'], :position => :type) if element['@type']
+          literal_opts[:datatype] = ec.expand_iri(element['@type'], :position => :datatype) if element['@type']
           literal_opts[:language] = element['@language'].to_sym if element['@language']
           RDF::Literal.new(element['@literal'], literal_opts)
         elsif element['@list']

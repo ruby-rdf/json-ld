@@ -388,47 +388,6 @@ describe JSON::LD::Reader do
 
     context "context" do
       {
-        "@base expansion" =>
-        [
-          %q({
-            "@context": {
-              "@base":  "http://greggkellogg.net/foaf",
-              "doap": "http://usefulinc.com/ns/doap#"
-            },
-            "@id":  "#me",
-            "doap:homepage":  {"@id": "http://github.com/gkellogg/"}
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
-          )
-        ],
-        "@vocab expansion" =>
-        [
-          %q({
-            "@context": {
-              "@vocab": "http://usefulinc.com/ns/doap#"
-            },
-            "@id":  "http://greggkellogg.net/foaf#me",
-            "homepage":  {"@id": "http://github.com/gkellogg/"}
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
-          )
-        ],
-        "@base and @vocab expansion" =>
-        [
-          %q({
-            "@context": {
-              "@base":  "http://greggkellogg.net/foaf",
-              "@vocab": "http://usefulinc.com/ns/doap#"
-            },
-            "@id":  "#me",
-            "homepage":  {"@id": "http://github.com/gkellogg/"}
-          }),
-          %q(
-            <http://greggkellogg.net/foaf#me> <http://usefulinc.com/ns/doap#homepage> <http://github.com/gkellogg/> .
-          )
-        ],
         "@id coersion" =>
         [
           %q({
@@ -567,18 +526,6 @@ describe JSON::LD::Reader do
       context "coercion" do
         context "term def with @id + @type" do
           {
-            "vocab expansion" => [
-              %q({
-                "@context": [
-                  {"@vocab": "http://example.org/"},
-                  {"foo": {}}
-                ],
-                "foo": "bar"
-              }),
-              %q(
-                _:a <http://example.org/foo> "bar" .
-              )
-            ],
             "dt with term" => [
               %q({
                 "@context": [
@@ -658,18 +605,6 @@ describe JSON::LD::Reader do
       context "lists" do
         context "term def with @id + @type + @list" do
           {
-            "vocab expansion" => [
-              %q({
-                "@context": [
-                  {"@vocab": "http://example.org/"},
-                  {"foo": {"@list": true}}
-                ],
-                "foo": ["bar"]
-              }),
-              %q(
-                _:a <http://example.org/foo> ("bar") .
-              )
-            ],
             "dt with term" => [
               %q({
                 "@context": [

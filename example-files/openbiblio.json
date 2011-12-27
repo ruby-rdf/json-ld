@@ -1,8 +1,6 @@
 {
 	"@context": [
 	{
-		"@vocab": "http://www.bibkn.org/bibjson/terms/",
-		"@base": "http://bibserver.berkeley.edu/",
 		"xsd": "http://www.w3.org/2001/XMLSchema#",
 		"dc": "http://purl.org/dc/terms/",
 		"bibjson": "http://www.bibkn.org/bibjson/terms/",
@@ -27,7 +25,7 @@
 			"dc:creator" : {
 				"dc:title": "Stanford University",
 				"dc:identifier": "http://www.stanford.edu/",
-				"dc:identifier": "@ustanford"
+				"dc:identifier": "http://bibserver.berkeley.edu/@ustanford"
 			},
 			"bibjson:hasRecord" : "_:MR2276901"
 		},
@@ -35,16 +33,16 @@
 			"@id" : "_:bnode2",
 			"foaf:name": "Jim Pitman",
 			"dc:identifier": "http://www.stat.berkeley.edu/~pitman/",
-			"dc:identifier": "@jpitman"
+			"dc:identifier": "http://bibserver.berkeley.edu/@jpitman"
 		},
 		{
 			"@id" : "_:bnode3",
 			"dc:title": "In memoriam Paul-AndrÃ© Meyer: SÃ©eminaire de ProbabilitÃ©s",
-			"dc:identifier": "@book_id"
+			"dc:identifier": "http://bibserver.berkeley.edu/@book_id"
 		},
 		{
 			"@id" : "_:MR2276901",
-			"bibjson:id" : "MR2276901",
+			"bibjson:id" : "http://bibserver.berkeley.edu/MR2276901",
 			"@type" : "Article",
 			"bibjson:prefLabel" : "Two recursive decompositions of Brownian bridge related to the asymptotics of random mappings",
 			"dc:description" : "Aldous and Pitman (1994) studied asymptotic distributions,....",

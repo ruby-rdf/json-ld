@@ -4,14 +4,6 @@ require 'bigdecimal'
 
 module JSON::LD
   class EvaluationContext # :nodoc:
-    # The base.
-    #
-    # The `@base` string is a special keyword that states that any relative IRI MUST be appended to the string
-    # specified by `@base`.
-    #
-    # @attr [RDF::URI]
-    attr :base, true
-
     # A list of current, in-scope mappings from term to IRI.
     #
     # @attr [Hash{String => String}]
@@ -27,23 +19,13 @@ module JSON::LD
     # @attr [Hash{RDF::URI => String}]
     attr :iri_to_term, true
 
-    # The default vocabulary
-    #
-    # A value to use as the prefix URI when a term is used.
-    # This specification does not define an initial setting for the default vocabulary.
-    # Host Languages may define an initial setting.
-    #
-    # @attr [String]
-    attr :vocab, true
-
     # Type coersion
     #
     # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the
     # key is a String representation of the property for which String values will be coerced and
     # the value is the datatype (or @id) to coerce to. Type coersion for
     # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
-    # including `@base` processing for relative IRIs and CURIE processing for compact IRI Expressions like
-    # `foaf:homepage`.
+    # including CURIE processing for compact IRI Expressions like `foaf:homepage`.
     #
     # @attr [Hash{String => String}]
     attr :coerce, true
@@ -74,9 +56,7 @@ module JSON::LD
     # @yieldparam [EvaluationContext]
     # @return [EvaluationContext]
     def initialize(options = {})
-      @base = nil
       @mappings =  {}
-      @vocab = nil
       @coerce = {}
       @list = {}
       @iri_to_curie = {}
@@ -153,8 +133,6 @@ module JSON::LD
           value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
           debug("parse") {"Hash[#{key}] = #{value.inspect}"}
           case key
-          when '@vocab'    then new_ec.vocab = value.to_s
-          when '@base'     then new_ec.base  = uri(value)
           when '@language' then new_ec.language = value.to_s
           else
             # If value is a Hash process contents
@@ -172,8 +150,6 @@ module JSON::LD
           value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
           debug("parse") {"Hash[#{key}] = #{value.inspect}"}
           case key
-          when '@vocab'    then # done
-          when '@base'     then # done
           when '@language' then # done
           else
             # If value is a Hash process contents
@@ -227,8 +203,6 @@ module JSON::LD
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
           ctx = Hash.new
-          ctx['@base'] = base.to_s if base
-          ctx['@vocab'] = vocab.to_s if vocab
           ctx['@language'] = language.to_s if language
 
           # Prefixes
@@ -357,11 +331,6 @@ module JSON::LD
         iri
       when self.mappings.has_key?(prefix)
         uri(self.mappings[prefix] + suffix.to_s)
-      when [:subject, :object].include?(options[:position]) && base
-        base.join(iri)
-      when options[:position] == :predicate && vocab
-        t_uri = uri(iri)
-        t_uri.absolute? ? t_uri : uri(vocab + iri)
       else
         uri(iri)
       end
@@ -371,7 +340,6 @@ module JSON::LD
     # Compact an IRI
     #
     # @param [RDF::URI] iri
-    # @param [String] base Base to apply to URIs
     # @param  [Hash{Symbol => Object}] options
     # @option options [:subject, :predicate, :object, :datatype] position
     #   Useful when determining how to serialize.
@@ -384,21 +352,8 @@ module JSON::LD
       depth(options) do
         debug {"compact_iri(#{options.inspect}, #{iri.inspect})"}
 
-        result = depth do
-          res = case options[:position]
-          when :subject, :object
-            # attempt base_uri replacement
-            iri.to_s.sub(base.to_s, "")
-          when :predicate
-            # attempt vocab replacement
-            iri == RDF.type ? '@type' : iri.to_s.sub(vocab.to_s, "")
-          else # :datatype
-            iri.to_s
-          end
-        
-          # If the above didn't result in a compacted representation, try a CURIE
-          res == iri.to_s ? (get_curie(iri) || iri.to_s) : res
-        end
+        result = '@type' if options[:position] == :predicate && iri == RDF.type
+        result ||= get_curie(iri) || iri.to_s
 
         debug {"=> #{result.inspect}"}
         result
@@ -520,7 +475,7 @@ module JSON::LD
     end
 
     def inspect
-      v = %w([EvaluationContext) + %w(base vocab).map {|a| "#{a}=#{self.send(a).inspect}"}
+      v = %w([EvaluationContext)
       v << "mappings[#{mappings.keys.length}]=#{mappings}"
       v << "coerce[#{coerce.keys.length}]=#{coerce}"
       v << "list[#{list.length}]=#{list}"

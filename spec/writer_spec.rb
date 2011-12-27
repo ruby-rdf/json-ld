@@ -503,34 +503,6 @@ describe JSON::LD::Writer do
   end
 
   context "context" do
-    context "@base" do
-      it "shortens URIs" do
-        input = %(<http://a/b> <http://a/c> <http://a/d> .)
-        serialize(input, :base_uri => "http://a/").should produce({
-          '@context'       => {
-            '@base'        => "http://a/",
-            "http://a/c"   => {"@type" => "@id"}
-          },
-          '@id'    => "b",
-          "http://a/c"  => "d"
-        }, @debug)
-      end
-    end
-    
-    context "@vocab" do
-      it "shortens URIs" do
-        input = %(<http://a/b> <http://a/c> <http://a/d> .)
-        serialize(input, :vocab => "http://a/").should produce({
-          "@context"  => {
-            "@vocab" => "http://a/",
-            "c"      => {"@type" => "@id"}
-          },
-          '@id'  => "http://a/b",
-          "c"         => "http://a/d"
-        }, @debug)
-      end
-    end
-    
     context "@type" do
       it "does not coerce properties with hetrogeneous types" do
         input = %(@prefix : <http://xmlns.com/foaf/0.1/> . :a :b :c, "d" .)

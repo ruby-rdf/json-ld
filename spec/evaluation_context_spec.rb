@@ -22,23 +22,22 @@ describe JSON::LD::EvaluationContext do
           }
         }))
         def @ctx.content_type; "application/ld+json"; end
-        def @ctx.base_uri; "http://example.com/context"; end
       end
 
       it "retrieves and parses a remote context document" do
-        subject.stub(:open).with(@ctx.base_uri).and_yield(@ctx)
-        ec = subject.parse(@ctx.base_uri)
-        ec.provided_context.should produce(@ctx.base_uri, @debug)
+        subject.stub(:open).with("http://example.com/context").and_yield(@ctx)
+        ec = subject.parse("http://example.com/context")
+        ec.provided_context.should produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        subject.stub(:open).with(@ctx.base_uri).and_raise(IOError)
-        lambda {subject.parse(@ctx.base_uri)}.should raise_error(IOError, /Failed to parse remote context/)
+        subject.stub(:open).with("http://example.com/context").and_raise(IOError)
+        lambda {subject.parse("http://example.com/context")}.should raise_error(IOError, /Failed to parse remote context/)
       end
       
       it "creates mappings" do
-        subject.stub(:open).with(@ctx.base_uri).and_yield(@ctx)
-        ec = subject.parse(@ctx.base_uri)
+        subject.stub(:open).with("http://example.com/context").and_yield(@ctx)
+        ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
@@ -76,18 +75,6 @@ describe JSON::LD::EvaluationContext do
     end
 
     context "Hash" do
-      it "extracts @base" do
-        subject.parse({
-          "@base" => "http://example.com/"
-        }).base.should produce("http://example.com/", @debug)
-      end
-
-      it "extracts @vocab" do
-        subject.parse({
-          "@vocab" => "http://example.com/"
-        }).vocab.should produce("http://example.com/", @debug)
-      end
-
       it "extracts @language" do
         subject.parse({
           "@language" => "en"
@@ -142,7 +129,7 @@ describe JSON::LD::EvaluationContext do
       
       it "uses provided context hash"
       
-      it "serializes @base, @vocab and @language"
+      it "serializes @language"
       
       it "serializes term mappings"
       
