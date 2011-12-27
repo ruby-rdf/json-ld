@@ -53,7 +53,7 @@ module JSON::LD
       # initialize the evaluation context with the appropriate base
       ec = EvaluationContext.new(@options) do |e|
         e.base = @base_uri if @base_uri
-      end
+      end.parse(INITIAL_CONTEXT)
 
       traverse("", @doc, nil, nil, ec)
     end
@@ -117,7 +117,7 @@ module JSON::LD
           RDF::Literal.new(element['@literal'], literal_opts)
         elsif element['@list']
           # 2.4 (Lists)
-          parse_list("#{path}[#{'@list'}]", element['@list'], subject, property, ec) do |resource|
+          parse_list("#{path}[#{'@list'}]", element['@list'], property, ec) do |resource|
             add_triple(path, subject, property, resource) if subject && property
           end
         end
@@ -148,7 +148,7 @@ module JSON::LD
           # 2.7.1) If a key that is not @context, @id, or @type, set the active property by
           # performing Property Processing on the key.
           property = case key
-          when '@type' then '@type'
+          when '@type' then RDF.type
           when /^@/ then next
           else      ec.expand_iri(key, :position => :predicate)
           end
@@ -157,7 +157,7 @@ module JSON::LD
           object = if ec.list.include?(property.to_s) && value.is_a?(Array)
             # If the active property is the target of a @list coercion, and the value is an array,
             # process the value as a list starting at Step 3.1.
-            parse_list("#{path}[#{key}]", value, subject, property, ec) do |resource|
+            parse_list("#{path}[#{key}]", value, property, ec) do |resource|
               # Adds triple for head BNode only, the rest of the list is done within the method
               add_triple(path, subject, property, resource) if subject && property
             end
@@ -180,20 +180,19 @@ module JSON::LD
         end
         nil # No real value returned from an array
       when String
-        # Perform coersion of the value, or generate a literal
+        # 4) Perform coersion of the value, or generate a literal
         debug(path) do
           "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, " +
           "ec=#{ec.coerce.inspect}"
         end
         if ec.coerce[property.to_s] == '@id'
+          # 4.1) If the active property is the target of a @id coercion ...
           ec.expand_iri(element, :position => :object)
-        elsif property == '@type'
-          # @type value is an IRI resolved relative to @vocab, or a term/prefix
-          property = RDF.type
-          ec.expand_iri(element, :position => :predicate)
         elsif ec.coerce[property.to_s]
+          # 4.2) Otherwise, if the active property is the target of coercion ..
           RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
         else
+          # 4.3) Otherwise, set the active object to a plain literal value created from the string.
           RDF::Literal.new(element, :language => ec.language)
         end
       when Float
@@ -224,8 +223,6 @@ module JSON::LD
     #   location within JSON hash
     # @param [Array] list
     #   The Array to serialize as a list
-    # @param [RDF::URI] subject
-    #   Inherited subject
     # @param [RDF::URI] property
     #   Inherited property
     # @param [EvaluationContext] ec
@@ -234,8 +231,8 @@ module JSON::LD
     # @yield :resource
     #   BNode or nil for head of list
     # @yieldparam [RDF::Resource] :resource
-    def parse_list(path, list, subject, property, ec)
-      debug(path) {"list: #{list.inspect}, s=#{subject.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
+    def parse_list(path, list, property, ec)
+      debug(path) {"list: #{list.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? RDF::Node.new : RDF.nil

@@ -80,6 +80,98 @@ describe JSON::LD::Reader do
   end
 
   context :parsing do
+    context "unnamed nodes" do
+      {
+        "no @id" => [
+          %q({
+            "foo": "bar"
+          }),
+          %q([ <foo> "bar"] .)
+        ],
+        "@id with _:a" => [
+          %q({
+            "@id": "_:a",
+            "foo": "bar"
+          }),
+          %q([ <foo> "bar"] .)
+        ],
+      }.each do |title, (js, nt)|
+        it title do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+        end
+      end
+    end
+
+    context "nodes with @id" do
+      {
+        "with IRI" => [
+          %q({
+            "@id": "a",
+            "foo": "bar"
+          }),
+          %q(<a> <foo> "bar" .)
+        ],
+      }.each do |title, (js, nt)|
+        it title do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+        end
+      end
+    end
+
+    context "typed nodes" do
+      {
+        "one type" => [
+          %q({
+            "@type": "foo"
+          }),
+          %q([ a <foo> ] .)
+        ],
+        "two types" => [
+          %q({
+            "@type": ["foo", "baz"]
+          }),
+          %q([ a <foo>, <baz> ] .)
+        ],
+      }.each do |title, (js, nt)|
+        it title do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+        end
+      end
+    end
+
+    context "key/value" do
+      {
+        "string" => [
+          %q({
+            "foo": "bar"
+          }),
+          %q([ <foo> "bar" ] .)
+        ],
+        "strings" => [
+          %q({
+            "foo": ["bar", "baz"]
+          }),
+          %q([ <foo> "bar", "baz" ] .)
+        ],
+        "IRI" => [
+          %q({
+            "foo": {"@id": "bar"}
+          }),
+          %q([ <foo> <bar> ] .)
+        ],
+        "IRIs" => [
+          %q({
+            "foo": [{"@id": "bar"}, {"@id": "baz"}]
+          }),
+          %q([ <foo> <bar>, <baz> ] .)
+        ],
+      }.each do |title, (js, nt)|
+        it title do
+          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+        end
+      end
+    end
+
     context "literals" do
       {
         "plain literal" =>
@@ -249,6 +341,22 @@ describe JSON::LD::Reader do
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": {"@list": ["Manu Sporny"]}
+          }),
+          %q(
+            <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          )
+        ],
+        "single value (with coercion)" =>
+        [
+          %q({
+            "@context": {
+              "foaf": "http://xmlns.com/foaf/0.1/",
+              "foaf:knows": { "@list": true}
+            },
+            "@id": "http://greggkellogg.net/foaf#me",
+            "foaf:knows": ["Manu Sporny"]
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .

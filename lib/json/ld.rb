@@ -30,6 +30,12 @@ module JSON
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
     
+    # Initial context
+    # @see http://json-ld.org/spec/latest/json-ld-api/#appendix-b
+    INITIAL_CONTEXT = {
+      RDF.type.to_s => {"@datatype" => "@id"}
+    }.freeze
+
     # Regexp matching an NCName.
     NC_REGEXP = Regexp.new(
       %{^
