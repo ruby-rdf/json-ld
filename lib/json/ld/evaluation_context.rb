@@ -127,61 +127,54 @@ module JSON::LD
         new_ec.provided_context = context
         debug("parse") {"=> provided_context: #{context.inspect}"}
         
-        # Map terms to IRIs first
-        context.each do |key, value|
-          # Expand a string value, unless it matches a keyword
-          value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
-          debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-          case key
-          when '@language' then new_ec.language = value.to_s
-          else
-            # If value is a Hash process contents
-            value = value['@id'] if value.is_a?(Hash)
-            iri = expand_iri(value || key, :position => :predicate) if term_valid?(key)
+        num_updates = 1
+        while num_updates > 0 do
+          num_updates = 0
 
-            # Record term definition
-            new_ec.add_mapping(key, iri) if term_valid?(key)
+          # Map terms to IRIs first
+          context.each do |key, value|
+            # Expand a string value, unless it matches a keyword
+            debug("parse") {"Hash[#{key}] = #{value.inspect}"}
+            if key == '@language'
+              new_ec.language = value.to_s
+            elsif term_valid?(key)
+              # Normalize into object form
+              value = value['@id'] if value.is_a?(Hash)
+
+              iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
+              if iri && new_ec.mappings[key] != iri
+                # Record term definition
+                new_ec.add_mapping(key, iri)
+                num_updates += 1
+              end
+            end
           end
         end
 
         # Next, look for coercion using new_ec
         context.each do |key, value|
           # Expand a string value, unless it matches a keyword
-          value = expand_iri(value, :position => :predicate) if value.is_a?(String) && value[0,1] != '@'
-          debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-          case key
-          when '@language' then # done
-          else
-            # If value is a Hash process contents
-            case value
-            when Hash
-              prop = new_ec.expand_iri(key, :position => :predicate).to_s
-
-              # List inclusion
-              if value["@list"]
-                new_ec.add_list(prop)
+          debug("parse") {"coercion/list: Hash[#{key}] = #{value.inspect}"}
+          prop = new_ec.expand_iri(key, :position => :predicate).to_s
+          if value.is_a?(Hash)
+            value.each do |key2, value2|
+              iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
+              case key2
+              when '@type'
+                if new_ec.coerce[prop] != iri
+                  # Record term coercion
+                  debug("parse") {"coerce #{prop.inspect} to #{iri.inspect}"}
+                  new_ec.coerce[prop] = iri
+                end
+              when '@list'
+                if new_ec.list[prop] != value2
+                  debug("parse") {"list #{prop.inspect} as #{value2.inspect}"}
+                  new_ec.list[prop] = value2
+                end
               end
-
-              # Coercion
-              case value["@type"]
-              when "@id"
-                # Must be of the form { "term" => { "@type" => "@id"}}
-                debug("parse") {"@type @id"}
-                new_ec.coerce[prop] = '@id'
-              when String
-                # Must be of the form { "term" => { "@type" => "xsd:string"}}
-                dt = new_ec.expand_iri(value["@type"], :position => :predicate)
-                debug("parse") {"@type #{dt}"}
-                new_ec.coerce[prop] = dt
-              end
-            else
-              # Given a string (or URI), us it
-              new_ec.add_mapping(key, value)
             end
           end
         end
-
-        debug("parse") {"iri_to_term: #{new_ec.iri_to_term.inspect}"}
 
         new_ec
       end

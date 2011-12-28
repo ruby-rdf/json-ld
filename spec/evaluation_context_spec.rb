@@ -9,18 +9,21 @@ describe JSON::LD::EvaluationContext do
   end
 
   describe "#parse" do
-    before(:each) { @debug = [] }
+    before(:each) {
+      @debug = []
+      @ctx_json = %q({
+        "@context": {
+          "name": "http://xmlns.com/foaf/0.1/name",
+          "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+          "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
+        }
+      })
+    }
     subject { JSON::LD::EvaluationContext.new(:debug => @debug, :validate => true)}
 
     context "remote" do
       before(:each) do
-        @ctx = StringIO.new(%q({
-          "@context": {
-            "name": "http://xmlns.com/foaf/0.1/name",
-            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
-            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
-          }
-        }))
+        @ctx = StringIO.new(@ctx_json)
         def @ctx.content_type; "application/ld+json"; end
       end
 
@@ -46,9 +49,9 @@ describe JSON::LD::EvaluationContext do
       end
     end
 
-    context "EvaluationContext", :pending => true do
+    context "EvaluationContext" do
       it "uses a duplicate of that provided" do
-        ec = subject.parse(subject)
+        ec = subject.parse(StringIO.new(@ctx_json))
         ec.mappings.should produce({
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
@@ -97,7 +100,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "Associates list coercion with predicate IRI" do
+      it "associates list coercion with predicate IRI" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@list" => true}
         }).list.should produce({
@@ -105,7 +108,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "Associates @id coercion with predicate IRI" do
+      it "associates @id coercion with predicate IRI" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coerce.should produce({
@@ -113,11 +116,23 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "Associates datatype coercion with predicate IRI" do
+      it "associates datatype coercion with predicate IRI" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coerce.should produce({
           "http://example.com/" => RDF::XSD.string.to_s
+        }, @debug)
+      end
+      
+      it "expands chains of term definition/use with string values" do
+        subject.parse({
+          "foo" => "bar",
+          "bar" => "baz",
+          "baz" => "http://example.com/"
+        }).mappings.should produce({
+          "foo" => "http://example.com/",
+          "bar" => "http://example.com/",
+          "baz" => "http://example.com/"
         }, @debug)
       end
     end

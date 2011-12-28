@@ -466,12 +466,12 @@ describe JSON::LD::Reader do
             _:b <http://example.com/foo#bar> "bar" .
           )
         ],
-        "IRI resolution uses term from active context, not current context" => [
+        "IRI resolution uses term from current context, not active context" => [
           %q({
             "@context": [
-              {"foo": "http://example.com/foo#"},
+              {"foo": "not-this#"},
               {
-                "foo": "not-this#",
+                "foo": "http://example.com/foo#",
                 "bar": "foo:bar"
               }
             ],
