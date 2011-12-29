@@ -12,14 +12,25 @@ def run(input, options)
 
   prefixes = {}
   start = Time.new
-  num = 0
-  r = reader_class.new(input, :base_uri => options[:base_uri], :strict => true)
-  g = RDF::Graph.new << r
-  num = g.count
-  options[:output].puts g.dump(options[:output_format], options.merge(:prefixes => r.prefixes))
-  puts
-  secs = Time.new - start
-  puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
+  if options[:expand]
+    output = JSON::LD::API.expand(input, nil, nil, options)
+    secs = Time.new - start
+    puts output.inspect
+    puts "Expanded in #{secs} seconds."
+  elsif options[:compact]
+    output = JSON::LD::API.compact(input, nil, nil, options)
+    secs = Time.new - start
+    puts output.inspect
+    puts "Compacted in #{secs} seconds."
+  else
+    r = reader_class.new(input, :base_uri => options[:base_uri], :strict => true)
+    g = RDF::Graph.new << r
+    secs = Time.new - start
+    num = g.count
+    options[:output].puts g.dump(options[:output_format], options.merge(:prefixes => r.prefixes))
+    puts
+    puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
+  end
 rescue
   fname = input.respond_to?(:path) ? input.path : "-stdin-"
   STDERR.puts("Error in #{fname}")
@@ -38,8 +49,10 @@ input = nil
 opts = GetoptLong.new(
   ["--dbg", GetoptLong::NO_ARGUMENT],
   ["--automatic", GetoptLong::NO_ARGUMENT],
+  ["--compact", GetoptLong::NO_ARGUMENT],
   ["--context", GetoptLong::REQUIRED_ARGUMENT],
   ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT],
+  ["--expand", GetoptLong::NO_ARGUMENT],
   ["--format", GetoptLong::REQUIRED_ARGUMENT],
   ["--input-format", GetoptLong::REQUIRED_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
@@ -51,8 +64,10 @@ opts = GetoptLong.new(
 opts.each do |opt, arg|
   case opt
   when '--dbg'          then ::JSON::LD::debug = true
+  when '--compact'      then options[:compact] = true
   when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
+  when '--expand'       then options[:expand] = true
   when '--format'       then options[:output_format] = arg.to_sym
   when '--input-format' then options[:input_format] = arg.to_sym
   when '--output'       then options[:output] = File.open(arg, "w")
