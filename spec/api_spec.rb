@@ -2,7 +2,7 @@
 $:.unshift "."
 require 'spec_helper'
 
-describe JSON::LD::API, :pending => true do
+describe JSON::LD::API do
   before(:each) { @debug = []}
 
   describe ".expand" do
@@ -19,11 +19,11 @@ describe JSON::LD::API, :pending => true do
             "c" => {"@id" => "http://example.com/c"},
           },
           "@id" => "a",
-          "b"        => "c"
+          "b"   => "c"
         },
         :output => {
           "@id" => "http://example.com/a",
-          "http://example.com/b" => "http://example.com/c"
+          "http://example.com/b" => {"@id" =>"http://example.com/c"}
         }
       },
       "coerced IRI in array" => {
@@ -34,21 +34,21 @@ describe JSON::LD::API, :pending => true do
             "c" => {"@id" => "http://example.com/c"},
           },
           "@id" => "a",
-          "b"        => "c"
+          "b"   => ["c"]
         },
         :output => {
           "@id" => "http://example.com/a",
-          "http://example.com/b" => "http://example.com/c"
+          "http://example.com/b" => [{"@id" => "http://example.com/c"}]
         }
       },
     }.each_pair do |title, params|
       it title do
-        JSON::LD::API.expand(params[:input], :debug => @debug).should produce(params[:output], @debug)
+        JSON::LD::API.expand(params[:input], nil, :debug => @debug).should produce(params[:output], @debug)
       end
     end
   end
   
-  describe ".compact" do
+  describe ".compact", :pending => true do
     {
       "prefix" => {
         :input => {
@@ -106,13 +106,14 @@ describe JSON::LD::API, :pending => true do
     it "uses referenced context"
   end
   
-  describe ".frame" do
+  describe ".frame", :pending => true do
   end
   
-  describe ".normalize" do
+  describe ".normalize", :pending => true do
   end
   
   describe ".triples" do
+    it "FIXME"
   end
   
   context "Test Files" do
@@ -136,7 +137,7 @@ describe JSON::LD::API, :pending => true do
         end if File.exist?(compacted) && File.exist?(context)
         
         it "expands" do
-          jld = JSON::LD::API.expand(File.open(filename), (context ? File.open(context) : {}), :debug => @debug)
+          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         

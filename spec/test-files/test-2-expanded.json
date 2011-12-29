@@ -1,20 +1,14 @@
 {
     "@subject": "http://example.org/library",
-    "@type": {
-        "@iri": "http://example.org/vocab#Library"
-    },
+    "@type": "http://example.org/vocab#Library",
     "http://example.org/vocab#contains": {
         "@subject": "http://example.org/library/the-republic",
-        "@type": {
-            "@iri": "http://example.org/vocab#Book"
-        },
+        "@type": "http://example.org/vocab#Book",
         "http://purl.org/dc/elements/1.1/creator": "Plato",
         "http://purl.org/dc/elements/1.1/title": "The Republic",
         "http://example.org/vocab#contains": {
             "@subject": "http://example.org/library/the-republic#introduction",
-            "@type": {
-                "@iri": "http://example.org/vocab#Chapter"
-            },
+            "@type": "http://example.org/vocab#Chapter",
             "http://purl.org/dc/elements/1.1/description": "An introductory chapter on The Republic.",
             "http://purl.org/dc/elements/1.1/title": "The Introduction"
         }
