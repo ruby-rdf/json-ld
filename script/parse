@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 $:.unshift(File.expand_path(File.join(File.dirname(__FILE__), "..", 'lib')))
-require 'linkeddata'
+begin
+  require 'linkeddata'
+rescue LoadError
+end
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
@@ -13,12 +16,12 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:expand]
-    output = JSON::LD::API.expand(input, nil, nil, options)
+    output = JSON::LD::API.expand(input, nil, options)
     secs = Time.new - start
-    puts output.inspect
+    options[:output].puts output
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
-    output = JSON::LD::API.compact(input, nil, nil, options)
+    output = JSON::LD::API.compact(input, nil, options)
     secs = Time.new - start
     puts output.inspect
     puts "Compacted in #{secs} seconds."
