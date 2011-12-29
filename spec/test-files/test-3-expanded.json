@@ -5,6 +5,6 @@
         "@literal": "41"
     },
     "http://xmlns.com/foaf/0.1/homepage": {
-        "@iri": "http://manu.sporny.org/"
+        "@id": "http://manu.sporny.org/"
     }
 }

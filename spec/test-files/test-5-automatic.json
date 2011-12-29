@@ -1,9 +1,9 @@
 {
   "@context": [
     { "foaf": "http://xmlns.com/foaf/0.1/" },
-    { "foaf:knows": { "@coerce": "@iri" } }
+    { "foaf:knows": { "@coerce": "@id" } }
   ],
-  "@subject": "http://manu.sporny.org/#me",
+  "@id": "http://manu.sporny.org/#me",
   "@type": "foaf:Person",
   "foaf:name": "Manu Sporny",
   "foaf:knows": {

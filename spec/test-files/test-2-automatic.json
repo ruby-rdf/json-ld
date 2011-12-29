@@ -6,19 +6,19 @@
     },
     {
       "ex:contains": {
-        "@coerce": "@iri"
+        "@coerce": "@id"
       }
     }
   ],
-  "@subject": "http://example.org/library",
+  "@id": "http://example.org/library",
   "@type": "ex:Library",
   "ex:contains": {
-    "@subject": "http://example.org/library/the-republic",
+    "@id": "http://example.org/library/the-republic",
     "@type": "ex:Book",
     "dc:creator": "Plato",
     "dc:title": "The Republic",
     "ex:contains": {
-      "@subject": "http://example.org/library/the-republic#introduction",
+      "@id": "http://example.org/library/the-republic#introduction",
       "@type": "ex:Chapter",
       "dc:description": "An introductory chapter on The Republic.",
       "dc:title": "The Introduction"
