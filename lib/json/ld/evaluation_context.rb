@@ -394,8 +394,6 @@ module JSON::LD
           res['@language'] = value.language.to_s if value.has_language?
           res
         else
-          debug("expand_value") {"coercions: #{coercions.inspect}"}
-          debug("expand_value") {"coerce[#{predicate}] => #{coerce(predicate).inspect}"}
           case coerce(predicate)
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}
@@ -508,7 +506,7 @@ module JSON::LD
     # @return [RDF::Node]
     def bnode(value = nil)
       @@bnode_cache ||= {}
-      @@bnode_cache[value.to_s] ||= RDF::Node.new
+      @@bnode_cache[value.to_s] ||= RDF::Node.new(value)
     end
 
     ##

@@ -49,7 +49,14 @@ module JSON::LD
       API.new(input, context, options) do |api|
         result = api.expand(api.value, nil, api.context)
       end
-      result
+      json_state = JSON::State.new(
+        :indent       => "  ",
+        :space        => " ",
+        :space_before => "",
+        :object_nl    => "\n",
+        :array_nl     => "\n"
+      )
+      result.to_json(json_state)
     end
     
     def expand(input, predicate = nil, context)
@@ -71,7 +78,10 @@ module JSON::LD
             # Ignore in output
           when '@id', '@type'
             # If the key is @id or @type and the value is a string, expand the value according to IRI Expansion.
-            result[key] = context.expand_iri(value, :position => :subject, :depth => @depth)
+            result[key] = case value
+            when String then context.expand_iri(value, :position => :subject, :depth => @depth)
+            else depth { expand(value, predicate, context) }
+            end
             debug("expand") {" => #{result[key].inspect}"}
           when '@literal'
             raise ProcessingError, "Value of @literal must be a string, was #{value.inspect}" unless value.is_a?(String)
@@ -95,7 +105,8 @@ module JSON::LD
               # 2.2.7) Otherwise, expand the value according to the Value Expansion rules, passing active property.
               context.expand_value(predicate, value, :position => :object, :depth => @depth)
             end
-            result[(predicate || key).to_s] = value
+            result[key[0,1] == '@' ? key : predicate.to_s] = value
+            debug("expand") {" => #{value.inspect}"}
           end
         end
         result

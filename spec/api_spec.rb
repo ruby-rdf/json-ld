@@ -43,7 +43,8 @@ describe JSON::LD::API do
       },
     }.each_pair do |title, params|
       it title do
-        JSON::LD::API.expand(params[:input], nil, :debug => @debug).should produce(params[:output], @debug)
+        jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+        JSON.parse(jld).should produce(params[:output], @debug)
       end
     end
   end
@@ -131,23 +132,23 @@ describe JSON::LD::API do
         before(:all) do
         end
 
-        it "compacts" do
+        it "compacts", :pending => true do
           jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "expands" do
           jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
-          jld.should produce(JSON.load(File.open(expanded)), @debug)
+          JSON.parse(jld).should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
-        it "frame" do
+        it "frame", :pending => true do
           jld = JSON::LD::API.frame(File.open(filename), File.open(frame), :debug => @debug)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
         it "Turtle" do
-          RDF::Graph.load(filename).should be_equivalent_graph(RDF::Graph.load(ttl))
+          RDF::Graph.load(filename, :debug => @debug).should be_equivalent_graph(RDF::Graph.load(ttl), :trace => @debug)
         end if File.exist?(ttl)
       end
     end
