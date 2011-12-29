@@ -97,7 +97,7 @@ module JSON::LD
         #      Use the new JSON object in subsequent steps
         new_element = {}
         element.each do |k, v|
-          k = ec.mappings[k.to_s] if ec.mappings[k.to_s].to_s[0,1] == '@'
+          k = ec.mapping(k) if ec.mapping(k).to_s[0,1] == '@'
           new_element[k] = v
         end
         unless element == new_element
@@ -151,7 +151,7 @@ module JSON::LD
           end
 
           # 2.7.3) List expansion
-          object = if ec.list.include?(property.to_s) && value.is_a?(Array)
+          object = if ec.list(property) && value.is_a?(Array)
             # If the active property is the target of a @list coercion, and the value is an array,
             # process the value as a list starting at Step 3.1.
             parse_list("#{path}[#{key}]", value, property, ec) do |resource|
@@ -179,15 +179,15 @@ module JSON::LD
       when String
         # 4) Perform coersion of the value, or generate a literal
         debug(path) do
-          "traverse(#{element}): coerce?(#{property.inspect}) == #{ec.coerce[property.to_s].inspect}, " +
-          "ec=#{ec.coerce.inspect}"
+          "traverse(#{element}): coerce(#{property.inspect}) == #{ec.coerce(property).inspect}, " +
+          "ec=#{ec.coercions.inspect}"
         end
-        if ec.coerce[property.to_s] == '@id'
+        if ec.coerce(property) == '@id'
           # 4.1) If the active property is the target of a @id coercion ...
           ec.expand_iri(element, :position => :object)
-        elsif ec.coerce[property.to_s]
+        elsif ec.coerce(property)
           # 4.2) Otherwise, if the active property is the target of coercion ..
-          RDF::Literal.new(element, :datatype => ec.coerce[property.to_s])
+          RDF::Literal.new(element, :datatype => ec.coerce(property))
         else
           # 4.3) Otherwise, set the active object to a plain literal value created from the string.
           RDF::Literal.new(element, :language => ec.language)

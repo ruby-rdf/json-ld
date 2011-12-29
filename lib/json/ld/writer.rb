@@ -162,7 +162,7 @@ module JSON::LD
       @context = EvaluationContext.new(@options)
       @context = @context.parse(@options[:context]) if @options[:context]
       @context.language = @options[:language] if @options[:language]
-      @context.list.each {|p| @list_range[p] = true}
+      @context.lists.each {|p| @list_range[p] = true}
 
       debug {"\nserialize: graph: #{@graph.size}"}
       debug {"=> options: #{@options.reject {|k,v| k == :debug}.inspect}"}
@@ -484,7 +484,7 @@ module JSON::LD
       return false if predicate.nil? || [RDF.first, RDF.rest].include?(predicate) || @options[:expand]
       return true if predicate == RDF.type
 
-      unless context.coerce.has_key?(predicate.to_s)
+      unless context.coerce(predicate)
         not_iri = !@options[:automatic]
         #debug {"  (automatic) = #{(!not_iri).inspect}"}
         
@@ -500,11 +500,11 @@ module JSON::LD
         
         # FIXME: detect when values are all represented through chaining
         
-        context.coerce[predicate.to_s] = not_iri ? false : '@id'
+        context.coerce(predicate, not_iri ? false : '@id')
       end
       
-      debug {"iri_range(#{predicate}) = #{context.coerce[predicate.to_s].inspect}"}
-      context.coerce[predicate.to_s] == '@id'
+      debug {"iri_range(#{predicate}) = #{context.coerce(predicate).inspect}"}
+      context.coerce(predicate) == '@id'
     end
     
     ##
@@ -512,7 +512,7 @@ module JSON::LD
     # @param [RDF::URI] predicate
     # @return [Boolean]
     def datatype_range?(predicate)
-      unless context.coerce.has_key?(predicate.to_s)
+      unless context.coerce(predicate)
         # objects of all statements with the predicate must be literal
         # and have the same non-nil datatype
         dt = nil
@@ -533,10 +533,10 @@ module JSON::LD
         else
           dt = false
         end
-        context.coerce[predicate.to_s] = dt
+        context.coerce(predicate, dt)
       end
 
-      context.coerce[predicate.to_s]
+      context.coerce(predicate)
     end
     
     ##
@@ -556,7 +556,7 @@ module JSON::LD
         else
           false
         end
-        context.add_list(predicate.to_s) if @list_range[predicate.to_s]
+        context.list(predicate, true) if @list_range[predicate.to_s]
 
         debug {"list(#{predicate}) = #{@list_range[predicate.to_s].inspect}"}
       end
