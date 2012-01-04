@@ -87,6 +87,26 @@ describe JSON::LD::API do
           "b" => "http://example.com/c"
         }
       },
+      "xsd:date coercion" => {
+        :input => {
+          "http://example.com/b" => {"@literal" => "2012-01-04", "@type" => "xsd:date"}
+        },
+        :context => {"b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}},
+        :output => {
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}},
+          "b" => "2012-01-04"
+        }
+      },
+      "@list coercion" => {
+        :input => {
+          "http://example.com/b" => {"@list" => ["c", "d"]}
+        },
+        :context => {"b" => {"@id" => "http://example.com/b", "@list" => true}},
+        :output => {
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@list" => true}},
+          "b" => ["c", "d"]
+        }
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
@@ -94,10 +114,19 @@ describe JSON::LD::API do
       end
     end
 
-    it "uses an @id coercion"
-    it "uses a datatype coercion"
-    it "uses a @list coercion"
-    it "uses referenced context"
+    it "uses referenced context" do
+      ctx = StringIO.new(%q({"@context": {"b": "http://example.com/b"}}))
+      input = {
+        "http://example.com/b" => "c"
+      }
+      expected = {
+        "@context" => "http://example.com/context",
+        "b" => "c"
+      }
+      JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
+      jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
+      JSON.parse(jld).should produce(expected, @debug)
+    end
   end
   
   describe ".frame", :pending => true do

@@ -64,6 +64,7 @@ module JSON::LD
         RDF.to_uri.to_s => "rdf",
         RDF::XSD.to_uri.to_s => "xsd"
       }
+
       @options = options
 
       # Load any defined prefixes
@@ -292,6 +293,7 @@ module JSON::LD
     #
     # @return [RDF::URI, '@id']
     def coerce(property, value = nil)
+      return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
       if value
         debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
         @coercions[property.to_s] = value

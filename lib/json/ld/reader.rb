@@ -50,7 +50,7 @@ module JSON::LD
       @callback = block
 
       # initialize the evaluation context with initial context
-      ec = EvaluationContext.new(@options).parse(INITIAL_CONTEXT)
+      ec = EvaluationContext.new(@options)
 
       traverse("", @doc, nil, nil, ec)
     end

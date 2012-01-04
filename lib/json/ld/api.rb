@@ -26,7 +26,7 @@ module JSON::LD
     def initialize(input, context, options = {})
       @options = options
       @value = input.respond_to?(:read) ? JSON.parse(input.read) : input
-      @context = EvaluationContext.new(options).parse(INITIAL_CONTEXT)
+      @context = EvaluationContext.new(options)
       @context = @context.parse(context) if context
       yield(self) if block_given?
     end
