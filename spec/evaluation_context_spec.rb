@@ -135,12 +135,26 @@ describe JSON::LD::EvaluationContext do
 
     describe "Syntax Errors" do
       {
-        "FIXME" => {
-          "foo" => "bar",
-        },
+        "malformed JSON" => StringIO.new(%q({"@context": {"foo" "http://malformed/"})),
+        "no @id, @type, or @list" => {"foo" => {}},
+        "unknown key" => {"foo" => {"@id" => "http://example.com/", "@foo" => "@bar"}},
+        "value as array" => {"foo" => []},
+        "@id as object" => {"foo" => {"@id" => {}}},
+        "@id as array" => {"foo" => {"@id" => []}},
+        "@type as object" => {"foo" => {"@type" => {}}},
+        "@type as array" => {"foo" => {"@type" => []}},
+        "@type as @list" => {"foo" => {"@type" => "@list"}},
+        "@list as object" => {"foo" => {"@list" => {}}},
+        "@list as array" => {"foo" => {"@list" => []}},
+        "@list as string" => {"foo" => {"@list" => "true"}},
+        "invalid term" => {"_:foo" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
         it title do
-          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::Syntax)
+          #subject.parse(context)
+          lambda {
+            ec = subject.parse(context)
+            ec.serialize.should produce({}, @debug)
+          }.should raise_error(JSON::LD::InvalidContext::Syntax)
         end
       end
     end

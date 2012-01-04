@@ -110,7 +110,7 @@ module JSON::LD
           ec
         rescue Exception => e
           debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
-          raise JSON::LD::InvalidContext::LoadError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
+          raise JSON::LD::InvalidContext::LoadError, "Failed to parse remote context at #{context}: #{e.message}", e.backtrace if @options[:validate]
           self.dup
         end
       when Array
@@ -138,8 +138,9 @@ module JSON::LD
             if key == '@language'
               new_ec.language = value.to_s
             elsif term_valid?(key)
-              # Normalize into object form
+              # Extract IRI mapping
               value = value['@id'] if value.is_a?(Hash)
+              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
               if iri && new_ec.mappings[key] != iri
@@ -147,6 +148,8 @@ module JSON::LD
                 new_ec.mapping(key, iri)
                 num_updates += 1
               end
+            elsif !new_ec.expand_iri(key).is_a?(RDF::URI)
+              raise InvalidContext::Syntax, "key #{key.inspect} is invalid"
             end
           end
         end
@@ -156,23 +159,34 @@ module JSON::LD
           # Expand a string value, unless it matches a keyword
           debug("parse") {"coercion/list: Hash[#{key}] = #{value.inspect}"}
           prop = new_ec.expand_iri(key, :position => :predicate).to_s
-          if value.is_a?(Hash)
+          case value
+          when Hash
+            # Must have one of @id, @type or @list
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @list" if (%w(@id @type @list) & value.keys).empty?
+            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (value.keys - %w(@id @type @list)).empty?
             value.each do |key2, value2|
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
               case key2
               when '@type'
+                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
                 if new_ec.coerce(prop) != iri
+                  raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
                   # Record term coercion
                   debug("parse") {"coerce #{prop.inspect} to #{iri.inspect}"}
                   new_ec.coerce(prop, iri)
                 end
               when '@list'
+                raise InvalidContext::Syntax, "unknown mapping for '@list' to #{value2.class}" unless value2.is_a?(TrueClass) || value2.is_a?(FalseClass)
                 if new_ec.list(prop) != value2
                   debug("parse") {"list #{prop.inspect} as #{value2.inspect}"}
                   new_ec.list(prop, value2)
                 end
               end
             end
+          when String
+            # handled in previous loop
+          else
+            raise InvalidContext::Syntax, "attemp to map #{key.inspect} to #{value.class}"
           end
         end
 
