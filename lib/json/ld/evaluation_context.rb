@@ -80,7 +80,7 @@ module JSON::LD
     #
     # @param [IO, Array, Hash, String] input
     # @return [EvaluationContext] context
-    # @raise [IOError]
+    # @raise [InvalidContext]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)
       case context
@@ -92,14 +92,14 @@ module JSON::LD
         # Load context document, if it is a string
         begin
           ctx = JSON.load(context)
-          raise JSON::ParserError, "missing @context" unless ctx.is_a?(Hash) && ctx["@context"]
+          raise JSON::LD::InvalidContext::Syntax, "missing @context" unless ctx.is_a?(Hash) && ctx["@context"]
           parse(ctx["@context"])
         rescue JSON::ParserError => e
           debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
-          raise JSON::ParserError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
+          raise JSON::LD::InvalidContext::Syntax, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
-      when String
+      when String, nil
         debug("parse") {"remote: #{context}"}
         # Load context document, if it is a string
         ec = nil
@@ -108,9 +108,9 @@ module JSON::LD
           ec.provided_context = context
           debug("parse") {"=> provided_context: #{context.inspect}"}
           ec
-        rescue IOError => e
+        rescue Exception => e
           debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
-          raise IOError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
+          raise JSON::LD::InvalidContext::LoadError, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
       when Array
@@ -425,7 +425,7 @@ module JSON::LD
     # @raise [ProcessingError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     def compact_value(predicate, value, options = {})
-      raise ProcessingError, "attempt to compact a non-object value" unless value.is_a?(Hash)
+      raise ProcessingError::Lossy, "attempt to compact a non-object value" unless value.is_a?(Hash)
 
       depth(options) do
         debug("compact_value") {"predicate: #{predicate.inspect}, value: #{value.inspect}, coerce: #{coerce(predicate).inspect}"}
@@ -438,12 +438,17 @@ module JSON::LD
           l.canonicalize.object
         when coerce(predicate) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
-          debug {" (@id)"}
+          debug {" (@id & coerce)"}
           compact_iri(value['@id'], :position => :object)
         when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(predicate)
           # Compact common datatype
-          debug {" (@type) == #{coerce(predicate)}"}
+          debug {" (@type & coerce) == #{coerce(predicate)}"}
           value['@literal']
+        when value.has_key?('@id')
+          # Compact an IRI
+          value['@id'] = compact_iri(value['@id'], :position => :object)
+          debug {" (@id => #{value['@id']})"}
+          value
         when value['@language'] && value['@language'] == language
           # Compact language
           debug {" (@language) == #{language}"}

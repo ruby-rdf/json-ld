@@ -31,7 +31,7 @@ describe JSON::LD::EvaluationContext do
 
       it "fails given a missing remote @context" do
         subject.stub(:open).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(IOError, /Failed to parse remote context/)
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to parse remote context/)
       end
       
       it "creates mappings" do
@@ -130,6 +130,29 @@ describe JSON::LD::EvaluationContext do
           "bar" => "http://example.com/",
           "baz" => "http://example.com/"
         }, @debug)
+      end
+    end
+
+    describe "Syntax Errors" do
+      {
+        "FIXME" => {
+          "foo" => "bar",
+        },
+      }.each do |title, context|
+        it title do
+          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::Syntax)
+        end
+      end
+    end
+
+    describe "Load Errors" do
+      {
+        "fixme" => "FIXME",
+        "nil" => nil,
+      }.each do |title, context|
+        it title do
+          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::LoadError)
+        end
       end
     end
   end
@@ -349,6 +372,8 @@ describe JSON::LD::EvaluationContext do
       "integer" =>        ["foaf:age",    54,                     {"@literal" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@literal" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" => "http://example.com/"},  {"@id" => "http://example.com/"}],
+      "no IRI (term)" =>  ["foo", {"@id" => "ex"},                {"@id" => "http://example.org/"}],
+      "no IRI (CURIE)" => ["foo", {"@id" => "foaf:Person"},       {"@id" => RDF::FOAF.Person.to_s}],
       "no boolean" =>     ["foo", true,                           {"@literal" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "no integer" =>     ["foo", 54,                             {"@literal" => "54", "@type" => RDF::XSD.integer.to_s}],
       "no date " =>       ["foo", {"@literal" => "2011-12-27Z", "@type" => "xsd:date"}, {"@literal" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
@@ -385,7 +410,7 @@ describe JSON::LD::EvaluationContext do
     
     [[], true, false, 1, 1.1, "string"].each do |v|
       it "raises error given #{v.class}" do
-        lambda {subject.compact_value("foo", v)}.should raise_error(JSON::LD::ProcessingError)
+        lambda {subject.compact_value("foo", v)}.should raise_error(JSON::LD::ProcessingError::Lossy)
       end
     end
   end
