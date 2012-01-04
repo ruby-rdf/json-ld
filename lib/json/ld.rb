@@ -65,26 +65,43 @@ module JSON
       
       attr :code
       
-      def intialize(message, code = nil)
-        super(message)
-        @code = code
+      class Lossy < ProcessingError
+        def initialize(*args)
+          super
+          @code = LOSSY_COMPACTION
+        end
+      end
+
+      class Conflict < ProcessingError
+        def initialize(*args)
+          super
+          @code = CONFLICTING_DATATYPES
+        end
       end
     end
     
     class InvalidContext < Exception
-      # A general syntax error was detected in the @context. For example, if a @coerce key maps to anything
-      # other than a string or an array of strings, this exception would be raised.
+      # A general syntax error was detected in the @context. For example, if a @type key maps to anything
+      # other than @id or an absolute IRI, this exception would be raised.
       INVALID_SYNTAX	= 1
 
-      # There is more than one target datatype specified for a single property in the list of coercion rules.
-      # This means that the processor does not know what the developer intended for the target datatype for a property.
-      MULTIPLE_DATATYPES = 2
+      # There was a problem encountered loading a remote context.
+      LOAD_ERROR = 2
       
       attr :code
       
-      def intialize(message, code = nil)
-        super(message)
-        @code = code
+      class Syntax < InvalidContext
+        def initialize(*args)
+          super
+          @code = INVALID_SYNTAX
+        end
+      end
+
+      class LoadError < InvalidContext
+        def initialize(*args)
+          super
+          @code = LOAD_ERROR
+        end
       end
     end
     
