@@ -49,7 +49,7 @@ describe JSON::LD::API do
     end
   end
   
-  describe ".compact", :pending => true do
+  describe ".compact" do
     {
       "prefix" => {
         :input => {
@@ -66,7 +66,7 @@ describe JSON::LD::API do
       "term" => {
         :input => {
           "@id" => "http://example.com/a",
-          "http://example.com/c" => {"@id" => "http://example.com/c"}
+          "http://example.com/b" => {"@id" => "http://example.com/c"}
         },
         :context => {"b" => "http://example.com/b"},
         :output => {
@@ -88,16 +88,9 @@ describe JSON::LD::API do
         }
       },
     }.each_pair do |title, params|
-      it "processes #{title} with embedded @context" do
-        JSON::LD::API.compact(
-          params[:context].merge(params[:input]), nil, :debug => @debug
-        ).should produce(params[:output], @debug)
-      end
-
-      it "processes #{title} with external @context" do
-        JSON::LD::API.compact(
-          params[:input], params[:context], :debug => @debug
-        ).should produce(params[:output], @debug)
+      it title do
+        jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
+        JSON.parse(jld).should produce(params[:output], @debug)
       end
     end
 
@@ -132,9 +125,9 @@ describe JSON::LD::API do
         before(:all) do
         end
 
-        it "compacts", :pending => true do
+        it "compacts" do
           jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
-          jld.should produce(JSON.load(File.open(compacted)), @debug)
+          JSON.parse(jld).should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "expands" do
