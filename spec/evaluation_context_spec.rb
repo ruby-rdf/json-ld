@@ -286,8 +286,27 @@ describe JSON::LD::EvaluationContext do
         subject.expand_iri(input).should produce(result, @debug)
       end
     end
+
     it "bnode" do
       subject.expand_iri("_:a").should be_a(RDF::Node)
+    end
+    
+    context "with base IRI" do
+      before(:each) do
+        subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
+        subject.mappings.delete("")
+      end
+
+      {
+        "base" =>     ["",            RDF::URI("http://example.org/")],
+        "relative" => ["a/b",         RDF::URI("http://example.org/a/b")],
+        "hash" =>     ["#a",          RDF::URI("http://example.org/#a")],
+        "absolute" => ["http://foo/", RDF::URI("http://foo/")]
+      }.each do |title, (input,result)|
+        it title do
+          subject.expand_iri(input).should produce(result, @debug)
+        end
+      end
     end
   end
   

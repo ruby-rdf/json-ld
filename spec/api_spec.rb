@@ -58,6 +58,46 @@ describe JSON::LD::API do
         JSON.parse(jld).should produce(params[:output], @debug)
       end
     end
+
+    context "with relative IRIs" do
+      {
+        "base" => {
+          :input => {
+            "@id" => "",
+            "@type" => "#{RDF::RDFS.Resource}"
+          },
+          :output => {
+            "@id" => "http://example.org/",
+            "@type" => "#{RDF::RDFS.Resource}"
+          }
+        },
+        "relative" => {
+          :input => {
+            "@id" => "a/b",
+            "@type" => "#{RDF::RDFS.Resource}"
+          },
+          :output => {
+            "@id" => "http://example.org/a/b",
+            "@type" => "#{RDF::RDFS.Resource}"
+          }
+        },
+        "hash" => {
+          :input => {
+            "@id" => "#a",
+            "@type" => "#{RDF::RDFS.Resource}"
+          },
+          :output => {
+            "@id" => "http://example.org/#a",
+            "@type" => "#{RDF::RDFS.Resource}"
+          }
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, :base_uri => "http://example.org/", :debug => @debug)
+          JSON.parse(jld).should produce(params[:output], @debug)
+        end
+      end
+    end
   end
   
   describe ".compact" do

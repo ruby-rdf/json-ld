@@ -4,6 +4,13 @@ require 'bigdecimal'
 
 module JSON::LD
   class EvaluationContext # :nodoc:
+    # The base.
+    #
+    # The document base IRI, used for expanding relative IRIs.
+    #
+    # @attr_reader [RDF::URI]
+    attr_reader :base
+
     # A list of current, in-scope mappings from term to IRI.
     #
     # @attr [Hash{String => String}]
@@ -56,6 +63,7 @@ module JSON::LD
     # @yieldparam [EvaluationContext]
     # @return [EvaluationContext]
     def initialize(options = {})
+      @base = RDF::URI(options[:base_uri]) if options[:base_uri]
       @mappings =  {}
       @coercions = {}
       @lists = {}
@@ -325,7 +333,7 @@ module JSON::LD
     end
 
     ##
-    # Expand an IRI
+    # Expand an IRI. Relative IRIs are expanded against any document base.
     #
     # @param [String] iri
     #   A keyword, term, prefix:suffix or possibly relative IRI
@@ -345,6 +353,7 @@ module JSON::LD
       when prefix == '_'              then bnode(suffix)
       when iri.to_s[0,1] == "@"       then iri
       when mappings.has_key?(prefix)  then uri(mappings[prefix] + suffix.to_s)
+      when base                       then base.join(iri)
       else                                 uri(iri)
       end
     end

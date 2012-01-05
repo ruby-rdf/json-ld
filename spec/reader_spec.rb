@@ -124,6 +124,36 @@ describe JSON::LD::Reader do
           parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
         end
       end
+      
+      context "with relative IRIs" do
+        {
+          "base" => [
+            %({
+              "@id": "",
+              "@type": "#{RDF::RDFS.Resource}"
+            }),
+            %(<http://example.org/> a <#{RDF::RDFS.Resource}>)
+          ],
+          "relative" => [
+            %({
+              "@id": "a/b",
+              "@type": "#{RDF::RDFS.Resource}"
+            }),
+            %(<http://example.org/a/b> a <#{RDF::RDFS.Resource}>)
+          ],
+          "hash" => [
+            %({
+              "@id": "#a",
+              "@type": "#{RDF::RDFS.Resource}"
+            }),
+            %(<http://example.org/#a> a <#{RDF::RDFS.Resource}>)
+          ],
+        }.each do |title, (js, nt)|
+          it title do
+            parse(js, :base_uri => "http://example.org/").should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          end
+        end
+      end
     end
 
     context "typed nodes" do
