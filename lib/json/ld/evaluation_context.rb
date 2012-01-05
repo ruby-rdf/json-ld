@@ -339,6 +339,8 @@ module JSON::LD
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
       prefix, suffix = iri.split(":", 2)
+      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"}
+      prefix = prefix.to_s
       case
       when prefix == '_'              then bnode(suffix)
       when iri.to_s[0,1] == "@"       then iri

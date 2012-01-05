@@ -41,6 +41,17 @@ describe JSON::LD::API do
           "http://example.com/b" => [{"@id" => "http://example.com/c"}]
         }
       },
+      "empty term" => {
+        :input => {
+          "@context" => {"" => "http://example.com/"},
+          "@id" => "",
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+        :output => {
+          "@id" => "http://example.com/",
+          "@type" => "#{RDF::RDFS.Resource}"
+        }
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
@@ -107,6 +118,18 @@ describe JSON::LD::API do
           "b" => ["c", "d"]
         }
       },
+      "empty term" => {
+        :input => {
+          "@id" => "http://example.com/",
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+        :context => {"" => "http://example.com/"},
+        :output => {
+          "@context" => {"" => "http://example.com/"},
+          "@id" => "",
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+      }
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)

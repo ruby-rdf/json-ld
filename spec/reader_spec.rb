@@ -111,6 +111,14 @@ describe JSON::LD::Reader do
           }),
           %q(<a> <foo> "bar" .)
         ],
+        "with empty term" => [
+          %({
+            "@context": {"": "http://example.com/"},
+            "@id": "",
+            "@type": "#{RDF::RDFS.Resource}"
+          }),
+          %(<http://example.com/> a <#{RDF::RDFS.Resource}>)
+        ],
       }.each do |title, (js, nt)|
         it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
