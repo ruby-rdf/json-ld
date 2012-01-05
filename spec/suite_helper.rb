@@ -32,9 +32,13 @@ module Fixtures
           
           case 
           when entry_types.include?(Jld.Manifest) then entry.as(Manifest)
+          when entry_types.include?(Jld.CompactTest) then entry.as(CompactTest)
+          when entry_types.include?(Jld.ExpandTest) then entry.as(ExpandTest)
+          when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
+          when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
           when entry_types.include?(Jld.RDFTest) then entry.as(RDFTest)
           when entry_types.include?(Test.TestCase) then entry.as(Entry)
-          else raise "Unexpected entry type: #{entry_typess.inpsect}"
+          else raise "Unexpected entry type: #{entry_types.inspect}"
           end
         end
       end
@@ -87,6 +91,28 @@ module Fixtures
         ).map {|a| v = self.send(a); "#{a}='#{v}'" if v}.compact.join(", ") +
         "]"
       end
+    end
+
+    class CompactTest < Entry
+      type Jld.CompactTest
+      property :contextDocument,       :predicate => Test.input
+
+      def context
+        self.contextDocument ? Kernel.open(self.contextDocument) : ""
+      end
+    end
+
+    class ExpandTest < Entry
+      type Jld.ExpandTest
+    end
+
+    class FrameTest < Entry
+      type Jld.FameTest
+      property :frame,       :predicate => Test.input
+    end
+
+    class NormalizeTest < Entry
+      type Jld.NormalizeTest
     end
 
     class RDFTest < Entry
