@@ -60,7 +60,7 @@ module Fixtures
       property :inputDocument,  :predicate => Test.informationResourceInput
       property :resultDocument, :predicate => Test.informationResourceResults
 
-      def test_type; (types - [type]).first; end
+      def information; name; end
 
       def input
         Kernel.open(self.inputDocument)

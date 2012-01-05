@@ -281,8 +281,7 @@ describe JSON::LD::Reader do
 
     context "overriding keywords" do
       {
-        "'url' for @id, 'a' for @type" =>
-        [
+        "'url' for @id, 'a' for @type" => [
           %q({
             "@context": {"url": "@id", "a": "@type", "name": "http://schema.org/name"},
             "url": "http://example.com/about#gregg",

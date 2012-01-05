@@ -13,7 +13,7 @@ describe JSON::LD::Reader do
             m2.entries.each do |t|
               case t
               when Fixtures::JSONLDTest::RDFTest
-                specify "#{File.basename(t.inputDocument.to_s)}: #{t.name} RDF Test" do
+                specify "RDF Test - #{File.basename(t.inputDocument.to_s)}: #{t.name}" do
                   t.debug = []
                   reader = RDF::Reader.open(t.inputDocument,
                     :base_uri => t.inputDocument,

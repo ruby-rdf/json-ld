@@ -2,7 +2,7 @@ require 'rdf/isomorphic'
 require 'rspec/matchers'
 require 'json'
 
-Info = Struct.new(:name, :trace, :inputDocument, :outputDocument)
+Info = Struct.new(:about, :information, :trace, :inputDocument, :outputDocument, :expectedResults)
 
 def normalize(graph)
   case graph
@@ -20,13 +20,13 @@ end
 
 RSpec::Matchers.define :be_equivalent_graph do |expected, info|
   match do |actual|
-    @info = if info.respond_to?(:name)
+    @info = if info.respond_to?(:about)
       info
     elsif info.is_a?(Hash)
-      identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:name]
+      identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
       trace = info[:trace]
       trace = trace.join("\n") if trace.is_a?(Array)
-      Info.new(identifier, trace, info[:inputDocument])
+      Info.new(identifier, info[:information] || "", trace, info[:inputDocument])
     else
       Info.new(expected.is_a?(RDF::Graph) ? expected.context : info, info.to_s)
     end
@@ -36,7 +36,7 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
   end
   
   failure_message_for_should do |actual|
-    info = @info.inspect
+    info = @info.respond_to?(:information) ? @info.information : @info.inspect
     if @expected.is_a?(RDF::Graph) && @actual.size != @expected.size
       "Graph entry count differs:\nexpected: #{@expected.size}\nactual:   #{@actual.size}"
     elsif @expected.is_a?(Array) && @actual.size != @expected.length
@@ -67,12 +67,12 @@ end
 
 RSpec::Matchers.define :pass_query do |expected, info|
   match do |actual|
-    if info.respond_to?(:name)
+    if info.respond_to?(:information)
       @info = info
     elsif info.is_a?(Hash)
       trace = info[:trace]
       trace = trace.join("\n") if trace.is_a?(Array)
-      @info = Info.new(info[:name] || "", trace, info[:inputDocument])
+      @info = Info.new(info[:about] || info[:inputDocument] || "", info[:information] || "", trace, info[:inputDocument])
       @info[:expectedResults] = info[:expectedResults] || RDF::Literal::Boolean.new(true)
     elsif info.is_a?(Array)
       @info = Info.new()
@@ -107,7 +107,7 @@ RSpec::Matchers.define :pass_query do |expected, info|
     end +
     "\n#{@expected}" +
     "\nResults:\n#{@actual.dump(:ttl, :standard_prefixes => true)}" +
-    (@info.inputDocument ? "Input file: #{@info.input.read}\n" : "") +
+    (@info.inputDocument ? "\nInput file: #{@info.input.read}\n" : "") +
     "\nDebug:\n#{@info.trace}"
   end  
 end
