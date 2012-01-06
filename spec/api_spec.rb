@@ -55,7 +55,7 @@ describe JSON::LD::API do
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
-        JSON.parse(jld).should produce(params[:output], @debug)
+        jld.should produce(params[:output], @debug)
       end
     end
 
@@ -94,7 +94,7 @@ describe JSON::LD::API do
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, :base_uri => "http://example.org/", :debug => @debug)
-          JSON.parse(jld).should produce(params[:output], @debug)
+          jld.should produce(params[:output], @debug)
         end
       end
     end
@@ -173,7 +173,7 @@ describe JSON::LD::API do
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-        JSON.parse(jld).should produce(params[:output], @debug)
+        jld.should produce(params[:output], @debug)
       end
     end
 
@@ -188,7 +188,7 @@ describe JSON::LD::API do
       }
       JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
       jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
-      JSON.parse(jld).should produce(expected, @debug)
+      jld.should produce(expected, @debug)
     end
   end
   
@@ -219,12 +219,12 @@ describe JSON::LD::API do
 
         it "compacts" do
           jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
-          JSON.parse(jld).should produce(JSON.load(File.open(compacted)), @debug)
+          jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "expands" do
           jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
-          JSON.parse(jld).should produce(JSON.load(File.open(expanded)), @debug)
+          jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
         it "frame", :pending => true do

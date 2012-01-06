@@ -49,14 +49,7 @@ module JSON::LD
       API.new(input, context, options) do |api|
         result = api.expand(api.value, nil, api.context)
       end
-      json_state = JSON::State.new(
-        :indent       => "  ",
-        :space        => " ",
-        :space_before => "",
-        :object_nl    => "\n",
-        :array_nl     => "\n"
-      )
-      result.to_json(json_state)
+      result
     end
     
     ##
@@ -86,7 +79,7 @@ module JSON::LD
           when '@id', '@type'
             # If the key is @id or @type and the value is a string, expand the value according to IRI Expansion.
             result[key] = case value
-            when String then context.expand_iri(value, :position => :subject, :depth => @depth)
+            when String then context.expand_iri(value, :position => :subject, :depth => @depth).to_s
             else depth { expand(value, predicate, context) }
             end
             debug("expand") {" => #{result[key].inspect}"}
@@ -152,16 +145,12 @@ module JSON::LD
         result = api.compact(api.value, nil)
 
         # xxx) Add the given context to the output
-        result = api.context.serialize.merge(result)
+        result = case result
+        when Hash then api.context.serialize.merge(result)
+        when Array then api.context.serialize.merge("@id" => result)
+        end
       end
-      json_state = JSON::State.new(
-        :indent       => "  ",
-        :space        => " ",
-        :space_before => "",
-        :object_nl    => "\n",
-        :array_nl     => "\n"
-      )
-      result.to_json(json_state)
+      result
     end
 
     ##
@@ -189,7 +178,7 @@ module JSON::LD
             result[key] = case value
             when String, RDF::Value
               # If the value is a string, compact the value according to IRI Compaction.
-              context.compact_iri(value, :position => :subject, :depth => @depth)
+              context.compact_iri(value, :position => :subject, :depth => @depth).to_s
             else
               # Otherwise, the compacted value is the result of performing this algorithm on the value
               # with the current active property.

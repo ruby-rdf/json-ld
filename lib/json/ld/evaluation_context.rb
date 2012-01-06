@@ -548,7 +548,7 @@ module JSON::LD
     def get_curie(resource)
       debug {"get_curie(#{resource.inspect})"}
       case resource
-      when RDF::Node
+      when RDF::Node, /^_:/
         return resource.to_s
       when String
         iri = resource
