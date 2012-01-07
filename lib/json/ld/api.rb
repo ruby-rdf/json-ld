@@ -56,10 +56,10 @@ module JSON::LD
     # Expand an Array or Object given an active context and performing local context expansion.
     #
     # @param [Array, Hash] input
-    # @param [RDF::URI] predicate (nil)
+    # @param [RDF::URI] predicate
     # @param [EvaluationContext] context
     # @return [Array, Hash]
-    def expand(input, predicate = nil, context)
+    def expand(input, predicate, context)
       debug("expand") {"input: #{input.class}, predicate: #{predicate.inspect}, context: #{context.inspect}"}
       case input
       when Array
