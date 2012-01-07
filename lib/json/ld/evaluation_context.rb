@@ -407,8 +407,8 @@ module JSON::LD
     ##
     # Expand a value from compacted to expanded form making the context
     # unnecessary. This method is used as part of more general expansion
-    # and operates on RHS values, using a supplied key to determine
-    # @type and @list coercion rules.
+    # and operates on RHS values, using a supplied key to determine @type and @list
+    # coercion rules.
     #
     # @param [RDF::URI] predicate
     #   Associated predicate used to find coercion rules
