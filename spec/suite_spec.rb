@@ -19,13 +19,13 @@ describe JSON::LD do
                                                 :base_uri => t.inputDocument,
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
-                  JSON.parse(result).should produce(expected, t.debug)
+                  result.should produce(expected, t.debug)
                 when Fixtures::JSONLDTest::ExpandTest
                   result = JSON::LD::API.expand(t.input, nil,
                                                 :base_uri => t.inputDocument,
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
-                  JSON.parse(result).should produce(expected, t.debug)
+                  result.should produce(expected, t.debug)
                 when Fixtures::JSONLDTest::FrameTest
                   pending("Framing")
                 when Fixtures::JSONLDTest::NormalizeTest

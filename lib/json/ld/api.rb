@@ -73,24 +73,28 @@ module JSON::LD
         result = Hash.new
         input.each do |key, value|
           debug("expand") {"#{key}: #{value.inspect}"}
-          case key
+          expanded_key = context.mapping(key) || key
+          case expanded_key
           when '@context'
             # Ignore in output
           when '@id', '@type'
             # If the key is @id or @type and the value is a string, expand the value according to IRI Expansion.
-            result[key] = case value
+            result[expanded_key] = case value
             when String then context.expand_iri(value, :position => :subject, :depth => @depth).to_s
             else depth { expand(value, predicate, context) }
             end
-            debug("expand") {" => #{result[key].inspect}"}
-          when '@literal'
-            raise ProcessingError::Lossy, "Value of @literal must be a string, was #{value.inspect}" unless value.is_a?(String)
-            result[key] = value
-            debug("expand") {" => #{result[key].inspect}"}
+            debug("expand") {" => #{result[expanded_key].inspect}"}
+          when '@literal', '@language'
+            raise ProcessingError::Lossy, "Value of #{expanded_key} must be a string, was #{value.inspect}" unless value.is_a?(String)
+            result[expanded_key] = value
+            debug("expand") {" => #{result[expanded_key].inspect}"}
           else
             # 2.2.3) Otherwise, if the key is not a keyword, expand the key according to IRI Expansion rules and set as active property.
-            predicate = context.expand_iri(key, :position => :predicate, :depth => @depth) unless key[0,1] == '@'
-            
+            unless key[0,1] == '@'
+              predicate = context.expand_iri(key, :position => :predicate, :depth => @depth)
+              expanded_key = predicate.to_s
+            end
+
             # 2.2.4) If the value is an array, and active property is subject to @list expansion,
             #   replace the value with a new key-value key where the key is @list and value set to the current value.
             value = {"@list" => value} if value.is_a?(Array) && context.list(predicate)
@@ -105,7 +109,7 @@ module JSON::LD
               # 2.2.7) Otherwise, expand the value according to the Value Expansion rules, passing active property.
               context.expand_value(predicate, value, :position => :object, :depth => @depth)
             end
-            result[key[0,1] == '@' ? key : predicate.to_s] = value
+            result[expanded_key] = value
             debug("expand") {" => #{value.inspect}"}
           end
         end
@@ -172,19 +176,30 @@ module JSON::LD
         result = Hash.new
         input.each do |key, value|
           debug("compact") {"#{key}: #{value.inspect}"}
+          compacted_key = context.alias(key)
+          debug("compact") {" => compacted key: #{compacted_key.inspect}"} unless compacted_key == key
+
           case key
           when '@id', '@type'
             # If the key is @id or @type
-            result[key] = case value
+            result[compacted_key] = case value
             when String, RDF::Value
               # If the value is a string, compact the value according to IRI Compaction.
               context.compact_iri(value, :position => :subject, :depth => @depth).to_s
+            when Hash
+              # Otherwise, if value is an object containing only the @id key, the compacted value
+              # if the result of performing IRI Compaction on that value.
+              if value.keys == ["@id"]
+                context.compact_iri(value["@id"], :position => :subject, :depth => @depth).to_s
+              else
+                depth { compact(value, predicate) }
+              end
             else
               # Otherwise, the compacted value is the result of performing this algorithm on the value
               # with the current active property.
               depth { compact(value, predicate) }
             end
-            debug("compact") {" => #{result[key].inspect}"}
+            debug("compact") {" => compacted value: #{result[compacted_key].inspect}"}
           else
             # Otherwise, if the key is not a keyword, set as active property and compact according to IRI Compaction.
             unless key[0,1] == '@'

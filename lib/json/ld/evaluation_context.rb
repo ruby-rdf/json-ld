@@ -144,11 +144,14 @@ module JSON::LD
           context.each do |key, value|
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-            if key == '@language'
+            if (new_ec.mapping(key) || key) == '@language'
               new_ec.language = value.to_s
             elsif term_valid?(key)
-              # Extract IRI mapping
-              value = value['@id'] if value.is_a?(Hash)
+              # Extract IRI mapping. This is complicated, as @id may have been aliased
+              if value.is_a?(Hash)
+                id_key = value.keys.detect {|k| new_ec.mapping(k) == '@id'} || '@id'
+                value = value[id_key]
+              end
               raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
@@ -171,11 +174,13 @@ module JSON::LD
           case value
           when Hash
             # Must have one of @id, @type or @list
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @list" if (%w(@id @type @list) & value.keys).empty?
-            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (value.keys - %w(@id @type @list)).empty?
+            expanded_keys = value.keys.map {|k| new_ec.mapping(k) || k}
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @list" if (%w(@id @type @list) & expanded_keys).empty?
+            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (expanded_keys - %w(@id @type @list)).empty?
             value.each do |key2, value2|
+              expanded_key = new_ec.mapping(key2) || key2
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
-              case key2
+              case expanded_key
               when '@type'
                 raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
                 if new_ec.coerce(prop) != iri
@@ -241,7 +246,7 @@ module JSON::LD
               ctx[k_iri] ||= Hash.new
               if ctx[k_iri].is_a?(String)
                 defn = Hash.new
-                defn["@id"] = ctx[k_iri]
+                defn[self.alias("@id")] = ctx[k_iri]
                 ctx[k_iri] = defn
               end
 
@@ -250,14 +255,14 @@ module JSON::LD
                 # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
                 dt = compact_iri(coerce(k), :position => :datatype, :depth => @depth)
                 # Fold into existing definition
-                ctx[k_iri]["@type"] = dt
+                ctx[k_iri][self.alias("@type")] = dt
                 debug {"=> reuse datatype[#{k_iri}] => #{dt}"}
               end
 
               debug {"=> list(#{k}) => #{list(k)}"}
               if list(k)
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k_iri]["@list"] = true
+                ctx[k_iri][self.alias("@list")] = true
                 debug {"=> reuse list_range[#{k_iri}] => true"}
               end
               
@@ -294,6 +299,20 @@ module JSON::LD
     end
 
     ##
+    # Revered term mapping, typically used for finding aliases for keys.
+    #
+    # Returns either the original value, or a mapping for this value.
+    #
+    # @example
+    #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
+    #
+    # @param [RDF::URI, String] value
+    # @return [RDF::URI, String]
+    def alias(value)
+      @mappings.invert.fetch(value, value)
+    end
+    
+    ##
     # Retrieve term coercion, add it if `value` is provided
     #
     # @param [String] property in full IRI string representation
@@ -301,6 +320,9 @@ module JSON::LD
     #
     # @return [RDF::URI, '@id']
     def coerce(property, value = nil)
+      # Map property, if it's not an RDF::Value
+      debug("coerce") {"map #{property} to #{mapping(property)}"} if mapping(property)
+      property = mapping(property) if mapping(property)
       return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
       if value
         debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
@@ -374,8 +396,8 @@ module JSON::LD
       depth(options) do
         debug {"compact_iri(#{options.inspect}, #{iri.inspect})"}
 
-        result = '@type' if options[:position] == :predicate && iri == RDF.type
-        result ||= get_curie(iri) || iri.to_s
+        result = self.alias('@type') if options[:position] == :predicate && iri == RDF.type
+        result ||= get_curie(iri) || self.alias(iri.to_s)
 
         debug {"=> #{result.inspect}"}
         result
@@ -495,6 +517,16 @@ module JSON::LD
           value
         end
         
+        # If the result is an object, tranform keys using any term keyword aliases
+        if result.is_a?(Hash) && result.keys.any? {|k| self.alias(k) != k}
+          debug {" (map to key aliases)"}
+          new_element = {}
+          result.each do |k, v|
+            new_element[self.alias(k)] = v
+          end
+          result = new_element
+        end
+
         debug {"=> #{result.inspect}"}
         result
       end

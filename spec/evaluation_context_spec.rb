@@ -33,7 +33,7 @@ describe JSON::LD::EvaluationContext do
         subject.stub(:open).with("http://example.com/context").and_raise(IOError)
         lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to parse remote context/)
       end
-      
+
       it "creates mappings" do
         subject.stub(:open).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
@@ -63,7 +63,7 @@ describe JSON::LD::EvaluationContext do
           {"bar" => "foo"}
         ]
       end
-      
+
       it "merges definitions from each context" do
         ec = subject.parse(@ctx)
         ec.mappings.should produce({
@@ -119,7 +119,7 @@ describe JSON::LD::EvaluationContext do
           "http://example.com/" => RDF::XSD.string.to_s
         }, @debug)
       end
-      
+
       it "expands chains of term definition/use with string values" do
         subject.parse({
           "foo" => "bar",
@@ -130,6 +130,41 @@ describe JSON::LD::EvaluationContext do
           "bar" => "http://example.com/",
           "baz" => "http://example.com/"
         }, @debug)
+      end
+
+      context "keyword aliases" do
+        it "uri for @id as term definition key" do
+          subject.parse({
+            "uri" => "@id", "foo" => {"uri" => "bar"}
+          }).mappings.should produce({
+            "uri" => "@id",
+            "foo" => "bar"
+          }, @debug)
+        end
+
+        it 'uri for @id as term definition value' do
+          subject.parse({
+            "uri" => "@id", "foo" => {"@id" => "bar", "@type" => "uri"}
+          }).coercions.should produce({
+            "bar" => "@id"
+          }, @debug)
+        end
+
+        it 'list for @list' do
+          subject.parse({
+            "list" => "@list", "foo" => {"@id" => "bar", "list" => true}
+          }).lists.should produce({
+            "bar" => true
+          }, @debug)
+        end
+
+        it 'type for @type' do
+          subject.parse({
+            "type" => "@type", "foo" => {"@id" => "bar", "type" => "@id"}
+          }).coercions.should produce({
+            "bar" => "@id"
+          }, @debug)
+        end
       end
     end
 
@@ -170,7 +205,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
   end
-    
+
   describe "#serialize" do
     it "uses provided context document" do
       ctx = StringIO.new(@ctx_json)
@@ -182,7 +217,7 @@ describe JSON::LD::EvaluationContext do
         "@context" => "http://example.com/context"
       }, @debug)
     end
-    
+
     it "uses provided context array" do
       ctx = [
         {"foo" => "bar"},
@@ -194,7 +229,7 @@ describe JSON::LD::EvaluationContext do
         "@context" => ctx
       }, @debug)
     end
-    
+
     it "uses provided context hash" do
       ctx = {"foo" => "bar"}
 
@@ -203,8 +238,8 @@ describe JSON::LD::EvaluationContext do
         "@context" => ctx
       }, @debug)
     end
-    
-    it "serializes @language" do
+
+    it "@language" do
       subject.language = "en"
       subject.serialize.should produce({
         "@context" => {
@@ -213,7 +248,7 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "serializes term mappings" do
+    it "term mappings" do
       subject.mapping("foo", "bar")
       subject.serialize.should produce({
         "@context" => {
@@ -221,8 +256,8 @@ describe JSON::LD::EvaluationContext do
         }
       }, @debug)
     end
-    
-    it "serializes @type with dependent prefixes in a single context" do
+
+    it "@type with dependent prefixes in a single context" do
       subject.mapping("xsd", RDF::XSD.to_uri)
       subject.mapping("homepage", RDF::FOAF.homepage)
       subject.coerce(RDF::FOAF.homepage, "@id")
@@ -233,8 +268,8 @@ describe JSON::LD::EvaluationContext do
         }
       }, @debug)
     end
-    
-    it "serializes @list with @id definition in a single context" do
+
+    it "@list with @id definition in a single context" do
       subject.mapping("knows", RDF::FOAF.knows)
       subject.list(RDF::FOAF.knows, true)
       subject.serialize.should produce({
@@ -243,8 +278,8 @@ describe JSON::LD::EvaluationContext do
         }
       }, @debug)
     end
-    
-    it "serializes prefix with @type and @list" do
+
+    it "prefix with @type and @list" do
       subject.mapping("knows", RDF::FOAF.knows)
       subject.coerce(RDF::FOAF.knows, "@id")
       subject.list(RDF::FOAF.knows, true)
@@ -254,8 +289,8 @@ describe JSON::LD::EvaluationContext do
         }
       }, @debug)
     end
-    
-    it "serializes CURIE with @type" do
+
+    it "CURIE with @type" do
       subject.mapping("foaf", RDF::FOAF.to_uri)
       subject.list(RDF::FOAF.knows, true)
       subject.serialize.should produce({
@@ -265,8 +300,59 @@ describe JSON::LD::EvaluationContext do
         }
       }, @debug)
     end
+
+    it "uses aliased @id in key position" do
+      subject.mapping("id", '@id')
+      subject.mapping("knows", RDF::FOAF.knows)
+      subject.list(RDF::FOAF.knows, true)
+      subject.serialize.should produce({
+        "@context" => {
+          "id" => "@id",
+          "knows" => {"id" => RDF::FOAF.knows.to_s, "@list" => true}
+        }
+      }, @debug)
+    end
+
+    it "uses aliased @id in value position" do
+      subject.mapping("id", "@id")
+      subject.mapping("foaf", RDF::FOAF.to_uri)
+      subject.coerce(RDF::FOAF.homepage, "@id")
+      subject.serialize.should produce({
+        "@context" => {
+          "foaf" => RDF::FOAF.to_uri.to_s,
+          "id" => "@id",
+          "foaf:homepage" => {"@type" => "id"}
+        }
+      }, @debug)
+    end
+
+    it "uses aliased @type" do
+      subject.mapping("type", "@type")
+      subject.mapping("foaf", RDF::FOAF.to_uri)
+      subject.coerce(RDF::FOAF.homepage, "@id")
+      subject.serialize.should produce({
+        "@context" => {
+          "foaf" => RDF::FOAF.to_uri.to_s,
+          "type" => "@type",
+          "foaf:homepage" => {"type" => "@id"}
+        }
+      }, @debug)
+    end
+
+    it "uses aliased @list" do
+      subject.mapping("list", '@list')
+      subject.mapping("knows", RDF::FOAF.knows)
+      subject.list(RDF::FOAF.knows, true)
+      subject.serialize.should produce({
+        "@context" => {
+          "list" => "@list",
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "list" => true}
+        }
+      }, @debug)
+    end
+
   end
-  
+
   describe "#expand_iri" do
     before(:each) do
       subject.mapping("ex", RDF::URI("http://example.org/"))
@@ -290,7 +376,7 @@ describe JSON::LD::EvaluationContext do
     it "bnode" do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
-    
+
     context "with base IRI" do
       before(:each) do
         subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
@@ -309,7 +395,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
   end
-  
+
   describe "#compact_iri" do
     before(:each) do
       subject.mapping("ex", RDF::URI("http://example.org/"))
@@ -330,7 +416,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
   end
-  
+
   describe "#expand_value" do
     before(:each) do
       subject.mapping("dc", RDF::DC.to_uri)
@@ -369,7 +455,7 @@ describe JSON::LD::EvaluationContext do
         subject.expand_value(predicate, compacted).should produce(expanded, @debug)
       end
     end
-    
+
     context "@language" do
       {
         "no IRI" =>         ["foo",         "http://example.com/",  {"@literal" => "http://example.com/", "@language" => "en"}],
@@ -387,7 +473,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
   end
-  
+
   describe "compact_value" do
     before(:each) do
       subject.mapping("dc", RDF::DC.to_uri)
@@ -418,7 +504,7 @@ describe JSON::LD::EvaluationContext do
         subject.compact_value(predicate, expanded).should produce(compacted, @debug)
       end
     end
-    
+
     context "@language" do
       {
         "@id"                            => ["foo", {"@id" => "foo"},                                   {"@id" => "foo"}],
@@ -441,10 +527,31 @@ describe JSON::LD::EvaluationContext do
         end
       end
     end
-    
+
     [[], true, false, 1, 1.1, "string"].each do |v|
       it "raises error given #{v.class}" do
         lambda {subject.compact_value("foo", v)}.should raise_error(JSON::LD::ProcessingError::Lossy)
+      end
+    end
+
+    context "keywords" do
+      before(:each) do
+        subject.mapping("id", "@id")
+        subject.mapping("type", "@type")
+        subject.mapping("list", "@list")
+        subject.mapping("language", "@language")
+        subject.mapping("literal", "@literal")
+      end
+
+      {
+        "@id" =>      [{"id" => "http://example.com/"},             {"@id" => "http://example.com/"}],
+        "@type" =>    [{"literal" => "foo", "type" => "bar"},       {"@literal" => "foo", "@type" => "bar"}],
+        "@literal" => [{"literal" => "foo", "language" => "bar"},   {"@literal" => "foo", "@language" => "bar"}],
+        "@list" =>    [{"list" => ["foo"]},                         {"@list" => ["foo"]  }],
+      }.each do |title, (compacted, expanded)|
+        it title do
+          subject.compact_value("foo", expanded).should produce(compacted, @debug)
+        end
       end
     end
   end

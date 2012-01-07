@@ -98,6 +98,66 @@ describe JSON::LD::API do
         end
       end
     end
+
+    context "keyword aliasing" do
+      {
+        "@id" => {
+          :input => {
+            "@context" => {"id" => "@id"},
+            "id" => "",
+            "@type" => "#{RDF::RDFS.Resource}"
+          },
+          :output => {
+            "@id" => "",
+            "@type" => "#{RDF::RDFS.Resource}"
+          }
+        },
+        "@type" => {
+          :input => {
+            "@context" => {"type" => "@type"},
+            "type" => RDF::RDFS.Resource.to_s,
+            "foo" => {"@literal" => "bar", "type" => "baz"}
+          },
+          :output => {
+            "@type" => RDF::RDFS.Resource.to_s,
+            "foo" => {"@literal" => "bar", "@type" => "baz"}
+          }
+        },
+        "@language" => {
+          :input => {
+            "@context" => {"language" => "@language"},
+            "foo" => {"@literal" => "bar", "language" => "baz"}
+          },
+          :output => {
+            "foo" => {"@literal" => "bar", "@language" => "baz"}
+          }
+        },
+        "@literal" => {
+          :input => {
+            "@context" => {"literal" => "@literal"},
+            "foo" => {"literal" => "bar"}
+          },
+          :output => {
+            "foo" => {"@literal" => "bar"}
+          }
+        },
+        "@list" => {
+          :input => {
+            "@context" => {"list" => "@list"},
+            "foo" => {"list" => ["bar"]}
+          },
+          :output => {
+            "foo" => {"@list" => ["bar"]}
+          }
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
   end
   
   describe ".compact" do
@@ -169,11 +229,97 @@ describe JSON::LD::API do
           "@id" => "",
           "@type" => "#{RDF::RDFS.Resource}"
         },
-      }
+      },
+      "@id with expanded @id" => {
+        :input => {
+          "@id" => {"@id" => "http://example.com/"},
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+        :context => {},
+        :output => {
+          "@id" => "http://example.com/",
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+      },
+      "@type with expanded @id" => {
+        :input => {
+          "@id" => "http://example.com/",
+          "@type" => {"@id" => "#{RDF::RDFS.Resource}"}
+        },
+        :context => {},
+        :output => {
+          "@id" => "http://example.com/",
+          "@type" => "#{RDF::RDFS.Resource}"
+        },
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
         jld.should produce(params[:output], @debug)
+      end
+    end
+
+    context "keyword aliasing" do
+      {
+        "@id" => {
+          :input => {
+            "@id" => "",
+            "@type" => "#{RDF::RDFS.Resource}"
+          },
+          :context => {"id" => "@id"},
+          :output => {
+            "@context" => {"id" => "@id"},
+            "id" => "",
+            "@type" => "#{RDF::RDFS.Resource}"
+          }
+        },
+        "@type" => {
+          :input => {
+            "@type" => {"@id" => RDF::RDFS.Resource.to_s},
+            "foo" => {"@literal" => "bar", "@type" => "baz"}
+          },
+          :context => {"type" => "@type"},
+          :output => {
+            "@context" => {"type" => "@type"},
+            "type" => RDF::RDFS.Resource.to_s,
+            "foo" => {"@literal" => "bar", "type" => "baz"}
+          }
+        },
+        "@language" => {
+          :input => {
+            "foo" => {"@literal" => "bar", "@language" => "baz"}
+          },
+          :context => {"language" => "@language"},
+          :output => {
+            "@context" => {"language" => "@language"},
+            "foo" => {"@literal" => "bar", "language" => "baz"}
+          }
+        },
+        "@literal" => {
+          :input => {
+            "foo" => {"@literal" => "bar", "@language" => "baz"}
+          },
+          :context => {"literal" => "@literal"},
+          :output => {
+            "@context" => {"literal" => "@literal"},
+            "foo" => {"literal" => "bar", "@language" => "baz"}
+          }
+        },
+        "@list" => {
+          :input => {
+            "foo" => {"@list" => ["bar"]}
+          },
+          :context => {"list" => "@list"},
+          :output => {
+            "@context" => {"list" => "@list"},
+            "foo" => {"list" => ["bar"]}
+          }
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
       end
     end
 
