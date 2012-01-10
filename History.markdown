@@ -1,3 +1,13 @@
+=== 0.1.0
+* New @context processing rules.
+* @iri and @subject changed to @id.
+* @datatype changed to @type.
+* @coerce keys can be CURIEs or IRIs (not spec'd).
+* @language in @context.
+* Implemented JSON::LD::API for .compact and .expand.
+* Support relative IRI expansion based on document location.
+* Make sure that keyword aliases are fully considered on both input and output and used when compacting.
+
 === 0.0.8
 * RDF.rb 0.3.4 compatibility.
 * Format detection.
