@@ -267,7 +267,7 @@ module JSON::LD
       debug {"format_literal(#{options.inspect}, #{literal.inspect})"}
 
       value = Hash.new
-      value['@literal'] = literal.value
+      value['@value'] = literal.value
       value['@type'] = literal.datatype.to_s if literal.has_datatype?
       value['@language'] = literal.language.to_s if literal.has_language?
 

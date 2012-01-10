@@ -424,21 +424,21 @@ module JSON::LD
         debug("expand_value") {"predicate: #{predicate}, value: #{value.inspect}, coerce: #{coerce(predicate).inspect}"}
         result = case value
         when TrueClass, FalseClass, RDF::Literal::Boolean
-          {"@literal" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
+          {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
         when Integer, RDF::Literal::Integer
-          {"@literal" => value.to_s, "@type" => RDF::XSD.integer.to_s}
+          {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
         when BigDecimal, RDF::Literal::Decimal
-          {"@literal" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
+          {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
         when Float, RDF::Literal::Double
-          {"@literal" => value.to_s, "@type" => RDF::XSD.double.to_s}
+          {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
         when Date, Time, DateTime
           l = RDF::Literal(value)
-          {"@literal" => l.to_s, "@type" => l.datatype.to_s}
+          {"@value" => l.to_s, "@type" => l.datatype.to_s}
         when RDF::URI
           {'@id' => value.to_s}
         when RDF::Literal
           res = Hash.new
-          res['@literal'] = value.to_s
+          res['@value'] = value.to_s
           res['@type'] = value.datatype.to_s if value.has_datatype?
           res['@language'] = value.language.to_s if value.has_language?
           res
@@ -447,10 +447,10 @@ module JSON::LD
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}
           when nil
-            language ? {"@literal" => value.to_s, "@language" => language.to_s} : value.to_s
+            language ? {"@value" => value.to_s, "@language" => language.to_s} : value.to_s
           else
             res = Hash.new
-            res['@literal'] = value.to_s
+            res['@value'] = value.to_s
             res['@type'] = coerce(predicate).to_s
             res
           end
@@ -483,7 +483,7 @@ module JSON::LD
         when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
           # Compact native type
           debug {" (native)"}
-          l = RDF::Literal(value['@literal'], :datatype => expand_iri(value['@type'], :position => :datatype))
+          l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
           l.canonicalize.object
         when coerce(predicate) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
@@ -492,7 +492,7 @@ module JSON::LD
         when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(predicate)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(predicate)}"}
-          value['@literal']
+          value['@value']
         when value.has_key?('@id')
           # Compact an IRI
           value['@id'] = compact_iri(value['@id'], :position => :object)
@@ -501,11 +501,11 @@ module JSON::LD
         when value['@language'] && value['@language'] == language
           # Compact language
           debug {" (@language) == #{language}"}
-          value['@literal']
-        when value['@literal'] && !value['@language'] && !value['@type'] && !coerce(predicate) && !language
+          value['@value']
+        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(predicate) && !language
           # Compact simple literal to string
-          debug {" (@literal && !@language && !@type && !coerce && !language)"}
-          value['@literal']
+          debug {" (@value && !@language && !@type && !coerce && !language)"}
+          value['@value']
         when value['@type']
           # Compact datatype
           debug {" (@type)"}

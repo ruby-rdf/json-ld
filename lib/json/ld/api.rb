@@ -84,7 +84,7 @@ module JSON::LD
             else depth { expand(value, predicate, context) }
             end
             debug("expand") {" => #{result[expanded_key].inspect}"}
-          when '@literal', '@language'
+          when '@value', '@language'
             raise ProcessingError::Lossy, "Value of #{expanded_key} must be a string, was #{value.inspect}" unless value.is_a?(String)
             result[expanded_key] = value
             debug("expand") {" => #{result[expanded_key].inspect}"}
@@ -210,8 +210,8 @@ module JSON::LD
 
             # If the value is an object
             compacted_value = if value.is_a?(Hash)
-              if value.keys == ['@id'] || value['@literal']
-                # If the value contains only an @id key or the value contains a @literal key, the compacted value
+              if value.keys == ['@id'] || value['@value']
+                # If the value contains only an @id key or the value contains a @value key, the compacted value
                 # is the result of performing Value Compaction on the value.
                 debug("compact") {"keys: #{value.keys.inspect}"}
                 context.compact_value(predicate, value, :depth => @depth)

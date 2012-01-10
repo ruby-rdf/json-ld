@@ -243,7 +243,7 @@ describe JSON::LD::Writer do
       serialize(input, :prefixes => {:ex => "http://example.com/"}).should produce({
         '@context'   => {"ex"    => "http://example.com/"},
         '@id'   => "ex:a",
-        "ex:b"    => {'@literal' => "foo", '@language' => "en-us"}
+        "ex:b"    => {'@value' => "foo", '@language' => "en-us"}
       }, @debug)
     end
   end
@@ -464,7 +464,7 @@ describe JSON::LD::Writer do
         serialize(input, :standard_prefixes => true).should produce({
           '@context'   => {"foaf"  => "http://xmlns.com/foaf/0.1/"},
           '@id'   => "foaf:a",
-          "foaf:b"  => ["c", {'@literal' => "d", '@language' => "en"}, {'@literal' => "f", '@type' => "foaf:g"}]
+          "foaf:b"  => ["c", {'@value' => "d", '@language' => "en"}, {'@value' => "f", '@type' => "foaf:g"}]
         }, @debug)
       end
     end
@@ -474,7 +474,7 @@ describe JSON::LD::Writer do
         input = %(<a> <b> "c"@en .)
         serialize(input).should produce({
           '@id'   => "a",
-          "b"          => {"@literal" => "c", "@language"  => "en"}
+          "b"          => {"@value" => "c", "@language"  => "en"}
         }, @debug)
       end
 
@@ -492,7 +492,7 @@ describe JSON::LD::Writer do
         serialize(input, :language => "en").should produce({
           '@context'   => {"@language"  => "en"},
           '@id'   => "a",
-          "b"          => {"@literal" => "c", "@language"  => "de"}
+          "b"          => {"@value" => "c", "@language"  => "de"}
         }, @debug)
       end
 
@@ -501,7 +501,7 @@ describe JSON::LD::Writer do
         serialize(input, :language => "en").should produce({
           '@context'   => {"@language"  => "en"},
           '@id'   => "a",
-          "b"          => {"@literal" => "c"}
+          "b"          => {"@value" => "c"}
         }, @debug)
       end
     end

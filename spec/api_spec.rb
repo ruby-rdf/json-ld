@@ -116,29 +116,29 @@ describe JSON::LD::API do
           :input => {
             "@context" => {"type" => "@type"},
             "type" => RDF::RDFS.Resource.to_s,
-            "foo" => {"@literal" => "bar", "type" => "baz"}
+            "foo" => {"@value" => "bar", "type" => "baz"}
           },
           :output => {
             "@type" => RDF::RDFS.Resource.to_s,
-            "foo" => {"@literal" => "bar", "@type" => "baz"}
+            "foo" => {"@value" => "bar", "@type" => "baz"}
           }
         },
         "@language" => {
           :input => {
             "@context" => {"language" => "@language"},
-            "foo" => {"@literal" => "bar", "language" => "baz"}
+            "foo" => {"@value" => "bar", "language" => "baz"}
           },
           :output => {
-            "foo" => {"@literal" => "bar", "@language" => "baz"}
+            "foo" => {"@value" => "bar", "@language" => "baz"}
           }
         },
-        "@literal" => {
+        "@value" => {
           :input => {
-            "@context" => {"literal" => "@literal"},
+            "@context" => {"literal" => "@value"},
             "foo" => {"literal" => "bar"}
           },
           :output => {
-            "foo" => {"@literal" => "bar"}
+            "foo" => {"@value" => "bar"}
           }
         },
         "@list" => {
@@ -200,7 +200,7 @@ describe JSON::LD::API do
       },
       "xsd:date coercion" => {
         :input => {
-          "http://example.com/b" => {"@literal" => "2012-01-04", "@type" => "xsd:date"}
+          "http://example.com/b" => {"@value" => "2012-01-04", "@type" => "xsd:date"}
         },
         :context => {"b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}},
         :output => {
@@ -276,32 +276,32 @@ describe JSON::LD::API do
         "@type" => {
           :input => {
             "@type" => {"@id" => RDF::RDFS.Resource.to_s},
-            "foo" => {"@literal" => "bar", "@type" => "baz"}
+            "foo" => {"@value" => "bar", "@type" => "baz"}
           },
           :context => {"type" => "@type"},
           :output => {
             "@context" => {"type" => "@type"},
             "type" => RDF::RDFS.Resource.to_s,
-            "foo" => {"@literal" => "bar", "type" => "baz"}
+            "foo" => {"@value" => "bar", "type" => "baz"}
           }
         },
         "@language" => {
           :input => {
-            "foo" => {"@literal" => "bar", "@language" => "baz"}
+            "foo" => {"@value" => "bar", "@language" => "baz"}
           },
           :context => {"language" => "@language"},
           :output => {
             "@context" => {"language" => "@language"},
-            "foo" => {"@literal" => "bar", "language" => "baz"}
+            "foo" => {"@value" => "bar", "language" => "baz"}
           }
         },
-        "@literal" => {
+        "@value" => {
           :input => {
-            "foo" => {"@literal" => "bar", "@language" => "baz"}
+            "foo" => {"@value" => "bar", "@language" => "baz"}
           },
-          :context => {"literal" => "@literal"},
+          :context => {"literal" => "@value"},
           :output => {
-            "@context" => {"literal" => "@literal"},
+            "@context" => {"literal" => "@value"},
             "foo" => {"literal" => "bar", "@language" => "baz"}
           }
         },

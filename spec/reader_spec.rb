@@ -219,12 +219,12 @@ describe JSON::LD::Reader do
         ],
         "explicit plain literal" =>
         [
-          %q({"http://xmlns.com/foaf/0.1/name": {"@literal": "Gregg Kellogg"}}),
+          %q({"http://xmlns.com/foaf/0.1/name": {"@value": "Gregg Kellogg"}}),
           %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
         ],
         "language tagged literal" =>
         [
-          %q({"http://www.w3.org/2000/01/rdf-schema#label": {"@literal": "A plain literal with a lang tag.", "@language": "en-us"}}),
+          %q({"http://www.w3.org/2000/01/rdf-schema#label": {"@value": "A plain literal with a lang tag.", "@language": "en-us"}}),
           %q(_:a <http://www.w3.org/2000/01/rdf-schema#label> "A plain literal with a lang tag."@en-us .)
         ],
         "I18N literal with language" =>
@@ -234,7 +234,7 @@ describe JSON::LD::Reader do
             "http://xmlns.com/foaf/0.1/knows": {"@id": "http://www.ivan-herman.net/foaf#me"}
           },{
             "@id": "http://www.ivan-herman.net/foaf#me",
-            "http://xmlns.com/foaf/0.1/name": {"@literal": "Herman Iván", "@language": "hu"}
+            "http://xmlns.com/foaf/0.1/name": {"@value": "Herman Iván", "@language": "hu"}
           }]),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
@@ -245,7 +245,7 @@ describe JSON::LD::Reader do
         [
           %q({
             "@id":  "http://greggkellogg.net/foaf#me",
-            "http://purl.org/dc/terms/created":  {"@literal": "1957-02-27", "@type": "http://www.w3.org/2001/XMLSchema#date"}
+            "http://purl.org/dc/terms/created":  {"@value": "1957-02-27", "@type": "http://www.w3.org/2001/XMLSchema#date"}
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
@@ -536,7 +536,7 @@ describe JSON::LD::Reader do
               "foo": "http://example.com/foo#",
               "@language": "en"
             },
-            "foo:bar":  {"@literal": "baz", "@language": "fr"}
+            "foo:bar":  {"@value": "baz", "@language": "fr"}
           }),
           %q(
             _:a <http://example.com/foo#bar> "baz"@fr .
@@ -548,7 +548,7 @@ describe JSON::LD::Reader do
               "foo": "http://example.com/foo#",
               "@language": "en"
             },
-            "foo:bar":  {"@literal": "baz"}
+            "foo:bar":  {"@value": "baz"}
           }),
           %q(
             _:a <http://example.com/foo#bar> "baz" .

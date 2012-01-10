@@ -106,12 +106,12 @@ module JSON::LD
         end
 
         # Other shortcuts to allow use of this method for terminal associative arrays
-        object = if element['@literal']
-          # 2.3) If the JSON object has a @literal key, set the active object to a literal value as follows ...
+        object = if element['@value']
+          # 2.3) If the JSON object has a @value key, set the active object to a literal value as follows ...
           literal_opts = {}
           literal_opts[:datatype] = ec.expand_iri(element['@type'], :position => :datatype) if element['@type']
           literal_opts[:language] = element['@language'].to_sym if element['@language']
-          RDF::Literal.new(element['@literal'], literal_opts)
+          RDF::Literal.new(element['@value'], literal_opts)
         elsif element['@list']
           # 2.4 (Lists)
           parse_list("#{path}[#{'@list'}]", element['@list'], property, ec) do |resource|
