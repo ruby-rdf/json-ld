@@ -429,8 +429,10 @@ module JSON::LD
           {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
         when BigDecimal, RDF::Literal::Decimal
           {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
-        when Float, RDF::Literal::Double
-          {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
+        when Float
+          {"@value" => ("%1.6e" % value), "@type" => RDF::XSD.double.to_s}
+        when RDF::Literal::Double
+          {"@value" => ("%1.6e" % value.object), "@type" => RDF::XSD.double.to_s}
         when Date, Time, DateTime
           l = RDF::Literal(value)
           {"@value" => l.to_s, "@type" => l.datatype.to_s}

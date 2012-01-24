@@ -439,14 +439,14 @@ describe JSON::LD::EvaluationContext do
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native boolean" => ["foo", true,                           {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "native integer" => ["foo", 1,                              {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-      "native double" =>  ["foo", 1.1,                            {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}],
+      "native double" =>  ["foo", 1.1,                            {"@value" => "1.100000e+00", "@type" => RDF::XSD.double.to_s}],
       "native date" =>    ["foo", Date.parse("2011-12-27Z"),      {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.time.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
       "rdf boolean" =>    ["foo", RDF::Literal(true),             {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
       "rdf decimal" =>    ["foo", RDF::Literal::Decimal.new(1.1), {"@value" => "1.1", "@type" => RDF::XSD.decimal.to_s}],
-      "rdf double" =>     ["foo", RDF::Literal(1.1),              {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}],
+      "rdf double" =>     ["foo", RDF::Literal(1.1),              {"@value" => "1.100000e+00", "@type" => RDF::XSD.double.to_s}],
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27Z")), {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
     }.each do |title, (key, compacted, expanded)|
@@ -463,7 +463,7 @@ describe JSON::LD::EvaluationContext do
         "no prefix" =>      ["foo",         "ex:suffix",            {"@value" => "ex:suffix", "@language" => "en"}],
         "native boolean" => ["foo",         true,                   {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
         "native integer" => ["foo",         1,                      {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-        "native double" =>  ["foo",         1.1,                    {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}],
+        "native double" =>  ["foo",         1.1,                    {"@value" => "1.100000e+00", "@type" => RDF::XSD.double.to_s}],
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.language = "en"

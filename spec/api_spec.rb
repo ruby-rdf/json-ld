@@ -158,6 +158,61 @@ describe JSON::LD::API do
       end
     end
 
+    context "native types" do
+      {
+        "true" => {
+          :input => {
+            "@context" => {"e" => "http://example.org/vocab#"},
+            "e:bool" => true
+          },
+          :output => {
+            "http://example.org/vocab#bool" => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}
+          }
+        },
+        "false" => {
+          :input => {
+            "@context" => {"e" => "http://example.org/vocab#"},
+            "e:bool" => false
+          },
+          :output => {
+            "http://example.org/vocab#bool" => {"@value" => "false", "@type" => RDF::XSD.boolean.to_s}
+          }
+        },
+        "double" => {
+          :input => {
+            "@context" => {"e" => "http://example.org/vocab#"},
+            "e:double" => 1.23
+          },
+          :output => {
+            "http://example.org/vocab#double" => {"@value" => "1.230000e+00", "@type" => RDF::XSD.double.to_s}
+          }
+        },
+        "double-zero" => {
+          :input => {
+            "@context" => {"e" => "http://example.org/vocab#"},
+            "e:double-zero" => 0.0e0
+          },
+          :output => {
+            "http://example.org/vocab#double-zero" => {"@value" => "0.000000e+00", "@type" => RDF::XSD.double.to_s}
+          }
+        },
+        "integer" => {
+          :input => {
+            "@context" => {"e" => "http://example.org/vocab#"},
+            "e:integer" => 123
+          },
+          :output => {
+            "http://example.org/vocab#integer" => {"@value" => "123", "@type" => RDF::XSD.integer.to_s}
+          }
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
   end
   
   describe ".compact" do
