@@ -1,18 +1,22 @@
 {
     "@context": {
-        "@base":    "http://rubygems.org/gems/json-ld",
         "dc":       "http://purl.org/dc/terms/",
-        "@coerce": {
-            "xsd:anyURI":   [
-                "dcterms:creator",
-                "doap:homepage", "doap:bug-database", "doap:blog", "doap:developer",
-                "doap:maintainer", "doap:documenter", "doap:license",
-                "foaf:maker", "foaf:mbox", "foaf:made", "rdfs:isDefinedBy"
-            ],
-            "xsd:date": "doap:created"
-        }
+        "xsd":      "http://www.w3.org/2001/XMLSchema#",
+        "dc:creator": {"@type": "@id"},
+        "doap:created": {"@type": "xsd:date"},
+        "doap:homepage": {"@type": "@id"},
+        "doap:bug-database": {"@type": "@id"},
+        "doap:blog": {"@type": "@id"},
+        "doap:developer": {"@type": "@id"},
+        "doap:maintainer": {"@type": "@id"},
+        "doap:documenter": {"@type": "@id"},
+        "doap:license": {"@type": "@id"},
+        "foaf:maker": {"@type": "@id"},
+        "foaf:mbox": {"@type": "@id"},
+        "foaf:made": {"@type": "@id"},
+        "rdfs:isDefinedBy": {"@type": "@id"}
     },
-    "@subject":           "",
+    "@id":                "http://rubygems.org/gems/json-ld",
     "@type":              "doap:Project",
     "doap:name":          "JSON::LD",
     "doap:homepage":      "http://github.com/gkellogg/json-ld/",
@@ -28,10 +32,10 @@
     "doap:documenter":    "http://greggkellogg.net/foaf#me",
     "foaf:maker":         "http://greggkellogg.net/foaf#me",
     "dc:creator":         {
-        "@subject":         "http://greggkellogg.net/foaf#me",
+        "@id":              "http://greggkellogg.net/foaf#me",
         "foaf:name":        "Gregg Kellogg",
         "foaf:mbox":        "mailto:gregg@greggkellogg.net",
-        "foaf:made":        "",
+        "foaf:made":        "http://rubygems.org/gems/json-ld",
         "rdfs:isDefinedBy": "http://greggkellogg.net/foaf"
     }
 }
