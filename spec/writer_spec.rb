@@ -12,11 +12,9 @@ describe JSON::LD::Writer do
 
   describe ".for" do
     formats = [
-      :json, :ld, :jsonld,
-      'etc/doap.json', "etc/doap.jsonld",
-      {:file_name      => 'etc/doap.json'},
+      :jsonld,
+      "etc/doap.jsonld",
       {:file_name      => 'etc/doap.jsonld'},
-      {:file_extension => 'json'},
       {:file_extension => 'jsonld'},
       {:content_type   => 'application/ld+json'},
       {:content_type   => 'application/x-ld+json'},

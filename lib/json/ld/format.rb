@@ -22,7 +22,7 @@ module JSON::LD
   # @see http://www.w3.org/TR/rdf-testcases/#ntriples
   class Format < RDF::Format
     content_type     'application/ld+json',
-                     :extensions => [:jsonld, :json, :ld],
+                     :extensions => [:jsonld, :ld],
                      :alias => 'application/x-ld+json'
     content_encoding 'utf-8'
 
@@ -39,7 +39,7 @@ module JSON::LD
     # @param [String] sample Beginning several bytes (~ 1K) of input.
     # @return [Boolean]
     def self.detect(sample)
-      !!sample.match(/\{\s*"@(subject|context|type|iri)"/m)
+      !!sample.match(/\{\s*"@(id|context|type)"/m)
     end
     
     ##
@@ -58,6 +58,9 @@ module JSON::LD
   #     RDF::Format.for(:jsonld).reader  #=> JSON::LD::Reader
   #     RDF::Format.for(:jsonld).writer  #=> JSON::LD::Writer
   class JSONLD < RDF::Format
+    content_type     'application/ld+json',
+                     :extensions => [:jsonld, :ld],
+                     :alias => 'application/x-ld+json'
     content_encoding 'utf-8'
 
     reader { JSON::LD::Reader }

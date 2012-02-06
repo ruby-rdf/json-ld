@@ -12,11 +12,9 @@ describe JSON::LD::Format do
 
   describe ".for" do
     formats = [
-      :json, :ld, :jsonld,
-      'etc/doap.json', "etc/doap.jsonld",
-      {:file_name      => 'etc/doap.json'},
+      :jsonld,
+      "etc/doap.jsonld",
       {:file_name      => 'etc/doap.jsonld'},
-      {:file_extension => 'json'},
       {:file_extension => 'jsonld'},
       {:content_type   => 'application/ld+json'},
       {:content_type   => 'application/x-ld+json'},
@@ -27,10 +25,10 @@ describe JSON::LD::Format do
     end
 
     {
-      :jsonld => '{"@context" => "foo"}',
-      :context => %({\n"@context": {),
-      :subject => %({\n"@subject": {),
-      :iri     => %({\n"@iri": {),
+      :jsonld   => '{"@context" => "foo"}',
+      :context  => %({\n"@context": {),
+      :id       => %({\n"@id": {),
+      :type     => %({\n"@type": {),
     }.each do |sym, str|
       it "detects #{sym}" do
         @format_class.for {str}.should == @format_class
