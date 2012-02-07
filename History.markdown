@@ -1,3 +1,8 @@
+=== 0.1.1
+* Changed @literal to @value.
+* Change expanded double format to %1.6e
+* Only recognize application/ld+json and :jsonld.
+
 === 0.1.0
 * New @context processing rules.
 * @iri and @subject changed to @id.
