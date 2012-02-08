@@ -22,7 +22,7 @@ module JSON::LD
   # @see http://www.w3.org/TR/rdf-testcases/#ntriples
   class Format < RDF::Format
     content_type     'application/ld+json',
-                     :extensions => [:jsonld, :ld],
+                     :extension => :jsonld,
                      :alias => 'application/x-ld+json'
     content_encoding 'utf-8'
 
@@ -47,23 +47,5 @@ module JSON::LD
     def self.to_sym
       :jsonld
     end
-  end
-  
-  # Alias for JSON-LD format
-  #
-  # This allows the following:
-  #
-  # @example Obtaining an Notation3 format class
-  #     RDF::Format.for(:jsonld)         #=> JSON::LD::JSONLD
-  #     RDF::Format.for(:jsonld).reader  #=> JSON::LD::Reader
-  #     RDF::Format.for(:jsonld).writer  #=> JSON::LD::Writer
-  class JSONLD < RDF::Format
-    content_type     'application/ld+json',
-                     :extensions => [:jsonld, :ld],
-                     :alias => 'application/x-ld+json'
-    content_encoding 'utf-8'
-
-    reader { JSON::LD::Reader }
-    writer { JSON::LD::Writer }
   end
 end

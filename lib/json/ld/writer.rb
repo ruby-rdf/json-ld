@@ -68,6 +68,12 @@ module JSON::LD
       self.new(hash, *args, &block)
       hash
     end
+    
+    ##
+    # Override normal symbol generation
+    def self.to_sym
+      :jsonld
+    end
 
     ##
     # Initializes the RDF-LD writer instance.

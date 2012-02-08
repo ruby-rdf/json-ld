@@ -14,6 +14,12 @@ module JSON::LD
     #
     # @return [RDF::Graph]
     attr_reader :graph
+    
+    ##
+    # Override normal symbol generation
+    def self.to_sym
+      :jsonld
+    end
 
     ##
     # Initializes the RDF/JSON reader instance.
