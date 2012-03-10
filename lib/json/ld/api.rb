@@ -70,7 +70,7 @@ module JSON::LD
         # Merge context
         context = context.parse(input['@context']) if input['@context']
       
-        result = Hash.new
+        result = Hash.ordered
         input.each do |key, value|
           debug("expand") {"#{key}: #{value.inspect}"}
           expanded_key = context.mapping(key) || key
@@ -173,7 +173,7 @@ module JSON::LD
         debug("compact") {"Array[#{input.length}]"}
         depth {input.map {|v| compact(v, predicate)}}
       when Hash
-        result = Hash.new
+        result = Hash.ordered
         input.each do |key, value|
           debug("compact") {"#{key}: #{value.inspect}"}
           compacted_key = context.alias(key)

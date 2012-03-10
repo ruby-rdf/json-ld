@@ -64,7 +64,7 @@ module JSON::LD
     #
     # @return [Hash]
     def self.hash(*args, &block)
-      hash = Hash.new
+      hash = Hash.ordered
       self.new(hash, *args, &block)
       hash
     end
@@ -86,11 +86,11 @@ module JSON::LD
     #   the encoding to use on the output stream (Ruby 1.9+)
     # @option options [Boolean]  :canonicalize (false)
     #   whether to canonicalize literals when serializing
-    # @option options [Hash]     :prefixes     (Hash.new)
+    # @option options [Hash]     :prefixes     (Hash.ordered)
     #   the prefix mappings to use (not supported by all writers)
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
-    # @option options [IO, Array, Hash, String, EvaluationContext]     :context     (Hash.new)
+    # @option options [IO, Array, Hash, String, EvaluationContext]     :context     (Hash.ordered)
     #   context to use when serializing. Constructed context for native serialization.
     # @option options [Boolean] :automatic (true)
     #   Automatically create context coercions and generate compacted form
@@ -184,7 +184,7 @@ module JSON::LD
       end
 
       # Don't generate context for expanded or normalized output
-      json_hash = (@options[:expand] || @options[:normalize]) ? Hash.new : context.serialize(:depth => @depth)
+      json_hash = (@options[:expand] || @options[:normalize]) ? Hash.ordered : context.serialize(:depth => @depth)
 
       elements = []
       order_subjects.each do |subject|
@@ -272,7 +272,7 @@ module JSON::LD
     def format_literal(literal, options = {})
       debug {"format_literal(#{options.inspect}, #{literal.inspect})"}
 
-      value = Hash.new
+      value = Hash.ordered
       value['@value'] = literal.value
       value['@type'] = literal.datatype.to_s if literal.has_datatype?
       value['@language'] = literal.language.to_s if literal.has_language?
@@ -361,7 +361,7 @@ module JSON::LD
     # Option contains referencing property, if this is recursive
     # @return [Hash]
     def subject(subject, options = {})
-      defn = Hash.new
+      defn = Hash.ordered
       
       raise RDF::WriterError, "Illegal use of subject #{subject.inspect}, not supported" unless subject.resource?
 

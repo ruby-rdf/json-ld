@@ -108,8 +108,14 @@ if RUBY_VERSION < "1.9"
   end
   
   class Hash
-    def new(obj = nil, &block)
+    def self.ordered(obj = nil, &block)
       InsertOrderPreservingHash.new(obj, &block)
+    end
+  end
+else
+  class Hash
+    def self.ordered(obj = nil, &block)
+      Hash.new(obj, &block)
     end
   end
 end

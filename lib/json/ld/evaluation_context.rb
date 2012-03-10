@@ -224,7 +224,7 @@ module JSON::LD
         else
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
-          ctx = Hash.new
+          ctx = Hash.ordered
           ctx['@language'] = language.to_s if language
 
           # Prefixes
@@ -243,9 +243,9 @@ module JSON::LD
               k_prefix = k_iri.split(':').first
 
               # Turn into long form
-              ctx[k_iri] ||= Hash.new
+              ctx[k_iri] ||= Hash.ordered
               if ctx[k_iri].is_a?(String)
-                defn = Hash.new
+                defn = Hash.ordered
                 defn[self.alias("@id")] = ctx[k_iri]
                 ctx[k_iri] = defn
               end
@@ -276,7 +276,7 @@ module JSON::LD
         end
 
         # Return hash with @context, or empty
-        r = Hash.new
+        r = Hash.ordered
         r['@context'] = use_context unless use_context.nil? || use_context.empty?
         r
       end
@@ -439,7 +439,7 @@ module JSON::LD
         when RDF::URI
           {'@id' => value.to_s}
         when RDF::Literal
-          res = Hash.new
+          res = Hash.ordered
           res['@value'] = value.to_s
           res['@type'] = value.datatype.to_s if value.has_datatype?
           res['@language'] = value.language.to_s if value.has_language?
@@ -451,7 +451,7 @@ module JSON::LD
           when nil
             language ? {"@value" => value.to_s, "@language" => language.to_s} : value.to_s
           else
-            res = Hash.new
+            res = Hash.ordered
             res['@value'] = value.to_s
             res['@type'] = coerce(predicate).to_s
             res
