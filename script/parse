@@ -44,8 +44,8 @@ options = {
   :validate      => false,
   :strict        => true,
   :output        => STDOUT,
-  :output_format => :ttl,
-  :input_format  => :ld,
+  :output_format => :turtle,
+  :input_format  => :jsonld,
 }
 input = nil
 
