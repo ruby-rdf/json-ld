@@ -2,7 +2,7 @@
   "@context": {
     "Release":  "http://example.org/idl-def/release#",
     "Playlist": "http://example.org/idl-def/release#Playlist",
-    "track":    {"@id": "http://example.org/idl-def/release#Playlist.track", "@list": true},
+    "track":    {"@id": "http://example.org/idl-def/release#Playlist.track", "@container": "@list"},
     "Track":    "http://example.org/idl-def/release#Track",
     "Slot":     "http://purl.org/ontology/olo/core#Slot",
     "slot":     "http://purl.org/ontology/olo/core#slot",

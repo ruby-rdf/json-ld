@@ -109,9 +109,9 @@ describe JSON::LD::EvaluationContext do
 
       it "associates list coercion with predicate IRI" do
         subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@list" => true}
-        }).lists.should produce({
-          "http://example.com/" => true
+          "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
+        }).containers.should produce({
+          "http://example.com/" => '@list'
         }, @debug)
       end
 
@@ -163,9 +163,9 @@ describe JSON::LD::EvaluationContext do
 
         it 'list for @list' do
           subject.parse({
-            "list" => "@list", "foo" => {"@id" => "bar", "list" => true}
-          }).lists.should produce({
-            "bar" => true
+            "container" => "@container", "foo" => {"@id" => "bar", "container" => '@list'}
+          }).containers.should produce({
+            "bar" => '@list'
           }, @debug)
         end
 
@@ -300,10 +300,10 @@ describe JSON::LD::EvaluationContext do
 
     it "@list with @id definition in a single context" do
       subject.mapping("knows", RDF::FOAF.knows)
-      subject.list(RDF::FOAF.knows, true)
+      subject.set_container(RDF::FOAF.knows, '@list')
       subject.serialize.should produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@list" => true}
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
@@ -311,21 +311,21 @@ describe JSON::LD::EvaluationContext do
     it "prefix with @type and @list" do
       subject.mapping("knows", RDF::FOAF.knows)
       subject.coerce(RDF::FOAF.knows, "@id")
-      subject.list(RDF::FOAF.knows, true)
+      subject.set_container(RDF::FOAF.knows, '@list')
       subject.serialize.should produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@list" => true}
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
         }
       }, @debug)
     end
 
     it "CURIE with @type" do
       subject.mapping("foaf", RDF::FOAF.to_uri)
-      subject.list(RDF::FOAF.knows, true)
+      subject.set_container(RDF::FOAF.knows, '@list')
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri,
-          "foaf:knows" => {"@list" => true}
+          "foaf:knows" => {"@container" => "@list"}
         }
       }, @debug)
     end
@@ -333,11 +333,11 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @id in key position" do
       subject.mapping("id", '@id')
       subject.mapping("knows", RDF::FOAF.knows)
-      subject.list(RDF::FOAF.knows, true)
+      subject.set_container(RDF::FOAF.knows, '@list')
       subject.serialize.should produce({
         "@context" => {
           "id" => "@id",
-          "knows" => {"id" => RDF::FOAF.knows.to_s, "@list" => true}
+          "knows" => {"id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
@@ -368,14 +368,14 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "uses aliased @list" do
-      subject.mapping("list", '@list')
+    it "uses aliased @container" do
+      subject.mapping("container", '@container')
       subject.mapping("knows", RDF::FOAF.knows)
-      subject.list(RDF::FOAF.knows, true)
+      subject.set_container(RDF::FOAF.knows, '@list')
       subject.serialize.should produce({
         "@context" => {
-          "list" => "@list",
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "list" => true}
+          "container" => "@container",
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "container" => "@list"}
         }
       }, @debug)
     end
@@ -576,7 +576,7 @@ describe JSON::LD::EvaluationContext do
       {
         "@id" =>      [{"id" => "http://example.com/"},             {"@id" => "http://example.com/"}],
         "@type" =>    [{"literal" => "foo", "type" => "bar"},       {"@value" => "foo", "@type" => "bar"}],
-        "@value" => [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
+        "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
         "@list" =>    [{"list" => ["foo"]},                         {"@list" => ["foo"]  }],
       }.each do |title, (compacted, expanded)|
         it title do

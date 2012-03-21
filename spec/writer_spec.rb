@@ -303,7 +303,7 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
-          "foaf:b" => {"@list" => true}
+          "foaf:b" => {"@container" => "@list"}
         },
         '@id'   => "foaf:a",
         "foaf:b"  => ["apple", "banana"]
@@ -315,7 +315,7 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
-          "foaf:b" => {"@type" => "@id", "@list" => true}
+          "foaf:b" => {"@type" => "@id", "@container" => "@list"}
         },
         '@id'   => "foaf:a",
         "foaf:b"  => [ "foaf:c" ]
@@ -327,7 +327,7 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
-          "foaf:b" => {"@type" => "@id", "@list" => true}
+          "foaf:b" => {"@type" => "@id", "@container" => "@list"}
         },
         '@id'   => "foaf:a",
         "foaf:b"  => []
@@ -339,7 +339,7 @@ describe JSON::LD::Writer do
       serialize(input, :standard_prefixes => true).should produce({
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
-          "foaf:b" => {"@list" => true}
+          "foaf:b" => {"@container" => "@list"}
         },
         '@id'   => "foaf:a",
         "foaf:b"  => ["apple"]
@@ -391,7 +391,7 @@ describe JSON::LD::Writer do
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
           "owl"   => "http://www.w3.org/2002/07/owl#",
-          "owl:sameAs" => {"@type" => "@id", "@list" => true}
+          "owl:sameAs" => {"@type" => "@id", "@container" => "@list"}
         },
         '@id'       => "foaf:listOf2Lists",
         "owl:sameAs"  => [[], [1]]
@@ -408,7 +408,7 @@ describe JSON::LD::Writer do
         "@context"   => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
           "owl"   => "http://www.w3.org/2002/07/owl#",
-          "owl:sameAs" => {"@type" => "@id", "@list" => true}
+          "owl:sameAs" => {"@type" => "@id", "@container" => "@list"}
         },
         '@id'       => "foaf:twoAnons",
         "owl:sameAs"  => [
@@ -435,7 +435,7 @@ describe JSON::LD::Writer do
           "owl"   => "http://www.w3.org/2002/07/owl#",
           "rdfs"  => "http://www.w3.org/2000/01/rdf-schema#",
           "rdfs:domain" => {"@type" => "@id"},
-          "owl:unionOf" => {"@type" => "@id", "@list" => true}
+          "owl:unionOf" => {"@type" => "@id", "@container" => "@list"}
         },
         '@id'         => "foaf:a",
         "rdfs:domain"   => {

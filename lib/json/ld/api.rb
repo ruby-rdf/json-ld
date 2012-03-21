@@ -108,7 +108,7 @@ module JSON::LD
 
             # 2.2.4) If the value is an array, and active property is subject to @list expansion,
             #   replace the value with a new key-value key where the key is @list and value set to the current value.
-            value = {"@list" => value} if value.is_a?(Array) && context.list(predicate)
+            value = {"@list" => value} if value.is_a?(Array) && context.container(predicate) == '@list'
 
             value = case value
             # 2.2.5) If the value is an array, process each item in the array recursively using this algorithm,
@@ -228,7 +228,7 @@ module JSON::LD
                 # is the result of performing Value Compaction on the value.
                 debug("compact") {"keys: #{value.keys.inspect}"}
                 context.compact_value(predicate, value, :depth => @depth)
-              elsif value.keys == ['@list'] && context.list(predicate)
+              elsif value.keys == ['@list'] && context.container(predicate) == '@list'
                 # Otherwise, if the value contains only a @list key, and the active property is subject to list coercion,
                 # the compacted value is the result of performing this algorithm on that value.
                 debug("compact") {"list"}

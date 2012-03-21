@@ -55,7 +55,7 @@ describe JSON::LD::API do
       "@list coercion" => {
         :input => {
           "@context" => {
-            "foo" => {"@id" => "http://example.com/foo", "@list" => true}
+            "foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}
           },
           "foo" => ["bar"]
         },
@@ -234,7 +234,7 @@ describe JSON::LD::API do
         },
         "@list containing @list (with coercion)" => {
           :input => {
-            "@context" => {"foo" => {"@list" => true}},
+            "@context" => {"foo" => {"@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
@@ -305,9 +305,9 @@ describe JSON::LD::API do
         :input => {
           "http://example.com/b" => {"@list" => ["c", "d"]}
         },
-        :context => {"b" => {"@id" => "http://example.com/b", "@list" => true}},
+        :context => {"b" => {"@id" => "http://example.com/b", "@container" => "@list"}},
         :output => {
-          "@context" => {"b" => {"@id" => "http://example.com/b", "@list" => true}},
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@container" => "@list"}},
           "b" => ["c", "d"]
         }
       },
@@ -479,7 +479,7 @@ describe JSON::LD::API do
         },
         "@list containing @list (with coercion)" => {
           :input => {
-            "@context" => {"foo" => {"@list" => true}},
+            "@context" => {"foo" => {"@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
           },
           :exception => JSON::LD::ProcessingError::ListOfLists

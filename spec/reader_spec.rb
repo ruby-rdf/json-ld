@@ -388,7 +388,7 @@ describe JSON::LD::Reader do
           %q({
             "@context": {
               "foaf": "http://xmlns.com/foaf/0.1/",
-              "foaf:knows": { "@list": true}
+              "foaf:knows": { "@container": "@list"}
             },
             "@id": "http://greggkellogg.net/foaf#me",
             "foaf:knows": ["Manu Sporny"]
@@ -638,13 +638,13 @@ describe JSON::LD::Reader do
       end
 
       context "lists" do
-        context "term def with @id + @type + @list" do
+        context "term def with @id + @type + @container" do
           {
             "dt with term" => [
               %q({
                 "@context": [
                   {"date": "http://www.w3.org/2001/XMLSchema#date", "term": "http://example.org/foo#"},
-                  {"foo": {"@id": "term", "@type": "date", "@list": true}}
+                  {"foo": {"@id": "term", "@type": "date", "@container": "@list"}}
                 ],
                 "foo": ["bar"]
               }),
@@ -657,7 +657,7 @@ describe JSON::LD::Reader do
               %q({
                 "@context": [
                   {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date", "@list": true}}
+                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date", "@container": "@list"}}
                 ],
                 "prefix:bar": ["bar"]
               }),
@@ -669,7 +669,7 @@ describe JSON::LD::Reader do
             "dt with IRI" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date", "@container": "@list"}}
                 ],
                 "http://example.org/foo#bar": ["bar"]
               }),
@@ -681,7 +681,7 @@ describe JSON::LD::Reader do
             "@id with term" => [
               %q({
                 "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id", "@list": true}}
+                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id", "@container": "@list"}}
                 ],
                 "foo": ["bar"]
               }),

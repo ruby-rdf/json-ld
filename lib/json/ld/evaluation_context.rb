@@ -39,10 +39,12 @@ module JSON::LD
 
     # List coercion
     #
-    # The @list keyword is used to specify that properties having an array value are to be treated
-    # as an ordered list, rather than a normal unordered list
-    # @attr [Hash{String => true}]
-    attr :lists, true
+    # The @container keyword is used to specify how arrays are to be treated.
+    # A value of @list indicates that arrays of values are to be treated as an ordered list.
+    # A value of @set indicates that arrays are to be treated as unordered and that
+    # singular values are always coerced to an array form on expansion and compaction.
+    # @attr [Hash{String => String}]
+    attr :containers, true
     
     # Default language
     #
@@ -66,7 +68,7 @@ module JSON::LD
       @base = RDF::URI(options[:base_uri]) if options[:base_uri]
       @mappings =  {}
       @coercions = {}
-      @lists = {}
+      @containers = {}
       @iri_to_curie = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -173,10 +175,10 @@ module JSON::LD
           prop = new_ec.expand_iri(key, :position => :predicate).to_s
           case value
           when Hash
-            # Must have one of @id, @type or @list
+            # Must have one of @id, @type or @container
             expanded_keys = value.keys.map {|k| new_ec.mapping(k) || k}
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @list" if (%w(@id @type @list) & expanded_keys).empty?
-            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (expanded_keys - %w(@id @type @list)).empty?
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @container" if (%w(@id @type @container) & expanded_keys).empty?
+            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (expanded_keys - %w(@id @type @container)).empty?
             value.each do |key2, value2|
               expanded_key = new_ec.mapping(key2) || key2
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
@@ -189,11 +191,11 @@ module JSON::LD
                   debug("parse") {"coerce #{prop.inspect} to #{iri.inspect}"}
                   new_ec.coerce(prop, iri)
                 end
-              when '@list'
-                raise InvalidContext::Syntax, "unknown mapping for '@list' to #{value2.class}" unless value2.is_a?(TrueClass) || value2.is_a?(FalseClass)
-                if new_ec.list(prop) != value2
-                  debug("parse") {"list #{prop.inspect} as #{value2.inspect}"}
-                  new_ec.list(prop, value2)
+              when '@container'
+                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
+                if new_ec.container(prop) != value2
+                  debug("parse") {"container #{prop.inspect} as #{value2.inspect}"}
+                  new_ec.container(prop, value2)
                 end
               end
             end
@@ -242,9 +244,9 @@ module JSON::LD
             ctx[k.to_s] = mappings[k].to_s
           end
 
-          unless coercions.empty? && lists.empty?
+          unless coercions.empty? && containers.empty?
             # Coerce
-            (coercions.keys + lists.keys).uniq.sort.each do |k|
+            (coercions.keys + containers.keys).uniq.sort.each do |k|
               next if ['@type', RDF.type.to_s].include?(k.to_s)
 
               k_iri = compact_iri(k, :position => :predicate, :depth => @depth).to_s
@@ -267,10 +269,10 @@ module JSON::LD
                 debug {"=> reuse datatype[#{k_iri}] => #{dt}"}
               end
 
-              debug {"=> list(#{k}) => #{list(k)}"}
-              if list(k)
+              debug {"=> container(#{k}) => #{container(k)}"}
+              if container(k) == '@list'
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k_iri][self.alias("@list")] = true
+                ctx[k_iri][self.alias("@container")] = '@list'
                 debug {"=> reuse list_range[#{k_iri}] => true"}
               end
               
@@ -340,17 +342,29 @@ module JSON::LD
     end
 
     ##
-    # Retrieve list mapping, add it if `value` is provided
+    # Retrieve container mapping, add it if `value` is provided
     #
     # @param [String] property in full IRI string representation
     # @param [Boolean] value (nil)
     # @return [Boolean]
-    def list(property, value = nil)
+    def container(property, value = nil)
       unless value.nil?
-        debug {"coerce #{property.inspect} to @list"} unless @lists[property.to_s] == value
-        @lists[property.to_s] = value
+        debug {"coerce #{property.inspect} to @list"} unless @containers[property.to_s] == value
+        @containers[property.to_s] = value
       end
-      @lists[property.to_s] && @lists[property.to_s]
+      @containers[property.to_s] && @containers[property.to_s]
+    end
+
+    ##
+    # Retrieve container mapping, add it if `value` is provided
+    #
+    # @param [String] property in full IRI string representation
+    # @param [String] value one of @list, @set or nil
+    # @return [Boolean]
+    def set_container(property, value)
+      return if @containers[property.to_s] == value
+      debug {"coerce #{property.inspect} to #{value.inspect}"} 
+      @containers[property.to_s] = value
     end
 
     ##
@@ -551,7 +565,7 @@ module JSON::LD
       v = %w([EvaluationContext)
       v << "mappings[#{mappings.keys.length}]=#{mappings}"
       v << "coercions[#{coercions.keys.length}]=#{coercions}"
-      v << "lists[#{lists.length}]=#{lists}"
+      v << "containers[#{containers.length}]=#{containers}"
       v.join(", ") + "]"
     end
     
@@ -560,7 +574,7 @@ module JSON::LD
       ec = super
       ec.mappings = mappings.dup
       ec.coercions = coercions.dup
-      ec.lists = lists.dup
+      ec.containers = containers.dup
       ec.language = language
       ec.options = options
       ec.iri_to_term = iri_to_term.dup

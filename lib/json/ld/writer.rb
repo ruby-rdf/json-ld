@@ -168,7 +168,7 @@ module JSON::LD
       @context = EvaluationContext.new(@options)
       @context = @context.parse(@options[:context]) if @options[:context]
       @context.language = @options[:language] if @options[:language]
-      @context.lists.each {|p| @list_range[p] = true}
+      @context.containers.each {|p| @list_range[p] = true}
 
       debug {"\nserialize: graph: #{@graph.size}"}
       debug {"=> options: #{@options.reject {|k,v| k == :debug}.inspect}"}
@@ -562,9 +562,9 @@ module JSON::LD
         else
           false
         end
-        context.list(predicate, true) if @list_range[predicate.to_s]
+        context.set_container(predicate, '@list') if @list_range[predicate.to_s]
 
-        debug {"list(#{predicate}) = #{@list_range[predicate.to_s].inspect}"}
+        debug {"container(#{predicate}) = '@list' if #{@list_range[predicate.to_s].inspect}"}
       end
 
       @list_range[predicate.to_s]

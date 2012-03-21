@@ -157,7 +157,7 @@ module JSON::LD
           end
 
           # 2.7.3) List expansion
-          object = if ec.list(property) && value.is_a?(Array)
+          object = if ec.container(property) == '@list' && value.is_a?(Array)
             # If the active property is the target of a @list coercion, and the value is an array,
             # process the value as a list starting at Step 3.1.
             parse_list("#{path}[#{key}]", value, property, ec) do |resource|
