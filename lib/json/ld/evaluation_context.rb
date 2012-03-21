@@ -199,6 +199,14 @@ module JSON::LD
             end
           when String
             # handled in previous loop
+          when nil
+            case prop
+            when '@language'
+              # Remove language mapping from active context
+              new_ec.language = nil
+            else
+              raise InvalidContext::Syntax, "attemp to map #{key.inspect} to nil"
+            end
           else
             raise InvalidContext::Syntax, "attemp to map #{key.inspect} to #{value.class}"
           end

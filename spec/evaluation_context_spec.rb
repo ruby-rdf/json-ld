@@ -79,6 +79,17 @@ describe JSON::LD::EvaluationContext do
           "@language" => "en"
         }).language.should produce("en", @debug)
       end
+      
+      it "removes @language if set to null" do
+        subject.parse([
+          {
+            "@language" => "en"
+          },
+          {
+            "@language" => nil
+          }
+        ]).language.should produce(nil, @debug)
+      end
 
       it "maps term with IRI value" do
         subject.parse({
