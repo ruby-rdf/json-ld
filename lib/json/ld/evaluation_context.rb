@@ -454,9 +454,10 @@ module JSON::LD
         when BigDecimal, RDF::Literal::Decimal
           {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
         when Float
-          {"@value" => ("%1.6e" % value), "@type" => RDF::XSD.double.to_s}
+          {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
         when RDF::Literal::Double
-          {"@value" => ("%1.6e" % value.object), "@type" => RDF::XSD.double.to_s}
+          value = value.dup.canonicalize!
+          {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
         when Date, Time, DateTime
           l = RDF::Literal(value)
           {"@value" => l.to_s, "@type" => l.datatype.to_s}
