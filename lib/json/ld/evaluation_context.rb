@@ -135,8 +135,6 @@ module JSON::LD
         ec
       when Hash
         new_ec = self.dup
-        new_ec.provided_context = context
-        debug("parse") {"=> provided_context: #{context.inspect}"}
         
         num_updates = 1
         while num_updates > 0 do
@@ -147,7 +145,7 @@ module JSON::LD
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
             if (new_ec.mapping(key) || key) == '@language'
-              new_ec.language = value.to_s
+              new_ec.language = value.to_s unless value.to_s == '@language' # due to aliasing
             elsif term_valid?(key)
               # Extract IRI mapping. This is complicated, as @id may have been aliased
               if value.is_a?(Hash)
@@ -178,7 +176,6 @@ module JSON::LD
             # Must have one of @id, @type or @container
             expanded_keys = value.keys.map {|k| new_ec.mapping(k) || k}
             raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @container" if (%w(@id @type @container) & expanded_keys).empty?
-            raise InvalidContext::Syntax, "unknown mappings for #{key.inspect}: #{value.keys.inspect}" unless (expanded_keys - %w(@id @type @container)).empty?
             value.each do |key2, value2|
               expanded_key = new_ec.mapping(key2) || key2
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)

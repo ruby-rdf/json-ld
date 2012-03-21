@@ -201,7 +201,6 @@ describe JSON::LD::EvaluationContext do
       {
         "malformed JSON" => StringIO.new(%q({"@context": {"foo" "http://malformed/"})),
         "no @id, @type, or @list" => {"foo" => {}},
-        "unknown key" => {"foo" => {"@id" => "http://example.com/", "@foo" => "@bar"}},
         "value as array" => {"foo" => []},
         "@id as object" => {"foo" => {"@id" => {}}},
         "@id as array" => {"foo" => {"@id" => []}},
@@ -378,6 +377,21 @@ describe JSON::LD::EvaluationContext do
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "container" => "@list"}
         }
       }, @debug)
+    end
+
+      
+    context "extra keys or values" do
+      {
+        "extra key" => {
+          :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
+          :result => {"@context" => {"foo" => "http://example.com/foo"}}
+        }
+      }.each do |title, params|
+        it title do
+          ec = subject.parse(params[:input])
+          ec.serialize.should produce(params[:result], @debug)
+        end
+      end
     end
 
   end

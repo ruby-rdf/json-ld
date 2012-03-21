@@ -347,7 +347,7 @@ describe JSON::LD::API do
       },
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
+        jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
         jld.should produce(params[:output], @debug)
       end
     end
@@ -410,7 +410,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -430,7 +430,7 @@ describe JSON::LD::API do
           },
           "foo" => "bar"
         }
-        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
       
@@ -448,7 +448,7 @@ describe JSON::LD::API do
           },
           "foo" => "bar"
         }
-        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -464,7 +464,7 @@ describe JSON::LD::API do
           "b" => "c"
         }
         JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -523,7 +523,7 @@ describe JSON::LD::API do
         end
 
         it "compacts" do
-          jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
+          jld = JSON::LD::API.compact(File.open(filename), File.open(context), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
