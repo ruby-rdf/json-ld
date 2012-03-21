@@ -95,6 +95,8 @@ module JSON::LD
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)
       case context
+      when nil
+        EvaluationContext.new
       when EvaluationContext
         debug("parse") {"context: #{context.inspect}"}
         context.dup
@@ -157,7 +159,7 @@ module JSON::LD
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
               if iri && new_ec.mappings[key] != iri
                 # Record term definition
-                new_ec.mapping(key, iri)
+                new_ec.set_mapping(key, iri)
                 num_updates += 1
               end
             elsif !new_ec.expand_iri(key).is_a?(RDF::URI)
@@ -204,10 +206,10 @@ module JSON::LD
               # Remove language mapping from active context
               new_ec.language = nil
             else
-              raise InvalidContext::Syntax, "attemp to map #{key.inspect} to nil"
+              new_ec.set_mapping(prop, nil)
             end
           else
-            raise InvalidContext::Syntax, "attemp to map #{key.inspect} to #{value.class}"
+            raise InvalidContext::Syntax, "attempt to map #{key.inspect} to #{value.class}"
           end
         end
 
@@ -290,19 +292,32 @@ module JSON::LD
     end
     
     ##
+    # Retrieve term mapping
+    #
+    # @param [String, #to_s] term
+    #
+    # @return [RDF::URI, String]
+    def mapping(term)
+      @mappings.fetch(term.to_s, nil)
+    end
+
+    ##
     # Retrieve term mapping, add it if `value` is provided
     #
     # @param [String, #to_s] term
-    # @param [RDF::URI, String] value (nil)
+    # @param [RDF::URI, String] value
     #
     # @return [RDF::URI, String]
-    def mapping(term, value = nil)
+    def set_mapping(term, value)
+      debug {"map #{term.inspect} to #{value}"} unless @mappings[term.to_s] == value
+      iri_to_term.delete(@mappings[term.to_s]) if @mappings[term.to_s]
       if value
-        debug {"map #{term.inspect} to #{value}"} unless @mappings[term.to_s] == value
         @mappings[term.to_s] = value
         iri_to_term[value.to_s] = term
+      else
+        @mappings.delete(term.to_s)
+        nil
       end
-      @mappings.has_key?(term.to_s) && @mappings[term.to_s]
     end
 
     ##
@@ -447,8 +462,10 @@ module JSON::LD
       depth(options) do
         debug("expand_value") {"predicate: #{predicate}, value: #{value.inspect}, coerce: #{coerce(predicate).inspect}"}
         result = case value
-        when TrueClass, FalseClass, RDF::Literal::Boolean
-          {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
+        when TrueClass, FalseClass
+          return value
+        when RDF::Literal::Boolean
+          return value.object
         when Integer, RDF::Literal::Integer
           {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
         when BigDecimal, RDF::Literal::Decimal
@@ -626,11 +643,11 @@ module JSON::LD
       when u = iri_to_term.keys.detect {|i| iri.index(i.to_s) == 0}
         # Use a defined prefix
         prefix = iri_to_term[u]
-        mapping(prefix, u)
+        set_mapping(prefix, u)
         iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
       when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
         prefix = vocab.__name__.to_s.split('::').last.downcase
-        mapping(prefix, vocab.to_uri.to_s)
+        set_mapping(prefix, vocab.to_uri.to_s)
         iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
       else
         debug "no mapping found for #{iri} in #{iri_to_term.inspect}"

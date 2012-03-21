@@ -24,7 +24,7 @@ module JSON::LD
           input.map do |v|
             raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array)
             expand(v, predicate, context, options)
-          end
+          end.compact
         end
       when Hash
         # Merge context
@@ -34,16 +34,37 @@ module JSON::LD
         input.each do |key, value|
           debug("expand") {"#{key}: #{value.inspect}"}
           expanded_key = context.mapping(key) || key
+          
+          # Skip nil values except for @context
+          if value.nil? && expanded_key != '@context'
+            debug("expand") {"skip nil value: #{value.inspect}"}
+            next
+          end
+          
+          # Need to look at hash values that need to be removed early
+          if value.is_a?(Hash)
+            if value.fetch('@value', 'default').nil?
+              debug("expand") {"skip object with nil @value: #{value.inspect}"}
+              next
+            end
+            if value.fetch('@list', 'default').nil?
+              debug("expand") {"skip object with nil @list: #{value.inspect}"}
+              next
+            end
+          end
+
           case expanded_key
           when '@context'
             # Ignore in output
           when '@id', '@type'
             # If the key is @id or @type and the value is a string, expand the value according to IRI Expansion.
-            result[expanded_key] = case value
+            expanded_value = case value
             when String then context.expand_iri(value, :position => :subject, :depth => @depth).to_s
             else depth { expand(value, predicate, context, options) }
             end
-            debug("expand") {" => #{result[expanded_key].inspect}"}
+            next if expanded_value.nil?
+            result[expanded_key] = expanded_value
+            debug("expand") {" => #{expanded_value.inspect}"}
           when '@value', '@language'
             raise ProcessingError::Lossy, "Value of #{expanded_key} must be a string, was #{value.inspect}" unless value.is_a?(String)
             result[expanded_key] = value
@@ -81,7 +102,7 @@ module JSON::LD
         result
       else
         # 2.3) Otherwise, expand the value according to the Value Expansion rules, passing active property.
-        context.expand_value(predicate, input, :position => :object, :depth => @depth)
+        context.expand_value(predicate, input, :position => :object, :depth => @depth) unless input.nil?
       end
     end
   end

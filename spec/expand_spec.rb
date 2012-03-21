@@ -177,7 +177,7 @@ describe JSON::LD::API do
             "e:bool" => true
           },
           :output => {
-            "http://example.org/vocab#bool" => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}
+            "http://example.org/vocab#bool" => true
           }
         },
         "false" => {
@@ -186,7 +186,7 @@ describe JSON::LD::API do
             "e:bool" => false
           },
           :output => {
-            "http://example.org/vocab#bool" => {"@value" => "false", "@type" => RDF::XSD.boolean.to_s}
+            "http://example.org/vocab#bool" => false
           }
         },
         "double" => {
@@ -216,6 +216,68 @@ describe JSON::LD::API do
             "http://example.org/vocab#integer" => {"@value" => "123", "@type" => RDF::XSD.integer.to_s}
           }
         },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
+    context "null" do
+      {
+        "value" => {
+          :input => {
+            "http://example.com/foo" => nil
+          },
+          :output => {
+          }
+        },
+        "@value" => {
+          :input => {
+            "http://example.com/foo" => {"@value" => nil}
+          },
+          :output => {
+          }
+        },
+        "@value and non-null @type" => {
+          :input => {
+            "http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}
+          },
+          :output => {
+          }
+        },
+        "@value and non-null @language" => {
+          :input => {
+            "http://example.com/foo" => {"@value" => nil, "@language" => "en"}
+          },
+          :output => {
+          }
+        },
+        "non-null @value and null @type" => {
+          :input => {
+            "http://example.com/foo" => {"@value" => "foo", "@type" => nil}
+          },
+          :output => {
+            "http://example.com/foo" => {"@value" => "foo"}
+          }
+        },
+        "non-null @value and null @language" => {
+          :input => {
+            "http://example.com/foo" => {"@value" => "foo", "@language" => nil}
+          },
+          :output => {
+            "http://example.com/foo" => {"@value" => "foo"}
+          }
+        },
+        "array with null elements" => {
+          :input => {
+            "http://example.com/foo" => [nil]
+          },
+          :output => {
+            "http://example.com/foo" => []
+          }
+        }
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
