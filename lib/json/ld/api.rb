@@ -130,12 +130,15 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [IO, Hash, Array] context
     #   The base context to use when compacting the input.
+    # @param [Boolean] optimize (false)
+    #   Perform further optimmization of the compacted output.
+    #   (Presently, this is a noop).
     # @param  [Hash{Symbol => Object}] options
     # @raise [InvalidContext, ProcessingError]
     # @return [Hash]
     #   The compacted JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
-    def self.compact(input, context = nil, options = {})
+    def self.compact(input, context, optimize = false, options = {})
       expanded = result = nil
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
