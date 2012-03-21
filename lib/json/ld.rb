@@ -36,6 +36,17 @@ module JSON
       RDF.type.to_s => {"@type" => "@id"}
     }.freeze
 
+    KEYWORDS = %w(
+      @container
+      @context
+      @id
+      @language
+      @list
+      @set
+      @type
+      @value
+    ).freeze
+
     # Regexp matching an NCName.
     NC_REGEXP = Regexp.new(
       %{^
@@ -116,9 +127,19 @@ module JSON
       
       attr :code
       
-      def intialize(message, code = nil)
-        super(message)
-        @code = code
+      
+      class Syntax < InvalidFrame
+        def initialize(*args)
+          super
+          @code = INVALID_SYNTAX
+        end
+      end
+
+      class MultipleEmbeds < InvalidFrame
+        def initialize(*args)
+          super
+          @code = MULTIPLE_EMBEDS
+        end
       end
     end
   end
