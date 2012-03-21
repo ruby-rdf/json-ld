@@ -386,6 +386,7 @@ module JSON::LD
       case
       when prefix == '_'              then bnode(suffix)
       when iri.to_s[0,1] == "@"       then iri
+      when iri =~ %r(://)             then uri(iri)
       when mappings.has_key?(prefix)  then uri(mappings[prefix] + suffix.to_s)
       when base                       then base.join(iri)
       else                                 uri(iri)

@@ -395,7 +395,8 @@ describe JSON::LD::EvaluationContext do
       "keyword" =>       ["@type",               "@type"],
       "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
       "unmapped" =>      ["foo",                 RDF::URI("foo")],
-      "empty term" =>    ["",                    RDF::URI("http://empty/")]
+      "empty term" =>    ["",                    RDF::URI("http://empty/")],
+      "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
     }.each do |title, (input,result)|
       it title do
         subject.expand_iri(input).should produce(result, @debug)
