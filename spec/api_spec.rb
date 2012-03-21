@@ -378,18 +378,57 @@ describe JSON::LD::API do
       end
     end
 
-    it "uses referenced context" do
-      ctx = StringIO.new(%q({"@context": {"b": "http://example.com/b"}}))
-      input = {
-        "http://example.com/b" => "c"
-      }
-      expected = {
-        "@context" => "http://example.com/context",
-        "b" => "c"
-      }
-      JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
-      jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
-      jld.should produce(expected, @debug)
+    context "context as value" do
+      it "includes the context in the output document" do
+        ctx = {
+          "foo" => "http://example.com/"
+        }
+        input = {
+          "http://example.com/" => "bar"
+        }
+        expected = {
+          "@context" => {
+            "foo" => "http://example.com/"
+          },
+          "foo" => "bar"
+        }
+        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
+        jld.should produce(expected, @debug)
+      end
+      
+      it "removes unused terms from the context", :pending => "Perhaps this will just go away" do
+        ctx = {
+          "foo" => "http://example.com/",
+          "baz" => "http://example.org/"
+        }
+        input = {
+          "http://example.com/" => "bar"
+        }
+        expected = {
+          "@context" => {
+            "foo" => "http://example.com/"
+          },
+          "foo" => "bar"
+        }
+        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
+        jld.should produce(expected, @debug)
+      end
+    end
+
+    context "context as reference" do
+      it "uses referenced context" do
+        ctx = StringIO.new(%q({"@context": {"b": "http://example.com/b"}}))
+        input = {
+          "http://example.com/b" => "c"
+        }
+        expected = {
+          "@context" => "http://example.com/context",
+          "b" => "c"
+        }
+        JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
+        jld.should produce(expected, @debug)
+      end
     end
   end
   

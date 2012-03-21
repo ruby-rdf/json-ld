@@ -138,14 +138,13 @@ module JSON::LD
     def self.compact(input, context = nil, options = {})
       expanded = result = nil
 
+      # 1) Perform the Expansion Algorithm on the JSON-LD input.
+      #    This removes any existing context to allow the given context to be cleanly applied.
       API.new(input, nil, options) do |api|
         expanded = api.expand(api.value, nil, api.context)
       end
 
       API.new(expanded, context, options) do |api|
-        # 1) Perform the Expansion Algorithm on the JSON-LD input.
-        #    This removes any existing context to allow the given context to be cleanly applied.
-        
         result = api.compact(api.value, nil)
 
         # xxx) Add the given context to the output
@@ -256,10 +255,74 @@ module JSON::LD
     # @param [IO, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Boolean] :object_embed (true)
+    #   a flag specifying that objects should be directly embedded in the output,
+    #   instead of being referred to by their IRI.
+    # @option options [Boolean] :explicit_inclusion (false)
+    #   a flag specifying that for properties to be included in the output,
+    #   they must be explicitly declared in the framing context.
+    # @option options [Boolean] :omit_missing_props (false)
+    #   a flag specifying that properties that are missing from the JSON-LD
+    #   input should be omitted from the output.
     # @raise [InvalidFrame]
     # @return [Hash]
     #   The framed JSON-LD document
+    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.frame(input, frame, options = {})
+      expanded_frame = result = nil
+      match_limit = 0
+      framing_context = {
+        :object_embed => true,
+        :explicit_inclusion => false,
+        :omit_missing_props => false
+      }.merge(options)
+
+      # Expand the input frame
+      API.new(frame, nil, options) do |api|
+        expanded_frame = api.expand(api.value, nil, api.context)
+      end
+
+      API.new(input, nil, options) do |api|
+        normalized_input = api.normalize(api.value, nil)
+        result = api.frame(normalized_input, expanded_frame, framing_context)
+      end
+      result
+    end
+
+    ##
+    # Frame input.
+    #
+    # @param [Array] normalized_input
+    # @param [Array, Hash] expanded_frame
+    # @param [Hash{Symbol => Boolean}] framing_context
+    # @return [Array, Hash]
+    def frame(normalized_input, expanded_frame, framing_context)
+      # 2) Generate a list of frames by processing the expanded frame
+      match_limit, list_of_frames, result = case expanded_frame
+      when []
+        # 2.2) If the expanded frame is an empty array, place an empty object into the list of frames,
+        # set the JSON-LD output to an array, and set match limit to -1.
+        [-1, [Hash.new], Array.new]
+      when Array
+        # 2.3) If the expanded frame is a non-empty array,
+        # add each item in the expanded frame into the list of frames,
+        # set the JSON-LD output to an array, and set match limit to -1
+        [-1, expanded_frame, Array.new]
+      else
+        # 2.1) If the expanded frame is not an array, set match limit to 1,
+        # place the expanded frame into the list of frames,
+        # and set the JSON-LD output to null.
+        [1, [expanded_frame], nil]
+      end
+
+      # 3) Create a match array for each expanded frame
+      list_of_frames.each do |expanded_frame|
+        # Halt if match_limit is zero
+        last if match_limit == 0
+        raise InvalidFrame::Syntax, "Expanded Frame must be an object, was #{expanded_frame.class}" unless expanded_frame.is_a?(Hash)
+        
+        # Add each matching item from the normalized input to the matches array and decrement the match limit by 1 if:
+      end
     end
 
     ##
