@@ -631,12 +631,12 @@ describe JSON::LD::API do
         "number syntax (decimal)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3}),
-          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (double)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3e0}),
-          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (integer)" =>
         [
