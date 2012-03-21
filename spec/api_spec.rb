@@ -52,6 +52,17 @@ describe JSON::LD::API do
           "@type" => "#{RDF::RDFS.Resource}"
         }
       },
+      "@list coercion" => {
+        :input => {
+          "@context" => {
+            "foo" => {"@id" => "http://example.com/foo", "@list" => true}
+          },
+          "foo" => ["bar"]
+        },
+        :output => {
+          "http://example.com/foo" => {"@list" => ["bar"]}
+        }
+      }
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
@@ -213,6 +224,33 @@ describe JSON::LD::API do
       end
     end
 
+    context "exceptions" do
+      {
+        "@list containing @list" => {
+          :input => {
+            "foo" => {"@list" => [{"@list" => ["baz"]}]}
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "@list containing @list (with coercion)" => {
+          :input => {
+            "@context" => {"foo" => {"@list" => true}},
+            "foo" => [{"@list" => ["baz"]}]
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "@list containing array" => {
+          :input => {
+            "foo" => {"@list" => [["baz"]]}
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+      }.each do |title, params|
+        it title do
+          lambda {JSON::LD::API.expand(params[:input], nil)}.should raise_error(params[:exception])
+        end
+      end
+    end
   end
   
   describe ".compact" do
@@ -430,6 +468,34 @@ describe JSON::LD::API do
         jld.should produce(expected, @debug)
       end
     end
+
+    context "exceptions" do
+      {
+        "@list containing @list" => {
+          :input => {
+            "foo" => {"@list" => [{"@list" => ["baz"]}]}
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "@list containing @list (with coercion)" => {
+          :input => {
+            "@context" => {"foo" => {"@list" => true}},
+            "foo" => [{"@list" => ["baz"]}]
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "@list containing array" => {
+          :input => {
+            "foo" => {"@list" => [["baz"]]}
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+      }.each do |title, params|
+        it title do
+          lambda {JSON::LD::API.compact(params[:input], {}, nil)}.should raise_error(params[:exception])
+        end
+      end
+    end
   end
   
   describe ".frame", :pending => true do
@@ -438,8 +504,7 @@ describe JSON::LD::API do
   describe ".normalize", :pending => true do
   end
   
-  describe ".triples" do
-    it "FIXME"
+  describe ".triples", :pending => true do
   end
   
   context "Test Files" do

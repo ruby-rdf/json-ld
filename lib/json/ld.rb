@@ -74,6 +74,9 @@ module JSON
       # The target datatype specified in the coercion rule and the datatype for the typed literal do not match.
       CONFLICTING_DATATYPES = 2
       
+      # A list containing another list was detected.
+      LIST_OF_LISTS_DETECTED = 3
+      
       attr :code
       
       class Lossy < ProcessingError
@@ -87,6 +90,13 @@ module JSON
         def initialize(*args)
           super
           @code = CONFLICTING_DATATYPES
+        end
+      end
+
+      class ListOfLists < ProcessingError
+        def initialize(*args)
+          super
+          @code = LIST_OF_LISTS_DETECTED
         end
       end
     end
@@ -126,8 +136,7 @@ module JSON
       MULTIPLE_EMBEDS = 2
       
       attr :code
-      
-      
+
       class Syntax < InvalidFrame
         def initialize(*args)
           super
