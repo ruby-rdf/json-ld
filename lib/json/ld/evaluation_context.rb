@@ -140,7 +140,7 @@ module JSON::LD
         while num_updates > 0 do
           num_updates = 0
 
-          # Map terms to IRIs first
+          # Map terms to IRIs/keywords first
           context.each do |key, value|
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
@@ -346,12 +346,16 @@ module JSON::LD
     end
 
     ##
-    # Determine if `term` is a suitable term
+    # Determine if `term` is a suitable term.
+    # Basically, a keyword (other than @context), an NCName or an absolute IRI
     #
     # @param [String] term
     # @return [Boolean]
     def term_valid?(term)
-      term.empty? || term.match(NC_REGEXP)
+      term.empty? ||
+      term.match(NC_REGEXP) ||
+      term.match(/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:.*$/) || # This is pretty permissive
+      (term.match(/^@\w+/) && term != '@context')
     end
 
     ##

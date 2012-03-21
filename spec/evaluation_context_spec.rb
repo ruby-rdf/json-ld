@@ -158,6 +158,24 @@ describe JSON::LD::EvaluationContext do
           }, @debug)
         end
 
+        it "@iri for @id as term definition key" do
+          subject.parse({
+            "@iri" => "@id", "foo" => {"@iri" => "bar"}
+          }).mappings.should produce({
+            "@iri" => "@id",
+            "foo" => "bar"
+          }, @debug)
+        end
+
+        it "@subject for @id as term definition key" do
+          subject.parse({
+            "@subject" => "@id", "foo" => {"@subject" => "bar"}
+          }).mappings.should produce({
+            "@subject" => "@id",
+            "foo" => "bar"
+          }, @debug)
+        end
+
         it 'type for @type' do
           subject.parse({
             "type" => "@type", "foo" => {"@id" => "bar", "type" => "@id"}
