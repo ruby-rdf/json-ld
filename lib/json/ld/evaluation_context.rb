@@ -117,7 +117,7 @@ module JSON::LD
         # Load context document, if it is a string
         ec = nil
         begin
-          open(context.to_s) {|f| ec = parse(f)}
+          RDF::Util::File.open_file(context.to_s) {|f| ec = parse(f)}
           ec.provided_context = context
           debug("parse") {"=> provided_context: #{context.inspect}"}
           ec
