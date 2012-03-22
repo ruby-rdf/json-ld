@@ -28,9 +28,9 @@ module RDF::Util
         path = filename_or_url[5..-1]
         Kernel.open(path.to_s, &block)
       when /^#{REMOTE_PATH}/
-        puts "attempt to open #{filename_or_url} locally"
+        #puts "attempt to open #{filename_or_url} locally"
         if response = ::File.open(filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH))
-          puts "use #{filename_or_url} locally"
+          #puts "use #{filename_or_url} locally"
           case filename_or_url.to_s
           when /\.jsonld$/
             def response.content_type; 'application/ld+json'; end
@@ -76,7 +76,7 @@ module Fixtures
 
           # Load entry if it is not in repo
           if entry_types.empty?
-            repo.load(entry, :context => entry, :format => :jsonld)
+            repo.load(entry, :format => :jsonld)
             entry_types = repo.query(:subject => entry, :predicate => RDF.type).map(&:object)
           end
           
@@ -177,9 +177,8 @@ module Fixtures
       end
     end
 
-    puts "load #{SUITE.join("manifest.jsonld")}"
     repo = RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
-    puts repo.dump(:ttl)
     Spira.add_repository! :default, repo
+    puts Manifest.each.to_a.first.inspect
   end
 end
