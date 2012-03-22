@@ -181,11 +181,11 @@ module JSON::LD
       expanded = nil
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      API.new(input, nil, options) do |api|
+      API.new(input, context, options) do |api|
         expanded = api.expand(api.value, nil, api.context)
       end
 
-      API.new(expanded, context, options) do |api|
+      API.new(expanded, nil, options) do |api|
         # Start generating triples
         api.triples("", api.value, nil, nil) do |statement|
           tripleCallback.call(statement) if tripleCallback
