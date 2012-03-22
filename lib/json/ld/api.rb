@@ -5,6 +5,7 @@ require 'json/ld/compact'
 require 'json/ld/frame'
 #require 'json/ld/normalize'
 require 'json/ld/triples'
+require 'json/ld/from_triples'
 
 module JSON::LD
   ##
@@ -22,6 +23,7 @@ module JSON::LD
     include Frame
     #include Normalize
     include Triples
+    include FromTriples
 
     attr_accessor :value
     attr_accessor :context
@@ -157,7 +159,7 @@ module JSON::LD
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     # @raise [InvalidContext]
-    # @return [Hash]
+    # @return [Array<Hash>]
     #   The normalized JSON-LD document
     def self.normalize(input, object, context = nil, options = {})
     end
@@ -185,11 +187,26 @@ module JSON::LD
 
       API.new(expanded, context, options) do |api|
         # Start generating triples
-        api.triples("", api.value, nil, nil, EvaluationContext.new) do |statement|
+        api.triples("", api.value, nil, nil) do |statement|
           tripleCallback.call(statement) if tripleCallback
           yield statement if block_given?
         end
       end
+    end
+    
+    ##
+    # Take an ordered list of RDF::Statements and turn them into a JSON-LD document.
+    #
+    # @param [Array<RDF::Statement>] input
+    # @param  [Hash{Symbol => Object}] options
+    # @return [Array<Hash>] the JSON-LD document in normalized form
+    def self.fromTriples(input, options = {})
+      result = nil
+
+      API.new(nil, nil, options) do |api|
+        result = api.from_triples(input)
+      end
+      result
     end
   end
 end

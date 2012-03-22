@@ -478,7 +478,7 @@ module JSON::LD
         when Date, Time, DateTime
           l = RDF::Literal(value)
           {"@value" => l.to_s, "@type" => l.datatype.to_s}
-        when RDF::URI
+        when RDF::URI, RDF::Node
           {'@id' => value.to_s}
         when RDF::Literal
           res = Hash.ordered

@@ -6,6 +6,56 @@ require 'open-uri'
 
 require 'rdf/turtle'
 
+
+# For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
+module RDF::Util
+  module File
+    REMOTE_PATH = "http://json-ld.org/test-suite/"
+    LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
+
+    ##
+    # Override to use Patron for http and https, Kernel.open otherwise.
+    #
+    # @param [String] filename_or_url to open
+    # @param  [Hash{Symbol => Object}] options
+    # @option options [Array, String] :headers
+    #   HTTP Request headers.
+    # @return [IO] File stream
+    # @yield [IO] File stream
+    def self.open_file(filename_or_url, options = {}, &block)
+      case filename_or_url.to_s
+      when /^file:/
+        path = filename_or_url[5..-1]
+        Kernel.open(path.to_s, &block)
+      when /^#{REMOTE_PATH}/
+        puts "attempt to open #{filename_or_url} locally"
+        if response = ::File.open(filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH))
+          puts "use #{filename_or_url} locally"
+          case filename_or_url.to_s
+          when /\.jsonld$/
+            def response.content_type; 'application/ld+json'; end
+          when /\.sparql$/
+            def response.content_type; 'application/sparql-query'; end
+          end
+
+          if block_given?
+            begin
+              yield response
+            ensure
+              response.close
+            end
+          else
+            response
+          end
+        else
+          Kernel.open(filename_or_url.to_s, &block)
+        end
+      else
+      end
+    end
+  end
+end
+
 module Fixtures
   module JSONLDTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
@@ -127,44 +177,9 @@ module Fixtures
       end
     end
 
-    local_manifest = File.expand_path("../json-ld.org/test-suite/manifest.jsonld", __FILE__)
-    repo = if File.exist?(local_manifest)
-      RDF::Repository.load(local_manifest, :base_uri => SUITE.join("manifest.jsonld"), :format => :jsonld)
-    else
-      RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
-    end
+    puts "load #{SUITE.join("manifest.jsonld")}"
+    repo = RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
+    puts repo.dump(:ttl)
     Spira.add_repository! :default, repo
-  end
-end
-
-# For now, override OpenURI.open_uri to look for the file locally before attempting to retrieve it
-module OpenURI
-  class << self
-    REMOTE_PATH = Fixtures::JSONLDTest::SUITE.to_s
-    LOCAL_PATH = File.expand_path(File.dirname(__FILE__)) + "/json-ld.org/test-suite/"
-
-    alias open_uri_without_local open_uri #:nodoc:
-    def open_uri(uri, *rest, &block)
-      if uri.to_s.index(REMOTE_PATH) == 0 && response = File.open(uri.to_s.sub(REMOTE_PATH, LOCAL_PATH))
-        case uri
-        when /\.jsonld$/
-          def response.content_type; 'application/ld+json'; end
-        when /\.sparql$/
-          def response.content_type; 'application/sparql-query'; end
-        end
-
-        if block_given?
-          begin
-            yield response
-          ensure
-            response.close
-          end
-        else
-          response
-        end
-      else
-        open_uri_without_local(uri, *rest, &block)
-      end
-    end
   end
 end

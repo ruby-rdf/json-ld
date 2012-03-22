@@ -14,12 +14,10 @@ module JSON::LD
     #   Inherited subject
     # @param [RDF::URI] property
     #   Inherited property
-    # @param [EvaluationContext] ec
-    #   An empty context, as element is already expanded
     # @return [RDF::Resource] defined by this element
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
-    def triples(path, element, subject, property, ec, &block)
+    def triples(path, element, subject, property, &block)
       debug(path) {"element: #{element.inspect}"} if path.empty? && subject.nil? && property.nil?
       debug(path) {"triples: e=#{element.class.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
 
@@ -35,7 +33,7 @@ module JSON::LD
             RDF::Literal.new(element['@value'], literal_opts)
           elsif element['@list']
             # 2.4 (Lists)
-            parse_list("#{path}[#{'@list'}]", element['@list'], property, ec, &block)
+            parse_list("#{path}[#{'@list'}]", element['@list'], property, &block)
           end
 
           if object
@@ -46,10 +44,10 @@ module JSON::LD
           active_subject = if element['@id'].is_a?(String)
             # 2.5 Subject
             # 2.5.1 Set active object (subject)
-            ec.expand_iri(element['@id'])
+            context.expand_iri(element['@id'])
           elsif element['@id']
             # 2.5.2 Recursively process hash or Array values
-            triples("#{path}[#{'@id'}]", element['@id'], subject, property, ec, &block)
+            triples("#{path}[#{'@id'}]", element['@id'], subject, property, &block)
           else
             # 2.6) Generate a blank node identifier and set it as the active subject.
             RDF::Node.new
@@ -62,10 +60,10 @@ module JSON::LD
             active_property = case key
             when '@type' then RDF.type
             when /^@/ then next
-            else      ec.expand_iri(key)
+            else      context.expand_iri(key)
             end
 
-            triples("#{path}[#{key}]", value, active_subject, active_property, ec, &block)
+            triples("#{path}[#{key}]", value, active_subject, active_property, &block)
           end
         
           # 2.8) The active_subject is returned
@@ -73,7 +71,7 @@ module JSON::LD
         when Array
           # 3) If a regular array is detected ...
           element.each_with_index do |v, i|
-            triples("#{path}[#{i}]", v, subject, property, ec, &block)
+            triples("#{path}[#{i}]", v, subject, property, &block)
           end
           nil # No real value returned from an array
         when String
@@ -116,8 +114,8 @@ module JSON::LD
     # @return [RDF::Resource] BNode or nil for head of list
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
-    def parse_list(path, list, property, ec, &block)
-      debug(path) {"list: #{list.inspect}, p=#{property.inspect}, e=#{ec.inspect}"}
+    def parse_list(path, list, property, &block)
+      debug(path) {"list: #{list.inspect}, p=#{property.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? RDF::Node.new : RDF.nil
@@ -125,13 +123,13 @@ module JSON::LD
       depth do
         list.each do |list_item|
           # Traverse the value
-          triples("#{path}", list_item, first_bnode, RDF.first, ec, &block)
+          triples("#{path}", list_item, first_bnode, RDF.first, &block)
           rest_bnode = RDF::Node.new
           add_triple("#{path}", first_bnode, RDF.rest, rest_bnode, &block)
           first_bnode = rest_bnode
         end
         if last
-          triples("#{path}", last, first_bnode, RDF.first, ec, &block)
+          triples("#{path}", last, first_bnode, RDF.first, &block)
           add_triple("#{path}", first_bnode, RDF.rest, RDF.nil, &block)
         end
       end
