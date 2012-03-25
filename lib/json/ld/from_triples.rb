@@ -12,15 +12,15 @@ module JSON::LD
     # @return [Array<Hash>] the JSON-LD document in normalized form
     def from_triples(input)
       array = []
-      list_map = {}
-      rest_map = {}
+      listMap = {}
+      restMap = {}
       bnode_map = {}
 
       value = nil
       last_entry = nil
       ec = EvaluationContext.new
 
-      # Scan _input_ again for non RDF Collection statements
+      # For each triple in input
       input.each do |statement|
         debug("statement") { statement.to_ntriples.chomp}
 
@@ -28,22 +28,22 @@ module JSON::LD
 
         case statement.predicate
         when RDF.first
-          # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#first,
-          # create a new entry in _list_map_ with a key of _subject_ and an array value
+          # If property is rdf:first,
+          # create a new entry in _listMap_ with a key of _subject_ and an array value
           # containing the object representation and continue to the next statement.
           object_rep = ec.expand_value(nil, statement.object)
           debug("rdf:first") { "save object #{[object_rep].inspect}"}
-          list_map[subject] = [object_rep]
+          listMap[subject] = [object_rep]
           next
         when RDF.rest
-          # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#first,
+          # If property is rdf:rest,
           # and object is a blank node,
-          # create a new entry in _rest_map_ with a key of _subject_ and a value being the
+          # create a new entry in _restMap_ with a key of _subject_ and a value being the
           # result of IRI expansion on the object and continue to the next statement.
           next unless statement.object.is_a?(RDF::Node)
           object_rep = ec.expand_iri(statement.object).to_s
           debug("rdf:rest") { "save object #{object_rep.inspect}"}
-          rest_map[subject] = object_rep
+          restMap[subject] = object_rep
           next
         end
 
@@ -107,21 +107,21 @@ module JSON::LD
         end
       end
 
-      # For each key/value _prev_, _rest_ entry in _rest_map_, append to the _list_map_ value identified
-      # by _prev_ the _list_map_ value identified by _rest_
-      debug("rest_map") {rest_map.inspect}
-      rest_map.each do |prev, rest|
+      # For each key/value _prev_, _rest_ entry in _restMap_, append to the _listMap_ value identified
+      # by _prev_ the _listMap_ value identified by _rest_
+      debug("restMap") {restMap.inspect}
+      restMap.each do |prev, rest|
         debug("@list") { "Fold #{rest} into #{prev}"}
-        list_map[prev] += list_map[rest] rescue debug("Oh Fuck!")
+        listMap[prev] += listMap[rest] rescue debug("Oh Fuck!")
       end
 
-      # For each key/value _node_, _list_, in _list_map_ where _list_ exists as a value of an object in _array_,
+      # For each key/value _node_, _list_, in _listMap_ where _list_ exists as a value of an object in _array_,
       # replace the object value with _list_
-      debug("list_map") {list_map.inspect}
-      list_map.each do |node, list|
+      debug("listMap") {listMap.inspect}
+      listMap.each do |node, list|
         next unless bnode_map.has_key?(node)
-        debug("@list") { "Replace #{bnode_map[node][:obj][bnode_map[node][:key]]} with #{list_map[node]}"}
-        bnode_map[node][:obj][bnode_map[node][:key]] = {"@list" => list_map[node]}
+        debug("@list") { "Replace #{bnode_map[node][:obj][bnode_map[node][:key]]} with #{listMap[node]}"}
+        bnode_map[node][:obj][bnode_map[node][:key]] = {"@list" => listMap[node]}
       end
 
       # Return array as the graph representation.
