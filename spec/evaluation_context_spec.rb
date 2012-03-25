@@ -24,18 +24,18 @@ describe JSON::LD::EvaluationContext do
       end
 
       it "retrieves and parses a remote context document" do
-        subject.stub(:open).with("http://example.com/context").and_yield(@ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
         ec.provided_context.should produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        subject.stub(:open).with("http://example.com/context").and_raise(IOError)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
         lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to parse remote context/)
       end
 
       it "creates mappings" do
-        subject.stub(:open).with("http://example.com/context").and_yield(@ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -253,7 +253,7 @@ describe JSON::LD::EvaluationContext do
       ctx = StringIO.new(@ctx_json)
       def ctx.content_type; "application/ld+json"; end
 
-      subject.stub(:open).with("http://example.com/context").and_yield(ctx)
+      RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
       ec = subject.parse("http://example.com/context")
       ec.serialize.should produce({
         "@context" => "http://example.com/context"

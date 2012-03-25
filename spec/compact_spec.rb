@@ -215,7 +215,7 @@ describe JSON::LD::API do
           "@context" => "http://example.com/context",
           "b" => "c"
         }
-        JSON::LD::EvaluationContext.any_instance.stub(:open).with("http://example.com/context").and_yield(ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
         jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
