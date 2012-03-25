@@ -117,11 +117,11 @@ module Fixtures
       def information; name; end
 
       def input
-        Kernel.open(self.inputDocument)
+        RDF::Util::File.open_file(self.inputDocument)
       end
       
       def expect
-        self.resultDocument ? Kernel.open(self.resultDocument) : ""
+        self.resultDocument ? RDF::Util::File.open_file(self.resultDocument) : ""
       end
 
       def base_uri

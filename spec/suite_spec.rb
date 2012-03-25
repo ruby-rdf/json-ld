@@ -13,6 +13,7 @@ describe JSON::LD do
           m2.entries.each do |t|
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               t.debug = []
+              #debugger
               case t
               when Fixtures::JSONLDTest::CompactTest
                 result = JSON::LD::API.compact(t.input, t.context,
