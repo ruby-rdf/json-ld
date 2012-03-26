@@ -47,9 +47,15 @@ describe JSON::LD::API do
         :input => {
           "http://example.com/b" => {"@value" => "2012-01-04", "@type" => "xsd:date"}
         },
-        :context => {"b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}},
+        :context => {
+          "xsd" => RDF::XSD.to_s,
+          "b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}
+        },
         :output => {
-          "@context" => {"b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}},
+          "@context" => {
+            "xsd" => RDF::XSD.to_s,
+            "b" => {"@id" => "http://example.com/b", "@type" => "xsd:date"}
+          },
           "b" => "2012-01-04"
         }
       },

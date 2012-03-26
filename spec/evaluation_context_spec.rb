@@ -100,7 +100,7 @@ describe JSON::LD::EvaluationContext do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers.should produce({
-          "http://example.com/" => '@list'
+          "foo" => '@list'
         }, @debug)
       end
 
@@ -108,7 +108,7 @@ describe JSON::LD::EvaluationContext do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions.should produce({
-          "http://example.com/" => "@id"
+          "foo" => "@id"
         }, @debug)
       end
 
@@ -116,7 +116,7 @@ describe JSON::LD::EvaluationContext do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coercions.should produce({
-          "http://example.com/" => RDF::XSD.string.to_s
+          "foo" => RDF::XSD.string.to_s
         }, @debug)
       end
 
@@ -161,52 +161,52 @@ describe JSON::LD::EvaluationContext do
       context "keyword aliases" do
         it "uri for @id as term definition key" do
           subject.parse({
-            "uri" => "@id", "foo" => {"uri" => "bar"}
+            "uri" => "@id", "foo" => {"uri" => "http://example.com/"}
           }).mappings.should produce({
             "uri" => "@id",
-            "foo" => "bar"
+            "foo" => "http://example.com/"
           }, @debug)
         end
 
         it 'uri for @id as term definition value' do
           subject.parse({
-            "uri" => "@id", "foo" => {"@id" => "bar", "@type" => "uri"}
+            "uri" => "@id", "foo" => {"@id" => "http://example.com/", "@type" => "uri"}
           }).coercions.should produce({
-            "bar" => "@id"
+            "foo" => "@id"
           }, @debug)
         end
 
         it 'list for @list' do
           subject.parse({
-            "container" => "@container", "foo" => {"@id" => "bar", "container" => '@list'}
+            "container" => "@container", "foo" => {"@id" => "http://example.com/", "container" => '@list'}
           }).containers.should produce({
-            "bar" => '@list'
+            "foo" => '@list'
           }, @debug)
         end
 
         it "@iri for @id as term definition key" do
           subject.parse({
-            "@iri" => "@id", "foo" => {"@iri" => "bar"}
+            "@iri" => "@id", "foo" => {"@iri" => "http://example.com/"}
           }).mappings.should produce({
             "@iri" => "@id",
-            "foo" => "bar"
+            "foo" => "http://example.com/"
           }, @debug)
         end
 
         it "@subject for @id as term definition key" do
           subject.parse({
-            "@subject" => "@id", "foo" => {"@subject" => "bar"}
+            "@subject" => "@id", "foo" => {"@subject" => "http://example.com/"}
           }).mappings.should produce({
             "@subject" => "@id",
-            "foo" => "bar"
+            "foo" => "http://example.com/"
           }, @debug)
         end
 
         it 'type for @type' do
           subject.parse({
-            "type" => "@type", "foo" => {"@id" => "bar", "type" => "@id"}
+            "type" => "@type", "foo" => {"@id" => "http://example.com/", "type" => "@id"}
           }).coercions.should produce({
-            "bar" => "@id"
+            "foo" => "@id"
           }, @debug)
         end
       end
@@ -262,7 +262,7 @@ describe JSON::LD::EvaluationContext do
 
     it "uses provided context array" do
       ctx = [
-        {"foo" => "bar"},
+        {"foo" => "http://example.com/"},
         {"baz" => "bob"}
       ]
 
@@ -273,7 +273,7 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "uses provided context hash" do
-      ctx = {"foo" => "bar"}
+      ctx = {"foo" => "http://example.com/"}
 
       ec = subject.parse(ctx)
       ec.serialize.should produce({
@@ -291,10 +291,10 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "term mappings" do
-      subject.set_mapping("foo", "bar")
+      subject.set_mapping("foo", RDF::URI("http://example.com/"))
       subject.serialize.should produce({
         "@context" => {
-          "foo" => "bar"
+          "foo" => "http://example.com/"
         }
       }, @debug)
     end
@@ -302,7 +302,7 @@ describe JSON::LD::EvaluationContext do
     it "@type with dependent prefixes in a single context" do
       subject.set_mapping("xsd", RDF::XSD.to_uri)
       subject.set_mapping("homepage", RDF::FOAF.homepage)
-      subject.coerce(RDF::FOAF.homepage, "@id")
+      subject.coerce("homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri,
@@ -313,7 +313,7 @@ describe JSON::LD::EvaluationContext do
 
     it "@list with @id definition in a single context" do
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.set_container(RDF::FOAF.knows, '@list')
+      subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
@@ -323,8 +323,8 @@ describe JSON::LD::EvaluationContext do
 
     it "prefix with @type and @list" do
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.coerce(RDF::FOAF.knows, "@id")
-      subject.set_container(RDF::FOAF.knows, '@list')
+      subject.coerce("knows", "@id")
+      subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
@@ -334,7 +334,7 @@ describe JSON::LD::EvaluationContext do
 
     it "CURIE with @type" do
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
-      subject.set_container(RDF::FOAF.knows, '@list')
+      subject.set_container("foaf:knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri,
@@ -346,7 +346,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @id in key position" do
       subject.set_mapping("id", '@id')
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.set_container(RDF::FOAF.knows, '@list')
+      subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "id" => "@id",
@@ -358,7 +358,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @id in value position" do
       subject.set_mapping("id", "@id")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
-      subject.coerce(RDF::FOAF.homepage, "@id")
+      subject.coerce("foaf:homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
@@ -371,7 +371,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @type" do
       subject.set_mapping("type", "@type")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
-      subject.coerce(RDF::FOAF.homepage, "@id")
+      subject.coerce("foaf:homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
@@ -384,7 +384,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @container" do
       subject.set_mapping("container", '@container')
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.set_container(RDF::FOAF.knows, '@list')
+      subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "container" => "@container",
@@ -481,9 +481,11 @@ describe JSON::LD::EvaluationContext do
       subject.set_mapping("ex", RDF::URI("http://example.org/"))
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_mapping("xsd", RDF::XSD.to_uri)
-      subject.coerce(RDF::FOAF.age, RDF::XSD.integer)
-      subject.coerce(RDF::FOAF.knows, "@id")
-      subject.coerce(RDF::DC.created, RDF::XSD.date)
+      subject.coerce("foaf:age", RDF::XSD.integer)
+      subject.coerce("foaf:knows", "@id")
+      subject.coerce("dc:created", RDF::XSD.date)
+      subject.coerce("ex:double", RDF::XSD.double)
+      subject.coerce("ex:boolean", RDF::XSD.boolean)
     end
 
     {
@@ -496,21 +498,20 @@ describe JSON::LD::EvaluationContext do
       "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native boolean" => ["foo", true,                           true],
-      "native integer" => ["foo", 1,                              {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-      "native double" =>  ["foo", 1.1,                            {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
+      "native integer" => ["foo", 1,                              1],
+      "native double" =>  ["foo", 1.1,                            1.1],
       "native date" =>    ["foo", Date.parse("2011-12-27Z"),      {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.time.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
       "rdf boolean" =>    ["foo", RDF::Literal(true),             true],
-      "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
+      "rdf integer" =>    ["foo", RDF::Literal(1),                1],
       "rdf decimal" =>    ["foo", RDF::Literal::Decimal.new(1.1), {"@value" => "1.1", "@type" => RDF::XSD.decimal.to_s}],
-      "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
+      "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  1.1],
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27Z")), {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
     }.each do |title, (key, compacted, expanded)|
       it title do
-        predicate = subject.expand_iri(key)
-        subject.expand_value(predicate, compacted).should produce(expanded, @debug)
+        subject.expand_value(key, compacted).should produce(expanded, @debug)
       end
     end
 
@@ -520,13 +521,34 @@ describe JSON::LD::EvaluationContext do
         "no term" =>        ["foo",         "ex",                   {"@value" => "ex", "@language" => "en"}],
         "no prefix" =>      ["foo",         "ex:suffix",            {"@value" => "ex:suffix", "@language" => "en"}],
         "native boolean" => ["foo",         true,                   true],
-        "native integer" => ["foo",         1,                      {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-        "native double" =>  ["foo",         1.1,                    {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
+        "native integer" => ["foo",         1,                      1],
+        "native double" =>  ["foo",         1.1,                    1.1],
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.language = "en"
-          predicate = subject.expand_iri(key)
-          subject.expand_value(predicate, compacted).should produce(expanded, @debug)
+          subject.expand_value(key, compacted).should produce(expanded, @debug)
+        end
+      end
+    end
+    
+    context "coercion" do
+      {
+        "boolean-boolean" => ["ex:boolean", true,   true],
+        "boolean-double"  => ["ex:double",  true,   {"@value" => "true", "@type" => RDF::XSD.double.to_s}],
+        "boolean-int"     => ["foaf:age",   true,   true],
+        "double-boolean"  => ["ex:boolean", 1.1,    {"@value" => "1.1", "@type" => RDF::XSD.boolean.to_s}],
+        "double-double"   => ["ex:double",  1.1,    {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
+        "double-int"      => ["foaf:age",   1.1,    {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
+        "int-boolean"     => ["ex:boolean", 1,      {"@value" => "1", "@type" => RDF::XSD.boolean.to_s}],
+        "int-double"      => ["ex:double",  1,      {"@value" => "1.0E0", "@type" => RDF::XSD.double.to_s}],
+        "int-int"         => ["foaf:age",   1,      1],
+        "string-boolean"  => ["ex:boolean", "foo",  {"@value" => "foo", "@type" => RDF::XSD.boolean.to_s}],
+        "string-double"   => ["ex:double",  "foo",  {"@value" => "foo", "@type" => RDF::XSD.double.to_s}],
+        "string-int"      => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
+      }.each do |title, (key, compacted, expanded)|
+        it title do
+          subject.language = "en"
+          subject.expand_value(key, compacted).should produce(expanded, @debug)
         end
       end
     end
@@ -538,9 +560,9 @@ describe JSON::LD::EvaluationContext do
       subject.set_mapping("ex", RDF::URI("http://example.org/"))
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_mapping("xsd", RDF::XSD.to_uri)
-      subject.coerce(RDF::FOAF.age, RDF::XSD.integer)
-      subject.coerce(RDF::FOAF.knows, "@id")
-      subject.coerce(RDF::DC.created, RDF::XSD.date)
+      subject.coerce("foaf:age", RDF::XSD.integer)
+      subject.coerce("foaf:knows", "@id")
+      subject.coerce("dc:created", RDF::XSD.date)
     end
 
     {
@@ -558,8 +580,7 @@ describe JSON::LD::EvaluationContext do
       "no string " =>     ["foo", "string",                       {"@value" => "string"}],
     }.each do |title, (key, compacted, expanded)|
       it title do
-        predicate = subject.expand_iri(key)
-        subject.compact_value(predicate, expanded).should produce(compacted, @debug)
+        subject.compact_value(key, expanded).should produce(compacted, @debug)
       end
     end
 
@@ -580,8 +601,7 @@ describe JSON::LD::EvaluationContext do
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.language = "en"
-          predicate = subject.expand_iri(key)
-          subject.compact_value(predicate, expanded).should produce(compacted, @debug)
+          subject.compact_value(key, expanded).should produce(compacted, @debug)
         end
       end
     end

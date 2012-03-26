@@ -63,7 +63,7 @@ module JSON::LD
       API.new(input, context, options) do |api|
         result = api.expand(api.value, nil, api.context)
       end
-      result
+      result.is_a?(Array) ? result : [result]
     end
 
     ##
@@ -89,9 +89,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      API.new(input, nil, options) do |api|
-        expanded = api.expand(api.value, nil, api.context)
-      end
+      expanded = expand(input)
 
       API.new(expanded, context, options) do |api|
         result = api.compact(api.value, nil)
@@ -138,9 +136,7 @@ module JSON::LD
       }.merge(options)
 
       # Expand the input frame
-      API.new(frame, nil, options) do |api|
-        expanded_frame = api.expand(api.value, nil, api.context)
-      end
+      expanded = expand(input)
 
       API.new(input, nil, options) do |api|
         normalized_input = api.normalize(api.value, nil)
@@ -177,13 +173,10 @@ module JSON::LD
     # @raise [InvalidContext]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.triples(input, tripleCallback = nil, context = nil, options = {})
-      expanded = nil
+    def self.toTriples(input, tripleCallback = nil, context = nil, options = {})
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      API.new(input, context, options) do |api|
-        expanded = api.expand(api.value, nil, api.context)
-      end
+      expanded = expand(input, context)
 
       API.new(expanded, nil, options) do |api|
         # Start generating triples

@@ -35,7 +35,7 @@ describe JSON::LD::API do
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
-        it "Turtle" do
+        it "toTriples" do
           RDF::Graph.load(filename, :debug => @debug).should be_equivalent_graph(RDF::Graph.load(ttl), :trace => @debug)
         end if File.exist?(ttl)
       end

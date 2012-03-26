@@ -355,11 +355,10 @@ describe JSON::LD::API do
         [
           %q({
             "@context": {
-              "foaf": "http://xmlns.com/foaf/0.1/",
               "knows": {"@id": "http://xmlns.com/foaf/0.1/knows", "@type": "@id"}
             },
             "@id":  "http://greggkellogg.net/foaf#me",
-            "foaf:knows":  "http://www.ivan-herman.net/foaf#me"
+            "knows":  "http://www.ivan-herman.net/foaf#me"
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.ivan-herman.net/foaf#me> .
@@ -374,7 +373,7 @@ describe JSON::LD::API do
               "created":  {"@id": "http://purl.org/dc/terms/created", "@type": "xsd:date"}
             },
             "@id":  "http://greggkellogg.net/foaf#me",
-            "dcterms:created":  "1957-02-27"
+            "created":  "1957-02-27"
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
@@ -502,31 +501,6 @@ describe JSON::LD::API do
                 [ <http://example.org/foo#> "bar"^^xsd:date ] .
               )
             ],
-            "dt with prefix:suffix" => [
-              %q({
-                "@context": [
-                  {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date"}}
-                ],
-                "prefix:bar": "bar"
-              }),
-              %q(
-                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
-              )
-            ],
-            "dt with IRI" => [
-              %q({
-                "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date"}}
-                ],
-                "http://example.org/foo#bar": "bar"
-              }),
-              %q(
-                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-                [ <http://example.org/foo#bar> "bar"^^xsd:date ] .
-              )
-            ],
             "@id with term" => [
               %q({
                 "@context": [
@@ -581,31 +555,6 @@ describe JSON::LD::API do
                 [ <http://example.org/foo#> ("bar"^^xsd:date) ] .
               )
             ],
-            "dt with prefix:suffix" => [
-              %q({
-                "@context": [
-                  {"xsd": "http://www.w3.org/2001/XMLSchema#", "prefix": "http://example.org/foo#"},
-                  {"foo": {"@id": "prefix:bar", "@type": "xsd:date", "@container": "@list"}}
-                ],
-                "prefix:bar": ["bar"]
-              }),
-              %q(
-                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
-              )
-            ],
-            "dt with IRI" => [
-              %q({
-                "@context": [
-                  {"foo": {"@id": "http://example.org/foo#bar", "@type": "http://www.w3.org/2001/XMLSchema#date", "@container": "@list"}}
-                ],
-                "http://example.org/foo#bar": ["bar"]
-              }),
-              %q(
-                @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-                [ <http://example.org/foo#bar> ("bar"^^xsd:date) ] .
-              )
-            ],
             "@id with term" => [
               %q({
                 "@context": [
@@ -631,12 +580,12 @@ describe JSON::LD::API do
         "number syntax (decimal)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3}),
-          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (double)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3e0}),
-          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (integer)" =>
         [
@@ -685,7 +634,7 @@ describe JSON::LD::API do
     @debug = []
     graph = options[:graph] || RDF::Graph.new
     options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
-    JSON::LD::API.triples(StringIO.new(input), nil, nil, options) {|st| graph << st}
+    JSON::LD::API.toTriples(StringIO.new(input), nil, nil, options) {|st| graph << st}
     graph
   end
 end

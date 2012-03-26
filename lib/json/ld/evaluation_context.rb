@@ -79,7 +79,7 @@ module JSON::LD
 
       # Load any defined prefixes
       (options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_term[v.to_s] = k
+        @iri_to_term[v] = k
       end
 
       debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
@@ -184,17 +184,17 @@ module JSON::LD
               case expanded_key
               when '@type'
                 raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
-                if new_ec.coerce(prop) != iri
+                if new_ec.coerce(key) != iri
                   raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
                   # Record term coercion
-                  debug("parse") {"coerce #{prop.inspect} to #{iri.inspect}"}
-                  new_ec.coerce(prop, iri)
+                  debug("parse") {"coerce #{key.inspect} to #{iri.inspect}"}
+                  new_ec.coerce(key, iri)
                 end
               when '@container'
                 raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
-                if new_ec.container(prop) != value2
-                  debug("parse") {"container #{prop.inspect} as #{value2.inspect}"}
-                  new_ec.container(prop, value2)
+                if new_ec.container(key) != value2
+                  debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
+                  new_ec.container(key, value2)
                 end
               end
             end
@@ -234,29 +234,26 @@ module JSON::LD
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
           ctx = Hash.ordered
-          ctx['@language'] = language.to_s if language
+          ctx[self.alias('@language')] = language.to_s if language
 
-          # Prefixes
-          mappings.keys.sort {|a,b| a.to_s <=> b.to_s}.each do |k|
+          # Mappings
+          mappings.keys.sort.each do |k|
             next unless term_valid?(k.to_s)
             debug {"=> mappings[#{k}] => #{mappings[k]}"}
-            ctx[k.to_s] = mappings[k].to_s
+            ctx[k] = mappings[k].to_s
           end
 
           unless coercions.empty? && containers.empty?
             # Coerce
             (coercions.keys + containers.keys).uniq.sort.each do |k|
-              next if ['@type', RDF.type.to_s].include?(k.to_s)
-
-              k_iri = compact_iri(k, :position => :predicate, :depth => @depth).to_s
-              k_prefix = k_iri.split(':').first
+              next if [self.alias('@type'), RDF.type.to_s].include?(k.to_s)
 
               # Turn into long form
-              ctx[k_iri] ||= Hash.ordered
-              if ctx[k_iri].is_a?(String)
+              ctx[k] ||= Hash.ordered
+              if ctx[k].is_a?(String)
                 defn = Hash.ordered
-                defn[self.alias("@id")] = ctx[k_iri]
-                ctx[k_iri] = defn
+                defn[self.alias("@id")] = ctx[k]
+                ctx[k] = defn
               end
 
               debug {"=> coerce(#{k}) => #{coerce(k)}"}
@@ -264,19 +261,19 @@ module JSON::LD
                 # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
                 dt = compact_iri(coerce(k), :position => :datatype, :depth => @depth)
                 # Fold into existing definition
-                ctx[k_iri][self.alias("@type")] = dt
-                debug {"=> reuse datatype[#{k_iri}] => #{dt}"}
+                ctx[k][self.alias("@type")] = dt
+                debug {"=> reuse datatype[#{k}] => #{dt}"}
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
               if container(k) == '@list'
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k_iri][self.alias("@container")] = '@list'
-                debug {"=> reuse list_range[#{k_iri}] => true"}
+                ctx[k][self.alias("@container")] = self.alias('@list')
+                debug {"=> reuse list_range[#{k}] => #{self.alias('@list')}"}
               end
               
               # Remove an empty definition
-              ctx.delete(k_iri) if ctx[k_iri].empty?
+              ctx.delete(k) if ctx[k].empty?
             end
           end
 
@@ -302,26 +299,28 @@ module JSON::LD
     end
 
     ##
-    # Retrieve term mapping, add it if `value` is provided
+    # Set term mapping
     #
-    # @param [String, #to_s] term
+    # @param [String] term
     # @param [RDF::URI, String] value
     #
     # @return [RDF::URI, String]
     def set_mapping(term, value)
-      debug {"map #{term.inspect} to #{value}"} unless @mappings[term.to_s] == value
-      iri_to_term.delete(@mappings[term.to_s]) if @mappings[term.to_s]
+#      raise "mapping term #{term.inspect} must be a string" unless term.is_a?(String)
+#      raise "mapping value #{value.inspect} must be an RDF::URI" unless value.nil? || value.to_s[0,1] == '@' || value.is_a?(RDF::URI)
+      debug {"map #{term.inspect} to #{value}"} unless @mappings[term] == value
+      iri_to_term.delete(@mappings[term]) if @mappings[term]
       if value
-        @mappings[term.to_s] = value
-        iri_to_term[value.to_s] = term
+        @mappings[term] = value
+        iri_to_term[value] = term
       else
-        @mappings.delete(term.to_s)
+        @mappings.delete(term)
         nil
       end
     end
 
     ##
-    # Revered term mapping, typically used for finding aliases for keys.
+    # Reverse term mapping, typically used for finding aliases for keys.
     #
     # Returns either the original value, or a mapping for this value.
     #
@@ -329,42 +328,44 @@ module JSON::LD
     #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
     #
     # @param [RDF::URI, String] value
-    # @return [RDF::URI, String]
+    # @return [String]
     def alias(value)
       @mappings.invert.fetch(value, value)
     end
     
     ##
-    # Retrieve term coercion, add it if `value` is provided
+    # Set term coercion
     #
-    # @param [String] property in full IRI string representation
+    # @param [String] property in unexpanded form
     # @param [RDF::URI, '@id'] value (nil)
     #
     # @return [RDF::URI, '@id']
     def coerce(property, value = nil)
       # Map property, if it's not an RDF::Value
-      debug("coerce") {"map #{property} to #{mapping(property)}"} if mapping(property)
-      property = mapping(property) if mapping(property)
       return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
       if value
         debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
-        @coercions[property.to_s] = value
+        @coercions[property] = value
+      elsif type = @coercions.fetch(property, nil)
+        debug("coerce") {"#{property.inspect} coerced to #{type}"}
+        type
+      else
+        nil
       end
-      @coercions[property.to_s] if @coercions.has_key?(property.to_s)
     end
 
     ##
     # Retrieve container mapping, add it if `value` is provided
     #
-    # @param [String] property in full IRI string representation
+    # @param [String] property in unexpanded form
     # @param [Boolean] value (nil)
-    # @return [Boolean]
+    # @return [String]
     def container(property, value = nil)
       unless value.nil?
         debug {"coerce #{property.inspect} to @list"} unless @containers[property.to_s] == value
         @containers[property.to_s] = value
       end
-      @containers[property.to_s] && @containers[property.to_s]
+      @containers[property.to_s]
     end
 
     ##
@@ -407,7 +408,7 @@ module JSON::LD
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
       prefix, suffix = iri.split(":", 2)
-      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"}
+      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"} unless options[:quiet]
       prefix = prefix.to_s
       case
       when prefix == '_'              then bnode(suffix)
@@ -433,10 +434,12 @@ module JSON::LD
       return iri.to_s if [RDF.first, RDF.rest, RDF.nil].include?(iri)  # Don't cause these to be compacted
 
       depth(options) do
-        debug {"compact_iri(#{options.inspect}, #{iri.inspect})"}
+        debug {"compact_iri(#{iri.inspect}, #{options.inspect})"}
 
         result = self.alias('@type') if options[:position] == :predicate && iri == RDF.type
-        result ||= get_curie(iri) || self.alias(iri.to_s)
+        result ||= @mappings.invert.fetch(iri, nil) # Like alias, but only if there is a mapping
+        result ||= get_term_or_curie(iri)
+        result ||= iri.to_s
 
         debug {"=> #{result.inspect}"}
         result
@@ -449,8 +452,8 @@ module JSON::LD
     # and operates on RHS values, using a supplied key to determine @type and @list
     # coercion rules.
     #
-    # @param [RDF::URI] predicate
-    #   Associated predicate used to find coercion rules
+    # @param [String] property
+    #   Associated property used to find coercion rules
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
@@ -458,23 +461,48 @@ module JSON::LD
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
-    def expand_value(predicate, value, options = {})
+    def expand_value(property, value, options = {})
       depth(options) do
-        debug("expand_value") {"predicate: #{predicate}, value: #{value.inspect}, coerce: #{coerce(predicate).inspect}"}
+        debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
         result = case value
-        when TrueClass, FalseClass
-          return value
-        when RDF::Literal::Boolean
-          return value.object
+        when TrueClass, FalseClass, RDF::Literal::Boolean
+          case coerce(property)
+          when RDF::XSD.double.to_s
+            {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
+          else
+            # Unless there's coercion, to not modify representation
+            value.is_a?(RDF::Literal::Boolean) ? value.object : value
+          end
         when Integer, RDF::Literal::Integer
-          {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
+          case coerce(property)
+          when RDF::XSD.double.to_s
+            {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
+          when RDF::XSD.integer.to_s, nil
+            # Unless there's coercion, to not modify representation
+            value.is_a?(RDF::Literal::Integer) ? value.object : value
+          else
+            res = Hash.ordered
+            res['@value'] = value.to_s
+            res['@type'] = coerce(property)
+            res
+          end
+        when Float, RDF::Literal::Double
+          case coerce(property)
+          when RDF::XSD.integer.to_s
+            {"@value" => value.to_int.to_s, "@type" => RDF::XSD.integer.to_s}
+          when RDF::XSD.double.to_s
+            {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
+          when nil
+            # Unless there's coercion, to not modify representation
+            value.is_a?(RDF::Literal::Double) ? value.object : value
+          else
+            res = Hash.ordered
+            res['@value'] = value.to_s
+            res['@type'] = coerce(property)
+            res
+          end
         when BigDecimal, RDF::Literal::Decimal
           {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
-        when Float
-          {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
-        when RDF::Literal::Double
-          value = value.dup.canonicalize!
-          {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
         when Date, Time, DateTime
           l = RDF::Literal(value)
           {"@value" => l.to_s, "@type" => l.datatype.to_s}
@@ -487,7 +515,7 @@ module JSON::LD
           res['@language'] = value.language.to_s if value.has_language?
           res
         else
-          case coerce(predicate)
+          case coerce(property)
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}
           when nil
@@ -495,7 +523,7 @@ module JSON::LD
           else
             res = Hash.ordered
             res['@value'] = value.to_s
-            res['@type'] = coerce(predicate).to_s
+            res['@type'] = coerce(property).to_s
             res
           end
         end
@@ -508,8 +536,8 @@ module JSON::LD
     ##
     # Compact a value
     #
-    # @param [RDF::URI] predicate
-    #   Associated predicate used to find coercion rules
+    # @param [String] property
+    #   Associated property used to find coercion rules
     # @param [Hash] value
     #   Value (literal or IRI), in full object representation, to be compacted
     # @param  [Hash{Symbol => Object}] options
@@ -517,11 +545,11 @@ module JSON::LD
     # @return [Hash] Object representation of value
     # @raise [ProcessingError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
-    def compact_value(predicate, value, options = {})
+    def compact_value(property, value, options = {})
       raise ProcessingError::Lossy, "attempt to compact a non-object value" unless value.is_a?(Hash)
 
       depth(options) do
-        debug("compact_value") {"predicate: #{predicate.inspect}, value: #{value.inspect}, coerce: #{coerce(predicate).inspect}"}
+        debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
         result = case
         when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
@@ -529,31 +557,35 @@ module JSON::LD
           debug {" (native)"}
           l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
           l.canonicalize.object
-        when coerce(predicate) == '@id' && value.has_key?('@id')
+        when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
           debug {" (@id & coerce)"}
           compact_iri(value['@id'], :position => :object)
-        when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(predicate)
+        when %(@id @type).include?(property) && value.has_key?('@id')
+          # Compact @id representation for @id or @type
+          debug {" (@id & @id|@type)"}
+          compact_iri(value['@id'], :position => :object)
+        when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(property)
           # Compact common datatype
-          debug {" (@type & coerce) == #{coerce(predicate)}"}
+          debug {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
         when value.has_key?('@id')
           # Compact an IRI
-          value['@id'] = compact_iri(value['@id'], :position => :object)
-          debug {" (@id => #{value['@id']})"}
+          value[self.alias('@id')] = compact_iri(value['@id'], :position => :object)
+          debug {" (#{self.alias('@id')} => #{value['@id']})"}
           value
         when value['@language'] && value['@language'] == language
           # Compact language
           debug {" (@language) == #{language}"}
           value['@value']
-        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(predicate) && !language
+        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !language
           # Compact simple literal to string
           debug {" (@value && !@language && !@type && !coerce && !language)"}
           value['@value']
         when value['@type']
           # Compact datatype
           debug {" (@type)"}
-          value['@type'] = compact_iri(value['@type'], :position => :datatype)
+          value[self.alias('@type')] = compact_iri(value['@type'], :position => :datatype)
           value
         else
           # Otherwise, use original value
@@ -621,8 +653,8 @@ module JSON::LD
     # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes
     # @param [RDF::Resource] resource
     # @return [String, nil] value to use to identify IRI
-    def get_curie(resource)
-      debug {"get_curie(#{resource.inspect})"}
+    def get_term_or_curie(resource)
+      debug {"get_term_or_curie(#{resource.inspect})"}
       case resource
       when RDF::Node, /^_:/
         return resource.to_s

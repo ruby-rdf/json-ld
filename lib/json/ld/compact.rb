@@ -8,81 +8,80 @@ module JSON::LD
     # Compact an expanded Array or Hash given an active property and a context.
     #
     # @param [Array, Hash] input
-    # @param [RDF::URI] predicate (nil)
+    # @param [String] property (nil)
     # @param [EvaluationContext] context
     # @return [Array, Hash]
-    def compact(input, predicate = nil)
-      debug("compact") {"input: #{input.class}, predicate: #{predicate.inspect}"}
+    def compact(input, property = nil)
+      if property.nil?
+        debug("compact") {"input: #{input.inspect}, ec: #{context.inspect}"}
+      else
+        debug("compact") {"property: #{property.inspect}"}
+      end
       case input
       when Array
         # 1) If value is an array, process each item in value recursively using this algorithm,
         #    passing copies of the active context and active property.
         debug("compact") {"Array[#{input.length}]"}
-        depth {input.map {|v| compact(v, predicate)}}
+        result = depth {input.map {|v| compact(v, property)}}
+        # FIXME: account for @set
+        case result.length
+        when 0
+          nil
+        when 1
+          result.first
+        else
+          result
+        end
       when Hash
+        # Otherwise, if value is an object
         result = Hash.ordered
+        
+        if k = %w(@list @set @value).detect {|container| input.has_key?(container)}
+          debug("compact") {"#{k}: container(#{property}) = #{context.container(property)}"}
+        end
+
+        k ||= '@id' if input.keys == ['@id']
+        
+        case k
+        when '@value', '@id'
+          # If the value only an @id key or the value contains a @value key, the compacted value is
+          # the result of performing Value Compaction on the value.
+          v = context.compact_value(property, input, :depth => @depth)
+          debug("compact") {"value optimization, return as #{v.inspect}"}
+          return v
+        when '@list', '@set'
+          # Otherwise, if the value contains only a @list or @set key, compact the array value
+          # by performing this algorithm, ensuring that the result remains an array.
+          compacted_key = context.compact_iri(k, :position => :predicate, :depth => @depth)
+          v = depth { compact(input[k], "") }
+          v = [v].compact unless v.is_a?(Array)
+          
+          # If the active property is subject to list or set coercion the compacted value
+          # is the compacted array value.
+          # Otherwise, the value is a new object, using any compacted representation of
+          # @list or @set as the key and the compacted array value
+          v = {compacted_key => v} unless context.container(property) == k
+          debug("compact") {"value optimization, return as #{v.inspect}"}
+          return v
+        end
+
         input.each do |key, value|
           debug("compact") {"#{key}: #{value.inspect}"}
-          compacted_key = context.alias(key)
-          debug("compact") {" => compacted key: #{compacted_key.inspect}"} unless compacted_key == key
+          compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
+          debug {" => compacted key: #{compacted_key.inspect}"} unless compacted_key == key
 
-          case key
-          when '@id', '@type'
-            # If the key is @id or @type
-            result[compacted_key] = case value
-            when String, RDF::Value
-              # If the value is a string, compact the value according to IRI Compaction.
-              context.compact_iri(value, :position => :subject, :depth => @depth).to_s
-            when Hash
-              # Otherwise, if value is an object containing only the @id key, the compacted value
-              # if the result of performing IRI Compaction on that value.
-              if value.keys == ["@id"]
-                context.compact_iri(value["@id"], :position => :subject, :depth => @depth).to_s
-              else
-                depth { compact(value, predicate) }
-              end
-            else
-              # Otherwise, the compacted value is the result of performing this algorithm on the value
-              # with the current active property.
-              depth { compact(value, predicate) }
-            end
-            debug("compact") {" => compacted value: #{result[compacted_key].inspect}"}
+          result[compacted_key] = if %(@id @type).include?(key) && value.is_a?(String)
+            debug {" => compacted string for #{key}"}
+            context.compact_iri(value, :position => :subject, :depth => @depth)
+          elsif %(@id @type).include?(key) && value.is_a?(Hash) && value.keys == ['@id']
+            debug {" => compacted string for #{key} with {@id}"}
+            context.compact_iri(value['@id'], :position => :subject, :depth => @depth)
           else
-            # Otherwise, if the key is not a keyword, set as active property and compact according to IRI Compaction.
-            unless key[0,1] == '@'
-              predicate = RDF::URI(key)
-              compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
-              debug("compact") {" => compacted key: #{compacted_key.inspect}"}
-            end
-
-            # If the value is an object
-            compacted_value = if value.is_a?(Hash)
-              if value.keys == ['@id'] || value['@value']
-                # If the value contains only an @id key or the value contains a @value key, the compacted value
-                # is the result of performing Value Compaction on the value.
-                debug("compact") {"keys: #{value.keys.inspect}"}
-                context.compact_value(predicate, value, :depth => @depth)
-              elsif value.keys == ['@list'] && context.container(predicate) == '@list'
-                # Otherwise, if the value contains only a @list key, and the active property is subject to list coercion,
-                # the compacted value is the result of performing this algorithm on that value.
-                debug("compact") {"list"}
-                depth {compact(value['@list'], predicate)}
-              else
-                # Otherwise, the compacted value is the result of performing this algorithm on the value
-                debug("compact") {"object"}
-                depth {compact(value, predicate)}
-              end
-            elsif value.is_a?(Array)
-              # Otherwise, if the value is an array, the compacted value is the result of performing this algorithm on the value.
-              debug("compact") {"array"}
-              depth {compact(value, predicate)}
-            else
-              # Otherwise, the value is already compacted.
-              debug("compact") {"value"}
-              value
-            end
-            debug("compact") {" => compacted value: #{compacted_value.inspect}"}
-            result[compacted_key || key] = compacted_value
+            # Otherwise, the value MUST be an array, the compacted value is the result of performing
+            # this algorithm on the value.
+            compacted_value = depth {compact(value, compacted_key)}
+            debug {" => compacted value: #{compacted_value.inspect}"}
+            compacted_value
           end
         end
         result

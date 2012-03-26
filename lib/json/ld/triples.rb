@@ -18,77 +18,80 @@ module JSON::LD
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
     def triples(path, element, subject, property, &block)
-      debug(path) {"element: #{element.inspect}"} if path.empty? && subject.nil? && property.nil?
-      debug(path) {"triples: e=#{element.class.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
+      debug(path) {"triples: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
 
       traverse_result = depth do
         case element
         when Hash
           # Other shortcuts to allow use of this method for terminal associative arrays
           object = if element['@value']
-            # 2.3) If the JSON object has a @value key, set the active object to a literal value as follows ...
+            # 1.2) If the JSON object has a @value key, set the active object to a literal value as follows ...
             literal_opts = {}
             literal_opts[:datatype] = RDF::URI(element['@type']) if element['@type']
             literal_opts[:language] = element['@language'].to_sym if element['@language']
             RDF::Literal.new(element['@value'], literal_opts)
           elsif element['@list']
-            # 2.4 (Lists)
+            # 1.3 (Lists)
             parse_list("#{path}[#{'@list'}]", element['@list'], property, &block)
           end
 
           if object
+            # 1.4
             add_triple(path, subject, property, object, &block) if subject && property
             return object
           end
         
           active_subject = if element['@id'].is_a?(String)
-            # 2.5 Subject
-            # 2.5.1 Set active object (subject)
-            context.expand_iri(element['@id'])
+            # 1.5 Subject
+            # 1.5.1 Set active object (subject)
+            context.expand_iri(element['@id'], :quite => true)
           elsif element['@id']
-            # 2.5.2 Recursively process hash or Array values
+            # 1.5.2 Recursively process hash or Array values
+            debug("triples[Step 1.5.2]")
             triples("#{path}[#{'@id'}]", element['@id'], subject, property, &block)
           else
-            # 2.6) Generate a blank node identifier and set it as the active subject.
+            # 1.6) Generate a blank node identifier and set it as the active subject.
             RDF::Node.new
           end
 
-          # 2.7) For each key in the JSON object that has not already been processed, perform the following steps:
+          # 1.7) For each key in the JSON object that has not already been processed, perform the following steps:
           element.each do |key, value|
-            # 2.7.1) If a key that is not @id, or @type, set the active property by
+            # 1.7.1) If a key that is not @id, or @type, set the active property by
             # performing Property Processing on the key.
             active_property = case key
             when '@type' then RDF.type
             when /^@/ then next
-            else      context.expand_iri(key)
+            else      context.expand_iri(key, :quite => true)
             end
 
+            debug("triples[Step 1.7.4]")
             triples("#{path}[#{key}]", value, active_subject, active_property, &block)
           end
         
-          # 2.8) The active_subject is returned
+          # 1.8) The active_subject is returned
           active_subject
         when Array
-          # 3) If a regular array is detected ...
+          # 2) If a regular array is detected ...
+          debug("triples[Step 2]")
           element.each_with_index do |v, i|
             triples("#{path}[#{i}]", v, subject, property, &block)
           end
           nil # No real value returned from an array
         when String
           object = RDF::Literal.new(element)
-          debug(path) {"triples(#{element}): plain: #{object.inspect}"}
+          debug(path) {"triples[Step 3]: plain: #{object.inspect}"}
           object
         when Float
           object = RDF::Literal::Double.new(element)
-          debug(path) {"triples(#{element}): native: #{object.inspect}"}
+          debug(path) {"triples[Step 4]: native: #{object.inspect}"}
           object
         when Fixnum
           object = RDF::Literal.new(element)
-          debug(path) {"triples(#{element}): native: #{object.inspect}"}
+          debug(path) {"triples[Step 5]: native: #{object.inspect}"}
           object
         when TrueClass, FalseClass
           object = RDF::Literal::Boolean.new(element)
-          debug(path) {"triples(#{element}): native: #{object.inspect}"}
+          debug(path) {"triples[Step 6]: native: #{object.inspect}"}
           object
         else
           raise RDF::ReaderError, "Traverse to unknown element: #{element.inspect} of type #{element.class}"

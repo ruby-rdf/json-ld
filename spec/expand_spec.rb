@@ -9,7 +9,7 @@ describe JSON::LD::API do
     {
       "empty doc" => {
         :input => {},
-        :output => {}
+        :output => [{}]
       },
       "coerced IRI" => {
         :input => {
@@ -21,10 +21,10 @@ describe JSON::LD::API do
           "@id" => "a",
           "b"   => "c"
         },
-        :output => {
+        :output => [{
           "@id" => "http://example.com/a",
-          "http://example.com/b" => {"@id" =>"http://example.com/c"}
-        }
+          "http://example.com/b" => [{"@id" =>"http://example.com/c"}]
+        }]
       },
       "coerced IRI in array" => {
         :input => {
@@ -36,10 +36,10 @@ describe JSON::LD::API do
           "@id" => "a",
           "b"   => ["c"]
         },
-        :output => {
+        :output => [{
           "@id" => "http://example.com/a",
           "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-        }
+        }]
       },
       "empty term" => {
         :input => {
@@ -47,10 +47,10 @@ describe JSON::LD::API do
           "@id" => "",
           "@type" => "#{RDF::RDFS.Resource}"
         },
-        :output => {
+        :output => [{
           "@id" => "http://example.com/",
-          "@type" => "#{RDF::RDFS.Resource}"
-        }
+          "@type" => ["#{RDF::RDFS.Resource}"]
+        }]
       },
       "@list coercion" => {
         :input => {
@@ -59,10 +59,10 @@ describe JSON::LD::API do
           },
           "foo" => ["bar"]
         },
-        :output => {
-          "http://example.com/foo" => {"@list" => ["bar"]}
-        }
-      }
+        :output => [{
+          "http://example.com/foo" => [{"@list" => ["bar"]}]
+        }]
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
@@ -77,30 +77,30 @@ describe JSON::LD::API do
             "@id" => "",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => {
+          :output => [{
             "@id" => "http://example.org/",
-            "@type" => "#{RDF::RDFS.Resource}"
-          }
+            "@type" => ["#{RDF::RDFS.Resource}"]
+          }]
         },
         "relative" => {
           :input => {
             "@id" => "a/b",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => {
+          :output => [{
             "@id" => "http://example.org/a/b",
-            "@type" => "#{RDF::RDFS.Resource}"
-          }
+            "@type" => ["#{RDF::RDFS.Resource}"]
+          }]
         },
         "hash" => {
           :input => {
             "@id" => "#a",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => {
+          :output => [{
             "@id" => "http://example.org/#a",
-            "@type" => "#{RDF::RDFS.Resource}"
-          }
+            "@type" => ["#{RDF::RDFS.Resource}"]
+          }]
         },
       }.each do |title, params|
         it title do
@@ -118,10 +118,10 @@ describe JSON::LD::API do
             "id" => "",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => {
+          :output => [{
             "@id" => "",
-            "@type" => "#{RDF::RDFS.Resource}"
-          }
+            "@type" =>[ "#{RDF::RDFS.Resource}"]
+          }]
         },
         "@type" => {
           :input => {
@@ -129,37 +129,37 @@ describe JSON::LD::API do
             "type" => RDF::RDFS.Resource.to_s,
             "foo" => {"@value" => "bar", "type" => "baz"}
           },
-          :output => {
-            "@type" => RDF::RDFS.Resource.to_s,
-            "foo" => {"@value" => "bar", "@type" => "baz"}
-          }
+          :output => [{
+            "@type" => [RDF::RDFS.Resource.to_s],
+            "foo" => [{"@value" => "bar", "@type" => "baz"}]
+          }]
         },
         "@language" => {
           :input => {
             "@context" => {"language" => "@language"},
             "foo" => {"@value" => "bar", "language" => "baz"}
           },
-          :output => {
-            "foo" => {"@value" => "bar", "@language" => "baz"}
-          }
+          :output => [{
+            "foo" => [{"@value" => "bar", "@language" => "baz"}]
+          }]
         },
         "@value" => {
           :input => {
             "@context" => {"literal" => "@value"},
             "foo" => {"literal" => "bar"}
           },
-          :output => {
-            "foo" => {"@value" => "bar"}
-          }
+          :output => [{
+            "foo" => [{"@value" => "bar"}]
+          }]
         },
         "@list" => {
           :input => {
             "@context" => {"list" => "@list"},
             "foo" => {"list" => ["bar"]}
           },
-          :output => {
-            "foo" => {"@list" => ["bar"]}
-          }
+          :output => [{
+            "foo" => [{"@list" => ["bar"]}]
+          }]
         },
       }.each do |title, params|
         it title do
@@ -176,45 +176,45 @@ describe JSON::LD::API do
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:bool" => true
           },
-          :output => {
-            "http://example.org/vocab#bool" => true
-          }
+          :output => [{
+            "http://example.org/vocab#bool" => [true]
+          }]
         },
         "false" => {
           :input => {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:bool" => false
           },
-          :output => {
-            "http://example.org/vocab#bool" => false
-          }
+          :output => [{
+            "http://example.org/vocab#bool" => [false]
+          }]
         },
         "double" => {
           :input => {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:double" => 1.23
           },
-          :output => {
-            "http://example.org/vocab#double" => {"@value" => "1.23E0", "@type" => RDF::XSD.double.to_s}
-          }
+          :output => [{
+            "http://example.org/vocab#double" => [1.23]
+          }]
         },
         "double-zero" => {
           :input => {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:double-zero" => 0.0e0
           },
-          :output => {
-            "http://example.org/vocab#double-zero" => {"@value" => "0.0E0", "@type" => RDF::XSD.double.to_s}
-          }
+          :output => [{
+            "http://example.org/vocab#double-zero" => [0.0e0]
+          }]
         },
         "integer" => {
           :input => {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:integer" => 123
           },
-          :output => {
-            "http://example.org/vocab#integer" => {"@value" => "123", "@type" => RDF::XSD.integer.to_s}
-          }
+          :output => [{
+            "http://example.org/vocab#integer" => [123]
+          }]
         },
       }.each do |title, params|
         it title do
@@ -230,53 +230,53 @@ describe JSON::LD::API do
           :input => {
             "http://example.com/foo" => nil
           },
-          :output => {
-          }
+          :output => [{
+          }]
         },
         "@value" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil}
           },
-          :output => {
-          }
+          :output => [{
+          }]
         },
         "@value and non-null @type" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}
           },
-          :output => {
-          }
+          :output => [{
+          }]
         },
         "@value and non-null @language" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil, "@language" => "en"}
           },
-          :output => {
-          }
+          :output => [{
+          }]
         },
         "non-null @value and null @type" => {
           :input => {
             "http://example.com/foo" => {"@value" => "foo", "@type" => nil}
           },
-          :output => {
-            "http://example.com/foo" => {"@value" => "foo"}
-          }
+          :output => [{
+            "http://example.com/foo" => [{"@value" => "foo"}]
+          }]
         },
         "non-null @value and null @language" => {
           :input => {
             "http://example.com/foo" => {"@value" => "foo", "@language" => nil}
           },
-          :output => {
-            "http://example.com/foo" => {"@value" => "foo"}
-          }
+          :output => [{
+            "http://example.com/foo" => [{"@value" => "foo"}]
+          }]
         },
         "array with null elements" => {
           :input => {
             "http://example.com/foo" => [nil]
           },
-          :output => {
+          :output => [{
             "http://example.com/foo" => []
-          }
+          }]
         }
       }.each do |title, params|
         it title do
