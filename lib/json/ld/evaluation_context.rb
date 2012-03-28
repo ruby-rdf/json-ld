@@ -79,7 +79,7 @@ module JSON::LD
 
       # Load any defined prefixes
       (options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_term[v] = k
+        @iri_to_term[v.to_s] = k
       end
 
       debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
@@ -309,10 +309,10 @@ module JSON::LD
 #      raise "mapping term #{term.inspect} must be a string" unless term.is_a?(String)
 #      raise "mapping value #{value.inspect} must be an RDF::URI" unless value.nil? || value.to_s[0,1] == '@' || value.is_a?(RDF::URI)
       debug {"map #{term.inspect} to #{value}"} unless @mappings[term] == value
-      iri_to_term.delete(@mappings[term]) if @mappings[term]
+      iri_to_term.delete(@mappings[term].to_s) if @mappings[term]
       if value
         @mappings[term] = value
-        iri_to_term[value] = term
+        iri_to_term[value.to_s] = term
       else
         @mappings.delete(term)
         nil
@@ -347,7 +347,6 @@ module JSON::LD
         debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
         @coercions[property] = value
       elsif type = @coercions.fetch(property, nil)
-        debug("coerce") {"#{property.inspect} coerced to #{type}"}
         type
       else
         nil
@@ -407,8 +406,9 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
-      prefix, suffix = iri.split(":", 2)
+      prefix, suffix = iri.split(%r{:(?!//)}, 2)
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"} unless options[:quiet]
+      base = self.base unless [:predicate, :datatype].include?(options[:position])
       prefix = prefix.to_s
       case
       when prefix == '_'              then bnode(suffix)
@@ -416,7 +416,10 @@ module JSON::LD
       when iri =~ %r(://)             then uri(iri)
       when mappings.has_key?(prefix)  then uri(mappings[prefix] + suffix.to_s)
       when base                       then base.join(iri)
-      else                                 uri(iri)
+      else
+        # Otherwise, it must be an absolute IRI
+        u = uri(u)
+        u if u.absolute? || [:subject, :object].include?(options[:position])
       end
     end
 
@@ -561,7 +564,7 @@ module JSON::LD
           # Compact an @id coercion
           debug {" (@id & coerce)"}
           compact_iri(value['@id'], :position => :object)
-        when %(@id @type).include?(property) && value.has_key?('@id')
+        when %(@id @type).include?(property.to_s) && value.has_key?('@id')
           # Compact @id representation for @id or @type
           debug {" (@id & @id|@type)"}
           compact_iri(value['@id'], :position => :object)
@@ -606,6 +609,15 @@ module JSON::LD
         debug {"=> #{result.inspect}"}
         result
       end
+    end
+
+    ##
+    # Is value a subject? A value is a subject if it is a Hash
+    # with more than one key, or with an @id key, but not with @value.
+    def subject?(value)
+      value.is_a?(Hash) &&
+        !value.has_key?('@value') &&
+        (value.has_key?('@id') || value.keys.length > 1)
     end
 
     def inspect
@@ -672,9 +684,9 @@ module JSON::LD
       curie = case
       when iri_to_curie.has_key?(iri)
         return iri_to_curie[iri]
-      when u = iri_to_term.keys.detect {|i| iri.index(i.to_s) == 0}
+      when u = iri_to_term.keys.detect {|i| iri.index(i) == 0}
         # Use a defined prefix
-        prefix = iri_to_term[u]
+        prefix = iri_to_term[u.to_s]
         set_mapping(prefix, u)
         iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
       when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}

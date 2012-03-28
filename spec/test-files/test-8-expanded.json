@@ -1,26 +1,26 @@
-{
-  "@id": [
+[{
+  "@graph": [
     {
       "@id": "http://example.com/library",
-      "@type": "http://example.org/vocab#Library",
-      "http://example.org/vocab#contains": {
+      "@type": ["http://example.org/vocab#Library"],
+      "http://example.org/vocab#contains": [{
         "@id": "http://example.org/library/the-republic"
-      }
+      }]
     },
     {
       "@id": "http://example.org/library/the-republic",
-      "@type": "http://example.org/vocab#Book",
-      "http://purl.org/dc/terms/creator": "Plato",
-      "http://purl.org/dc/terms/title": "The Republic",
-      "http://example.org/vocab#contains": {
+      "@type": ["http://example.org/vocab#Book"],
+      "http://purl.org/dc/terms/creator": ["Plato"],
+      "http://purl.org/dc/terms/title": ["The Republic"],
+      "http://example.org/vocab#contains": [{
         "@id": "http://example.org/library/the-republic#introduction"
-      }
+      }]
     },
     {
       "@id": "http://example.org/library/the-republic#introduction",
-      "@type": "http://example.org/vocab#Chapter",
-      "http://purl.org/dc/terms/description": "An introductory chapter on The Republic.",
-      "http://purl.org/dc/terms/title": "The Introduction"
+      "@type": ["http://example.org/vocab#Chapter"],
+      "http://purl.org/dc/terms/description": ["An introductory chapter on The Republic."],
+      "http://purl.org/dc/terms/title": ["The Introduction"]
     }
   ]
-}
+}]

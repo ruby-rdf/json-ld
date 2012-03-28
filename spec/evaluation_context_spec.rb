@@ -416,39 +416,62 @@ describe JSON::LD::EvaluationContext do
       subject.set_mapping("", RDF::URI("http://empty/"))
     end
 
-    {
-      "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
-      "term" =>          ["ex",                  RDF::URI("http://example.org/")],
-      "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
-      "keyword" =>       ["@type",               "@type"],
-      "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
-      "unmapped" =>      ["foo",                 RDF::URI("foo")],
-      "empty term" =>    ["",                    RDF::URI("http://empty/")],
-      "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
-    }.each do |title, (input,result)|
-      it title do
-        subject.expand_iri(input).should produce(result, @debug)
-      end
-    end
-
     it "bnode" do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
 
-    context "with base IRI" do
-      before(:each) do
-        subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
-        subject.mappings.delete("")
+    context "relative IRI" do
+      {
+        :subject => true,
+        :predicate => false,
+        :object => true,
+        :datatype => false
+      }.each do |position, r|
+        context "as #{position}" do
+          {
+            "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/"), true],
+            "term" =>          ["ex",                  RDF::URI("http://example.org/"), true],
+            "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix"), true],
+            "keyword" =>       ["@type",               "@type", true],
+            "empty" =>         [":suffix",             RDF::URI("http://empty/suffix"), true],
+            "unmapped" =>      ["foo",                 RDF::URI("foo"), false],
+            "empty term" =>    ["",                    RDF::URI("http://empty/"), true],
+            "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo"), true],
+          }.each do |title, (input,result,abs)|
+            result = nil unless r || abs
+            result = nil if title == 'unmapped'
+            it title do
+              subject.expand_iri(input).should produce(result, @debug)
+            end
+          end
+        end
       end
 
-      {
-        "base" =>     ["",            RDF::URI("http://example.org/")],
-        "relative" => ["a/b",         RDF::URI("http://example.org/a/b")],
-        "hash" =>     ["#a",          RDF::URI("http://example.org/#a")],
-        "absolute" => ["http://foo/", RDF::URI("http://foo/")]
-      }.each do |title, (input,result)|
-        it title do
-          subject.expand_iri(input).should produce(result, @debug)
+      context "with base IRI" do
+        {
+          :subject => true,
+          :predicate => false,
+          :object => true,
+          :datatype => false
+        }.each do |position, r|
+          context "as #{position}" do
+            before(:each) do
+              subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
+              subject.mappings.delete("")
+            end
+
+            {
+              "base" =>     ["",            RDF::URI("http://example.org/")],
+              "relative" => ["a/b",         RDF::URI("http://example.org/a/b")],
+              "hash" =>     ["#a",          RDF::URI("http://example.org/#a")],
+              "absolute" => ["http://foo/", RDF::URI("http://foo/")]
+            }.each do |title, (input,result)|
+              result = nil unless r || title == 'absolute'
+              it title do
+                subject.expand_iri(input, :position => position).should produce(result, @debug)
+              end
+            end
+          end
         end
       end
     end
@@ -623,7 +646,8 @@ describe JSON::LD::EvaluationContext do
 
       {
         "@id" =>      [{"id" => "http://example.com/"},             {"@id" => "http://example.com/"}],
-        "@type" =>    [{"literal" => "foo", "type" => "bar"},       {"@value" => "foo", "@type" => "bar"}],
+        "@type" =>    [{"literal" => "foo", "type" => "http://example.com/"},
+                                                                    {"@value" => "foo", "@type" => "http://example.com/"}],
         "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
         "@list" =>    [{"list" => ["foo"]},                         {"@list" => ["foo"]  }],
       }.each do |title, (compacted, expanded)|

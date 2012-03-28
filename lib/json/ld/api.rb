@@ -89,15 +89,21 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = expand(input)
+      API.new(input, nil, options) do |api|
+        expanded = api.expand(api.value, nil, api.context)
 
+        # x) If no context provided, use context from input document
+        context ||= api.value.fetch('@context', nil)
+      end
+
+      
       API.new(expanded, context, options) do |api|
         result = api.compact(api.value, nil)
 
         # xxx) Add the given context to the output
         result = case result
         when Hash then api.context.serialize.merge(result)
-        when Array then api.context.serialize.merge("@id" => result)
+        when Array then api.context.serialize.merge("@graph" => result)
         end
       end
       result
@@ -176,7 +182,7 @@ module JSON::LD
     def self.toTriples(input, tripleCallback = nil, context = nil, options = {})
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = expand(input, context)
+      expanded = expand(input, context, options)
 
       API.new(expanded, nil, options) do |api|
         # Start generating triples

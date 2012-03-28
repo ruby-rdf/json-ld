@@ -10,16 +10,16 @@ describe JSON::LD::API do
       {
         "no @id" => [
           %q({
-            "foo": "bar"
+            "http://example.com/foo": "bar"
           }),
-          %q([ <foo> "bar"] .)
+          %q([ <http://example.com/foo> "bar"] .)
         ],
         "@id with _:a" => [
           %q({
             "@id": "_:a",
-            "foo": "bar"
+            "http://example.com/foo": "bar"
           }),
-          %q([ <foo> "bar"] .)
+          %q([ <http://example.com/foo> "bar"] .)
         ],
       }.each do |title, (js, nt)|
         it title do
@@ -32,10 +32,10 @@ describe JSON::LD::API do
       {
         "with IRI" => [
           %q({
-            "@id": "a",
-            "foo": "bar"
+            "@id": "http://example.com/a",
+            "http://example.com/foo": "bar"
           }),
-          %q(<a> <foo> "bar" .)
+          %q(<http://example.com/a> <http://example.com/foo> "bar" .)
         ],
         "with empty term" => [
           %({
@@ -86,15 +86,15 @@ describe JSON::LD::API do
       {
         "one type" => [
           %q({
-            "@type": "foo"
+            "@type": "http://example.com/foo"
           }),
-          %q([ a <foo> ] .)
+          %q([ a <http://example.com/foo> ] .)
         ],
         "two types" => [
           %q({
-            "@type": ["foo", "baz"]
+            "@type": ["http://example.com/foo", "http://example.com/baz"]
           }),
-          %q([ a <foo>, <baz> ] .)
+          %q([ a <http://example.com/foo>, <http://example.com/baz> ] .)
         ],
       }.each do |title, (js, nt)|
         it title do
@@ -107,27 +107,27 @@ describe JSON::LD::API do
       {
         "string" => [
           %q({
-            "foo": "bar"
+            "http://example.com/foo": "bar"
           }),
-          %q([ <foo> "bar" ] .)
+          %q([ <http://example.com/foo> "bar" ] .)
         ],
         "strings" => [
           %q({
-            "foo": ["bar", "baz"]
+            "http://example.com/foo": ["bar", "baz"]
           }),
-          %q([ <foo> "bar", "baz" ] .)
+          %q([ <http://example.com/foo> "bar", "baz" ] .)
         ],
         "IRI" => [
           %q({
-            "foo": {"@id": "bar"}
+            "http://example.com/foo": {"@id": "http://example.com/bar"}
           }),
-          %q([ <foo> <bar> ] .)
+          %q([ <http://example.com/foo> <http://example.com/bar> ] .)
         ],
         "IRIs" => [
           %q({
-            "foo": [{"@id": "bar"}, {"@id": "baz"}]
+            "http://example.com/foo": [{"@id": "http://example.com/bar"}, {"@id": "http://example.com/baz"}]
           }),
-          %q([ <foo> <bar>, <baz> ] .)
+          %q([ <http://example.com/foo> <http://example.com/bar>, <http://example.com/baz> ] .)
         ],
       }.each do |title, (js, nt)|
         it title do
@@ -506,10 +506,10 @@ describe JSON::LD::API do
                 "@context": [
                   {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id"}}
                 ],
-                "foo": "bar"
+                "foo": "http://example.org/foo#bar"
               }),
               %q(
-                _:a <http://example.org/foo#bar> <bar> .
+                _:a <http://example.org/foo#bar> <http://example.org/foo#bar> .
               )
             ],
             "coercion without term definition" => [
@@ -560,10 +560,10 @@ describe JSON::LD::API do
                 "@context": [
                   {"foo": {"@id": "http://example.org/foo#bar", "@type": "@id", "@container": "@list"}}
                 ],
-                "foo": ["bar"]
+                "foo": ["http://example.org/foo#bar"]
               }),
               %q(
-                _:a <http://example.org/foo#bar> (<bar>) .
+                _:a <http://example.org/foo#bar> (<http://example.org/foo#bar>) .
               )
             ],
           }.each do |title, (js, nt)|
@@ -608,11 +608,11 @@ describe JSON::LD::API do
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
-        "@id with array of objects value" =>
+        "@graph with array of objects value" =>
         [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@id": [
+            "@graph": [
               {"@id":   "http://example.com/#me", "@type": "foaf:Person"},
               {"@id":   "http://example.com/#you", "@type": "foaf:Person"}
             ]

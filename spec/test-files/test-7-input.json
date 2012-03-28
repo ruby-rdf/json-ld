@@ -1,6 +1,6 @@
 {
   "@context": { "foaf": "http://xmlns.com/foaf/0.1/" },
-  "@id": [
+  "@graph": [
     {
       "@id": "_:bnode1",
       "@type": "foaf:Person",

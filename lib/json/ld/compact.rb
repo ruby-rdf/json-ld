@@ -44,7 +44,7 @@ module JSON::LD
         
         case k
         when '@value', '@id'
-          # If the value only an @id key or the value contains a @value key, the compacted value is
+          # If the value only has an @id key or the value contains a @value key, the compacted value is
           # the result of performing Value Compaction on the value.
           v = context.compact_value(property, input, :depth => @depth)
           debug("compact") {"value optimization, return as #{v.inspect}"}
@@ -52,8 +52,13 @@ module JSON::LD
         when '@list', '@set'
           # Otherwise, if the value contains only a @list or @set key, compact the array value
           # by performing this algorithm, ensuring that the result remains an array.
+          # FIXME: should use active property, but if there are more than one mapping
+          #   for the property with different coercions, how to pick best?
+          #   For example:
+          #     * list/set coercion with xsd:integer
+          #     * list/set coercion with @id
           compacted_key = context.compact_iri(k, :position => :predicate, :depth => @depth)
-          v = depth { compact(input[k], "") }
+          v = depth { compact(input[k], property) }
           v = [v].compact unless v.is_a?(Array)
           
           # If the active property is subject to list or set coercion the compacted value
@@ -67,6 +72,11 @@ module JSON::LD
 
         input.each do |key, value|
           debug("compact") {"#{key}: #{value.inspect}"}
+          
+          # FIXME: right now, this just chooses any key representation, it probably
+          #   should look recursively to find the best key representation based
+          #   on the values. Note that this might mean splitting multiple values into
+          #   separate keys.
           compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
           debug {" => compacted key: #{compacted_key.inspect}"} unless compacted_key == key
 
@@ -76,10 +86,23 @@ module JSON::LD
           elsif %(@id @type).include?(key) && value.is_a?(Hash) && value.keys == ['@id']
             debug {" => compacted string for #{key} with {@id}"}
             context.compact_iri(value['@id'], :position => :subject, :depth => @depth)
+          elsif key == '@type' && value.is_a?(Array)
+            # Otherwise, if key is @type and value is an array, perform value compaction
+            # on all members of the array
+            compacted_value = value.map do |v|
+              if v.is_a?(String)
+                context.compact_iri(v, :position => :subject, :depth => @depth)
+              else
+                context.compact_value(key, v, :depth => @depth)
+              end
+            end
+            debug {" => compacted value(@type): #{compacted_value.inspect}"}
+            compacted_value = compacted_value.first if compacted_value.length == 1
+            compacted_value
           else
             # Otherwise, the value MUST be an array, the compacted value is the result of performing
             # this algorithm on the value.
-            compacted_value = depth {compact(value, compacted_key)}
+            compacted_value = depth {self.compact(value, compacted_key)}
             debug {" => compacted value: #{compacted_value.inspect}"}
             compacted_value
           end

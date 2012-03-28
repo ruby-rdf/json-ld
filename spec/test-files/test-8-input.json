@@ -8,7 +8,7 @@
     "Library":      "http://example.org/vocab#Library",
     "title":        "http://purl.org/dc/terms/title"
   },
-  "@id":
+  "@graph":
   [{
     "@id": "http://example.com/library",
     "@type": "Library",

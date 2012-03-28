@@ -45,10 +45,10 @@ module JSON::LD
             # 1.5 Subject
             # 1.5.1 Set active object (subject)
             context.expand_iri(element['@id'], :quite => true)
-          elsif element['@id']
+          elsif element['@graph']
             # 1.5.2 Recursively process hash or Array values
             debug("triples[Step 1.5.2]")
-            triples("#{path}[#{'@id'}]", element['@id'], subject, property, &block)
+            triples("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)
           else
             # 1.6) Generate a blank node identifier and set it as the active subject.
             RDF::Node.new

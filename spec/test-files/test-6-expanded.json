@@ -1,6 +1,6 @@
-{
-  "@id":       "http://example.org/people#joebob",
-  "@type":          "http://xmlns.com/foaf/0.1/Person",
-  "http://xmlns.com/foaf/0.1/name":      "Joe Bob",
-  "http://xmlns.com/foaf/0.1/nick":      { "@list": [ "joe", "bob", "jaybe" ] }
-}
+[{
+  "@id":      "http://example.org/people#joebob",
+  "@type":    ["http://xmlns.com/foaf/0.1/Person"],
+  "http://xmlns.com/foaf/0.1/name":      ["Joe Bob"],
+  "http://xmlns.com/foaf/0.1/nick":      [{ "@list": [ "joe", "bob", "jaybe" ] }]
+}]
