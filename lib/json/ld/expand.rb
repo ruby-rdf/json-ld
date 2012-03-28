@@ -27,7 +27,7 @@ module JSON::LD
           end.compact
           
           # If the array is empty, return a null value, otherwise return the expanded array
-          value unless value.empty?
+          #value unless value.empty?
         end
       when Hash
         # 2.1) Update the active context according to the steps outlined in the context section
@@ -55,7 +55,7 @@ module JSON::LD
           
           # 2.2.3) Otherwise, if value is a JSON object having either a @value, @list, or @set key with a null value,
           #       skip this key/value pair.
-          # FIXME: value might be nil only after expansion
+          # FIXME: coult value be nil only after expansion?
           if value.is_a?(Hash)
             expanded_keys = value.keys {|k| context.expand_iri(k, :position => :predicate, :quiet => true)}
             k = (%w(@list @set @value) & expanded_keys).first

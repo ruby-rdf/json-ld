@@ -324,6 +324,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [nil]
           },
           :output => [{
+            "http://example.com/foo" => []
           }]
         }
       }.each do |title, params|
