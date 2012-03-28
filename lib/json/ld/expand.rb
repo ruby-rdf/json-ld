@@ -121,6 +121,12 @@ module JSON::LD
             raise ProcessingError::ListOfLists, "A list may not contain another list" if options[:in_list]
             raise ProcessingError, "Value of @list must be an array" unless value.is_a?(Array)
             result[expanded_key] = depth { expand(value, property, context, options.merge(:in_list => true)) } || []
+          when '@graph'
+            # value must be an array, expand values of the array
+            raise ProcessingError, "Value of @graph must be an array" unless value.is_a?(Array)
+            result = depth { expand(value, property, context, options) } || []
+            debug {" => #{result.inspect}"}
+            return result
           else
             # 2.2.4) If the value is an array, and active property is subject to @list expansion,
             #   replace the value with a new key-value key where the key is @list and value set to the current value.

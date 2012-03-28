@@ -63,6 +63,19 @@ describe JSON::LD::API do
           "http://example.com/foo" => [{"@list" => ["bar"]}]
         }]
       },
+      "@graph" => {
+        :input => {
+          "@context" => {"ex" => "http://example.com/"},
+          "@graph" => [
+            {"ex:foo"  => "foo"},
+            {"ex:bar" => "bar"}
+          ]
+        },
+        :output => [
+          {"http://example.com/foo" => ["foo"]},
+          {"http://example.com/bar" => ["bar"]}
+        ]
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)

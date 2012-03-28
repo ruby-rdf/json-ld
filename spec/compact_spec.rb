@@ -125,6 +125,20 @@ describe JSON::LD::API do
           "@type" => "#{RDF::RDFS.Resource}"
         },
       },
+      "@graph" => {
+        :input => [
+          {"http://example.com/foo" => ["foo"]},
+          {"http://example.com/bar" => ["bar"]}
+        ],
+        :context => {"ex" => "http://example.com/"},
+        :output => {
+          "@context" => {"ex" => "http://example.com/"},
+          "@graph" => [
+            {"ex:foo"  => "foo"},
+            {"ex:bar" => "bar"}
+          ]
+        }
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
