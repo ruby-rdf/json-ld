@@ -26,11 +26,11 @@ def run(input, options)
     puts output.inspect
     puts "Compacted in #{secs} seconds."
   else
-    r = reader_class.new(input, :base_uri => options[:base_uri], :strict => true)
+    r = reader_class.new(input, options[:parser_options])
     g = RDF::Graph.new << r
     secs = Time.new - start
     num = g.count
-    options[:output].puts g.dump(options[:output_format], options.merge(:prefixes => r.prefixes))
+    options[:output].puts g.dump(options[:output_format], options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true))
     puts
     puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
   end
@@ -40,9 +40,15 @@ rescue
   raise
 end
 
+parser_options = {
+  :base_uri => "",
+  :progress   => false,
+  :validate => false,
+  :strict => false,
+}
+
 options = {
-  :validate      => false,
-  :strict        => true,
+  :parser_options => parser_options,
   :output        => STDOUT,
   :output_format => :turtle,
   :input_format  => :jsonld,
@@ -66,7 +72,7 @@ opts = GetoptLong.new(
 )
 opts.each do |opt, arg|
   case opt
-  when '--dbg'          then ::JSON::LD::debug = true
+  when '--dbg'          then parser_options[:debug] = ::JSON::LD::debug = true
   when '--compact'      then options[:compact] = true
   when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
@@ -76,7 +82,7 @@ opts.each do |opt, arg|
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--quiet'        then options[:quiet] = true
-  when '--uri'          then options[:base_uri] = arg
+  when '--uri'          then parser_options[:base_uri] = arg
   when '--verbose'      then $verbose = true
   end
 end

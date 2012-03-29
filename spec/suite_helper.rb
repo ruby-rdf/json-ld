@@ -113,11 +113,16 @@ module Fixtures
       property :expected,       :predicate => Test.expectedResults
       property :inputDocument,  :predicate => Test.informationResourceInput
       property :resultDocument, :predicate => Test.informationResourceResults
+      property :extraDocument,  :predicate => Test.input
 
       def information; name; end
 
       def input
         RDF::Util::File.open_file(self.inputDocument)
+      end
+
+      def extra
+        RDF::Util::File.open_file(self.extraDocument)
       end
       
       def expect
@@ -138,6 +143,7 @@ module Fixtures
           name
           inputDocument
           resultDocument
+          extraDocument
         ).map {|a| v = self.send(a); "#{a}='#{v}'" if v}.compact.join(", ") +
         "]"
       end
@@ -145,11 +151,6 @@ module Fixtures
 
     class CompactTest < Entry
       type Jld.CompactTest
-      property :contextDocument,       :predicate => Test.input
-
-      def context
-        self.contextDocument ? Kernel.open(self.contextDocument) : ""
-      end
     end
 
     class ExpandTest < Entry
@@ -158,7 +159,6 @@ module Fixtures
 
     class FrameTest < Entry
       type Jld.FameTest
-      property :frame,       :predicate => Test.input
     end
 
     class NormalizeTest < Entry

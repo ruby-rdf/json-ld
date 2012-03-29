@@ -31,6 +31,11 @@ describe JSON::LD::API do
           "b" => {"@id" => "http://example.com/c"}
         }
       },
+      "@id" => {
+        :input => {"@id" => "http://example.org/test#example"},
+        :context => {},
+        :output => {"@id" => "http://example.org/test#example"}
+      },
       "@id coercion" => {
         :input => {
           "@id" => "http://example.com/a",

@@ -104,6 +104,7 @@ module JSON::LD
         result = case result
         when Hash then api.context.serialize.merge(result)
         when Array then api.context.serialize.merge("@graph" => result)
+        when String then api.context.serialize.merge("@id" => result)
         end
       end
       result

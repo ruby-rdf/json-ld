@@ -312,6 +312,7 @@ module JSON::LD
       iri_to_term.delete(@mappings[term].to_s) if @mappings[term]
       if value
         @mappings[term] = value
+        @options[:prefixes][term] = value if @options.has_key?(:prefixes)
         iri_to_term[value.to_s] = term
       else
         @mappings.delete(term)
