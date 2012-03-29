@@ -96,11 +96,19 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates list coercion with predicate IRI" do
+      it "associates @list coercion with predicate IRI" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers.should produce({
           "foo" => '@list'
+        }, @debug)
+      end
+
+      it "associates @set coercion with predicate IRI" do
+        subject.parse({
+          "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
+        }).containers.should produce({
+          "foo" => '@set'
         }, @debug)
       end
 
@@ -215,16 +223,17 @@ describe JSON::LD::EvaluationContext do
     describe "Syntax Errors" do
       {
         "malformed JSON" => StringIO.new(%q({"@context": {"foo" "http://malformed/"})),
-        "no @id, @type, or @list" => {"foo" => {}},
+        "no @id, @type, or @container" => {"foo" => {}},
         "value as array" => {"foo" => []},
         "@id as object" => {"foo" => {"@id" => {}}},
         "@id as array" => {"foo" => {"@id" => []}},
         "@type as object" => {"foo" => {"@type" => {}}},
         "@type as array" => {"foo" => {"@type" => []}},
         "@type as @list" => {"foo" => {"@type" => "@list"}},
-        "@list as object" => {"foo" => {"@list" => {}}},
-        "@list as array" => {"foo" => {"@list" => []}},
-        "@list as string" => {"foo" => {"@list" => "true"}},
+        "@type as @list" => {"foo" => {"@type" => "@set"}},
+        "@container as object" => {"foo" => {"@container" => {}}},
+        "@container as array" => {"foo" => {"@container" => []}},
+        "@container as string" => {"foo" => {"@container" => "true"}},
         "invalid term" => {"_:foo" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
         it title do
@@ -321,6 +330,16 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
+    it "@set with @id definition in a single context" do
+      subject.set_mapping("knows", RDF::FOAF.knows)
+      subject.set_container("knows", '@set')
+      subject.serialize.should produce({
+        "@context" => {
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
+        }
+      }, @debug)
+    end
+
     it "prefix with @type and @list" do
       subject.set_mapping("knows", RDF::FOAF.knows)
       subject.coerce("knows", "@id")
@@ -328,6 +347,17 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
+        }
+      }, @debug)
+    end
+
+    it "prefix with @type and @set" do
+      subject.set_mapping("knows", RDF::FOAF.knows)
+      subject.coerce("knows", "@id")
+      subject.set_container("knows", '@set')
+      subject.serialize.should produce({
+        "@context" => {
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
         }
       }, @debug)
     end
@@ -393,7 +423,18 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-      
+    it "compacts IRIs to CURIEs" do
+      subject.set_mapping("ex", 'http://example.org/')
+      subject.set_mapping("term", 'http://example.org/term')
+      subject.coerce("term", "http://example.org/datatype")
+      subject.serialize.should produce({
+        "@context" => {
+          "ex" => 'http://example.org/',
+          "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
+        }
+      }, @debug)
+    end
+
     context "extra keys or values" do
       {
         "extra key" => {
@@ -640,6 +681,7 @@ describe JSON::LD::EvaluationContext do
         subject.set_mapping("id", "@id")
         subject.set_mapping("type", "@type")
         subject.set_mapping("list", "@list")
+        subject.set_mapping("set", "@set")
         subject.set_mapping("language", "@language")
         subject.set_mapping("literal", "@value")
       end
@@ -650,6 +692,7 @@ describe JSON::LD::EvaluationContext do
                                                                     {"@value" => "foo", "@type" => "http://example.com/"}],
         "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
         "@list" =>    [{"list" => ["foo"]},                         {"@list" => ["foo"]  }],
+        "@set" =>     [{"set" => ["foo"]},                         {"@set" => ["foo"]  }],
       }.each do |title, (compacted, expanded)|
         it title do
           subject.compact_value("foo", expanded).should produce(compacted, @debug)

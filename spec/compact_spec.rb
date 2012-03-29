@@ -74,6 +74,26 @@ describe JSON::LD::API do
           "b" => ["c", "d"]
         }
       },
+      "@set coercion" => {
+        :input => {
+          "http://example.com/b" => {"@set" => ["c"]}
+        },
+        :context => {"b" => {"@id" => "http://example.com/b", "@container" => "@set"}},
+        :output => {
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@container" => "@set"}},
+          "b" => ["c"]
+        }
+      },
+      "empty @set coercion" => {
+        :input => {
+          "http://example.com/b" => []
+        },
+        :context => {"b" => {"@id" => "http://example.com/b", "@container" => "@set"}},
+        :output => {
+          "@context" => {"b" => {"@id" => "http://example.com/b", "@container" => "@set"}},
+          "b" => []
+        }
+      },
       "empty term" => {
         :input => {
           "@id" => "http://example.com/",

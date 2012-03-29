@@ -11,14 +11,14 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
-            next unless t.is_a?(Fixtures::JSONLDTest::CompactTest)
+            #next unless t.is_a?(Fixtures::JSONLDTest::CompactTest)
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
               t.debug << "extra: #{t.extra.read}" if t.extraDocument
               #debugger
               case t
               when Fixtures::JSONLDTest::CompactTest
-                result = JSON::LD::API.compact(t.input, t.extra,
+                result = JSON::LD::API.compact(t.input, t.extra, nil,
                                               :base_uri => t.inputDocument,
                                               :debug => t.debug)
                 expected = JSON.load(t.expect)

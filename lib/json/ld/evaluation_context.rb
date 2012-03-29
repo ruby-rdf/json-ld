@@ -240,7 +240,7 @@ module JSON::LD
           mappings.keys.sort.each do |k|
             next unless term_valid?(k.to_s)
             debug {"=> mappings[#{k}] => #{mappings[k]}"}
-            ctx[k] = mappings[k].to_s
+            ctx[k] = get_compact_iri(mappings[k].to_s) || mappings[k].to_s
           end
 
           unless coercions.empty? && containers.empty?
@@ -262,14 +262,14 @@ module JSON::LD
                 dt = compact_iri(coerce(k), :position => :datatype, :depth => @depth)
                 # Fold into existing definition
                 ctx[k][self.alias("@type")] = dt
-                debug {"=> reuse datatype[#{k}] => #{dt}"}
+                debug {"=> datatype[#{k}] => #{dt}"}
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
-              if container(k) == '@list'
+              if %w(@list @set).include?(container(k))
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k][self.alias("@container")] = self.alias('@list')
-                debug {"=> reuse list_range[#{k}] => #{self.alias('@list')}"}
+                ctx[k][self.alias("@container")] = self.alias(container(k))
+                debug {"=> list_range[#{k}] => #{self.alias(container(k))}"}
               end
               
               # Remove an empty definition
@@ -331,7 +331,7 @@ module JSON::LD
     # @param [RDF::URI, String] value
     # @return [String]
     def alias(value)
-      @mappings.invert.fetch(value, value)
+      iri_to_term.fetch(value, value)
     end
     
     ##
@@ -362,7 +362,7 @@ module JSON::LD
     # @return [String]
     def container(property, value = nil)
       unless value.nil?
-        debug {"coerce #{property.inspect} to @list"} unless @containers[property.to_s] == value
+        debug {"coerce #{property.inspect} to #{value}"} unless @containers[property.to_s] == value
         @containers[property.to_s] = value
       end
       @containers[property.to_s]
@@ -441,8 +441,8 @@ module JSON::LD
         debug {"compact_iri(#{iri.inspect}, #{options.inspect})"}
 
         result = self.alias('@type') if options[:position] == :predicate && iri == RDF.type
-        result ||= @mappings.invert.fetch(iri, nil) # Like alias, but only if there is a mapping
-        result ||= get_term_or_curie(iri)
+        result ||= iri_to_term.fetch(iri.to_s, nil)
+        result ||= get_compact_iri(iri)
         result ||= iri.to_s
 
         debug {"=> #{result.inspect}"}
@@ -453,7 +453,7 @@ module JSON::LD
     ##
     # Expand a value from compacted to expanded form making the context
     # unnecessary. This method is used as part of more general expansion
-    # and operates on RHS values, using a supplied key to determine @type and @list
+    # and operates on RHS values, using a supplied key to determine @type and @container
     # coercion rules.
     #
     # @param [String] property
@@ -663,11 +663,13 @@ module JSON::LD
     end
 
     ##
-    # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes
+    # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes.
+    # Always returns a CURIE or the full IRI, not a term.
+    #
     # @param [RDF::Resource] resource
     # @return [String, nil] value to use to identify IRI
-    def get_term_or_curie(resource)
-      debug {"get_term_or_curie(#{resource.inspect})"}
+    def get_compact_iri(resource)
+      debug {"get_compact_iri(#{resource.inspect})"}
       case resource
       when RDF::Node, /^_:/
         return resource.to_s
@@ -685,7 +687,7 @@ module JSON::LD
       curie = case
       when iri_to_curie.has_key?(iri)
         return iri_to_curie[iri]
-      when u = iri_to_term.keys.detect {|i| iri.index(i) == 0}
+      when u = iri_to_term.keys.detect {|i| iri.index(i) == 0  && i != iri}
         # Use a defined prefix
         prefix = iri_to_term[u.to_s]
         set_mapping(prefix, u)
@@ -695,7 +697,7 @@ module JSON::LD
         set_mapping(prefix, vocab.to_uri.to_s)
         iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
       else
-        debug "no mapping found for #{iri} in #{iri_to_term.inspect}"
+        debug " => no mapping found for #{iri} in #{iri_to_term.inspect}"
         nil
       end
       

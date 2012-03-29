@@ -108,7 +108,7 @@ module Fixtures
       include Spira::Resource
       type Test.TestCase
 
-      property :name,           :predicate => DC11.title,                   :type => XSD.string
+      property :name,           :predicate => RDF::DC.title,                :type => XSD.string
       property :purpose,        :predicate => Test.purpose,                 :type => XSD.string
       property :expected,       :predicate => Test.expectedResults
       property :inputDocument,  :predicate => Test.informationResourceInput

@@ -24,14 +24,7 @@ module JSON::LD
         debug("compact") {"Array[#{input.length}]"}
         result = depth {input.map {|v| compact(v, property)}}
         # FIXME: account for @set
-        case result.length
-        when 0
-          nil
-        when 1
-          result.first
-        else
-          result
-        end
+        result.length == 1 ? result.first : result
       when Hash
         # Otherwise, if value is an object
         result = Hash.ordered
@@ -49,8 +42,8 @@ module JSON::LD
           v = context.compact_value(property, input, :depth => @depth)
           debug("compact") {"value optimization, return as #{v.inspect}"}
           return v
-        when '@list', '@set'
-          # Otherwise, if the value contains only a @list or @set key, compact the array value
+        when '@list'
+          # Otherwise, if the value contains only a @list key, compact the array value
           # by performing this algorithm, ensuring that the result remains an array.
           # FIXME: should use active property, but if there are more than one mapping
           #   for the property with different coercions, how to pick best?
@@ -80,7 +73,7 @@ module JSON::LD
           compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
           debug {" => compacted key: #{compacted_key.inspect}"} unless compacted_key == key
 
-          result[compacted_key] = if %(@id @type).include?(key) && value.is_a?(String)
+          rval = if %(@id @type).include?(key) && value.is_a?(String)
             debug {" => compacted string for #{key}"}
             context.compact_iri(value, :position => :subject, :depth => @depth)
           elsif %(@id @type).include?(key) && value.is_a?(Hash) && value.keys == ['@id']
@@ -104,8 +97,17 @@ module JSON::LD
             # this algorithm on the value.
             compacted_value = depth {self.compact(value, compacted_key)}
             debug {" => compacted value: #{compacted_value.inspect}"}
+            
+            # If compacted key is subject to @set coercion, ensure that compacted value is expressed
+            # as an array
+            if !compacted_value.is_a?(Array) && context.container(compacted_key) == '@set'
+              compacted_value = [compacted_value].compact
+              debug {" => as @set: #{compacted_value.inspect}"}
+            end
             compacted_value
           end
+          
+          result[compacted_key] = rval unless rval.nil?
         end
         result
       else
