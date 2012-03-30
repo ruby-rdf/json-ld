@@ -76,6 +76,24 @@ describe JSON::LD::API do
           {"http://example.com/bar" => ["bar"]}
         ]
       },
+      "@type with CURIE" => {
+        :input => {
+          "@context" => {"ex" => "http://example.com/"},
+          "@type" => "ex:type"
+        },
+        :output => [
+          {"@type" => ["http://example.com/type"]}
+        ]
+      },
+      "@type with CURIE and muliple values" => {
+        :input => {
+          "@context" => {"ex" => "http://example.com/"},
+          "@type" => ["ex:type1", "ex:type2"]
+        },
+        :output => [
+          {"@type" => ["http://example.com/type1", "http://example.com/type2"]}
+        ]
+      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)

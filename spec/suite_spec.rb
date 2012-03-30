@@ -11,7 +11,7 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
-            #next unless t.is_a?(Fixtures::JSONLDTest::CompactTest)
+            #next unless t.is_a?(Fixtures::JSONLDTest::RDFTest)
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
               t.debug << "extra: #{t.extra.read}" if t.extraDocument

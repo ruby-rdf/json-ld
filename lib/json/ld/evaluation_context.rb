@@ -550,7 +550,7 @@ module JSON::LD
     # @raise [ProcessingError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     def compact_value(property, value, options = {})
-      raise ProcessingError::Lossy, "attempt to compact a non-object value" unless value.is_a?(Hash)
+      raise ProcessingError::Lossy, "attempt to compact a non-object value: #{value.inspect}" unless value.is_a?(Hash)
 
       depth(options) do
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}

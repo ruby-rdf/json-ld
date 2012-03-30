@@ -108,8 +108,12 @@ module JSON::LD
               when String
                 v = context.expand_iri(value, :position => position, :debug => @debug)
                 v.to_s unless v.nil?
+              when Array
+                # Otherwise, if the expanded property is @type and the value is an array, expand every entry according to IRI Expansion.
+                depth { value.map {|v| context.expand_iri(v, options.merge(:position => :property)).to_s} }
               else
-                # Otherwise, if the property is @type and the value is an array, expand every item according to IRI Expansion.
+                # FIXME: document?
+                # Otherwise, expand as a value
                 depth { expand(value, property, context, options) }
               end
               debug {"=> #{expanded_value.inspect}"}
