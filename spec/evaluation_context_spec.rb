@@ -439,7 +439,7 @@ describe JSON::LD::EvaluationContext do
       {
         "extra key" => {
           :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
-          :result => {"@context" => {"foo" => "http://example.com/foo"}}
+          :result => {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
         }
       }.each do |title, params|
         it title do

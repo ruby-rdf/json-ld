@@ -137,6 +137,7 @@ module JSON::LD
         ec
       when Hash
         new_ec = self.dup
+        new_ec.provided_context = context
         
         num_updates = 1
         while num_updates > 0 do
