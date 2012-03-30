@@ -159,12 +159,12 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b _:a . _:a :c :d .)
         serialize(input).should produce([
           {
-            "@id" => "http://example.com/a",
-            "http://example.com/b"  => {"@id" => "_:a"}
-          },
-          {
             "@id" => "_:a",
             "http://example.com/c"  => {"@id" => "http://example.com/d"}
+          },
+          {
+            "@id" => "http://example.com/a",
+            "http://example.com/b"  => {"@id" => "_:a"}
           },
         ], @debug)
       end
@@ -221,13 +221,13 @@ describe JSON::LD::API do
         @prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .)
         serialize(input).should produce([
           {
+            '@id'   => "_:a",
+            "http://example.com/b"  => {"@value" => "foo"}
+          },
+          {
             '@id'   => "http://example.com/a",
             "http://example.com/b"  => {"@list" => [{"@id" => "_:a"}]}
           },
-          {
-            '@id'   => "_:a",
-            "http://example.com/b"  => {"@value" => "foo"}
-          }
         ], @debug)
       end
     end
@@ -241,7 +241,7 @@ describe JSON::LD::API do
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug = [] << g.dump(:ttl)
-    triples = g.each_statement.to_a.sort_by {|s| s.to_ntriples }
+    triples = g.each_statement.to_a.sort_by {|s| "#{s.subject} #{s.predicate} #{s.object}" }
     JSON::LD::API.fromTriples(triples, options.merge(:debug => @debug))
   end
 end

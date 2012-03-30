@@ -145,7 +145,7 @@ module JSON::LD
       @debug = @options[:debug]
 
       # Turn graph into a triple array, ordered by subject
-      triples = @graph.each_statement.to_a.sort_by {|s| s.to_ntriples }
+      triples = @graph.each_statement.to_a.sort_by {|s| "#{s.subject} #{s.predicate} #{s.object}" }
       debug("writer") { "serialize #{triples.length} triples, #{@options.inspect}"}
       result = API.fromTriples(triples, @options)
 

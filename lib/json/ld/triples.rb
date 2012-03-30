@@ -19,6 +19,7 @@ module JSON::LD
     # @yieldparam [RDF::Statement] :statement
     def triples(path, element, subject, property, &block)
       debug(path) {"triples: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
+      @node_seq = "jld_t0000" unless subject || property
 
       traverse_result = depth do
         case element
@@ -51,7 +52,7 @@ module JSON::LD
             triples("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)
           else
             # 1.6) Generate a blank node identifier and set it as the active subject.
-            RDF::Node.new
+            node
           end
 
           # 1.7) For each key in the JSON object that has not already been processed, perform the following steps:
@@ -121,13 +122,13 @@ module JSON::LD
       debug(path) {"list: #{list.inspect}, p=#{property.inspect}"}
 
       last = list.pop
-      result = first_bnode = last ? RDF::Node.new : RDF.nil
+      result = first_bnode = last ? node : RDF.nil
 
       depth do
         list.each do |list_item|
           # Traverse the value
           triples("#{path}", list_item, first_bnode, RDF.first, &block)
-          rest_bnode = RDF::Node.new
+          rest_bnode = node
           add_triple("#{path}", first_bnode, RDF.rest, rest_bnode, &block)
           first_bnode = rest_bnode
         end
@@ -139,6 +140,13 @@ module JSON::LD
       result
     end
 
+    ##
+    # Create a new named node using the sequence
+    def node
+      n = RDF::Node.new(@node_seq)
+      @node_seq = @node_seq.succ
+      n
+    end
 
     ##
     # add a statement, object can be literal or URI or bnode
