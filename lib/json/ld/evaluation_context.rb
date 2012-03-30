@@ -237,10 +237,10 @@ module JSON::LD
           ctx[self.alias('@language')] = language.to_s if language
 
           # Mappings
-          mappings.keys.sort.each do |k|
+          mappings.keys.sort{|a, b| a.to_s <=> b.to_s}.each do |k|
             next unless term_valid?(k.to_s)
             debug {"=> mappings[#{k}] => #{mappings[k]}"}
-            ctx[k] = get_compact_iri(mappings[k].to_s) || mappings[k].to_s
+            ctx[k] = mappings[k].to_s
           end
 
           unless coercions.empty? && containers.empty?
@@ -252,7 +252,7 @@ module JSON::LD
               ctx[k] ||= Hash.ordered
               if ctx[k].is_a?(String)
                 defn = Hash.ordered
-                defn[self.alias("@id")] = ctx[k]
+                defn[self.alias("@id")] = get_compact_iri(ctx[k]) || ctx[k]
                 ctx[k] = defn
               end
 

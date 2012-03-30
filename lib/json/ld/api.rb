@@ -199,7 +199,7 @@ module JSON::LD
     #
     # @param [Array<RDF::Statement>] input
     # @param  [Hash{Symbol => Object}] options
-    # @return [Array<Hash>] the JSON-LD document in normalized form
+    # @return [Array<Hash>] the JSON-LD document in expanded form
     def self.fromTriples(input, options = {})
       result = nil
 
