@@ -11,7 +11,7 @@ describe JSON::LD::API do
         serialize(input).should produce([
         {
           '@id'         => "http://a/b",
-          "http://a/c"  => {"@id" => "http://a/d"}
+          "http://a/c"  => [{"@id" => "http://a/d"}]
         }], @debug)
       end
 
@@ -52,10 +52,10 @@ describe JSON::LD::API do
         serialize(input).
         should produce([{
           '@id'                                       => "http://xmlns.com/foaf/0.1/b",
-          '@type'                                     => "http://xmlns.com/foaf/0.1/class",
-          "http://purl.org/dc/elements/1.1/title"     => {"@value" => "title"},
-          "http://www.w3.org/2000/01/rdf-schema#label"=> {"@value" => "label"},
-          "http://xmlns.com/foaf/0.1/c"               => {"@id" => "http://xmlns.com/foaf/0.1/d"}
+          '@type'                                     => ["http://xmlns.com/foaf/0.1/class"],
+          "http://purl.org/dc/elements/1.1/title"     => [{"@value" => "title"}],
+          "http://www.w3.org/2000/01/rdf-schema#label"=> [{"@value" => "label"}],
+          "http://xmlns.com/foaf/0.1/c"               => [{"@id" => "http://xmlns.com/foaf/0.1/d"}]
         }], @debug)
       end
     
@@ -76,8 +76,8 @@ describe JSON::LD::API do
         serialize(input).
         should produce([{
           '@id'   => "http://example.com/b",
-          "http://example.com/c"      => {"@id" => "http://example.com/d"},
-          "http://example.com/e"      => {"@id" => "http://example.com/f"}
+          "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
+          "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
         }], @debug)
       end
     
@@ -90,8 +90,8 @@ describe JSON::LD::API do
         )
         serialize(input).
         should produce([
-          {'@id'  => "test-cases/0001", '@type' => "http://www.w3.org/2006/03/test-description#TestCase"},
-          {'@id'  => "test-cases/0002", '@type' => "http://www.w3.org/2006/03/test-description#TestCase"}
+          {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
+          {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]}
         ], @debug)
       end
     end
@@ -101,7 +101,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => {"@value" => "foo", "@type" => "http://example.com/d"}
+          "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
         }], @debug)
       end
 
@@ -109,7 +109,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => 1
+          "http://example.com/b"    => [1]
         }], @debug)
       end
 
@@ -117,7 +117,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
         serialize(input,).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => true
+          "http://example.com/b"    => [true]
         }], @debug)
       end
 
@@ -125,7 +125,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => {"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}
+          "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
         }], @debug)
       end
 
@@ -133,7 +133,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => 1.0E0
+          "http://example.com/b"    => [1.0E0]
         }], @debug)
       end
     
@@ -141,7 +141,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"@en-us .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => {"@value" => "foo", "@language" => "en-us"}
+          "http://example.com/b"    => [{"@value" => "foo", "@language" => "en-us"}]
         }], @debug)
       end
     end
@@ -151,7 +151,7 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
         serialize(input).should produce([{
           "@id" => "_:a",
-          "http://example.com/a"  => {"@id" => "http://example.com/b"}
+          "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
         }], @debug)
       end
     
@@ -160,11 +160,11 @@ describe JSON::LD::API do
         serialize(input).should produce([
           {
             "@id" => "_:a",
-            "http://example.com/c"  => {"@id" => "http://example.com/d"}
+            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
           },
           {
             "@id" => "http://example.com/a",
-            "http://example.com/b"  => {"@id" => "_:a"}
+            "http://example.com/b"  => [{"@id" => "_:a"}]
           },
         ], @debug)
       end
@@ -222,7 +222,7 @@ describe JSON::LD::API do
         serialize(input).should produce([
           {
             '@id'   => "_:a",
-            "http://example.com/b"  => {"@value" => "foo"}
+            "http://example.com/b"  => [{"@value" => "foo"}]
           },
           {
             '@id'   => "http://example.com/a",

@@ -6,6 +6,7 @@ module JSON::LD
 
     ##
     # Generate a JSON-LD array representation from an ordered array of RDF::Statement.
+    # Representation is in expanded form
     #
     # @param [Array<RDF::Statement>] input
     # @param  [Hash{Symbol => Object}] options
@@ -63,21 +64,17 @@ module JSON::LD
         if statement.predicate == RDF.type
           object = ec.expand_iri(statement.object)
           debug("@type") { object.inspect}
-          if last_entry == '@type' && value[last_entry].is_a?(Array)
+          if last_entry == '@type'
             # If value has an key/value pair of @type and an array,
             # append the string representation of object to that array.
             value[last_entry] << object
-          elsif last_entry == '@type'
-            # Otherwise, if value has an key of @type, replace that value with a new array containing the
-            # existing value and a string representation of object.
-            value[last_entry] = [value[last_entry], object]
           else
             # Otherwise, create a new entry in value with a key of @type and value being a string representation of object.
             last_entry = '@type'
-            value['@type'] = object
+            value['@type'] = [object]
           end
         else
-          # Let key be the string representation of predicate andlet object representation
+          # Let key be the string representation of predicate and let object representation
           # be object represented in expanded form as described in Value Expansion.
           key = ec.expand_iri(statement.predicate).to_s
           object = ec.expand_value(key, statement.object)
@@ -85,24 +82,21 @@ module JSON::LD
 
           debug("key/value") { "key: #{key}, :value #{object.inspect}"}
           
-          # If object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, replace
-          # object representation with {"@list": []}
-          object = {"@list" => []} if object_iri == RDF.nil.to_s
-
           # Non-normative, save a reference for the bnode to allow for easier list expansion
           bnode_map[object_iri] = {:obj => value, :key => key} if statement.object.is_a?(RDF::Node)
           
-          if last_entry == key && value[last_entry].is_a?(Array)
+          if last_entry == key && value[last_entry]
             # If value has an key/value pair of key and an array, append object representation to that array.
             value[last_entry] << object
-          elsif last_entry == key
-            # Otherwise, if value has an key of key, replace that value with a new array containing the
-            # existing value and object representation.
-            value[last_entry] = [value[last_entry], object]
+          elsif statement.object == RDF.nil
+            # If object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, replace
+            # object representation with {"@list": []}
+            last_entry = key
+            value[last_entry] = {"@list" => []}
           else
             # Otherwise, create a new entry in value with a key of key and object representation.
             last_entry = key
-            value[last_entry] = object
+            value[last_entry] = [object]
           end
         end
       end
