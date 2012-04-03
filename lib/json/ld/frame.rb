@@ -196,7 +196,32 @@ module JSON::LD
     # Does the subject property have the specified value
     # Expects that properties are in expanded (array) form
     def has_value?(subject, property, value)
-      @subjects.fetch(subject, {}).fetch(property, []).include?(value)
+      subject.fetch(property, []).any? {|v| compare_values(v, value)}
+    end
+
+    ##
+    # Compares two JSON-LD values for equality. Two JSON-LD values will be
+    # considered equal if:
+    #
+    # 1. They are both primitives of the same type and value.
+    # 2. They are both @values with the same @value, @type, and @language, OR
+    # 3. They both have @ids they are the same.
+    #
+    # @param v1 the first value.
+    # @param v2 the second value.
+    #
+    # @return true if v1 and v2 are considered equal, false if not.
+    def compare_values(v1, v2)
+      case v1
+      when Hash
+        v2.is_a?(Hash) && (
+          v1.has_key?('@id') ?
+            (v1['@id'] == v2['@id']) :
+            %(@value @type @language).all? {|p| v1.fetch(p, false) == v2.fetch(p, false)}
+        )
+      else
+        v1 == v2
+      end
     end
 
     def validate_frame(state, frame)
@@ -238,13 +263,25 @@ module JSON::LD
       end
 
       # recursively remove dependent dangling embeds
-      embeds.each do |id_dep, e|
-        if e.is_a?(Hash) && e.fetch(:parent, {})['@id'] == id_dep
-          embeds.delete(id_dep)
-          remove_dependents(e)
+      def remove_dependents(id, embeds)
+        debug("frame") {"remove dependents for #{id}"}
+
+        depth do
+          # get embed keys as a separate array to enable deleting keys in map
+          embeds.each do |id_dep, e|
+            p = e.fetch(:parent, {}) if e.is_a?(Hash)
+            next unless p.is_a?(Hash)
+            pid = p.fetch('@id', nil)
+            if pid == id
+              debug("frame") {"remove #{id_dep} from embeds"}
+              embeds.delete(id_dep)
+              remove_dependents(id_dep, embeds)
+            end
+          end
         end
       end
-      remove_dependents(id)
+      
+      remove_dependents(id, embeds)
     end
 
     ##

@@ -183,7 +183,9 @@ module JSON::LD
         # xxx) Add the given context to the output
         result = case compacted
         when Hash then [context.serialize.merge(compacted)]
-        when Array then compacted.map {|o| context.serialize.merge(o)}
+        when Array
+          ctx = context.serialize
+          compacted.map {|o| ctx.merge(o)}
         when String then [context.serialize.merge("@id" => compacted)]
         end
       end
