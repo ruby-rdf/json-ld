@@ -30,7 +30,7 @@ describe JSON::LD::Writer do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       serialize(input).should produce([{
         '@id'         => "http://a/b",
-        "http://a/c"  => {"@id" => "http://a/d"}
+        "http://a/c"  => [{"@id" => "http://a/d"}]
       }], @debug)
     end
 
@@ -86,24 +86,6 @@ describe JSON::LD::Writer do
         '@id'   => "db:Michael_Jackson",
         "dbo:artistOf" => {"@id" => "db:%28I_Can%27t_Make_It%29_Another_Day"}
       }, @debug)
-    end
-
-    it "should order literal values" do
-      input = %(@base <http://a/> . <b> <c> "e", "d" .)
-      serialize(input).
-      should produce([{
-        '@id'       => "http://a/b",
-        "http://a/c"  => [{"@value" => "d"}, {"@value" => "e"}]
-      }], @debug)
-    end
-
-    it "should order URI values" do
-      input = %(@base <http://a/> . <b> <c> <e>, <d> .)
-      serialize(input).
-      should produce([{
-        '@id'       => "http://a/b",
-        "http://a/c"  => [{"@id" => "http://a/d"}, {"@id" => "http://a/e"}]
-      }], @debug)
     end
 
     it "serializes multiple subjects" do

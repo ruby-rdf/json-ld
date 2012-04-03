@@ -144,8 +144,8 @@ module JSON::LD
     def write_epilogue
       @debug = @options[:debug]
 
-      # Turn graph into a triple array, ordered by subject
-      triples = @graph.each_statement.to_a.sort_by {|s| "#{s.subject} #{s.predicate} #{s.object}" }
+      # Turn graph into a triple array
+      triples = @graph.each_statement.to_a
       debug("writer") { "serialize #{triples.length} triples, #{@options.inspect}"}
       result = API.fromTriples(triples, @options)
 
