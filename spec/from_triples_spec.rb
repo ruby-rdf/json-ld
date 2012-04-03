@@ -15,50 +15,6 @@ describe JSON::LD::API do
         }], @debug)
       end
 
-      it "should order literal values" do
-        input = %(@base <http://a/> . <b> <c> "e", "d" .)
-        serialize(input).
-        should produce([{
-          '@id'       => "http://a/b",
-          "http://a/c"  => [
-            {"@value" => "d"},
-            {"@value" => "e"}
-          ]
-        }], @debug)
-      end
-
-      it "should order URI values" do
-        input = %(@base <http://a/> . <b> <c> <e>, <d> .)
-        serialize(input).
-        should produce([{
-          '@id'         => "http://a/b",
-          "http://a/c"  => [
-            {"@id" => "http://a/d"},
-            {"@id" => "http://a/e"}
-          ]
-        }], @debug)
-      end
-
-      it "should order properties" do
-        input = %(
-          @prefix : <http://xmlns.com/foaf/0.1/> .
-          @prefix dc: <http://purl.org/dc/elements/1.1/> .
-          @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-          :b :c :d .
-          :b dc:title "title" .
-          :b a :class .
-          :b rdfs:label "label" .
-        )
-        serialize(input).
-        should produce([{
-          '@id'                                       => "http://xmlns.com/foaf/0.1/b",
-          '@type'                                     => ["http://xmlns.com/foaf/0.1/class"],
-          "http://purl.org/dc/elements/1.1/title"     => [{"@value" => "title"}],
-          "http://www.w3.org/2000/01/rdf-schema#label"=> [{"@value" => "label"}],
-          "http://xmlns.com/foaf/0.1/c"               => [{"@id" => "http://xmlns.com/foaf/0.1/d"}]
-        }], @debug)
-      end
-    
       it "should generate object list" do
         input = %(@prefix : <http://example.com/> . :b :c :d, :e .)
         serialize(input).
@@ -159,13 +115,13 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b _:a . _:a :c :d .)
         serialize(input).should produce([
           {
-            "@id" => "_:a",
-            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
-          },
-          {
             "@id" => "http://example.com/a",
             "http://example.com/b"  => [{"@id" => "_:a"}]
           },
+          {
+            "@id" => "_:a",
+            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
+          }
         ], @debug)
       end
     end
@@ -221,12 +177,12 @@ describe JSON::LD::API do
         @prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .)
         serialize(input).should produce([
           {
-            '@id'   => "_:a",
-            "http://example.com/b"  => [{"@value" => "foo"}]
-          },
-          {
             '@id'   => "http://example.com/a",
             "http://example.com/b"  => {"@list" => [{"@id" => "_:a"}]}
+          },
+          {
+            '@id'   => "_:a",
+            "http://example.com/b"  => [{"@value" => "foo"}]
           },
         ], @debug)
       end
@@ -241,7 +197,7 @@ describe JSON::LD::API do
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug = [] << g.dump(:ttl)
-    triples = g.each_statement.to_a.sort_by {|s| "#{s.subject} #{s.predicate} #{s.object}" }
+    triples = g.each_statement.to_a
     JSON::LD::API.fromTriples(triples, options.merge(:debug => @debug))
   end
 end

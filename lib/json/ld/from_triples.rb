@@ -15,11 +15,13 @@ module JSON::LD
       array = []
       listMap = {}
       restMap = {}
+      subjectMap = {}
       bnode_map = {}
 
       value = nil
-      last_entry = nil
       ec = EvaluationContext.new
+
+      # Create a map for subject to object representation
 
       # For each triple in input
       input.each do |statement|
@@ -48,33 +50,35 @@ module JSON::LD
           next
         end
 
-        # If the last entry in array is not a JSON Object with an @id having a value of subject:
-        if !value.is_a?(Hash) || value['@id'] != subject
+        # If _subjectMap_ does not have an entry for subject
+        value = subjectMap[subject]
+        unless value
           debug("@id") { "new subject: #{subject}"}
           # Create a new JSON Object with key/value pair of @id and a string representation
           # of subject and use as value.
           value = Hash.ordered
           value['@id'] = subject
-          last_entry = nil
-          array << value
+
+          # Save value in _subjectMap_ for subject and append to _array_.
+          array << (subjectMap[subject] = value)
         end
-        # Otherwise, set _value_ to the last element in _array_.
+        # Otherwise, set _value_ to the value for subject in _subjectMap_.
         
         # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type:
         if statement.predicate == RDF.type
-          object = ec.expand_iri(statement.object)
+          object = ec.expand_iri(statement.object).to_s
           debug("@type") { object.inspect}
-          if last_entry == '@type'
-            # If value has an key/value pair of @type and an array,
-            # append the string representation of object to that array.
-            value[last_entry] << object
-          else
-            # Otherwise, create a new entry in value with a key of @type and value being a string representation of object.
-            last_entry = '@type'
-            value['@type'] = [object]
-          end
+          # append the string representation of object to the array value for the key @type, creating
+          # an entry if necessary
+          (value['@type'] ||= []) << object
+        elsif statement.object == RDF.nil
+          # Otherwise, if object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, let
+          # key be the string representation of predicate. Set the value
+          # for key to an empty @list representation {"@list": []}
+          key = ec.expand_iri(statement.predicate).to_s
+          value[key] = {"@list" => []}
         else
-          # Let key be the string representation of predicate and let object representation
+          # Otherwise, let key be the string representation of predicate and let object representation
           # be object represented in expanded form as described in Value Expansion.
           key = ec.expand_iri(statement.predicate).to_s
           object = ec.expand_value(key, statement.object)
@@ -84,20 +88,10 @@ module JSON::LD
           
           # Non-normative, save a reference for the bnode to allow for easier list expansion
           bnode_map[object_iri] = {:obj => value, :key => key} if statement.object.is_a?(RDF::Node)
-          
-          if last_entry == key && value[last_entry]
-            # If value has an key/value pair of key and an array, append object representation to that array.
-            value[last_entry] << object
-          elsif statement.object == RDF.nil
-            # If object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, replace
-            # object representation with {"@list": []}
-            last_entry = key
-            value[last_entry] = {"@list" => []}
-          else
-            # Otherwise, create a new entry in value with a key of key and object representation.
-            last_entry = key
-            value[last_entry] = [object]
-          end
+
+          # append the object object representation to the array value for key, creating
+          # an entry if necessary
+          (value[key] ||= []) << object
         end
       end
 
