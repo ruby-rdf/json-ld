@@ -27,7 +27,7 @@ module JSON::LD
         result.length == 1 ? result.first : result
       when Hash
         # Otherwise, if value is an object
-        result = Hash.ordered
+        result = {}
         
         if k = %w(@list @set @value).detect {|container| input.has_key?(container)}
           debug("compact") {"#{k}: container(#{property}) = #{context.container(property)}"}
@@ -109,7 +109,11 @@ module JSON::LD
           
           result[compacted_key] = rval unless rval.nil?
         end
-        result
+        
+        # Re-order result keys
+        r = Hash.ordered
+        result.keys.sort.each {|k| r[k] = result[k]}
+        r
       else
         # For other types, the compacted value is the input value
         debug("compact") {input.class.to_s}

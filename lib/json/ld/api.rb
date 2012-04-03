@@ -20,10 +20,10 @@ module JSON::LD
   class API
     include Expand
     include Compact
-    include Frame
-    #include Normalize
     include Triples
     include FromTriples
+    include Frame
+    #include Normalize
 
     attr_accessor :value
     attr_accessor :context
@@ -37,12 +37,19 @@ module JSON::LD
     # @param [Hash] options
     # @yield [api]
     # @yieldparam [API]
-    def initialize(input, context, options = {})
+    def initialize(input, context, options = {}, &block)
       @options = options
-      @value = input.respond_to?(:read) ? JSON.parse(input.read) : input
+      @value = input.dup if input
+      @value = JSON.parse(@value.read) if @value.respond_to?(:read)
       @context = EvaluationContext.new(options)
       @context = @context.parse(context) if context
-      yield(self) if block_given?
+      
+      if block_given?
+        case block.arity
+          when 0 then instance_eval(&block)
+          else block.call(self)
+        end
+      end
     end
     
     ##
@@ -96,7 +103,6 @@ module JSON::LD
         context ||= api.value.fetch('@context', nil)
       end
 
-      
       API.new(expanded, context, options) do |api|
         result = api.compact(api.value, nil)
 
@@ -120,13 +126,13 @@ module JSON::LD
     # @param [IO, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :object_embed (true)
+    # @option options [Boolean] :embed (true)
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
-    # @option options [Boolean] :explicit_inclusion (false)
+    # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output,
     #   they must be explicitly declared in the framing context.
-    # @option options [Boolean] :omit_missing_props (false)
+    # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD
     #   input should be omitted from the output.
     # @raise [InvalidFrame]
@@ -134,20 +140,52 @@ module JSON::LD
     #   The framed JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.frame(input, frame, options = {})
-      expanded_frame = result = nil
+      result = nil
       match_limit = 0
-      framing_context = {
-        :object_embed => true,
-        :explicit_inclusion => false,
-        :omit_missing_props => false
-      }.merge(options)
+      framing_state = {
+        :embed       => true,
+        :explicit    => false,
+        :omitDefault => false,
+        :embeds      => {},
+      }
+      framing_state[:embed] = options[:embed] if options.has_key?(:embed)
+      framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
+      framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
 
-      # Expand the input frame
-      expanded = expand(input)
+      # de-reference frame to create the framing object
+      frame = frame.respond_to?(:read) ? JSON.parse(frame.read) : frame
 
-      API.new(input, nil, options) do |api|
-        normalized_input = api.normalize(api.value, nil)
-        result = api.frame(normalized_input, expanded_frame, framing_context)
+      # Expand frame to simplify processing
+      expanded_frame = API.expand(frame)
+
+      # Initialize input using frame as context
+      API.new(input, nil, options) do
+        debug(".frame") {"context from frame: #{context.inspect}"}
+        debug(".frame") {"expanded frame: #{expanded_frame.inspect}"}
+        # Flatten input using frame context
+        flattened_input = depth {flatten}
+        debug(".frame") {"flattened input: #{flattened_input.inspect}"}
+
+        # the recursive algorithm takes this state, the set of subjects that are to be filtered
+        # (which is initialized to the subject map), the frame, and the "parent" tree node and its property.
+        @subjects = flattened_input.inject(Hash.ordered) {|memo, e| memo[e['@id']] = e; memo}
+        debug(".frame") {"subjects: #{@subjects.inspect}"}
+
+        result = []
+        frame(framing_state, @subjects.keys, expanded_frame[0], result, nil)
+        debug(".frame") {"result: #{result.inspect}"}
+        
+        # Initalize context from frame
+        @context = depth {@context.parse(frame['@context'])}
+        # Compact result
+        compacted = depth {compact(result, nil)}
+        
+        # xxx) Add the given context to the output
+        result = case compacted
+        when Hash then [context.serialize.merge(compacted)]
+        when Array then compacted.map {|o| context.serialize.merge(o)}
+        when String then [context.serialize.merge("@id" => compacted)]
+        end
       end
       result
     end

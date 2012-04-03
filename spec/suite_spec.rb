@@ -11,7 +11,8 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
-            #next unless t.is_a?(Fixtures::JSONLDTest::RDFTest)
+            next unless t.is_a?(Fixtures::JSONLDTest::FrameTest)
+            #next unless t.inputDocument.to_s =~/0014/
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
               t.debug << "extra: #{t.extra.read}" if t.extraDocument
@@ -30,7 +31,19 @@ describe JSON::LD do
                 expected = JSON.load(t.expect)
                 result.should produce(expected, t.debug)
               when Fixtures::JSONLDTest::FrameTest
-                pending("Framing")
+                case t.inputDocument.to_s
+                when /0005|0009/
+                  pending "default property representation"
+                #when /0007|0008|0012/
+                #  pending "value ordering"
+                when /0013/
+                  pending "flattening algorithm, as forgotten and spotted aren't triples"
+                end
+                result = JSON::LD::API.frame(t.input, t.extra,
+                                              :base_uri => t.inputDocument,
+                                              :debug => t.debug)
+                expected = JSON.load(t.expect)
+                result.should produce(expected, t.debug)
               when Fixtures::JSONLDTest::NormalizeTest
                 pending("Normalization")
               when Fixtures::JSONLDTest::RDFTest

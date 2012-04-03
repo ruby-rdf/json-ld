@@ -370,6 +370,14 @@ describe JSON::LD::API do
             "http://example.com/foo" => [{"@value" => "bar"}]
           }]
         },
+        "unknown keyword" => {
+          :input => {
+            "@foo" => "bar"
+          },
+          :output => [{
+            "@foo" => ["bar"]
+          }]
+        }
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)

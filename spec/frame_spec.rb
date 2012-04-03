@@ -5,14 +5,298 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  describe ".frame", :pending => true do
+  describe ".frame" do
+    {
+      "frame with @type matches subject with @type" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@type" => "ex:Type1"
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1"
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub2",
+            "@type" => "ex:Type2"
+          },
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1"
+        }]
+      },
+      "implicitly includes unframed properties" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@type" => "ex:Type1"
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:prop1" => "Property 1",
+          "ex:prop2" => {"@id" => "ex:Obj1"}
+        }]
+      },
+      "explicitly excludes unframed properties" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@explicit" => true,
+          "@type" => "ex:Type1"
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1"
+        }]
+      },
+      "explicitly includes unframed properties" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@explicit" => false,
+          "@type" => "ex:Type1"
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:prop1" => "Property 1",
+          "ex:prop2" => {"@id" => "ex:Obj1"}
+        }]
+      },
+      "frame without @type matches only subjects containing listed properties (duck typing)" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "ex:prop1" => {},
+          "ex:prop2" => {}
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "ex:prop1" => "Property 1"
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub2",
+            "ex:prop2" => "Property 2"
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub3",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => "Property 2"
+          },
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub3",
+          "ex:prop1" => "Property 1",
+          "ex:prop2" => "Property 2"
+        }]
+      },
+      "embed matched frames" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@type" => "ex:Type1",
+          "ex:includes" => {
+            "@type" => "ex:Type2"
+          }
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:includes" => {"@id" => "ex:Sub2"}
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub2",
+            "@type" => "ex:Type2",
+            "ex:includes" => {"@id" => "ex:Sub1"}
+          },
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:includes" => {
+            "@id" => "ex:Sub2",
+            "@type" => "ex:Type2",
+            "ex:includes" => {"@id" => "ex:Sub1"}
+          }
+        }]
+      },
+      "multiple matches" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@type" => "ex:Type1"
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1"
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub2",
+            "@type" => "ex:Type1"
+          },
+        ],
+        :output => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1"
+          },
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub2",
+            "@type" => "ex:Type1"
+          },
+        ]
+      },
+      "non-existent framed properties create empty property" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
+          "@type" => "ex:Type1",
+          "ex:null" => []
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:prop1" => "Property 1",
+          "ex:prop2" => {"@id" => "ex:Obj1"},
+          "ex:null" => []
+        }]
+      },
+      "non-existent framed properties create default property" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
+          "@type" => "ex:Type1",
+          "ex:null" => [{"@default" => "foo"}]
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:prop1" => "Property 1",
+          "ex:prop2" => {"@id" => "ex:Obj1"},
+          "ex:null" => ["foo"]
+        }]
+      },
+      "mixed content" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "ex:mixed" => {"@embed" => false}
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "ex:mixed" => [
+              {"@id" => "ex:Sub2"},
+              "literal1"
+            ]
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "ex:mixed" => [
+            {"@id" => "ex:Sub2"},
+            "literal1"
+          ]
+        }]
+      },
+      "no embedding" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "ex:embed" => {"@embed" => false}
+        },
+        :input => [
+          {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "ex:Sub1",
+            "ex:embed" => {
+              "@id" => "ex:Sub2",
+              "ex:prop" => "property"
+            }
+          }
+        ],
+        :output => [{
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "ex:embed" =>  {"@id" => "ex:Sub2"}
+        }]
+      },
+    }.each do |title, params|
+      it title do
+        @debug = []
+        jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
+        jld.should produce(params[:output], @debug)
+      end
+    end
   end
   
   describe ".flatten" do
     {
       "single object" => {
         :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :output => [{"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s}]
+        :output => [{"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}]
       },
       "embedded object" => {
         :input => {
@@ -20,21 +304,21 @@ describe JSON::LD::API do
             "foaf" => RDF::FOAF.to_s
           },
           "@id" => "http://greggkellogg.net/foaf",
-          "@type" => "foaf:PersonalProfile",
-          "foaf:primaryTopic" => {
+          "@type" => ["foaf:PersonalProfile"],
+          "foaf:primaryTopic" => [{
             "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => "foaf:Person"
-          }
+            "@type" => ["foaf:Person"]
+          }]
         },
         :output => [
           {
             "@id" => "http://greggkellogg.net/foaf",
-            "@type" => RDF::FOAF.PersonalProfile.to_s,
-            RDF::FOAF.primaryTopic.to_s => {"@id" => "http://greggkellogg.net/foaf#me"}
+            "@type" => [RDF::FOAF.PersonalProfile.to_s],
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
           },
           {
             "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => RDF::FOAF.Person.to_s
+            "@type" => [RDF::FOAF.Person.to_s]
           }
         ]
       },
@@ -51,13 +335,13 @@ describe JSON::LD::API do
         },
         :output => [
           {
-            "@id" => "_:jld_t0000",
-            "@type" => RDF::FOAF.Person.to_s
+            "@id" => "http://greggkellogg.net/foaf",
+            "@type" => [RDF::FOAF.PersonalProfile.to_s],
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:jld_t0000"}]
           },
           {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => RDF::FOAF.PersonalProfile.to_s,
-            RDF::FOAF.primaryTopic.to_s => {"@id" => "_:jld_t0000"}
+            "@id" => "_:jld_t0000",
+            "@type" => [RDF::FOAF.Person.to_s]
           }
         ]
       }
