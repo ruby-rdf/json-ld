@@ -1,5 +1,3 @@
-require 'json/ld/utils'
-
 module JSON::LD
   module Compact
     include Utils

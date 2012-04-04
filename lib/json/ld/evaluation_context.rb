@@ -613,15 +613,6 @@ module JSON::LD
       end
     end
 
-    ##
-    # Is value a subject? A value is a subject if it is a Hash
-    # with more than one key, or with an @id key, but not with @value.
-    def subject?(value)
-      value.is_a?(Hash) &&
-        !value.has_key?('@value') &&
-        (value.has_key?('@id') || value.keys.length > 1)
-    end
-
     def inspect
       v = %w([EvaluationContext)
       v << "mappings[#{mappings.keys.length}]=#{mappings}"

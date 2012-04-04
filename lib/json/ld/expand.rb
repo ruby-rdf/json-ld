@@ -1,5 +1,3 @@
-require 'json/ld/utils'
-
 module JSON::LD
   ##
   # Expand module, used as part of API

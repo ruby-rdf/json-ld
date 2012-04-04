@@ -1,5 +1,3 @@
-require 'json/ld/utils'
-
 module JSON::LD
   module Frame
     include Utils
@@ -128,6 +126,69 @@ module JSON::LD
             add_frame_output(state, parent, property, output)
           end
           output
+        end
+      end
+    end
+
+    ##
+    # Build hash of subjects used for framing. Also returns flattened representation
+    # of input.
+    #
+    # @param [Hash{String => Hash}] subjects
+    #   destination for mapped subjects and their Object representations
+    # @param [Array, Hash] input
+    #   JSON-LD in expanded form
+    # @param [BlankNodeNamer] namer
+    # @return
+    #   input with subject definitions changed to references
+    def get_framing_subjects(subjects, input, namer)
+      depth do
+        debug("framing subjects") {"input: #{input.inspect}"}
+        case input
+        when Array
+          input.map {|o| get_framing_subjects(subjects, o, namer)}
+        when Hash
+          case
+          when subject?(input) || subject_reference?(input)
+            # Get name for subject, mapping old blank node identifiers to new
+            name = blank_node?(input) ? namer.get_name(input.fetch('@id', nil)) : input['@id']
+            subject = subjects[name] ||= {'@id' => name}
+          
+            input.each do |prop, value|
+              case prop
+              when '@id'
+                # Skip @id, already assigned
+              when /^@/
+                # Copy other keywords
+                subject[prop] = value
+              else
+                case value
+                when Hash
+                  # Special case @list, which is not in expanded form
+                  raise "Unexpected hash value: #{value.inspect}" unless value.has_key?('@list')
+                
+                  # Map entries replacing subjects with subject references
+                  subject[prop] = {"@list" =>
+                    value['@list'].map {|o| get_framing_subjects(subjects, o, namer)}
+                  }
+                when Array
+                  # Map array entries
+                  subject[prop] = get_framing_subjects(subjects, value, namer)
+                else
+                  raise "unexpected value: #{value.inspect}"
+                end
+              end
+            end
+            
+            # Return as subject reference
+            {"@id" => name}
+          else
+            # At this point, it's not a subject or a reference, just return input
+            input
+          end
+        else
+          # Returns equivalent representation
+          input
         end
       end
     end

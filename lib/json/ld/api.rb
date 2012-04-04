@@ -1,5 +1,4 @@
 require 'open-uri'
-require 'json/ld/utils'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/frame'
@@ -162,13 +161,14 @@ module JSON::LD
       API.new(input, nil, options) do
         debug(".frame") {"context from frame: #{context.inspect}"}
         debug(".frame") {"expanded frame: #{expanded_frame.inspect}"}
-        # Flatten input using frame context
-        flattened_input = depth {flatten}
-        debug(".frame") {"flattened input: #{flattened_input.inspect}"}
 
-        # the recursive algorithm takes this state, the set of subjects that are to be filtered
-        # (which is initialized to the subject map), the frame, and the "parent" tree node and its property.
-        @subjects = flattened_input.inject(Hash.ordered) {|memo, e| memo[e['@id']] = e; memo}
+        # Expand input to simplify processing
+        expanded_input = depth {expand(value, nil, context)}
+        debug(".frame") {"expanded input: #{expanded_input.inspect}"}
+
+        # Get framing subjects from expanded input, replacing Blank Node identifiers as necessary
+        @subjects = Hash.ordered
+        depth {get_framing_subjects(@subjects, expanded_input, BlankNodeNamer.new("t"))}
         debug(".frame") {"subjects: #{@subjects.inspect}"}
 
         result = []

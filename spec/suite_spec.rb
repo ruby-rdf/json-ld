@@ -34,8 +34,6 @@ describe JSON::LD do
                 case t.inputDocument.to_s
                 when /0005|0009/
                   pending "default property representation"
-                #when /0007|0008|0012/
-                #  pending "value ordering"
                 when /0013/
                   pending "flattening algorithm, as forgotten and spotted aren't triples"
                 end

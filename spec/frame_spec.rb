@@ -292,11 +292,16 @@ describe JSON::LD::API do
     end
   end
   
-  describe ".flatten" do
+  describe "#get_framing_subjects" do
     {
       "single object" => {
         :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :output => [{"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}]
+        :subjects => %w(http://example.com),
+        :output => {
+          "http://example.com" => {
+            "@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]
+          }
+        }
       },
       "embedded object" => {
         :input => {
@@ -310,17 +315,18 @@ describe JSON::LD::API do
             "@type" => ["foaf:Person"]
           }]
         },
-        :output => [
-          {
+        :subjects => %w(http://greggkellogg.net/foaf http://greggkellogg.net/foaf#me),
+        :output => {
+          "http://greggkellogg.net/foaf" => {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
           },
-          {
+          "http://greggkellogg.net/foaf#me" => {
             "@id" => "http://greggkellogg.net/foaf#me",
             "@type" => [RDF::FOAF.Person.to_s]
           }
-        ]
+        }
       },
       "embedded anon" => {
         :input => {
@@ -333,26 +339,30 @@ describe JSON::LD::API do
             "@type" => "foaf:Person"
           }
         },
-        :output => [
-          {
+        :subjects => %w(http://greggkellogg.net/foaf _:t0),
+        :output => {
+          "http://greggkellogg.net/foaf" => {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:jld_t0000"}]
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
           },
-          {
-            "@id" => "_:jld_t0000",
+          "_:t0" => {
+            "@id" => "_:t0",
             "@type" => [RDF::FOAF.Person.to_s]
           }
-        ]
+        }
       }
     }.each do |title, params|
       it title do
         @debug = []
+        @subjects = Hash.ordered
         jld = nil
         JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
-          jld = api.flatten
+          expanded_value = api.expand(api.value, nil, api.context)
+          api.get_framing_subjects(@subjects, expanded_value, JSON::LD::BlankNodeNamer.new("t"))
         end
-        jld.should produce(params[:output], @debug)
+        @subjects.keys.should produce(params[:subjects], @debug)
+        @subjects.should produce(params[:output], @debug)
       end
     end
   end
