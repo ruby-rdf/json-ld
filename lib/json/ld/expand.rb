@@ -19,10 +19,18 @@ module JSON::LD
         # 1) If element is an array, process each item in element recursively using this algorithm,
         #    passing copies of the active context and active property and removing null entries.
         depth do
-          value = input.map do |v|
+          input.map do |v|
             raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array)
             expand(v, property, context, options)
-          end.compact
+          end.map do |v|
+            # Flatten included @set
+            if v.is_a?(Hash) && v.has_key?('@set')
+              debug("expand") {"flatten #{v} in array context"}
+              v['@set']
+            else
+              v
+            end
+          end.flatten.compact
         end
       when Hash
         # 2) Otherwise, if element is an object
@@ -48,12 +56,18 @@ module JSON::LD
             end
             expanded_key = expanded_key.to_s
 
+            # 2.2.x) If expanded key is @value, and value is nil, skip the entire object
+            if expanded_key == '@value' && value.nil?
+              debug {"skip nil @value: #{value.inspect}"}
+              return nil
+            end
+
             # 2.2.2) If value is null, skip this key/value pair and remove key from value
             if value.nil? && expanded_key != '@context'
               debug {"skip nil value: #{value.inspect}"}
               next
             end
-          
+
             # 2.2.3) Otherwise, if value is a JSON object having either a @value, @list, or @set key with a null value,
             #       skip this key/value pair.
             # FIXME: could value be nil only after expansion?

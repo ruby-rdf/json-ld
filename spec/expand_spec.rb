@@ -344,6 +344,16 @@ describe JSON::LD::API do
           :output => [{
             "http://example.com/foo" => []
           }]
+        },
+        "@set with null @value" => {
+          :input => {
+            "http://example.com/foo" => [
+              {"@value" => nil, "@type" => "http://example.org/Type"}
+            ]
+          },
+          :output => [{
+            "http://example.com/foo" => []
+          }]
         }
       }.each do |title, params|
         it title do
@@ -432,6 +442,56 @@ describe JSON::LD::API do
     end
 
     context "sets" do
+      {
+        "empty" => {
+          :input => {
+            "http://example.com/foo" => {"@set" => []}
+          },
+          :output => [{
+            "http://example.com/foo" => []
+          }]
+        },
+        "coerced empty" => {
+          :input => {
+            "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
+            "http://example.com/foo" => []
+          },
+          :output => [{
+            "http://example.com/foo" => []
+          }]
+        },
+        "coerced single element" => {
+          :input => {
+            "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
+            "http://example.com/foo" => [ "foo" ]
+          },
+          :output => [{
+            "http://example.com/foo" => [ "foo" ]
+          }]
+        },
+        "coerced multiple elements" => {
+          :input => {
+            "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
+            "http://example.com/foo" => [ "foo", "bar" ]
+          },
+          :output => [{
+            "http://example.com/foo" => [ "foo", "bar" ]
+          }]
+        },
+        "array containing set" => {
+          :input => {
+            "http://example.com/foo" => [{"@set" => []}]
+          },
+          :output => [{
+            "http://example.com/foo" => []
+          }]
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
     end
 
     context "exceptions" do
