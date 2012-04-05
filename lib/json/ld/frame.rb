@@ -152,6 +152,7 @@ module JSON::LD
           when subject?(input) || subject_reference?(input)
             # Get name for subject, mapping old blank node identifiers to new
             name = blank_node?(input) ? namer.get_name(input.fetch('@id', nil)) : input['@id']
+            debug("framing subjects") {"new subject: #{name.inspect}"} unless subjects.has_key?(name)
             subject = subjects[name] ||= {'@id' => name}
           
             input.each do |prop, value|

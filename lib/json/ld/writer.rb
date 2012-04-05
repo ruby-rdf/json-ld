@@ -165,14 +165,7 @@ module JSON::LD
         result = API.compact(result, context, nil, @options)
       end
 
-      json_state = JSON::State.new(
-        :indent       => "  ",
-        :space        => " ",
-        :space_before => "",
-        :object_nl    => "\n",
-        :array_nl     => "\n"
-      )
-      @output.write(result.to_json(json_state))
+      @output.write(result.to_json(JSON_STATE))
     end
   end
 end

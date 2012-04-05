@@ -305,9 +305,7 @@ describe JSON::LD::API do
       },
       "embedded object" => {
         :input => {
-          "@context" => {
-            "foaf" => RDF::FOAF.to_s
-          },
+          "@context" => {"foaf" => RDF::FOAF.to_s},
           "@id" => "http://greggkellogg.net/foaf",
           "@type" => ["foaf:PersonalProfile"],
           "foaf:primaryTopic" => [{
@@ -330,9 +328,7 @@ describe JSON::LD::API do
       },
       "embedded anon" => {
         :input => {
-          "@context" => {
-            "foaf" => RDF::FOAF.to_s
-          },
+          "@context" => {"foaf" => RDF::FOAF.to_s},
           "@id" => "http://greggkellogg.net/foaf",
           "@type" => "foaf:PersonalProfile",
           "foaf:primaryTopic" => {
@@ -351,7 +347,7 @@ describe JSON::LD::API do
             "@type" => [RDF::FOAF.Person.to_s]
           }
         }
-      }
+      },
     }.each do |title, params|
       it title do
         @debug = []

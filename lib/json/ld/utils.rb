@@ -27,7 +27,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def blank_node?(value)
-      subject?(value) && value.fetch('@id', '_:')[0,2] == '_:'
+      value.is_a?(Hash) && value.fetch('@id', '_:')[0,2] == '_:'
     end
 
     private
@@ -73,13 +73,13 @@ module JSON::LD
       if old && self.has_key?(old)
         self[old]
       elsif old
-        self[old] = @prefix
+        self[old] = @prefix.dup
         @prefix.succ!
         self[old]
       else
         # Not referenced, just return a new unique value
         cur = @prefix
-        @prefix.succ
+        @prefix.succ!
         cur
       end
     end

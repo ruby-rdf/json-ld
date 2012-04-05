@@ -156,20 +156,20 @@ module JSON::LD
 
       # Expand frame to simplify processing
       expanded_frame = API.expand(frame)
+      
+      # Expand input to simplify processing
+      expanded_input = API.expand(input)
 
       # Initialize input using frame as context
-      API.new(input, nil, options) do
+      API.new(expanded_input, nil, options) do
         debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"expanded frame: #{expanded_frame.inspect}"}
-
-        # Expand input to simplify processing
-        expanded_input = depth {expand(value, nil, context)}
-        debug(".frame") {"expanded input: #{expanded_input.inspect}"}
+        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
+        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Get framing subjects from expanded input, replacing Blank Node identifiers as necessary
         @subjects = Hash.ordered
-        depth {get_framing_subjects(@subjects, expanded_input, BlankNodeNamer.new("t"))}
-        debug(".frame") {"subjects: #{@subjects.inspect}"}
+        depth {get_framing_subjects(@subjects, value, BlankNodeNamer.new("t"))}
+        debug(".frame") {"subjects: #{@subjects.to_json(JSON_STATE)}"}
 
         result = []
         frame(framing_state, @subjects.keys, expanded_frame[0], result, nil)
