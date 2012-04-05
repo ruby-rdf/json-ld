@@ -11,11 +11,8 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
-            #next unless t.is_a?(Fixtures::JSONLDTest::FrameTest)
-            #next unless t.inputDocument.to_s =~/0010/
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-              #debugger
               case t
               when Fixtures::JSONLDTest::CompactTest
                 t.debug << "context: #{t.extra.read}" if t.extraDocument

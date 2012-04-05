@@ -64,7 +64,7 @@ module Fixtures
 
     class Manifest < Spira::Base
       type Jld.Manifest
-      property :name,       :predicate => DC11.title,         :type => XSD.string
+      property :name,       :predicate => RDF::DC.title,         :type => XSD.string
       property :comment,    :predicate => RDF::RDFS.comment,  :type => XSD.string
       property :sequence,   :predicate => Jld.sequence
       
