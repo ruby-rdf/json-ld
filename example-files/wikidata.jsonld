@@ -1,0 +1,42 @@
+{
+  "@context": {
+    "titles": "http://purl.org/dc/terms/title",
+    "description": "http://purl.org/dc/terms/description",
+    "label": "http://www.w3.org/2000/01/rdf-schema#label",
+    "en": "http://meta.wikimedia.org/language#en",
+    "de": "http://meta.wikimedia.org/language#de",
+    "value": "@value",
+    "entity": "@id"
+  },
+  "entity" : "q7",
+  "titles" : {
+    "en" : {
+      "@language" : "en",
+      "value" : "Georgia_(country)"
+    },
+    "de" : {
+      "@language" : "de",
+      "value" : "Georgien"
+    }
+  },
+  "label" : {
+    "en" : {
+      "@language" : "en",
+      "value" : "Georgia"
+    },
+    "de" : {
+      "@language" : "de",
+      "value" : "Georgien"
+    }
+  },
+  "description" : {
+    "en" : {
+      "@language" : "en",
+      "value" : "A central-asian country"
+    },
+    "de" : {
+      "@language" : "de",
+      "value" : "Land im Kaukasus"
+    }
+  }
+}
