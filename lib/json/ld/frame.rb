@@ -231,6 +231,14 @@ module JSON::LD
 
     ##
     # Returns true if the given subject matches the given frame.
+    #
+    # Matches either based on explicit type inclusion where the subject
+    # has any type listed in the frame. If the frame has empty types defined
+    # matches subjects not having a @type. If the frame has a type of {} defined
+    # matches subjects having any type defined.
+    #
+    # Otherwise, does duck typing, where the subject must have all of the properties
+    # defined in the frame.
     # 
     # @param [Hash{Symbol => Object}] state the current frame state.
     # @param [Hash{String => Object}] subject the subject to check.
@@ -244,7 +252,9 @@ module JSON::LD
         raise "subject @type must be an array: #{subject_types.inspect}" unless subject_types.is_a?(Array)
         # If frame has an @type, use it for selecting appropriate subjects.
         debug("frame") {"filter subject: #{subject_types.inspect} has any of #{types.inspect}"}
-        subject_types.any? {|t| types.include?(t)}
+
+        # Check for type wild-card, or intersection
+        types == [{}] ? !subject_types.empty? : subject_types.any? {|t| types.include?(t)}
       else
         # Duck typing, for subjects not having a type, but having @id
         
