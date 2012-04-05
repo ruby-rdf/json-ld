@@ -18,9 +18,10 @@ module JSON::LD
       when Array
         # 1) If element is an array, process each item in element recursively using this algorithm,
         #    passing copies of the active context and active property and removing null entries.
+        #   If any result is a JSON Object with a property of @set (or alias thereof), remove that object,
+        #   and append the array value to element.
         depth do
           input.map do |v|
-            #raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array)
             expand(v, property, context, options)
           end.map do |v|
             # Flatten included @set
@@ -34,8 +35,8 @@ module JSON::LD
         end
       when Hash
         # 2) Otherwise, if element is an object
-        # 2.1) If element has a @context property, update the active context according to the steps outlined in
-        #   Context Processing and remove the @context property.
+        # 2.1) If element has a @context property, update the active context according to the steps outlined
+        #   in Context Processing and remove the @context property.
         if input.has_key?('@context')
           context = context.parse(input.delete('@context'))
           debug("expand") {"evaluation context: #{context.inspect}"}
@@ -45,30 +46,32 @@ module JSON::LD
           output_object = Hash.ordered
           # 2.2) For each property and value in element:
           input.each do |key, value|
-            # 2.2.1) Set property as active property and the result of performing IRI Expansion on property as expanded property.
+            # 2.2.1) Set property as active property and the result of performing IRI Expansion on property as
+            #   expanded property.
             expanded_key = context.expand_iri(key, :position => :predicate, :quiet => true)
             debug("expand key") {"#{key}, expanded: #{expanded_key}, value: #{value.inspect}"}
           
-            # 2.2.x) If key does not expand to a keyword or absolute IRI, skip this key/value pair and remove from value
+            # 2.2.2) If property does not expand to a keyword or absolute IRI, remove property from element
+            #   and continue to the next property from element
             if expanded_key.nil?
               debug {"skip nil key"}
               next
             end
             expanded_key = expanded_key.to_s
 
-            # 2.2.x) If expanded key is @value, and value is nil, skip the entire object
+            # 2.2.3) If expanded property is @value and value is null, skip further processing and return null as the expanded version of element
             if expanded_key == '@value' && value.nil?
               debug {"skip nil @value: #{value.inspect}"}
               return nil
             end
 
-            # 2.2.2) If value is null, skip this key/value pair and remove key from value
+            # 2.2.4) If value is null, skip this key/value pair and remove key from value
             if value.nil? && expanded_key != '@context'
               debug {"skip nil value: #{value.inspect}"}
               next
             end
 
-            # 2.2.3) Otherwise, if value is a JSON object having either a @value, @list, or @set key with a null value,
+            # 2.2.5) Otherwise, if value is a JSON object having either a @value, @list, or @set key with a null value,
             #       skip this key/value pair.
             # FIXME: could value be nil only after expansion?
             if value.is_a?(Hash)
@@ -81,13 +84,14 @@ module JSON::LD
                 next
               end
 
-              # 2.2.4) Otherwise, if value is a JSON object having a @set key, replace value with the value of @set.
+              # 2.2.6) If value is a JSON object having a @set property (or an alias thereof) with a non-null
+              #   value, replace value with the value of @set.
               if expanded_keys.include?('@set')
                 debug {"=> #{value['@set'].inspect}"}
                 value = value['@set']
               end
 
-              # 2.2.x) Otherwise, if value is a JSON object having a @list key, that value MUST
+              # 2.2.7) Otherwise, if value is a JSON object having a @list key, that value MUST
               #   be an array. Process each entry in that array recursively using this algorithm
               #   passing copies of the active context and active property removing all items that equal to null.
               #   Add an entry in the output object for expanded property with value and continue to the
@@ -108,9 +112,8 @@ module JSON::LD
               # A new object starts a new context for defining lists
               options = options.merge(:in_list => false) if options[:in_list]
 
-              # If the property is @id and the value is a string, expand the value according to IRI Expansion.
-              # Otherwise, if the property is @type and the value is a string expand value according to IRI Expansion.
-              # If element has no @value property, replace value with an array whose only value is the expanded value
+              # 2.2.8) If the property is @id and the value is a string, expand the value according to IRI Expansion.
+              # 2.2.9) Otherwise, if the property is @type and the value is a string expand value according to IRI Expansion.
               position = if expanded_key == '@type' && input.keys.detect {|k| context.expand_iri(k, :quiet => true) == '@value'}
                 :datatype
               else
@@ -129,14 +132,7 @@ module JSON::LD
                 depth { expand(value, property, context, options) }
               end
               debug {"=> #{expanded_value.inspect}"}
-              # If value expands to null and object contains only the @id key, abort processing this object
-              # and return null
               if expanded_value.nil?
-                if expanded_key == '@id' && input.keys == ['@id']
-                  debug("expand") {"return because of nil @id"}
-                  return nil
-                end
-
                 debug("expand") {"skip nil #{value.inspect}"}
                 next
               end
@@ -152,20 +148,21 @@ module JSON::LD
               output_object[expanded_key] = expanded_value
               debug {" => #{expanded_value.inspect}"}
             when '@value', '@language'
-              # Otherwise, if the property is @value, the value is not subject to further expansion.
+              # 2.2.10) Otherwise, if the expanded property is @value or @language, the value is not subject to further expansion.
               raise ProcessingError::Lossy, "Value of #{expanded_key} must be a string, was #{value.inspect}" unless value.is_a?(String)
               output_object[expanded_key] = value
               debug {" => #{output_object[expanded_key].inspect}"}
             when '@list'
               raise ProcessingError::ListOfLists, "A list may not contain another list"
             when '@graph'
-              # value must be an array, expand values of the array
+              # Otherwise, if the expanded property is @graph, replace the entire object with the result of
+              #   performing this algorithm on the members of the value and terminate further processing of this object
               raise ProcessingError, "Value of @graph must be an array" unless value.is_a?(Array)
               output_object = depth { expand(value, property, context, options) } || []
             else
-              # Otherwise, process value as follows:
+              # 2.2.12) process value as follows:
               if value.is_a?(Array)
-                # 2.2.4) If the value is an array, and active property is subject to @list expansion,
+                # 2.2.12.1) If the value is an array, and active property is subject to @list expansion,
                 #   replace the value with a new object where the key is @list and value set to the current value
                 #   updated by recursively using this algorithm.
                 if context.container(key) == '@list'
@@ -174,20 +171,20 @@ module JSON::LD
                   value = {"@list" => value}
                 end
               else
-                # Otherwise, if value is not an array, replace value with an array containing value
+                # 2.2.12.2) Otherwise, if value is not an array, replace value with an array containing value
                 value = [value]
               end
             
-              # 2.3.x) process each item in the array recursively using this algorithm,
+              # 2.2.12.3) process each item in the array recursively using this algorithm,
               #   passing copies of the active context and active property
               value = depth {expand(value, key, context, options)} if value.is_a?(Array)
 
               if output_object.has_key?(expanded_key)
-                # 2.2.x) If output object already contains an entry for expanded property, add the expanded value to
+                # 2.2.13) If output object already contains an entry for expanded property, add the expanded value to
                 #  the existing value,
                 output_object[expanded_key] += value
               else
-                #  Otherwise, add expanded property to output object with expanded value.
+                #  2.2.14) Otherwise, add expanded property to output object with expanded value.
                 output_object[expanded_key] = value
               end
               debug {" => #{value.inspect}"}
