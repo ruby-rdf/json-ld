@@ -20,7 +20,7 @@ module JSON::LD
         #    passing copies of the active context and active property and removing null entries.
         depth do
           input.map do |v|
-            raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array)
+            #raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array)
             expand(v, property, context, options)
           end.map do |v|
             # Flatten included @set
@@ -36,7 +36,7 @@ module JSON::LD
         # 2) Otherwise, if element is an object
         # 2.1) If element has a @context property, update the active context according to the steps outlined in
         #   Context Processing and remove the @context property.
-        if input['@context']
+        if input.has_key?('@context')
           context = context.parse(input.delete('@context'))
           debug("expand") {"evaluation context: #{context.inspect}"}
         end
@@ -72,7 +72,7 @@ module JSON::LD
             #       skip this key/value pair.
             # FIXME: could value be nil only after expansion?
             if value.is_a?(Hash)
-              expanded_keys = value.keys.map {|k| context.expand_iri(k, :position => :predicate, :depth => @depth).to_s}
+              expanded_keys = value.keys.map {|k| context.expand_iri(k, :position => :predicate, :quiet => true).to_s}
               debug("expand") {"expanded keys: #{expanded_keys.inspect}"}
               k = (%w(@list @set @value) & expanded_keys).first
 
@@ -111,18 +111,18 @@ module JSON::LD
               # If the property is @id and the value is a string, expand the value according to IRI Expansion.
               # Otherwise, if the property is @type and the value is a string expand value according to IRI Expansion.
               # If element has no @value property, replace value with an array whose only value is the expanded value
-              position = if expanded_key == '@type' && input.keys.detect {|k| context.expand_iri(k) == '@value'}
+              position = if expanded_key == '@type' && input.keys.detect {|k| context.expand_iri(k, :quiet => true) == '@value'}
                 :datatype
               else
                 :subject
               end
               expanded_value = case value
               when String
-                v = context.expand_iri(value, :position => position, :debug => @debug)
+                v = context.expand_iri(value, :position => position, :quiet => true)
                 v.to_s unless v.nil?
               when Array
                 # Otherwise, if the expanded property is @type and the value is an array, expand every entry according to IRI Expansion.
-                depth { value.map {|v| context.expand_iri(v, options.merge(:position => :property)).to_s} }
+                depth { value.map {|v| context.expand_iri(v, options.merge(:position => :property, :quiet => true)).to_s} }
               else
                 # FIXME: document?
                 # Otherwise, expand as a value

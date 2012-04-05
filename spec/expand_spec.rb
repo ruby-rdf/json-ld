@@ -387,7 +387,26 @@ describe JSON::LD::API do
           :output => [{
             "@foo" => ["bar"]
           }]
-        }
+        },
+        "context reset" => {
+          :input => {
+            "@context" => {"ex" => "http://example.org/"},
+            "@id" => "http://example.org/id1",
+            "ex:prop" => "prop",
+            "ex:chain" => {
+              "@context" => nil,
+              "@id" => "http://example.org/id2",
+              "ex:prop" => "prop"
+            }
+          },
+          :output => [{
+            "@id" => "http://example.org/id1",
+            "http://example.org/prop" => ["prop"],
+            "http://example.org/chain" => [{
+              "@id" => "http://example.org/id2",
+            }]
+          }
+        ]}
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
@@ -432,7 +451,15 @@ describe JSON::LD::API do
           :output => [{
             "http://example.com/foo" => {"@list" => [ "foo", "bar" ]}
           }]
-        }
+        },
+        "@list containing array" => {
+          :input => {
+            "http://example.com/foo" => {"@list" => [["baz"]]}
+          },
+          :output => [{
+            "http://example.com/foo" => {"@list" => [ "baz" ]}
+          }]
+        },
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
@@ -506,12 +533,6 @@ describe JSON::LD::API do
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
-          },
-          :exception => JSON::LD::ProcessingError::ListOfLists
-        },
-        "@list containing array" => {
-          :input => {
-            "http://example.com/foo" => {"@list" => [["baz"]]}
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },

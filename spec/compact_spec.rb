@@ -227,6 +227,16 @@ describe JSON::LD::API do
             "http://example.org/foo" => {"list" => ["bar"]}
           }
         },
+        "@list containing array" => {
+          :input => {
+            "http://example.org/foo" => {"@list" => [["baz"]]}
+          },
+          :context => {"http://example.org/foo" => {"@container" => "@list"}},
+          :output => {
+            "@context" => {"http://example.org/foo" => {"@container" => "@list"}},
+            "http://example.org/foo" => [ "baz" ]
+          }
+        },
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
@@ -300,12 +310,6 @@ describe JSON::LD::API do
           :input => {
             "@context" => {"http://example.org/foo" => {"@container" => "@list"}},
             "http://example.org/foo" => [{"@list" => ["baz"]}]
-          },
-          :exception => JSON::LD::ProcessingError::ListOfLists
-        },
-        "@list containing array" => {
-          :input => {
-            "http://example.org/foo" => {"@list" => [["baz"]]}
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },
