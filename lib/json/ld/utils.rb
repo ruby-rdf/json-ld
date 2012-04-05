@@ -78,7 +78,7 @@ module JSON::LD
         self[old]
       else
         # Not referenced, just return a new unique value
-        cur = @prefix
+        cur = @prefix.dup
         @prefix.succ!
         cur
       end

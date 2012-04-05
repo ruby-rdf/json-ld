@@ -109,16 +109,16 @@ module JSON::LD
               # Skip keywords
               next if prop[0,1] == '@' || output.has_key?(prop)
               debug("frame") {"prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
-              property_frame = property_frame.first || {}
 
               # If the key is not in the item, add the key to the item and set the associated value to an
-              # empty array if the match frame key's value is an array or null otherwise
-              # FIXME: given that we've expanded the frame, the value will be an array, possibly empty
+              # empty array if the match frame key's value is an empty array or null otherwise
+              property_frame = property_frame.first || {}
 
               # if omit default is off, then include default values for properties
               # that appear in the next frame but are not in the matching subject
               next if get_frame_flag(state, property_frame, 'omitDefault')
               default = property_frame.fetch('@default', nil)
+              default ||= '@null' if property_frame.empty?
               output[prop] = [default].compact
             end
           
@@ -210,7 +210,29 @@ module JSON::LD
       # Transform back to JSON-LD, not flattened
       depth {self.from_triples(triples)}
     end
-    
+
+    ##
+    # Cleanup output after framing, replacing @null with nil
+    #
+    # @param [Array, Hash] input
+    # @return [Array, Hash]
+    def cleanup_null(input)
+      case input
+      when Array
+        input.map {|o| cleanup_null(o)}
+      when Hash
+        output = Hash.ordered
+        input.each do |key, value|
+          output[key] = cleanup_null(value)
+        end
+        output
+      when '@null'
+        nil
+      else
+        input
+      end
+    end
+
     private
     
     ##
@@ -331,7 +353,9 @@ module JSON::LD
         parent[i] = ref if i
       else 
         # replace subject with reference
-        parent[property] = ref
+        parent[property].map! do |v|
+          v.is_a?(Hash) && v.fetch('@id', nil) == id ? ref : v
+        end
       end
 
       # recursively remove dependent dangling embeds

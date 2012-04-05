@@ -185,9 +185,14 @@ module JSON::LD
         when Hash then [context.serialize.merge(compacted)]
         when Array
           ctx = context.serialize
-          compacted.map {|o| ctx.merge(o)}
+          compacted.map do |o|
+            o = {"@id" => o} if o.is_a?(String)
+            ctx.merge(o)
+          end
         when String then [context.serialize.merge("@id" => compacted)]
         end
+        
+        result = cleanup_null(result)
       end
       result
     end
