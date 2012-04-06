@@ -18,13 +18,13 @@ module JSON::LD
       case input
       when Array
         # 1) If value is an array, process each item in value recursively using this algorithm,
-        #    passing copies of the active context and active property.
+        #    passing copies of the active property.
         debug("compact") {"Array[#{input.length}]"}
         result = depth {input.map {|v| compact(v, property)}}
         # FIXME: account for @set
         result.length == 1 ? result.first : result
       when Hash
-        # Otherwise, if value is an object
+        # Otherwise, if element is an object:
         result = {}
         
         if k = %w(@list @set @value).detect {|container| input.has_key?(container)}

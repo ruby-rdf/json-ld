@@ -108,8 +108,12 @@ module JSON::LD
         # xxx) Add the given context to the output
         result = case result
         when Hash then api.context.serialize.merge(result)
-        when Array then api.context.serialize.merge("@graph" => result)
-        when String then api.context.serialize.merge("@id" => result)
+        when Array
+          kwgraph = api.context.compact_iri('@graph', :quiet => true)
+          api.context.serialize.merge(kwgraph => result)
+        when String
+          kwid = api.context.compact_iri('@id', :quiet => true)
+          api.context.serialize.merge(kwid => result)
         end
       end
       result
