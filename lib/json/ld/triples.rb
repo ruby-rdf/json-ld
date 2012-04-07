@@ -23,13 +23,13 @@ module JSON::LD
         case element
         when Hash
           # Other shortcuts to allow use of this method for terminal associative arrays
-          object = if element['@value']
+          object = if element.has_key?('@value')
             # 1.2) If the JSON object has a @value key, set the active object to a literal value as follows ...
             literal_opts = {}
             literal_opts[:datatype] = RDF::URI(element['@type']) if element['@type']
             literal_opts[:language] = element['@language'].to_sym if element['@language']
             RDF::Literal.new(element['@value'], literal_opts)
-          elsif element['@list']
+          elsif element.has_key?('@list')
             # 1.3 (Lists)
             parse_list("#{path}[#{'@list'}]", element['@list'], property, &block)
           end
@@ -40,11 +40,11 @@ module JSON::LD
             return object
           end
         
-          active_subject = if element['@id'].is_a?(String)
+          active_subject = if element.fetch('@id', nil).is_a?(String)
             # 1.5 Subject
             # 1.5.1 Set active object (subject)
             context.expand_iri(element['@id'], :quite => true)
-          elsif element['@graph']
+          elsif element.has_key?('@graph')
             # 1.5.2 Recursively process hash or Array values
             debug("triples[Step 1.5.2]")
             triples("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)

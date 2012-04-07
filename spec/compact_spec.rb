@@ -106,17 +106,6 @@ describe JSON::LD::API do
           "@type" => "#{RDF::RDFS.Resource}"
         },
       },
-      "@id with expanded @id" => {
-        :input => {
-          "@id" => {"@id" => "http://example.com/"},
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-        :context => {},
-        :output => {
-          "@id" => "http://example.com/",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-      },
       "@type with string @id" => {
         :input => {
           "@id" => "http://example.com/",
@@ -132,17 +121,6 @@ describe JSON::LD::API do
         :input => {
           "@id" => "http://example.com/",
           "@type" => ["#{RDF::RDFS.Resource}"]
-        },
-        :context => {},
-        :output => {
-          "@id" => "http://example.com/",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-      },
-      "@type with expanded @id" => {
-        :input => {
-          "@id" => "http://example.com/",
-          "@type" => {"@id" => "#{RDF::RDFS.Resource}"}
         },
         :context => {},
         :output => {
@@ -187,7 +165,7 @@ describe JSON::LD::API do
         },
         "@type" => {
           :input => {
-            "@type" => {"@id" => RDF::RDFS.Resource.to_s},
+            "@type" => RDF::RDFS.Resource.to_s,
             "http://example.org/foo" => {"@value" => "bar", "@type" => "http://example.com/type"}
           },
           :context => {"type" => "@type"},
@@ -225,16 +203,6 @@ describe JSON::LD::API do
           :output => {
             "@context" => {"list" => "@list"},
             "http://example.org/foo" => {"list" => ["bar"]}
-          }
-        },
-        "@list containing array" => {
-          :input => {
-            "http://example.org/foo" => {"@list" => [["baz"]]}
-          },
-          :context => {"http://example.org/foo" => {"@container" => "@list"}},
-          :output => {
-            "@context" => {"http://example.org/foo" => {"@container" => "@list"}},
-            "http://example.org/foo" => [ "baz" ]
           }
         },
       }.each do |title, params|

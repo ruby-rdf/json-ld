@@ -188,7 +188,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"literal" => "bar"}
           },
           :output => [{
-            "http://example.com/foo" => [{"@value" => "bar"}]
+            "http://example.com/foo" => ["bar"]
           }]
         },
         "@list" => {
@@ -326,7 +326,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "foo", "@type" => nil}
           },
           :output => [{
-            "http://example.com/foo" => [{"@value" => "foo"}]
+            "http://example.com/foo" => ["foo"]
           }]
         },
         "non-null @value and null @language" => {
@@ -334,7 +334,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "foo", "@language" => nil}
           },
           :output => [{
-            "http://example.com/foo" => [{"@value" => "foo"}]
+            "http://example.com/foo" => ["foo"]
           }]
         },
         "array with null elements" => {
@@ -377,7 +377,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "bar", "@type" => "baz"}
           },
           :output => [{
-            "http://example.com/foo" => [{"@value" => "bar"}]
+            "http://example.com/foo" => ["bar"]
           }]
         },
         "unknown keyword" => {
@@ -450,14 +450,6 @@ describe JSON::LD::API do
           },
           :output => [{
             "http://example.com/foo" => {"@list" => [ "foo", "bar" ]}
-          }]
-        },
-        "@list containing array" => {
-          :input => {
-            "http://example.com/foo" => {"@list" => [["baz"]]}
-          },
-          :output => [{
-            "http://example.com/foo" => {"@list" => [ "baz" ]}
           }]
         },
       }.each do |title, params|
@@ -533,6 +525,12 @@ describe JSON::LD::API do
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "@list containing array" => {
+          :input => {
+            "http://example.com/foo" => {"@list" => [["baz"]]}
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },
