@@ -46,12 +46,23 @@ module JSON::LD
     # @attr [Hash{String => String}]
     attr :containers, true
     
+    # Language coercion
+    #
+    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the
+    # key is a String representation of the property for which String values will be coerced and
+    # the value is the language to coerce to. If no property-specific language is given,
+    # any default language from the context is used.
+    #
+    # @attr [Hash{String => String}]
+    attr :languages, true
+    
     # Default language
+    #
     #
     # This adds a language to plain strings that aren't otherwise coerced
     # @attr [String]
-    attr :language, true
-    
+    attr :default_language, true
+
     # Global options used in generating IRIs
     # @attr [Hash] options
     attr :options, true
@@ -69,6 +80,7 @@ module JSON::LD
       @mappings =  {}
       @coercions = {}
       @containers = {}
+      @languages = {}
       @iri_to_curie = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -148,7 +160,7 @@ module JSON::LD
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
             if (new_ec.mapping(key) || key) == '@language'
-              new_ec.language = value.to_s unless value.to_s == '@language' # due to aliasing
+              new_ec.default_language = value.to_s unless value.to_s == '@language' # due to aliasing
             elsif term_valid?(key)
               # Extract IRI mapping. This is complicated, as @id may have been aliased
               if value.is_a?(Hash)
@@ -195,7 +207,12 @@ module JSON::LD
                 raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
                 if new_ec.container(key) != value2
                   debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
-                  new_ec.container(key, value2)
+                  new_ec.set_container(key, value2)
+                end
+              when '@language'
+                if new_ec.language(key) != value2
+                  debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
+                  new_ec.set_language(key, value2)
                 end
               end
             end
@@ -205,7 +222,7 @@ module JSON::LD
             case prop
             when '@language'
               # Remove language mapping from active context
-              new_ec.language = nil
+              new_ec.default_language = nil
             else
               new_ec.set_mapping(prop, nil)
             end
@@ -235,7 +252,7 @@ module JSON::LD
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
           ctx = Hash.ordered
-          ctx[self.alias('@language')] = language.to_s if language
+          ctx[self.alias('@language')] = default_language.to_s if default_language
 
           # Mappings
           mappings.keys.sort{|a, b| a.to_s <=> b.to_s}.each do |k|
@@ -244,9 +261,9 @@ module JSON::LD
             ctx[k] = mappings[k].to_s
           end
 
-          unless coercions.empty? && containers.empty?
+          unless coercions.empty? && containers.empty? && languages.empty?
             # Coerce
-            (coercions.keys + containers.keys).uniq.sort.each do |k|
+            (coercions.keys + containers.keys + languages.keys).uniq.sort.each do |k|
               next if [self.alias('@type'), RDF.type.to_s].include?(k.to_s)
 
               # Turn into long form
@@ -270,7 +287,14 @@ module JSON::LD
               if %w(@list @set).include?(container(k))
                 # It is not dependent on previously defined terms, fold into existing definition
                 ctx[k][self.alias("@container")] = self.alias(container(k))
-                debug {"=> list_range[#{k}] => #{self.alias(container(k))}"}
+                debug {"=> container[#{k}] => #{self.alias(container(k)).inspect}"}
+              end
+
+              debug {"=> language(#{k}) => #{language(k)}"}
+              if language(k) != default_language
+                # It is not dependent on previously defined terms, fold into existing definition
+                ctx[k][self.alias("@language")] = language(k)
+                debug {"=> language[#{k}] => #{language(k).inspect}"}
               end
               
               # Remove an empty definition
@@ -348,10 +372,8 @@ module JSON::LD
       if value
         debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
         @coercions[property] = value
-      elsif type = @coercions.fetch(property, nil)
-        type
       else
-        nil
+        @coercions.fetch(property, nil)
       end
     end
 
@@ -359,26 +381,38 @@ module JSON::LD
     # Retrieve container mapping, add it if `value` is provided
     #
     # @param [String] property in unexpanded form
-    # @param [Boolean] value (nil)
     # @return [String]
-    def container(property, value = nil)
-      unless value.nil?
-        debug {"coerce #{property.inspect} to #{value}"} unless @containers[property.to_s] == value
-        @containers[property.to_s] = value
-      end
-      @containers[property.to_s]
+    def container(property)
+      @containers.fetch(property.to_s, nil)
     end
 
     ##
-    # Retrieve container mapping, add it if `value` is provided
+    # Set container mapping
     #
-    # @param [String] property in full IRI string representation
+    # @param [String] property
     # @param [String] value one of @list, @set or nil
     # @return [Boolean]
     def set_container(property, value)
       return if @containers[property.to_s] == value
       debug {"coerce #{property.inspect} to #{value.inspect}"} 
       @containers[property.to_s] = value
+    end
+
+    ##
+    # Retrieve the language associated with a property, or the default language otherwise
+    # @return [String]
+    def language(property)
+      @languages.fetch(property.to_s, @default_language)
+    end
+    
+    ##
+    # Set language mapping
+    #
+    # @param [String] property
+    # @param [String] value
+    # @return [String]
+    def set_language(property, value)
+      @languages[property.to_s] = value
     end
 
     ##
@@ -524,7 +558,7 @@ module JSON::LD
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}
           when nil
-            language ? {"@value" => value.to_s, "@language" => language.to_s} : value.to_s
+            language(property) ? {"@value" => value.to_s, "@language" => language(property)} : value.to_s
           else
             res = Hash.ordered
             res['@value'] = value.to_s
@@ -579,11 +613,11 @@ module JSON::LD
           value[self.alias('@id')] = compact_iri(value['@id'], :position => :object)
           debug {" (#{self.alias('@id')} => #{value['@id']})"}
           value
-        when value['@language'] && value['@language'] == language
+        when value['@language'] && value['@language'] == language(property)
           # Compact language
-          debug {" (@language) == #{language}"}
+          debug {" (@language) == #{language(property).inspect}"}
           value['@value']
-        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !language
+        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !default_language
           # Compact simple literal to string
           debug {" (@value && !@language && !@type && !coerce && !language)"}
           value['@value']
@@ -627,7 +661,8 @@ module JSON::LD
       ec.mappings = mappings.dup
       ec.coercions = coercions.dup
       ec.containers = containers.dup
-      ec.language = language
+      ec.languages = languages.dup
+      ec.default_language = default_language
       ec.options = options
       ec.iri_to_term = iri_to_term.dup
       ec.iri_to_curie = iri_to_curie.dup

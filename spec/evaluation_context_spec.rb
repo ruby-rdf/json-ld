@@ -77,7 +77,7 @@ describe JSON::LD::EvaluationContext do
       it "extracts @language" do
         subject.parse({
           "@language" => "en"
-        }).language.should produce("en", @debug)
+        }).default_language.should produce("en", @debug)
       end
 
       it "maps term with IRI value" do
@@ -96,7 +96,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @list coercion with predicate IRI" do
+      it "associates @list coercion with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers.should produce({
@@ -104,7 +104,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @set coercion with predicate IRI" do
+      it "associates @set coercion with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
         }).containers.should produce({
@@ -112,7 +112,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @id coercion with predicate IRI" do
+      it "associates @id coercion with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions.should produce({
@@ -120,11 +120,19 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates datatype coercion with predicate IRI" do
+      it "associates datatype coercion with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coercions.should produce({
           "foo" => RDF::XSD.string.to_s
+        }, @debug)
+      end
+
+      it "associates language coercion with predicate" do
+        subject.parse({
+          "foo" => {"@id" => "http://example.com/", "@language" => "en"}
+        }).languages.should produce({
+          "foo" => "en"
         }, @debug)
       end
 
@@ -149,13 +157,14 @@ describe JSON::LD::EvaluationContext do
             {
               "@language" => nil
             }
-          ]).language.should produce(nil, @debug)
+          ]).default_language.should produce(nil, @debug)
         end
 
         it "loads initial context" do
           init_ec = JSON::LD::EvaluationContext.new
           nil_ec = subject.parse(nil)
-          nil_ec.language.should == init_ec.language
+          nil_ec.default_language.should == init_ec.default_language
+          nil_ec.languages.should == init_ec.languages
           nil_ec.mappings.should == init_ec.mappings
           nil_ec.coercions.should == init_ec.coercions
           nil_ec.containers.should == init_ec.containers
@@ -291,7 +300,7 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "@language" do
-      subject.language = "en"
+      subject.default_language = "en"
       subject.serialize.should produce({
         "@context" => {
           "@language" => "en"
@@ -336,6 +345,52 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
+        }
+      }, @debug)
+    end
+
+    it "@language with @id definition in a single context" do
+      subject.set_mapping("name", RDF::FOAF.name)
+      subject.set_language("name", 'en')
+      subject.serialize.should produce({
+        "@context" => {
+          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "en"}
+        }
+      }, @debug)
+    end
+
+    it "@language with @id definition in a single context and equivalent default" do
+      subject.set_mapping("name", RDF::FOAF.name)
+      subject.default_language = 'en'
+      subject.set_language("name", 'en')
+      subject.serialize.should produce({
+        "@context" => {
+          "@language" => 'en',
+          "name" => {"@id" => RDF::FOAF.name.to_s}
+        }
+      }, @debug)
+    end
+
+    it "@language with @id definition in a single context and different default" do
+      subject.set_mapping("name", RDF::FOAF.name)
+      subject.default_language = 'en'
+      subject.set_language("name", 'de')
+      subject.serialize.should produce({
+        "@context" => {
+          "@language" => 'en',
+          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "de"}
+        }
+      }, @debug)
+    end
+
+    it "null @language with @id definition in a single context and default" do
+      subject.set_mapping("name", RDF::FOAF.name)
+      subject.default_language = 'en'
+      subject.set_language("name", nil)
+      subject.serialize.should produce({
+        "@context" => {
+          "@language" => 'en',
+          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => nil}
         }
       }, @debug)
     end
@@ -589,7 +644,7 @@ describe JSON::LD::EvaluationContext do
         "native double" =>  ["foo",         1.1,                    1.1],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          subject.language = "en"
+          subject.default_language = "en"
           subject.expand_value(key, compacted).should produce(expanded, @debug)
         end
       end
@@ -611,7 +666,7 @@ describe JSON::LD::EvaluationContext do
         "string-int"      => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          subject.language = "en"
+          subject.default_language = "en"
           subject.expand_value(key, compacted).should produce(expanded, @debug)
         end
       end
@@ -664,7 +719,7 @@ describe JSON::LD::EvaluationContext do
         "other lang with @id coercion"   => ["foaf:knows", {"@value" => "foo", "@language" => "bar"}, {"@value" => "foo", "@language" => "bar"}],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          subject.language = "en"
+          subject.default_language = "en"
           subject.compact_value(key, expanded).should produce(compacted, @debug)
         end
       end

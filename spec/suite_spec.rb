@@ -56,8 +56,6 @@ describe JSON::LD do
                 fail("Invalid Context: #{e.message}")
               rescue JSON::LD::InvalidFrame => e
                 fail("Invalid Frame: #{e.message}")
-              rescue
-                fail("#{$!}: #{$!.message}")
               end
             end
           end

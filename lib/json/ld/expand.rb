@@ -108,12 +108,14 @@ module JSON::LD
             # If the expanded value is not null and the active property has a @container set to @list,
             # convert value to an object with an @list property whose value is set to value
             # (unless value is already in that form)
-            if expanded_value && context.container(active_property) == '@list'
+            if expanded_value && context.container(active_property) == '@list' &&
+               (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
+               debug(" => ") { "convert #{expanded_value.inspect} to list"}
               expanded_value = {'@list' => [expanded_value].flatten}
             end
 
             # FIXME: make array
-            if expanded_value.is_a?(Hash) && expanded_value.has_key?('@list')
+            if expanded_value.is_a?(Hash) && expanded_value.has_key?('@list') && false  # Use Array rep
               debug(" => don't make list array")
               # Don't make an array
             elsif !%(@id @language @type @value).include?(property) && !expanded_value.is_a?(Array)

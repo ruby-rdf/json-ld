@@ -388,6 +388,16 @@ describe JSON::LD::API do
             "@foo" => ["bar"]
           }]
         },
+        "value" => {
+          :input => {
+            "@context" => {"ex" => {"@id" => "http://example.org/idrange", "@type" => "@id"}},
+            "@id" => "http://example.org/Subj",
+            "idrange" => "unmapped"
+          },
+          :output => [{
+            "@id" => "http://example.org/Subj",
+          }]
+        },
         "context reset" => {
           :input => {
             "@context" => {"ex" => "http://example.org/"},
