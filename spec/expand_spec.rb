@@ -76,6 +76,14 @@ describe JSON::LD::API do
           {"http://example.com/bar" => ["bar"]}
         ]
       },
+      "@type with empty object" => {
+        :input => {
+          "@type" => {}
+        },
+        :output => [
+          {"@type" => [{}]}
+        ]
+      },
       "@type with CURIE" => {
         :input => {
           "@context" => {"ex" => "http://example.com/"},

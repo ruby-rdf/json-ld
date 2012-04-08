@@ -70,7 +70,8 @@ module JSON::LD
               # If the property is @id the value must be a string. Expand the value according to IRI Expansion.
               context.expand_iri(value, :position => :subject, :quiet => true).to_s
             when '@type'
-              # Otherwise, if the property is @type the value must be a string or an array of strings.
+              # Otherwise, if the property is @type the value must be a string, an array of strings
+              # or an empty JSON Object.
               # Expand value or each of it's entries according to IRI Expansion
               case value
               when Array
@@ -79,6 +80,10 @@ module JSON::LD
                     context.expand_iri(v, options.merge(:position => :property, :quiet => true)).to_s
                   end
                 end
+              when Hash
+                # Empty object used for @type wildcard
+                raise ProcessingError, "Object value of @type must be empty: #{value.inspect}" unless value.empty?
+                value
               else
                 context.expand_iri(value, options.merge(:position => :property, :quiet => true)).to_s
               end
