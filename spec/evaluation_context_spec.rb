@@ -320,7 +320,7 @@ describe JSON::LD::EvaluationContext do
     it "@type with dependent prefixes in a single context" do
       subject.set_mapping("xsd", RDF::XSD.to_uri)
       subject.set_mapping("homepage", RDF::FOAF.homepage)
-      subject.coerce("homepage", "@id")
+      subject.set_coerce("homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri,
@@ -397,7 +397,7 @@ describe JSON::LD::EvaluationContext do
 
     it "prefix with @type and @list" do
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.coerce("knows", "@id")
+      subject.set_coerce("knows", "@id")
       subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
@@ -408,7 +408,7 @@ describe JSON::LD::EvaluationContext do
 
     it "prefix with @type and @set" do
       subject.set_mapping("knows", RDF::FOAF.knows)
-      subject.coerce("knows", "@id")
+      subject.set_coerce("knows", "@id")
       subject.set_container("knows", '@set')
       subject.serialize.should produce({
         "@context" => {
@@ -443,7 +443,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @id in value position" do
       subject.set_mapping("id", "@id")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
-      subject.coerce("foaf:homepage", "@id")
+      subject.set_coerce("foaf:homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
@@ -456,7 +456,7 @@ describe JSON::LD::EvaluationContext do
     it "uses aliased @type" do
       subject.set_mapping("type", "@type")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
-      subject.coerce("foaf:homepage", "@id")
+      subject.set_coerce("foaf:homepage", "@id")
       subject.serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
@@ -481,7 +481,7 @@ describe JSON::LD::EvaluationContext do
     it "compacts IRIs to CURIEs" do
       subject.set_mapping("ex", 'http://example.org/')
       subject.set_mapping("term", 'http://example.org/term')
-      subject.coerce("term", "http://example.org/datatype")
+      subject.set_coerce("term", "http://example.org/datatype")
       subject.serialize.should produce({
         "@context" => {
           "ex" => 'http://example.org/',
@@ -600,11 +600,11 @@ describe JSON::LD::EvaluationContext do
       subject.set_mapping("ex", RDF::URI("http://example.org/"))
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_mapping("xsd", RDF::XSD.to_uri)
-      subject.coerce("foaf:age", RDF::XSD.integer)
-      subject.coerce("foaf:knows", "@id")
-      subject.coerce("dc:created", RDF::XSD.date)
-      subject.coerce("ex:double", RDF::XSD.double)
-      subject.coerce("ex:boolean", RDF::XSD.boolean)
+      subject.set_coerce("foaf:age", RDF::XSD.integer)
+      subject.set_coerce("foaf:knows", "@id")
+      subject.set_coerce("dc:created", RDF::XSD.date)
+      subject.set_coerce("ex:double", RDF::XSD.double)
+      subject.set_coerce("ex:boolean", RDF::XSD.boolean)
     end
 
     {
@@ -679,9 +679,9 @@ describe JSON::LD::EvaluationContext do
       subject.set_mapping("ex", RDF::URI("http://example.org/"))
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_mapping("xsd", RDF::XSD.to_uri)
-      subject.coerce("foaf:age", RDF::XSD.integer)
-      subject.coerce("foaf:knows", "@id")
-      subject.coerce("dc:created", RDF::XSD.date)
+      subject.set_coerce("foaf:age", RDF::XSD.integer)
+      subject.set_coerce("foaf:knows", "@id")
+      subject.set_coerce("dc:created", RDF::XSD.date)
     end
 
     {

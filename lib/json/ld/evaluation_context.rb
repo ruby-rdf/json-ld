@@ -200,8 +200,7 @@ module JSON::LD
                 if new_ec.coerce(key) != iri
                   raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
                   # Record term coercion
-                  debug("parse") {"coerce #{key.inspect} to #{iri.inspect}"}
-                  new_ec.coerce(key, iri)
+                  new_ec.set_coerce(key, iri)
                 end
               when '@container'
                 raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
@@ -224,7 +223,11 @@ module JSON::LD
               # Remove language mapping from active context
               new_ec.default_language = nil
             else
+              # Remove all mapping information for the property
               new_ec.set_mapping(prop, nil)
+              new_ec.set_coerce(prop, nil)
+              new_ec.set_container(prop, nil)
+              new_ec.set_language(prop, nil)
             end
           else
             raise InvalidContext::Syntax, "attempt to map #{key.inspect} to #{value.class}"
@@ -358,22 +361,32 @@ module JSON::LD
     def alias(value)
       iri_to_term.fetch(value, value)
     end
-    
+
+    ##
+    # Retrieve term coercion
+    #
+    # @param [String] property in unexpanded form
+    #
+    # @return [RDF::URI, '@id']
+    def coerce(property)
+      # Map property, if it's not an RDF::Value
+      return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
+      @coercions.fetch(property, nil)
+    end
+
     ##
     # Set term coercion
     #
     # @param [String] property in unexpanded form
-    # @param [RDF::URI, '@id'] value (nil)
+    # @param [RDF::URI, '@id'] value
     #
     # @return [RDF::URI, '@id']
-    def coerce(property, value = nil)
-      # Map property, if it's not an RDF::Value
-      return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
+    def set_coerce(property, value)
+      debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
       if value
-        debug {"coerce #{property.inspect} to #{value}"} unless @coercions[property.to_s] == value
         @coercions[property] = value
       else
-        @coercions.fetch(property, nil)
+        @coercions.delete(property)
       end
     end
 
