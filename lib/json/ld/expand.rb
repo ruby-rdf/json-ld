@@ -120,10 +120,7 @@ module JSON::LD
             end
 
             # FIXME: make array
-            if expanded_value.is_a?(Hash) && expanded_value.has_key?('@list') && false  # Use Array rep
-              debug(" => don't make list array")
-              # Don't make an array
-            elsif !%(@id @language @type @value).include?(property) && !expanded_value.is_a?(Array)
+            if !%(@id @language @type @value).include?(property) && !expanded_value.is_a?(Array)
               debug(" => make #{expanded_value.inspect} an array")
               expanded_value = [expanded_value]
             end
