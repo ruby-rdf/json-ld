@@ -28,16 +28,22 @@ module JSON::LD
     ##
     # Initialize the API, reading in any document and setting global options
     #
-    # @param [#read, Hash, Array] input
-    # @param [IO, Hash, Array] context
+    # @param [String, #read, Hash, Array] input
+    # @param [String, #read,, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [Hash] options
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
       @options = options
-      @value = input.dup if input
-      @value = JSON.parse(@value.read) if @value.respond_to?(:read)
+      @value = case input
+      when Array, Hash then input.dup
+      when IO, StringIO then JSON.parse(input.read)
+      when String
+        content = nil
+        RDF::Util::File.open_file(input) {|f| content = JSON.parse(f)}
+        content
+      end
       @context = EvaluationContext.new(options)
       @context = @context.parse(context) if context
       
@@ -57,9 +63,9 @@ module JSON::LD
     #
     # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
     #
-    # @param [#read, Hash, Array] input
+    # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
-    # @param [IO, Hash, Array] context
+    # @param [String, #read, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -95,9 +101,9 @@ module JSON::LD
     #
     # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
     #
-    # @param [IO, Hash, Array] input
+    # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the compaction upon.
-    # @param [IO, Hash, Array] context
+    # @param [String, #read, Hash, Array] context
     #   The base context to use when compacting the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -154,9 +160,9 @@ module JSON::LD
     #
     # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
     #
-    # @param [IO, Hash, Array] input
+    # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the framing on.
-    # @param [IO, Hash, Array] frame
+    # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -245,9 +251,9 @@ module JSON::LD
     #
     # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
     #
-    # @param [IO, Hash, Array] input
+    # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
-    # @param [IO, Hash, Array] context
+    # @param [String, #read, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
