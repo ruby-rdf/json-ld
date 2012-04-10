@@ -5,6 +5,23 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
+  context "callbacks" do
+    describe ".compact" do
+    end
+
+    describe ".expand" do
+    end
+
+    describe ".frame" do
+    end
+
+    describe ".fromRDF" do
+    end
+
+    describe ".toRDF" do
+    end
+  end
+
   context "Test Files" do
     Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
       test = File.basename(filename).sub(/-input\..*$/, '')
@@ -21,7 +38,7 @@ describe JSON::LD::API do
         end
 
         it "expands" do
-          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
+          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
@@ -31,7 +48,7 @@ describe JSON::LD::API do
         end if File.exist?(compacted) && File.exist?(context)
         
         it "frame" do
-          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), :debug => @debug)
+          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 

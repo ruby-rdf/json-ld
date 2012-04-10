@@ -16,12 +16,12 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:expand]
-    output = JSON::LD::API.expand(input, nil, options)
+    output = JSON::LD::API.expand(input, nil, nil, options)
     secs = Time.new - start
     options[:output].puts output
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
-    output = JSON::LD::API.compact(input, nil, options)
+    output = JSON::LD::API.compact(input, nil, nil, options)
     secs = Time.new - start
     puts output.inspect
     puts "Compacted in #{secs} seconds."
@@ -41,7 +41,7 @@ rescue
 end
 
 parser_options = {
-  :base_uri => "",
+  :base => "",
   :progress   => false,
   :validate => false,
   :strict => false,
@@ -82,7 +82,7 @@ opts.each do |opt, arg|
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--quiet'        then options[:quiet] = true
-  when '--uri'          then parser_options[:base_uri] = arg
+  when '--uri'          then parser_options[:base] = arg
   when '--verbose'      then $verbose = true
   end
 end

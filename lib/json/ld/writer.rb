@@ -89,6 +89,8 @@ module JSON::LD
     # @yield  [writer]
     # @yieldparam [RDF::Writer] writer
     def initialize(output = $stdout, options = {}, &block)
+      options[:base_uri] ||= options[:base] if options.has_key?(:base)
+      options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
         @graph = RDF::Graph.new
 
@@ -145,7 +147,7 @@ module JSON::LD
       # Turn graph into a triple array
       statements = @graph.each_statement.to_a
       debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
-      result = API.fromRDF(statements, @options)
+      result = API.fromRDF(statements, nil, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)

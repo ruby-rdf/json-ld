@@ -286,7 +286,7 @@ describe JSON::LD::API do
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
+        jld = JSON::LD::API.frame(params[:input], params[:frame], nil, :debug => @debug)
         jld.should produce(params[:output], @debug)
       end
     end

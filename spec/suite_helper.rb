@@ -179,6 +179,6 @@ module Fixtures
 
     repo = RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
     Spira.add_repository! :default, repo
-    puts Manifest.each.to_a.first.inspect
+    puts Manifest.each.to_a.inspect
   end
 end

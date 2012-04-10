@@ -76,7 +76,7 @@ describe JSON::LD::API do
           ],
         }.each do |title, (js, nt)|
           it title do
-            parse(js, :base_uri => "http://example.org/").should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            parse(js, :base => "http://example.org/").should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
           end
         end
       end

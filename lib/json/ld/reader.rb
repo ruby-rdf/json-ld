@@ -32,6 +32,8 @@ module JSON::LD
     # @yieldreturn [void] ignored
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
     def initialize(input = $stdin, options = {}, &block)
+      options[:base_uri] ||= options[:base] if options.has_key?(:base)
+      options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
         begin
           @doc = JSON.load(input)
@@ -53,7 +55,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRDF(@doc, nil, @options[:context], @options, &block)
+      JSON::LD::API.toRDF(@doc, @options[:context], nil, @options, &block)
     end
 
     ##

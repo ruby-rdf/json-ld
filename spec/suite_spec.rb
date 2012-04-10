@@ -19,21 +19,21 @@ describe JSON::LD do
                 when Fixtures::JSONLDTest::CompactTest
                   t.debug << "context: #{t.extra.read}" if t.extraDocument
                   result = JSON::LD::API.compact(t.input, t.extra, nil,
-                                                :base_uri => t.inputDocument,
+                                                :base => t.base_uri,
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
                 when Fixtures::JSONLDTest::ExpandTest
                   t.debug << "context: #{t.extra.read}" if t.extraDocument
-                  result = JSON::LD::API.expand(t.input, nil,
-                                                :base_uri => t.inputDocument,
+                  result = JSON::LD::API.expand(t.input, nil, nil,
+                                                :base => t.base_uri,
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
                 when Fixtures::JSONLDTest::FrameTest
                   t.debug << "frame: #{t.extra.read}" if t.extraDocument
-                  result = JSON::LD::API.frame(t.input, t.extra,
-                                                :base_uri => t.inputDocument,
+                  result = JSON::LD::API.frame(t.input, t.extra, nil, 
+                                                :base => t.inputDocument,
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
@@ -41,7 +41,7 @@ describe JSON::LD do
                   pending("Normalization")
                 when Fixtures::JSONLDTest::RDFTest
                   reader = RDF::Reader.open(t.inputDocument,
-                    :base_uri => t.inputDocument,
+                    :base => t.inputDocument,
                     :debug => t.debug,
                     :format => :jsonld)
                   reader.should be_a JSON::LD::Reader

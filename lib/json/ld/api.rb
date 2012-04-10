@@ -53,21 +53,36 @@ module JSON::LD
     # Expands the given input according to the steps in the Expansion Algorithm. The input must be copied, expanded and returned
     # if there are no errors. If the expansion fails, an appropriate exception must be thrown.
     #
+    # The resulting `Array` is returned via the provided callback.
+    #
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
+    #
     # @param [#read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
     # @param [IO, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Boolean] :base
+    #   Base IRI to use when processing relative IRIs.
     # @raise [InvalidContext]
-    # @return [Hash, Array]
+    # @yield jsonld
+    # @yieldparam [Array<Hash>] jsonld
+    #   The expanded JSON-LD document
+    # @return [Array<Hash>]
     #   The expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
-    def self.expand(input, context = nil, options = {})
+    def self.expand(input, context = nil, callback = nil, options = {})
       result = nil
       API.new(input, context, options) do |api|
         result = api.expand(api.value, nil, api.context)
       end
-      result.is_a?(Array) ? result : [result]
+
+      result = result.is_a?(Array) ? result : [result]
+      callback.call(result) if callback
+      yield result if block_given?
+      result
     end
 
     ##
@@ -76,19 +91,30 @@ module JSON::LD
     #
     # If no context is provided, the input document is compacted using the top-level context of the document
     #
+    # The resulting `Hash` is returned via the provided callback.
+    #
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
+    #
     # @param [IO, Hash, Array] input
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [IO, Hash, Array] context
     #   The base context to use when compacting the input.
-    # @param [Boolean] optimize (false)
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameters.
+    # @param  [Hash{Symbol => Object}] options
+    #   Other options passed to {#expand}
+    # @option options [Boolean] :optimize (false)
     #   Perform further optimmization of the compacted output.
     #   (Presently, this is a noop).
     # @param  [Hash{Symbol => Object}] options
-    # @raise [InvalidContext, ProcessingError]
+    # @yield jsonld
+    # @yieldparam [Hash] jsonld
+    #   The compacted JSON-LD document
     # @return [Hash]
     #   The compacted JSON-LD document
+    # @raise [InvalidContext, ProcessingError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
-    def self.compact(input, context, optimize = false, options = {})
+    def self.compact(input, context, callback = nil, options = {})
       expanded = result = nil
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -114,6 +140,8 @@ module JSON::LD
           api.context.serialize.merge(kwid => result)
         end
       end
+      callback.call(result) if callback
+      yield result if block_given?
       result
     end
 
@@ -122,11 +150,18 @@ module JSON::LD
     # framed output and is returned if there are no errors. If there are no matches for the frame, null must be returned.
     # Exceptions must be thrown if there are errors.
     #
+    # The resulting `Array` is returned via the provided callback.
+    #
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
+    #
     # @param [IO, Hash, Array] input
     #   The JSON-LD object to copy and perform the framing on.
     # @param [IO, Hash, Array] frame
     #   The frame to use when re-arranging the data.
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
+    #   Other options passed to {#expand}
     # @option options [Boolean] :embed (true)
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
@@ -136,11 +171,14 @@ module JSON::LD
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD
     #   input should be omitted from the output.
-    # @raise [InvalidFrame]
-    # @return [Hash]
+    # @yield jsonld
+    # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
+    # @return [Array<Hash>]
+    #   The framed JSON-LD document
+    # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
-    def self.frame(input, frame, options = {})
+    def self.frame(input, frame, callback = nil, options = {})
       result = nil
       match_limit = 0
       framing_state = {
@@ -196,26 +234,33 @@ module JSON::LD
         
         result = cleanup_null(result)
       end
+
+      callback.call(result) if callback
+      yield result if block_given?
       result
     end
 
     ##
     # Processes the input according to the RDF Conversion Algorithm, calling the provided callback for each triple generated.
     #
-    # Note that for Ruby, if the callback is not provided, it will be yielded
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
     #
     # @param [IO, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
     # @param [IO, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameteres.
+    # @param [{Symbol,String => Object}] options
+    #   Options passed to {#expand}
     # @param  [Hash{Symbol => Object}] options
     # @raise [InvalidContext]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.toRDF(input, callback = nil, context = nil, options = {})
+    def self.toRDF(input, context = nil, callback = nil, options = {})
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = expand(input, context, options)
+      expanded = expand(input, context, nil, options)
 
       API.new(expanded, nil, options) do |api|
         # Start generating statements
@@ -229,15 +274,28 @@ module JSON::LD
     ##
     # Take an ordered list of RDF::Statements and turn them into a JSON-LD document.
     #
+    # The resulting `Array` is returned via the provided callback.
+    #
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded
+    #
     # @param [Array<RDF::Statement>] input
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameteres.
     # @param  [Hash{Symbol => Object}] options
-    # @return [Array<Hash>] the JSON-LD document in expanded form
-    def self.fromRDF(input, options = {})
+    # @yield jsonld
+    # @yieldparam [Hash] jsonld
+    #   The JSON-LD document in expanded form
+    # @return [Array<Hash>]
+    #   The JSON-LD document in expanded form
+    def self.fromRDF(input, callback = nil, options = {})
       result = nil
 
       API.new(nil, nil, options) do |api|
         result = api.from_statements(input)
       end
+
+      callback.call(result) if callback
+      yield result if block_given?
       result
     end
   end

@@ -76,7 +76,7 @@ module JSON::LD
     # @yieldparam [EvaluationContext]
     # @return [EvaluationContext]
     def initialize(options = {})
-      @base = RDF::URI(options[:base_uri]) if options[:base_uri]
+      @base = RDF::URI(options[:base]) if options[:base]
       @mappings =  {}
       @coercions = {}
       @containers = {}

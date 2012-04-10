@@ -8,12 +8,12 @@ def normalize(graph)
   case graph
   when RDF::Graph then graph
   when IO, StringIO
-    RDF::Graph.new.load(graph, :base_uri => @info.about)
+    RDF::Graph.new.load(graph, :base => @info.about)
   else
     # Figure out which parser to use
     g = RDF::Graph.new
     reader_class = detect_format(graph)
-    reader_class.new(graph, :base_uri => @info.about).each {|s| g << s}
+    reader_class.new(graph, :base => @info.about).each {|s| g << s}
     g
   end
 end
