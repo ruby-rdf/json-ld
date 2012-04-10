@@ -230,24 +230,6 @@ describe JSON::LD::API do
         jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
-      
-      it "removes unused terms from the context", :pending => "Perhaps this will just go away" do
-        ctx = {
-          "foo" => "http://example.com/",
-          "baz" => "http://example.org/"
-        }
-        input = {
-          "http://example.com/" => "bar"
-        }
-        expected = {
-          "@context" => {
-            "foo" => "http://example.com/"
-          },
-          "foo" => "bar"
-        }
-        jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
-        jld.should produce(expected, @debug)
-      end
     end
 
     context "context as reference" do
