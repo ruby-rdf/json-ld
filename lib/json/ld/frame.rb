@@ -197,18 +197,18 @@ module JSON::LD
     ##
     # Flatten input, used in framing.
     #
-    # This algorithm works by transforming input to triples, and then back to JSON-LD
+    # This algorithm works by transforming input to statements, and then back to JSON-LD
     #
     # @return [Array{Hash}]
     def flatten
       debug("flatten")
       expanded = depth {self.expand(self.value, nil, context)}
-      triples = []
-      depth {self.triples("", expanded, nil, nil) {|s| triples << s}}
-      debug("flatten") {"triples: #{triples.map(&:to_ntriples).join("\n")}"}
+      statements = []
+      depth {self.statements("", expanded, nil, nil) {|s| statements << s}}
+      debug("flatten") {"statements: #{statements.map(&:to_ntriples).join("\n")}"}
 
       # Transform back to JSON-LD, not flattened
-      depth {self.from_triples(triples)}
+      depth {self.from_statements(statements)}
     end
 
     ##

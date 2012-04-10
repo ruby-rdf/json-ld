@@ -11,6 +11,7 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
+            next if t.is_a?(Fixtures::JSONLDTest::NormalizeTest)
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               begin
                 t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]

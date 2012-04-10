@@ -5,7 +5,7 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  context ".triples" do
+  context ".statements" do
     context "unnamed nodes" do
       {
         "no @id" => [
@@ -634,7 +634,7 @@ describe JSON::LD::API do
     @debug = []
     graph = options[:graph] || RDF::Graph.new
     options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
-    JSON::LD::API.toTriples(StringIO.new(input), nil, nil, options) {|st| graph << st}
+    JSON::LD::API.toRDF(StringIO.new(input), nil, nil, options) {|st| graph << st}
     graph
   end
 end

@@ -15,8 +15,8 @@ module JSON::LD
     # @return [RDF::Resource] defined by this element
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
-    def triples(path, element, subject, property, &block)
-      debug(path) {"triples: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
+    def statements(path, element, subject, property, &block)
+      debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
       @node_seq = "jld_t0000" unless subject || property
 
       traverse_result = depth do
@@ -46,8 +46,8 @@ module JSON::LD
             context.expand_iri(element['@id'], :quite => true)
           elsif element.has_key?('@graph')
             # 1.5.2 Recursively process hash or Array values
-            debug("triples[Step 1.5.2]")
-            triples("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)
+            debug("statements[Step 1.5.2]")
+            statements("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)
           else
             # 1.6) Generate a blank node identifier and set it as the active subject.
             node
@@ -63,34 +63,34 @@ module JSON::LD
             else      context.expand_iri(key, :quite => true)
             end
 
-            debug("triples[Step 1.7.4]")
-            triples("#{path}[#{key}]", value, active_subject, active_property, &block)
+            debug("statements[Step 1.7.4]")
+            statements("#{path}[#{key}]", value, active_subject, active_property, &block)
           end
         
           # 1.8) The active_subject is returned
           active_subject
         when Array
           # 2) If a regular array is detected ...
-          debug("triples[Step 2]")
+          debug("statements[Step 2]")
           element.each_with_index do |v, i|
-            triples("#{path}[#{i}]", v, subject, property, &block)
+            statements("#{path}[#{i}]", v, subject, property, &block)
           end
           nil # No real value returned from an array
         when String
           object = RDF::Literal.new(element)
-          debug(path) {"triples[Step 3]: plain: #{object.inspect}"}
+          debug(path) {"statements[Step 3]: plain: #{object.inspect}"}
           object
         when Float
           object = RDF::Literal::Double.new(element)
-          debug(path) {"triples[Step 4]: native: #{object.inspect}"}
+          debug(path) {"statements[Step 4]: native: #{object.inspect}"}
           object
         when Fixnum
           object = RDF::Literal.new(element)
-          debug(path) {"triples[Step 5]: native: #{object.inspect}"}
+          debug(path) {"statements[Step 5]: native: #{object.inspect}"}
           object
         when TrueClass, FalseClass
           object = RDF::Literal::Boolean.new(element)
-          debug(path) {"triples[Step 6]: native: #{object.inspect}"}
+          debug(path) {"statements[Step 6]: native: #{object.inspect}"}
           object
         else
           raise RDF::ReaderError, "Traverse to unknown element: #{element.inspect} of type #{element.class}"
@@ -125,13 +125,13 @@ module JSON::LD
       depth do
         list.each do |list_item|
           # Traverse the value
-          triples("#{path}", list_item, first_bnode, RDF.first, &block)
+          statements("#{path}", list_item, first_bnode, RDF.first, &block)
           rest_bnode = node
           add_triple("#{path}", first_bnode, RDF.rest, rest_bnode, &block)
           first_bnode = rest_bnode
         end
         if last
-          triples("#{path}", last, first_bnode, RDF.first, &block)
+          statements("#{path}", last, first_bnode, RDF.first, &block)
           add_triple("#{path}", first_bnode, RDF.rest, RDF.nil, &block)
         end
       end

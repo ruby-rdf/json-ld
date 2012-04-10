@@ -2,9 +2,8 @@ require 'open-uri'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/frame'
-#require 'json/ld/normalize'
-require 'json/ld/triples'
-require 'json/ld/from_triples'
+require 'json/ld/to_rdf'
+require 'json/ld/from_rdf'
 
 module JSON::LD
   ##
@@ -22,7 +21,6 @@ module JSON::LD
     include Triples
     include FromTriples
     include Frame
-    #include Normalize
 
     attr_accessor :value
     attr_accessor :context
@@ -202,42 +200,27 @@ module JSON::LD
     end
 
     ##
-    # Normalizes the given input according to the steps in the Normalization Algorithm. The input must be copied, normalized and
-    # returned if there are no errors. If the compaction fails, null must be returned.
+    # Processes the input according to the RDF Conversion Algorithm, calling the provided callback for each triple generated.
+    #
+    # Note that for Ruby, if the callback is not provided, it will be yielded
     #
     # @param [IO, Hash, Array] input
-    #   The JSON-LD object to copy and perform the normalization upon.
-    # @param [IO, Hash, Array] context
-    #   An external context to use additionally to the context embedded in input when expanding the input.
-    # @param  [Hash{Symbol => Object}] options
-    # @raise [InvalidContext]
-    # @return [Array<Hash>]
-    #   The normalized JSON-LD document
-    def self.normalize(input, object, context = nil, options = {})
-    end
-
-    ##
-    # Processes the input according to the RDF Conversion Algorithm, calling the provided tripleCallback for each triple generated.
-    #
-    # Note that for Ruby, if the tripleCallback is not provided, it will be yielded
-    #
-    # @param [IO, Hash, Array] input
-    #   The JSON-LD object to process when outputting triples.
+    #   The JSON-LD object to process when outputting statements.
     # @param [IO, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     # @raise [InvalidContext]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.toTriples(input, tripleCallback = nil, context = nil, options = {})
+    def self.toRDF(input, callback = nil, context = nil, options = {})
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
       expanded = expand(input, context, options)
 
       API.new(expanded, nil, options) do |api|
-        # Start generating triples
-        api.triples("", api.value, nil, nil) do |statement|
-          tripleCallback.call(statement) if tripleCallback
+        # Start generating statements
+        api.statements("", api.value, nil, nil) do |statement|
+          callback.call(statement) if callback
           yield statement if block_given?
         end
       end
@@ -249,11 +232,11 @@ module JSON::LD
     # @param [Array<RDF::Statement>] input
     # @param  [Hash{Symbol => Object}] options
     # @return [Array<Hash>] the JSON-LD document in expanded form
-    def self.fromTriples(input, options = {})
+    def self.fromRDF(input, options = {})
       result = nil
 
       API.new(nil, nil, options) do |api|
-        result = api.from_triples(input)
+        result = api.from_statements(input)
       end
       result
     end

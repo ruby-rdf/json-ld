@@ -67,7 +67,7 @@ describe JSON::LD::Reader do
     end
 
     describe "#each_triple" do
-      it "yields triples" do
+      it "yields statements" do
         inner = mock("inner")
         inner.should_receive(:called).exactly(3)
         JSON::LD::Reader.new(subject).each_triple do |subject, predicate, object|

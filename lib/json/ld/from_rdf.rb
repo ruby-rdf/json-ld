@@ -9,7 +9,7 @@ module JSON::LD
     # @param [Array<RDF::Statement>] input
     # @param  [Hash{Symbol => Object}] options
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_triples(input)
+    def from_statements(input)
       array = []
       listMap = {}
       restMap = {}

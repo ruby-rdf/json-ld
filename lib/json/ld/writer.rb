@@ -132,7 +132,7 @@ module JSON::LD
     end
 
     ##
-    # Outputs the Serialized JSON-LD representation of all stored triples.
+    # Outputs the Serialized JSON-LD representation of all stored statements.
     #
     # If provided a context or prefixes, we'll create a context
     # and use it to compact the output. Otherwise, we return un-compacted JSON-LD
@@ -143,9 +143,9 @@ module JSON::LD
       @debug = @options[:debug]
 
       # Turn graph into a triple array
-      triples = @graph.each_statement.to_a
-      debug("writer") { "serialize #{triples.length} triples, #{@options.inspect}"}
-      result = API.fromTriples(triples, @options)
+      statements = @graph.each_statement.to_a
+      debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
+      result = API.fromRDF(statements, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)

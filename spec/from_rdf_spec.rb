@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do
-  describe ".fromTriples" do
+  describe ".fromRDF" do
     context "simple tests" do
       it "One subject IRI object" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
@@ -197,7 +197,7 @@ describe JSON::LD::API do
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug = [] << g.dump(:ttl)
-    triples = g.each_statement.to_a
-    JSON::LD::API.fromTriples(triples, options.merge(:debug => @debug))
+    statements = g.each_statement.to_a
+    JSON::LD::API.fromRDF(statements, options.merge(:debug => @debug))
   end
 end

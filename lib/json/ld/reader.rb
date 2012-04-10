@@ -53,7 +53,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toTriples(@doc, nil, @options[:context], @options, &block)
+      JSON::LD::API.toRDF(@doc, nil, @options[:context], @options, &block)
     end
 
     ##

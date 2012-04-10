@@ -4,7 +4,7 @@
 
 ## Features
 
-JSON::LD parses and serializes [JSON-LD][] into statements or triples.
+JSON::LD parses and serializes [JSON-LD][] into statements or statements.
 
 Install with `gem install json-ld`
 
