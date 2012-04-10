@@ -60,7 +60,7 @@ describe JSON::LD::API do
           "foo" => ["bar"]
         },
         :output => [{
-          "http://example.com/foo" => {"@list" => ["bar"]}
+          "http://example.com/foo" => [{"@list" => ["bar"]}]
         }]
       },
       "@graph" => {
@@ -205,7 +205,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"list" => ["bar"]}
           },
           :output => [{
-            "http://example.com/foo" => {"@list" => ["bar"]}
+            "http://example.com/foo" => [{"@list" => ["bar"]}]
           }]
         },
       }.each do |title, params|
@@ -440,7 +440,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@list" => []}
           },
           :output => [{
-            "http://example.com/foo" => {"@list" => []}
+            "http://example.com/foo" => [{"@list" => []}]
           }]
         },
         "coerced empty" => {
@@ -449,7 +449,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => []
           },
           :output => [{
-            "http://example.com/foo" => {"@list" => []}
+            "http://example.com/foo" => [{"@list" => []}]
           }]
         },
         "coerced single element" => {
@@ -458,7 +458,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo" ]
           },
           :output => [{
-            "http://example.com/foo" => {"@list" => [ "foo" ]}
+            "http://example.com/foo" => [{"@list" => [ "foo" ]}]
           }]
         },
         "coerced multiple elements" => {
@@ -467,7 +467,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo", "bar" ]
           },
           :output => [{
-            "http://example.com/foo" => {"@list" => [ "foo", "bar" ]}
+            "http://example.com/foo" => [{"@list" => [ "foo", "bar" ]}]
           }]
         },
       }.each do |title, params|
