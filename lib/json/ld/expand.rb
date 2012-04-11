@@ -102,7 +102,7 @@ module JSON::LD
               depth { expand(value, active_property, context, options) }
             end
 
-            # FIXME: moved from step 2.2.3
+            # moved from step 2.2.3
             # If expanded value is null and property is not @value, continue with the next property
             # from element.
             if property != '@value' && expanded_value.nil?
@@ -119,7 +119,7 @@ module JSON::LD
               expanded_value = {'@list' => [expanded_value].flatten}
             end
 
-            # FIXME: make array
+            # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
             if !%(@id @language @type @value).include?(property) && !expanded_value.is_a?(Array)
               debug(" => make #{expanded_value.inspect} an array")
               expanded_value = [expanded_value]
@@ -155,9 +155,9 @@ module JSON::LD
             output_object['@type'] = [output_object['@type']]
           end
 
-          # If element has an @set, @list, or @graph property, it must be the only property. Set element to the value of @set or @graph;
+          # If element has an @set or @list property, it must be the only property. Set element to the value of @set;
           # leave @list untouched.
-          if !(%w(@set @list @graph) & output_object.keys).empty?
+          if !(%w(@set @list) & output_object.keys).empty?
             raise ProcessingError, "element must have only @set, @list or @graph" if output_object.keys.length > 1
             
             output_object = output_object.values.first unless output_object.has_key?('@list')

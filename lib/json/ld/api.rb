@@ -85,7 +85,12 @@ module JSON::LD
         result = api.expand(api.value, nil, api.context)
       end
 
-      result = result.is_a?(Array) ? result : [result]
+      # If, after the algorithm outlined above is run, the resulting element is an
+      # JSON object with just a @graph property, element is set to the value of @graph's value.
+      result = result['@graph'] if result.is_a?(Hash) && result.keys == %w(@graph)
+
+      # Finally, if element is a JSON object, it is wrapped into an array.
+      result = [result] unless result.is_a?(Array)
       callback.call(result) if callback
       yield result if block_given?
       result
