@@ -17,26 +17,23 @@ module JSON::LD
       result = case input
       when Array
         # If element is an array, process each item in element recursively using this algorithm,
-        # passing copies of the active context. If the expanded entry is null, drop it.
+        # passing copies of the active context and active property. If the expanded entry is null, drop it.
         depth do
-          input.map do |v|
+          is_list = context.container(active_property) == '@list'
+          value = input.map do |v|
+            # If active property has a @container set to @list, and item is an array,
+            # or the result of expanding any item is an object containing an @list property,
+            # throw an exception as lists of lists are not allowed.
+            raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array) && is_list
+
             expand(v, active_property, context, options)
-          end.map do |v|
-            if context.expand_iri(active_property, :quiet => true) == '@list' ||
-             context.container(active_property) == '@list'
-             case v
-             when Array
-               # If it's an array, merge it's entries with element's entries unless the active property
-               # is @list or has a @container set to @list; in that case, throw an exception as lists of lists
-               # are not allowed.
-               raise ProcessingError::ListOfLists, "A list may not contain another list"
-             when Hash
-               raise ProcessingError::ListOfLists, "A list may not contain another list" if v.has_key?('@list')
-             end
-           end
-            
-            v
           end.flatten.compact
+
+          if is_list && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
+            raise ProcessingError::ListOfLists, "A list may not contain another list"
+          end
+
+          value
         end
       when Hash
         # Otherwise, if element is an object
@@ -51,10 +48,11 @@ module JSON::LD
           output_object = Hash.ordered
           # Then, proceed and process each property and value in element as follows:
           input.each do |key, value|
-            # Remove property from element, set the active property to property and expand property
-            # according to the steps outlined in IRI Expansion
-            active_property = key
-            property = context.expand_iri(active_property, :position => :predicate, :quiet => true)
+            # Remove property from element expand property according to the steps outlined in IRI Expansion
+            property = context.expand_iri(key, :position => :predicate, :quiet => true)
+
+            # Set active property to the original un-expanded property if property if not a keyword
+            active_property = key unless key[0,1] == '@'
             debug("expand property") {"#{active_property}, expanded: #{property}, value: #{value.inspect}"}
           
             # If property does not expand to a keyword or absolute IRI, remove property from element
@@ -93,10 +91,18 @@ module JSON::LD
               value
             when '@list', '@set', '@graph'
               # Otherwise, if the property is @list, @set, or @graph, expand value recursively
-              # using this algorithm, passing copies of the active context and property.
+              # using this algorithm, passing copies of the active context and active property.
               # If the expanded value is not an array, convert it to an array.
               value = [value] unless value.is_a?(Array)
-              depth { expand(value, property, context, options) }
+              value = depth { expand(value, active_property, context, options) }
+
+              # If property is @list, and any expanded value
+              # is an object containing an @list property, throw an exception, as lists of lists are not supported
+              if property == '@list' && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
+                raise ProcessingError::ListOfLists, "A list may not contain another list"
+              end
+
+              value
             else
               # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
               depth { expand(value, active_property, context, options) }
@@ -110,10 +116,11 @@ module JSON::LD
               next
             end
 
-            # If the expanded value is not null and the active property has a @container set to @list,
+            # If the expanded value is not null and property is not a keyword
+            # and the active property has a @container set to @list,
             # convert value to an object with an @list property whose value is set to value
             # (unless value is already in that form)
-            if expanded_value && context.container(active_property) == '@list' &&
+            if expanded_value && property[0,1] != '@' && context.container(active_property) == '@list' &&
                (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
                debug(" => ") { "convert #{expanded_value.inspect} to list"}
               expanded_value = {'@list' => [expanded_value].flatten}

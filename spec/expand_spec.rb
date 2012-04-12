@@ -470,6 +470,24 @@ describe JSON::LD::API do
             "http://example.com/foo" => [{"@list" => [ "foo", "bar" ]}]
           }]
         },
+        "explicit list with coerced @id values" => {
+          :input => {
+            "@context" => {"http://example.com/foo" => {"@type" => "@id"}},
+            "http://example.com/foo" => {"@list" => ["http://foo", "http://bar"]}
+          },
+          :output => [{
+            "http://example.com/foo" => [{"@list" => [{"@id" => "http://foo"}, {"@id" => "http://bar"}]}]
+          }]
+        },
+        "explicit list with coerced datatype values" => {
+          :input => {
+            "@context" => {"http://example.com/foo" => {"@type" => RDF::XSD.date.to_s}},
+            "http://example.com/foo" => {"@list" => ["2012-04-12"]}
+          },
+          :output => [{
+            "http://example.com/foo" => [{"@list" => [{"@value" => "2012-04-12", "@type" => RDF::XSD.date.to_s}]}]
+          }]
+        },
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
@@ -543,6 +561,13 @@ describe JSON::LD::API do
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
+          },
+          :exception => JSON::LD::ProcessingError::ListOfLists
+        },
+        "coerced @list containing an array" => {
+          :input => {
+            "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
+            "foo" => [["baz"]]
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },
