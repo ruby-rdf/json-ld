@@ -173,7 +173,7 @@ module Fixtures
       end
 
       def sparql
-        Kernel.open(self.expected) if self.expected
+        RDF::Util::File.open_file(self.expected) if self.expected
       end
     end
 

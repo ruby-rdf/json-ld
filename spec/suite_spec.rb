@@ -11,7 +11,7 @@ describe JSON::LD do
       m.entries.each do |m2|
         describe m2.name do
           m2.entries.each do |t|
-            next if t.is_a?(Fixtures::JSONLDTest::NormalizeTest)
+            #next unless t.is_a?(Fixtures::JSONLDTest::RDFTest)
             specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
               begin
                 t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
@@ -37,8 +37,6 @@ describe JSON::LD do
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
-                when Fixtures::JSONLDTest::NormalizeTest
-                  pending("Normalization")
                 when Fixtures::JSONLDTest::RDFTest
                   reader = RDF::Reader.open(t.inputDocument,
                     :base => t.inputDocument,

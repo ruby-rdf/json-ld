@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/gkellogg/rdf.git
-  revision: 909cd9bdda68d31ce6344fc65914c8c09fad924f
+  revision: 3180bdf0fa8e42c30dfb9bee5263503b0ed35731
   specs:
-    rdf (0.3.5)
+    rdf (0.3.5.2)
       addressable (>= 2.2.6)
 
 PATH
@@ -16,13 +16,28 @@ GEM
   remote: http://rubygems.org/
   specs:
     addressable (2.2.7)
+    backports (2.5.1)
     builder (3.0.0)
     diff-lcs (1.1.3)
     equivalent-xml (0.2.9)
       nokogiri (>= 1.4.3)
-    json (1.6.5)
-    json (1.6.5-java)
-    json_pure (1.6.5)
+    haml (3.1.4)
+    htmlentities (4.3.1)
+    json (1.6.6)
+    json (1.6.6-java)
+    json_pure (1.6.6)
+    linkeddata (0.3.5)
+      json-ld (>= 0.1.0)
+      rdf (>= 0.3.5)
+      rdf-isomorphic (>= 0.3.4)
+      rdf-json (>= 0.3.0)
+      rdf-microdata (>= 0.2.3)
+      rdf-n3 (>= 0.3.6)
+      rdf-rdfa (>= 0.3.9)
+      rdf-rdfxml (>= 0.3.5)
+      rdf-trig (>= 0.1.1)
+      rdf-trix (>= 0.3.0)
+      rdf-turtle (>= 0.1.1)
     net-http-persistent (1.4.1)
     nokogiri (1.5.2)
     nokogiri (1.5.2-java)
@@ -30,8 +45,32 @@ GEM
     promise (0.3.0)
     rdf-isomorphic (0.3.4)
       rdf (>= 0.2.3)
+    rdf-json (0.3.0)
+      json_pure (>= 1.4.2)
+      rdf (~> 0.3.0)
+    rdf-microdata (0.2.3.1)
+      htmlentities (>= 4.3.0)
+      json (>= 1.6.1)
+      rdf (>= 0.3.4)
+      rdf-xsd (>= 0.3.4)
+    rdf-n3 (0.3.6)
+      rdf (>= 0.3.4)
+    rdf-rdfa (0.3.9)
+      backports
+      haml (>= 3.0.0)
+      htmlentities (>= 4.3.0)
+      rdf (>= 0.3.3)
+      rdf-xsd (>= 0.3.5)
+    rdf-rdfxml (0.3.6)
+      rdf (>= 0.3.4)
+      rdf-xsd (>= 0.3.5)
     rdf-spec (0.3.5.1)
       rspec (>= 2.8.0)
+    rdf-trig (0.1.1)
+      rdf (>= 0.3.4)
+      rdf-turtle (>= 0.1.1)
+    rdf-trix (0.3.0)
+      rdf (~> 0.3.0)
     rdf-turtle (0.1.1)
       rdf (>= 0.3.4)
     rdf-xsd (0.3.5)
@@ -42,7 +81,7 @@ GEM
       rspec-expectations (~> 2.9.0)
       rspec-mocks (~> 2.9.0)
     rspec-core (2.9.0)
-    rspec-expectations (2.9.0)
+    rspec-expectations (2.9.1)
       diff-lcs (~> 1.1.3)
     rspec-mocks (2.9.0)
     sparql (0.1.1)
@@ -72,6 +111,7 @@ PLATFORMS
 DEPENDENCIES
   equivalent-xml (>= 0.2.8)
   json-ld!
+  linkeddata
   open-uri-cached (>= 0.0.5)
   rdf!
   rdf-isomorphic (>= 0.3.4)

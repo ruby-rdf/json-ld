@@ -1,3 +1,5 @@
+require 'rdf/nquads'
+
 module JSON::LD
   module FromTriples
     include Utils
@@ -23,7 +25,7 @@ module JSON::LD
 
       # For each triple in input
       input.each do |statement|
-        debug("statement") { statement.to_ntriples.chomp}
+        debug("statement") { statement.to_nquads.chomp}
 
         subject = ec.expand_iri(statement.subject).to_s
 

@@ -27,7 +27,7 @@ def run(input, options)
     puts "Compacted in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
-    g = RDF::Graph.new << r
+    g = RDF::Repository.new << r
     secs = Time.new - start
     num = g.count
     options[:output].puts g.dump(options[:output_format], options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true))

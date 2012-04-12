@@ -10,12 +10,6 @@ module JSON::LD
     format Format
     
     ##
-    # The graph constructed when parsing.
-    #
-    # @return [RDF::Graph]
-    attr_reader :graph
-    
-    ##
     # Override normal symbol generation
     def self.to_sym
       :jsonld

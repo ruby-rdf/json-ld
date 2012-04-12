@@ -1,3 +1,5 @@
+require 'rdf/nquads'
+
 module JSON::LD
   module Triples
     include Utils
@@ -8,15 +10,17 @@ module JSON::LD
     #   location within JSON hash
     # @param [Hash, Array, String] element
     #   The current JSON element being processed
-    # @param [RDF::URI] subject
+    # @param [RDF::Node] subject
     #   Inherited subject
     # @param [RDF::URI] property
     #   Inherited property
+    # @param [RDF::Node] name
+    #   Inherited inherited graph name
     # @return [RDF::Resource] defined by this element
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
-    def statements(path, element, subject, property, &block)
-      debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}"}
+    def statements(path, element, subject, property, name, &block)
+      debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
       @node_seq = "jld_t0000" unless subject || property
 
       traverse_result = depth do
@@ -31,12 +35,12 @@ module JSON::LD
             RDF::Literal.new(element['@value'], literal_opts)
           elsif element.has_key?('@list')
             # 1.3 (Lists)
-            parse_list("#{path}[#{'@list'}]", element['@list'], property, &block)
+            parse_list("#{path}[#{'@list'}]", element['@list'], property, name, &block)
           end
 
           if object
             # 1.4
-            add_triple(path, subject, property, object, &block) if subject && property
+            add_quad(path, subject, property, object, name, &block) if subject && property
             return object
           end
         
@@ -44,27 +48,35 @@ module JSON::LD
             # 1.5 Subject
             # 1.5.1 Set active object (subject)
             context.expand_iri(element['@id'], :quite => true)
-          elsif element.has_key?('@graph')
-            # 1.5.2 Recursively process hash or Array values
-            debug("statements[Step 1.5.2]")
-            statements("#{path}[#{'@graph'}]", element['@graph'], subject, property, &block)
           else
             # 1.6) Generate a blank node identifier and set it as the active subject.
             node
           end
 
-          # 1.7) For each key in the JSON object that has not already been processed, perform the following steps:
+          # 1.7) For each key in the JSON object that has not already been processed,
+          # perform the following steps:
           element.each do |key, value|
-            # 1.7.1) If a key that is not @id, or @type, set the active property by
-            # performing Property Processing on the key.
             active_property = case key
-            when '@type' then RDF.type
-            when /^@/ then next
-            else      context.expand_iri(key, :quite => true)
+            when '@type'
+              # If the key is @type, set the active property to rdf:type.
+              RDF.type
+            when '@graph'
+              # Otherwise, if property is @graph, process value algorithm recursively, using active subject
+              # as graph name and null values for active subject and active property and then continue to
+              # next property
+              statements("#{path}[#{key}]", value, nil, nil, active_subject, &block)
+              next
+            when /^@/
+              # Otherwise, if property is a keyword, skip this step.
+              next
+            else
+              # 1.7.1) If a key that is not @id, @graph, or @type, set the active property by
+              # performing Property Processing on the key.
+              context.expand_iri(key, :quite => true)
             end
 
             debug("statements[Step 1.7.4]")
-            statements("#{path}[#{key}]", value, active_subject, active_property, &block)
+            statements("#{path}[#{key}]", value, active_subject, active_property, name, &block)
           end
         
           # 1.8) The active_subject is returned
@@ -73,7 +85,7 @@ module JSON::LD
           # 2) If a regular array is detected ...
           debug("statements[Step 2]")
           element.each_with_index do |v, i|
-            statements("#{path}[#{i}]", v, subject, property, &block)
+            statements("#{path}[#{i}]", v, subject, property, name, &block)
           end
           nil # No real value returned from an array
         when String
@@ -98,7 +110,7 @@ module JSON::LD
       end
 
       # Yield and return traverse_result
-      add_triple(path, subject, property, traverse_result, &block) if subject && property && traverse_result
+      add_quad(path, subject, property, traverse_result, name, &block) if subject && property && traverse_result
       traverse_result
     end
 
@@ -111,13 +123,15 @@ module JSON::LD
     #   The Array to serialize as a list
     # @param [RDF::URI] property
     #   Inherited property
+    # @param [RDF::Resource] name
+    #   Inherited named graph context
     # @param [EvaluationContext] ec
     #   The active context
     # @return [RDF::Resource] BNode or nil for head of list
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement
-    def parse_list(path, list, property, &block)
-      debug(path) {"list: #{list.inspect}, p=#{property.inspect}"}
+    def parse_list(path, list, property, name, &block)
+      debug(path) {"list: #{list.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? node : RDF.nil
@@ -125,14 +139,14 @@ module JSON::LD
       depth do
         list.each do |list_item|
           # Traverse the value
-          statements("#{path}", list_item, first_bnode, RDF.first, &block)
+          statements("#{path}", list_item, first_bnode, RDF.first, name, &block)
           rest_bnode = node
-          add_triple("#{path}", first_bnode, RDF.rest, rest_bnode, &block)
+          add_quad("#{path}", first_bnode, RDF.rest, rest_bnode, name, &block)
           first_bnode = rest_bnode
         end
         if last
-          statements("#{path}", last, first_bnode, RDF.first, &block)
-          add_triple("#{path}", first_bnode, RDF.rest, RDF.nil, &block)
+          statements("#{path}", last, first_bnode, RDF.first, name, &block)
+          add_quad("#{path}", first_bnode, RDF.rest, RDF.nil, name, &block)
         end
       end
       result
@@ -150,16 +164,17 @@ module JSON::LD
     # add a statement, object can be literal or URI or bnode
     #
     # @param [String] path
-    # @param [URI, BNode] subject the subject of the statement
-    # @param [URI] predicate the predicate of the statement
-    # @param [URI, BNode, Literal] object the object of the statement
+    # @param [RDF::Resource] subject the subject of the statement
+    # @param [RDF::URI] predicate the predicate of the statement
+    # @param [RDF::Term] object the object of the statement
+    # @param [RDF::Resource] name the named graph context of the statement
     # @yield :statement
     # @yieldParams [RDF::Statement] :statement
-    def add_triple(path, subject, predicate, object)
+    def add_quad(path, subject, predicate, object, name)
       predicate = RDF.type if predicate == '@type'
       object = RDF::URI(object.to_s) if object.literal? && predicate == RDF.type
-      statement = RDF::Statement.new(subject, predicate, object)
-      debug(path) {"statement: #{statement.to_ntriples}"}
+      statement = RDF::Statement.new(subject, predicate, object, :context => name)
+      debug(path) {"statement: #{statement.to_nquads}"}
       yield statement
     end
   end

@@ -275,7 +275,7 @@ module JSON::LD
 
       API.new(expanded, nil, options) do |api|
         # Start generating statements
-        api.statements("", api.value, nil, nil) do |statement|
+        api.statements("", api.value, nil, nil, nil) do |statement|
           callback.call(statement) if callback
           yield statement if block_given?
         end

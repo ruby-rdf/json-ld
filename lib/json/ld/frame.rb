@@ -204,8 +204,8 @@ module JSON::LD
       debug("flatten")
       expanded = depth {self.expand(self.value, nil, context)}
       statements = []
-      depth {self.statements("", expanded, nil, nil) {|s| statements << s}}
-      debug("flatten") {"statements: #{statements.map(&:to_ntriples).join("\n")}"}
+      depth {self.statements("", expanded, nil, nil, nil ) {|s| statements << s}}
+      debug("flatten") {"statements: #{statements.map(&:to_nquads).join("\n")}"}
 
       # Transform back to JSON-LD, not flattened
       depth {self.from_statements(statements)}
