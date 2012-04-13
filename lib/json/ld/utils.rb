@@ -27,7 +27,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def blank_node?(value)
-      value.is_a?(Hash) && value.fetch('@id', '')[0,2] == '_:'
+      (subject?(value) || subject_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
     end
 
     private

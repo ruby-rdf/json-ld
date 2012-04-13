@@ -571,12 +571,6 @@ describe JSON::LD::API do
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },
-        "@list containing array" => {
-          :input => {
-            "http://example.com/foo" => {"@list" => [["baz"]]}
-          },
-          :exception => JSON::LD::ProcessingError::ListOfLists
-        },
       }.each do |title, params|
         it title do
           #JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug).should produce([], @debug)
