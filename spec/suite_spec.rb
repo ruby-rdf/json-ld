@@ -37,6 +37,12 @@ describe JSON::LD do
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
+                when Fixtures::JSONLDTest::FromRDFTest
+                  repo = RDF::Repository.load(t.inputDocument)
+                  result = JSON::LD::API.fromRDF(repo.each_statement.to_a, nil,
+                                                :debug => t.debug)
+                  expected = JSON.load(t.expect)
+                  result.should produce(expected, t.debug)
                 when Fixtures::JSONLDTest::RDFTest
                   reader = RDF::Reader.open(t.inputDocument,
                     :base => t.inputDocument,

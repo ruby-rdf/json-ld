@@ -87,6 +87,7 @@ module Fixtures
           when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
           when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
           when entry_types.include?(Jld.RDFTest) then entry.as(RDFTest)
+          when entry_types.include?(Jld.FromRDFTest) then entry.as(FromRDFTest)
           when entry_types.include?(Test.TestCase) then entry.as(Entry)
           else raise "Unexpected entry type: #{entry_types.inspect}"
           end
@@ -163,6 +164,10 @@ module Fixtures
 
     class NormalizeTest < Entry
       type Jld.NormalizeTest
+    end
+
+    class FromRDFTest < Entry
+      type Jld.FromRDFTest
     end
 
     class RDFTest < Entry
