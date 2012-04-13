@@ -4,9 +4,6 @@ require 'spira'
 require 'json/ld'
 require 'open-uri'
 
-require 'rdf/turtle'
-
-
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util
   module File

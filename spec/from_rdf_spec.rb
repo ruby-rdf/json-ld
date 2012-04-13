@@ -2,7 +2,6 @@
 $:.unshift "."
 require 'spec_helper'
 require 'rdf/spec/writer'
-require 'rdf/trig'
 
 describe JSON::LD::API do
   describe ".fromRDF" do
@@ -237,6 +236,37 @@ describe JSON::LD::API do
                 "http://example.com/b" => {"@list" => [{"@id" => "http://example.com/c"}]}
               }],
               "http://example.com/d" => {"@list" => [{"@id" => "http://example.com/e"}]}
+            }
+          ]
+        },
+        "Two Graphs with same subject and lists" => {
+          :input => %(
+            @prefix : <http://example.com/> .
+            :U { :a :b (:c) .}
+            :V { :a :b (:e) .}
+          ),
+          :output => [
+            {
+              "@id": "http://example.com/U",
+              "@graph": [
+                {
+                  "@id": "http://example.com/a",
+                  "http://example.com/b": {
+                    "@list": [{"@id": "http://example.com/c"}]
+                  }
+                }
+              ]
+            },
+            {
+              "@id": "http://example.com/V",
+              "@graph": [
+                {
+                  "@id": "http://example.com/a",
+                  "http://example.com/b": {
+                    "@list": [{"@id": "http://example.com/e"}]
+                  }
+                }
+              ]
             }
           ]
         },
