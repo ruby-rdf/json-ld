@@ -159,14 +159,18 @@ module JSON::LD
           context.each do |key, value|
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-            if (new_ec.mapping(key) || key) == '@language'
-              new_ec.default_language = value.to_s unless value.to_s == '@language' # due to aliasing
+            if key == '@language'
+              raise InvalidContext::Syntax, "@language must be null or a string" unless value.nil? || value.is_a?(String)
+              new_ec.default_language = value
             elsif term_valid?(key)
+              # Clear existing mappings and coercions, as terms can't be partially re-defined
+              new_ec.set_mapping(key, nil)
+              new_ec.set_coerce(key, nil)
+              new_ec.set_container(key, nil)
+              new_ec.set_language(key, nil)
+
               # Extract IRI mapping. This is complicated, as @id may have been aliased
-              if value.is_a?(Hash)
-                id_key = value.keys.detect {|k| new_ec.mapping(k) == '@id'} || '@id'
-                value = value[id_key]
-              end
+              value = value.fetch('@id', nil) if value.is_a?(Hash)
               raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
@@ -185,50 +189,30 @@ module JSON::LD
         context.each do |key, value|
           # Expand a string value, unless it matches a keyword
           debug("parse") {"coercion/list: Hash[#{key}] = #{value.inspect}"}
-          prop = new_ec.expand_iri(key, :position => :predicate).to_s
           case value
           when Hash
-            # Must have one of @id, @type or @container
-            expanded_keys = value.keys.map {|k| new_ec.mapping(k) || k}
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @container" if (%w(@id @type @container) & expanded_keys).empty?
+            # Must have one of @id, @language, @type or @container
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @container" if (%w(@id @language @type @container) & value.keys).empty?
+            
             value.each do |key2, value2|
-              expanded_key = new_ec.mapping(key2) || key2
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
-              case expanded_key
+              case key2
               when '@type'
                 raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
-                if new_ec.coerce(key) != iri
-                  raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
-                  # Record term coercion
-                  new_ec.set_coerce(key, iri)
-                end
+                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
+                # Record term coercion
+                new_ec.set_coerce(key, iri)
               when '@container'
                 raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
-                if new_ec.container(key) != value2
-                  debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
-                  new_ec.set_container(key, value2)
-                end
+                debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
+                new_ec.set_container(key, value2)
               when '@language'
-                if new_ec.language(key) != value2
-                  debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
-                  new_ec.set_language(key, value2)
-                end
+                debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
+                new_ec.set_language(key, value2)
               end
             end
           when String
             # handled in previous loop
-          when nil
-            case prop
-            when '@language'
-              # Remove language mapping from active context
-              new_ec.default_language = nil
-            else
-              # Remove all mapping information for the property
-              new_ec.set_mapping(prop, nil)
-              new_ec.set_coerce(prop, nil)
-              new_ec.set_container(prop, nil)
-              new_ec.set_language(prop, nil)
-            end
           else
             raise InvalidContext::Syntax, "attempt to map #{key.inspect} to #{value.class}"
           end
@@ -255,7 +239,7 @@ module JSON::LD
           debug("serlialize: generate context")
           debug {"=> context: #{inspect}"}
           ctx = Hash.ordered
-          ctx[self.alias('@language')] = default_language.to_s if default_language
+          ctx['@language'] = default_language.to_s if default_language
 
           # Mappings
           mappings.keys.sort{|a, b| a.to_s <=> b.to_s}.each do |k|
@@ -267,13 +251,13 @@ module JSON::LD
           unless coercions.empty? && containers.empty? && languages.empty?
             # Coerce
             (coercions.keys + containers.keys + languages.keys).uniq.sort.each do |k|
-              next if [self.alias('@type'), RDF.type.to_s].include?(k.to_s)
+              next if k == '@type'
 
               # Turn into long form
               ctx[k] ||= Hash.ordered
               if ctx[k].is_a?(String)
                 defn = Hash.ordered
-                defn[self.alias("@id")] = get_compact_iri(ctx[k]) || ctx[k]
+                defn["@id"] = get_compact_iri(ctx[k]) || ctx[k]
                 ctx[k] = defn
               end
 
@@ -282,21 +266,21 @@ module JSON::LD
                 # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
                 dt = compact_iri(coerce(k), :position => :datatype, :depth => @depth)
                 # Fold into existing definition
-                ctx[k][self.alias("@type")] = dt
+                ctx[k]["@type"] = dt
                 debug {"=> datatype[#{k}] => #{dt}"}
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
               if %w(@list @set).include?(container(k))
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k][self.alias("@container")] = self.alias(container(k))
+                ctx[k]["@container"] = self.alias(container(k))
                 debug {"=> container[#{k}] => #{self.alias(container(k)).inspect}"}
               end
 
               debug {"=> language(#{k}) => #{language(k)}"}
               if language(k) != default_language
                 # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k][self.alias("@language")] = language(k)
+                ctx[k]["@language"] = language(k)
                 debug {"=> language[#{k}] => #{language(k).inspect}"}
               end
               
@@ -430,15 +414,12 @@ module JSON::LD
 
     ##
     # Determine if `term` is a suitable term.
-    # Basically, a keyword (other than @context), an NCName or an absolute IRI
+    # Term may be any valid JSON string.
     #
     # @param [String] term
     # @return [Boolean]
     def term_valid?(term)
-      term.empty? ||
-      term.match(NC_REGEXP) ||
-      term.match(/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:.*$/) || # This is pretty permissive
-      (term.match(/^@\w+/) && term != '@context')
+      term.is_a?(String)
     end
 
     ##

@@ -243,7 +243,6 @@ describe JSON::LD::EvaluationContext do
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
-        "invalid term" => {"_:foo" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
         it title do
           #subject.parse(context)
