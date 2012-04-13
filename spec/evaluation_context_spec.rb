@@ -174,59 +174,6 @@ describe JSON::LD::EvaluationContext do
           subject.parse({"name" => nil}).mapping("name").should be_nil
         end
       end
-
-      context "keyword aliases" do
-        it "uri for @id as term definition key" do
-          subject.parse({
-            "uri" => "@id", "foo" => {"uri" => "http://example.com/"}
-          }).mappings.should produce({
-            "uri" => "@id",
-            "foo" => "http://example.com/"
-          }, @debug)
-        end
-
-        it 'uri for @id as term definition value' do
-          subject.parse({
-            "uri" => "@id", "foo" => {"@id" => "http://example.com/", "@type" => "uri"}
-          }).coercions.should produce({
-            "foo" => "@id"
-          }, @debug)
-        end
-
-        it 'list for @list' do
-          subject.parse({
-            "container" => "@container", "foo" => {"@id" => "http://example.com/", "container" => '@list'}
-          }).containers.should produce({
-            "foo" => '@list'
-          }, @debug)
-        end
-
-        it "@iri for @id as term definition key" do
-          subject.parse({
-            "@iri" => "@id", "foo" => {"@iri" => "http://example.com/"}
-          }).mappings.should produce({
-            "@iri" => "@id",
-            "foo" => "http://example.com/"
-          }, @debug)
-        end
-
-        it "@subject for @id as term definition key" do
-          subject.parse({
-            "@subject" => "@id", "foo" => {"@subject" => "http://example.com/"}
-          }).mappings.should produce({
-            "@subject" => "@id",
-            "foo" => "http://example.com/"
-          }, @debug)
-        end
-
-        it 'type for @type' do
-          subject.parse({
-            "type" => "@type", "foo" => {"@id" => "http://example.com/", "type" => "@id"}
-          }).coercions.should produce({
-            "foo" => "@id"
-          }, @debug)
-        end
-      end
     end
 
     describe "Syntax Errors" do
@@ -427,19 +374,19 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "uses aliased @id in key position" do
+    it "does not use aliased @id in key position" do
       subject.set_mapping("id", '@id')
       subject.set_mapping("knows", RDF::FOAF.knows)
       subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "id" => "@id",
-          "knows" => {"id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
 
-    it "uses aliased @id in value position" do
+    it "does not use aliased @id in value position" do
       subject.set_mapping("id", "@id")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_coerce("foaf:homepage", "@id")
@@ -447,12 +394,12 @@ describe JSON::LD::EvaluationContext do
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "id" => "@id",
-          "foaf:homepage" => {"@type" => "id"}
+          "foaf:homepage" => {"@type" => "@id"}
         }
       }, @debug)
     end
 
-    it "uses aliased @type" do
+    it "does not use aliased @type" do
       subject.set_mapping("type", "@type")
       subject.set_mapping("foaf", RDF::FOAF.to_uri)
       subject.set_coerce("foaf:homepage", "@id")
@@ -460,19 +407,19 @@ describe JSON::LD::EvaluationContext do
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "type" => "@type",
-          "foaf:homepage" => {"type" => "@id"}
+          "foaf:homepage" => {"@type" => "@id"}
         }
       }, @debug)
     end
 
-    it "uses aliased @container" do
+    it "does not use aliased @container" do
       subject.set_mapping("container", '@container')
       subject.set_mapping("knows", RDF::FOAF.knows)
       subject.set_container("knows", '@list')
       subject.serialize.should produce({
         "@context" => {
           "container" => "@container",
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "container" => "@list"}
+          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end

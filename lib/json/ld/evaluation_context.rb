@@ -160,14 +160,12 @@ module JSON::LD
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
             if key == '@language'
-              raise InvalidContext::Syntax, "@language must be null or a string" unless value.nil? || value.is_a?(String)
               new_ec.default_language = value
             elsif term_valid?(key)
-              # Clear existing mappings and coercions, as terms can't be partially re-defined
-              new_ec.set_mapping(key, nil)
+              # Remove all coercion information for the property
               new_ec.set_coerce(key, nil)
               new_ec.set_container(key, nil)
-              new_ec.set_language(key, nil)
+              @languages.delete(key)
 
               # Extract IRI mapping. This is complicated, as @id may have been aliased
               value = value.fetch('@id', nil) if value.is_a?(Hash)
@@ -178,8 +176,10 @@ module JSON::LD
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
+              elsif value.nil?
+                new_ec.set_mapping(key, nil)
               end
-            elsif !new_ec.expand_iri(key).is_a?(RDF::URI)
+            else
               raise InvalidContext::Syntax, "key #{key.inspect} is invalid"
             end
           end
@@ -191,27 +191,32 @@ module JSON::LD
           debug("parse") {"coercion/list: Hash[#{key}] = #{value.inspect}"}
           case value
           when Hash
-            # Must have one of @id, @language, @type or @container
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @type or @container" if (%w(@id @language @type @container) & value.keys).empty?
-            
+            # Must have one of @id, @type or @container
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @language, @type or @container" if (%w(@id @type @container) & value.keys).empty?
             value.each do |key2, value2|
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
               case key2
               when '@type'
                 raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
-                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
-                # Record term coercion
-                new_ec.set_coerce(key, iri)
+                if new_ec.coerce(key) != iri
+                  raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
+                  # Record term coercion
+                  new_ec.set_coerce(key, iri)
+                end
               when '@container'
                 raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
-                debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
-                new_ec.set_container(key, value2)
+                if new_ec.container(key) != value2
+                  debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
+                  new_ec.set_container(key, value2)
+                end
               when '@language'
-                debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
-                new_ec.set_language(key, value2)
+                if new_ec.language(key) != value2
+                  debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
+                  new_ec.set_language(key, value2)
+                end
               end
             end
-          when String
+          when nil, String
             # handled in previous loop
           else
             raise InvalidContext::Syntax, "attempt to map #{key.inspect} to #{value.class}"
@@ -263,8 +268,8 @@ module JSON::LD
 
               debug {"=> coerce(#{k}) => #{coerce(k)}"}
               if coerce(k) && !NATIVE_DATATYPES.include?(coerce(k))
-                # If coercion doesn't depend on any prefix definitions, it can be folded into the first context block
-                dt = compact_iri(coerce(k), :position => :datatype, :depth => @depth)
+                dt = coerce(k)
+                dt = compact_iri(dt, :position => :datatype, :depth => @depth) unless dt == '@id'
                 # Fold into existing definition
                 ctx[k]["@type"] = dt
                 debug {"=> datatype[#{k}] => #{dt}"}
@@ -272,14 +277,12 @@ module JSON::LD
 
               debug {"=> container(#{k}) => #{container(k)}"}
               if %w(@list @set).include?(container(k))
-                # It is not dependent on previously defined terms, fold into existing definition
-                ctx[k]["@container"] = self.alias(container(k))
-                debug {"=> container[#{k}] => #{self.alias(container(k)).inspect}"}
+                ctx[k]["@container"] = container(k)
+                debug {"=> container[#{k}] => #{container(k).inspect}"}
               end
 
               debug {"=> language(#{k}) => #{language(k)}"}
               if language(k) != default_language
-                # It is not dependent on previously defined terms, fold into existing definition
                 ctx[k]["@language"] = language(k)
                 debug {"=> language[#{k}] => #{language(k).inspect}"}
               end
@@ -392,7 +395,11 @@ module JSON::LD
     def set_container(property, value)
       return if @containers[property.to_s] == value
       debug {"coerce #{property.inspect} to #{value.inspect}"} 
-      @containers[property.to_s] = value
+      if value
+        @containers[property.to_s] = value
+      else
+        @containers.delete(value)
+      end
     end
 
     ##
@@ -643,6 +650,8 @@ module JSON::LD
 
     def inspect
       v = %w([EvaluationContext)
+      v << "def_language=#{default_language}"
+      v << "languages[#{languages.keys.length}]=#{languages}"
       v << "mappings[#{mappings.keys.length}]=#{mappings}"
       v << "coercions[#{coercions.keys.length}]=#{coercions}"
       v << "containers[#{containers.length}]=#{containers}"
