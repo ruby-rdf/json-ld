@@ -116,7 +116,8 @@ DEPENDENCIES
   rdf!
   rdf-isomorphic (>= 0.3.4)
   rdf-spec (>= 0.3.5)
-  rdf-turtle (>= 0.1.0)
+  rdf-trig (>= 0.1.1)
+  rdf-turtle (>= 0.1.1)
   rspec (>= 2.8.0)
   sparql (>= 0.0.2)
   spira (>= 0.0.12)

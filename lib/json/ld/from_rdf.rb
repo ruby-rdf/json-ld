@@ -5,7 +5,7 @@ module JSON::LD
     include Utils
 
     ##
-    # Generate a JSON-LD array representation from an ordered array of RDF::Statement.
+    # Generate a JSON-LD array representation from an array of {RDF::Statement}.
     # Representation is in expanded form
     #
     # @param [Array<RDF::Statement>] input
@@ -28,41 +28,79 @@ module JSON::LD
         debug("statement") { statement.to_nquads.chomp}
 
         subject = ec.expand_iri(statement.subject).to_s
+        name = ec.expand_iri(statement.context).to_s if statement.context
 
         case statement.predicate
         when RDF.first
           # If property is rdf:first,
-          # create a new entry in _listMap_ with a key of _subject_ and an array value
+          # create a new entry in _listMap_ for _name_ and _subject_ and an array value
           # containing the object representation and continue to the next statement.
           object_rep = ec.expand_value(nil, statement.object)
           debug("rdf:first") { "save object #{[object_rep].inspect}"}
-          listMap[subject] = [object_rep]
+          listMap[name] ||= {}
+          listMap[name][subject] = [object_rep]
           next
         when RDF.rest
           # If property is rdf:rest,
           # and object is a blank node,
-          # create a new entry in _restMap_ with a key of _subject_ and a value being the
+          # create a new entry in _restMap_ for _name_ and _subject_ and a value being the
           # result of IRI expansion on the object and continue to the next statement.
           next unless statement.object.is_a?(RDF::Node)
           object_rep = ec.expand_iri(statement.object).to_s
           debug("rdf:rest") { "save object #{object_rep.inspect}"}
-          restMap[subject] = object_rep
+          restMap[name] ||= {}
+          restMap[name][subject] = object_rep
           next
         end
 
-        # If _subjectMap_ does not have an entry for subject
-        value = subjectMap[subject]
-        unless value
-          debug("@id") { "new subject: #{subject}"}
-          # Create a new JSON Object with key/value pair of @id and a string representation
-          # of subject and use as value.
-          value = Hash.ordered
-          value['@id'] = subject
+        # If name is not null
+        if name
+          # If _subjectMap_ does not have an entry for null as name and _name_ as subject
+          subjectMap[nil] ||= {}
+          value = subjectMap[nil][name]
+          unless value
+            # Create a new JSON Object with key/value pair of @id and a string representation
+            # of name and append to array.
+            debug("@id") { "new subject: #{name} for graph"}
+            value = Hash.ordered
+            value['@id'] = name
+            array << (subjectMap[nil][name] = value)
+          else
+            # Otherwise, use that entry as value
+          end
 
-          # Save value in _subjectMap_ for subject and append to _array_.
-          array << (subjectMap[subject] = value)
+          # If value does not have an entry for @graph, initialize it as a new array
+          a = value['@graph'] ||= []
+
+          # If subjectMap does not have an entry for name and subject
+          subjectMap[name] ||= {}
+          value = subjectMap[name][subject]
+          unless value
+            # Create a new JSON Object with key/value pair of @id and a string representation
+            # of name and append to the the graph array for name and use as value.
+            debug("@id") { "new subject: #{subject} for graph: #{name}"}
+            value = Hash.ordered
+            value['@id'] = subject
+            a << (subjectMap[name][subject] = value)
+          else
+            # Otherwise, use that entry as value
+          end
+        else
+          # Otherwise, if subjectMap does not have an entry for _name_ and _subject_
+          debug("@id") { "subjectMap: #{subjectMap.inspect}"}
+          subjectMap[name] ||= {}
+          value = subjectMap[nil][subject]
+          unless value
+            # Create a new JSON Object with key/value pair of @id and a string representation
+            # of subject and append to array.
+            debug("@id") { "new subject: #{subject}"}
+            value = Hash.ordered
+            value['@id'] = subject
+            array << (subjectMap[nil][subject] = value)
+          else
+            # Otherwise, use that entry as value
+          end
         end
-        # Otherwise, set _value_ to the value for subject in _subjectMap_.
         
         # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type:
         if statement.predicate == RDF.type
@@ -98,18 +136,22 @@ module JSON::LD
       # For each key/value _prev_, _rest_ entry in _restMap_, append to the _listMap_ value identified
       # by _prev_ the _listMap_ value identified by _rest_
       debug("restMap") {restMap.inspect}
-      restMap.each do |prev, rest|
-        debug("@list") { "Fold #{rest} into #{prev}"}
-        listMap[prev] += listMap[rest] rescue debug("Oh Fuck!")
+      restMap.each do |gname, map|
+        map.each do |prev, rest|
+          debug("@list") { "Fold #{rest} into #{prev}"}
+          listMap[gname][prev] += listMap[gname][rest]
+        end
       end
 
       # For each key/value _node_, _list_, in _listMap_ where _list_ exists as a value of an object in _array_,
       # replace the object value with _list_
       debug("listMap") {listMap.inspect}
-      listMap.each do |node, list|
-        next unless bnode_map.has_key?(node)
-        debug("@list") { "Replace #{bnode_map[node][:obj][bnode_map[node][:key]]} with #{listMap[node]}"}
-        bnode_map[node][:obj][bnode_map[node][:key]] = {"@list" => listMap[node]}
+      listMap.each do |gname, map|
+        map.each do |node, list|
+          next unless bnode_map.has_key?(node)
+          debug("@list") { "Replace #{bnode_map[node][:obj][bnode_map[node][:key]]} with #{listMap[node]}"}
+          bnode_map[node][:obj][bnode_map[node][:key]] = {"@list" => listMap[gname][node]}
+        end
       end
 
       # Return array as the graph representation.

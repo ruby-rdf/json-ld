@@ -2,6 +2,7 @@
 $:.unshift "."
 require 'spec_helper'
 require 'rdf/spec/writer'
+require 'rdf/trig'
 
 describe JSON::LD::API do
   describe ".fromRDF" do
@@ -187,16 +188,76 @@ describe JSON::LD::API do
         ], @debug)
       end
     end
+    
+    context "quads" do
+      {
+        "simple named graph" => {
+          :input => %(
+            @prefix : <http://example.com/> .
+            :U { :a :b :c .}
+          ),
+          :output => [
+            {
+              "@id" => "http://example.com/U",
+              "@graph" => [{
+                "@id" => "http://example.com/a",
+                "http://example.com/b" => [{"@id" => "http://example.com/c"}]
+              }]
+            }
+          ]
+        },
+        "with properties" => {
+          :input => %(
+            @prefix : <http://example.com/> .
+            :U { :a :b :c .}
+            { :U :d :e .}
+          ),
+          :output => [
+            {
+              "@id" => "http://example.com/U",
+              "@graph" => [{
+                "@id" => "http://example.com/a",
+                "http://example.com/b" => [{"@id" => "http://example.com/c"}]
+              }],
+              "http://example.com/d" => [{"@id" => "http://example.com/e"}]
+            }
+          ]
+        },
+        "with lists" => {
+          :input => %(
+            @prefix : <http://example.com/> .
+            :U { :a :b (:c) .}
+            { :U :d (:e) .}
+          ),
+          :output => [
+            {
+              "@id" => "http://example.com/U",
+              "@graph" => [{
+                "@id" => "http://example.com/a",
+                "http://example.com/b" => {"@list" => [{"@id" => "http://example.com/c"}]}
+              }],
+              "http://example.com/d" => {"@list" => [{"@id" => "http://example.com/e"}]}
+            }
+          ]
+        },
+      }.each_pair do |name, properties|
+        it name do
+          r = serialize(properties[:input], :reader => RDF::TriG::Reader)
+          r.should produce(properties[:output], @debug)
+        end
+      end
+    end
   end
 
   def parse(input, options = {})
-    RDF::Graph.new << RDF::Turtle::Reader.new(input, options)
+    reader = options[:reader] || RDF::Turtle::Reader
+    RDF::Repository.new << reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    @debug = [] << g.dump(:ttl)
+    @debug = [] << g.dump(:trig)
     statements = g.each_statement.to_a
     JSON::LD::API.fromRDF(statements, nil, options.merge(:debug => @debug))
   end
