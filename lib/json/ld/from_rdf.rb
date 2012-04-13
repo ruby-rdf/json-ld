@@ -9,9 +9,9 @@ module JSON::LD
     # Representation is in expanded form
     #
     # @param [Array<RDF::Statement>] input
-    # @param  [Hash{Symbol => Object}] options
+    # @param [BlankNodeNamer] namer
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(input)
+    def from_statements(input, namer)
       array = []
       listMap = {}
       restMap = {}
@@ -29,6 +29,8 @@ module JSON::LD
 
         subject = ec.expand_iri(statement.subject).to_s
         name = ec.expand_iri(statement.context).to_s if statement.context
+        subject = namer.get_name(subject) if subject[0,2] == "_:"
+        name = namer.get_name(name) if name.to_s[0,2] == "_:"
 
         case statement.predicate
         when RDF.first
@@ -36,6 +38,7 @@ module JSON::LD
           # create a new entry in _listMap_ for _name_ and _subject_ and an array value
           # containing the object representation and continue to the next statement.
           object_rep = ec.expand_value(nil, statement.object)
+          object_rep['@id'] = namer.get_name(object_rep['@id']) if blank_node?(object_rep)
           debug("rdf:first") { "save object #{[object_rep].inspect}"}
           listMap[name] ||= {}
           listMap[name][subject] = [object_rep]
@@ -47,6 +50,7 @@ module JSON::LD
           # result of IRI expansion on the object and continue to the next statement.
           next unless statement.object.is_a?(RDF::Node)
           object_rep = ec.expand_iri(statement.object).to_s
+          object_rep = namer.get_name(object_rep) if object_rep[0,2] == '_:'
           debug("rdf:rest") { "save object #{object_rep.inspect}"}
           restMap[name] ||= {}
           restMap[name][subject] = object_rep
@@ -87,7 +91,6 @@ module JSON::LD
           end
         else
           # Otherwise, if subjectMap does not have an entry for _name_ and _subject_
-          debug("@id") { "subjectMap: #{subjectMap.inspect}"}
           subjectMap[name] ||= {}
           value = subjectMap[nil][subject]
           unless value
@@ -120,7 +123,8 @@ module JSON::LD
           # be object represented in expanded form as described in Value Expansion.
           key = ec.expand_iri(statement.predicate).to_s
           object = ec.expand_value(key, statement.object)
-          object_iri = object.fetch('@id', nil) if object.is_a?(Hash)
+          debug("object") {"detected that #{object.inspect} is a blank node"}
+          object['@id'] = object_iri = namer.get_name(object['@id']) if blank_node?(object)
 
           debug("key/value") { "key: #{key}, :value #{object.inspect}"}
           
@@ -155,6 +159,7 @@ module JSON::LD
       end
 
       # Return array as the graph representation.
+      debug("fromRdf") {array.to_json(JSON_STATE)}
       array
     end
   end

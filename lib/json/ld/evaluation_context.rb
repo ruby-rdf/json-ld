@@ -91,7 +91,7 @@ module JSON::LD
 
       # Load any defined prefixes
       (options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_term[v.to_s] = k
+        @iri_to_term[v.to_s] = k unless k.nil?
       end
 
       debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
@@ -170,7 +170,7 @@ module JSON::LD
               raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
-              if iri && new_ec.mappings[key] != iri
+              if iri && new_ec.mappings.fetch(key, nil) != iri
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1

@@ -30,7 +30,10 @@ def run(input, options)
     g = RDF::Repository.new << r
     secs = Time.new - start
     num = g.count
-    options[:output].puts g.dump(options[:output_format], options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true))
+    puts "prefixes: #{r.prefixes.inspect}"
+    parser_options = options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true)
+    puts "begin dump: #{parser_options.inspect}"
+    options[:output].puts g.dump(options[:output_format], parser_options)
     puts
     puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
   end

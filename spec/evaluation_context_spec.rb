@@ -618,7 +618,7 @@ describe JSON::LD::EvaluationContext do
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native boolean" => ["foo", true,                           true],
       "native integer" => ["foo", 1,                              1],
-      "native double" =>  ["foo", 1.1,                            1.1],
+      "native double" =>  ["foo", 1.1e1,                          1.1E1],
       "native date" =>    ["foo", Date.parse("2011-12-27Z"),      {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.time.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],

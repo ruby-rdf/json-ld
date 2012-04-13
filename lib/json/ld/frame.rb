@@ -208,7 +208,7 @@ module JSON::LD
       debug("flatten") {"statements: #{statements.map(&:to_nquads).join("\n")}"}
 
       # Transform back to JSON-LD, not flattened
-      depth {self.from_statements(statements)}
+      depth {self.from_statements(statements, BlankNodeNamer.new("t"))}
     end
 
     ##

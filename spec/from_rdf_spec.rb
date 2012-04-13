@@ -107,7 +107,7 @@ describe JSON::LD::API do
       it "should generate bare anon" do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
         serialize(input).should produce([{
-          "@id" => "_:a",
+          "@id" => "_:t0",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
         }], @debug)
       end
@@ -117,10 +117,10 @@ describe JSON::LD::API do
         serialize(input).should produce([
           {
             "@id" => "http://example.com/a",
-            "http://example.com/b"  => [{"@id" => "_:a"}]
+            "http://example.com/b"  => [{"@id" => "_:t0"}]
           },
           {
-            "@id" => "_:a",
+            "@id" => "_:t0",
             "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
           }
         ], @debug)
@@ -179,10 +179,10 @@ describe JSON::LD::API do
         serialize(input).should produce([
           {
             '@id'   => "http://example.com/a",
-            "http://example.com/b"  => {"@list" => [{"@id" => "_:a"}]}
+            "http://example.com/b"  => {"@list" => [{"@id" => "_:t1"}]}
           },
           {
-            '@id'   => "_:a",
+            '@id'   => "_:t1",
             "http://example.com/b"  => [{"@value" => "foo"}]
           },
         ], @debug)

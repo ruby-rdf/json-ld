@@ -408,10 +408,10 @@ describe JSON::LD::API do
           {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:jld_t0000"}]
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
           },
           {
-            "@id" => "_:jld_t0000",
+            "@id" => "_:t0",
             "@type" => [RDF::FOAF.Person.to_s]
           }
         ]

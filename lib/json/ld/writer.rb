@@ -156,7 +156,7 @@ module JSON::LD
         ctx = EvaluationContext.new(@options)
         ctx.language = @options[:language] if @options[:language]
         @options[:prefixes].each do |prefix, iri|
-          ctx.set_mapping(prefix, iri)
+          ctx.set_mapping(prefix, iri) if prefix && iri
         end if @options[:prefixes]
         ctx
       end

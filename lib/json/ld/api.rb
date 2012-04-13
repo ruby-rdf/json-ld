@@ -302,7 +302,7 @@ module JSON::LD
       result = nil
 
       API.new(nil, nil, options) do |api|
-        result = api.from_statements(input)
+        result = api.from_statements(input, BlankNodeNamer.new("t"))
       end
 
       callback.call(result) if callback
