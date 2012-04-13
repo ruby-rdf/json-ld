@@ -80,13 +80,7 @@ module JSON::LD
           elsif key == '@type' && value.is_a?(Array)
             # Otherwise, if key is @type and value is an array, perform value compaction
             # on all members of the array
-            compacted_value = value.map do |v|
-              if v.is_a?(String)
-                context.compact_iri(v, :position => :subject, :depth => @depth)
-              else
-                context.compact_value(key, v, :depth => @depth)
-              end
-            end
+            compacted_value = value.map {|v| context.compact_iri(v, :position => :subject, :depth => @depth)}
             debug {" => compacted value(@type): #{compacted_value.inspect}"}
             compacted_value = compacted_value.first if compacted_value.length == 1
             compacted_value
