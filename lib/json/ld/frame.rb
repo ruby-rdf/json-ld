@@ -78,7 +78,7 @@ module JSON::LD
             subject.each do |prop, value|
               if prop[0,1] == '@'
                 # Copy keywords
-                output[prop] = subject[prop].dup
+                output[prop] = value.dup
                 next
               end
 
@@ -125,7 +125,6 @@ module JSON::LD
             # Add output to parent
             add_frame_output(state, parent, property, output)
           end
-          output
         end
       end
     end

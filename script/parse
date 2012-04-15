@@ -21,10 +21,15 @@ def run(input, options)
     options[:output].puts output
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
-    output = JSON::LD::API.compact(input, nil, nil, options)
+    output = JSON::LD::API.compact(input, options[:context], nil, options)
     secs = Time.new - start
     puts output.inspect
     puts "Compacted in #{secs} seconds."
+  elsif options[:frame]
+    output = JSON::LD::API.frame(input, options[:frame], nil, options)
+    secs = Time.new - start
+    puts output.inspect
+    puts "Framed in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
     g = RDF::Repository.new << r
@@ -66,6 +71,7 @@ opts = GetoptLong.new(
   ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT],
   ["--expand", GetoptLong::NO_ARGUMENT],
   ["--format", GetoptLong::REQUIRED_ARGUMENT],
+  ["--frame", GetoptLong::REQUIRED_ARGUMENT],
   ["--input-format", GetoptLong::REQUIRED_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
   ["--parse-only", GetoptLong::NO_ARGUMENT],
@@ -81,6 +87,7 @@ opts.each do |opt, arg|
   when '--execute'      then input = arg
   when '--expand'       then options[:expand] = true
   when '--format'       then options[:output_format] = arg.to_sym
+  when '--frame'        then options[:frame] = arg
   when '--input-format' then options[:input_format] = arg.to_sym
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true

@@ -41,7 +41,7 @@ module JSON::LD
       when IO, StringIO then JSON.parse(input.read)
       when String
         content = nil
-        RDF::Util::File.open_file(input) {|f| content = JSON.parse(f)}
+        RDF::Util::File.open_file(input) {|f| content = JSON.parse(f.read)}
         content
       end
       @context = EvaluationContext.new(options)
@@ -203,7 +203,14 @@ module JSON::LD
       framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
 
       # de-reference frame to create the framing object
-      frame = frame.respond_to?(:read) ? JSON.parse(frame.read) : frame
+      frame = case frame
+      when Hash then frame.dup
+      when IO, StringIO then JSON.parse(frame.read)
+      when String
+        content = nil
+        RDF::Util::File.open_file(frame) {|f| content = JSON.parse(f.read)}
+        content
+      end
 
       # Expand frame to simplify processing
       expanded_frame = API.expand(frame)
