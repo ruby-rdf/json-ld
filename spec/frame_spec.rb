@@ -24,11 +24,13 @@ describe JSON::LD::API do
             "@type" => "ex:Type2"
           },
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1"
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1"
+          }]
+        }
       },
       "implicitly includes unframed properties" => {
         :frame => {
@@ -44,13 +46,15 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1",
-          "ex:prop1" => "Property 1",
-          "ex:prop2" => {"@id" => "ex:Obj1"}
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }]
+        }
       },
       "explicitly excludes unframed properties" => {
         :frame => {
@@ -67,11 +71,13 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1"
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1"
+          }]
+        }
       },
       "explicitly includes unframed properties" => {
         :frame => {
@@ -88,13 +94,15 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1",
-          "ex:prop1" => "Property 1",
-          "ex:prop2" => {"@id" => "ex:Obj1"}
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"}
+          }]
+        }
       },
       "frame without @type matches only subjects containing listed properties (duck typing)" => {
         :frame => {
@@ -120,12 +128,14 @@ describe JSON::LD::API do
             "ex:prop2" => "Property 2"
           },
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub3",
-          "ex:prop1" => "Property 1",
-          "ex:prop2" => "Property 2"
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub3",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => "Property 2"
+          }]
+        }
       },
       "embed matched frames" => {
         :frame => {
@@ -149,16 +159,18 @@ describe JSON::LD::API do
             "ex:includes" => {"@id" => "ex:Sub1"}
           },
         ],
-        :output => [{
+        :output =>{
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1",
-          "ex:includes" => {
-            "@id" => "ex:Sub2",
-            "@type" => "ex:Type2",
-            "ex:includes" => {"@id" => "ex:Sub1"}
-          }
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:includes" => {
+              "@id" => "ex:Sub2",
+              "@type" => "ex:Type2",
+              "ex:includes" => {"@id" => "ex:Sub1"}
+            }
+          }]
+        }
       },
       "multiple matches" => {
         :frame => {
@@ -177,18 +189,19 @@ describe JSON::LD::API do
             "@type" => "ex:Type1"
           },
         ],
-        :output => [
-          {
-            "@context" => {"ex" => "http://example.org/"},
-            "@id" => "ex:Sub1",
-            "@type" => "ex:Type1"
-          },
-          {
-            "@context" => {"ex" => "http://example.org/"},
-            "@id" => "ex:Sub2",
-            "@type" => "ex:Type1"
-          },
-        ]
+        :output => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@graph" => [
+              {
+                "@id" => "ex:Sub1",
+                "@type" => "ex:Type1"
+              },
+              {
+                "@id" => "ex:Sub2",
+                "@type" => "ex:Type1"
+              }
+            ]
+          }
       },
       "non-existent framed properties create null property" => {
         :frame => {
@@ -205,14 +218,16 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1",
-          "ex:prop1" => "Property 1",
-          "ex:prop2" => {"@id" => "ex:Obj1"},
-          "ex:null" => nil
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"},
+            "ex:null" => nil
+          }]
+        }
       },
       "non-existent framed properties create default property" => {
         :frame => {
@@ -229,14 +244,16 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
-          "@id" => "ex:Sub1",
-          "@type" => "ex:Type1",
-          "ex:prop1" => "Property 1",
-          "ex:prop2" => {"@id" => "ex:Obj1"},
-          "ex:null" => ["foo"]
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:prop1" => "Property 1",
+            "ex:prop2" => {"@id" => "ex:Obj1"},
+            "ex:null" => ["foo"]
+          }]
+        }
       },
       "mixed content" => {
         :frame => {
@@ -253,14 +270,16 @@ describe JSON::LD::API do
             ]
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "ex:mixed" => [
-            {"@id" => "ex:Sub2"},
-            "literal1"
-          ]
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "ex:mixed" => [
+              {"@id" => "ex:Sub2"},
+              "literal1"
+            ]
+          }]
+        }
       },
       "no embedding" => {
         :frame => {
@@ -277,11 +296,13 @@ describe JSON::LD::API do
             }
           }
         ],
-        :output => [{
+        :output => {
           "@context" => {"ex" => "http://example.org/"},
-          "@id" => "ex:Sub1",
-          "ex:embed" =>  {"@id" => "ex:Sub2"}
-        }]
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "ex:embed" =>  {"@id" => "ex:Sub2"}
+          }]
+        }
       },
     }.each do |title, params|
       it title do

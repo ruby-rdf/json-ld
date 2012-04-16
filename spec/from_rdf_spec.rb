@@ -247,23 +247,23 @@ describe JSON::LD::API do
           ),
           :output => [
             {
-              "@id": "http://example.com/U",
-              "@graph": [
+              "@id" => "http://example.com/U",
+              "@graph" => [
                 {
-                  "@id": "http://example.com/a",
-                  "http://example.com/b": {
-                    "@list": [{"@id": "http://example.com/c"}]
+                  "@id" => "http://example.com/a",
+                  "http://example.com/b" => {
+                    "@list" => [{"@id" => "http://example.com/c"}]
                   }
                 }
               ]
             },
             {
-              "@id": "http://example.com/V",
-              "@graph": [
+              "@id" => "http://example.com/V",
+              "@graph" => [
                 {
-                  "@id": "http://example.com/a",
-                  "http://example.com/b": {
-                    "@list": [{"@id": "http://example.com/e"}]
+                  "@id" => "http://example.com/a",
+                  "http://example.com/b" => {
+                    "@list" => [{"@id" => "http://example.com/e"}]
                   }
                 }
               ]

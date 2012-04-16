@@ -601,10 +601,6 @@ module JSON::LD
           # Compact an @id coercion
           debug {" (@id & coerce)"}
           compact_iri(value['@id'], :position => :object)
-        when %(@id @type).include?(property.to_s) && value.has_key?('@id')
-          # Compact @id representation for @id or @type
-          debug {" (@id & @id|@type)"}
-          compact_iri(value['@id'], :position => :object)
         when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(property)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(property)}"}

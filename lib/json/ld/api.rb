@@ -130,25 +130,26 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      API.new(input, nil, options) do |api|
-        expanded = api.expand(api.value, nil, api.context)
+      API.new(input, nil, options) do
+        expanded = expand(value, nil, self.context)
+        debug(".compact") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # x) If no context provided, use context from input document
-        context ||= api.value.fetch('@context', nil)
+        context ||= value.fetch('@context', nil)
       end
 
-      API.new(expanded, context, options) do |api|
-        result = api.compact(api.value, nil)
+      API.new(expanded, context, options) do
+        result = compact(value, nil)
 
         # xxx) Add the given context to the output
         result = case result
-        when Hash then api.context.serialize.merge(result)
+        when Hash then self.context.serialize.merge(result)
         when Array
-          kwgraph = api.context.compact_iri('@graph', :quiet => true)
-          api.context.serialize.merge(kwgraph => result)
+          kwgraph = self.context.compact_iri('@graph', :quiet => true)
+          self.context.serialize.merge(kwgraph => result)
         when String
-          kwid = api.context.compact_iri('@id', :quiet => true)
-          api.context.serialize.merge(kwid => result)
+          kwid = self.context.compact_iri('@id', :quiet => true)
+          self.context.serialize.merge(kwid => result)
         end
       end
       callback.call(result) if callback
@@ -237,20 +238,11 @@ module JSON::LD
         @context = depth {@context.parse(frame['@context'])}
         # Compact result
         compacted = depth {compact(result, nil)}
-        
-        # xxx) Add the given context to the output
-        result = case compacted
-        when Hash then [context.serialize.merge(compacted)]
-        when Array
-          ctx = context.serialize
-          compacted.map do |o|
-            o = {"@id" => o} if o.is_a?(String)
-            ctx.merge(o)
-          end
-        when String then [context.serialize.merge("@id" => compacted)]
-        end
-        
-        result = cleanup_null(result)
+        compacted = [compacted] unless compacted.is_a?(Array)
+
+        # Add the given context to the output
+        kwgraph = context.compact_iri('@graph', :quiet => true)
+        result = cleanup_null(context.serialize.merge({kwgraph => compacted}))
       end
 
       callback.call(result) if callback

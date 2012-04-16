@@ -128,20 +128,6 @@ describe JSON::LD::API do
           "@type" => "#{RDF::RDFS.Resource}"
         },
       },
-      "@graph" => {
-        :input => [
-          {"http://example.com/foo" => ["foo"]},
-          {"http://example.com/bar" => ["bar"]}
-        ],
-        :context => {"ex" => "http://example.com/"},
-        :output => {
-          "@context" => {"ex" => "http://example.com/"},
-          "@graph" => [
-            {"ex:foo"  => "foo"},
-            {"ex:bar" => "bar"}
-          ]
-        }
-      },
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
@@ -245,6 +231,44 @@ describe JSON::LD::API do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
         jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
+      end
+    end
+
+    context "@graph" do
+      {
+        "Uses @graph given mutliple inputs" => {
+          :input => [
+            {"http://example.com/foo" => ["foo"]},
+            {"http://example.com/bar" => ["bar"]}
+          ],
+          :context => {"ex" => "http://example.com/"},
+          :output => {
+            "@context" => {"ex" => "http://example.com/"},
+            "@graph" => [
+              {"ex:foo"  => "foo"},
+              {"ex:bar" => "bar"}
+            ]
+          }
+        },
+        "Uses expanded subject definitions for subject references" => {
+          :input => [
+            {"@id" => "http://example.com/foo"},
+            {"@id" => "http://example.com/bar"}
+          ],
+          :context => {"ex" => "http://example.com/"},
+          :output => {
+            "@context" => {"ex" => "http://example.com/"},
+            "@graph" => [
+              {"@id" => "ex:foo"},
+              {"@id" => "ex:bar"}
+            ]
+          }
+        },
+      }.each_pair do |title, params|
+        it title do
+          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
       end
     end
 
