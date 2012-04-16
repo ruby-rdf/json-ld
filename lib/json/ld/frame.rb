@@ -32,50 +32,52 @@ module JSON::LD
         debug("frame") {"matches: #{matches.keys.inspect}"}
 
         # get flags for current frame
-        embedOn = get_frame_flag(state, frame, 'embed');
+        embed = get_frame_flag(state, frame, 'embed');
         explicit = get_frame_flag(state, frame, 'explicit');
-        debug("frame") {"embed: #{embedOn.inspect}, explicit: #{explicit.inspect}"}
+        debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
       
         # Add matches to output
-        matches.each do |id, subject|
+        matches.each do |id, element|
           output = {}
           output['@id'] = id
         
           # prepare embed meta info
-          embed = {:parent => parent, :property => property}
+          embedded_subject = {:parent => parent, :property => property}
         
           # if embed is on and there is an existing embed
-          if embedOn && (existing = state[:embeds].fetch(id, nil))
+          if embed && (existing = state[:embeds].fetch(id, nil))
             # only overwrite an existing embed if it has already been added to its
             # parent -- otherwise its parent is somewhere up the tree from this
             # embed and the embed would occur twice once the tree is added
-            embedOn = false
+            embed = false
           
-            embedOn = if existing[:parent].is_a?(Array)
-              # exisitng embed's parent is an array
-              # perform embedding if the subject has already been emitted
-              existing[:parent].detect {|p| output == p}
+            embed = if existing[:parent].is_a?(Array)
+              # exisitng embedded_subject's parent is an array
+              # perform embedding if the element has already been emitted
+              existing[:parent].detect {|p| p['@id'] == id}
             else
-              # Existing embed's parent is an object,
+              # Existing embedded_subject's parent is an object,
               # perform embedding if the property already includes output
-              has_value?(existing[:parent], existing[:property], output)
+              existing[:parent].fetch(existing[:property], []).any? do |v|
+                v.is_a?(Hash) && v.fetch('@id', nil) == id
+              end
             end
-            debug("frame") {"embed now: #{embedOn.inspect}"}
+            debug("frame") {"embed now: #{embed.inspect}"}
 
             # existing embed has already been added, so allow an overwrite
-            remove_embed(state, id) if embedOn
+            remove_embed(state, id) if embed
           end
 
-          unless embedOn
+          unless embed
             # not embedding, add output without any other properties
             add_frame_output(state, parent, property, output)
           else
-            # add embed meta info
-            state[:embeds][id] = embed
-            debug("frame") {"add embed: #{embed.inspect}"}
+            # add embedded_subject meta info
+            state[:embeds][id] = embedded_subject
+            debug("frame") {"add embedded_subject: #{embedded_subject.inspect}"}
         
-            # iterate over subject properties
-            subject.each do |prop, value|
+            # iterate over element properties
+            element.each do |prop, value|
               if prop[0,1] == '@'
                 # Copy keywords
                 output[prop] = value.dup
@@ -85,14 +87,14 @@ module JSON::LD
               # Embed values if explcit is off and the frame doesn't have the property
               unless frame.has_key?(prop)
                 debug("frame") {"non-framed property #{prop}"}
-                embed_values(state, subject, prop, output) unless explicit
+                embed_values(state, element, prop, output) unless explicit
                 next
               end
           
               # only look at values which are references to subjects
               value.each do |o|
                 debug("frame") {"framed property #{prop.inspect} == #{o.inspect}"}
-                oid = o.fetch('@id', o) if o.is_a?(Hash)
+                oid = o['@id'] if subject_reference?(o)
                 if oid && @subjects.has_key?(oid)
                   # Recurse into sub-objects
                   debug("frame") {"framed property #{prop} recurse for #{oid.inspect}"}
@@ -286,37 +288,6 @@ module JSON::LD
       end
     end
 
-    # Does the subject property have the specified value
-    # Expects that properties are in expanded (array) form
-    def has_value?(subject, property, value)
-      subject.fetch(property, []).any? {|v| compare_values(v, value)}
-    end
-
-    ##
-    # Compares two JSON-LD values for equality. Two JSON-LD values will be
-    # considered equal if:
-    #
-    # 1. They are both primitives of the same type and value.
-    # 2. They are both @values with the same @value, @type, and @language, OR
-    # 3. They both have @ids they are the same.
-    #
-    # @param v1 the first value.
-    # @param v2 the second value.
-    #
-    # @return true if v1 and v2 are considered equal, false if not.
-    def compare_values(v1, v2)
-      case v1
-      when Hash
-        v2.is_a?(Hash) && (
-          v1.has_key?('@id') ?
-            (v1['@id'] == v2['@id']) :
-            %(@value @type @language).all? {|p| v1.fetch(p, false) == v2.fetch(p, false)}
-        )
-      else
-        v1 == v2
-      end
-    end
-
     def validate_frame(state, frame)
       raise JSON::LD::InvalidFrame::Syntax,
             "Invalid JSON-LD syntax; a JSON-LD frame must be an object" unless frame.is_a?(Hash)
@@ -346,11 +317,7 @@ module JSON::LD
       ref = {'@id' => id}
       
       # remove existing embed
-      if parent.is_a?(Array)
-        # replace subject with reference
-        i = parent.index(subject)
-        parent[i] = ref if i
-      else 
+      if subject?(parent)
         # replace subject with reference
         parent[property].map! do |v|
           v.is_a?(Hash) && v.fetch('@id', nil) == id ? ref : v
@@ -398,19 +365,19 @@ module JSON::LD
     end
     
     ##
-    # Embeds values for the given subject and property into output.
-    def embed_values(state, subject, property, output)
-      subject[property].each do |o|
-        # Get subject @id, if this is an object
-        sid = o.fetch('@id', nil) if o.is_a?(Hash)
+    # Embeds values for the given element and property into output.
+    def embed_values(state, element, property, output)
+      element[property].each do |o|
+        # Get element @id, if this is an object
+        sid = o['@id'] if subject_reference?(o)
         if sid
           unless state[:embeds].has_key?(sid)
-            debug("frame") {"embed subject #{sid.inspect}"}
-            # Embed full subject, if it isn't already embedded
+            debug("frame") {"embed element #{sid.inspect}"}
+            # Embed full element, if it isn't already embedded
             embed = {:parent => output, :property => property}
             state[:embeds][sid] = embed
           
-            # Recurse into subject
+            # Recurse into element
             s = @subjects.fetch(sid, {'@id' => sid})
             o = {}
             s.each do |prop, value|
@@ -425,14 +392,12 @@ module JSON::LD
               end
             end
           else
-            debug("frame") {"don't embed subject #{sid.inspect}"}
+            debug("frame") {"don't embed element #{sid.inspect}"}
           end
-          
-          add_frame_output(state, output, property, o)
         else
           debug("frame") {"embed property #{property.inspect}, value #{o.inspect}"}
-          add_frame_output(state, output, property, o.dup)
         end
+        add_frame_output(state, output, property, o.dup)
       end
     end
   end
