@@ -307,8 +307,14 @@ describe JSON::LD::API do
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.frame(params[:input], params[:frame], nil, :debug => @debug)
-        jld.should produce(params[:output], @debug)
+        begin
+          jld = JSON::LD::API.frame(params[:input], params[:frame], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, JSON::LD::InvalidFrame => e
+          fail("#{e.class}: #{e.message}\n" +
+            "#{@debug.join("\n")}\n" +
+            "Backtrace:\n#{e.backtrace.join("\n")}")
+        end
       end
     end
   end

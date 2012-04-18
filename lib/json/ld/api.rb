@@ -232,7 +232,7 @@ module JSON::LD
 
         result = []
         frame(framing_state, @subjects.keys, expanded_frame[0], result, nil)
-        debug(".frame") {"result: #{result.inspect}"}
+        debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame
         @context = depth {@context.parse(frame['@context'])}
@@ -242,7 +242,9 @@ module JSON::LD
 
         # Add the given context to the output
         kwgraph = context.compact_iri('@graph', :quiet => true)
-        result = cleanup_null(context.serialize.merge({kwgraph => compacted}))
+        result = context.serialize.merge({kwgraph => compacted})
+        debug(".frame") {"after compact: #{result.to_json(JSON_STATE)}"}
+        result = cleanup_preserve(result)
       end
 
       callback.call(result) if callback

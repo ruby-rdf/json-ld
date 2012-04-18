@@ -16,7 +16,7 @@ module JSON::LD
     #   Property referencing this frame, or null for array.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, parent, property)
-      raise "why isn't @subjects a hash?: #{@subjects.inspect}" unless @subjects.is_a?(Hash)
+      raise ProcessingError, "why isn't @subjects a hash?: #{@subjects.inspect}" unless @subjects.is_a?(Hash)
       depth do
         debug("frame") {"state: #{state.inspect}"}
         debug("frame") {"subjects: #{subjects.inspect}"}
@@ -107,21 +107,21 @@ module JSON::LD
               end
             end
 
+            # Process each property and value in frame, where property is not a keyword, as follows:
             frame.each do |prop, property_frame|
-              # Skip keywords
               next if prop[0,1] == '@' || output.has_key?(prop)
-              debug("frame") {"prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
+              debug("frame") {"default prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
 
-              # If the key is not in the item, add the key to the item and set the associated value to an
-              # empty array if the match frame key's value is an empty array or null otherwise
+              # Set property frame to the first item in value or a newly created JSON object if value is empty.
               property_frame = property_frame.first || {}
 
-              # if omit default is off, then include default values for properties
-              # that appear in the next frame but are not in the matching subject
-              next if get_frame_flag(state, property_frame, 'omitDefault')
-              default = property_frame.fetch('@default', nil)
-              default ||= '@null' if property_frame.empty?
-              output[prop] = [default].compact
+              # Skip to the next property in frame if property is in output or if property frame contains @omitDefault which is true or if it does not contain @omitDefault but the value of omit default flag true.
+              next if output.has_key?(prop) || get_frame_flag(state, property_frame, 'omitDefault')
+
+              # Set the value of property in output to a new JSON object with a property @preserve and a value that is a copy of the value of @default in frame if it exists, or the string @null otherwise
+              default = property_frame.fetch('@default', '@null')
+              default = [default] unless default.is_a?(Array)
+              output[prop] = [{"@preserve" => default.compact}]
             end
           
             # Add output to parent
@@ -167,7 +167,7 @@ module JSON::LD
                 case value
                 when Hash
                   # Special case @list, which is not in expanded form
-                  raise "Unexpected hash value: #{value.inspect}" unless value.has_key?('@list')
+                  raise InvalidFrame::Syntax, "Unexpected hash value: #{value.inspect}" unless value.has_key?('@list')
                 
                   # Map entries replacing subjects with subject references
                   subject[prop] = {"@list" =>
@@ -177,7 +177,7 @@ module JSON::LD
                   # Map array entries
                   subject[prop] = get_framing_subjects(subjects, value, namer)
                 else
-                  raise "unexpected value: #{value.inspect}"
+                  raise InvalidFrame::Syntax, "unexpected value: #{value.inspect}"
                 end
               end
             end
@@ -213,24 +213,36 @@ module JSON::LD
     end
 
     ##
-    # Cleanup output after framing, replacing @null with nil
+    # Replace @preserve keys with the values, also replace @null with null
     #
     # @param [Array, Hash] input
     # @return [Array, Hash]
-    def cleanup_null(input)
-      case input
-      when Array
-        input.map {|o| cleanup_null(o)}
-      when Hash
-        output = Hash.ordered
-        input.each do |key, value|
-          output[key] = cleanup_null(value)
+    def cleanup_preserve(input)
+      depth do
+        debug("cleanup preserve") {input.inspect}
+        result = case input
+        when Array
+          # If, after replacement, an array contains only the value null remove the value, leaving an empty array
+          input.map {|o| cleanup_preserve(o)}.compact
+        when Hash
+          output = Hash.ordered
+          input.each do |key, value|
+            if key == '@preserve'
+              # replace all key-value pairs where the key is @preserve with the value from the key-pair
+              output = cleanup_preserve(value)
+            else
+              output[key] = cleanup_preserve(value)
+            end
+          end
+          output
+        when '@null'
+          # If the value from the key-pair is @null, replace the value with nul
+          nil
+        else
+          input
         end
-        output
-      when '@null'
-        nil
-      else
-        input
+        debug(" => ") {result.inspect}
+        result
       end
     end
 
@@ -271,8 +283,8 @@ module JSON::LD
     def filter_subject(state, subject, frame)
       if types = frame.fetch('@type', nil)
         subject_types = subject.fetch('@type', [])
-        raise "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
-        raise "subject @type must be an array: #{subject_types.inspect}" unless subject_types.is_a?(Array)
+        raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
+        raise InvalidFrame::Syntax, "subject @type must be an array: #{subject_types.inspect}" unless subject_types.is_a?(Array)
         # If frame has an @type, use it for selecting appropriate subjects.
         debug("frame") {"filter subject: #{subject_types.inspect} has any of #{types.inspect}"}
 
@@ -289,7 +301,7 @@ module JSON::LD
     end
 
     def validate_frame(state, frame)
-      raise JSON::LD::InvalidFrame::Syntax,
+      raise InvalidFrame::Syntax,
             "Invalid JSON-LD syntax; a JSON-LD frame must be an object" unless frame.is_a?(Hash)
     end
     
