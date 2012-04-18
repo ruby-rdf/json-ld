@@ -88,7 +88,7 @@ module JSON::LD
             end
 
             # For each item in value:
-            raise "found #{value.inspect} for #{key} if #{element.inspect}" unless value.is_a?(Array)
+            raise ProcessingError, "found #{value.inspect} for #{key} if #{element.inspect}" unless value.is_a?(Array)
             value.each do |item|
               compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
               debug {" => compacted key: #{compacted_key.inspect} for #{item.inspect}"}
