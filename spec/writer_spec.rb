@@ -48,14 +48,20 @@ describe JSON::LD::Writer do
 
     it "should use CURIEs with empty prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
-      serialize(input, :prefixes => { "" => RDF::FOAF}).
-      should produce({
-        "@context" => {
-          "" => "http://xmlns.com/foaf/0.1/"
-        },
-        '@id' => ":b",
-        ":c"    => {"@id" => ":d"}
-      }, @debug)
+      begin
+        serialize(input, :prefixes => { "" => RDF::FOAF}).
+        should produce({
+          "@context" => {
+            "" => "http://xmlns.com/foaf/0.1/"
+          },
+          '@id' => ":b",
+          ":c"    => {"@id" => ":d"}
+        }, @debug)
+      rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, TypeError => e
+        fail("#{e.class}: #{e.message}\n" +
+          "#{@debug.join("\n")}\n" +
+          "Backtrace:\n#{e.backtrace.join("\n")}")
+      end
     end
     
     it "should use terms if no suffix" do

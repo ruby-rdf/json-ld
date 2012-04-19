@@ -371,6 +371,42 @@ describe JSON::LD::API do
       end
     end
 
+    context "default language" do
+      {
+        "value with null language" => {
+          :input => {
+            "@context" => {"@language" => "en"},
+            "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
+          },
+          :output => [{
+            "http://example.org/nolang" => ["no language"]
+          }]
+        },
+        "value with coerced null language" => {
+          :input => {
+            "@context" => {
+              "@language" => "en",
+              "http://example.org/vocab#german" => { "@id" => "ex:nolang", "@language" => "de" },
+              "http://example.org/vocab#nolang" => { "@id" => "ex:nolang", "@language" => nil }
+            },
+            "http://example.org/vocab#german" => "german",
+            "http://example.org/vocab#nolang" => "no language"
+          },
+          :output => [
+            {
+              "http://example.org/vocab#german" => [{"@value" => "german", "@language" => "de"}],
+              "http://example.org/vocab#nolang" => ["no language"]
+            }
+          ]
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
     context "unmapped properties" do
       {
         "unmapped key" => {

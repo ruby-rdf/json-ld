@@ -39,7 +39,7 @@ describe JSON::LD::API do
       "@id coercion" => {
         :input => {
           "@id" => "http://example.com/a",
-          "http://example.com/b" => "http://example.com/c"
+          "http://example.com/b" => {"@id" => "http://example.com/c"}
         },
         :context => {"b" => {"@id" => "http://example.com/b", "@type" => "@id"}},
         :output => {
@@ -192,6 +192,48 @@ describe JSON::LD::API do
           }
         },
       }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
+    context "term selection" do
+      {
+        "Uses term with nil language when two terms conflict on language" => {
+          :input => [{
+            "http://example.com/term" => {"@value" => "v1", "@language" => nil}
+          }],
+          :context => {
+            "term5" => {"@id" => "http://example.com/term","@language" => nil},
+            "@language" => "de"
+          },
+          :output => {
+            "@context" => {
+              "term5" => {"@id" => "http://example.com/term","@language" => nil},
+              "@language" => "de"
+            },
+            "term5" => "v1",
+          }
+        },
+        "Uses subject alias" => {
+          :input => [{
+            "@id" => "http://example.com/id1"
+          }],
+          :context => {
+            "id1" => "http://example.com/id1",
+            "@language" => "de"
+          },
+          :output => {
+            "@context" => {
+              "id1" => "http://example.com/id1",
+              "@language" => "de"
+            },
+            "@id" => "id1",
+          }
+        },
+      }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
           jld.should produce(params[:output], @debug)

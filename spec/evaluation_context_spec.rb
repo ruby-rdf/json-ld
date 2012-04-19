@@ -538,6 +538,326 @@ describe JSON::LD::EvaluationContext do
         subject.compact_iri(input).should produce(result, @debug)
       end
     end
+    
+    context "with value" do
+      let(:ctx) do
+        c = subject.parse({
+          "xsd" => RDF::XSD.to_s,
+          "plain" => "http://example.com/plain",
+          "lang" => {"@id" => "http://example.com/lang", "@language" => "en"},
+          "bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean"},
+          "integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer"},
+          "double" => {"@id" => "http://example.com/double", "@type" => "xsd:double"},
+          "date" => {"@id" => "http://example.com/date", "@type" => "xsd:date"},
+          "id" => {"@id" => "http://example.com/id", "@type" => "@id"},
+          "listplain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
+          "listlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
+          "listbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
+          "listinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
+          "listdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
+          "listdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
+          "listid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
+          "setplain" => {"@id" => "http://example.com/plain", "@container" => "@set"},
+          "setlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
+          "setbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
+          "setinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
+          "setdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
+          "setdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
+          "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
+        })
+        @debug.clear
+        c
+      end
+
+      {
+        "plain"   => [
+          "foo",
+          {"@value" => "foo"},
+          {"@value" => "de", "@language" => "de"},
+          {"@value" => "other dt", "@language" => "http://example.com/other-datatype"}
+        ],
+        "lang" => [{"@value" => "en", "@language" => "en"}],
+        "bool" => [true, false, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+        "integer" => [1, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
+        "double" => [1.1, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
+        "date" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
+      }.each do |prop, values|
+        context "uses #{prop}" do
+          values.each do |value|
+            it "for #{value.inspect}" do
+              ctx.compact_iri("http://example.com/#{prop}", :value => value).should produce(prop, @debug)
+            end
+          end
+        end
+      end
+
+      context "for @set" do
+        {
+          "setplain"   => [
+            "foo",
+            {"@value" => "foo"},
+            {"@value" => "de", "@language" => "de"},
+            {"@value" => "other dt", "@language" => "http://example.com/other-datatype"}
+          ],
+          "setlang" => [{"@value" => "en", "@language" => "en"}],
+          "setbool" => [true, false, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+          "setinteger" => [1, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
+          "setdouble" => [1.1, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
+          "setdate" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
+        }.each do |prop, values|
+          context "uses #{prop}" do
+            values.each do |value|
+              it "for #{value.inspect}" do
+                ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value, :as_set => true).should produce(prop, @debug)
+              end
+            end
+          end
+        end
+      end
+
+      context "for @list" do
+        {
+          "listplain"   => [
+            ["foo"],
+            ["foo", "bar", 1],
+            ["foo", "bar", 1.1],
+            ["foo", "bar", true],
+            [{"@value" => "foo"}, {"@value" => "bar"}, 1],
+            [{"@value" => "de", "@language" => "de"}, {"@value" => "jp", "@language" => "jp"}],
+          ],
+          "listlang" => [[{"@value" => "en", "@language" => "en"}]],
+          "listbool" => [[true], [false], [{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
+          "listinteger" => [[1], [{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
+          "listdouble" => [[1.1], [{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
+          "listdate" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
+        }.each do |prop, values|
+          context "uses #{prop}" do
+            values.each do |value|
+              it "for #{{"@list" => value}.inspect}" do
+                ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", :value => {"@list" => value}).should produce(prop, @debug)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  describe "#term_rank" do
+    {
+      "no coercions" => {
+        :defn => {},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 3},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 1},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
+        "value string" => {:value => {"@value" => "foo"}, :rank => 3},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "boolean" => {
+        :defn => {"@type" => RDF::XSD.boolean.to_s},
+        "boolean" => {:value => true, :rank => 3},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+        "value boolean" => {:value => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}, :rank => 3},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "integer" => {
+        :defn => {"@type" => RDF::XSD.integer.to_s},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 3},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+        "value integer" => {:value => {"@value" => "1", "@type" => RDF::XSD.integer.to_s}, :rank => 3},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "double" => {
+        :defn => {"@type" => RDF::XSD.double.to_s},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 3},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+        "value double" => {:value => {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}, :rank => 3},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "date" => {
+        :defn => {"@type" => RDF::XSD.date.to_s},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 3},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "lang" => {
+        :defn => {"@language" => "en"},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+        "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+        "null"  => {:value => nil, :rank => 3},
+      },
+      "id" => {
+        :defn => {"@type" => "@id"},
+        "boolean" => {:value => true, :rank => 2},
+        "integer"    => {:value => 1, :rank => 2},
+        "double" => {:value => 1.1, :rank => 2},
+        "string" => {:value => "foo", :rank => 0},
+        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+        "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
+        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 3},
+        "null"  => {:value => nil, :rank => 3},
+      },
+    }.each do |title, properties|
+      context title do
+        let(:ctx) do
+          subject.parse({
+            "term" => properties[:defn].merge("@id" => "http://example.org/term")
+          })
+        end
+        properties.each do |type, defn|
+          next unless type.is_a?(String)
+          it "returns #{defn[:rank]} for #{type}" do
+            ctx.send(:term_rank, "term", defn[:value]).should produce(defn[:rank], @debug)
+          end
+        end
+      end
+    end
+    
+    context "with default language" do
+      before(:each) {subject.default_language = "en"}
+      {
+        "no coercions" => {
+          :defn => {},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
+          "value string" => {:value => {"@value" => "foo"}, :rank => 3},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "boolean" => {
+          :defn => {"@type" => RDF::XSD.boolean.to_s},
+          "boolean" => {:value => true, :rank => 3},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "value boolean" => {:value => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}, :rank => 3},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "integer" => {
+          :defn => {"@type" => RDF::XSD.integer.to_s},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 3},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "value integer" => {:value => {"@value" => "1", "@type" => RDF::XSD.integer.to_s}, :rank => 3},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "double" => {
+          :defn => {"@type" => RDF::XSD.double.to_s},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 3},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "value double" => {:value => {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}, :rank => 3},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "date" => {
+          :defn => {"@type" => RDF::XSD.date.to_s},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 3},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "lang" => {
+          :defn => {"@language" => "en"},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+          "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "null lang" => {
+          :defn => {"@language" => nil},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 3},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "null lang" => {:value => {"@value" => "apple", "@language" => nil}, :rank => 3},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
+          "null"  => {:value => nil, :rank => 3},
+        },
+        "id" => {
+          :defn => {"@type" => "@id"},
+          "boolean" => {:value => true, :rank => 2},
+          "integer"    => {:value => 1, :rank => 2},
+          "double" => {:value => 1.1, :rank => 2},
+          "string" => {:value => "foo", :rank => 0},
+          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
+          "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
+          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 3},
+          "null"  => {:value => nil, :rank => 3},
+        },
+      }.each do |title, properties|
+        context title do
+          let(:ctx) do
+            subject.parse({
+              "term" => properties[:defn].merge("@id" => "http://example.org/term")
+            })
+          end
+          properties.each do |type, defn|
+            next unless type.is_a?(String)
+            it "returns #{defn[:rank]} for #{type}" do
+              ctx.send(:term_rank, "term", defn[:value]).should produce(defn[:rank], @debug)
+            end
+          end
+        end
+      end
+    end
   end
 
   describe "#expand_value" do
@@ -581,6 +901,7 @@ describe JSON::LD::EvaluationContext do
     end
 
     context "@language" do
+      before(:each) {subject.default_language = "en"}
       {
         "no IRI" =>         ["foo",         "http://example.com/",  {"@value" => "http://example.com/", "@language" => "en"}],
         "no term" =>        ["foo",         "ex",                   {"@value" => "ex", "@language" => "en"}],
@@ -590,13 +911,13 @@ describe JSON::LD::EvaluationContext do
         "native double" =>  ["foo",         1.1,                    1.1],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          subject.default_language = "en"
           subject.expand_value(key, compacted).should produce(expanded, @debug)
         end
       end
     end
     
     context "coercion" do
+      before(:each) {subject.default_language = "en"}
       {
         "boolean-boolean" => ["ex:boolean", true,   true],
         "boolean-double"  => ["ex:double",  true,   {"@value" => "true", "@type" => RDF::XSD.double.to_s}],
@@ -612,7 +933,6 @@ describe JSON::LD::EvaluationContext do
         "string-int"      => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          subject.default_language = "en"
           subject.expand_value(key, compacted).should produce(expanded, @debug)
         end
       end
