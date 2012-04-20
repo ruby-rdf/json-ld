@@ -7,8 +7,8 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Array<String>] subjects
-    #   Set of subjects to be filtered
+    # @param [Hash{String => Hash}] subjects
+    #   Map of flattened subjects
     # @param [Hash{String => Object}] frame
     # @param [Hash{String => Object}] parent
     #   Parent subject or top-level array
@@ -19,9 +19,9 @@ module JSON::LD
       raise ProcessingError, "why isn't @subjects a hash?: #{@subjects.inspect}" unless @subjects.is_a?(Hash)
       depth do
         debug("frame") {"state: #{state.inspect}"}
-        debug("frame") {"subjects: #{subjects.inspect}"}
-        debug("frame") {"frame: #{frame.inspect}"}
-        debug("frame") {"parent: #{parent.inspect}"}
+        debug("frame") {"subjects: #{subjects.keys.inspect}"}
+        debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
+        debug("frame") {"parent: #{parent.to_json(JSON_STATE)}"}
         debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)
@@ -38,8 +38,10 @@ module JSON::LD
       
         # For each id and subject from the set of matched subjects
         matches.each do |id, element|
-          output = {}
-          output['@id'] = id
+          # If the active property is null, set the map of embeds in state to an empty map
+          state = state.merge(:embeds => {}) if property.nil?
+
+          output = {'@id' => id}
         
           # prepare embed meta info
           embedded_subject = {:parent => parent, :property => property}
@@ -94,23 +96,23 @@ module JSON::LD
               end
           
               # Process each item from value as follows
-              value.each do |o|
-                debug("frame") {"framed property #{prop.inspect} == #{o.inspect}"}
+              value.each do |item|
+                debug("frame") {"framed property #{prop.inspect} == #{item.inspect}"}
                 
                 # FIXME: If item is a JSON object with the key @list
 
-                oid = o['@id'] if subject_reference?(o)
-                if oid && @subjects.has_key?(oid)
+                if subject_reference?(item)
                   # If item is a subject reference process item recursively
                   # Recurse into sub-objects
-                  debug("frame") {"framed property #{prop} recurse for #{oid.inspect}"}
+                  itemid = item['@id']
+                  debug("frame") {"framed property #{prop} recurse for #{itemid.inspect}"}
                   
-                  # FIXME: passing a new map as subjects that contains the @id of item as the key and the subject reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
-                  frame(state, [oid], frame[prop].first, output, prop)
+                  # passing a new map as subjects that contains the @id of item as the key and the subject reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
+                  frame(state, {itemid => @subjects[itemid]}, frame[prop].first, output, prop)
                 else
                   # Otherwise, append a copy of item to active property in output.
-                  debug("frame") {"framed property #{prop} non-subject ref #{o.inspect}"}
-                  add_frame_output(state, output, prop, o)
+                  debug("frame") {"framed property #{prop} non-subject ref #{item.inspect}"}
+                  add_frame_output(state, output, prop, item)
                 end
               end
             end
@@ -273,11 +275,7 @@ module JSON::LD
     # 
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame)
-      subjects.inject({}) do |memo, id|
-        s = @subjects.fetch(id, nil)
-        memo[id] = s if filter_subject(state, s, frame)
-        memo
-      end
+      subjects.dup.keep_if {|id, element| filter_subject(state, element, frame)}
     end
 
     ##

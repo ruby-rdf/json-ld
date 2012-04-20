@@ -197,7 +197,7 @@ module JSON::LD
         :embed       => true,
         :explicit    => false,
         :omitDefault => false,
-        :embeds      => {},
+        :embeds      => nil,
       }
       framing_state[:embed] = options[:embed] if options.has_key?(:embed)
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
@@ -231,7 +231,7 @@ module JSON::LD
         debug(".frame") {"subjects: #{@subjects.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @subjects.keys, expanded_frame[0], result, nil)
+        frame(framing_state, @subjects, expanded_frame[0], result, nil)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame
