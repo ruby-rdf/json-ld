@@ -510,7 +510,7 @@ module JSON::LD
           list_terms = terms.select {|t| container(t) == '@list'}
             
           term_map = list_terms.inject({}) do |memo, t|
-            memo[t] = value.inject {|sum, v| sum + term_rank(t, v)}
+            memo[t] = term_rank(t, value)
             memo
           end unless list_terms.empty?
           debug("term map") {"remove zero rank terms: #{term_map.keys.select {|t| term_map[t] == 0}}"} if term_map.any? {|t,r| r == 0}
@@ -823,11 +823,11 @@ module JSON::LD
 
       rank = case value
       when TrueClass, FalseClass
-        coerce(term) == RDF::XSD.boolean.to_s ? 3 : 2
+        coerce(term) == RDF::XSD.boolean.to_s ? 3 : (default_term ? 2 : 1)
       when Integer
-        coerce(term) == RDF::XSD.integer.to_s ? 3 : 2
+        coerce(term) == RDF::XSD.integer.to_s ? 3 : (default_term ? 2 : 1)
       when Float
-        coerce(term) == RDF::XSD.double.to_s ? 3 : 2
+        coerce(term) == RDF::XSD.double.to_s ? 3 : (default_term ? 2 : 1)
       when nil
         # A value of null probably means it's an @id
         3
@@ -836,13 +836,19 @@ module JSON::LD
         debug("term rank") {"string: lang: #{languages.fetch(term, false).inspect}, def: #{default_language.inspect}"}
         !languages.fetch(term, true) || (default_term && !default_language) ? 3 : 0
       when Hash
-        val_lang = value.fetch('@language', nil)
-        val_type = value.fetch('@type', nil)
-        if subject?(value) || subject_reference?(value)
+        if list?(value)
+          if value['@list'].empty?
+            # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
+            container(term) == '@list' ? 1 : 0
+          else
+            # Otherwise, return the sum of the term ranks for every entry in the list.
+            depth {value['@list'].inject(0) {|memo, v| memo + term_rank(term, v)}}
+          end
+        elsif subject?(value) || subject_reference?(value)
           coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
-        elsif val_type
+        elsif val_type = value.fetch('@type', nil)
           coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
-        elsif val_lang
+        elsif val_lang = value.fetch('@language', nil)
           val_lang == language(term) ? 3 : (default_term ? 1 : 0)
         else
           default_term ? 3 : 0
