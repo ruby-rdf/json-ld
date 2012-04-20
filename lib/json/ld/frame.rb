@@ -97,21 +97,41 @@ module JSON::LD
           
               # Process each item from value as follows
               value.each do |item|
-                debug("frame") {"framed property #{prop.inspect} == #{item.inspect}"}
+                debug("frame") {"value property #{prop.inspect} == #{item.inspect}"}
                 
                 # FIXME: If item is a JSON object with the key @list
+                if list?(item)
+                  # create a JSON object named list with the key @list and the value of an empty array
+                  list = {'@list' => []}
+                  
+                  # Append list to property in output
+                  add_frame_output(state, output, prop, list)
+                  
+                  # Process each listitem in the @list array as follows
+                  item['@list'].each do |listitem|
+                    if subject_reference?(listitem)
+                      itemid = listitem['@id']
+                      debug("frame") {"list item of #{prop} recurse for #{itemid.inspect}"}
 
-                if subject_reference?(item)
+                      # If listitem is a subject reference process listitem recursively using this algorithm passing a new map of subjects that contains the @id of listitem as the key and the subject reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
+                      frame(state, {itemid => @subjects[itemid]}, frame[prop].first, list, '@list')
+                    else
+                      # Otherwise, append a copy of listitem to @list in list.
+                      debug("frame") {"list item of #{prop} non-subject ref #{listitem.inspect}"}
+                      add_frame_output(state, list, '@list', listitem)
+                    end
+                  end
+                elsif subject_reference?(item)
                   # If item is a subject reference process item recursively
                   # Recurse into sub-objects
                   itemid = item['@id']
-                  debug("frame") {"framed property #{prop} recurse for #{itemid.inspect}"}
+                  debug("frame") {"value property #{prop} recurse for #{itemid.inspect}"}
                   
                   # passing a new map as subjects that contains the @id of item as the key and the subject reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
                   frame(state, {itemid => @subjects[itemid]}, frame[prop].first, output, prop)
                 else
                   # Otherwise, append a copy of item to active property in output.
-                  debug("frame") {"framed property #{prop} non-subject ref #{item.inspect}"}
+                  debug("frame") {"value property #{prop} non-subject ref #{item.inspect}"}
                   add_frame_output(state, output, prop, item)
                 end
               end
@@ -121,7 +141,7 @@ module JSON::LD
             frame.keys.sort.each do |prop|
               next if prop[0,1] == '@' || output.has_key?(prop)
               property_frame = frame[prop]
-              debug("frame") {"default prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
+              debug("frame") {"frame prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
 
               # Set property frame to the first item in value or a newly created JSON object if value is empty.
               property_frame = property_frame.first || {}
@@ -133,6 +153,7 @@ module JSON::LD
               default = property_frame.fetch('@default', '@null').dup
               default = [default] unless default.is_a?(Array)
               output[prop] = [{"@preserve" => default.compact}]
+              debug("=>") {"add default #{output[prop].inspect}"}
             end
           
             # Add output to parent

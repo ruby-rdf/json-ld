@@ -304,6 +304,38 @@ describe JSON::LD::API do
           }]
         }
       },
+      "mixed list" => {
+        :frame => {
+          "@context" => {"ex" => "http://example.org/"},
+          "ex:mixedlist" => {}
+        },
+        :input => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@id" => "ex:Sub1",
+          "@type" => "ex:Type1",
+          "ex:mixedlist" => {"@list" => [
+            {
+              "@id" => "ex:Sub2",
+              "@type" => "ex:Type2"
+            },
+            "literal1"
+          ]}
+        },
+        :output => {
+          "@context" => {"ex" => "http://example.org/"},
+          "@graph" => [{
+            "@id" => "ex:Sub1",
+            "@type" => "ex:Type1",
+            "ex:mixedlist" => {"@list" => [
+              {
+                "@id" => "ex:Sub2",
+                "@type" => "ex:Type2"
+              },
+              "literal1"
+            ]}
+          }]
+        }
+      },
     }.each do |title, params|
       it title do
         @debug = []
