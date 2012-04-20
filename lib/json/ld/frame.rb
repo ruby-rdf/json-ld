@@ -26,17 +26,17 @@ module JSON::LD
         # Validate the frame
         validate_frame(state, frame)
 
-        # Filter out subjects matching the frame
+        # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
         # This gives us a hash of objects indexed by @id
         matches = filter_subjects(state, subjects, frame)
         debug("frame") {"matches: #{matches.keys.inspect}"}
 
-        # get flags for current frame
+        # Get values for embedOn and explicitOn
         embed = get_frame_flag(state, frame, 'embed');
         explicit = get_frame_flag(state, frame, 'explicit');
         debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
       
-        # Add matches to output
+        # For each id and subject from the set of matched subjects
         matches.each do |id, element|
           output = {}
           output['@id'] = id
@@ -44,7 +44,7 @@ module JSON::LD
           # prepare embed meta info
           embedded_subject = {:parent => parent, :property => property}
         
-          # if embed is on and there is an existing embed
+          # If embedOn is true, and id is in map of embeds from state
           if embed && (existing = state[:embeds].fetch(id, nil))
             # only overwrite an existing embed if it has already been added to its
             # parent -- otherwise its parent is somewhere up the tree from this
@@ -52,19 +52,17 @@ module JSON::LD
             embed = false
           
             embed = if existing[:parent].is_a?(Array)
-              # exisitng embedded_subject's parent is an array
-              # perform embedding if the element has already been emitted
+              # If existing has a parent which is an array containing a JSON object with @id equal to id, element has already been embedded and can be overwritten, so set embedOn to true
               existing[:parent].detect {|p| p['@id'] == id}
             else
-              # Existing embedded_subject's parent is an object,
-              # perform embedding if the property already includes output
+              # Otherwise, existing has a parent which is a subject definition. Set embedOn to true if any of the items in parent property is a subject definition or subject reference for id because the embed can be overwritten
               existing[:parent].fetch(existing[:property], []).any? do |v|
                 v.is_a?(Hash) && v.fetch('@id', nil) == id
               end
             end
             debug("frame") {"embed now: #{embed.inspect}"}
 
-            # existing embed has already been added, so allow an overwrite
+            # If embedOn is true, existing is already embedded but can be overwritten
             remove_embed(state, id) if embed
           end
 
@@ -72,44 +70,55 @@ module JSON::LD
             # not embedding, add output without any other properties
             add_frame_output(state, parent, property, output)
           else
-            # add embedded_subject meta info
+            # Add embed to map of embeds for id
             state[:embeds][id] = embedded_subject
             debug("frame") {"add embedded_subject: #{embedded_subject.inspect}"}
         
-            # iterate over element properties
-            element.each do |prop, value|
+            # Process each property and value in the matched subject as follows
+            element.keys.sort.each do |prop|
+              value = element[prop]
               if prop[0,1] == '@'
-                # Copy keywords
+                # If property is a keyword, add property and a copy of value to output and continue with the next property from subject
                 output[prop] = value.dup
                 next
               end
 
-              # Embed values if explcit is off and the frame doesn't have the property
+              # If property is not in frame:
               unless frame.has_key?(prop)
                 debug("frame") {"non-framed property #{prop}"}
+                # If explicitOn is false, Embed values from subject in output using subject as element and property as active property
                 embed_values(state, element, prop, output) unless explicit
+                
+                # Continue to next property
                 next
               end
           
-              # only look at values which are references to subjects
+              # Process each item from value as follows
               value.each do |o|
                 debug("frame") {"framed property #{prop.inspect} == #{o.inspect}"}
+                
+                # FIXME: If item is a JSON object with the key @list
+
                 oid = o['@id'] if subject_reference?(o)
                 if oid && @subjects.has_key?(oid)
+                  # If item is a subject reference process item recursively
                   # Recurse into sub-objects
                   debug("frame") {"framed property #{prop} recurse for #{oid.inspect}"}
+                  
+                  # FIXME: passing a new map as subjects that contains the @id of item as the key and the subject reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
                   frame(state, [oid], frame[prop].first, output, prop)
                 else
-                  # include other values automatically
+                  # Otherwise, append a copy of item to active property in output.
                   debug("frame") {"framed property #{prop} non-subject ref #{o.inspect}"}
                   add_frame_output(state, output, prop, o)
                 end
               end
             end
 
-            # Process each property and value in frame, where property is not a keyword, as follows:
-            frame.each do |prop, property_frame|
+            # Process each property and value in frame in lexographical order, where property is not a keyword, as follows:
+            frame.keys.sort.each do |prop|
               next if prop[0,1] == '@' || output.has_key?(prop)
+              property_frame = frame[prop]
               debug("frame") {"default prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
 
               # Set property frame to the first item in value or a newly created JSON object if value is empty.
@@ -119,7 +128,7 @@ module JSON::LD
               next if output.has_key?(prop) || get_frame_flag(state, property_frame, 'omitDefault')
 
               # Set the value of property in output to a new JSON object with a property @preserve and a value that is a copy of the value of @default in frame if it exists, or the string @null otherwise
-              default = property_frame.fetch('@default', '@null')
+              default = property_frame.fetch('@default', '@null').dup
               default = [default] unless default.is_a?(Array)
               output[prop] = [{"@preserve" => default.compact}]
             end
@@ -155,8 +164,10 @@ module JSON::LD
             name = blank_node?(input) ? namer.get_name(input.fetch('@id', nil)) : input['@id']
             debug("framing subjects") {"new subject: #{name.inspect}"} unless subjects.has_key?(name)
             subject = subjects[name] ||= {'@id' => name}
-          
-            input.each do |prop, value|
+
+            # In property order
+            input.keys.sort.each do |prop|
+              value = input[prop]
               case prop
               when '@id'
                 # Skip @id, already assigned
@@ -222,7 +233,7 @@ module JSON::LD
         debug("cleanup preserve") {input.inspect}
         result = case input
         when Array
-          # If, after replacement, an array contains only the value null remove the value, leaving an empty array
+          # If, after replacement, an array contains only the value null remove the value, leaving an empty array. 
           input.map {|o| cleanup_preserve(o)}.compact
         when Hash
           output = Hash.ordered
@@ -231,7 +242,12 @@ module JSON::LD
               # replace all key-value pairs where the key is @preserve with the value from the key-pair
               output = cleanup_preserve(value)
             else
-              output[key] = cleanup_preserve(value)
+              v = cleanup_preserve(value)
+              
+              # Because we may have added a null value to an array, we need to clean that up, if we possible
+              v = v.first if v.is_a?(Array) && v.length == 1 &&
+                context.expand_iri(key) != "@graph" && context.container(key).nil?
+              output[key] = v
             end
           end
           output
