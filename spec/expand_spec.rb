@@ -386,11 +386,12 @@ describe JSON::LD::API do
           :input => {
             "@context" => {
               "@language" => "en",
-              "http://example.org/vocab#german" => { "@id" => "ex:nolang", "@language" => "de" },
-              "http://example.org/vocab#nolang" => { "@id" => "ex:nolang", "@language" => nil }
+              "ex" => "http://example.org/vocab#",
+              "ex:german" => { "@language" => "de" },
+              "ex:nolang" => { "@language" => nil }
             },
-            "http://example.org/vocab#german" => "german",
-            "http://example.org/vocab#nolang" => "no language"
+            "ex:german" => "german",
+            "ex:nolang" => "no language"
           },
           :output => [
             {
@@ -444,13 +445,13 @@ describe JSON::LD::API do
         },
         "context reset" => {
           :input => {
-            "@context" => {"ex" => "http://example.org/"},
+            "@context" => {"ex" => "http://example.org/", "prop" => "ex:prop"},
             "@id" => "http://example.org/id1",
-            "ex:prop" => "prop",
+            "prop" => "prop",
             "ex:chain" => {
               "@context" => nil,
               "@id" => "http://example.org/id2",
-              "ex:prop" => "prop"
+              "prop" => "prop"
             }
           },
           :output => [{

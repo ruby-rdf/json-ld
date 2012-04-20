@@ -456,6 +456,7 @@ describe JSON::LD::EvaluationContext do
     before(:each) do
       subject.set_mapping("ex", RDF::URI("http://example.org/"))
       subject.set_mapping("", RDF::URI("http://empty/"))
+      subject.set_mapping("_", RDF::URI("http://underscore/"))
     end
 
     it "bnode" do
@@ -479,6 +480,10 @@ describe JSON::LD::EvaluationContext do
             "unmapped" =>      ["foo",                 RDF::URI("foo"), false],
             "empty term" =>    ["",                    RDF::URI("http://empty/"), true],
             "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo"), true],
+            "absolute IRI looking like a curie" =>
+                               ["foo:bar",             RDF::URI("foo:bar"), true],
+            "bnode" =>         ["_:foo",               RDF::Node("foo"), true],
+            "_" =>             ["_",                   RDF::URI("http://underscore/"), true],
           }.each do |title, (input,result,abs)|
             result = nil unless r || abs
             result = nil if title == 'unmapped'
@@ -570,46 +575,22 @@ describe JSON::LD::EvaluationContext do
       end
 
       {
-        "plain"   => [
+        "setplain"   => [
           "foo",
           {"@value" => "foo"},
           {"@value" => "de", "@language" => "de"},
           {"@value" => "other dt", "@language" => "http://example.com/other-datatype"}
         ],
-        "lang" => [{"@value" => "en", "@language" => "en"}],
-        "bool" => [true, false, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-        "integer" => [1, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-        "double" => [1.1, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
-        "date" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
+        "setlang" => [{"@value" => "en", "@language" => "en"}],
+        "setbool" => [true, false, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+        "setinteger" => [1, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
+        "setdouble" => [1.1, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
+        "setdate" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              ctx.compact_iri("http://example.com/#{prop}", :value => value).should produce(prop, @debug)
-            end
-          end
-        end
-      end
-
-      context "for @set" do
-        {
-          "setplain"   => [
-            "foo",
-            {"@value" => "foo"},
-            {"@value" => "de", "@language" => "de"},
-            {"@value" => "other dt", "@language" => "http://example.com/other-datatype"}
-          ],
-          "setlang" => [{"@value" => "en", "@language" => "en"}],
-          "setbool" => [true, false, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-          "setinteger" => [1, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-          "setdouble" => [1.1, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
-          "setdate" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
-        }.each do |prop, values|
-          context "uses #{prop}" do
-            values.each do |value|
-              it "for #{value.inspect}" do
-                ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value, :as_set => true).should produce(prop, @debug)
-              end
+              ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value).should produce(prop, @debug)
             end
           end
         end
@@ -826,7 +807,6 @@ describe JSON::LD::EvaluationContext do
           "string" => {:value => "foo", :rank => 3},
           "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
           "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "null lang" => {:value => {"@value" => "apple", "@language" => nil}, :rank => 3},
           "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
           "null"  => {:value => nil, :rank => 3},
         },

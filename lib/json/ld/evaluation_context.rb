@@ -194,7 +194,7 @@ module JSON::LD
           case value
           when Hash
             # Must have one of @id, @language, @type or @container
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @language, @type or @container" if (%w(@id @type @container) & value.keys).empty?
+            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @language, @type or @container" if (%w(@id @language @type @container) & value.keys).empty?
             value.each do |key2, value2|
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
               case key2
@@ -453,19 +453,21 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
-      prefix, suffix = iri.split(%r{:(?!//)}, 2)
+      prefix, suffix = iri.split(':', 2)
+      return mapping(iri) if mapping(iri) # If it's an exact match
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"} unless options[:quiet]
       base = self.base unless [:predicate, :datatype].include?(options[:position])
       prefix = prefix.to_s
       case
-      when prefix == '_'              then bnode(suffix)
-      when iri.to_s[0,1] == "@"       then iri
-      when iri =~ %r(://)             then uri(iri)
-      when mappings.has_key?(prefix)  then uri(mappings[prefix] + suffix.to_s)
-      when base                       then base.join(iri)
+      when prefix == '_' && suffix          then debug("=> bnode"); bnode(suffix)
+      when iri.to_s[0,1] == "@"             then debug("=> keyword"); iri
+      when suffix.to_s[0,2] == '//'         then debug("=> iri"); uri(iri)
+      when mappings.has_key?(prefix)        then debug("=> curie"); uri(mappings[prefix] + suffix.to_s)
+      when base                             then debug("=> base"); base.join(iri)
       else
         # Otherwise, it must be an absolute IRI
-        u = uri(u)
+        u = uri(iri)
+        debug("=> absolute") {"#{u.inspect} abs? #{u.absolute?.inspect}"}
         u if u.absolute? || [:subject, :object].include?(options[:position])
       end
     end
@@ -479,9 +481,6 @@ module JSON::LD
     #   Useful when determining how to serialize.
     # @option options [Object] :value
     #   Value, used to select among various maps for the same IRI
-    # @option options [Object] :as_set
-    #   Prefer term that is a set, all things being equal,
-    #   otherwise non-set term is chose
     # @option options [Boolean] :not_term (false)
     #   Don't return a term, but only a CURIE or IRI.
     #
@@ -589,10 +588,7 @@ module JSON::LD
         # Prefer terms that don't have @container @set over other terms, unless as set is true
         terms = terms.sort do |a, b|
           debug("term sort") {"c(a): #{container(a).inspect}, c(b): #{container(b)}"}
-          if container(a) != container(b) && (container(a) == '@set' || container(b) == '@set')
-            debug("term sort") {"@set(#{a.inspect}) => #{(options[:as_set] ? 1 : -1).inspect}"}
-            options[:as_set] ? 1 : -1
-          elsif a.length == b.length
+          if a.length == b.length
             a <=> b
           else
             a.length <=> b.length
@@ -810,50 +806,6 @@ module JSON::LD
     end
 
     ##
-    # Return a CURIE for the IRI, or nil. Adds namespace of CURIE to defined prefixes.
-    # Always returns a CURIE or the full IRI, not a term.
-    #
-    # @param [RDF::Resource] resource
-    # @return [String, nil] value to use to identify IRI
-    def get_compact_iri(resource)
-      debug {"get_compact_iri(#{resource.inspect})"}
-      case resource
-      when RDF::Node, /^_:/
-        return resource.to_s
-      when String
-        iri = resource
-        resource = RDF::URI(resource)
-        return nil unless resource.absolute?
-      when RDF::URI
-        iri = resource.to_s
-        return iri if options[:expand]
-      else
-        return nil
-      end
-
-      curie = case
-      when iri_to_curie.has_key?(iri)
-        return iri_to_curie[iri]
-      when u = iri_to_term.keys.detect {|i| iri.index(i) == 0  && i != iri}
-        # Use a defined prefix
-        prefix = iri_to_term[u.to_s]
-        set_mapping(prefix, u)
-        iri.sub(u.to_s, "#{prefix}:").sub(/:$/, '')
-      when @options[:standard_prefixes] && vocab = RDF::Vocabulary.detect {|v| iri.index(v.to_uri.to_s) == 0}
-        prefix = vocab.__name__.to_s.split('::').last.downcase
-        set_mapping(prefix, vocab.to_uri.to_s)
-        iri.sub(vocab.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
-      else
-        debug " => no mapping found for #{iri} in #{iri_to_term.inspect}"
-        nil
-      end
-      
-      iri_to_curie[iri] = curie
-    rescue Addressable::URI::InvalidURIError => e
-      raise RDF::WriterError, "Invalid IRI #{resource.inspect}: #{e.message}"
-    end
-    
-    ##
     # Get a "match value" given a term and a value. The value
     # is lowest when the relative match between the term and the value
     # is closest.
@@ -869,7 +821,7 @@ module JSON::LD
       default_term = !coerce(term) && !languages.has_key?(term)
       debug("term rank") { "default_term: #{default_term.inspect}"}
 
-      case value
+      rank = case value
       when TrueClass, FalseClass
         coerce(term) == RDF::XSD.boolean.to_s ? 3 : 2
       when Integer
@@ -884,14 +836,13 @@ module JSON::LD
         debug("term rank") {"string: lang: #{languages.fetch(term, false).inspect}, def: #{default_language.inspect}"}
         !languages.fetch(term, true) || (default_term && !default_language) ? 3 : 0
       when Hash
-        val_lang = (value['@language'] || false) if value.has_key?('@language')
+        val_lang = value.fetch('@language', nil)
         val_type = value.fetch('@type', nil)
-        val_id = value.fetch('@id', nil)
-        if val_id
+        if subject?(value) || subject_reference?(value)
           coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
         elsif val_type
           coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
-        elsif !val_lang.nil?
+        elsif val_lang
           val_lang == language(term) ? 3 : (default_term ? 1 : 0)
         else
           default_term ? 3 : 0
@@ -899,6 +850,9 @@ module JSON::LD
       else
         raise ProcessingError, "Unexpected value for term_rank: #{value.inspect}"
       end
+      
+      # If term has @container @set, and rank is not 0, increase rank by 1.
+      rank > 0 && container(term) == '@set' ? rank + 1 : rank
     end
   end
 end
