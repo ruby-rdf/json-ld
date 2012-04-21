@@ -77,7 +77,7 @@ if RUBY_VERSION < "1.9"
     end
 
     def each
-      @ordered_keys.each {|k| yield(k, super[k])}
+      @ordered_keys.each {|k| yield(k, self[k])}
     end
     alias :each_pair :each
 
@@ -91,10 +91,6 @@ if RUBY_VERSION < "1.9"
 
     def keys
       @ordered_keys
-    end
-
-    def values
-      @ordered_keys.map {|k| super[k]}
     end
 
     def clear
@@ -120,7 +116,9 @@ if RUBY_VERSION < "1.9"
     end
 
     def merge!(other)
-      @ordered_keys += other.instance_variable_get(:@ordered_keys) || other.keys
+      new_keys = other.instance_variable_get(:@ordered_keys) || other.keys
+      new_keys -= @ordered_keys
+      @ordered_keys += new_keys
       super
       self
     end
