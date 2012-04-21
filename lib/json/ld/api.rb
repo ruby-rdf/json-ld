@@ -49,7 +49,7 @@ module JSON::LD
       
       if block_given?
         case block.arity
-          when 0 then instance_eval(&block)
+          when 0, -1 then instance_eval(&block)
           else block.call(self)
         end
       end
@@ -274,9 +274,10 @@ module JSON::LD
       #    This removes any existing context to allow the given context to be cleanly applied.
       expanded = expand(input, context, nil, options)
 
-      API.new(expanded, nil, options) do |api|
+      API.new(expanded, nil, options) do
+        debug(".expand") {"expanded input: #{value.to_json(JSON_STATE)}"}
         # Start generating statements
-        api.statements("", api.value, nil, nil, nil) do |statement|
+        statements("", value, nil, nil, nil) do |statement|
           callback.call(statement) if callback
           yield statement if block_given?
         end

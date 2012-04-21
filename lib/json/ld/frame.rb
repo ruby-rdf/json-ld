@@ -36,8 +36,9 @@ module JSON::LD
         explicit = get_frame_flag(state, frame, 'explicit');
         debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
       
-        # For each id and subject from the set of matched subjects
-        matches.each do |id, element|
+        # For each id and subject from the set of matched subjects ordered by id
+        matches.keys.sort.each do |id|
+          element = matches[id]
           # If the active property is null, set the map of embeds in state to an empty map
           state = state.merge(:embeds => {}) if property.nil?
 
@@ -253,7 +254,7 @@ module JSON::LD
     # @return [Array, Hash]
     def cleanup_preserve(input)
       depth do
-        debug("cleanup preserve") {input.inspect}
+        #debug("cleanup preserve") {input.inspect}
         result = case input
         when Array
           # If, after replacement, an array contains only the value null remove the value, leaving an empty array. 
@@ -280,7 +281,7 @@ module JSON::LD
         else
           input
         end
-        debug(" => ") {result.inspect}
+        #debug(" => ") {result.inspect}
         result
       end
     end
