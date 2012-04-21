@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.homepage              = "http://github.com/gkellogg/json-ld"
   gem.license               = 'Public Domain' if gem.respond_to?(:license=)
   gem.summary               = "JSON-LD reader/writer for Ruby."
-  gem.description           = gem.summary
+  gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."
   gem.rubyforge_project     = 'json-ld'
 
   gem.authors               = ['Gregg Kellogg']

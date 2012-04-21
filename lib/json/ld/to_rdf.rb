@@ -169,7 +169,7 @@ module JSON::LD
     # @param [RDF::Term] object the object of the statement
     # @param [RDF::Resource] name the named graph context of the statement
     # @yield :statement
-    # @yieldParams [RDF::Statement] :statement
+    # @yieldparam [RDF::Statement] :statement
     def add_quad(path, subject, predicate, object, name)
       predicate = RDF.type if predicate == '@type'
       object = RDF::URI(object.to_s) if object.literal? && predicate == RDF.type

@@ -9,6 +9,7 @@ PATH
   remote: .
   specs:
     json-ld (0.1.2)
+      backports
       json (>= 1.6.5)
       rdf (>= 0.3.5)
 

@@ -65,9 +65,10 @@ module JSON::LD
   end
 
   ##
-  # Utility class for mapping old blank node identifiers, or unnamed blank nodes to new identifiers
+  # Utility class for mapping old blank node identifiers, or unnamed blank
+  # nodes to new identifiers
   class BlankNodeNamer < Hash
-    # @prefix [String] prefix
+    # @param [String] prefix
     def initialize(prefix)
       @prefix = "_:#{prefix}0"
       super

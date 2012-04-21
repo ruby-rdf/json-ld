@@ -810,8 +810,8 @@ module JSON::LD
     # is lowest when the relative match between the term and the value
     # is closest.
     #
-    # @property [String] term
-    # @property [Object] value
+    # @param [String] term
+    # @param [Object] value
     # @return [Integer]
     def term_rank(term, value)
       debug("term rank") { "term: #{term.inspect}, value: #{value.inspect}"}

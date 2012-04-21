@@ -4,7 +4,8 @@
 
 ## Features
 
-JSON::LD parses and serializes [JSON-LD][] into statements or statements.
+JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements
+JSON::LD expansion, compaction and framing API interfaces.
 
 Install with `gem install json-ld`
 
@@ -13,13 +14,208 @@ Install with `gem install json-ld`
     require 'rubygems'
     require 'json/ld'
 
+### Expand a Document
+
+    input = {
+      "@context": {
+        "name": "http://xmlns.com/foaf/0.1/name",
+        "homepage": "http://xmlns.com/foaf/0.1/homepage",
+        "avatar": "http://xmlns.com/foaf/0.1/avatar"
+      },
+      "name": "Manu Sporny",
+      "homepage": "http://manu.sporny.org/",
+      "avatar": "http://twitter.com/account/profile_image/manusporny"
+    }
+    JSON::LD::API.expand(input) =>
+    
+    [{
+        "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
+        "http://xmlns.com/foaf/0.1/homepage": ["http://manu.sporny.org/"],
+        "http://xmlns.com/foaf/0.1/avatar": ["http://twitter.com/account/profile_image/manusporny"]
+    }]
+
+### Compact a Document
+
+    input = [{
+        "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
+        "http://xmlns.com/foaf/0.1/homepage": ["http://manu.sporny.org/"],
+        "http://xmlns.com/foaf/0.1/avatar": ["http://twitter.com/account/profile_image/manusporny"]
+    }]
+    
+    context = {
+      "@context": {
+        "name": "http://xmlns.com/foaf/0.1/name",
+        "homepage": "http://xmlns.com/foaf/0.1/homepage",
+        "avatar": "http://xmlns.com/foaf/0.1/avatar"
+      }
+    }
+    
+    JSON::LD::API.compact(input, context) =>
+    {
+        "@context": {
+            "avatar": "http://xmlns.com/foaf/0.1/avatar",
+            "homepage": "http://xmlns.com/foaf/0.1/homepage",
+            "name": "http://xmlns.com/foaf/0.1/name"
+        },
+        "avatar": "http://twitter.com/account/profile_image/manusporny",
+        "homepage": "http://manu.sporny.org/",
+        "name": "Manu Sporny"
+    }
+
+### Frame a Document
+
+    input = {
+      "@context": {
+        "Book":         "http://example.org/vocab#Book",
+        "Chapter":      "http://example.org/vocab#Chapter",
+        "contains":     {"@id": "http://example.org/vocab#contains", "@type": "@id"},
+        "creator":      "http://purl.org/dc/terms/creator",
+        "description":  "http://purl.org/dc/terms/description",
+        "Library":      "http://example.org/vocab#Library",
+        "title":        "http://purl.org/dc/terms/title"
+      },
+      "@graph":
+      [{
+        "@id": "http://example.com/library",
+        "@type": "Library",
+        "contains": "http://example.org/library/the-republic"
+      },
+      {
+        "@id": "http://example.org/library/the-republic",
+        "@type": "Book",
+        "creator": "Plato",
+        "title": "The Republic",
+        "contains": "http://example.org/library/the-republic#introduction"
+      },
+      {
+        "@id": "http://example.org/library/the-republic#introduction",
+        "@type": "Chapter",
+        "description": "An introductory chapter on The Republic.",
+        "title": "The Introduction"
+      }]
+    }
+    
+    frame = {
+      "@context": {
+        "Book":         "http://example.org/vocab#Book",
+        "Chapter":      "http://example.org/vocab#Chapter",
+        "contains":     "http://example.org/vocab#contains",
+        "creator":      "http://purl.org/dc/terms/creator",
+        "description":  "http://purl.org/dc/terms/description",
+        "Library":      "http://example.org/vocab#Library",
+        "title":        "http://purl.org/dc/terms/title"
+      },
+      "@type": "Library",
+      "contains": {
+        "@type": "Book",
+        "contains": {
+          "@type": "Chapter"
+        }
+      }
+    }
+    JSON::LD.frame(input, frame) =>
+    {
+      "@context": {
+        "Book": "http://example.org/vocab#Book",
+        "Chapter": "http://example.org/vocab#Chapter",
+        "contains": "http://example.org/vocab#contains",
+        "creator": "http://purl.org/dc/terms/creator",
+        "description": "http://purl.org/dc/terms/description",
+        "Library": "http://example.org/vocab#Library",
+        "title": "http://purl.org/dc/terms/title"
+      },
+      "@graph": [
+        {
+          "@id": "http://example.com/library",
+          "@type": "Library",
+          "contains": {
+            "@id": "http://example.org/library/the-republic",
+            "@type": "Book",
+            "contains": {
+              "@id": "http://example.org/library/the-republic#introduction",
+              "@type": "Chapter",
+              "description": "An introductory chapter on The Republic.",
+              "title": "The Introduction"
+            },
+            "creator": "Plato",
+            "title": "The Republic"
+          }
+        }
+      ]
+    }
+
+### Turn JSON-LD into RDF (Turtle)
+
+    input = {
+      "@context": {
+        "":       "http://manu.sporny.org/",
+        "foaf":   "http://xmlns.com/foaf/0.1/"
+      },
+      "@id":       "http://example.org/people#joebob",
+      "@type":          "foaf:Person",
+      "foaf:name":      "Joe Bob",
+      "foaf:nick":      { "@list": [ "joe", "bob", "jaybe" ] }
+    }
+    
+    JSON::LD::API.toRDF(input) =>
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+    <http://example.org/people#joebob> a foaf:Person;
+       foaf:name "Joe Bob";
+       foaf:nick ("joe" "bob" "jaybe") .
+
+### Turn RDF into JSON-LD
+
+    input =
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+    <http://manu.sporny.org/#me> a foaf:Person;
+       foaf:knows [ a foaf:Person;
+         foaf:name "Gregg Kellogg"];
+       foaf:name "Manu Sporny" .
+    
+    context =
+    {
+      "@context": {
+        "":       "http://manu.sporny.org/",
+        "foaf":   "http://xmlns.com/foaf/0.1/"
+      }
+    }
+
+    JSON::LD::fromRDF(input, context) =>
+    {
+      "@context": {
+        "":       "http://manu.sporny.org/",
+        "foaf":   "http://xmlns.com/foaf/0.1/"
+      },
+      "@id":       ":#me",
+      "@type":          "foaf:Person",
+      "foaf:name":      "Manu Sporny",
+      "foaf:knows": {
+        "@type":          "foaf:Person",
+        "foaf:name":      "Gregg Kellogg"
+      }
+    }
+
+## RDF Reader and Writer
+{JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
+
+    graph = RDF::Graph.load("etc/doap.jsonld", :format => :jsonld)
+    graph.dump(:jsonld, :standard_prefixes => true)
+
 ## Documentation
-Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/0.0.4/file/README)
+Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.markdown)
 
 ### Principle Classes
 * {JSON::LD}
+  * {JSON::LD::API}
+  * {JSON::LD::Compact}
+  * {JSON::LD::EvaluationContext}
   * {JSON::LD::Format}
+  * {JSON::LD::Frame}
+  * {JSON::LD::FromTriples}
   * {JSON::LD::Reader}
+  * {JSON::LD::Triples}
   * {JSON::LD::Writer}
 
 ## Dependencies
@@ -70,4 +266,4 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [PDD]:              http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
 [RDF.rb]:           http://rdf.rubyforge.org/
 [Backports]:        http://rubygems.org/gems/backports
-[JSON-LD]:          http://json-ld.org/spec/ED/20110507/
+[JSON-LD]:          http://json-ld.org/spec/latest/

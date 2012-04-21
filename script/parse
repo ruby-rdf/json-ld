@@ -18,26 +18,24 @@ def run(input, options)
   if options[:expand]
     output = JSON::LD::API.expand(input, nil, nil, options)
     secs = Time.new - start
-    options[:output].puts output
+    options[:output].puts output.to_json(JSON_STATE)
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
     output = JSON::LD::API.compact(input, options[:context], nil, options)
     secs = Time.new - start
-    puts output.inspect
+    puts output.to_json(JSON_STATE)
     puts "Compacted in #{secs} seconds."
   elsif options[:frame]
     output = JSON::LD::API.frame(input, options[:frame], nil, options)
     secs = Time.new - start
-    puts output.inspect
+    puts output.to_json(JSON_STATE)
     puts "Framed in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
     g = RDF::Repository.new << r
     secs = Time.new - start
     num = g.count
-    puts "prefixes: #{r.prefixes.inspect}"
     parser_options = options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true)
-    puts "begin dump: #{parser_options.inspect}"
     options[:output].puts g.dump(options[:output_format], parser_options)
     puts
     puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."

@@ -5,7 +5,7 @@ module JSON::LD
     include Utils
 
     ##
-    # Generate a JSON-LD array representation from an array of {RDF::Statement}.
+    # Generate a JSON-LD array representation from an array of `RDF::Statement`.
     # Representation is in expanded form
     #
     # @param [Array<RDF::Statement>] input

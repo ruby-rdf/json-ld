@@ -5,7 +5,7 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  context ".statements" do
+  context ".toRDF" do
     context "unnamed nodes" do
       {
         "no @id" => [
