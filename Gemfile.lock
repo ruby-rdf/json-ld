@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    json-ld (0.1.1)
+    json-ld (0.1.2)
       json (>= 1.6.5)
       rdf (>= 0.3.5)
 
@@ -55,8 +55,7 @@ GEM
       rdf-xsd (>= 0.3.4)
     rdf-n3 (0.3.6)
       rdf (>= 0.3.4)
-    rdf-rdfa (0.3.9)
-      backports
+    rdf-rdfa (0.3.10)
       haml (>= 3.0.0)
       htmlentities (>= 4.3.0)
       rdf (>= 0.3.3)
@@ -109,6 +108,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  backports
   equivalent-xml (>= 0.2.8)
   json-ld!
   linkeddata
