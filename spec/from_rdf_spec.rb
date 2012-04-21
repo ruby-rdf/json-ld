@@ -71,7 +71,7 @@ describe JSON::LD::API do
 
       it "coerces boolean" do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-        serialize(input,).should produce([{
+        serialize(input).should produce([{
           '@id'   => "http://example.com/a",
           "http://example.com/b"    => [true]
         }], @debug)

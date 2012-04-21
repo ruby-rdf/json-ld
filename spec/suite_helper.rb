@@ -66,27 +66,29 @@ module Fixtures
       property :sequence,   :predicate => Jld.sequence
       
       def entries
-        repo = self.class.repository
-        RDF::List.new(sequence, repo).map do |entry|
-          results = repo.query(:subject => entry, :predicate => RDF.type)
-          entry_types = results.map(&:object)
+        @entries ||= begin
+          repo = self.class.repository
+          RDF::List.new(sequence, repo).map do |entry|
+            results = repo.query(:subject => entry, :predicate => RDF.type)
+            entry_types = results.map(&:object)
 
-          # Load entry if it is not in repo
-          if entry_types.empty?
-            repo.load(entry, :format => :jsonld)
-            entry_types = repo.query(:subject => entry, :predicate => RDF.type).map(&:object)
-          end
+            # Load entry if it is not in repo
+            if entry_types.empty?
+              repo.load(entry, :format => :jsonld)
+              entry_types = repo.query(:subject => entry, :predicate => RDF.type).map(&:object)
+            end
           
-          case 
-          when entry_types.include?(Jld.Manifest) then entry.as(Manifest)
-          when entry_types.include?(Jld.CompactTest) then entry.as(CompactTest)
-          when entry_types.include?(Jld.ExpandTest) then entry.as(ExpandTest)
-          when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
-          when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
-          when entry_types.include?(Jld.RDFTest) then entry.as(RDFTest)
-          when entry_types.include?(Jld.FromRDFTest) then entry.as(FromRDFTest)
-          when entry_types.include?(Test.TestCase) then entry.as(Entry)
-          else raise "Unexpected entry type: #{entry_types.inspect}"
+            case 
+            when entry_types.include?(Jld.Manifest) then entry.as(Manifest)
+            when entry_types.include?(Jld.CompactTest) then entry.as(CompactTest)
+            when entry_types.include?(Jld.ExpandTest) then entry.as(ExpandTest)
+            when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
+            when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
+            when entry_types.include?(Jld.RDFTest) then entry.as(RDFTest)
+            when entry_types.include?(Jld.FromRDFTest) then entry.as(FromRDFTest)
+            when entry_types.include?(Test.TestCase) then entry.as(Entry)
+            else raise "Unexpected entry type: #{entry_types.inspect}"
+            end
           end
         end
       end
@@ -181,6 +183,5 @@ module Fixtures
 
     repo = RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
     Spira.add_repository! :default, repo
-    puts Manifest.each.to_a.inspect
   end
 end
