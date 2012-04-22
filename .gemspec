@@ -39,6 +39,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-trig',        '>= 0.1.1'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
   gem.add_development_dependency 'sparql',          '>= 0.0.2'
-  gem.add_runtime_dependency     'backports'        if RUBY_VERSION < "1.9"
+  gem.add_runtime_dependency     'backports'
   gem.post_install_message  = nil
 end

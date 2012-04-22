@@ -4,8 +4,7 @@
 
 ## Features
 
-JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements
-JSON::LD expansion, compaction and framing API interfaces.
+JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces.
 
 Install with `gem install json-ld`
 
