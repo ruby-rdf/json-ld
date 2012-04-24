@@ -490,10 +490,6 @@ module JSON::LD
     # @return [String] compacted form of IRI
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-compaction
     def compact_iri(iri, options = {})
-      # Don't cause these to be compacted
-      return iri.to_s if [RDF.first, RDF.rest, RDF.nil].include?(iri)
-      return self.alias('@type') if options[:position] == :predicate && iri == RDF.type
-
       depth(options) do
         debug {"compact_iri(#{iri.inspect}, #{options.inspect})"}
 

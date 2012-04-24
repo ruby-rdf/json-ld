@@ -105,8 +105,9 @@ module JSON::LD
           end
         end
         
-        # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type:
-        if statement.predicate == RDF.type
+        # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+        # and the notType option is not true
+        if statement.predicate == RDF.type && !@options[:notType]
           object = ec.expand_iri(statement.object).to_s
           debug("@type") { object.inspect}
           # append the string representation of object to the array value for the key @type, creating

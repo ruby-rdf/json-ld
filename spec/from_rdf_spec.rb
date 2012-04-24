@@ -277,6 +277,24 @@ describe JSON::LD::API do
         end
       end
     end
+
+    context "notType option" do
+      it "uses @type if set to false" do
+        input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
+        serialize(input, :notType => false).should produce([{
+          '@id'   => "http://example.com/a",
+          "@type"    => ["http://example.com/b"]
+        }], @debug)
+      end
+      
+      it "does not use @type if set to true" do
+        input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
+        serialize(input, :notType => true).should produce([{
+          '@id'   => "http://example.com/a",
+          RDF.type.to_s    => [{"@id" => "http://example.com/b"}]
+        }], @debug)
+      end
+    end
   end
 
   def parse(input, options = {})

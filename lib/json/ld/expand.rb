@@ -71,17 +71,23 @@ module JSON::LD
               # Otherwise, if the property is @type the value must be a string, an array of strings
               # or an empty JSON Object.
               # Expand value or each of it's entries according to IRI Expansion
+              debug("@type") {"value: #{value.inspect}"}
               case value
               when Array
                 depth do
                   [value].flatten.map do |v|
+                    v = v['@id'] if subject_reference?(v)
+                    raise ProcessingError, "Object value must be a string or a subject reference: #{v.inspect}" unless v.is_a?(String)
                     context.expand_iri(v, options.merge(:position => :property, :quiet => true)).to_s
                   end
                 end
               when Hash
-                # Empty object used for @type wildcard
-                raise ProcessingError, "Object value of @type must be empty: #{value.inspect}" unless value.empty?
-                value
+                # Empty object used for @type wildcard or subject reference
+                if subject_reference?(value)
+                  context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true)).to_s
+                elsif !value.empty?
+                  raise ProcessingError, "Object value of @type must be empty or a subject reference: #{value.inspect}"
+                end
               else
                 context.expand_iri(value, options.merge(:position => :property, :quiet => true)).to_s
               end
