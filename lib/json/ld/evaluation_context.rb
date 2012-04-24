@@ -366,7 +366,8 @@ module JSON::LD
     # @return [RDF::URI, '@id']
     def coerce(property)
       # Map property, if it's not an RDF::Value
-      return '@id' if [RDF.type, '@type'].include?(property)  # '@type' always is an IRI
+      # @type and @graph always is an IRI
+      return '@id' if [RDF.type, '@type', '@graph'].include?(property)
       @coercions.fetch(property, nil)
     end
 
