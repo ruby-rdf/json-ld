@@ -190,11 +190,28 @@ describe JSON::LD::EvaluationContext do
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
+        "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
         it title do
           #subject.parse(context)
           lambda {
             ec = subject.parse(context)
+            ec.serialize.should produce({}, @debug)
+          }.should raise_error(JSON::LD::InvalidContext::Syntax)
+        end
+      end
+      
+      (JSON::LD::KEYWORDS - %w(@language)).each do |kw|
+        it "does not redefined #{kw} as a string" do
+          lambda {
+            ec = subject.parse({kw => "http://example.com/"})
+            ec.serialize.should produce({}, @debug)
+          }.should raise_error(JSON::LD::InvalidContext::Syntax)
+        end
+
+        it "does not redefined #{kw} with an @id" do
+          lambda {
+            ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
           }.should raise_error(JSON::LD::InvalidContext::Syntax)
         end

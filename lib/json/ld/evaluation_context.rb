@@ -161,7 +161,7 @@ module JSON::LD
           context.each do |key, value|
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-            if key == '@language'
+            if key == '@language' && (value.nil? || value.is_a?(String))
               new_ec.default_language = value
             elsif term_valid?(key)
               # Remove all coercion information for the property
@@ -174,7 +174,9 @@ module JSON::LD
               raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
-              if iri && new_ec.mappings.fetch(key, nil) != iri
+              if iri && KEYWORDS.include?(key)
+                raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword"
+              elsif iri && new_ec.mappings.fetch(key, nil) != iri
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
