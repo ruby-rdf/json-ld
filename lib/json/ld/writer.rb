@@ -92,7 +92,7 @@ module JSON::LD
       options[:base_uri] ||= options[:base] if options.has_key?(:base)
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
-        @graph = RDF::Graph.new
+        @repo = RDF::Graph.new
 
         if block_given?
           case block.arity
@@ -110,7 +110,7 @@ module JSON::LD
     # @return [void]
     def write_graph(graph)
       debug {"Add graph #{graph.inspect}"}
-      @graph = graph
+      @repo = graph
     end
 
     ##
@@ -118,7 +118,7 @@ module JSON::LD
     # @param  [RDF::Statement] statement
     # @return [void]
     def write_statement(statement)
-      @graph.insert(statement)
+      @repo.insert(statement)
     end
 
     ##
@@ -130,7 +130,7 @@ module JSON::LD
     # @raise  [NotImplementedError] unless implemented in subclass
     # @abstract
     def write_triple(subject, predicate, object)
-      @graph.insert(Statement.new(subject, predicate, object))
+      @repo.insert(Statement.new(subject, predicate, object))
     end
 
     ##
@@ -145,7 +145,7 @@ module JSON::LD
       @debug = @options[:debug]
 
       # Turn graph into a triple array
-      statements = @graph.each_statement.to_a
+      statements = @repo.each_statement.to_a
       debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
       result = API.fromRDF(statements, nil, @options)
 
