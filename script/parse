@@ -16,19 +16,19 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:expand]
-    output = JSON::LD::API.expand(input, nil, nil, options)
+    output = JSON::LD::API.expand(input, options[:context], nil, options)
     secs = Time.new - start
-    options[:output].puts output.to_json(JSON_STATE)
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
     output = JSON::LD::API.compact(input, options[:context], nil, options)
     secs = Time.new - start
-    puts output.to_json(JSON_STATE)
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Compacted in #{secs} seconds."
   elsif options[:frame]
     output = JSON::LD::API.frame(input, options[:frame], nil, options)
     secs = Time.new - start
-    puts output.to_json(JSON_STATE)
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Framed in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
