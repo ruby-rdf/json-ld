@@ -53,7 +53,7 @@ module JSON::LD
 
             # Set active property to the original un-expanded property if property if not a keyword
             active_property = key unless key[0,1] == '@'
-            debug("expand property") {"#{active_property}, expanded: #{property}, value: #{value.inspect}"}
+            debug("expand property") {"#{active_property.inspect}, expanded: #{property}, value: #{value.inspect}"}
           
             # If property does not expand to a keyword or absolute IRI, remove property from element
             # and continue to the next property from element
@@ -87,6 +87,8 @@ module JSON::LD
                   context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true)).to_s
                 elsif !value.empty?
                   raise ProcessingError, "Object value of @type must be empty or a subject reference: #{value.inspect}"
+                else
+                  value
                 end
               else
                 context.expand_iri(value, options.merge(:position => :property, :quiet => true)).to_s

@@ -334,16 +334,11 @@ module JSON::LD
     def set_mapping(term, value)
 #      raise InvalidContext::Syntax, "mapping term #{term.inspect} must be a string" unless term.is_a?(String)
 #      raise InvalidContext::Syntax, "mapping value #{value.inspect} must be an RDF::URI" unless value.nil? || value.to_s[0,1] == '@' || value.is_a?(RDF::URI)
-      debug {"map #{term.inspect} to #{value}"} unless @mappings[term] == value
+      debug {"map #{term.inspect} to #{value.inspect}"}
       iri_to_term.delete(@mappings[term].to_s) if @mappings[term]
-      if value
-        @mappings[term] = value
-        @options[:prefixes][term] = value if @options.has_key?(:prefixes)
-        iri_to_term[value.to_s] = term
-      else
-        @mappings.delete(term)
-        nil
-      end
+      @mappings[term] = value
+      @options[:prefixes][term] = value if @options.has_key?(:prefixes)
+      iri_to_term[value.to_s] = term
     end
 
     ##
@@ -462,15 +457,14 @@ module JSON::LD
       base = self.base unless [:predicate, :datatype].include?(options[:position])
       prefix = prefix.to_s
       case
-      when prefix == '_' && suffix          then debug("=> bnode"); bnode(suffix)
-      when iri.to_s[0,1] == "@"             then debug("=> keyword"); iri
-      when suffix.to_s[0,2] == '//'         then debug("=> iri"); uri(iri)
-      when mappings.has_key?(prefix)        then debug("=> curie"); uri(mappings[prefix] + suffix.to_s)
-      when base                             then debug("=> base"); base.join(iri)
+      when prefix == '_' && suffix          then bnode(suffix)
+      when iri.to_s[0,1] == "@"             then iri
+      when suffix.to_s[0,2] == '//'         then uri(iri)
+      when mappings.has_key?(prefix)        then uri(mappings[prefix] + suffix.to_s)
+      when base                             then base.join(iri)
       else
         # Otherwise, it must be an absolute IRI
         u = uri(iri)
-        debug("=> absolute") {"#{u.inspect} abs? #{u.absolute?.inspect}"}
         u if u.absolute? || [:subject, :object].include?(options[:position])
       end
     end
@@ -546,9 +540,12 @@ module JSON::LD
         # @type coercion, @container coercion or @language coercion rules
         # along with the iri itself.
         if terms.empty?
-          curies = mappings.keys.map {|k| iri.to_s.sub(mapping(k).to_s, "#{k}:") if
-            iri.to_s.index(mapping(k).to_s) == 0 &&
-            iri.to_s != mapping(k).to_s}.compact
+          curies = mappings.keys.map do |k|
+            iri.to_s.sub(mapping(k).to_s, "#{k}:") if
+              mapping(k).to_s.length > 0 &&
+              iri.to_s.index(mapping(k).to_s) == 0 &&
+              iri.to_s != mapping(k).to_s
+          end.compact
 
           debug("curies") do
             curies.map do |c|
@@ -580,7 +577,14 @@ module JSON::LD
             debug("curies") {"using standard prefies: #{terms.inspect}"}
           end
 
-          terms << iri.to_s
+          # If there is a mapping from the complete IRI to null, return null,
+          # otherwise, return the complete IRI.
+          if mappings.has_key?(iri.to_s) && !mapping(iri)
+            debug("iri") {"use nil IRI mapping"}
+            terms << nil
+          else
+            terms << iri.to_s
+          end
         end
         
         # Get the first term based on distance and lexecographical order

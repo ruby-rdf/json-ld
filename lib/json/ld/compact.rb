@@ -68,6 +68,7 @@ module JSON::LD
 
           if %(@id @type).include?(key)
             compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
+
             result[compacted_key] = case value
             when String
               # If value is a string, the compacted value is the result of performing IRI Compaction on value.
@@ -84,6 +85,7 @@ module JSON::LD
             if value.empty?
               # Make sure that an empty array is preserved
               compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
+              next if compacted_key.nil?
               result[compacted_key] = value
             end
 
@@ -92,6 +94,7 @@ module JSON::LD
             value.each do |item|
               compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
               debug {" => compacted key: #{compacted_key.inspect} for #{item.inspect}"}
+              next if compacted_key.nil?
 
               compacted_item = depth {self.compact(item, compacted_key)}
               debug {" => compacted value: #{compacted_value.inspect}"}

@@ -233,6 +233,26 @@ describe JSON::LD::API do
             "@id" => "id1",
           }
         },
+        "Allows IRI to be aliased to null, but still output term using IRI" => {
+          :context => {
+            "http://example.com/comment" => nil,
+            "comment_en" => {"@id" => "http://example.com/comment", "@language" => "en"}
+          },
+          :input => [{
+            "http://example.com/comment" => [
+               {"@value" => "comment in english", "@language" => "en"},
+               {"@value" => "commentar auf deutsch", "@language" => "de"},
+               {"@value" => "日本語でのコメント", "@language" => "ja"},
+             ]
+          }],
+          :output => {
+            "@context" => {
+              "http://example.com/comment" => nil,
+              "comment_en" => {"@id" => "http://example.com/comment", "@language" => "en"}
+            },
+            "comment_en" => "comment in english",
+          }
+        },
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
