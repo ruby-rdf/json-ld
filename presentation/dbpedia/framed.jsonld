@@ -1,0 +1,89 @@
+{
+  "@context": {
+    "dbpedia": "http://dbpedia.org/resource/",
+    "dbpedia-owl": "http://dbpedia.org/ontology/",
+    "dbpprop": "http://dbpedia.org/property/",
+    "dc": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "enwp": "http://en.wikipedia.org/wiki/",
+    "disambiguates": {
+      "@id": "dbpedia-owl:wikiPageDisambiguates",
+      "@type": "@id"
+    },
+    "externalLink": {
+      "@id": "dbpedia-owl:wikiPageExternalLink",
+      "@type": "@id"
+    },
+    "redirects": {
+      "@id": "dbpedia-owl:wikiPageRedirects",
+      "@type": "@id"
+    },
+    "genre": {
+      "@id": "dbpedia-owl:genre",
+      "@type": "@id"
+    },
+    "subject": {
+      "@id": "dc:subject",
+      "@type": "@id"
+    },
+    "page": {
+      "@id": "foaf:page",
+      "@type": "@id"
+    },
+    "primaryTopic": {
+      "@id": "foaf:primaryTopic",
+      "@type": "@id"
+    },
+    "sameAs": {
+      "@id": "owl:sameAs",
+      "@type": "@id"
+    },
+    "abstract": {
+      "@id": "dbpedia-owl:abstract",
+      "@language": "en"
+    },
+    "comment": {
+      "@id": "rdfs:comment",
+      "@language": "en"
+    },
+    "label": {
+      "@id": "rdfs:label",
+      "@language": "en"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "enwp:Linked_Data",
+      "primaryTopic": {
+        "@id": "dbpedia:Linked_Data",
+        "@type": "http://dbpedia.org/class/yago/Buzzwords",
+        "abstract": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried. Tim Berners-Lee, director of the World Wide Web Consortium, coined the term in a design note discussing issues around the Semantic Web project.. However, the idea is very old and is closely related to concepts such as the network model (database), citations between scholarly articles, and authority control in libraries.",
+        "comment": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried.",
+        "dbpedia-owl:abstract": {
+          "@value": "La propuesta de datos vinculados (linked data) surge dentro de marco general de la Web semántica. El término \"datos vinculados\" hace referencia al método con el que se pueden mostrar, intercambiar y conectar datos a través de URIs desreferenciables en la Web.",
+          "@language": "es"
+        },
+        "externalLink": null,
+        "genre": null,
+        "label": "Linked Data",
+        "page": "enwp:Linked_Data",
+        "rdfs:comment": {
+          "@value": "Linked Open Data (LOD) bezeichnet im World Wide Web frei verfügbare Daten, die per Uniform Resource Identifier (URI) identifiziert sind und darüber direkt per HTTP abgerufen werden können und ebenfalls per URI auf andere Daten verweisen. Idealerweise werden zur Kodierung und Verlinkung der Daten das Resource Description Framework (RDF) und darauf aufbauende Standards wie SPARQL und die Web Ontology Language (OWL) verwendet, so dass Linked Open Data gleichzeitig Teil des Semantic Web ist.",
+          "@language": "de"
+        },
+        "rdfs:label": {
+          "@value": "Linked Open Data",
+          "@language": "de"
+        },
+        "sameAs": null,
+        "subject": [
+          "dbpedia:Category:World_Wide_Web",
+          "dbpedia:Category:Buzzwords",
+          "dbpedia:Category:Semantic_Web"
+        ]
+      }
+    }
+  ]
+}

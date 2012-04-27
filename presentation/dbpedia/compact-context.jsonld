@@ -1,0 +1,43 @@
+{
+  "@context": {
+    "dbpedia": "http://dbpedia.org/resource/",
+    "dbpedia-owl": "http://dbpedia.org/ontology/",
+    "dbpprop": "http://dbpedia.org/property/",
+    "dc": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "enwp": "http://en.wikipedia.org/wiki/",
+
+    "disambiguates": {"@id": "dbpedia-owl:wikiPageDisambiguates", "@type": "@id"},
+    "externalLink": {"@id": "dbpedia-owl:wikiPageExternalLink", "@type": "@id"},
+    "redirects": {"@id": "dbpedia-owl:wikiPageRedirects", "@type": "@id"},
+    "genre": {"@id": "dbpedia-owl:genre", "@type": "@id"},
+    "dbpprop:genre": {"@type": "@id"},
+    "subject": {"@id": "dc:subject", "@type": "@id"},
+    "page": {"@id": "foaf:page", "@type": "@id"},
+    "primaryTopic": {"@id": "foaf:primaryTopic", "@type": "@id"},
+    "sameAs": {"@id": "owl:sameAs", "@type": "@id"},
+
+    "abstract_de": {"@id": "dbpedia-owl:abstract", "@language": "de"},
+    "abstract_en": {"@id": "dbpedia-owl:abstract", "@language": "en"},
+    "abstract_es": {"@id": "dbpedia-owl:abstract", "@language": "es"},
+    "abstract_fr": {"@id": "dbpedia-owl:abstract", "@language": "fr"},
+    "abstract_it": {"@id": "dbpedia-owl:abstract", "@language": "it"},
+    "abstract_zh": {"@id": "dbpedia-owl:abstract", "@language": "zh"},
+
+    "comment_de": {"@id": "rdfs:comment", "@language": "de"},
+    "comment_en": {"@id": "rdfs:comment", "@language": "en"},
+    "comment_es": {"@id": "rdfs:comment", "@language": "es"},
+    "comment_fr": {"@id": "rdfs:comment", "@language": "fr"},
+    "comment_it": {"@id": "rdfs:comment", "@language": "it"},
+    "comment_zh": {"@id": "rdfs:comment", "@language": "zh"},
+
+    "label_de": {"@id": "rdfs:label", "@language": "de"},
+    "label_en": {"@id": "rdfs:label", "@language": "en"},
+    "label_es": {"@id": "rdfs:label", "@language": "es"},
+    "label_fr": {"@id": "rdfs:label", "@language": "fr"},
+    "label_it": {"@id": "rdfs:label", "@language": "it"},
+    "label_zh": {"@id": "rdfs:label", "@language": "zh"}
+  }
+}

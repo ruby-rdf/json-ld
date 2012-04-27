@@ -1,0 +1,51 @@
+{
+  "@context": "presentation/dbpedia/compact-context.jsonld",
+  "@graph": [
+    {
+      "@id": "dbpedia:DBpedia",
+      "dbpprop:genre": "dbpedia:Linked_Data",
+      "genre": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/Linked_Data",
+      "sameAs": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "dbpedia:Linked_Data",
+      "@type": "http://dbpedia.org/class/yago/Buzzwords",
+      "abstract_en": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried. Tim Berners-Lee, director of the World Wide Web Consortium, coined the term in a design note discussing issues around the Semantic Web project.. However, the idea is very old and is closely related to concepts such as the network model (database), citations between scholarly articles, and authority control in libraries.",
+      "abstract_es": "La propuesta de datos vinculados (linked data) surge dentro de marco general de la Web semántica. El término \"datos vinculados\" hace referencia al método con el que se pueden mostrar, intercambiar y conectar datos a través de URIs desreferenciables en la Web.",
+      "comment_de": "Linked Open Data (LOD) bezeichnet im World Wide Web frei verfügbare Daten, die per Uniform Resource Identifier (URI) identifiziert sind und darüber direkt per HTTP abgerufen werden können und ebenfalls per URI auf andere Daten verweisen. Idealerweise werden zur Kodierung und Verlinkung der Daten das Resource Description Framework (RDF) und darauf aufbauende Standards wie SPARQL und die Web Ontology Language (OWL) verwendet, so dass Linked Open Data gleichzeitig Teil des Semantic Web ist.",
+      "comment_en": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried.",
+      "label_de": "Linked Open Data",
+      "label_en": "Linked Data",
+      "page": "enwp:Linked_Data",
+      "sameAs": "http://rdf.freebase.com/ns/m/02r2kb1",
+      "subject": [
+        "dbpedia:Category:World_Wide_Web",
+        "dbpedia:Category:Buzzwords",
+        "dbpedia:Category:Semantic_Web"
+      ]
+    },
+    {
+      "@id": "dbpedia:LinkedData",
+      "redirects": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "dbpedia:Linked_data",
+      "redirects": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "dbpedia:Linking_Open_Data",
+      "redirects": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "enwp:Linked_Data",
+      "primaryTopic": "dbpedia:Linked_Data"
+    },
+    {
+      "@id": "http://mpii.de/yago/resource/Linked_Data",
+      "sameAs": "dbpedia:Linked_Data"
+    }
+  ]
+}

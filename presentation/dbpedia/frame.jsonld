@@ -1,0 +1,44 @@
+{
+  "@context": {
+    "dbpedia": "http://dbpedia.org/resource/",
+    "dbpedia-owl": "http://dbpedia.org/ontology/",
+    "dbpprop": "http://dbpedia.org/property/",
+    "dc": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "enwp": "http://en.wikipedia.org/wiki/",
+
+    "disambiguates": {"@id": "dbpedia-owl:wikiPageDisambiguates", "@type": "@id"},
+    "externalLink": {"@id": "dbpedia-owl:wikiPageExternalLink", "@type": "@id"},
+    "redirects": {"@id": "dbpedia-owl:wikiPageRedirects", "@type": "@id"},
+    "genre": {"@id": "dbpedia-owl:genre", "@type": "@id"},
+    "subject": {"@id": "dc:subject", "@type": "@id"},
+    "page": {"@id": "foaf:page", "@type": "@id"},
+    "primaryTopic": {"@id": "foaf:primaryTopic", "@type": "@id"},
+    "sameAs": {"@id": "owl:sameAs", "@type": "@id"},
+
+    "abstract": {"@id": "dbpedia-owl:abstract", "@language": "en"},
+
+    "comment": {"@id": "rdfs:comment", "@language": "en"},
+
+    "label": {"@id": "rdfs:label", "@language": "en"}
+  },
+  "primaryTopic": {
+    "@type": "http://dbpedia.org/class/yago/Buzzwords",
+    "@explicit": true,
+    "abstract": {},
+    "comment": {},
+    "label": {},
+    "genre": {},
+    "externalLink": {},
+    "page": {},
+    "subject": {},
+    "redirectedFrom": {
+      "redirects": {}
+    },
+    "sameAs": {
+      "sameAs": {}
+    }
+  }
+}

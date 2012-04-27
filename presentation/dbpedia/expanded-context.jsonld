@@ -1,0 +1,13 @@
+{
+  "@context": {
+    "http://dbpedia.org/ontology/wikiPageDisambiguates": {"@type": "@id"},
+    "http://dbpedia.org/ontology/wikiPageExternalLink": {"@type": "@id"},
+    "http://dbpedia.org/ontology/wikiPageRedirects": {"@type": "@id"},
+    "http://dbpedia.org/ontology/genre": {"@type": "@id"},
+    "http://dbpedia.org/property/genre": {"@type": "@id"},
+    "http://www.w3.org/2002/07/owl#sameAs": {"@type": "@id"},
+    "http://purl.org/dc/terms/subject": {"@type": "@id"},
+    "http://xmlns.com/foaf/0.1/page": {"@type": "@id"},
+    "http://xmlns.com/foaf/0.1/primaryTopic": {"@type": "@id"}
+  }
+}
