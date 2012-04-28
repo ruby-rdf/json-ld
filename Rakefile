@@ -31,6 +31,54 @@ RSpec::Core::RakeTask.new("doc:spec") do |spec|
   spec.rspec_opts = ["--format", "html", "-o", "doc/spec.html"]
 end
 
+# Presentation building
+namespace :presentation do
+  desc "Clean presentation files"
+  task :clean do
+    FileUtils.rm %w(compacted expanded framed).map {|f| "presentation/dbpedia/#{f}.jsonld"}
+  end
+
+  desc "Build presentation files"
+  task :build => %w(
+    presentation/dbpedia/expanded.jsonld
+    presentation/dbpedia/compacted.jsonld
+    presentation/dbpedia/framed.jsonld
+  )
+
+  desc "Build expanded example"
+  file "presentation/dbpedia/expanded.jsonld" => %w(
+    presentation/dbpedia/orig.jsonld
+    presentation/dbpedia/expanded-context.jsonld) do
+      system(%w(
+        script/parse
+          --expand presentation/dbpedia/orig.jsonld
+          --context presentation/dbpedia/expanded-context.jsonld
+          -o presentation/dbpedia/expanded.jsonld).join(" "))
+  end
+
+  desc "Build compacted example"
+  file "presentation/dbpedia/compacted.jsonld" => %w(
+    presentation/dbpedia/expanded.jsonld
+    presentation/dbpedia/compact-context.jsonld) do
+      system(%w(
+        script/parse
+          --compact presentation/dbpedia/expanded.jsonld
+          --context presentation/dbpedia/compact-context.jsonld
+          -o presentation/dbpedia/compacted.jsonld).join(" "))
+  end
+
+  desc "Build framed example"
+  file "presentation/dbpedia/framed.jsonld" => %w(
+    presentation/dbpedia/expanded.jsonld
+    presentation/dbpedia/frame.jsonld) do
+      system(%w(
+        script/parse
+          --frame presentation/dbpedia/frame.jsonld
+          presentation/dbpedia/expanded.jsonld
+          -o presentation/dbpedia/framed.jsonld).join(" "))
+  end
+end
+
 require 'yard'
 namespace :doc do
   YARD::Rake::YardocTask.new

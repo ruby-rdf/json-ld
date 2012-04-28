@@ -591,10 +591,10 @@ module JSON::LD
         # Prefer terms that don't have @container @set over other terms, unless as set is true
         terms = terms.sort do |a, b|
           debug("term sort") {"c(a): #{container(a).inspect}, c(b): #{container(b)}"}
-          if a.length == b.length
-            a <=> b
+          if a.to_s.length == b.to_s.length
+            a.to_s <=> b.to_s
           else
-            a.length <=> b.length
+            a.to_s.length <=> b.to_s.length
           end
         end
         debug("sorted terms") {terms.inspect}

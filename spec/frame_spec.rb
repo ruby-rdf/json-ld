@@ -336,6 +336,59 @@ describe JSON::LD::API do
           }]
         }
       },
+      "presentation example" => {
+        :frame => {
+          "@context" => {
+            "primaryTopic" => {"@id" => "http://xmlns.com/foaf/0.1/primaryTopic","@type" => "@id"},
+            "sameAs" => {"@id" => "http://www.w3.org/2002/07/owl#sameAs","@type" => "@id"},
+          },
+          "primaryTopic" => {
+            "@type" => "http://dbpedia.org/class/yago/Buzzwords",
+            "sameAs" => {}
+          }
+        },
+        :input => [
+          {
+            "@id" => "http://en.wikipedia.org/wiki/Linked_Data",
+            "http://xmlns.com/foaf/0.1/primaryTopic" => [{"@id" => "http://dbpedia.org/resource/Linked_Data"}]
+          },
+          {
+            "@id" => "http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/Linked_Data",
+            "http://www.w3.org/2002/07/owl#sameAs" => [{"@id" => "http://dbpedia.org/resource/Linked_Data"}]
+          },
+          {
+            "@id" => "http://dbpedia.org/resource/Linked_Data",
+            "@type" => ["http://dbpedia.org/class/yago/Buzzwords"],
+            "http://www.w3.org/2002/07/owl#sameAs" => [{"@id" => "http://rdf.freebase.com/ns/m/02r2kb1"}]
+          },
+          {
+            "@id" => "http://mpii.de/yago/resource/Linked_Data",
+            "http://www.w3.org/2002/07/owl#sameAs" => [{"@id" => "http://dbpedia.org/resource/Linked_Data"}]
+          }
+        ],
+        :output => {
+          "@context" => {
+            "primaryTopic" => {
+              "@id" => "http://xmlns.com/foaf/0.1/primaryTopic",
+              "@type" => "@id"
+            },
+            "sameAs" => {
+              "@id" => "http://www.w3.org/2002/07/owl#sameAs",
+              "@type" => "@id"
+            }
+          },
+          "@graph" => [
+            {
+              "@id" => "http://en.wikipedia.org/wiki/Linked_Data",
+              "primaryTopic" => {
+                "@id" => "http://dbpedia.org/resource/Linked_Data",
+                "@type" => "http://dbpedia.org/class/yago/Buzzwords",
+                "sameAs" => "http://rdf.freebase.com/ns/m/02r2kb1"
+              }
+            }
+          ]
+        }
+      }
     }.each do |title, params|
       it title do
         @debug = []

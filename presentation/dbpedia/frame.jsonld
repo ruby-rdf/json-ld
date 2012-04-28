@@ -19,10 +19,13 @@
     "sameAs": {"@id": "owl:sameAs", "@type": "@id"},
 
     "abstract": {"@id": "dbpedia-owl:abstract", "@language": "en"},
+    "http://dbpedia.org/ontology/abstract": null,
 
     "comment": {"@id": "rdfs:comment", "@language": "en"},
+    "http://www.w3.org/2000/01/rdf-schema#comment": null,
 
-    "label": {"@id": "rdfs:label", "@language": "en"}
+    "label": {"@id": "rdfs:label", "@language": "en"},
+    "http://www.w3.org/2000/01/rdf-schema#label": null
   },
   "primaryTopic": {
     "@type": "http://dbpedia.org/class/yago/Buzzwords",
@@ -37,8 +40,6 @@
     "redirectedFrom": {
       "redirects": {}
     },
-    "sameAs": {
-      "sameAs": {}
-    }
+    "sameAs": {}
   }
 }

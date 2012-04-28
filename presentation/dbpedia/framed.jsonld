@@ -44,14 +44,17 @@
       "@id": "dbpedia-owl:abstract",
       "@language": "en"
     },
+    "http://dbpedia.org/ontology/abstract": null,
     "comment": {
       "@id": "rdfs:comment",
       "@language": "en"
     },
+    "http://www.w3.org/2000/01/rdf-schema#comment": null,
     "label": {
       "@id": "rdfs:label",
       "@language": "en"
-    }
+    },
+    "http://www.w3.org/2000/01/rdf-schema#label": null
   },
   "@graph": [
     {
@@ -61,23 +64,70 @@
         "@type": "http://dbpedia.org/class/yago/Buzzwords",
         "abstract": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried. Tim Berners-Lee, director of the World Wide Web Consortium, coined the term in a design note discussing issues around the Semantic Web project.. However, the idea is very old and is closely related to concepts such as the network model (database), citations between scholarly articles, and authority control in libraries.",
         "comment": "In computing, linked Data describes a method of publishing structured data so that it can be interlinked and become more useful. It builds upon standard Web technologies such as HTTP and URIs, but rather than using them to serve web pages for human readers, it extends them to share information in a way that can be read automatically by computers. This enables data from different sources to be connected and queried.",
-        "dbpedia-owl:abstract": {
-          "@value": "La propuesta de datos vinculados (linked data) surge dentro de marco general de la Web semántica. El término \"datos vinculados\" hace referencia al método con el que se pueden mostrar, intercambiar y conectar datos a través de URIs desreferenciables en la Web.",
-          "@language": "es"
-        },
-        "externalLink": null,
+        "externalLink": [
+          "http://revyu.com/",
+          "http://www.ted.com/talks/tim_berners_lee_on_the_next_web.html",
+          "http://dataviewer.zitgist.com/",
+          "http://tomheath.com/papers/bizer-heath-berners-lee-ijswis-linked-data.pdf",
+          "http://www.tecweb.inf.puc-rio.br/explorator/demo",
+          "http://knoesis.wright.edu/library/publications/linkedai2010_submission_13.pdf",
+          "http://relfinder.visualdataweb.org/",
+          "http://linkeddata.uriburner.com/ode",
+          "http://www.linkeddataplanet.com/",
+          "http://code.google.com/p/ontology-browser/",
+          "http://tomheath.com/slides/2008-02-amsterdam-linking-open-data-project.pdf",
+          "http://knoesis.wright.edu/library/publications/iswc10_paper218.pdf",
+          "http://esw.w3.org/topic/SweoIG/TaskForces/CommunityProjects/LinkingOpenData#dbpedia-lod-cloud",
+          "http://virtuoso.openlinksw.com/presentations/Creating_Deploying_Exploiting_Linked_Data2/Creating_Deploying_Exploiting_Linked_Data2_TimBL_v3.html",
+          "http://esw.w3.org/topic/SweoIG/TaskForces/CommunityProjects/LinkingOpenData",
+          "http://events.linkeddata.org/ldow2011/",
+          "http://www.sensorpedia.com",
+          "http://ws.nju.edu.cn/explorer/myview/",
+          "http://ws.nju.edu.cn/explorer/",
+          "http://www.openpsi.org/",
+          "http://sites.wiwiss.fu-berlin.de/suhl/bizer/pub/LinkingOpenData.pdf",
+          "http://events.linkeddata.org/ldow2008/",
+          "http://nomisma.org/",
+          "http://events.linkeddata.org/ldow2009/",
+          "http://www.viaf.org",
+          "http://linkeddatabook.com/book",
+          "http://events.linkeddata.org/ldow2010/",
+          "http://demo.openlinksw.com/Demo/customers/CustomerID/ALFKI%23this",
+          "http://www.plasticbag.org/archives/2006/02/my_future_of_web_apps_slides/",
+          "http://www.w3.org/2008/Talks/0617-lod-tbl/#(1)",
+          "http://www.scientificamerican.com/article.cfm?id=berners-lee-linked-data",
+          "http://www.linkeddataplanet.com",
+          "http://linkeddata.org",
+          "http://sig.ma",
+          "http://www4.wiwiss.fu-berlin.de/bizer/pub/lod-datasets_2009-07-14.html",
+          "http://virtuoso.openlinksw.com/white-papers/",
+          "http://isweb.uni-koblenz.de/Research/lena/",
+          "http://people.aifb.kit.edu/aha/2010/cold/",
+          "http://www.w3.org/2008/Talks/WWW2008-W3CTrack-LOD.pdf",
+          "http://www.w3.org/wiki/LinkedData",
+          "http://virtuoso.openlinksw.com/presentations/Virtuoso_Deploying_Linked_Data/Virtuoso_Deploying_Linked_Data.html",
+          "http://umbel.org/sites/umbel.org/lod/lod_constellation.html",
+          "http://latc-project.eu/",
+          "http://riese.joanneum.at",
+          "http://visinav.deri.org/",
+          "http://www.w3.org/2005/ajar/tab",
+          "http://www.sheaflight.com/browser/",
+          "http://www4.wiwiss.fu-berlin.de/dblp/",
+          "http://www.razorbase.com",
+          "http://www.w3.org/DesignIssues/LinkedData.html",
+          "http://www.w3.org/DesignIssues/LinkedData",
+          "http://www.wandora.org",
+          "http://www4.wiwiss.fu-berlin.de/bizer/ng4j/disco/",
+          "http://planet-data.eu/about",
+          "http://www.webknox.com/blog/2010/05/linked-open-data-on-the-web-visualization/",
+          "http://www.slideshare.net/knoesis/how-to-make-linked-data-more-than-data",
+          "http://www.slideshare.net/mediasemanticweb/linked-data-michael-hausenblas-2009-03-05",
+          "http://www2008.org/papers/pdf/p1265-bizer.pdf"
+        ],
         "genre": null,
         "label": "Linked Data",
         "page": "enwp:Linked_Data",
-        "rdfs:comment": {
-          "@value": "Linked Open Data (LOD) bezeichnet im World Wide Web frei verfügbare Daten, die per Uniform Resource Identifier (URI) identifiziert sind und darüber direkt per HTTP abgerufen werden können und ebenfalls per URI auf andere Daten verweisen. Idealerweise werden zur Kodierung und Verlinkung der Daten das Resource Description Framework (RDF) und darauf aufbauende Standards wie SPARQL und die Web Ontology Language (OWL) verwendet, so dass Linked Open Data gleichzeitig Teil des Semantic Web ist.",
-          "@language": "de"
-        },
-        "rdfs:label": {
-          "@value": "Linked Open Data",
-          "@language": "de"
-        },
-        "sameAs": null,
+        "sameAs": "http://rdf.freebase.com/ns/m/02r2kb1",
         "subject": [
           "dbpedia:Category:World_Wide_Web",
           "dbpedia:Category:Buzzwords",
