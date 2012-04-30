@@ -84,7 +84,7 @@ module Fixtures
             when entry_types.include?(Jld.ExpandTest) then entry.as(ExpandTest)
             when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
             when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
-            when entry_types.include?(Jld.RDFTest) then entry.as(RDFTest)
+            when entry_types.include?(Jld.ToRDFTest) then entry.as(ToRDFTest)
             when entry_types.include?(Jld.FromRDFTest) then entry.as(FromRDFTest)
             when entry_types.include?(Test.TestCase) then entry.as(Entry)
             else raise "Unexpected entry type: #{entry_types.inspect}"
@@ -126,7 +126,7 @@ module Fixtures
       end
       
       def expect
-        self.resultDocument ? RDF::Util::File.open_file(self.resultDocument) : ""
+        RDF::Util::File.open_file(self.resultDocument)
       end
 
       def base_uri
@@ -169,15 +169,11 @@ module Fixtures
       type Jld.FromRDFTest
     end
 
-    class RDFTest < Entry
-      type Jld.RDFTest
-      
-      def expectedResults
-         RDF::Literal::Boolean.new(true)
-      end
+    class ToRDFTest < Entry
+      type Jld.ToRDFTest
 
       def quads
-        RDF::Util::File.open_file(self.expected) if self.expected
+        RDF::Util::File.open_file(self.expected)
       end
     end
 

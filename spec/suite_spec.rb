@@ -43,7 +43,7 @@ describe JSON::LD do
                                                 :debug => t.debug)
                   expected = JSON.load(t.expect)
                   result.should produce(expected, t.debug)
-                when Fixtures::JSONLDTest::RDFTest
+                when Fixtures::JSONLDTest::ToRDFTest
                   reader = RDF::Reader.open(t.inputDocument,
                     :base => t.inputDocument,
                     :debug => t.debug,
@@ -51,7 +51,7 @@ describe JSON::LD do
                   reader.should be_a JSON::LD::Reader
 
                   graph = RDF::Repository.new << reader
-                  graph.dump(:nquads).should produce(t.quads.read, t.debug)
+                  graph.dump(:nquads).should produce(t.expect.read, t.debug)
                 else
                   pending("unkown test type #{t.inspect}")
                 end
