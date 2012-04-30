@@ -65,7 +65,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [1]
+          "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
         }], @debug)
       end
 
@@ -73,7 +73,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [true]
+          "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
         }], @debug)
       end
 
@@ -89,7 +89,7 @@ describe JSON::LD::API do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [1.0E0]
+          "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
         }], @debug)
       end
     

@@ -616,11 +616,13 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Boolean] :native (true) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
+      options = {:native => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
         result = case value
@@ -629,8 +631,12 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
           else
-            # Unless there's coercion, to not modify representation
-            value.is_a?(RDF::Literal::Boolean) ? value.object : value
+            if options[:native]
+              # Unless there's coercion, to not modify representation
+              value.is_a?(RDF::Literal::Boolean) ? value.object : value
+            else
+              {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
+            end
           end
         when Integer, RDF::Literal::Integer
           case coerce(property)
@@ -638,7 +644,11 @@ module JSON::LD
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when RDF::XSD.integer.to_s, nil
             # Unless there's coercion, to not modify representation
-            value.is_a?(RDF::Literal::Integer) ? value.object : value
+            if options[:native]
+              value.is_a?(RDF::Literal::Integer) ? value.object : value
+            else
+              {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
+            end
           else
             res = Hash.ordered
             res['@value'] = value.to_s
@@ -652,8 +662,12 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when nil
-            # Unless there's coercion, to not modify representation
-            value.is_a?(RDF::Literal::Double) ? value.object : value
+            if options[:native]
+              # Unless there's coercion, to not modify representation
+              value.is_a?(RDF::Literal::Double) ? value.object : value
+            else
+              {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
+            end
           else
             res = Hash.ordered
             res['@value'] = value.to_s

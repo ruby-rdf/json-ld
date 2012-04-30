@@ -449,15 +449,15 @@ describe JSON::LD::API do
         },
         :subjects => %w(http://greggkellogg.net/foaf _:t0),
         :output => {
+          "_:t0" => {
+            "@id" => "_:t0",
+            "@type" => [RDF::FOAF.Person.to_s]
+          },
           "http://greggkellogg.net/foaf" => {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
           },
-          "_:t0" => {
-            "@id" => "_:t0",
-            "@type" => [RDF::FOAF.Person.to_s]
-          }
         }
       },
     }.each do |title, params|
@@ -518,14 +518,14 @@ describe JSON::LD::API do
         },
         :output => [
           {
+            "@id" => "_:t0",
+            "@type" => [RDF::FOAF.Person.to_s]
+          },
+          {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
           },
-          {
-            "@id" => "_:t0",
-            "@type" => [RDF::FOAF.Person.to_s]
-          }
         ]
       }
     }.each do |title, params|

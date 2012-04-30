@@ -81,7 +81,7 @@ module JSON::LD
           # Otherwise, let key be the string representation of predicate and let object representation
           # be object represented in expanded form as described in Value Expansion.
           key = ec.expand_iri(statement.predicate).to_s
-          object = ec.expand_value(key, statement.object)
+          object = ec.expand_value(key, statement.object, :native => false)
           if blank_node?(object)
             # if object is an Unnamed Node, set as the head element in the listMap
             # entry for object
