@@ -106,7 +106,7 @@ describe JSON::LD::API do
       it "should generate bare anon" do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
         serialize(input).should produce([{
-          "@id" => "_:t0",
+          "@id" => "_:a",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
         }], @debug)
       end
@@ -115,13 +115,13 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b _:a . _:a :c :d .)
         serialize(input).should produce([
           {
-            "@id" => "http://example.com/a",
-            "http://example.com/b"  => [{"@id" => "_:t0"}]
+            "@id" => "_:a",
+            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
           },
           {
-            "@id" => "_:t0",
-            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
-          }
+            "@id" => "http://example.com/a",
+            "http://example.com/b"  => [{"@id" => "_:a"}]
+          },
         ], @debug)
       end
     end
@@ -135,12 +135,12 @@ describe JSON::LD::API do
         )
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"  => {
+          "http://example.com/b"  => [{
             "@list" => [
               {"@value" => "apple"},
               {"@value" => "banana"}
             ]
-          }
+          }]
         }], @debug)
       end
     
@@ -148,11 +148,11 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b (:c) .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"  => {
+          "http://example.com/b"  => [{
             "@list" => [
               {"@id" => "http://example.com/c"}
             ]
-          }
+          }]
         }], @debug)
       end
     
@@ -160,7 +160,7 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b () .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"  => {"@list" => []}
+          "http://example.com/b"  => [{"@list" => []}]
         }], @debug)
       end
     
@@ -168,7 +168,7 @@ describe JSON::LD::API do
         input = %(@prefix : <http://example.com/> . :a :b ( "apple" ) .)
         serialize(input).should produce([{
           '@id'   => "http://example.com/a",
-          "http://example.com/b"  => {"@list" => [{"@value" => "apple"}]}
+          "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
         }], @debug)
       end
     
@@ -177,12 +177,12 @@ describe JSON::LD::API do
         @prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .)
         serialize(input).should produce([
           {
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"  => {"@list" => [{"@id" => "_:t1"}]}
+            '@id'   => "_:a",
+            "http://example.com/b"  => [{"@value" => "foo"}]
           },
           {
-            '@id'   => "_:t1",
-            "http://example.com/b"  => [{"@value" => "foo"}]
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
           },
         ], @debug)
       end
@@ -192,8 +192,7 @@ describe JSON::LD::API do
       {
         "simple named graph" => {
           :input => %(
-            @prefix : <http://example.com/> .
-            :U { :a :b :c .}
+            <http://example.com/a> <http://example.com/b> <http://example.com/c> <http://example.com/U> .
           ),
           :output => [
             {
@@ -207,9 +206,8 @@ describe JSON::LD::API do
         },
         "with properties" => {
           :input => %(
-            @prefix : <http://example.com/> .
-            :U { :a :b :c .}
-            { :U :d :e .}
+            <http://example.com/a> <http://example.com/b> <http://example.com/c> <http://example.com/U> .
+            <http://example.com/U> <http://example.com/d> <http://example.com/e> .
           ),
           :output => [
             {
@@ -224,26 +222,32 @@ describe JSON::LD::API do
         },
         "with lists" => {
           :input => %(
-            @prefix : <http://example.com/> .
-            :U { :a :b (:c) .}
-            { :U :d (:e) .}
+            <http://example.com/a> <http://example.com/b> _:a <http://example.com/U> .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/c> <http://example.com/U> .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/U> .
+            <http://example.com/U> <http://example.com/d> _:b .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/e> .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           ),
           :output => [
             {
               "@id" => "http://example.com/U",
               "@graph" => [{
                 "@id" => "http://example.com/a",
-                "http://example.com/b" => {"@list" => [{"@id" => "http://example.com/c"}]}
+                "http://example.com/b" => [{"@list" => [{"@id" => "http://example.com/c"}]}]
               }],
-              "http://example.com/d" => {"@list" => [{"@id" => "http://example.com/e"}]}
+              "http://example.com/d" => [{"@list" => [{"@id" => "http://example.com/e"}]}]
             }
           ]
         },
         "Two Graphs with same subject and lists" => {
           :input => %(
-            @prefix : <http://example.com/> .
-            :U { :a :b (:c) .}
-            :V { :a :b (:e) .}
+            <http://example.com/a> <http://example.com/b> _:a <http://example.com/U> .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/c> <http://example.com/U> .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/U> .
+            <http://example.com/a> <http://example.com/b> _:b <http://example.com/V> .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/e> <http://example.com/V> .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/V> .
           ),
           :output => [
             {
@@ -251,9 +255,9 @@ describe JSON::LD::API do
               "@graph" => [
                 {
                   "@id" => "http://example.com/a",
-                  "http://example.com/b" => {
+                  "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/c"}]
-                  }
+                  }]
                 }
               ]
             },
@@ -262,9 +266,9 @@ describe JSON::LD::API do
               "@graph" => [
                 {
                   "@id" => "http://example.com/a",
-                  "http://example.com/b" => {
+                  "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/e"}]
-                  }
+                  }]
                 }
               ]
             }
@@ -272,7 +276,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |name, properties|
         it name do
-          r = serialize(properties[:input], :reader => RDF::TriG::Reader)
+          r = serialize(properties[:input], :reader => RDF::NQuads::Reader)
           r.should produce(properties[:output], @debug)
         end
       end
