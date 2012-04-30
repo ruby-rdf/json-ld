@@ -21,7 +21,7 @@ module JSON::LD
     # @yieldparam [RDF::Statement] :statement
     def statements(path, element, subject, property, name, &block)
       debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
-      @node_seq = "jld_t0000" unless subject || property
+      @node_seq = "t0" unless subject || property
 
       traverse_result = depth do
         case element

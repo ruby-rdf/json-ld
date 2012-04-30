@@ -176,7 +176,7 @@ module Fixtures
          RDF::Literal::Boolean.new(true)
       end
 
-      def sparql
+      def quads
         RDF::Util::File.open_file(self.expected) if self.expected
       end
     end

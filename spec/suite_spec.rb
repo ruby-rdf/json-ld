@@ -50,8 +50,8 @@ describe JSON::LD do
                     :format => :jsonld)
                   reader.should be_a JSON::LD::Reader
 
-                  graph = RDF::Graph.new << reader
-                  graph.should pass_query(t.sparql, t) if t.sparql
+                  graph = RDF::Repository.new << reader
+                  graph.dump(:nquads).should produce(t.quads.read, t.debug)
                 else
                   pending("unkown test type #{t.inspect}")
                 end
