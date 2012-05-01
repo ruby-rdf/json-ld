@@ -1,0 +1,16 @@
+{
+    "@context": "http://drupal.example.org/context.jsonld",
+    "@id": "http://dev.fga-directory.gotpantheon.com/occupation/al/kosovo/occupy-prishtina",
+    "@type": ["ows:Occupation", "schema:Organization"],
+    "foaf:name": "Occupy Prishtina",
+    "schema:name": "Occupy Prishtina",
+    "dc:date": "2012-02-12T21:18:08-05:00",
+    "dc:created": "2012-02-12T21:18:08-05:00",
+    "dc:modified": "2012-02-12T21:57:52-05:00",
+    "sioc:num_replies": 0,
+    "schema:foundingDate": "2011-10-15T00:00:00-04:00",
+    "ows:twitter_account": "@OccupyPrishtina",
+    "foaf:mbox": "",
+    "schema:telephone": "",
+    "foaf:phone": ""
+}

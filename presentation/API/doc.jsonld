@@ -1,0 +1,11 @@
+{
+  "@context": "http://example.com/context.jsonld",
+  "@type": "Person",
+  "image": "http://localhost:9393/examples/schema.org/janedoe.jpg",
+  "colleagues": [
+    "http://www.xyz.edu/students/alicejones.html",
+    "http://www.xyz.edu/students/bobsmith.html"
+  ],
+  "name": "Jane Doe",
+  "url": "http://www.janedoe.com"
+}

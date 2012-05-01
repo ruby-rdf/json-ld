@@ -1,0 +1,7 @@
+{
+  "@context": "http://example.org/context.jsonld",
+  "@id": "http://www.markus-lanthaler.com/",
+  "@type": "Person",
+  "name": "Markus Lanthaler",
+  "knows" "http://greggkellogg.net/foaf#me"
+}

@@ -1,0 +1,23 @@
+{  "@context": {
+    "content": "http://purl.org/rss/1.0/modules/content/", 
+    "dc": "http://purl.org/dc/terms/", 
+    "foaf": "http://xmlns.com/foaf/0.1/", 
+    "og": "http://ogp.me/ns#", 
+    "owl": "http://www.w3.org/2002/07/owl#", 
+    "ows": "http://vocab.occupy.net/ows#", 
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
+    "rss": "http://purl.org/rss/1.0/", 
+    "schema": "http://schema.org/", 
+    "sioc": "http://rdfs.org/sioc/ns#", 
+    "sioct": "http://rdfs.org/sioc/types#", 
+    "site": "http://dev.fga-directory.gotpantheon.com/ns#", 
+    "skos": "http://www.w3.org/2004/02/skos/core#", 
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dc:created": {"@type": "xsd:dateTime"},
+    "dc:modified": {"@type": "xsd:dateTime"},
+    "dc:date": {"@type": "xsd:dateTime"},
+    "schema:foundingDate": {"@type": "xsd:date"},
+    "sioc:num_replies": {"@type": "xsd:integer"}
+  }
+}

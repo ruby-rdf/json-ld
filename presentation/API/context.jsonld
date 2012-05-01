@@ -1,0 +1,10 @@
+{
+  "@context": {
+    "schema":     "http://schema.org/",
+    "Person":     "schema:Person",
+    "colleagues": {"@id": "schema:coleagues", "@type": "@id"},
+    "name":       "schema:name",
+    "image":      {"@id": "schema:image", "@type": "@id"},
+    "url":        {"@id": "schema:url", "@type": "@id"}
+  }
+}

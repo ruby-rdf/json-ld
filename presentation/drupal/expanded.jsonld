@@ -1,0 +1,30 @@
+[{
+    "@id": "http://dev.fga-directory.gotpantheon.com/occupation/al/kosovo/occupy-prishtina",
+    "@type": ["http://vocab.occupy.net/ows#Occupation", "http://schema.org/Organization"],
+    "http://purl.org/dc/terms/created": [{
+        "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "@value": "2012-02-12T21:18:08-05:00"
+    }],
+    "http://purl.org/dc/terms/date": [{
+        "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "@value": "2012-02-12T21:18:08-05:00"
+    }],
+    "http://purl.org/dc/terms/modified": [{
+        "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "@value": "2012-02-12T21:57:52-05:00"
+    }],
+    "http://rdfs.org/sioc/ns#num_replies": [{
+        "@type": "http://www.w3.org/2001/XMLSchema#integer",
+        "@value": "0"
+    }],
+    "http://schema.org/foundingDate": [{
+        "@type": "http://www.w3.org/2001/XMLSchema#date",
+        "@value": "2011-10-15T00:00:00-04:00"
+    }],
+    "http://schema.org/name": ["Occupy Prishtina"],
+    "http://schema.org/telephone": [""],
+    "http://vocab.occupy.net/ows#twitter_account": ["@OccupyPrishtina"],
+    "http://xmlns.com/foaf/0.1/mbox": [""],
+    "http://xmlns.com/foaf/0.1/name": ["Occupy Prishtina"],
+    "http://xmlns.com/foaf/0.1/phone": [""]
+}]
