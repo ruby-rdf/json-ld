@@ -11,6 +11,7 @@
       "doap:bug-database": {"@type": "@id"},
       "doap:blog": {"@type": "@id"},
       "doap:developer": {"@type": "@id"},
+      "doap:implements": {"@type": "@id"},
       "doap:maintainer": {"@type": "@id"},
       "doap:documenter": {"@type": "@id"},
       "doap:license": {"@type": "@id"},
@@ -30,6 +31,10 @@
     "doap:description":   "RDF.rb plugin for parsing/serializing JSON-LD data.",
     "doap:created":       "2011-05-07",
     "doap:platform":      "Ruby",
+    "doap:implements":    [
+                            "http://json-ld.org/spec/latest/json-ld-api/",
+                            "http://json-ld.org/spec/latest/json-ld-syntax/"
+    ],
     "doap:bug-database":  "http://github.com/gkellogg/json-ld/issues",
     "doap:blog":          "http://greggkellogg.net/",
     "doap:developer":     "http://greggkellogg.net/foaf#me",
