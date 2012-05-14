@@ -126,14 +126,14 @@ module JSON::LD
         debug("=> default") {entry.to_json(JSON_STATE)}
         
         # If subject is a named graph, add serialized subject defintions
-        if graphs.has_key?(subject)
+        if graphs.has_key?(subject) && !subject.empty?
           entry['@graph'] = graphs[subject][:subjects].keys.sort.map do |s|
-            debug("=> #{subject}") {entry.to_json(JSON_STATE)}
+            debug("=> #{s.inspect}")
             graphs[subject][:subjects][s]
           end
         end
         
-        debug("default graph") {entry.to_json(JSON_STATE)}
+        debug("default graph") {entry.inspect}
         entry
       end
 
