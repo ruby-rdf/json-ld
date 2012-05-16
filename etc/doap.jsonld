@@ -25,7 +25,7 @@
     "@id":                "http://rubygems.org/gems/json-ld",
     "@type":              "doap:Project",
     "doap:name":          "JSON::LD",
-    "doap:homepage":      "http://github.com/gkellogg/json-ld/",
+    "doap:homepage":      "http://github.com/ruby-rdf/json-ld/",
     "doap:license":       "http://creativecommons.org/licenses/publicdomain/",
     "doap:shortdesc":     "JSON-LD support for RDF.rb.",
     "doap:description":   "RDF.rb plugin for parsing/serializing JSON-LD data.",
@@ -35,7 +35,7 @@
                             "http://json-ld.org/spec/latest/json-ld-api/",
                             "http://json-ld.org/spec/latest/json-ld-syntax/"
     ],
-    "doap:bug-database":  "http://github.com/gkellogg/json-ld/issues",
+    "doap:bug-database":  "http://github.com/ruby-rdf/json-ld/issues",
     "doap:blog":          "http://greggkellogg.net/",
     "doap:developer":     "http://greggkellogg.net/foaf#me",
     "doap:maintainer":    "http://greggkellogg.net/foaf#me",

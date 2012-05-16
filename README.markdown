@@ -231,7 +231,7 @@ To install the latest official release of the `JSON-LD` gem, do:
 ## Download
 To get a local working copy of the development repository, do:
 
-    % git clone git://github.com/gkellogg/json-ld.git
+    % git clone git://github.com/ruby-rdf/json-ld.git
 
 ## Mailing List
 * <http://lists.w3.org/Archives/Public/public-rdf-ruby/>
@@ -263,6 +263,6 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [YARD]:             http://yardoc.org/
 [YARD-GS]:          http://rubydoc.info/docs/yard/file/docs/GettingStarted.md
 [PDD]:              http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
-[RDF.rb]:           http://rdf.rubyforge.org/
+[RDF.rb]:           http://rubygems.org/gems/rdf
 [Backports]:        http://rubygems.org/gems/backports
 [JSON-LD]:          http://json-ld.org/spec/latest/

@@ -16,7 +16,7 @@ module JSON
   #     end
   #   end
   #
-  # @see http://rdf.rubyforge.org/
+  # @see http://rubygems.org/gems/rdf
   # @see http://www.w3.org/TR/REC-rdf-syntax/
   #
   # @author [Gregg Kellogg](http://greggkellogg.net/)
