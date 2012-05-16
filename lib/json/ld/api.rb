@@ -117,7 +117,6 @@ module JSON::LD
     # @option options [Boolean] :optimize (false)
     #   Perform further optimmization of the compacted output.
     #   (Presently, this is a noop).
-    # @param  [Hash{Symbol => Object}] options
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
@@ -265,7 +264,6 @@ module JSON::LD
     #   Alternative to using block, with same parameteres.
     # @param [{Symbol,String => Object}] options
     #   Options passed to {#expand}
-    # @param  [Hash{Symbol => Object}] options
     # @raise [InvalidContext]
     # @yield statement
     # @yieldparam [RDF::Statement] statement

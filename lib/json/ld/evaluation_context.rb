@@ -103,8 +103,7 @@ module JSON::LD
 
     # Create an Evaluation Context using an existing context as a start by parsing the input.
     #
-    # @param [String, #read, Array, Hash, EvaluatoinContext] input
-    # @return [EvaluationContext] context
+    # @param [String, #read, Array, Hash, EvaluatoinContext] context
     # @raise [InvalidContext]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)

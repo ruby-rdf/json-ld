@@ -126,8 +126,6 @@ module JSON::LD
     #   Inherited property
     # @param [RDF::Resource] name
     #   Inherited named graph context
-    # @param [EvaluationContext] ec
-    #   The active context
     # @return [RDF::Resource] BNode or nil for head of list
     # @yield :statement
     # @yieldparam [RDF::Statement] :statement

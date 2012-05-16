@@ -43,8 +43,8 @@ module JSON::LD
 
     # Add debug event to debug array, if specified
     #
-    # @param [String] message
-    # @yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    #   param [String] message
+    #   yieldreturn [String] appended to message, to allow for lazy-evaulation of message
     def debug(*args)
       return unless ::JSON::LD.debug? || @options[:debug]
       list = args

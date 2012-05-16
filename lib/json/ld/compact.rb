@@ -7,7 +7,6 @@ module JSON::LD
     #
     # @param [Array, Hash] element
     # @param [String] property (nil)
-    # @param [EvaluationContext] context
     # @return [Array, Hash]
     def compact(element, property = nil)
       if property.nil?
