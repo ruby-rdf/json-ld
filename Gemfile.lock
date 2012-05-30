@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/ruby-rdf/rdf.git
-  revision: 08fd56617fc6973ce4fc6ae4abed5959c5bec2ac
+  revision: d370dbb82fd0924acc5866fd020205f81ce76704
   specs:
-    rdf (0.3.5.2)
+    rdf (0.3.6)
       addressable (>= 2.2.6)
 
 PATH
@@ -12,6 +12,12 @@ PATH
       backports
       json (>= 1.6.5)
       rdf (>= 0.3.5)
+
+PATH
+  remote: ../rdf-spec
+  specs:
+    rdf-spec (0.3.6)
+      rspec (>= 2.8.0)
 
 GEM
   remote: http://rubygems.org/
@@ -56,16 +62,14 @@ GEM
       rdf-xsd (>= 0.3.4)
     rdf-n3 (0.3.7)
       rdf (>= 0.3.4)
-    rdf-rdfa (0.3.12)
-      haml (>= 3.0.0)
+    rdf-rdfa (0.3.14)
+      haml (>= 3.1.6)
       htmlentities (>= 4.3.0)
-      rdf (>= 0.3.3)
-      rdf-xsd (>= 0.3.5)
-    rdf-rdfxml (0.3.7)
+      rdf (>= 0.3.5)
+      rdf-xsd (>= 0.3.7)
+    rdf-rdfxml (0.3.8)
       rdf (>= 0.3.4)
       rdf-xsd (>= 0.3.5)
-    rdf-spec (0.3.5.1)
-      rspec (>= 2.8.0)
     rdf-trig (0.1.3)
       rdf (>= 0.3.4)
       rdf-turtle (>= 0.1.1)
@@ -73,14 +77,15 @@ GEM
       rdf (~> 0.3.0)
     rdf-turtle (0.1.2)
       rdf (>= 0.3.4)
-    rdf-xsd (0.3.6)
+    rdf-xsd (0.3.7)
+      backports
       nokogiri (>= 1.5.0)
       rdf (>= 0.3.4)
     rspec (2.10.0)
       rspec-core (~> 2.10.0)
       rspec-expectations (~> 2.10.0)
       rspec-mocks (~> 2.10.0)
-    rspec-core (2.10.0)
+    rspec-core (2.10.1)
     rspec-expectations (2.10.0)
       diff-lcs (~> 1.1.3)
     rspec-mocks (2.10.1)
@@ -116,7 +121,7 @@ DEPENDENCIES
   open-uri-cached (>= 0.0.5)
   rdf!
   rdf-isomorphic (>= 0.3.4)
-  rdf-spec (>= 0.3.5)
+  rdf-spec!
   rdf-trig (>= 0.1.1)
   rdf-turtle (>= 0.1.1)
   rspec (>= 2.8.0)

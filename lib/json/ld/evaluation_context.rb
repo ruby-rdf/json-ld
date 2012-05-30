@@ -326,17 +326,19 @@ module JSON::LD
     ##
     # Set term mapping
     #
-    # @param [String] term
+    # @param [#to_s] term
     # @param [RDF::URI, String] value
     #
     # @return [RDF::URI, String]
     def set_mapping(term, value)
+      term = term.to_s
+      term_sym = term.empty? ? "" : term.to_sym
 #      raise InvalidContext::Syntax, "mapping term #{term.inspect} must be a string" unless term.is_a?(String)
 #      raise InvalidContext::Syntax, "mapping value #{value.inspect} must be an RDF::URI" unless value.nil? || value.to_s[0,1] == '@' || value.is_a?(RDF::URI)
       debug {"map #{term.inspect} to #{value.inspect}"}
       iri_to_term.delete(@mappings[term].to_s) if @mappings[term]
       @mappings[term] = value
-      @options[:prefixes][term] = value if @options.has_key?(:prefixes)
+      @options[:prefixes][term_sym] = value if @options.has_key?(:prefixes)
       iri_to_term[value.to_s] = term
     end
 
@@ -539,7 +541,10 @@ module JSON::LD
         # @type coercion, @container coercion or @language coercion rules
         # along with the iri itself.
         if terms.empty?
+          debug("curies") {"mappings: #{mappings.inspect}"}
           curies = mappings.keys.map do |k|
+            debug("curies[#{k}]") {"#{mapping(k).inspect}"}
+            #debug("curies[#{k}]") {"#{(mapping(k).to_s.length > 0).inspect}, #{iri.to_s.index(mapping(k).to_s)}"}
             iri.to_s.sub(mapping(k).to_s, "#{k}:") if
               mapping(k).to_s.length > 0 &&
               iri.to_s.index(mapping(k).to_s) == 0 &&

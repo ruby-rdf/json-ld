@@ -34,7 +34,7 @@ describe JSON::LD::Writer do
       }], @debug)
     end
 
-    it "should use qname URIs with prefix" do
+    it "should use qname URIs with standard prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
       serialize(input, :standard_prefixes => true).
       should produce({
@@ -43,6 +43,32 @@ describe JSON::LD::Writer do
         },
         '@id'     => "foaf:b",
         "foaf:c"  => {"@id" => "foaf:d"}
+      }, @debug)
+    end
+
+    it "should use qname URIs with parsed prefix" do
+      input = %(
+        <https://senet.org/gm> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://vocab.org/frbr/core#Work> .
+        <https://senet.org/gm> <http://purl.org/dc/terms/title> "Rhythm Paradise"@en .
+        <https://senet.org/gm> <https://senet.org/ns#unofficialTitle> "Rhythm Tengoku"@en .
+        <https://senet.org/gm> <https://senet.org/ns#urlkey> "rhythm-tengoku" .
+      )
+      serialize(input, :prefixes => {
+        :dc    => "http://purl.org/dc/terms/",
+        :frbr  => "http://vocab.org/frbr/core#",
+        :senet => "https://senet.org/ns#",
+      }).
+      should produce({
+        '@context' => {
+          "dc" => "http://purl.org/dc/terms/",
+          "frbr" => "http://vocab.org/frbr/core#",
+          "senet" => "https://senet.org/ns#"
+        },
+        '@id'     => "https://senet.org/gm",
+        "@type"   => "frbr:Work",
+        "dc:title" => {"@value" => "Rhythm Paradise","@language" => "en"},
+        "senet:unofficialTitle" => {"@value" => "Rhythm Tengoku","@language" => "en"},
+        "senet:urlkey" => "rhythm-tengoku"
       }, @debug)
     end
 

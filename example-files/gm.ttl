@@ -1,0 +1,10 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix senet: <https://senet.org/ns#> .
+
+<https://senet.org/gm> a <http://vocab.org/frbr/core#Work>;
+   dc:title "ãƒªã‚ºãƒ å¤©å›½"@ja,
+     "Rhythm Paradise"@en;
+   <https://senet.org/ns#unofficialTitle> "Rhythm Tengoku"@en;
+   <https://senet.org/ns#urlkey> "rhythm-tengoku"^^xsd:string .
