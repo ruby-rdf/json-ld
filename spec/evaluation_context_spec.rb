@@ -43,6 +43,11 @@ describe JSON::LD::EvaluationContext do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, @debug)
       end
+      
+      it "allows a non-existing @context" do
+        ec = subject.parse(StringIO.new("{}"))
+        ec.mappings.should produce({}, @debug)
+      end
     end
 
     context "EvaluationContext" do

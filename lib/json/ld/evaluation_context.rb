@@ -118,8 +118,7 @@ module JSON::LD
         # Load context document, if it is a string
         begin
           ctx = JSON.load(context)
-          raise JSON::LD::InvalidContext::Syntax, "missing @context" unless ctx.is_a?(Hash) && ctx["@context"]
-          parse(ctx["@context"])
+          parse(ctx["@context"] || {})
         rescue JSON::ParserError => e
           debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
           raise JSON::LD::InvalidContext::Syntax, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
