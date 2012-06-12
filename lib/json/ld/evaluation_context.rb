@@ -636,7 +636,7 @@ module JSON::LD
           else
             if options[:native]
               # Unless there's coercion, to not modify representation
-              value.is_a?(RDF::Literal::Boolean) ? value.object : value
+              {"@value" => (value.is_a?(RDF::Literal::Boolean) ? value.object : value)}
             else
               {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
             end
@@ -648,7 +648,7 @@ module JSON::LD
           when RDF::XSD.integer.to_s, nil
             # Unless there's coercion, to not modify representation
             if options[:native]
-              value.is_a?(RDF::Literal::Integer) ? value.object : value
+              {"@value" => value.is_a?(RDF::Literal::Integer) ? value.object : value}
             else
               {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
             end
@@ -667,7 +667,7 @@ module JSON::LD
           when nil
             if options[:native]
               # Unless there's coercion, to not modify representation
-              value.is_a?(RDF::Literal::Double) ? value.object : value
+              {"@value" => value.is_a?(RDF::Literal::Double) ? value.object : value}
             else
               {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
             end
@@ -696,7 +696,7 @@ module JSON::LD
             {'@id' => expand_iri(value, :position => :object).to_s}
           when nil
             debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
-            language(property) ? {"@value" => value.to_s, "@language" => language(property)} : value.to_s
+            language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
           else
             res = Hash.ordered
             res['@value'] = value.to_s
@@ -722,6 +722,7 @@ module JSON::LD
     # @return [Hash] Object representation of value
     # @raise [ProcessingError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
+    # FIXME: revisit the specification version of this.
     def compact_value(property, value, options = {})
       raise ProcessingError::Lossy, "attempt to compact a non-object value: #{value.inspect}" unless value.is_a?(Hash)
 
@@ -729,11 +730,11 @@ module JSON::LD
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
         result = case
-        when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
-          # Compact native type
-          debug {" (native)"}
-          l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
-          l.canonicalize.object
+          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
+        #  # Compact native type
+        #  debug {" (native)"}
+        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
+        #  l.canonicalize.object
         when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
           debug {" (@id & coerce)"}
@@ -751,9 +752,17 @@ module JSON::LD
           # Compact language
           debug {" (@language) == #{language(property).inspect}"}
           value['@value']
+        when value['@value'] && !value['@value'].is_a?(String)
+          # Compact simple literal to string
+          debug {" (@value not string)"}
+          value['@value']
         when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !default_language
           # Compact simple literal to string
           debug {" (@value && !@language && !@type && !coerce && !language)"}
+          value['@value']
+        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !language(property)
+          # Compact simple literal to string
+          debug {" (@value && !@language && !@type && !coerce && language(property).false)"}
           value['@value']
         when value['@type']
           # Compact datatype
@@ -834,51 +843,47 @@ module JSON::LD
     # @param [Object] value
     # @return [Integer]
     def term_rank(term, value)
-      debug("term rank") { "term: #{term.inspect}, value: #{value.inspect}"}
-      debug("term rank") { "coerce: #{coerce(term).inspect}, lang: #{languages.fetch(term, nil).inspect}"}
-
-      # A term without @language or @type can be used with rank 1 for any value
       default_term = !coerce(term) && !languages.has_key?(term)
-      debug("term rank") { "default_term: #{default_term.inspect}"}
+      debug("term rank") {
+        "term: #{term.inspect}, " +
+        "value: #{value.inspect}, " +
+        "coerce: #{coerce(term).inspect}, " +
+        "lang: #{languages.fetch(term, nil).inspect}/#{language(term).inspect} " +
+        "default_term: #{default_term.inspect}"
+      }
 
-      rank = case value
-      when TrueClass, FalseClass
-        coerce(term) == RDF::XSD.boolean.to_s ? 3 : (default_term ? 2 : 1)
-      when Integer
-        coerce(term) == RDF::XSD.integer.to_s ? 3 : (default_term ? 2 : 1)
-      when Float
-        coerce(term) == RDF::XSD.double.to_s ? 3 : (default_term ? 2 : 1)
-      when nil
-        # A value of null probably means it's an @id
+      # value is null
+      rank = if value.nil?
+        debug("term rank") { "null value: 3"}
         3
-      when String
-        # When compacting a string, the string has no language, so the term can be used if the term has @language null or it is a default term and there is no default language
-        debug("term rank") {"string: lang: #{languages.fetch(term, false).inspect}, def: #{default_language.inspect}"}
-        !languages.fetch(term, true) || (default_term && !default_language) ? 3 : 0
-      when Hash
-        if list?(value)
-          if value['@list'].empty?
-            # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
-            container(term) == '@list' ? 1 : 0
-          else
-            # Otherwise, return the sum of the term ranks for every entry in the list.
-            depth {value['@list'].inject(0) {|memo, v| memo + term_rank(term, v)}}
-          end
-        elsif subject?(value) || subject_reference?(value)
-          coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
-        elsif val_type = value.fetch('@type', nil)
-          coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
-        elsif val_lang = value.fetch('@language', nil)
-          val_lang == language(term) ? 3 : (default_term ? 1 : 0)
+      elsif list?(value)
+        if value['@list'].empty?
+          # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
+          container(term) == '@list' ? 1 : 0
         else
-          default_term ? 3 : 0
+          # Otherwise, return the sum of the term ranks for every entry in the list.
+          depth {value['@list'].inject(0) {|memo, v| memo + term_rank(term, v)}}
         end
-      else
-        raise ProcessingError, "Unexpected value for term_rank: #{value.inspect}"
+      elsif value?(value)
+        val_type = value.fetch('@type', nil)
+        val_lang = value.fetch('@language', nil)
+        debug("term rank") {"@val_type: #{val_type.inspect}, val_lang: #{val_lang.inspect}"}
+        if val_type
+          coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
+        elsif !value['@value'].is_a?(String)
+          default_term ? 2 : 1
+        elsif val_lang.nil?
+          debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
+          !language(term) && !coerce(term) ? 3 : 0
+        else
+          val_lang == language(term) ? 3 : (default_term ? 1 : 0)
+        end
+      else # subject definition/reference
+        coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
       end
       
-      # If term has @container @set, and rank is not 0, increase rank by 1.
-      rank > 0 && container(term) == '@set' ? rank + 1 : rank
+      debug(" =>") {rank.inspect}
+      rank
     end
   end
 end

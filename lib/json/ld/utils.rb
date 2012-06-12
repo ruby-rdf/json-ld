@@ -39,6 +39,15 @@ module JSON::LD
       value.is_a?(Hash) && value.keys == %w(@list)
     end
 
+    ##
+    # Is value literal?
+    #
+    # @param [Object] value
+    # @return [Boolean]
+    def value?(value)
+      value.is_a?(Hash) && value.has_key?('@value')
+    end
+
     private
 
     # Add debug event to debug array, if specified

@@ -7,18 +7,23 @@ describe JSON::LD::API do
 
   context "callbacks" do
     describe ".compact" do
+      it "needs to be implemented"
     end
 
     describe ".expand" do
+      it "needs to be implemented"
     end
 
     describe ".frame" do
+      it "needs to be implemented"
     end
 
     describe ".fromRDF" do
+      it "needs to be implemented"
     end
 
     describe ".toRDF" do
+      it "needs to be implemented"
     end
   end
 

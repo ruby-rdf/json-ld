@@ -31,6 +31,30 @@ describe JSON::LD::API do
           "b" => {"@id" => "http://example.com/c"}
         }
       },
+      "integer value" => {
+        :input => {
+          "@id" => "http://example.com/a",
+          "http://example.com/b" => {"@value" => 1}
+        },
+        :context => {"b" => "http://example.com/b"},
+        :output => {
+          "@context" => {"b" => "http://example.com/b"},
+          "@id" => "http://example.com/a",
+          "b" => 1
+        }
+      },
+      "boolean value" => {
+        :input => {
+          "@id" => "http://example.com/a",
+          "http://example.com/b" => {"@value" => true}
+        },
+        :context => {"b" => "http://example.com/b"},
+        :output => {
+          "@context" => {"b" => "http://example.com/b"},
+          "@id" => "http://example.com/a",
+          "b" => true
+        }
+      },
       "@id" => {
         :input => {"@id" => "http://example.org/test#example"},
         :context => {},
@@ -72,6 +96,24 @@ describe JSON::LD::API do
         :output => {
           "@context" => {"b" => {"@id" => "http://example.com/b", "@container" => "@list"}},
           "b" => ["c", "d"]
+        }
+      },
+      "@list coercion (integer)" => {
+        :input => {
+          "http://example.com/term" => [
+            {"@list" => [1]},
+          ]
+        },
+        :context => {
+          "term4" => {"@id" => "http://example.com/term", "@container" => "@list"},
+          "@language" => "de"
+        },
+        :output => {
+          "@context" => {
+            "term4" => {"@id" => "http://example.com/term", "@container" => "@list"},
+            "@language" => "de"
+          },
+          "term4" => [1],
         }
       },
       "@set coercion" => {
@@ -127,6 +169,25 @@ describe JSON::LD::API do
           "@id" => "http://example.com/",
           "@type" => "#{RDF::RDFS.Resource}"
         },
+      },
+      "default language" => {
+        :input => {
+          "http://example.com/term" => [
+            "v5",
+            {"@value" => "plain literal"}
+          ]
+        },
+        :context => {
+          "term5" => {"@id" => "http://example.com/term", "@language" => nil},
+          "@language" => "de"
+        },
+        :output => {
+          "@context" => {
+            "term5" => {"@id" => "http://example.com/term", "@language" => nil},
+            "@language" => "de"
+          },
+          "term5" => [ "v5", "plain literal" ]
+        }
       },
     }.each_pair do |title, params|
       it title do
@@ -201,22 +262,22 @@ describe JSON::LD::API do
 
     context "term selection" do
       {
-        "Uses term with nil language when two terms conflict on language" => {
-          :input => [{
-            "http://example.com/term" => {"@value" => "v1", "@language" => nil}
-          }],
-          :context => {
-            "term5" => {"@id" => "http://example.com/term","@language" => nil},
-            "@language" => "de"
-          },
-          :output => {
-            "@context" => {
-              "term5" => {"@id" => "http://example.com/term","@language" => nil},
-              "@language" => "de"
-            },
-            "term5" => "v1",
-          }
-        },
+        #"Uses term with nil language when two terms conflict on language" => {
+        #  :input => [{
+        #    "http://example.com/term" => {"@value" => "v1", "@language" => nil}
+        #  }],
+        #  :context => {
+        #    "term5" => {"@id" => "http://example.com/term","@language" => nil},
+        #    "@language" => "de"
+        #  },
+        #  :output => {
+        #    "@context" => {
+        #      "term5" => {"@id" => "http://example.com/term","@language" => nil},
+        #      "@language" => "de"
+        #    },
+        #    "term5" => "v1",
+        #  }
+        #},
         "Uses subject alias" => {
           :input => [{
             "@id" => "http://example.com/id1"

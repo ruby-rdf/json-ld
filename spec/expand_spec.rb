@@ -57,23 +57,31 @@ describe JSON::LD::API do
           "@context" => {
             "foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}
           },
-          "foo" => ["bar"]
+          "foo" => [{"@value" => "bar"}]
         },
         :output => [{
-          "http://example.com/foo" => [{"@list" => ["bar"]}]
+          "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
+        }]
+      },
+      "native values in list" => {
+        :input => {
+          "http://example.com/foo" => {"@list" => [1, 2]}
+        },
+        :output => [{
+          "http://example.com/foo" => [{"@list" => [{"@value" => 1}, {"@value" => 2}]}]
         }]
       },
       "@graph" => {
         :input => {
           "@context" => {"ex" => "http://example.com/"},
           "@graph" => [
-            {"ex:foo"  => "foo"},
-            {"ex:bar" => "bar"}
+            {"ex:foo"  => {"@value" => "foo"}},
+            {"ex:bar" => {"@value" => "bar"}}
           ]
         },
         :output => [
-          {"http://example.com/foo" => ["foo"]},
-          {"http://example.com/bar" => ["bar"]}
+          {"http://example.com/foo" => [{"@value" => "foo"}]},
+          {"http://example.com/bar" => [{"@value" => "bar"}]}
         ]
       },
       "@type with empty object" => {
@@ -196,7 +204,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"literal" => "bar"}
           },
           :output => [{
-            "http://example.com/foo" => ["bar"]
+            "http://example.com/foo" => [{"@value" => "bar"}]
           }]
         },
         "@list" => {
@@ -205,7 +213,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"list" => ["bar"]}
           },
           :output => [{
-            "http://example.com/foo" => [{"@list" => ["bar"]}]
+            "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
           }]
         },
       }.each do |title, params|
@@ -224,7 +232,7 @@ describe JSON::LD::API do
             "e:bool" => true
           },
           :output => [{
-            "http://example.org/vocab#bool" => [true]
+            "http://example.org/vocab#bool" => [{"@value" => true}]
           }]
         },
         "false" => {
@@ -233,7 +241,7 @@ describe JSON::LD::API do
             "e:bool" => false
           },
           :output => [{
-            "http://example.org/vocab#bool" => [false]
+            "http://example.org/vocab#bool" => [{"@value" => false}]
           }]
         },
         "double" => {
@@ -242,7 +250,7 @@ describe JSON::LD::API do
             "e:double" => 1.23
           },
           :output => [{
-            "http://example.org/vocab#double" => [1.23]
+            "http://example.org/vocab#double" => [{"@value" => 1.23}]
           }]
         },
         "double-zero" => {
@@ -251,7 +259,7 @@ describe JSON::LD::API do
             "e:double-zero" => 0.0e0
           },
           :output => [{
-            "http://example.org/vocab#double-zero" => [0.0e0]
+            "http://example.org/vocab#double-zero" => [{"@value" => 0.0e0}]
           }]
         },
         "integer" => {
@@ -260,7 +268,7 @@ describe JSON::LD::API do
             "e:integer" => 123
           },
           :output => [{
-            "http://example.org/vocab#integer" => [123]
+            "http://example.org/vocab#integer" => [{"@value" => 123}]
           }]
         },
       }.each do |title, params|
@@ -334,7 +342,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "foo", "@type" => nil}
           },
           :output => [{
-            "http://example.com/foo" => ["foo"]
+            "http://example.com/foo" => [{"@value" => "foo"}]
           }]
         },
         "non-null @value and null @language" => {
@@ -342,7 +350,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "foo", "@language" => nil}
           },
           :output => [{
-            "http://example.com/foo" => ["foo"]
+            "http://example.com/foo" => [{"@value" => "foo"}]
           }]
         },
         "array with null elements" => {
@@ -379,7 +387,7 @@ describe JSON::LD::API do
             "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
           },
           :output => [{
-            "http://example.org/nolang" => ["no language"]
+            "http://example.org/nolang" => [{"@value" => "no language"}]
           }]
         },
         "value with coerced null language" => {
@@ -396,7 +404,7 @@ describe JSON::LD::API do
           :output => [
             {
               "http://example.org/vocab#german" => [{"@value" => "german", "@language" => "de"}],
-              "http://example.org/vocab#nolang" => ["no language"]
+              "http://example.org/vocab#nolang" => [{"@value" => "no language"}]
             }
           ]
         },
@@ -422,7 +430,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "bar", "@type" => "baz"}
           },
           :output => [{
-            "http://example.com/foo" => ["bar"]
+            "http://example.com/foo" => [{"@value" => "bar"}]
           }]
         },
         "unknown keyword" => {
@@ -430,7 +438,7 @@ describe JSON::LD::API do
             "@foo" => "bar"
           },
           :output => [{
-            "@foo" => ["bar"]
+            "@foo" => [{"@value" => "bar"}]
           }]
         },
         "value" => {
@@ -456,10 +464,8 @@ describe JSON::LD::API do
           },
           :output => [{
             "@id" => "http://example.org/id1",
-            "http://example.org/prop" => ["prop"],
-            "http://example.org/chain" => [{
-              "@id" => "http://example.org/id2",
-            }]
+            "http://example.org/prop" => [{"@value" => "prop"}],
+            "http://example.org/chain" => [{"@id" => "http://example.org/id2"}]
           }
         ]}
       }.each do |title, params|
@@ -495,7 +501,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo" ]
           },
           :output => [{
-            "http://example.com/foo" => [{"@list" => [ "foo" ]}]
+            "http://example.com/foo" => [{"@list" => [{"@value" => "foo"}]}]
           }]
         },
         "coerced multiple elements" => {
@@ -504,7 +510,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo", "bar" ]
           },
           :output => [{
-            "http://example.com/foo" => [{"@list" => [ "foo", "bar" ]}]
+            "http://example.com/foo" => [{"@list" => [ {"@value" => "foo"}, {"@value" => "bar"} ]}]
           }]
         },
         "explicit list with coerced @id values" => {
@@ -558,7 +564,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo" ]
           },
           :output => [{
-            "http://example.com/foo" => [ "foo" ]
+            "http://example.com/foo" => [ {"@value" => "foo"} ]
           }]
         },
         "coerced multiple elements" => {
@@ -567,7 +573,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => [ "foo", "bar" ]
           },
           :output => [{
-            "http://example.com/foo" => [ "foo", "bar" ]
+            "http://example.com/foo" => [ {"@value" => "foo"}, {"@value" => "bar"} ]
           }]
         },
         "array containing set" => {

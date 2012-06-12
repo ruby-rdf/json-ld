@@ -160,10 +160,8 @@ module JSON::LD
               raise ProcessingError, "element must not have more than one other property, which can either be @language or @type with a string value." unless value.is_a?(String)
             end
 
-            # if @value is the only property or the value of @value equals null, replace element with the value of @value.
-            if output_object['@value'].nil? || output_object.keys.length == 1
-              return output_object['@value']
-            end
+            # if the value of @value equals null, replace element with the value of null.
+            return nil if output_object['@value'].nil?
           elsif !output_object.fetch('@type', []).is_a?(Array)
             # Otherwise, if element has an @type property and it's value is not in the form of an array,
             # convert it to an array.

@@ -129,15 +129,10 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      API.new(input, nil, options) do
-        expanded = expand(value, nil, self.context)
-        debug(".compact") {"expanded input: #{value.to_json(JSON_STATE)}"}
-
-        # x) If no context provided, use context from input document
-        context ||= value.fetch('@context', nil)
-      end
+      expanded = API.expand(input, nil, nil, options)
 
       API.new(expanded, context, options) do
+        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
         result = compact(value, nil)
 
         # xxx) Add the given context to the output
