@@ -1,3 +1,6 @@
+=== 0.1.3
+* Progress release syncing with the spec. Most expansion and compaction tests pass. RDF is okay, framing has many issues.
+
 === 0.1.1
 * Changed @literal to @value.
 * Change expanded double format to %1.6e
