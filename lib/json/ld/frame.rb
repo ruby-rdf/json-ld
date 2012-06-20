@@ -343,7 +343,8 @@ module JSON::LD
     
     # Return value of @name in frame, or default from state if it doesn't exist
     def get_frame_flag(state, frame, name)
-      !!(frame.fetch("@#{name}", [state[name.to_sym]]).first)
+      value = frame.fetch("@#{name}", [state[name.to_sym]]).first
+      !!(value?(value) ? value['@value'] : value)
     end
 
     ##

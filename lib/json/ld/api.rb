@@ -129,7 +129,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = API.expand(input, nil, nil, options)
+      expanded = API.expand(input, nil, nil, options.merge(:debug => nil))
 
       API.new(expanded, context, options) do
         debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
@@ -215,9 +215,9 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
-        debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
-        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        #debug(".frame") {"context from frame: #{context.inspect}"}
+        #debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
+        #debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Get framing subjects from expanded input, replacing Blank Node identifiers as necessary
         @subjects = Hash.ordered
