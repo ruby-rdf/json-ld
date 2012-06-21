@@ -13,16 +13,16 @@ Gem::Specification.new do |gem|
   gem.rubyforge_project     = 'json-ld'
 
   gem.authors               = ['Gregg Kellogg']
-  gem.email                 = 'public-rdf-ruby@w3.org'
+  gem.email                 = 'public-linked-json@w3.org'
 
   gem.platform              = Gem::Platform::RUBY
   gem.files                 = %w(AUTHORS README.markdown History.markdown UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
-  #gem.bindir               = %q(bin)
-  #gem.executables          = %w(json_ld)
-  #gem.default_executable   = gem.executables.first
+  gem.bindir               = %q(bin)
+  gem.executables          = %w(jsonld)
+  gem.default_executable   = gem.executables.first
   gem.require_paths         = %w(lib)
   gem.extensions            = %w()
-  gem.test_files            = %w()
+  gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
   gem.has_rdoc              = false
 
   gem.required_ruby_version = '>= 1.8.1'
@@ -38,7 +38,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-turtle',      '>= 0.1.1'
   gem.add_development_dependency 'rdf-trig',        '>= 0.1.1'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
-  gem.add_development_dependency 'sparql',          '>= 0.0.2'
   gem.add_runtime_dependency     'backports'
   gem.post_install_message  = nil
 end
