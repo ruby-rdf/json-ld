@@ -1,3 +1,7 @@
+=== 0.1.4.1
+* Include rdf-xsd for some specs.
+* Refactor #expand_value to deal with previous matching on RDF::Literal::Integer for sub-types.
+ 
 === 0.1.4
 * Added bin/jsonld for command-line manipulation of JSON-LD files and to perform RDF transformations.
 
