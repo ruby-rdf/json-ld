@@ -1,6 +1,7 @@
 # coding: utf-8
 $:.unshift "."
 require 'spec_helper'
+require 'rdf/xsd'
 require 'rdf/spec/reader'
 
 describe JSON::LD::EvaluationContext do
@@ -895,6 +896,8 @@ describe JSON::LD::EvaluationContext do
       "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => 1.1}],
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27Z")), {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+      "rdf nonNeg" =>     ["foo", RDF::Literal::NonNegativeInteger.new(1), {"@value" => "1", "@type" => RDF::XSD.nonNegativeInteger}],
+      "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0), {"@value" => "1.0", "@type" => RDF::XSD.float}],
     }.each do |title, (key, compacted, expanded)|
       it title do
         subject.expand_value(key, compacted).should produce(expanded, @debug)

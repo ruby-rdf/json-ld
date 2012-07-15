@@ -628,8 +628,20 @@ module JSON::LD
       options = {:native => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
-        result = case value
-        when TrueClass, FalseClass, RDF::Literal::Boolean
+        value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
+        dt = case value
+        when RDF::Literal
+          case value.datatype
+          when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double then value.datatype
+          else value
+          end
+        when RDF::Term then value
+        else value
+        end
+
+        result = case dt
+        when RDF::XSD.boolean
+          debug("xsd:boolean")
           case coerce(property)
           when RDF::XSD.double.to_s
             {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
@@ -641,7 +653,8 @@ module JSON::LD
               {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
             end
           end
-        when Integer, RDF::Literal::Integer
+        when RDF::XSD.integer
+          debug("xsd:integer")
           case coerce(property)
           when RDF::XSD.double.to_s
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
@@ -658,7 +671,8 @@ module JSON::LD
             res['@type'] = coerce(property)
             res
           end
-        when Float, RDF::Literal::Double
+        when RDF::XSD.double
+          debug("xsd:double")
           case coerce(property)
           when RDF::XSD.integer.to_s
             {"@value" => value.to_int.to_s, "@type" => RDF::XSD.integer.to_s}
@@ -677,20 +691,18 @@ module JSON::LD
             res['@type'] = coerce(property)
             res
           end
-        when BigDecimal, RDF::Literal::Decimal
-          {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
-        when Date, Time, DateTime
-          l = RDF::Literal(value)
-          {"@value" => l.to_s, "@type" => l.datatype.to_s}
         when RDF::URI, RDF::Node
+          debug("URI || BNode")
           {'@id' => value.to_s}
         when RDF::Literal
+          debug("Literal")
           res = Hash.ordered
           res['@value'] = value.to_s
           res['@type'] = value.datatype.to_s if value.has_datatype?
           res['@language'] = value.language.to_s if value.has_language?
           res
         else
+          debug("else")
           case coerce(property)
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}

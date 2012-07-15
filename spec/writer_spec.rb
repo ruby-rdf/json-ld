@@ -139,6 +139,49 @@ describe JSON::LD::Writer do
         ]
       }, @debug)
     end
+
+    it "serializes Wikia OWL example" do
+      input = %q(
+        @prefix owl: <http://www.w3.org/2002/07/owl#> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+        <http://data.wikia.com/terms#Character> a owl:Class;
+           rdfs:subClassOf _:a .
+        _:a a owl:Restriction;
+           owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger;
+           owl:onClass <http://data.wikia.com/terms#Element>;
+           owl:onProperty <http://data.wikia.com/terms#characterIn> .
+      )
+      serialize(input, :prefixes => {
+        :owl  => "http://www.w3.org/2002/07/owl#",
+        :rdfs => "http://www.w3.org/2000/01/rdf-schema#",
+        :xsd  => "http://www.w3.org/2001/XMLSchema#"
+      }).
+      should produce({
+        '@context'     => {
+          "owl"  => "http://www.w3.org/2002/07/owl#",
+          "rdf"  => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
+          "xsd"  => "http://www.w3.org/2001/XMLSchema#"
+        },
+        '@graph'     => [
+          {
+            "@id" => "_:a",
+            "@type" => "owl:Restriction",
+            "owl:minQualifiedCardinality" => {"@value" => "1","@type" => "xsd:nonNegativeInteger"},
+            "owl:onClass" => {"@id" => "http://data.wikia.com/terms#Element"},
+            "owl:onProperty" => {"@id" => "http://data.wikia.com/terms#characterIn"}
+          },
+          {
+            "@id" => "http://data.wikia.com/terms#Character",
+            "@type" => "owl:Class",
+            "rdfs:subClassOf" => {"@id" => "_:a"}
+          }
+        ]
+      }, @debug)
+    end
   end
   
   def parse(input, options = {})

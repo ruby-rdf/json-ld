@@ -53,46 +53,71 @@ describe JSON::LD::API do
     end
   
     context "literals" do
-      it "coerces typed literal" do
-        input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
-        }], @debug)
+      context "coercion" do
+        it "typed literal" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
+          serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
+          }], @debug)
+        end
+
+        it "integer" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
+          serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
+          }], @debug)
+        end
+
+        it "boolean" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
+          serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
+          }], @debug)
+        end
+
+        it "decmal" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
+          serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
+          }], @debug)
+        end
+
+        it "double" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
+          serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
+          }], @debug)
+        end
       end
 
-      it "coerces integer" do
-        input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
-        }], @debug)
+      context "datatyped" do
+        {
+          :integer            => 1,
+          :unsignedInteger    => 1,
+          :nonNegativeInteger => 1,
+          :float              => 1,
+          :nonPositiveInteger => -1,
+          :negativeInteger    => -1,
+        }.each do |t, v|
+          it "#{t}" do
+            input = %(
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              @prefix ex: <http://example.com/> .
+              ex:a ex:b "#{v}"^^xsd:#{t} .
+            )
+            serialize(input).should produce([{
+              '@id'   => "http://example.com/a",
+              "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
+            }], @debug)
+          end
+        end
       end
 
-      it "coerces boolean" do
-        input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
-        }], @debug)
-      end
-
-      it "coerces decmal" do
-        input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
-        }], @debug)
-      end
-
-      it "coerces double" do
-        input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
-        }], @debug)
-      end
-    
       it "encodes language literal" do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"@en-us .)
         serialize(input).should produce([{
@@ -308,8 +333,10 @@ describe JSON::LD::API do
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
+    @debug = []
+    @debug << ntstr if ntstr.is_a?(String)
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    @debug = [] << g.dump(:trig)
+    @debug << g.dump(:trig)
     statements = g.each_statement.to_a
     JSON::LD::API.fromRDF(statements, nil, options.merge(:debug => @debug))
   end

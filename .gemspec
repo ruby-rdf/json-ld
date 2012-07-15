@@ -38,6 +38,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-turtle',      '>= 0.1.1'
   gem.add_development_dependency 'rdf-trig',        '>= 0.1.1'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
+  gem.add_development_dependency 'rdf-xsd',         '>= 0.3.7'
   gem.add_runtime_dependency     'backports'
   gem.post_install_message  = nil
 end
