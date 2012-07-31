@@ -324,6 +324,29 @@ describe JSON::LD::API do
         }], @debug)
       end
     end
+  
+    context "problems" do
+      {
+        "xsd:boolean as value" => [
+          %(
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            <http://data.wikia.com/terms#playable> rdfs:range xsd:boolean .
+          ),
+          [{
+            "@id" => "http://data.wikia.com/terms#playable",
+            "http://www.w3.org/2000/01/rdf-schema#range" => [
+              { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }
+            ]
+          }]
+        ],
+      }.each do |t, (input, output)|
+        it "#{t}" do
+          serialize(input).should produce(output, @debug)
+        end
+      end
+    end
   end
 
   def parse(input, options = {})

@@ -875,6 +875,12 @@ describe JSON::LD::EvaluationContext do
       subject.set_coerce("ex:boolean", RDF::XSD.boolean.to_s)
     end
 
+    %w(boolean integer string dateTime date time).each do |dt|
+      it "expands datatype xsd:#{dt}" do
+        subject.expand_value("foo", RDF::XSD[dt]).should produce({"@id" => "http://www.w3.org/2001/XMLSchema##{dt}"}, @debug)
+      end
+    end
+
     {
       "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
       "term" =>           ["foaf:knows",  "ex",                   {"@id" => "http://example.org/"}],

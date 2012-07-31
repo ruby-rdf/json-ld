@@ -635,7 +635,7 @@ module JSON::LD
           when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double then value.datatype
           else value
           end
-        when RDF::Term then value
+        when RDF::Term then value.class.name
         else value
         end
 
@@ -691,8 +691,8 @@ module JSON::LD
             res['@type'] = coerce(property)
             res
           end
-        when RDF::URI, RDF::Node
-          debug("URI || BNode")
+        when "RDF::URI", "RDF::Node"
+          debug("URI | BNode") { value.to_s }
           {'@id' => value.to_s}
         when RDF::Literal
           debug("Literal")
