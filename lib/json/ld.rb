@@ -47,6 +47,7 @@ module JSON
       @set
       @type
       @value
+      @vocab
     ).freeze
 
     # Regexp matching an NCName.
