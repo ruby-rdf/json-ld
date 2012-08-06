@@ -166,7 +166,7 @@ module JSON::LD
           v = context.fetch(key, false)
           if v.nil? || v.is_a?(String)
             context.delete(key)
-            debug("parse") {"Hash[#{key}] = #{v.inspect}"}
+            debug("parse") {"Set #{key} to #{v.inspect}"}
             new_ec.send(setter, v)
           elsif v
             raise InvalidContext::Syntax, "#{key.inspect} is invalid"
@@ -482,7 +482,7 @@ module JSON::LD
       when prefix == '_' && suffix          then bnode(suffix)
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
-      when mappings.has_key?(prefix)        then uri(mappings[prefix] + suffix.to_s)
+      when mappings.fetch(prefix, false)    then uri(mappings[prefix] + suffix.to_s)
       when base                             then base.join(iri)
       when vocab                            then uri("#{vocab}#{iri}")
       else
