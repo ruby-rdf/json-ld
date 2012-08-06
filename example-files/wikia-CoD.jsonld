@@ -1,0 +1,48 @@
+{
+  "@context": {
+    "@comment":      "Generic terms for describing Video Games in RDF and JSON/LD",
+    "wikia":        "http://data.wikia.com/terms#",
+    "xsd":          "http://www.w3.org/2001/XMLSchema#",
+    "@vocab":       "http://schema.org/",
+    "@language":    "en",
+
+    "birthDate":    {"@type": "xsd:date"},
+    "dateCreated":  {"@type": "xsd:dateTime"},
+    "dateModified": {"@type": "xsd:dateTime"},
+    "datePublished":{"@type": "xsd:dateTime"},
+    "event":        {"@id": "wikia:event", "@container": "@list"},
+    "eventIn":      {"@id": "wikia:eventIn", "@type": "@id"},
+    "fingerprint":  {"@id": "wikia:fingerprint", "@language": null},
+    "game":         {"@id": "wikia:game", "@type": "@id"},
+    "height":       {"@type": "xsd:integer"},
+    "map":          {"@type": "@id", "@container": "@set"},
+    "next":         {"@id": "wikia:next", "@type": "@id"},
+    "objective":    {"@id": "wikia:objective", "@container": "@list"},
+    "objectiveIn":  {"@id": "wikia:objectiveIn", "@type": "@id"},
+    "previous":     {"@id": "wikia:previous", "@type": "@id"},
+    "startDate":    {"@type": "xsd:dateTime"},
+    "width":        {"@type": "xsd:integer"}
+  },
+  "@id": "500f1a1b6e7f1827ba000001",
+  "@type": "wikia:VideoGame",
+  "contentRating": [
+    "ESRB: Mature (DS version is Teen)",
+    "PEGI: 18+ (DS version is 16+) ",
+    "USK: 18 CERO: Z OFLC: MA15+ (DS version is M)"
+  ],
+  "datePublished": "2011-11-09",
+  "description": "Primary game entry point",
+  "genre": ["First-person shooter"],
+  "name": "Call of Duty: Black Ops",
+  "publisher": [
+    {"@id": "501067246e7f184553000001"},
+    {"@id": "5010675a6e7f18464d000001"}
+  ],
+  "wikia:event": [
+    {"@id": "500f28856e7f187196000001"},
+    {"@id": "500f44556e7f18f7ef000001"},
+    {"@id": "500f449e6e7f18f94b000001"},
+    {"@id": "500f44e26e7f18fa75000001"}
+  ],
+  "wikia:platform": ["Xbox 360","PS3","PC","Wii","DS"]
+}
