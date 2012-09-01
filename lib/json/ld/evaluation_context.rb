@@ -64,6 +64,14 @@ module JSON::LD
     # This adds a language to plain strings that aren't otherwise coerced
     # @attr [String]
     attr :default_language, true
+    
+    # Default vocabulary
+    #
+    #
+    # Sets the default vocabulary used for expanding terms which
+    # aren't otherwise absolute IRIs
+    # @attr [String]
+    attr :vocab, true
 
     # Global options used in generating IRIs
     # @attr [Hash] options
@@ -149,8 +157,22 @@ module JSON::LD
         ec
       when Hash
         new_ec = self.dup
-        new_ec.provided_context = context
-        
+        new_ec.provided_context = context.dup
+
+        {
+          '@language' => :default_language=,
+          '@vocab'    => :vocab=
+        }.each do |key, setter|
+          v = context.fetch(key, false)
+          if v.nil? || v.is_a?(String)
+            context.delete(key)
+            debug("parse") {"Set #{key} to #{v.inspect}"}
+            new_ec.send(setter, v)
+          elsif v
+            raise InvalidContext::Syntax, "#{key.inspect} is invalid"
+            end
+        end
+
         num_updates = 1
         while num_updates > 0 do
           num_updates = 0
@@ -159,8 +181,9 @@ module JSON::LD
           context.each do |key, value|
             # Expand a string value, unless it matches a keyword
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-            if key == '@language' && (value.nil? || value.is_a?(String))
-              new_ec.default_language = value
+
+            if KEYWORDS.include?(key)
+              raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword"
             elsif term_valid?(key)
               # Remove all coercion information for the property
               new_ec.set_coerce(key, nil)
@@ -172,9 +195,7 @@ module JSON::LD
               raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
-              if iri && KEYWORDS.include?(key)
-                raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword"
-              elsif iri && new_ec.mappings.fetch(key, nil) != iri
+              if iri && new_ec.mappings.fetch(key, nil) != iri
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
@@ -254,6 +275,7 @@ module JSON::LD
           debug {"=> context: #{inspect}"}
           ctx = Hash.ordered
           ctx['@language'] = default_language.to_s if default_language
+          ctx['@vocab'] = vocab.to_s if vocab
 
           # Mappings
           mappings.keys.sort{|a, b| a.to_s <=> b.to_s}.each do |k|
@@ -453,15 +475,16 @@ module JSON::LD
       return iri unless iri.is_a?(String)
       prefix, suffix = iri.split(':', 2)
       return mapping(iri) if mapping(iri) # If it's an exact match
-      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}"} unless options[:quiet]
+      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
       base = self.base unless [:predicate, :datatype].include?(options[:position])
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
-      when mappings.has_key?(prefix)        then uri(mappings[prefix] + suffix.to_s)
+      when mappings.fetch(prefix, false)    then uri(mappings[prefix] + suffix.to_s)
       when base                             then base.join(iri)
+      when vocab                            then uri("#{vocab}#{iri}")
       else
         # Otherwise, it must be an absolute IRI
         u = uri(iri)
@@ -535,10 +558,20 @@ module JSON::LD
         least_distance = term_map.values.max
         terms = term_map.keys.select {|t| term_map[t] == least_distance}
 
-        # If the list of found terms is empty, append a compact IRI for
-        # each term which is a prefix of iri which does not have
-        # @type coercion, @container coercion or @language coercion rules
-        # along with the iri itself.
+        # If terms is empty, and the active context has a @vocab which is a 
+        # prefix of iri where the resulting relative IRI is not a term in the 
+        # active context. The resulting relative IRI is the unmatched part of iri.
+        if vocab && terms.empty? && iri.to_s.index(vocab) == 0
+          terms << iri.to_s.sub(vocab, '')
+          debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
+        end
+
+        # If terms is empty, add a compact IRI representation of iri for each 
+        # term in the active context which maps to an IRI which is a prefix for 
+        # iri where the resulting compact IRI is not a term in the active 
+        # context. The resulting compact IRI is the term associated with the 
+        # partially matched IRI in the active context concatenated with a colon 
+        # (:) character and the unmatched part of iri.
         if terms.empty?
           debug("curies") {"mappings: #{mappings.inspect}"}
           curies = mappings.keys.map do |k|
@@ -566,20 +599,22 @@ module JSON::LD
           end
 
           debug("curies") {"selected #{terms.inspect}"}
+        end
 
-          # If we still don't have any terms and we're using standard_prefixes,
-          # try those, and add to mapping
-          if terms.empty? && @options[:standard_prefixes]
-            terms = RDF::Vocabulary.
-              select {|v| iri.index(v.to_uri.to_s) == 0}.
-              map do |v|
-                prefix = v.__name__.to_s.split('::').last.downcase
-                set_mapping(prefix, v.to_uri.to_s)
-                iri.sub(v.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
-              end
-            debug("curies") {"using standard prefies: #{terms.inspect}"}
-          end
+        # If we still don't have any terms and we're using standard_prefixes,
+        # try those, and add to mapping
+        if terms.empty? && @options[:standard_prefixes]
+          terms = RDF::Vocabulary.
+            select {|v| iri.index(v.to_uri.to_s) == 0}.
+            map do |v|
+              prefix = v.__name__.to_s.split('::').last.downcase
+              set_mapping(prefix, v.to_uri.to_s)
+              iri.sub(v.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
+            end
+          debug("curies") {"using standard prefies: #{terms.inspect}"}
+        end
 
+        if terms.empty?
           # If there is a mapping from the complete IRI to null, return null,
           # otherwise, return the complete IRI.
           if mappings.has_key?(iri.to_s) && !mapping(iri)
@@ -589,7 +624,7 @@ module JSON::LD
             terms << iri.to_s
           end
         end
-        
+
         # Get the first term based on distance and lexecographical order
         # Prefer terms that don't have @container @set over other terms, unless as set is true
         terms = terms.sort do |a, b|
@@ -628,8 +663,20 @@ module JSON::LD
       options = {:native => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
-        result = case value
-        when TrueClass, FalseClass, RDF::Literal::Boolean
+        value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
+        dt = case value
+        when RDF::Literal
+          case value.datatype
+          when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double then value.datatype
+          else value
+          end
+        when RDF::Term then value.class.name
+        else value
+        end
+
+        result = case dt
+        when RDF::XSD.boolean
+          debug("xsd:boolean")
           case coerce(property)
           when RDF::XSD.double.to_s
             {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
@@ -641,7 +688,8 @@ module JSON::LD
               {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
             end
           end
-        when Integer, RDF::Literal::Integer
+        when RDF::XSD.integer
+          debug("xsd:integer")
           case coerce(property)
           when RDF::XSD.double.to_s
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
@@ -658,7 +706,8 @@ module JSON::LD
             res['@type'] = coerce(property)
             res
           end
-        when Float, RDF::Literal::Double
+        when RDF::XSD.double
+          debug("xsd:double")
           case coerce(property)
           when RDF::XSD.integer.to_s
             {"@value" => value.to_int.to_s, "@type" => RDF::XSD.integer.to_s}
@@ -677,20 +726,18 @@ module JSON::LD
             res['@type'] = coerce(property)
             res
           end
-        when BigDecimal, RDF::Literal::Decimal
-          {"@value" => value.to_s, "@type" => RDF::XSD.decimal.to_s}
-        when Date, Time, DateTime
-          l = RDF::Literal(value)
-          {"@value" => l.to_s, "@type" => l.datatype.to_s}
-        when RDF::URI, RDF::Node
+        when "RDF::URI", "RDF::Node"
+          debug("URI | BNode") { value.to_s }
           {'@id' => value.to_s}
         when RDF::Literal
+          debug("Literal")
           res = Hash.ordered
           res['@value'] = value.to_s
           res['@type'] = value.datatype.to_s if value.has_datatype?
           res['@language'] = value.language.to_s if value.has_language?
           res
         else
+          debug("else")
           case coerce(property)
           when '@id'
             {'@id' => expand_iri(value, :position => :object).to_s}

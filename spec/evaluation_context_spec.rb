@@ -1,6 +1,7 @@
 # coding: utf-8
 $:.unshift "."
 require 'spec_helper'
+require 'rdf/xsd'
 require 'rdf/spec/reader'
 
 describe JSON::LD::EvaluationContext do
@@ -85,6 +86,12 @@ describe JSON::LD::EvaluationContext do
         }).default_language.should produce("en", @debug)
       end
 
+      it "extracts @vocab" do
+        subject.parse({
+          "@vocab" => "http://schema.org/"
+        }).vocab.should produce("http://schema.org/", @debug)
+      end
+
       it "maps term with IRI value" do
         subject.parse({
           "foo" => "http://example.com/"
@@ -153,6 +160,15 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
+      it "expands terms using @vocab" do
+        subject.parse({
+          "foo" => "bar",
+          "@vocab" => "http://example.com/"
+        }).mappings.should produce({
+          "foo" => "http://example.com/bar"
+        }, @debug)
+      end
+
       context "with null" do
         it "removes @language if set to null" do
           subject.parse([
@@ -163,6 +179,17 @@ describe JSON::LD::EvaluationContext do
               "@language" => nil
             }
           ]).default_language.should produce(nil, @debug)
+        end
+
+        it "removes @vocab if set to null" do
+          subject.parse([
+            {
+              "@vocab" => "http://schema.org/"
+            },
+            {
+              "@vocab" => nil
+            }
+          ]).vocab.should produce(nil, @debug)
         end
 
         it "loads initial context" do
@@ -196,6 +223,7 @@ describe JSON::LD::EvaluationContext do
         "@container as array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
         "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
+        "@vocab as @id" => {"@vocab" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
         it title do
           lambda {
@@ -205,15 +233,15 @@ describe JSON::LD::EvaluationContext do
         end
       end
       
-      (JSON::LD::KEYWORDS - %w(@language)).each do |kw|
-        it "does not redefined #{kw} as a string" do
+      (JSON::LD::KEYWORDS - %w(@language @vocab)).each do |kw|
+        it "does not redefine #{kw} as a string" do
           lambda {
             ec = subject.parse({kw => "http://example.com/"})
             ec.serialize.should produce({}, @debug)
           }.should raise_error(JSON::LD::InvalidContext::Syntax)
         end
 
-        it "does not redefined #{kw} with an @id" do
+        it "does not redefine #{kw} with an @id" do
           lambda {
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
@@ -234,7 +262,7 @@ describe JSON::LD::EvaluationContext do
   end
 
   describe "#serialize" do
-    it "uses provided context document" do
+    it "context document" do
       ctx = StringIO.new(@ctx_json)
       def ctx.content_type; "application/ld+json"; end
 
@@ -245,7 +273,7 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "uses provided context array" do
+    it "context array" do
       ctx = [
         {"foo" => "http://example.com/"},
         {"baz" => "bob"}
@@ -257,7 +285,7 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "uses provided context hash" do
+    it "context hash" do
       ctx = {"foo" => "http://example.com/"}
 
       ec = subject.parse(ctx)
@@ -271,6 +299,15 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "@language" => "en"
+        }
+      }, @debug)
+    end
+
+    it "@vocab" do
+      subject.vocab = "http://example.com/"
+      subject.serialize.should produce({
+        "@context" => {
+          "@vocab" => "http://example.com/"
         }
       }, @debug)
     end
@@ -457,6 +494,18 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
+    it "compacts IRIs using @vocab" do
+      subject.vocab = 'http://example.org/'
+      subject.set_mapping("term", 'http://example.org/term')
+      subject.set_coerce("term", "http://example.org/datatype")
+      subject.serialize.should produce({
+        "@context" => {
+          "@vocab" => 'http://example.org/',
+          "term" => {"@id" => "term", "@type" => "datatype"}
+        }
+      }, @debug)
+    end
+
     context "extra keys or values" do
       {
         "extra key" => {
@@ -543,6 +592,33 @@ describe JSON::LD::EvaluationContext do
         end
       end
     end
+    
+    context "@vocab" do
+      before(:each) { subject.vocab = "http://example.com/"}
+      {
+        :subject => false,
+        :predicate => true,
+        :object => false,
+        :datatype => true
+      }.each do |position, r|
+        context "as #{position}" do
+          {
+            "absolute IRI" =>  ["http://example.org/", "http://example.org/", true],
+            "term" =>          ["ex",                  "http://example.org/", true],
+            "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix", true],
+            "keyword" =>       ["@type",               "@type", true],
+            "empty" =>         [":suffix",             "http://empty/suffix", true],
+            "unmapped" =>      ["foo",                 "http://example.com/foo", true],
+            "empty term" =>    ["",                    "http://empty/", true],
+          }.each do |title, (input,result,abs)|
+            result = nil unless r || abs
+            it title do
+              subject.expand_iri(input).should produce(result, @debug)
+            end
+          end
+        end
+      end
+    end
   end
 
   describe "#compact_iri" do
@@ -567,6 +643,24 @@ describe JSON::LD::EvaluationContext do
       end
     end
     
+    context "with @vocab" do
+      before(:each) { subject.vocab = "http://example.org/"}
+
+      {
+        "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
+        "term" =>          ["ex",                  "http://example.org/"],
+        "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
+        "keyword" =>       ["@type",               "@type"],
+        "empty" =>         [":suffix",             "http://empty/suffix"],
+        "unmapped" =>      ["foo",                 "foo"],
+        "bnode" =>         ["_:a",                 RDF::Node("a")],
+      }.each do |title, (result, input)|
+        it title do
+          subject.compact_iri(input).should produce(result, @debug)
+        end
+      end
+    end
+
     context "with value" do
       let(:ctx) do
         c = subject.parse({
@@ -874,6 +968,12 @@ describe JSON::LD::EvaluationContext do
       subject.set_coerce("ex:boolean", RDF::XSD.boolean.to_s)
     end
 
+    %w(boolean integer string dateTime date time).each do |dt|
+      it "expands datatype xsd:#{dt}" do
+        subject.expand_value("foo", RDF::XSD[dt]).should produce({"@id" => "http://www.w3.org/2001/XMLSchema##{dt}"}, @debug)
+      end
+    end
+
     {
       "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
       "term" =>           ["foaf:knows",  "ex",                   {"@id" => "http://example.org/"}],
@@ -895,6 +995,8 @@ describe JSON::LD::EvaluationContext do
       "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => 1.1}],
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27Z")), {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+      "rdf nonNeg" =>     ["foo", RDF::Literal::NonNegativeInteger.new(1), {"@value" => "1", "@type" => RDF::XSD.nonNegativeInteger}],
+      "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0), {"@value" => "1.0", "@type" => RDF::XSD.float}],
     }.each do |title, (key, compacted, expanded)|
       it title do
         subject.expand_value(key, compacted).should produce(expanded, @debug)

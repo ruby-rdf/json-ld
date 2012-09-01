@@ -8,7 +8,7 @@ module JSON::LD
     # Generate a JSON-LD array representation from an array of `RDF::Statement`.
     # Representation is in expanded form
     #
-    # @param [Array<RDF::Statement>] input
+    # @param [Array<RDF::Statement>, RDF::Enumerable] input
     # @return [Array<Hash>] the JSON-LD document in normalized form
     def from_statements(input)
       defaultGraph = {:subjects => {}, :listMap => {}, :name => ''}
