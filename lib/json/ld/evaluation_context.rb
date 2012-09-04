@@ -654,13 +654,13 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :native (true) use native representations
+    # @option options [Boolean] :useNativeTypes (true) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {:native => true}.merge(options)
+      options = {:useNativeTypes => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
         value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
@@ -681,7 +681,7 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
           else
-            if options[:native]
+            if options[:useNativeTypes]
               # Unless there's coercion, to not modify representation
               {"@value" => (value.is_a?(RDF::Literal::Boolean) ? value.object : value)}
             else
@@ -695,7 +695,7 @@ module JSON::LD
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when RDF::XSD.integer.to_s, nil
             # Unless there's coercion, to not modify representation
-            if options[:native]
+            if options[:useNativeTypes]
               {"@value" => value.is_a?(RDF::Literal::Integer) ? value.object : value}
             else
               {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
@@ -714,7 +714,7 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when nil
-            if options[:native]
+            if options[:useNativeTypes]
               # Unless there's coercion, to not modify representation
               {"@value" => value.is_a?(RDF::Literal::Double) ? value.object : value}
             else

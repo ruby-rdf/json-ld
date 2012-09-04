@@ -307,10 +307,10 @@ describe JSON::LD::API do
       end
     end
 
-    context "notType option" do
+    context "useRdfType option" do
       it "uses @type if set to false" do
         input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
-        serialize(input, :notType => false).should produce([{
+        serialize(input, :useRdfType => false).should produce([{
           '@id'   => "http://example.com/a",
           "@type"    => ["http://example.com/b"]
         }], @debug)
@@ -318,7 +318,7 @@ describe JSON::LD::API do
       
       it "does not use @type if set to true" do
         input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
-        serialize(input, :notType => true).should produce([{
+        serialize(input, :useRdfType => true).should produce([{
           '@id'   => "http://example.com/a",
           RDF.type.to_s    => [{"@id" => "http://example.com/b"}]
         }], @debug)
