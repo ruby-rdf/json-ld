@@ -1,23 +1,23 @@
 module JSON::LD
   module Utils
     ##
-    # Is value a subject? A value is a subject if
+    # Is value a node? A value is a node if
     # * it is a Hash
     # * it is not a @value, @set or @list
     # * it has more than 1 key or any key is not @id
     # @param [Object] value
     # @return [Boolean]
-    def subject?(value)
+    def node?(value)
       value.is_a?(Hash) &&
         (value.keys & %w(@value @list @set)).empty? &&
         !(value.keys - ['@id']).empty?
     end
 
     ##
-    # Is value a subject reference?
+    # Is value a node reference?
     # @param [Object] value
     # @return [Boolean]
-    def subject_reference?(value)
+    def node_reference?(value)
       value.is_a?(Hash) && value.keys == %w(@id)
     end
 
@@ -27,7 +27,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def blank_node?(value)
-      (subject?(value) || subject_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+      (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
     end
 
     ##

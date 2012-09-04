@@ -1,0 +1,28 @@
+{
+  "@context": {
+    "md": "http://www.w3.org/ns/md#",
+    "mf": "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+    "mq": "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+  },
+  "@id": "_:g70301460688860",
+  "@type": "mf:Manifest",
+  "mf:entries": {"@list": [{
+    "@id": "_:g70301460728760",
+    "@type": "mf:ManifestEntry",
+    "mf:action": {
+      "@id": "_:g70301460279500",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
+      }
+    },
+    "mf:name": "Test 0001",
+    "mf:result": "true",
+    "rdfs:comment": "Item with no itemtype and literal itemprop"
+  }]},
+  "rdfs:comment": "Positive processor tests"
+}

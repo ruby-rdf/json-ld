@@ -76,17 +76,17 @@ module JSON::LD
               when Array
                 depth do
                   [value].flatten.map do |v|
-                    v = v['@id'] if subject_reference?(v)
-                    raise ProcessingError, "Object value must be a string or a subject reference: #{v.inspect}" unless v.is_a?(String)
+                    v = v['@id'] if node_reference?(v)
+                    raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
                     context.expand_iri(v, options.merge(:position => :property, :quiet => true)).to_s
                   end
                 end
               when Hash
-                # Empty object used for @type wildcard or subject reference
-                if subject_reference?(value)
+                # Empty object used for @type wildcard or node reference
+                if node_reference?(value)
                   context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true)).to_s
                 elsif !value.empty?
-                  raise ProcessingError, "Object value of @type must be empty or a subject reference: #{value.inspect}"
+                  raise ProcessingError, "Object value of @type must be empty or a node reference: #{value.inspect}"
                 else
                   value
                 end

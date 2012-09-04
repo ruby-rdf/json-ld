@@ -1,0 +1,112 @@
+@base <http://www.w3.org/TR/microdata-rdf/tests/> .
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix mq: <http://www.w3.org/2001/sw/DataAccess/tests/test-query#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<> <http://www.w3.org/ns/md#item> ([ a mf:Manifest;
+       rdfs:comment "Positive processor tests";
+       mf:entries [ a mf:ManifestEntry;
+         rdfs:comment "Item with no itemtype and literal itemprop";
+         mf:action [ a mq:QueryTest;
+           mq:data <0001.html>;
+           mq:query <0001.ttl>];
+         mf:name "Test 0001";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Item with no itemtype and 2 elements with equivalent itemprop";
+         mf:action [ a mq:QueryTest;
+           mq:data <0002.html>;
+           mq:query <0002.ttl>];
+         mf:name "Test 0002";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Item with itemprop having two properties";
+         mf:action [ a mq:QueryTest;
+           mq:data <0003.html>;
+           mq:query <0003.ttl>];
+         mf:name "Test 0003";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of meta and @content";
+         mf:action [ a mq:QueryTest;
+           mq:data <0004.html>;
+           mq:query <0004.ttl>];
+         mf:name "Test 0004";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of audio and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0005.html>;
+           mq:query <0005.ttl>];
+         mf:name "Test 0005";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of embed and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0006.html>;
+           mq:query <0006.ttl>];
+         mf:name "Test 0006";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of iframe and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0007.html>;
+           mq:query <0007.ttl>];
+         mf:name "Test 0007";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of img and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0008.html>;
+           mq:query <0008.ttl>];
+         mf:name "Test 0008";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of source and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0009.html>;
+           mq:query <0009.ttl>];
+         mf:name "Test 0009";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of track and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0010.html>;
+           mq:query <0010.ttl>];
+         mf:name "Test 0010";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of video and @src";
+         mf:action [ a mq:QueryTest;
+           mq:data <0011.html>;
+           mq:query <0011.ttl>];
+         mf:name "Test 0011";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of a and @href";
+         mf:action [ a mq:QueryTest;
+           mq:data <0012.html>;
+           mq:query <0012.ttl>];
+         mf:name "Test 0012";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of area and @href";
+         mf:action [ a mq:QueryTest;
+           mq:data <0013.html>;
+           mq:query <0013.ttl>];
+         mf:name "Test 0013";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of link and @href";
+         mf:action [ a mq:QueryTest;
+           mq:data <0014.html>;
+           mq:query <0014.ttl>];
+         mf:name "Test 0014";
+         mf:result "true"],
+         [ a mf:ManifestEntry;
+         rdfs:comment "Use of object and @data";
+         mf:action [ a mq:QueryTest;
+           mq:data <0015.html>;
+           mq:query <0015.ttl>];
+         mf:name "Test 0015";
+         mf:result "true"]]) .

@@ -1,6 +1,7 @@
 require 'open-uri'
 require 'json/ld/expand'
 require 'json/ld/compact'
+require 'json/ld/flatten'
 require 'json/ld/frame'
 require 'json/ld/to_rdf'
 require 'json/ld/from_rdf'
@@ -19,6 +20,7 @@ module JSON::LD
     include Expand
     include Compact
     include Triples
+    include Flatten
     include FromTriples
     include Frame
 
@@ -152,6 +154,76 @@ module JSON::LD
     end
 
     ##
+    # Flattens the given input according to the steps in the Flattening Algorithm. The input must be flattened and returned if there are no errors. If the flattening fails, an appropriate exception must be thrown.
+    #
+    # The resulting `Array` is returned via the provided callback.
+    #
+    # Note that for Ruby, if the callback is not provided and a block is given, it will be yielded. If there is no block, the value will be returned.
+    #
+    # @param [String, #read, Hash, Array] input
+    #   The JSON-LD object or array of JSON-LD objects to flatten or an IRI referencing the JSON-LD document to flatten.
+    # @param [String, RDF::URI] graph
+    #   The graph in the document that should be flattened. To return the default graph @default has to be passed, for the merged graph @merged and for any other graph the IRI identifying the graph has to be passed. The default value is @merged.
+    # @param [String, #read, Hash, Array] context
+    #   An optional external context to use additionally to the context embedded in input when expanding the input.
+    # @param [Proc] callback (&block)
+    #   Alternative to using block, with same parameters.
+    # @param  [Hash{Symbol => Object}] options
+    #   Other options passed to {#expand}
+    # @option options [Boolean] :embed (true)
+    #   a flag specifying that objects should be directly embedded in the output,
+    #   instead of being referred to by their IRI.
+    # @option options [Boolean] :explicit (false)
+    #   a flag specifying that for properties to be included in the output,
+    #   they must be explicitly declared in the framing context.
+    # @option options [Boolean] :omitDefault (false)
+    #   a flag specifying that properties that are missing from the JSON-LD
+    #   input should be omitted from the output.
+    # @yield jsonld
+    # @yieldparam [Hash] jsonld
+    #   The framed JSON-LD document
+    # @return [Array<Hash>]
+    #   The framed JSON-LD document
+    # @raise [InvalidFrame]
+    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
+    def self.flatten(input, graph, context, callback = nil, options = {})
+      result = nil
+      graph ||= '@merged'
+
+      # Expand input to simplify processing
+      expanded_input = API.expand(input)
+
+      # Initialize input using frame as context
+      API.new(expanded_input, nil, options) do
+        #debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
+
+        # Generate _nodeMap_
+        node_map = Hash.ordered
+        self.generate_node_map(value,
+          node_map,
+          (graph.to_s == '@merged' ? '@merged' : '@default'),
+          nil,
+          BlankNodeNamer.new("t"))
+        
+        result = []
+
+        # If nodeMap has no property graph, return result, otherwise set definitions to its value.
+        definitions = node_map.fetch(graph.to_s, {})
+        
+        # Foreach property and valud of definitions
+        definitions.each do |prop, value|
+          result << value
+        end
+        
+        result
+      end
+
+      callback.call(result) if callback
+      yield result if block_given?
+      result
+    end
+
+    ##
     # Frames the given input using the frame according to the steps in the Framing Algorithm. The input is used to build the
     # framed output and is returned if there are no errors. If there are no matches for the frame, null must be returned.
     # Exceptions must be thrown if there are errors.
@@ -219,13 +291,13 @@ module JSON::LD
         #debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
         #debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
-        # Get framing subjects from expanded input, replacing Blank Node identifiers as necessary
-        @subjects = Hash.ordered
-        depth {get_framing_subjects(@subjects, value, BlankNodeNamer.new("t"))}
-        debug(".frame") {"subjects: #{@subjects.to_json(JSON_STATE)}"}
+        # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
+        @nodes = Hash.ordered
+        depth {get_framing_subjects(@nodes, value, BlankNodeNamer.new("t"))}
+        debug(".frame") {"nodes: #{@nodes.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @subjects, expanded_frame[0], result, nil)
+        frame(framing_state, @nodes, expanded_frame[0], result, nil)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame

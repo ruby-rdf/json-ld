@@ -44,7 +44,7 @@ module JSON::LD
         
         case k
         when '@value', '@id'
-          # If element has an @value property or element is a subject reference, return the result of performing
+          # If element has an @value property or element is a node reference, return the result of performing
           # Value Compaction on element using active property.
           v = context.compact_value(property, element, :depth => @depth)
           debug("compact") {"value optimization, return as #{v.inspect}"}

@@ -1,0 +1,372 @@
+{
+  "@context": {
+    "md": "http://www.w3.org/ns/md#",
+    "mf": "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+    "mq": "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+  },
+  "@graph": [
+    {
+      "@id": "_:g70355285576200",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0004.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0004.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355286904500",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0006.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0006.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355287905740",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0002.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0002.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355288159600",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0008.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0008.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355288287220",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355288385020"
+      },
+      "mf:name": "Test 0007",
+      "mf:result": "true",
+      "rdfs:comment": "Use of iframe and @src"
+    },
+    {
+      "@id": "_:g70355288385020",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0007.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0007.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355288426660",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355285576200"
+      },
+      "mf:name": "Test 0004",
+      "mf:result": "true",
+      "rdfs:comment": "Use of meta and @content"
+    },
+    {
+      "@id": "_:g70355288550780",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355288159600"
+      },
+      "mf:name": "Test 0008",
+      "mf:result": "true",
+      "rdfs:comment": "Use of img and @src"
+    },
+    {
+      "@id": "_:g70355289704080",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355289996860"
+      },
+      "mf:name": "Test 0005",
+      "mf:result": "true",
+      "rdfs:comment": "Use of audio and @src"
+    },
+    {
+      "@id": "_:g70355289996860",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0005.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0005.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355290045600",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355290557500"
+      },
+      "mf:name": "Test 0009",
+      "mf:result": "true",
+      "rdfs:comment": "Use of source and @src"
+    },
+    {
+      "@id": "_:g70355290182360",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355286904500"
+      },
+      "mf:name": "Test 0006",
+      "mf:result": "true",
+      "rdfs:comment": "Use of embed and @src"
+    },
+    {
+      "@id": "_:g70355290557500",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0009.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0009.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355290791740",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355290848080"
+      },
+      "mf:name": "Test 0010",
+      "mf:result": "true",
+      "rdfs:comment": "Use of track and @src"
+    },
+    {
+      "@id": "_:g70355290848080",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0010.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0010.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355290967000",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355291013840"
+      },
+      "mf:name": "Test 0011",
+      "mf:result": "true",
+      "rdfs:comment": "Use of video and @src"
+    },
+    {
+      "@id": "_:g70355291013840",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0011.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0011.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355291129540",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355291162220"
+      },
+      "mf:name": "Test 0012",
+      "mf:result": "true",
+      "rdfs:comment": "Use of a and @href"
+    },
+    {
+      "@id": "_:g70355291162220",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0012.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0012.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355291233720",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355291261800"
+      },
+      "mf:name": "Test 0013",
+      "mf:result": "true",
+      "rdfs:comment": "Use of area and @href"
+    },
+    {
+      "@id": "_:g70355291261800",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0013.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0013.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355291374680",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355291422200"
+      },
+      "mf:name": "Test 0014",
+      "mf:result": "true",
+      "rdfs:comment": "Use of link and @href"
+    },
+    {
+      "@id": "_:g70355291422200",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0014.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0014.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355291476220",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355301930460"
+      },
+      "mf:name": "Test 0001",
+      "mf:result": "true",
+      "rdfs:comment": "Item with no itemtype and literal itemprop"
+    },
+    {
+      "@id": "_:g70355291564040",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355291608420"
+      },
+      "mf:name": "Test 0015",
+      "mf:result": "true",
+      "rdfs:comment": "Use of object and @data"
+    },
+    {
+      "@id": "_:g70355291608420",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0015.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0015.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355301930460",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355301951480",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355287905740"
+      },
+      "mf:name": "Test 0002",
+      "mf:result": "true",
+      "rdfs:comment": "Item with no itemtype and 2 elements with equivalent itemprop"
+    },
+    {
+      "@id": "_:g70355303569580",
+      "@type": "mf:ManifestEntry",
+      "mf:action": {
+        "@id": "_:g70355303605640"
+      },
+      "mf:name": "Test 0003",
+      "mf:result": "true",
+      "rdfs:comment": "Item with itemprop having two properties"
+    },
+    {
+      "@id": "_:g70355303605640",
+      "@type": "mq:QueryTest",
+      "mq:data": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0003.html"
+      },
+      "mq:query": {
+        "@id": "http://www.w3.org/TR/microdata-rdf/tests/0003.ttl"
+      }
+    },
+    {
+      "@id": "_:g70355306226700",
+      "@type": "mf:Manifest",
+      "mf:entries": [
+        {
+          "@id": "_:g70355291476220"
+        },
+        {
+          "@id": "_:g70355301951480"
+        },
+        {
+          "@id": "_:g70355303569580"
+        },
+        {
+          "@id": "_:g70355288426660"
+        },
+        {
+          "@id": "_:g70355289704080"
+        },
+        {
+          "@id": "_:g70355290182360"
+        },
+        {
+          "@id": "_:g70355288287220"
+        },
+        {
+          "@id": "_:g70355288550780"
+        },
+        {
+          "@id": "_:g70355290045600"
+        },
+        {
+          "@id": "_:g70355290791740"
+        },
+        {
+          "@id": "_:g70355290967000"
+        },
+        {
+          "@id": "_:g70355291129540"
+        },
+        {
+          "@id": "_:g70355291233720"
+        },
+        {
+          "@id": "_:g70355291374680"
+        },
+        {
+          "@id": "_:g70355291564040"
+        }
+      ],
+      "rdfs:comment": "Positive processor tests"
+    },
+    {
+      "@id": "http://www.w3.org/TR/microdata-rdf/tests/",
+      "md:item": {
+        "@list": [
+          {
+            "@id": "_:g70355306226700"
+          }
+        ]
+      }
+    }
+  ]
+}

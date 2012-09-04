@@ -925,7 +925,7 @@ module JSON::LD
         else
           val_lang == language(term) ? 3 : (default_term ? 1 : 0)
         end
-      else # subject definition/reference
+      else # node definition/reference
         coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
       end
       

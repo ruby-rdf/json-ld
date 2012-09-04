@@ -11,13 +11,13 @@ module JSON::LD
     # @param [Array<RDF::Statement>, RDF::Enumerable] input
     # @return [Array<Hash>] the JSON-LD document in normalized form
     def from_statements(input)
-      defaultGraph = {:subjects => {}, :listMap => {}, :name => ''}
+      defaultGraph = {:nodes => {}, :listMap => {}, :name => ''}
       graphs = {'' => defaultGraph}
 
       value = nil
       ec = EvaluationContext.new
 
-      # Create a map for subject to object representation
+      # Create a map for node to object representation
 
       # For each triple in input
       input.each do |statement|
@@ -27,7 +27,7 @@ module JSON::LD
         name = statement.context ? ec.expand_iri(statement.context).to_s : ''
         
         # Create a graph entry as needed
-        graph = graphs[name] ||= {:subjects => {}, :listMap => {}, :name => name}
+        graph = graphs[name] ||= {:nodes => {}, :listMap => {}, :name => name}
         
         case statement.predicate
         when RDF.first
@@ -57,11 +57,11 @@ module JSON::LD
         end
 
         # Add entry to default graph for name unless it is empty
-        defaultGraph[:subjects][name] ||= {'@id' => name} unless name.empty?
+        defaultGraph[:nodes][name] ||= {'@id' => name} unless name.empty?
         
-        # Get value from graph subjects for subject, initializing it to a new subject declaration for subject if it does not exist
-        debug("@id") { "new subject: #{subject}"} unless graph[:subjects].has_key?(subject)
-        value = graph[:subjects][subject] ||= {'@id' => subject}
+        # Get value from graph nodes for subject, initializing it to a new node declaration for subject if it does not exist
+        debug("@id") { "new subject: #{subject}"} unless graph[:nodes].has_key?(subject)
+        value = graph[:nodes][subject] ||= {'@id' => subject}
 
         # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type
         # and the notType option is not true
@@ -121,15 +121,15 @@ module JSON::LD
 
       # Build graphs in @id order
       debug("graphs") {graphs.to_json(JSON_STATE)}
-      array = defaultGraph[:subjects].keys.sort.map do |subject|
-        entry = defaultGraph[:subjects][subject]
+      array = defaultGraph[:nodes].keys.sort.map do |subject|
+        entry = defaultGraph[:nodes][subject]
         debug("=> default") {entry.to_json(JSON_STATE)}
         
         # If subject is a named graph, add serialized subject defintions
         if graphs.has_key?(subject) && !subject.empty?
-          entry['@graph'] = graphs[subject][:subjects].keys.sort.map do |s|
+          entry['@graph'] = graphs[subject][:nodes].keys.sort.map do |s|
             debug("=> #{s.inspect}")
-            graphs[subject][:subjects][s]
+            graphs[subject][:nodes][s]
           end
         end
         

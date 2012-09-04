@@ -1,0 +1,20 @@
+{
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "mf": "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+    "mq": "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+    
+    "comment": "rdfs:comment",
+    "entries": {"@id": "mf:entries", "@container": "@list"},
+    "name": "mf:name",
+    "action": "mf:action",
+    "data": {"@id": "mq:data", "@type": "@id"},
+    "query": {"@id": "mq:query", "@type": "@id"},
+    "result": {"@id": "mf:result", "@type": "xsd:boolean"}
+  },
+  "@type": "mf:Manifest",
+  "entries": [{
+    "@type": "mf:ManifestEntry"
+  }]
+}

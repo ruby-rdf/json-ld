@@ -388,6 +388,70 @@ describe JSON::LD::API do
             }
           ]
         }
+      },
+      "microdata manifest" => {
+        :frame => {
+          "@context" => {
+            "xsd" => "http://www.w3.org/2001/XMLSchema#",
+            "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
+            "mf" => "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+            "mq" => "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+    
+            "comment" => "rdfs:comment",
+            "entries" => {"@id" => "mf:entries", "@container" => "@list"},
+            "name" => "mf:name",
+            "action" => "mf:action",
+            "data" => {"@id" => "mq:data", "@type" => "@id"},
+            "query" => {"@id" => "mq:query", "@type" => "@id"},
+            "result" => {"@id" => "mf:result", "@type" => "xsd:boolean"}
+          },
+          "@type" => "mf:Manifest",
+          "entries" => [{
+            "@type" => "mf:ManifestEntry",
+            "action" => {
+              "@type" => "mq:QueryTest"
+            }
+          }]
+        },
+        :input => {
+          "@context" => {
+            "md" => "http://www.w3.org/ns/md#",
+            "mf" => "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+            "mq" => "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+            "rdfs" => "http://www.w3.org/2000/01/rdf-schema#"
+          },
+          "@graph" => [
+            {
+              "@id" => "_:manifest",
+              "@type" => "mf:Manifest",
+              "mf:entries" => {"@list" => [
+                {"@id" => "_:entry"}
+              ]},
+              "rdfs:comment" => "Positive processor tests"
+            },
+            {
+              "@id" => "_:entry",
+              "@type" => "mf:ManifestEntry",
+              "mf:action" => {"@id" => "_:query"},
+              "mf:name" => "Test 0001",
+              "mf:result" => "true",
+              "rdfs:comment" => "Item with no itemtype and literal itemprop"
+            },
+            {
+              "@id" => "_:query",
+              "@type" => "mq:QueryTest",
+              "mq:data" => {
+                "@id" => "http://www.w3.org/TR/microdata-rdf/tests/0001.html"
+              },
+              "mq:query" => {
+                "@id" => "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
+              }
+            }
+          ]
+        },
+        :output => {
+          
+        }
       }
     }.each do |title, params|
       it title do
@@ -460,6 +524,38 @@ describe JSON::LD::API do
           },
         }
       },
+      "anon in list" => {
+        :input => [{
+          "@id" => "_:a",
+          "http://example.com/list" => [{"@list" => [{"@id" => "_:b"}]}]
+        }, {
+          "@id" => "_:b",
+          "http://example.com/name" => "foo"
+        }],
+        :subjects => %w(_:t0 _:t1),
+        :output => {
+          "_:t0" => {
+            "@id" => "_:t0",
+            "http://example.com/list" => [
+              {
+                "@list" => [
+                  {
+                    "@id" => "_:t1"
+                  }
+                ]
+              }
+            ]
+          },
+          "_:t1" => {
+            "@id" => "_:t1",
+            "http://example.com/name" => [
+              {
+                "@value" => "foo"
+              }
+            ]
+          }
+        }
+      }
     }.each do |title, params|
       it title do
         @debug = []

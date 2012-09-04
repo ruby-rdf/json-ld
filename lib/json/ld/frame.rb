@@ -7,28 +7,28 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Hash{String => Hash}] subjects
-    #   Map of flattened subjects
+    # @param [Hash{String => Hash}] nodes
+    #   Map of flattened nodes
     # @param [Hash{String => Object}] frame
     # @param [Hash{String => Object}] parent
-    #   Parent subject or top-level array
+    #   Parent node or top-level array
     # @param [String] property
     #   Property referencing this frame, or null for array.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, parent, property)
-      raise ProcessingError, "why isn't @subjects a hash?: #{@subjects.inspect}" unless @subjects.is_a?(Hash)
+    def frame(state, nodes, frame, parent, property)
+      raise ProcessingError, "why isn't @nodes a hash?: #{@nodes.inspect}" unless @nodes.is_a?(Hash)
       depth do
         debug("frame") {"state: #{state.inspect}"}
-        debug("frame") {"subjects: #{subjects.keys.inspect}"}
+        debug("frame") {"nodes: #{nodes.keys.inspect}"}
         debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
         debug("frame") {"parent: #{parent.to_json(JSON_STATE)}"}
         debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)
 
-        # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
+        # Create a set of matched nodes by filtering nodes by checking the map of flattened nodes against frame
         # This gives us a hash of objects indexed by @id
-        matches = filter_subjects(state, subjects, frame)
+        matches = filter_nodes(state, nodes, frame)
         debug("frame") {"matches: #{matches.keys.inspect}"}
 
         # Get values for embedOn and explicitOn
@@ -36,7 +36,7 @@ module JSON::LD
         explicit = get_frame_flag(state, frame, 'explicit');
         debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
       
-        # For each id and subject from the set of matched subjects ordered by id
+        # For each id and node from the set of matched nodes ordered by id
         matches.keys.sort.each do |id|
           element = matches[id]
           # If the active property is null, set the map of embeds in state to an empty map
@@ -45,7 +45,7 @@ module JSON::LD
           output = {'@id' => id}
         
           # prepare embed meta info
-          embedded_subject = {:parent => parent, :property => property}
+          embedded_node = {:parent => parent, :property => property}
         
           # If embedOn is true, and id is in map of embeds from state
           if embed && (existing = state[:embeds].fetch(id, nil))
@@ -58,7 +58,7 @@ module JSON::LD
               # If existing has a parent which is an array containing a JSON object with @id equal to id, element has already been embedded and can be overwritten, so set embedOn to true
               existing[:parent].detect {|p| p['@id'] == id}
             else
-              # Otherwise, existing has a parent which is a subject definition. Set embedOn to true if any of the items in parent property is a subject definition or subject reference for id because the embed can be overwritten
+              # Otherwise, existing has a parent which is a node definition. Set embedOn to true if any of the items in parent property is a node definition or node reference for id because the embed can be overwritten
               existing[:parent].fetch(existing[:property], []).any? do |v|
                 v.is_a?(Hash) && v.fetch('@id', nil) == id
               end
@@ -74,14 +74,14 @@ module JSON::LD
             add_frame_output(state, parent, property, output)
           else
             # Add embed to map of embeds for id
-            state[:embeds][id] = embedded_subject
-            debug("frame") {"add embedded_subject: #{embedded_subject.inspect}"}
+            state[:embeds][id] = embedded_node
+            debug("frame") {"add embedded_node: #{embedded_node.inspect}"}
         
-            # Process each property and value in the matched subject as follows
+            # Process each property and value in the matched node as follows
             element.keys.sort.each do |prop|
               value = element[prop]
               if prop[0,1] == '@'
-                # If property is a keyword, add property and a copy of value to output and continue with the next property from subject
+                # If property is a keyword, add property and a copy of value to output and continue with the next property from node
                 output[prop] = value.dup
                 next
               end
@@ -89,7 +89,7 @@ module JSON::LD
               # If property is not in frame:
               unless frame.has_key?(prop)
                 debug("frame") {"non-framed property #{prop}"}
-                # If explicitOn is false, Embed values from subject in output using subject as element and property as active property
+                # If explicitOn is false, Embed values from node in output using node as element and property as active property
                 embed_values(state, element, prop, output) unless explicit
                 
                 # Continue to next property
@@ -110,29 +110,29 @@ module JSON::LD
                   
                   # Process each listitem in the @list array as follows
                   item['@list'].each do |listitem|
-                    if subject_reference?(listitem)
+                    if node_reference?(listitem)
                       itemid = listitem['@id']
                       debug("frame") {"list item of #{prop} recurse for #{itemid.inspect}"}
 
-                      # If listitem is a subject reference process listitem recursively using this algorithm passing a new map of subjects that contains the @id of listitem as the key and the subject reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
-                      frame(state, {itemid => @subjects[itemid]}, frame[prop].first, list, '@list')
+                      # If listitem is a node reference process listitem recursively using this algorithm passing a new map of nodes that contains the @id of listitem as the key and the node reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
+                      frame(state, {itemid => @nodes[itemid]}, frame[prop].first, list, '@list')
                     else
                       # Otherwise, append a copy of listitem to @list in list.
-                      debug("frame") {"list item of #{prop} non-subject ref #{listitem.inspect}"}
+                      debug("frame") {"list item of #{prop} non-node ref #{listitem.inspect}"}
                       add_frame_output(state, list, '@list', listitem)
                     end
                   end
-                elsif subject_reference?(item)
-                  # If item is a subject reference process item recursively
+                elsif node_reference?(item)
+                  # If item is a node reference process item recursively
                   # Recurse into sub-objects
                   itemid = item['@id']
                   debug("frame") {"value property #{prop} recurse for #{itemid.inspect}"}
                   
-                  # passing a new map as subjects that contains the @id of item as the key and the subject reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
-                  frame(state, {itemid => @subjects[itemid]}, frame[prop].first, output, prop)
+                  # passing a new map as nodes that contains the @id of item as the key and the node reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
+                  frame(state, {itemid => @nodes[itemid]}, frame[prop].first, output, prop)
                 else
                   # Otherwise, append a copy of item to active property in output.
-                  debug("frame") {"value property #{prop} non-subject ref #{item.inspect}"}
+                  debug("frame") {"value property #{prop} non-node ref #{item.inspect}"}
                   add_frame_output(state, output, prop, item)
                 end
               end
@@ -165,29 +165,29 @@ module JSON::LD
     end
 
     ##
-    # Build hash of subjects used for framing. Also returns flattened representation
+    # Build hash of nodes used for framing. Also returns flattened representation
     # of input.
     #
-    # @param [Hash{String => Hash}] subjects
-    #   destination for mapped subjects and their Object representations
+    # @param [Hash{String => Hash}] nodes
+    #   destination for mapped nodes and their Object representations
     # @param [Array, Hash] input
     #   JSON-LD in expanded form
     # @param [BlankNodeNamer] namer
     # @return
-    #   input with subject definitions changed to references
-    def get_framing_subjects(subjects, input, namer)
+    #   input with node definitions changed to references
+    def get_framing_nodes(nodes, input, namer)
       depth do
-        debug("framing subjects") {"input: #{input.inspect}"}
+        debug("framing nodes") {"input: #{input.inspect}"}
         case input
         when Array
-          input.map {|o| get_framing_subjects(subjects, o, namer)}
+          input.map {|o| get_framing_nodes(nodes, o, namer)}
         when Hash
           case
-          when subject?(input) || subject_reference?(input)
-            # Get name for subject, mapping old blank node identifiers to new
+          when node?(input) || node_reference?(input)
+            # Get name for node, mapping old blank node identifiers to new
             name = blank_node?(input) ? namer.get_name(input.fetch('@id', nil)) : input['@id']
-            debug("framing subjects") {"new subject: #{name.inspect}"} unless subjects.has_key?(name)
-            subject = subjects[name] ||= {'@id' => name}
+            debug("framing nodes") {"new node: #{name.inspect}"} unless subjects.has_key?(name)
+            node = nodes[name] ||= {'@id' => name}
 
             # In property order
             input.keys.sort.each do |prop|
@@ -197,30 +197,30 @@ module JSON::LD
                 # Skip @id, already assigned
               when /^@/
                 # Copy other keywords
-                subject[prop] = value
+                node[prop] = value
               else
                 case value
                 when Hash
                   # Special case @list, which is not in expanded form
                   raise InvalidFrame::Syntax, "Unexpected hash value: #{value.inspect}" unless value.has_key?('@list')
                 
-                  # Map entries replacing subjects with subject references
-                  subject[prop] = {"@list" =>
-                    value['@list'].map {|o| get_framing_subjects(subjects, o, namer)}
+                  # Map entries replacing nodes with node references
+                  node[prop] = {"@list" =>
+                    value['@list'].map {|o| get_framing_nodes(nodes, o, namer)}
                   }
                 when Array
                   # Map array entries
-                  subject[prop] = get_framing_subjects(subjects, value, namer)
+                  node[prop] = get_framing_nodes(nodes, value, namer)
                 else
                   raise InvalidFrame::Syntax, "unexpected value: #{value.inspect}"
                 end
               end
             end
             
-            # Return as subject reference
+            # Return as node reference
             {"@id" => name}
           else
-            # At this point, it's not a subject or a reference, just return input
+            # At this point, it's not a node or a reference, just return input
             input
           end
         else
@@ -289,50 +289,51 @@ module JSON::LD
     private
     
     ##
-    # Returns a map of all of the subjects that match a parsed frame.
+    # Returns a map of all of the nodes that match a parsed frame.
     # 
     # @param state the current framing state.
-    # @param subjects the set of subjects to filter.
+    # @param nodes the set of nodes to filter.
     # @param frame the parsed frame.
     # 
-    # @return all of the matched subjects.
-    def filter_subjects(state, subjects, frame)
-      subjects.dup.keep_if {|id, element| filter_subject(state, element, frame)}
+    # @return all of the matched nodes.
+    def filter_nodes(state, nodes, frame)
+      nodes.dup.keep_if {|id, element| element && filter_node(state, element, frame)}
     end
 
     ##
-    # Returns true if the given subject matches the given frame.
+    # Returns true if the given node matches the given frame.
     #
-    # Matches either based on explicit type inclusion where the subject
+    # Matches either based on explicit type inclusion where the node
     # has any type listed in the frame. If the frame has empty types defined
-    # matches subjects not having a @type. If the frame has a type of {} defined
-    # matches subjects having any type defined.
+    # matches nodes not having a @type. If the frame has a type of {} defined
+    # matches nodes having any type defined.
     #
-    # Otherwise, does duck typing, where the subject must have all of the properties
+    # Otherwise, does duck typing, where the node must have all of the properties
     # defined in the frame.
     # 
     # @param [Hash{Symbol => Object}] state the current frame state.
-    # @param [Hash{String => Object}] subject the subject to check.
+    # @param [Hash{String => Object}] node the node to check.
     # @param [Hash{String => Object}] frame the frame to check.
     # 
-    # @return true if the subject matches, false if not.
-    def filter_subject(state, subject, frame)
+    # @return true if the node matches, false if not.
+    def filter_node(state, node, frame)
+      debug("frame") {"filter node: #{node.inspect}"}
       if types = frame.fetch('@type', nil)
-        subject_types = subject.fetch('@type', [])
+        node_types = node.fetch('@type', [])
         raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
-        raise InvalidFrame::Syntax, "subject @type must be an array: #{subject_types.inspect}" unless subject_types.is_a?(Array)
-        # If frame has an @type, use it for selecting appropriate subjects.
-        debug("frame") {"filter subject: #{subject_types.inspect} has any of #{types.inspect}"}
+        raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless node_types.is_a?(Array)
+        # If frame has an @type, use it for selecting appropriate nodes.
+        debug("frame") {"filter node: #{node_types.inspect} has any of #{types.inspect}"}
 
         # Check for type wild-card, or intersection
-        types == [{}] ? !subject_types.empty? : subject_types.any? {|t| types.include?(t)}
+        types == [{}] ? !node_types.empty? : node_types.any? {|t| types.include?(t)}
       else
-        # Duck typing, for subjects not having a type, but having @id
+        # Duck typing, for nodes not having a type, but having @id
         
         # Subject matches if it has all the properties in the frame
         frame_keys = frame.keys.reject {|k| k[0,1] == '@'}
-        subject_keys = subject.keys.reject {|k| k[0,1] == '@'}
-        (frame_keys & subject_keys) == frame_keys
+        node_keys = node.keys.reject {|k| k[0,1] == '@'}
+        (frame_keys & node_keys) == frame_keys
       end
     end
 
@@ -361,13 +362,13 @@ module JSON::LD
       property = embed[:property];
 
       # create reference to replace embed
-      subject = {}
-      subject['@id'] = id
+      node = {}
+      node['@id'] = id
       ref = {'@id' => id}
       
       # remove existing embed
-      if subject?(parent)
-        # replace subject with reference
+      if node?(parent)
+        # replace node with reference
         parent[property].map! do |v|
           v.is_a?(Hash) && v.fetch('@id', nil) == id ? ref : v
         end
@@ -418,7 +419,7 @@ module JSON::LD
     def embed_values(state, element, property, output)
       element[property].each do |o|
         # Get element @id, if this is an object
-        sid = o['@id'] if subject_reference?(o)
+        sid = o['@id'] if node_reference?(o)
         if sid
           unless state[:embeds].has_key?(sid)
             debug("frame") {"embed element #{sid.inspect}"}
@@ -427,7 +428,7 @@ module JSON::LD
             state[:embeds][sid] = embed
           
             # Recurse into element
-            s = @subjects.fetch(sid, {'@id' => sid})
+            s = @nodes.fetch(sid, {'@id' => sid})
             o = {}
             s.each do |prop, value|
               if prop[0,1] == '@'

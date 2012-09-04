@@ -373,7 +373,7 @@ describe JSON::LD::API do
             ]
           }
         },
-        "Uses expanded subject definitions for subject references" => {
+        "Uses expanded node definitions for node references" => {
           :input => [
             {"@id" => "http://example.com/foo"},
             {"@id" => "http://example.com/bar"}
