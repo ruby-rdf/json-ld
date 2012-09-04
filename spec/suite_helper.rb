@@ -26,27 +26,32 @@ module RDF::Util
         path = filename_or_url[5..-1]
         Kernel.open(path.to_s, &block)
       when /^#{REMOTE_PATH}/
-        #puts "attempt to open #{filename_or_url} locally"
-        if response = ::File.open(filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH))
-          #puts "use #{filename_or_url} locally"
-          case filename_or_url.to_s
-          when /\.jsonld$/
-            def response.content_type; 'application/ld+json'; end
-          when /\.sparql$/
-            def response.content_type; 'application/sparql-query'; end
-          end
+        begin
+          #puts "attempt to open #{filename_or_url} locally"
+          if response = ::File.open(filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH))
+            #puts "use #{filename_or_url} locally"
+            case filename_or_url.to_s
+            when /\.jsonld$/
+              def response.content_type; 'application/ld+json'; end
+            when /\.sparql$/
+              def response.content_type; 'application/sparql-query'; end
+            end
 
-          if block_given?
-            begin
-              yield response
-            ensure
-              response.close
+            if block_given?
+              begin
+                yield response
+              ensure
+                response.close
+              end
+            else
+              response
             end
           else
-            response
+            Kernel.open(filename_or_url.to_s, &block)
           end
-        else
-          Kernel.open(filename_or_url.to_s, &block)
+        rescue Errno::ENOENT
+          # Not there, don't run tests
+          StringIO.new("")
         end
       else
       end
