@@ -32,7 +32,7 @@ describe JSON::LD::EvaluationContext do
 
       it "fails given a missing remote @context" do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to parse remote context/)
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to retrieve remote context/)
       end
 
       it "creates mappings" do
@@ -48,6 +48,18 @@ describe JSON::LD::EvaluationContext do
       it "allows a non-existing @context" do
         ec = subject.parse(StringIO.new("{}"))
         ec.mappings.should produce({}, @debug)
+      end
+      
+      it "parses a referenced context at a relative URI" do
+        c1 = StringIO.new(%({"@context": "context"}))
+        RDF::Util::File.stub(:open_file).with("http://example.com/c1").and_yield(c1)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        ec = subject.parse("http://example.com/c1")
+        ec.mappings.should produce({
+          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "homepage" => "http://xmlns.com/foaf/0.1/homepage",
+          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+        }, @debug)
       end
     end
 
