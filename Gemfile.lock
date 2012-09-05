@@ -16,7 +16,7 @@ PATH
 PATH
   remote: ../rdf-spec
   specs:
-    rdf-spec (0.3.5)
+    rdf-spec (0.3.8)
       rspec (>= 2.8.0)
 
 GEM
