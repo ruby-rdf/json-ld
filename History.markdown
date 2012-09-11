@@ -1,3 +1,10 @@
+=== 0.1.6
+* Added flattening API, and updated algorithm.
+* Fixed framing issues using updated flattening.
+
+=== 0.1.5
+* Added support for @vocab.
+
 === 0.1.4.1
 * Include rdf-xsd for some specs.
 * Refactor #expand_value to deal with previous matching on RDF::Literal::Integer for sub-types.
