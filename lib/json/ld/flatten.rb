@@ -14,7 +14,9 @@ module JSON::LD
     # @param [Array] list
     #   List for saving list elements
     # @param [BlankNodeNamer] namer
-    def generate_node_map(element, node_map, graph, list, namer)
+    # @param [String] id
+    #   Identifier already associated with element
+    def generate_node_map(element, node_map, graph, list, namer, id = nil)
       depth do
         debug("nodeMap") {"element: #{element.inspect}, graph: #{graph}"}
         if element.is_a?(Array)
@@ -23,9 +25,10 @@ module JSON::LD
           list << element if list
         else
           # If the @id property exists and is an IRI, set id to its value, otherwise set it to a blank node identifier created by the Generate Blank Node Identifier algorithm.
-          id = blank_node?(element) ? namer.get_name(element.fetch('@id', nil)) : element['@id']
+          # FIXME: (spec) id passed when it is allocated, so it is not re-allocated here.
+          id ||= blank_node?(element) ? namer.get_name(element.fetch('@id', nil)) : element['@id']
           
-          # If list is not null, append a new node reference to list using id at the value for @id.
+          # If list is not nil, append a new node reference to list using id at the value for @id.
           list << {'@id' => id} if list
 
           # Let nodes be the value in nodeMap where the key is graph; if no such value exists, insert a new JSON object for the key graph.
@@ -43,11 +46,12 @@ module JSON::LD
             when '@id'
               # Skip @id, already assigned
             when '@graph'
-              # If property is @graph, recursively call this algorithm passing value for element, nodeMap, null for list and if graph is @merged use graph, otherwise use id for graph and then continue.
+              # If property is @graph, recursively call this algorithm passing value for element, nodeMap, nil for list and if graph is @merged use graph, otherwise use id for graph and then continue.
               graph = graph == '@merged' ? '@merged' : id
-              generate_node_map(value, node_map, graph, null, namer)
+              generate_node_map(value, node_map, graph, nil, namer)
             when /^@(?!type)/
               # If property is not @type and is a keyword, merge property and value into node and then continue.
+              debug("nodeMap") {"merge keyword#{prop}: #{value.inspect}"}
               node[prop] = value
             else
               raise InvalidFrame::Syntax,
@@ -57,11 +61,12 @@ module JSON::LD
               # For each value v in the array value:
               value.each do |v|
                 if node?(v) || node_reference?(v)
+                  debug("nodeMap") {"node value #{prop}: #{v.inspect}"}
                   # If v is a node definition or node reference:
                   # If the property @id is not an IRI or it does not exist, map v to a new blank node identifier to avoid collisions.
-                  name = blank_node?(element) ?
-                    namer.get_name(element.fetch('@id', nil)) :
-                    element['@id']
+                  name = blank_node?(v) ?
+                    namer.get_name(v.fetch('@id', nil)) :
+                    v['@id']
 
                   # If one does not already exist, add a node reference for v into node for property.
                   node[prop] ||= []
@@ -69,10 +74,11 @@ module JSON::LD
                     node_ref?(n) && n['@id'] == name
                   }
 
-                  # Recursively call this algorithm passing v for value, nodeMap, graph, and null for list.
-                  generate_node_map(v, node_map, graph, null, namer)
+                  # Recursively call this algorithm passing v for value, nodeMap, graph, and nil for list.
+                  generate_node_map(v, node_map, graph, nil, namer, name)
                 elsif list?(v)
                   # Otherwise if v has the property @list then recursively call this algorithm with the value of @list as element, nodeMap, graph, and a new array flattenedList as list.
+                  debug("nodeMap") {"list value #{prop}: #{v.inspect}"}
                   flattened_list = []
                   generate_node_map(v['@list'],
                     node_map,
@@ -80,12 +86,14 @@ module JSON::LD
                     flattened_list,
                     namer)
                   # Create a new JSON object with the property @list set to flattenedList and add it to node for property.
-                  node[prop] = {'@list' => flattened_list}
+                  (node[prop] ||= []) << {'@list' => flattened_list}
                 elsif prop == '@type'
                   # Otherwise, if property is @type and v is not an IRI, generate a new blank node identifier and add it to node for property.
+                  # FIXME: @type shouldn't really be a BNode, and not clear how we even get here from expansion
                   name = blank_node?({'@id' => v}) ? namer.get_name(v) : v
                   (node[prop] ||= []) << name
                 else
+                  debug("nodeMap") {"value #{prop}: #{v.inspect}"}
                   # Otherwise, add v to node for property.
                   (node[prop] ||= []) << v
                 end

@@ -195,7 +195,7 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
-        #debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Generate _nodeMap_
         node_map = Hash.ordered
@@ -211,7 +211,8 @@ module JSON::LD
         definitions = node_map.fetch(graph.to_s, {})
         
         # Foreach property and valud of definitions
-        definitions.each do |prop, value|
+        definitions.keys.sort.each do |prop|
+          value = definitions[prop]
           result << value
         end
         

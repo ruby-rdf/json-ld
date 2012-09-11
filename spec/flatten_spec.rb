@@ -97,17 +97,20 @@ describe JSON::LD::API do
       it title do
         @debug = []
         @node_map = Hash.ordered
+        graph = params[:graph] || '@merged'
         jld = nil
         JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
           expanded_value = api.expand(api.value, nil, api.context)
           api.generate_node_map(expanded_value,
             @node_map,
-            params[:graph],
+            graph,
             nil,
             JSON::LD::BlankNodeNamer.new("t"))
         end
-        @node_map.keys.should produce(params[:subjects], @debug)
-        @node_map.should produce(params[:output], @debug)
+        @node_map.keys.should produce([graph], @debug)
+        subjects = @node_map[graph]
+        subjects.keys.should produce(params[:subjects], @debug)
+        subjects.should produce(params[:output], @debug)
       end
     end
   end
@@ -168,7 +171,8 @@ describe JSON::LD::API do
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.flatten(params[:input], nil, :debug => @debug) 
+        graph = params[:graph] || '@merged'
+        jld = JSON::LD::API.flatten(params[:input], graph, nil, nil, :debug => @debug) 
         jld.should produce(params[:output], @debug)
       end
     end
