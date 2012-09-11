@@ -416,6 +416,74 @@ describe JSON::LD::API do
       end
     end
 
+    context "default vocabulary" do
+      {
+        "property" => {
+          :input => {
+            "@context" => {"@vocab" => "http://example.com/"},
+            "verb" => {"@value" => "foo"}
+          },
+          :output => [{
+            "http://example.com/verb" => [{"@value" => "foo"}]
+          }]
+        },
+        "datatype" => {
+          :input => {
+            "@context" => {"@vocab" => "http://example.com/"},
+            "http://example.org/verb" => {"@value" => "foo", "@type" => "string"}
+          },
+          :output => [
+            "http://example.org/verb" => [{"@value" => "foo", "@type" => "http://example.com/string"}]
+          ]
+        },
+        "expand-0028" => {
+          :input => {
+            "@context" => {
+              "@vocab" => "http://example.org/vocab#",
+              "date" => { "@type" => "dateTime" }
+            },
+            "@id" => "example1",
+            "@type" => "test",
+            "date" => "2011-01-25T00:00:00Z",
+            "embed" => {
+              "@id" => "example2",
+              "expandedDate" => { "@value" => "2012-08-01T00:00:00Z", "@type" => "dateTime" }
+            }
+          },
+          :output => [
+            {
+              "@id" => "http://foo/bar/example1",
+              "@type" => ["http://example.org/vocab#test"],
+              "http://example.org/vocab#date" => [
+                {
+                  "@value" => "2011-01-25T00:00:00Z",
+                  "@type" => "http://example.org/vocab#dateTime"
+                }
+              ],
+              "http://example.org/vocab#embed" => [
+                {
+                  "@id" => "http://foo/bar/example2",
+                  "http://example.org/vocab#expandedDate" => [
+                    {
+                      "@value" => "2012-08-01T00:00:00Z",
+                      "@type" => "http://example.org/vocab#dateTime"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil,
+            :base => "http://foo/bar/",
+            :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
     context "unmapped properties" do
       {
         "unmapped key" => {

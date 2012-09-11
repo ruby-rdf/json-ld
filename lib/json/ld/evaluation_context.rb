@@ -476,7 +476,7 @@ module JSON::LD
       prefix, suffix = iri.split(':', 2)
       return mapping(iri) if mapping(iri) # If it's an exact match
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = self.base unless [:predicate, :datatype].include?(options[:position])
+      base = [:subject, :object].include?(options[:position]) ? self.base : nil
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)

@@ -71,7 +71,7 @@ module JSON::LD
                   # If one does not already exist, add a node reference for v into node for property.
                   node[prop] ||= []
                   node[prop] << {'@id' => name} unless node[prop].any? {|n|
-                    node_ref?(n) && n['@id'] == name
+                    node_reference?(n) && n['@id'] == name
                   }
 
                   # Recursively call this algorithm passing v for value, nodeMap, graph, and nil for list.
