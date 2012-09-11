@@ -293,12 +293,19 @@ module JSON::LD
         #debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        @nodes = Hash.ordered
-        depth {get_framing_subjects(@nodes, value, BlankNodeNamer.new("t"))}
-        debug(".frame") {"nodes: #{@nodes.to_json(JSON_STATE)}"}
+        all_nodes = Hash.ordered
+        depth do
+          generate_node_map(value,
+            all_nodes,
+            '@merged',
+            nil,
+            BlankNodeNamer.new("t"))
+        end
+        @node_map = all_nodes['@merged']
+        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @nodes, expanded_frame[0], result, nil)
+        frame(framing_state, @node_map, expanded_frame[0], result, nil)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame

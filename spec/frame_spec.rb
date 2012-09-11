@@ -450,7 +450,53 @@ describe JSON::LD::API do
           ]
         },
         :output => {
-          
+          "@context" => {
+            "xsd" => "http://www.w3.org/2001/XMLSchema#",
+            "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
+            "mf" => "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+            "mq" => "http://www.w3.org/2001/sw/DataAccess/tests/test-query#",
+            "comment" => "rdfs:comment",
+            "entries" => {
+              "@id" => "mf:entries",
+              "@container" => "@list"
+            },
+            "name" => "mf:name",
+            "action" => "mf:action",
+            "data" => {
+              "@id" => "mq:data",
+              "@type" => "@id"
+            },
+            "query" => {
+              "@id" => "mq:query",
+              "@type" => "@id"
+            },
+            "result" => {
+              "@id" => "mf:result",
+              "@type" => "xsd:boolean"
+            }
+          },
+          "@graph" => [
+            {
+              "@id" => "_:t0",
+              "@type" => "mf:Manifest",
+              "comment" => "Positive processor tests",
+              "entries" => [
+                {
+                  "@id" => "_:t1",
+                  "@type" => "mf:ManifestEntry",
+                  "action" => {
+                    "@id" => "_:t2",
+                    "@type" => "mq:QueryTest",
+                    "data" => "http://www.w3.org/TR/microdata-rdf/tests/0001.html",
+                    "query" => "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
+                  },
+                  "comment" => "Item with no itemtype and literal itemprop",
+                  "mf:result" => "true",
+                  "name" => "Test 0001"
+                }
+              ]
+            }
+          ]
         }
       }
     }.each do |title, params|
@@ -464,174 +510,6 @@ describe JSON::LD::API do
             "#{@debug.join("\n")}\n" +
             "Backtrace:\n#{e.backtrace.join("\n")}")
         end
-      end
-    end
-  end
-  
-  describe "#get_framing_subjects" do
-    {
-      "single object" => {
-        :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :subjects => %w(http://example.com),
-        :output => {
-          "http://example.com" => {
-            "@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]
-          }
-        }
-      },
-      "embedded object" => {
-        :input => {
-          "@context" => {"foaf" => RDF::FOAF.to_s},
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => ["foaf:PersonalProfile"],
-          "foaf:primaryTopic" => [{
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => ["foaf:Person"]
-          }]
-        },
-        :subjects => %w(http://greggkellogg.net/foaf http://greggkellogg.net/foaf#me),
-        :output => {
-          "http://greggkellogg.net/foaf" => {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
-          },
-          "http://greggkellogg.net/foaf#me" => {
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => [RDF::FOAF.Person.to_s]
-          }
-        }
-      },
-      "embedded anon" => {
-        :input => {
-          "@context" => {"foaf" => RDF::FOAF.to_s},
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => "foaf:PersonalProfile",
-          "foaf:primaryTopic" => {
-            "@type" => "foaf:Person"
-          }
-        },
-        :subjects => %w(http://greggkellogg.net/foaf _:t0),
-        :output => {
-          "_:t0" => {
-            "@id" => "_:t0",
-            "@type" => [RDF::FOAF.Person.to_s]
-          },
-          "http://greggkellogg.net/foaf" => {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
-          },
-        }
-      },
-      "anon in list" => {
-        :input => [{
-          "@id" => "_:a",
-          "http://example.com/list" => [{"@list" => [{"@id" => "_:b"}]}]
-        }, {
-          "@id" => "_:b",
-          "http://example.com/name" => "foo"
-        }],
-        :subjects => %w(_:t0 _:t1),
-        :output => {
-          "_:t0" => {
-            "@id" => "_:t0",
-            "http://example.com/list" => [
-              {
-                "@list" => [
-                  {
-                    "@id" => "_:t1"
-                  }
-                ]
-              }
-            ]
-          },
-          "_:t1" => {
-            "@id" => "_:t1",
-            "http://example.com/name" => [
-              {
-                "@value" => "foo"
-              }
-            ]
-          }
-        }
-      }
-    }.each do |title, params|
-      it title do
-        @debug = []
-        @subjects = Hash.ordered
-        jld = nil
-        JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
-          expanded_value = api.expand(api.value, nil, api.context)
-          api.get_framing_subjects(@subjects, expanded_value, JSON::LD::BlankNodeNamer.new("t"))
-        end
-        @subjects.keys.should produce(params[:subjects], @debug)
-        @subjects.should produce(params[:output], @debug)
-      end
-    end
-  end
-
-  describe ".flatten" do
-    {
-      "single object" => {
-        :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :output => [{"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}]
-      },
-      "embedded object" => {
-        :input => {
-          "@context" => {
-            "foaf" => RDF::FOAF.to_s
-          },
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => ["foaf:PersonalProfile"],
-          "foaf:primaryTopic" => [{
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => ["foaf:Person"]
-          }]
-        },
-        :output => [
-          {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
-          },
-          {
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => [RDF::FOAF.Person.to_s]
-          }
-        ]
-      },
-      "embedded anon" => {
-        :input => {
-          "@context" => {
-            "foaf" => RDF::FOAF.to_s
-          },
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => "foaf:PersonalProfile",
-          "foaf:primaryTopic" => {
-            "@type" => "foaf:Person"
-          }
-        },
-        :output => [
-          {
-            "@id" => "_:t0",
-            "@type" => [RDF::FOAF.Person.to_s]
-          },
-          {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
-          },
-        ]
-      }
-    }.each do |title, params|
-      it title do
-        @debug = []
-        jld = nil
-        JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
-          jld = api.flatten
-        end
-        jld.should produce(params[:output], @debug)
       end
     end
   end

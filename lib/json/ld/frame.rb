@@ -16,7 +16,6 @@ module JSON::LD
     #   Property referencing this frame, or null for array.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, nodes, frame, parent, property)
-      raise ProcessingError, "why isn't @nodes a hash?: #{@nodes.inspect}" unless @nodes.is_a?(Hash)
       depth do
         debug("frame") {"state: #{state.inspect}"}
         debug("frame") {"nodes: #{nodes.keys.inspect}"}
@@ -115,7 +114,7 @@ module JSON::LD
                       debug("frame") {"list item of #{prop} recurse for #{itemid.inspect}"}
 
                       # If listitem is a node reference process listitem recursively using this algorithm passing a new map of nodes that contains the @id of listitem as the key and the node reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
-                      frame(state, {itemid => @nodes[itemid]}, frame[prop].first, list, '@list')
+                      frame(state, {itemid => @node_map[itemid]}, frame[prop].first, list, '@list')
                     else
                       # Otherwise, append a copy of listitem to @list in list.
                       debug("frame") {"list item of #{prop} non-node ref #{listitem.inspect}"}
@@ -129,7 +128,7 @@ module JSON::LD
                   debug("frame") {"value property #{prop} recurse for #{itemid.inspect}"}
                   
                   # passing a new map as nodes that contains the @id of item as the key and the node reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
-                  frame(state, {itemid => @nodes[itemid]}, frame[prop].first, output, prop)
+                  frame(state, {itemid => @node_map[itemid]}, frame[prop].first, output, prop)
                 else
                   # Otherwise, append a copy of item to active property in output.
                   debug("frame") {"value property #{prop} non-node ref #{item.inspect}"}
@@ -162,89 +161,6 @@ module JSON::LD
           end
         end
       end
-    end
-
-    ##
-    # Build hash of nodes used for framing. Also returns flattened representation
-    # of input.
-    #
-    # @param [Hash{String => Hash}] nodes
-    #   destination for mapped nodes and their Object representations
-    # @param [Array, Hash] input
-    #   JSON-LD in expanded form
-    # @param [BlankNodeNamer] namer
-    # @return
-    #   input with node definitions changed to references
-    def get_framing_nodes(nodes, input, namer)
-      depth do
-        debug("framing nodes") {"input: #{input.inspect}"}
-        case input
-        when Array
-          input.map {|o| get_framing_nodes(nodes, o, namer)}
-        when Hash
-          case
-          when node?(input) || node_reference?(input)
-            # Get name for node, mapping old blank node identifiers to new
-            name = blank_node?(input) ? namer.get_name(input.fetch('@id', nil)) : input['@id']
-            debug("framing nodes") {"new node: #{name.inspect}"} unless subjects.has_key?(name)
-            node = nodes[name] ||= {'@id' => name}
-
-            # In property order
-            input.keys.sort.each do |prop|
-              value = input[prop]
-              case prop
-              when '@id'
-                # Skip @id, already assigned
-              when /^@/
-                # Copy other keywords
-                node[prop] = value
-              else
-                case value
-                when Hash
-                  # Special case @list, which is not in expanded form
-                  raise InvalidFrame::Syntax, "Unexpected hash value: #{value.inspect}" unless value.has_key?('@list')
-                
-                  # Map entries replacing nodes with node references
-                  node[prop] = {"@list" =>
-                    value['@list'].map {|o| get_framing_nodes(nodes, o, namer)}
-                  }
-                when Array
-                  # Map array entries
-                  node[prop] = get_framing_nodes(nodes, value, namer)
-                else
-                  raise InvalidFrame::Syntax, "unexpected value: #{value.inspect}"
-                end
-              end
-            end
-            
-            # Return as node reference
-            {"@id" => name}
-          else
-            # At this point, it's not a node or a reference, just return input
-            input
-          end
-        else
-          # Returns equivalent representation
-          input
-        end
-      end
-    end
-
-    ##
-    # Flatten input, used in framing.
-    #
-    # This algorithm works by transforming input to statements, and then back to JSON-LD
-    #
-    # @return [Array{Hash}]
-    def flatten
-      debug("flatten")
-      expanded = depth {self.expand(self.value, nil, context)}
-      statements = []
-      depth {self.statements("", expanded, nil, nil, nil ) {|s| statements << s}}
-      debug("flatten") {"statements: #{statements.map(&:to_nquads).join("\n")}"}
-
-      # Transform back to JSON-LD, not flattened
-      depth {self.from_statements(statements)}
     end
 
     ##
@@ -428,7 +344,7 @@ module JSON::LD
             state[:embeds][sid] = embed
           
             # Recurse into element
-            s = @nodes.fetch(sid, {'@id' => sid})
+            s = @node_map.fetch(sid, {'@id' => sid})
             o = {}
             s.each do |prop, value|
               if prop[0,1] == '@'
