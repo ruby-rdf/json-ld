@@ -66,6 +66,14 @@ describe JSON::LD::API do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
           serialize(input).should produce([{
             '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => 1}]
+          }], @debug)
+        end
+
+        it "integer (non-native)" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
+          serialize(input, :useNativeTypes => false).should produce([{
+            '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
           }], @debug)
         end
@@ -73,6 +81,14 @@ describe JSON::LD::API do
         it "boolean" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
           serialize(input).should produce([{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => true}]
+          }], @debug)
+        end
+
+        it "boolean (non-native)" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
+          serialize(input, :useNativeTypes => false).should produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
           }], @debug)
@@ -90,12 +106,20 @@ describe JSON::LD::API do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
           serialize(input).should produce([{
             '@id'   => "http://example.com/a",
+            "http://example.com/b"    => [{"@value" => 1.0E0}]
+          }], @debug)
+        end
+
+        it "double (non-native)" do
+          input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
+          serialize(input, :useNativeTypes => false).should produce([{
+            '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
           }], @debug)
         end
       end
 
-      context "datatyped" do
+      context "datatyped (non-native)" do
         {
           :integer            => 1,
           :unsignedInteger    => 1,
@@ -110,7 +134,7 @@ describe JSON::LD::API do
               @prefix ex: <http://example.com/> .
               ex:a ex:b "#{v}"^^xsd:#{t} .
             )
-            serialize(input).should produce([{
+            serialize(input, :useNativeTypes => false).should produce([{
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
             }], @debug)
@@ -307,10 +331,10 @@ describe JSON::LD::API do
       end
     end
 
-    context "notType option" do
+    context "useRdfType option" do
       it "uses @type if set to false" do
         input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
-        serialize(input, :notType => false).should produce([{
+        serialize(input, :useRdfType => false).should produce([{
           '@id'   => "http://example.com/a",
           "@type"    => ["http://example.com/b"]
         }], @debug)
@@ -318,7 +342,7 @@ describe JSON::LD::API do
       
       it "does not use @type if set to true" do
         input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
-        serialize(input, :notType => true).should produce([{
+        serialize(input, :useRdfType => true).should produce([{
           '@id'   => "http://example.com/a",
           RDF.type.to_s    => [{"@id" => "http://example.com/b"}]
         }], @debug)

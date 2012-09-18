@@ -64,8 +64,8 @@ module JSON::LD
         value = graph[:nodes][subject] ||= {'@id' => subject}
 
         # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-        # and the notType option is not true
-        if statement.predicate == RDF.type && !@options[:notType]
+        # and the useRdfType option is not true
+        if statement.predicate == RDF.type && !@options[:useRdfType]
           object = ec.expand_iri(statement.object).to_s
           debug("@type") { object.inspect}
           # append the string representation of object to the array value for the key @type, creating
@@ -78,10 +78,11 @@ module JSON::LD
           key = ec.expand_iri(statement.predicate).to_s
           (value[key] ||= []) << {"@list" => []}
         else
-          # Otherwise, let key be the string representation of predicate and let object representation
-          # be object represented in expanded form as described in Value Expansion.
+          # Otherwise, let key be the string representation of predicate and 
+          # let object representation be object represented in expanded form as 
+          # described in Value Expansion.
           key = ec.expand_iri(statement.predicate).to_s
-          object = ec.expand_value(key, statement.object, :native => false)
+          object = ec.expand_value(key, statement.object, @options)
           if blank_node?(object)
             # if object is an Unnamed Node, set as the head element in the listMap
             # entry for object

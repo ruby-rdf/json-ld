@@ -13,6 +13,11 @@ module JSON::LD
     # @attr_reader [RDF::URI]
     attr_reader :base
 
+    # The base IRI of the context, if loaded remotely.
+    #
+    # @attr [RDF::URI]
+    attr :context_base, true
+
     # A list of current, in-scope mappings from term to IRI.
     #
     # @attr [Hash{String => String}]
@@ -132,18 +137,26 @@ module JSON::LD
           raise JSON::LD::InvalidContext::Syntax, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
           self.dup
         end
-      when String, nil
+      when nil
+        debug("parse") {"nil"}
+        # Load context document, if it is a string
+        ec = EvaluationContext.new(options)
+      when String
         debug("parse") {"remote: #{context}"}
         # Load context document, if it is a string
         ec = nil
         begin
-          RDF::Util::File.open_file(context.to_s) {|f| ec = parse(f)}
+          url = expand_iri(context, :base => context_base || base)
+          ecdup = self.dup
+          ecdup.context_base = url  # Set context_base for recursive remote contexts
+          RDF::Util::File.open_file(url) {|f| ec = ecdup.parse(f)}
           ec.provided_context = context
+          ec.context_base = url
           debug("parse") {"=> provided_context: #{context.inspect}"}
           ec
         rescue Exception => e
-          debug("parse") {"Failed to retrieve @context from remote document at #{context}: #{e.message}"}
-          raise JSON::LD::InvalidContext::LoadError, "Failed to parse remote context at #{context}: #{e.message}", e.backtrace if @options[:validate]
+          debug("parse") {"Failed to retrieve @context from remote document at #{context.inspect}: #{e.message}"}
+          raise JSON::LD::InvalidContext::LoadError, "Failed to retrieve remote context at #{context.inspect}: #{e.message}", e.backtrace if @options[:validate]
           self.dup
         end
       when Array
@@ -467,6 +480,8 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     # @option options [:subject, :predicate, :object, :datatype] position
     #   Useful when determining how to serialize.
+    # @option options [RDF::URI] base (self.base)
+    #   Base IRI to use when expanding relative IRIs.
     #
     # @return [RDF::URI, String] IRI or String, if it's a keyword
     # @raise [RDF::ReaderError] if the iri cannot be expanded
@@ -476,7 +491,7 @@ module JSON::LD
       prefix, suffix = iri.split(':', 2)
       return mapping(iri) if mapping(iri) # If it's an exact match
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = [:subject, :object].include?(options[:position]) ? self.base : nil
+      base = [:subject, :object].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)
@@ -654,13 +669,13 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :native (true) use native representations
+    # @option options [Boolean] :useNativeTypes (true) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {:native => true}.merge(options)
+      options = {:useNativeTypes => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
         value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
@@ -681,7 +696,7 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
           else
-            if options[:native]
+            if options[:useNativeTypes]
               # Unless there's coercion, to not modify representation
               {"@value" => (value.is_a?(RDF::Literal::Boolean) ? value.object : value)}
             else
@@ -695,7 +710,7 @@ module JSON::LD
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when RDF::XSD.integer.to_s, nil
             # Unless there's coercion, to not modify representation
-            if options[:native]
+            if options[:useNativeTypes]
               {"@value" => value.is_a?(RDF::Literal::Integer) ? value.object : value}
             else
               {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
@@ -714,7 +729,7 @@ module JSON::LD
           when RDF::XSD.double.to_s
             {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
           when nil
-            if options[:native]
+            if options[:useNativeTypes]
               # Unless there's coercion, to not modify representation
               {"@value" => value.is_a?(RDF::Literal::Double) ? value.object : value}
             else

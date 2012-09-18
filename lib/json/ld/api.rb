@@ -368,7 +368,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :notType don't use @type for rdf:type
+    # @option options [Boolean] :useRdfType (false) use rdf:type instead of @type
+    # @option options [Boolean] :useNativeDatatypes FIXME
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
