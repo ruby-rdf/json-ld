@@ -8,4 +8,5 @@ gem "rdf-spec", :path => "../rdf-spec"
 group :development do
   gem "wirble"
   gem "linkeddata"
+  gem 'debugger'
 end

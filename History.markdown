@@ -1,3 +1,6 @@
+=== 0.1.6.1
+* Merge relative contexts from 0.1.5.2.
+
 === 0.1.6
 * Added flattening API, and updated algorithm.
 * Fixed framing issues using updated flattening.

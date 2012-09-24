@@ -146,7 +146,7 @@ module JSON::LD
         # Load context document, if it is a string
         ec = nil
         begin
-          url = expand_iri(context, :base => context_base || base)
+          url = expand_iri(context, :base => context_base || base, :position => :subject)
           ecdup = self.dup
           ecdup.context_base = url  # Set context_base for recursive remote contexts
           RDF::Util::File.open_file(url) {|f| ec = ecdup.parse(f)}
