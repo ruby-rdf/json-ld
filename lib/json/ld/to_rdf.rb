@@ -47,7 +47,7 @@ module JSON::LD
           active_subject = if element.fetch('@id', nil).is_a?(String)
             # 1.5 Subject
             # 1.5.1 Set active object (subject)
-            context.expand_iri(element['@id'], :quite => true)
+            context.expand_iri(element['@id'], :quiet => true)
           else
             # 1.6) Generate a blank node identifier and set it as the active subject.
             node
@@ -73,7 +73,7 @@ module JSON::LD
             else
               # 1.7.1) If a key that is not @id, @graph, or @type, set the active property by
               # performing Property Processing on the key.
-              context.expand_iri(key, :quite => true)
+              context.expand_iri(key, :quiet => true)
             end
 
             debug("statements[Step 1.7.4]")
@@ -171,7 +171,7 @@ module JSON::LD
     # @yieldparam [RDF::Statement] :statement
     def add_quad(path, subject, predicate, object, name)
       predicate = RDF.type if predicate == '@type'
-      object = RDF::URI(object.to_s) if object.literal? && predicate == RDF.type
+      object = context.expand_iri(object.to_s, :quiet => true) if object.literal? && predicate == RDF.type
       statement = RDF::Statement.new(subject, predicate, object, :context => name)
       debug(path) {"statement: #{statement.to_nquads}"}
       yield statement

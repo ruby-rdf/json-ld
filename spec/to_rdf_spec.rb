@@ -96,6 +96,12 @@ describe JSON::LD::API do
           }),
           %q([ a <http://example.com/foo>, <http://example.com/baz> ] .)
         ],
+        "blank node type" => [
+          %q({
+            "@type": "_:foo"
+          }),
+          %q([ a _:a ] .)
+        ]
       }.each do |title, (js, nt)|
         it title do
           parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
