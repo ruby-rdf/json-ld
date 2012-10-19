@@ -19,7 +19,8 @@ describe JSON::LD do
               quads << to_quad(statement)
             end
 
-            quads.sort.join("").should produce(t.expect.read, t.debug)
+            sorted_expected = t.expect.readlines.sort.join("")
+            quads.sort.join("").should produce(sorted_expected, t.debug)
           rescue JSON::LD::ProcessingError => e
             fail("Processing error: #{e.message}")
           rescue JSON::LD::InvalidContext => e
@@ -40,7 +41,16 @@ describe JSON::LD do
     when RDF::Node
       escaped(thing.to_s)
     when RDF::Literal::Double
-      quoted("%1.15e" % thing.value) + "^^<#{RDF::XSD.double}>"
+      case
+      when thing.object.nan?, thing.object.infinite?, thing.object.zero?
+        thing.canonicalize.to_ntriples
+      else
+        i, f, e = ('%.15E' % thing.object.to_f).split(/[\.E]/)
+        f.sub!(/0*$/, '')           # remove any trailing zeroes
+        f = '0' if f.empty?         # ...but there must be a digit to the right of the decimal point
+        e.sub!(/^\+?0+(\d)$/, '\1') # remove the optional leading '+' sign and any extra leading zeroes
+        %("#{i}.#{f}E#{e}"^^<http://www.w3.org/2001/XMLSchema#double>)
+      end
     when RDF::Literal
       quoted(escaped(thing.value)) +
       (thing.datatype? ? "^^<#{thing.datatype}>" : "") +
