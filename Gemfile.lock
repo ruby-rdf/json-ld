@@ -6,18 +6,18 @@ GIT
       addressable (>= 2.2.6)
 
 PATH
-  remote: ../rdf-spec
-  specs:
-    rdf-spec (0.3.8)
-      rspec (>= 2.8.0)
-
-PATH
   remote: .
   specs:
     json-ld (0.1.6)
       backports
       json (>= 1.6.5)
       rdf (>= 0.3.5)
+
+PATH
+  remote: ../rdf-spec
+  specs:
+    rdf-spec (0.3.8)
+      rspec (>= 2.8.0)
 
 GEM
   remote: http://rubygems.org/
