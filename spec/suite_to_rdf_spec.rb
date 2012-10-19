@@ -5,29 +5,27 @@ require 'spec_helper'
 describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
-    
-    if m = Fixtures::JSONLDTest::Manifest.each.to_a.first
-      m2 = m.entries.detect {|m2| m2.name == 'toRdf'}
-      describe m2.name do
-        m2.entries.each do |t|
-          specify "#{File.basename(t.inputDocument.to_s)}: #{t.name}" do
-            begin
-              t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-              quads = []
-              JSON::LD::API.toRDF(t.input, nil, nil,
-                                  :base => t.inputDocument,
-                                  :debug => t.debug) do |statement|
-                quads << to_quad(statement)
-              end
-
-              quads.sort.join("").should produce(t.expect.read, t.debug)
-            rescue JSON::LD::ProcessingError => e
-              fail("Processing error: #{e.message}")
-            rescue JSON::LD::InvalidContext => e
-              fail("Invalid Context: #{e.message}")
-            rescue JSON::LD::InvalidFrame => e
-              fail("Invalid Frame: #{e.message}")
+    MANIFEST = 'http://json-ld.org/test-suite/tests/toRdf-manifest.jsonld'
+    m = Fixtures::SuiteTest::Manifest.open(MANIFEST)
+    describe m.name do
+      m.entries.each do |t|
+        specify "#{t.property('input')}: #{t.name}" do
+          begin
+            t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
+            quads = []
+            JSON::LD::API.toRDF(t.input, nil, nil,
+                                :base => t.base,
+                                :debug => t.debug) do |statement|
+              quads << to_quad(statement)
             end
+
+            quads.sort.join("").should produce(t.expect.read, t.debug)
+          rescue JSON::LD::ProcessingError => e
+            fail("Processing error: #{e.message}")
+          rescue JSON::LD::InvalidContext => e
+            fail("Invalid Context: #{e.message}")
+          rescue JSON::LD::InvalidFrame => e
+            fail("Invalid Frame: #{e.message}")
           end
         end
       end

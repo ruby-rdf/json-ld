@@ -60,130 +60,49 @@ module RDF::Util
 end
 
 module Fixtures
-  module JSONLDTest
+  module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
-    class Test < RDF::Vocabulary("http://www.w3.org/2006/03/test-description#"); end
-    class Jld < RDF::Vocabulary("http://json-ld.org/test-suite/vocab#"); end
-
-    class Manifest < Spira::Base
-      type Jld.Manifest
-      property :name,       :predicate => RDF::DC.title,         :type => XSD.string
-      property :comment,    :predicate => RDF::RDFS.comment,  :type => XSD.string
-      property :sequence,   :predicate => Jld.sequence
-      
-      def entries
-        @entries ||= begin
-          repo = self.class.repository
-          RDF::List.new(sequence, repo).map do |entry|
-            results = repo.query(:subject => entry, :predicate => RDF.type)
-            entry_types = results.map(&:object)
-
-            # Load entry if it is not in repo
-            if entry_types.empty?
-              repo.load(entry, :format => :jsonld)
-              entry_types = repo.query(:subject => entry, :predicate => RDF.type).map(&:object)
-            end
-          
-            case 
-            when entry_types.include?(Jld.Manifest) then entry.as(Manifest)
-            when entry_types.include?(Jld.CompactTest) then entry.as(CompactTest)
-            when entry_types.include?(Jld.ExpandTest) then entry.as(ExpandTest)
-            when entry_types.include?(Jld.FrameTest) then entry.as(FrameTest)
-            when entry_types.include?(Jld.NormalizeTest) then entry.as(NormalizeTest)
-            when entry_types.include?(Jld.ToRDFTest) then entry.as(ToRDFTest)
-            when entry_types.include?(Jld.FromRDFTest) then entry.as(FromRDFTest)
-            when entry_types.include?(Test.TestCase) then entry.as(Entry)
-            else raise "Unexpected entry type: #{entry_types.inspect}"
-            end
-          end
+    class Manifest < JSON::LD::Resource
+      def self.open(file)
+        #puts "open: #{file}"
+        RDF::Util::File.open_file(file) do |f|
+          json = JSON.parse(f.read)
+          self.from_jsonld(json)
         end
       end
-      
-      def inspect
-        "[#{self.class.to_s} " + %w(
-          subject
-          name
-        ).map {|a| v = self.send(a); "#{a}='#{v}'" if v}.compact.join(", ") +
-        ", entries=#{entries.length}" +
-        "]"
+
+      # @param [Hash] json framed JSON-LD
+      # @return [Array<Manifest>]
+      def self.from_jsonld(json)
+        Manifest.new(json)
+      end
+
+      def entries
+        # Map entries to resources
+        attributes['sequence'].map do |e|
+          e.is_a?(String) ? Manifest.open("#{SUITE}#{e}") : Entry.new(e)
+        end
       end
     end
 
-    class Entry
+    class Entry < JSON::LD::Resource
       attr_accessor :debug
-      include Spira::Resource
-      type Test.TestCase
 
-      property :name,           :predicate => RDF::DC.title,                :type => XSD.string
-      property :purpose,        :predicate => Test.purpose,                 :type => XSD.string
-      property :expected,       :predicate => Test.expectedResults
-      property :inputDocument,  :predicate => Test.informationResourceInput
-      property :resultDocument, :predicate => Test.informationResourceResults
-      property :extraDocument,  :predicate => Test.input
-
-      def information; name; end
-
-      def input
-        RDF::Util::File.open_file(self.inputDocument)
+      # Base is expanded input file
+      def base
+        "#{SUITE}tests/#{property('input')}"
       end
 
-      def extra
-        RDF::Util::File.open_file(self.extraDocument)
+      # Alias input, context, expect and frame
+      %w(input context expect frame).each do |m|
+        define_method(m.to_sym) {RDF::Util::File.open_file "#{SUITE}tests/#{property(m)}"}
+      end
+
+      def positiveTest
+        property('positiveTest') == 'true'
       end
       
-      def expect
-        RDF::Util::File.open_file(self.resultDocument)
-      end
-
-      def base_uri
-        inputDocument.to_s
-      end
-      
-      def trace
-        @debug.to_a.join("\n")
-      end
-
-      def inspect
-        "[#{self.class.to_s} " + %w(
-          subject
-          name
-          inputDocument
-          resultDocument
-          extraDocument
-        ).map {|a| v = self.send(a); "#{a}='#{v}'" if v}.compact.join(", ") +
-        "]"
-      end
+      def trace; @debug.join("\n"); end
     end
-
-    class CompactTest < Entry
-      type Jld.CompactTest
-    end
-
-    class ExpandTest < Entry
-      type Jld.ExpandTest
-    end
-
-    class FrameTest < Entry
-      type Jld.FameTest
-    end
-
-    class NormalizeTest < Entry
-      type Jld.NormalizeTest
-    end
-
-    class FromRDFTest < Entry
-      type Jld.FromRDFTest
-    end
-
-    class ToRDFTest < Entry
-      type Jld.ToRDFTest
-
-      def quads
-        RDF::Util::File.open_file(self.expected)
-      end
-    end
-
-    repo = RDF::Repository.load(SUITE.join("manifest.jsonld"), :format => :jsonld)
-    Spira.add_repository! :default, repo
   end
 end
