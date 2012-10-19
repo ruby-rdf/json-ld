@@ -29,6 +29,7 @@ module JSON
     autoload :EvaluationContext,  'json/ld/evaluation_context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
+    autoload :Resource,           'json/ld/resource'
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
     
