@@ -262,22 +262,22 @@ describe JSON::LD::API do
 
     context "term selection" do
       {
-        #"Uses term with nil language when two terms conflict on language" => {
-        #  :input => [{
-        #    "http://example.com/term" => {"@value" => "v1", "@language" => nil}
-        #  }],
-        #  :context => {
-        #    "term5" => {"@id" => "http://example.com/term","@language" => nil},
-        #    "@language" => "de"
-        #  },
-        #  :output => {
-        #    "@context" => {
-        #      "term5" => {"@id" => "http://example.com/term","@language" => nil},
-        #      "@language" => "de"
-        #    },
-        #    "term5" => "v1",
-        #  }
-        #},
+        "Uses term with nil language when two terms conflict on language" => {
+          :input => [{
+            "http://example.com/term" => {"@value" => "v1", "@language" => nil}
+          }],
+          :context => {
+            "term5" => {"@id" => "http://example.com/term","@language" => nil},
+            "@language" => "de"
+          },
+          :output => {
+            "@context" => {
+              "term5" => {"@id" => "http://example.com/term","@language" => nil},
+              "@language" => "de"
+            },
+            "term5" => "v1",
+          }
+        },
         "Uses subject alias" => {
           :input => [{
             "@id" => "http://example.com/id1"
@@ -314,10 +314,90 @@ describe JSON::LD::API do
             "comment_en" => "comment in english",
           }
         },
+        "compact-0018" => {
+          :context => %{{
+            "id1": "http://example.com/id1",
+            "type1": "http://example.com/t1",
+            "type2": "http://example.com/t2",
+            "@language": "de",
+            "term": { "@id": "http://example.com/term" },
+            "term1": { "@id": "http://example.com/term", "@container": "@list" },
+            "term2": { "@id": "http://example.com/term", "@container": "@list", "@language": "en" }
+          }},
+          :input => %{{
+            "http://example.com/term": [
+              {
+                "@list": [
+                  { "@value": "v1.1", "@language": "de" },
+                  { "@value": "v1.2", "@language": "de" },
+                  { "@value": "v1.3", "@language": "de" },
+                  4,
+                  { "@value": "v1.5", "@language": "de" },
+                  { "@value": "v1.6", "@language": "en" }
+                ]
+              },
+              {
+                "@list": [
+                  { "@value": "v2.1", "@language": "en" },
+                  { "@value": "v2.2", "@language": "en" },
+                  { "@value": "v2.3", "@language": "en" },
+                  4,
+                  { "@value": "v2.5", "@language": "en" },
+                  { "@value": "v2.6", "@language": "de" }
+                ]
+              }
+            ]
+          }},
+          :output => %q{{
+            "@context": {
+              "id1": "http://example.com/id1",
+              "type1": "http://example.com/t1",
+              "type2": "http://example.com/t2",
+              "@language": "de",
+              "term": {
+                "@id": "http://example.com/term"
+              },
+              "term1": {
+                "@id": "http://example.com/term",
+                "@container": "@list"
+              },
+              "term2": {
+                "@id": "http://example.com/term",
+                "@container": "@list",
+                "@language": "en"
+              }
+            },
+            "term1": [
+              "v1.1",
+              "v1.2",
+              "v1.3",
+              4,
+              "v1.5",
+              {
+                "@value": "v1.6",
+                "@language": "en"
+              }
+            ],
+            "term2": [
+              "v2.1",
+              "v2.2",
+              "v2.3",
+              4,
+              "v2.5",
+              {
+                "@value": "v2.6",
+                "@language": "de"
+              }
+            ]
+          }}
+        }
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
+          ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
+          output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
+          jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug)
+          jld.should produce(output, @debug)
         end
       end
     end
@@ -354,6 +434,36 @@ describe JSON::LD::API do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
         jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
+      end
+    end
+
+    context "@list" do
+      {
+        "1 term 2 lists 2 languages" => {
+          :input => [{
+            "http://example.com/foo" => [
+              {"@list" => [{"@value" => "en", "@language" => "en"}]},
+              {"@list" => [{"@value" => "de", "@language" => "de"}]}
+            ]
+          }],
+          :context => {
+            "foo_en" => {"@id" => "http://example.com/foo", "@container" => "@list", "@language" => "en"},
+            "foo_de" => {"@id" => "http://example.com/foo", "@container" => "@list", "@language" => "de"}
+          },
+          :output => {
+            "@context" => {
+              "foo_en" => {"@id" => "http://example.com/foo", "@container" => "@list", "@language" => "en"},
+              "foo_de" => {"@id" => "http://example.com/foo", "@container" => "@list", "@language" => "de"}
+            },
+            "foo_en" => ["en"],
+            "foo_de" => ["de"]
+          }
+        },
+      }.each_pair do |title, params|
+        it title do
+          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
       end
     end
 

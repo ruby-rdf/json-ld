@@ -11,6 +11,7 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
+            pending("resolution of term rank in compact-0018") if t.property('input') == 'compact-0018-in.jsonld'
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')
             result = JSON::LD::API.compact(t.input, t.context, nil,

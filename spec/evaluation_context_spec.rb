@@ -964,6 +964,40 @@ describe JSON::LD::EvaluationContext do
           end
         end
       end
+      
+      context "compact-0018" do
+        let(:ctx) do
+          subject.parse({
+            "@language" => "de",
+            "term1" => {"@id" => "http://example/term"},
+            "term2" => {"@id" => "http://example/term", "@language" => "en"}
+          })
+        end
+        {
+          "v1.1" => [{"@value" => "v1.1", "@language" => "de"}, 3, 0],
+          "v1.2" => [{"@value" => "v1.2", "@language" => "de"}, 3, 0],
+          "v1.3" => [{"@value" => "v1.3", "@language" => "de"}, 3, 0],
+          "v1.4" => [{"@value" => 4},                           2, 1],
+          "v1.5" => [{"@value" => "v1.5", "@language" => "de"}, 3, 0],
+          "v1.6" => [{"@value" => "v1.6", "@language" => "en"}, 1, 3],
+          "v2.1" => [{"@value" => "v2.1", "@language" => "en"}, 1, 3],
+          "v2.2" => [{"@value" => "v2.2", "@language" => "en"}, 1, 3],
+          "v2.3" => [{"@value" => "v2.3", "@language" => "en"}, 1, 3],
+          "v2.4" => [{"@value" => 4},                           2, 1],
+          "v2.5" => [{"@value" => "v2.5", "@language" => "en"}, 1, 3],
+          "v2.6" => [{"@value" => "v2.6", "@language" => "de"}, 3, 0],
+        }.each do |label, (val, r1, r2)|
+          context label do
+            it "has rank #{r1} for term1" do
+              ctx.send(:term_rank, "term1", val).should produce(r1, @debug)
+            end
+
+            it "has rank #{r2} for term2" do
+              ctx.send(:term_rank, "term2", val).should produce(r2, @debug)
+            end
+          end
+        end
+      end
     end
   end
 

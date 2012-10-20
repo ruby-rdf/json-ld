@@ -183,7 +183,7 @@ module JSON::LD
             new_ec.send(setter, v)
           elsif v
             raise InvalidContext::Syntax, "#{key.inspect} is invalid"
-            end
+          end
         end
 
         num_updates = 1
@@ -928,7 +928,7 @@ module JSON::LD
         end
       elsif value?(value)
         val_type = value.fetch('@type', nil)
-        val_lang = value.fetch('@language', nil)
+        val_lang = value['@language'] || false if value.has_key?('@language')
         debug("term rank") {"@val_type: #{val_type.inspect}, val_lang: #{val_lang.inspect}"}
         if val_type
           coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
@@ -936,9 +936,15 @@ module JSON::LD
           default_term ? 2 : 1
         elsif val_lang.nil?
           debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
-          !language(term) && !coerce(term) ? 3 : 0
+          language(term) == false || (default_term && default_language.nil?) ? 3 : 0
         else
-          val_lang == language(term) ? 3 : (default_term ? 1 : 0)
+          if val_lang == language(term) || (default_term && default_language == val_lang)
+            3
+          elsif default_term
+            1
+          else
+            0
+          end
         end
       else # node definition/reference
         coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
