@@ -71,6 +71,7 @@ module JSON::LD
           # append the string representation of object to the array value for the key @type, creating
           # an entry if necessary
           (value['@type'] ||= []) << object
+        # FIXME: 3.7) If object is a typed literal and the useNativeTypes option is set to true:
         elsif statement.object == RDF.nil
           # Otherwise, if object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, let
           # key be the string representation of predicate. Set the value
@@ -139,7 +140,7 @@ module JSON::LD
       end
 
       # Return array as the graph representation.
-      debug("fromRdf") {array.to_json(JSON_STATE)}
+      debug("fromRDF") {array.to_json(JSON_STATE)}
       array
     end
   end

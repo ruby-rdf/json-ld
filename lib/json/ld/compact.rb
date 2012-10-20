@@ -25,7 +25,7 @@ module JSON::LD
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
-        if result.length == 1
+        if result.length == 1 && @options[:compactArrays]
           debug("=> extract single element: #{result.first.inspect}")
           result.first
         else
@@ -44,13 +44,17 @@ module JSON::LD
         
         case k
         when '@value', '@id'
-          # If element has an @value property or element is a node reference, return the result of performing
-          # Value Compaction on element using active property.
+          # If element has an @value property or element is a node reference, return the result of performing Value Compaction on element using active property.
           v = context.compact_value(property, element, :depth => @depth)
           debug("compact") {"value optimization, return as #{v.inspect}"}
           return v
         when '@list'
-          # Otherwise, if the active property has a @container mapping to @list and element has a corresponding @list property, recursively compact that property's value passing a copy of the active context and the active property ensuring that the result is an array and removing null values.
+          # Otherwise, if the active property has a @container mapping to @list and element has a corresponding @list property, recursively compact that property's value passing a copy of the active context and the active property ensuring that the result is an array with all null values removed.
+          
+          # If there already exists a value for active property in element and the full IRI of property is also coerced to @list, return an error.
+          # FIXME: check for full-iri list coercion
+
+          # Otherwise store the resulting array as value of active property if empty or property otherwise.
           compacted_key = context.compact_iri(k, :position => :predicate, :depth => @depth)
           v = depth { compact(element[k], property) }
           
@@ -77,7 +81,7 @@ module JSON::LD
               # Otherwise, value must be an array. Perform IRI Compaction on every entry of value. If value contains just one entry, value is set to that entry
               compacted_value = value.map {|v| context.compact_iri(v, :position => :subject, :depth => @depth)}
               debug {" => compacted value(#{key}): #{compacted_value.inspect}"}
-              compacted_value = compacted_value.first if compacted_value.length == 1
+              compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
               compacted_value
             end
           else

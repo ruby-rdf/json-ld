@@ -33,11 +33,25 @@ module JSON::LD
     # @param [String, #read, Hash, Array] input
     # @param [String, #read,, Hash, Array] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
-    # @param [Hash] options
+    # @param  [Hash{Symbol => Object}] options
+    # @option options [Boolean] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :conformanceCallback
+    #   The purpose of this option is to instruct the processor about whether or not it should continue processing. If the value is null, the processor should ignore any key-value pair associated with any recoverable conformance issue and continue processing. More details about this feature can be found in the ConformanceCallback section.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [Boolean] :optimize (false)
+    #   If set to `true`, the JSON-LD processor is allowed to optimize the output of the Compaction Algorithm to produce even compacter representations. The algorithm for compaction optimization is beyond the scope of this specification and thus not defined. Consequently, different implementations *MAY* implement different optimization algorithms.
+    #   (Presently, this is a noop).
+    # @option options [Boolean] :useNativeDatatypes (true)
+    # If set to `true`, the JSON-LD processor will use the expanded `rdf:type` IRI as the property instead of `@type` when converting from RDF.
+    # @option options [Boolean] :useRdfType (false) If set to `true`, the JSON-LD processor will try to convert datatyped literals to JSON native types instead of using the expanded object form when converting from RDF. `xsd:boolean` values will be converted to `true` or `false`. `xsd:integer` and `xsd:double` values will be converted to JSON numbers.
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
-      @options = options
+      @options = {:compactArrays => true}.merge(options)
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO then JSON.parse(input.read)
@@ -72,8 +86,7 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :base
-    #   Base IRI to use when processing relative IRIs.
+    #   See options in {#initialize}
     # @raise [InvalidContext]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
@@ -115,10 +128,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
+    #   See options in {#initialize}
     #   Other options passed to {#expand}
-    # @option options [Boolean] :optimize (false)
-    #   Perform further optimmization of the compacted output.
-    #   (Presently, this is a noop).
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
@@ -169,16 +180,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
+    #   See options in {#initialize}
     #   Other options passed to {#expand}
-    # @option options [Boolean] :embed (true)
-    #   a flag specifying that objects should be directly embedded in the output,
-    #   instead of being referred to by their IRI.
-    # @option options [Boolean] :explicit (false)
-    #   a flag specifying that for properties to be included in the output,
-    #   they must be explicitly declared in the framing context.
-    # @option options [Boolean] :omitDefault (false)
-    #   a flag specifying that properties that are missing from the JSON-LD
-    #   input should be omitted from the output.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -240,6 +243,7 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
+    #   See options in {#initialize}
     #   Other options passed to {#expand}
     # @option options [Boolean] :embed (true)
     #   a flag specifying that objects should be directly embedded in the output,
@@ -338,6 +342,7 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
     # @param [{Symbol,String => Object}] options
+    #   See options in {#initialize}
     #   Options passed to {#expand}
     # @raise [InvalidContext]
     # @yield statement
@@ -368,14 +373,14 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :useRdfType (false) use rdf:type instead of @type
-    # @option options [Boolean] :useNativeDatatypes FIXME
+    #   See options in {#initialize}
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
     def self.fromRDF(input, callback = nil, options = {})
+      options = {:useNativeTypes => true}.merge(options)
       result = nil
 
       API.new(nil, nil, options) do |api|
