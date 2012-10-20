@@ -5,8 +5,7 @@ require 'spec_helper'
 describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
-    MANIFEST = 'http://json-ld.org/test-suite/tests/expand-manifest.jsonld'
-    m = Fixtures::SuiteTest::Manifest.open(MANIFEST)
+    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/expand-manifest.jsonld')
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
