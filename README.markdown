@@ -1,6 +1,7 @@
 # JSON-LD reader/writer
 
-[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] .
+[![Build Status](https://secure.travis-ci.org/gkellogg/json-ld.png?branch=master)](http://travis-ci.org/gkellogg/json-ld)
+[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD][] processor.
 
 ## Features
 

@@ -30,4 +30,4 @@ describe JSON::LD do
       end
     end
   end
-end
+end unless ENV['CI']

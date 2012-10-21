@@ -73,4 +73,4 @@ describe JSON::LD do
     string.gsub('\\', '\\\\').gsub("\t", '\\t').
       gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
   end
-end
+end unless ENV['CI']
