@@ -6,12 +6,6 @@ GIT
       addressable (>= 2.2.6)
 
 PATH
-  remote: ../rdf-spec
-  specs:
-    rdf-spec (0.3.8)
-      rspec (>= 2.8.0)
-
-PATH
   remote: .
   specs:
     json-ld (0.1.6)
@@ -66,6 +60,8 @@ GEM
     rdf-rdfxml (0.3.8)
       rdf (>= 0.3.4)
       rdf-xsd (>= 0.3.5)
+    rdf-spec (0.3.8)
+      rspec (>= 2.8.0)
     rdf-trig (0.1.3)
       rdf (>= 0.3.4)
       rdf-turtle (>= 0.1.1)
@@ -101,7 +97,7 @@ DEPENDENCIES
   open-uri-cached (>= 0.0.5)
   rdf!
   rdf-isomorphic (>= 0.3.4)
-  rdf-spec!
+  rdf-spec (>= 0.3.5)
   rdf-trig (>= 0.1.1)
   rdf-turtle (>= 0.1.1)
   rdf-xsd (>= 0.3.7)
