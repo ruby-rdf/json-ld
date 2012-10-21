@@ -313,7 +313,7 @@ module JSON::LD
               debug {"=> coerce(#{k}) => #{coerce(k)}"}
               if coerce(k) && !NATIVE_DATATYPES.include?(coerce(k))
                 dt = coerce(k)
-                dt = compact_iri(dt, :position => :datatype) unless dt == '@id'
+                dt = compact_iri(dt, :position => :type) unless dt == '@id'
                 # Fold into existing definition
                 ctx[k]["@type"] = dt
                 debug {"=> datatype[#{k}] => #{dt}"}
@@ -478,7 +478,7 @@ module JSON::LD
     # @param [String] iri
     #   A keyword, term, prefix:suffix or possibly relative IRI
     # @param  [Hash{Symbol => Object}] options
-    # @option options [:subject, :predicate, :object, :datatype] position
+    # @option options [:subject, :predicate, :type] position
     #   Useful when determining how to serialize.
     # @option options [RDF::URI] base (self.base)
     #   Base IRI to use when expanding relative IRIs.
@@ -491,7 +491,7 @@ module JSON::LD
       prefix, suffix = iri.split(':', 2)
       return mapping(iri) if mapping(iri) # If it's an exact match
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = [:subject, :object].include?(options[:position]) ? options.fetch(:base, self.base) : nil
+      base = [:subject].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)
@@ -503,7 +503,7 @@ module JSON::LD
       else
         # Otherwise, it must be an absolute IRI
         u = uri(iri)
-        u if u.absolute? || [:subject, :object].include?(options[:position])
+        u if u.absolute? || [:subject].include?(options[:position])
       end
     end
 
@@ -512,7 +512,7 @@ module JSON::LD
     #
     # @param [RDF::URI] iri
     # @param  [Hash{Symbol => Object}] options ({})
-    # @option options [:subject, :predicate, :object, :datatype] position
+    # @option options [:subject, :predicate, :type] position
     #   Useful when determining how to serialize.
     # @option options [Object] :value
     #   Value, used to select among various maps for the same IRI
@@ -528,55 +528,54 @@ module JSON::LD
         value = options.fetch(:value, nil)
 
         # Get a list of terms which map to iri
-        terms = mappings.keys.select {|t| mapping(t).to_s == iri}
+        matched_terms = mappings.keys.select {|t| mapping(t).to_s == iri}
+        debug("compact_iri", "initial terms: #{matched_terms.inspect}")
 
-        # Create an association term map for terms to their associated
-        # term rank.
-        term_map = {}
+        # Create an empty list of terms _terms_ that will be populated with terms that are ranked according to how closely they match value. Initialize highest rank to 0, and set a flag list container to false.
+        terms = {}
 
         # If value is a @list add a term rank for each
         # term mapping to iri which has @container @list.
         debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}")
         if list?(value)
-          list_terms = terms.select {|t| container(t) == '@list'}
+          list_terms = matched_terms.select {|t| container(t) == '@list'}
             
-          term_map = list_terms.inject({}) do |memo, t|
+          terms = list_terms.inject({}) do |memo, t|
             memo[t] = term_rank(t, value)
             memo
           end unless list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{term_map.keys.select {|t| term_map[t] == 0}}"} if term_map.any? {|t,r| r == 0}
-          term_map.delete_if {|t, r| r == 0}
+          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
+          terms.delete_if {|t, r| r == 0}
         end
         
         # Otherwise, value is @value or a native type.
         # Add a term rank for each term mapping to iri
         # which does not have @container @list
-        if term_map.empty?
-          non_list_terms = terms.reject {|t| container(t) == '@list'}
+        if terms.empty?
+          non_list_terms = matched_terms.reject {|t| container(t) == '@list'}
 
           # If value is a @list, exclude from term map those terms
           # with @container @set
           non_list_terms.reject {|t| container(t) == '@set'} if list?(value)
 
-          term_map = non_list_terms.inject({}) do |memo, t|
+          terms = non_list_terms.inject({}) do |memo, t|
             memo[t] = term_rank(t, value)
             memo
           end unless non_list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{term_map.keys.select {|t| term_map[t] == 0}}"} if term_map.any? {|t,r| r == 0}
-          term_map.delete_if {|t, r| r == 0}
+          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
+          terms.delete_if {|t, r| r == 0}
         end
 
         # If we don't want terms, remove anything that's not a CURIE or IRI
-        term_map.keep_if {|t, v| t.index(':') } if options.fetch(:not_term, false)
+        terms.keep_if {|t, v| t.index(':') } if options.fetch(:not_term, false)
 
         # Find terms having the greatest term match value
-        least_distance = term_map.values.max
-        terms = term_map.keys.select {|t| term_map[t] == least_distance}
+        least_distance = terms.values.max
+        terms = terms.keys.select {|t| terms[t] == least_distance}
 
-        # If terms is empty, and the active context has a @vocab which is a 
-        # prefix of iri where the resulting relative IRI is not a term in the 
-        # active context. The resulting relative IRI is the unmatched part of iri.
-        if vocab && terms.empty? && iri.to_s.index(vocab) == 0
+        # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
+        if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
+           [:predicate, :type].include?(options[:position])
           terms << iri.to_s.sub(vocab, '')
           debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
         end
@@ -608,7 +607,7 @@ module JSON::LD
           end
 
           terms = curies.select do |curie|
-            container(curie) != '@list' &&
+            (options[:position] != :predicate || container(curie) != '@list') &&
             coerce(curie).nil? &&
             language(curie) == default_language
           end
@@ -755,7 +754,7 @@ module JSON::LD
           debug("else")
           case coerce(property)
           when '@id'
-            {'@id' => expand_iri(value, :position => :object).to_s}
+            {'@id' => expand_iri(value, :position => :subject).to_s}
           when nil
             debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
             language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
@@ -792,22 +791,22 @@ module JSON::LD
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
         result = case
-          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
+          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :type) == RDF::XSD[t]}
         #  # Compact native type
         #  debug {" (native)"}
-        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
+        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :type))
         #  l.canonicalize.object
         when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
           debug {" (@id & coerce)"}
-          compact_iri(value['@id'], :position => :object)
-        when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(property)
+          compact_iri(value['@id'], :position => :subject)
+        when value['@type'] && expand_iri(value['@type'], :position => :type) == coerce(property)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
         when value.has_key?('@id')
           # Compact an IRI
-          value[self.alias('@id')] = compact_iri(value['@id'], :position => :object)
+          value[self.alias('@id')] = compact_iri(value['@id'], :position => :subject)
           debug {" (#{self.alias('@id')} => #{value['@id']})"}
           value
         when value['@language'] && value['@language'] == language(property)
@@ -829,7 +828,7 @@ module JSON::LD
         when value['@type']
           # Compact datatype
           debug {" (@type)"}
-          value[self.alias('@type')] = compact_iri(value['@type'], :position => :datatype)
+          value[self.alias('@type')] = compact_iri(value['@type'], :position => :type)
           value
         else
           # Otherwise, use original value

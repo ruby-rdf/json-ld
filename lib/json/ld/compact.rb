@@ -70,16 +70,17 @@ module JSON::LD
           debug("compact") {"#{key}: #{value.inspect}"}
 
           if %(@id @type).include?(key)
+            position = key == '@id' ? :subject : :type
             compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
 
             result[compacted_key] = case value
             when String
               # If value is a string, the compacted value is the result of performing IRI Compaction on value.
               debug {" => compacted string for #{key}"}
-              context.compact_iri(value, :position => :subject, :depth => @depth)
+              context.compact_iri(value, :position => position, :depth => @depth)
             when Array
               # Otherwise, value must be an array. Perform IRI Compaction on every entry of value. If value contains just one entry, value is set to that entry
-              compacted_value = value.map {|v| context.compact_iri(v, :position => :subject, :depth => @depth)}
+              compacted_value = value.map {|v| context.compact_iri(v, :position => position, :depth => @depth)}
               debug {" => compacted value(#{key}): #{compacted_value.inspect}"}
               compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
               compacted_value

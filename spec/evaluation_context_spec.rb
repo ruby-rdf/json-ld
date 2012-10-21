@@ -513,7 +513,7 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
-          "term" => {"@id" => "term", "@type" => "datatype"}
+          "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
         }
       }, @debug)
     end
@@ -549,8 +549,7 @@ describe JSON::LD::EvaluationContext do
       {
         :subject => true,
         :predicate => false,
-        :object => true,
-        :datatype => false
+        :type => false
       }.each do |position, r|
         context "as #{position}" do
           {
@@ -580,8 +579,7 @@ describe JSON::LD::EvaluationContext do
         {
           :subject => true,
           :predicate => false,
-          :object => true,
-          :datatype => false
+          :type => false
         }.each do |position, r|
           context "as #{position}" do
             before(:each) do
@@ -610,8 +608,7 @@ describe JSON::LD::EvaluationContext do
       {
         :subject => false,
         :predicate => true,
-        :object => false,
-        :datatype => true
+        :type => true
       }.each do |position, r|
         context "as #{position}" do
           {
@@ -661,7 +658,7 @@ describe JSON::LD::EvaluationContext do
       {
         "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
         "term" =>          ["ex",                  "http://example.org/"],
-        "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
+        "prefix:suffix" => ["ex:suffix",              "http://example.org/suffix"],
         "keyword" =>       ["@type",               "@type"],
         "empty" =>         [":suffix",             "http://empty/suffix"],
         "unmapped" =>      ["foo",                 "foo"],
@@ -748,6 +745,32 @@ describe JSON::LD::EvaluationContext do
             end
           end
         end
+      end
+    end
+
+    context "compact-0020" do
+      let(:ctx) do
+        subject.parse({
+          "ex" => "http://example.org/ns#",
+          "ex:property" => {"@container" => "@list"}
+        })
+      end
+      it "Compact @id that is a property IRI when @container is @list" do
+        ctx.compact_iri("http://example.org/ns#property", :position => :subject).
+          should produce("ex:property", @debug)
+      end
+    end
+
+    context "compact-0021" do
+      let(:ctx) do
+        subject.parse({
+          "@vocab" => "http://example.com/",
+          "sub" => "http://example.com/subdir/"
+        })
+      end
+      it "Compact properties and types using @vocab" do
+        ctx.compact_iri("http://example.com/subdir/id/1", :position => :subject).
+          should produce("sub:id/1", @debug)
       end
     end
   end

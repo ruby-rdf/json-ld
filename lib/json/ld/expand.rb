@@ -181,7 +181,7 @@ module JSON::LD
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
-        context.expand_value(active_property, input, :position => :object, :depth => @depth) unless input.nil?
+        context.expand_value(active_property, input, :position => :subject, :depth => @depth) unless input.nil?
       end
 
       debug {" => #{result.inspect}"}
