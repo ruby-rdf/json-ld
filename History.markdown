@@ -1,3 +1,9 @@
+=== 0.3.0
+* Fix regression on opening self-relative contexts.
+* When generating RDF, allow @type to be a BNode. This fixes issue #2
+* Add {JSON::LD::Resource} class for simple ruby-like management of JSON-LD nodes.
+* Term Rank and IRI compaction updates.
+
 === 0.1.6
 * Added flattening API, and updated algorithm.
 * Fixed framing issues using updated flattening.
