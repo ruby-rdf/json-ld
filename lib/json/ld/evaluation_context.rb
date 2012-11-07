@@ -15,23 +15,23 @@ module JSON::LD
 
     # The base IRI of the context, if loaded remotely.
     #
-    # @attr [RDF::URI]
-    attr :context_base, true
+    # @attr_accessor [RDF::URI]
+    attr_accessor :context_base
 
     # A list of current, in-scope mappings from term to IRI.
     #
-    # @attr [Hash{String => String}]
-    attr :mappings, true
+    # @attr_accessor [Hash{String => String}]
+    attr_accessor :mappings
 
     # Reverse mappings from IRI to a term or CURIE
     #
-    # @attr [Hash{RDF::URI => String}]
-    attr :iri_to_curie, true
+    # @attr_accessor [Hash{RDF::URI => String}]
+    attr_accessor :iri_to_curie
 
     # Reverse mappings from IRI to term only for terms, not CURIEs
     #
-    # @attr [Hash{RDF::URI => String}]
-    attr :iri_to_term, true
+    # @attr_accessor [Hash{RDF::URI => String}]
+    attr_accessor :iri_to_term
 
     # Type coersion
     #
@@ -41,8 +41,8 @@ module JSON::LD
     # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
     # including CURIE processing for compact IRI Expressions like `foaf:homepage`.
     #
-    # @attr [Hash{String => String}]
-    attr :coercions, true
+    # @attr_accessor [Hash{String => String}]
+    attr_accessor :coercions
 
     # List coercion
     #
@@ -50,8 +50,8 @@ module JSON::LD
     # A value of @list indicates that arrays of values are to be treated as an ordered list.
     # A value of @set indicates that arrays are to be treated as unordered and that
     # singular values are always coerced to an array form on expansion and compaction.
-    # @attr [Hash{String => String}]
-    attr :containers, true
+    # @attr_accessor [Hash{String => String}]
+    attr_accessor :containers
     
     # Language coercion
     #
@@ -60,30 +60,31 @@ module JSON::LD
     # the value is the language to coerce to. If no property-specific language is given,
     # any default language from the context is used.
     #
-    # @attr [Hash{String => String}]
-    attr :languages, true
+    # @attr_accessor [Hash{String => String}]
+    attr_accessor :languages
     
     # Default language
     #
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @attr [String]
-    attr :default_language, true
+    # @attr_accessor [String]
+    attr_accessor :default_language
     
     # Default vocabulary
     #
     #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @attr [String]
-    attr :vocab, true
+    # @attr_accessor [String]
+    attr_accessor :vocab
 
     # Global options used in generating IRIs
-    # @attr [Hash] options
-    attr :options, true
+    # @attr_accessor [Hash] options
+    attr_accessor :options
 
     # A context provided to us that we can use without re-serializing
-    attr :provided_context, true
+    # @attr_accessor [EvaluationContext]
+    attr_accessor :provided_context
 
     ##
     # Create new evaluation context

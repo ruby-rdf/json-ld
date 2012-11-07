@@ -89,7 +89,7 @@ module JSON
       # A list containing another list was detected.
       LIST_OF_LISTS_DETECTED = 3
       
-      attr :code
+      attr_reader :code
       
       class Lossy < ProcessingError
         def initialize(*args)
@@ -121,7 +121,7 @@ module JSON
       # There was a problem encountered loading a remote context.
       LOAD_ERROR = 2
       
-      attr :code
+      attr_reader :code
       
       class Syntax < InvalidContext
         def initialize(*args)
@@ -147,7 +147,7 @@ module JSON
       # More than one embed of a given subject IRI is not allowed, and if requested, must result in this exception.
       MULTIPLE_EMBEDS = 2
       
-      attr :code
+      attr_reader :code
 
       class Syntax < InvalidFrame
         def initialize(*args)

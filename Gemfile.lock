@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    json-ld (0.1.6)
+    json-ld (0.3.0)
       backports
       json (>= 1.6.5)
       rdf (>= 0.3.5)
@@ -24,6 +24,7 @@ GEM
     haml (3.1.7)
     htmlentities (4.3.1)
     json (1.7.5)
+    json (1.7.5-java)
     json_pure (1.7.5)
     linkeddata (0.3.5)
       json-ld (>= 0.1.0)
@@ -38,6 +39,7 @@ GEM
       rdf-trix (>= 0.3.0)
       rdf-turtle (>= 0.1.1)
     nokogiri (1.5.5)
+    nokogiri (1.5.5-java)
     open-uri-cached (0.0.5)
     promise (0.3.0)
     rdf-isomorphic (0.3.4)
@@ -87,6 +89,7 @@ GEM
     yard (0.8.3)
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES
