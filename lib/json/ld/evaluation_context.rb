@@ -3,34 +3,34 @@ require 'json'
 require 'bigdecimal'
 
 module JSON::LD
-  class EvaluationContext # :nodoc:
+  class EvaluationContext
     include Utils
 
     # The base.
     #
     # The document base IRI, used for expanding relative IRIs.
     #
-    # @attr_reader [RDF::URI]
+    # @!attribute [RDF::URI] :base
     attr_reader :base
 
     # The base IRI of the context, if loaded remotely.
     #
-    # @attr_accessor [RDF::URI]
+    # @!attribute [RDF::URI] :context_base
     attr_accessor :context_base
 
     # A list of current, in-scope mappings from term to IRI.
     #
-    # @attr_accessor [Hash{String => String}]
+    # @!attribute [Hash{String => String}] :mappings
     attr_accessor :mappings
 
     # Reverse mappings from IRI to a term or CURIE
     #
-    # @attr_accessor [Hash{RDF::URI => String}]
+    # @!attribute [Hash{RDF::URI => String}] :iri_to_curie
     attr_accessor :iri_to_curie
 
     # Reverse mappings from IRI to term only for terms, not CURIEs
     #
-    # @attr_accessor [Hash{RDF::URI => String}]
+    # @!attribute [Hash{RDF::URI => String}] :iri_to_term
     attr_accessor :iri_to_term
 
     # Type coersion
@@ -41,7 +41,7 @@ module JSON::LD
     # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
     # including CURIE processing for compact IRI Expressions like `foaf:homepage`.
     #
-    # @attr_accessor [Hash{String => String}]
+    # @!attribute [Hash{String => String}] :coercions
     attr_accessor :coercions
 
     # List coercion
@@ -50,7 +50,7 @@ module JSON::LD
     # A value of @list indicates that arrays of values are to be treated as an ordered list.
     # A value of @set indicates that arrays are to be treated as unordered and that
     # singular values are always coerced to an array form on expansion and compaction.
-    # @attr_accessor [Hash{String => String}]
+    # @!attribute [Hash{String => String}] :containers
     attr_accessor :containers
     
     # Language coercion
@@ -60,14 +60,14 @@ module JSON::LD
     # the value is the language to coerce to. If no property-specific language is given,
     # any default language from the context is used.
     #
-    # @attr_accessor [Hash{String => String}]
+    # @!attribute [Hash{String => String}] :languages
     attr_accessor :languages
     
     # Default language
     #
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @attr_accessor [String]
+    # @!attribute [String] :default_language
     attr_accessor :default_language
     
     # Default vocabulary
@@ -75,15 +75,15 @@ module JSON::LD
     #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @attr_accessor [String]
+    # @!attribute [String] :vocab
     attr_accessor :vocab
 
     # Global options used in generating IRIs
-    # @attr_accessor [Hash] options
+    # @!attribute [Hash] options :options
     attr_accessor :options
 
     # A context provided to us that we can use without re-serializing
-    # @attr_accessor [EvaluationContext]
+    # @!attribute [EvaluationContext] :provided_context
     attr_accessor :provided_context
 
     ##

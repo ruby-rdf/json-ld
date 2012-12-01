@@ -19,9 +19,9 @@ module JSON::LD
   class API
     include Expand
     include Compact
-    include Triples
+    include ToRDF
     include Flatten
-    include FromTriples
+    include FromRDF
     include Frame
 
     attr_accessor :value
@@ -86,7 +86,7 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
-    #   See options in {#initialize}
+    #   See options in {JSON::LD::API#initialize}
     # @raise [InvalidContext]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
@@ -128,8 +128,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
-    #   See options in {#initialize}
-    #   Other options passed to {#expand}
+    #   See options in {JSON::LD::API#initialize}
+    #   Other options passed to {JSON::LD::API.expand}
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
@@ -180,8 +180,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
-    #   See options in {#initialize}
-    #   Other options passed to {#expand}
+    #   See options in {JSON::LD::API#initialize}
+    #   Other options passed to {JSON::LD::API.expand}
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -243,8 +243,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
     # @param  [Hash{Symbol => Object}] options
-    #   See options in {#initialize}
-    #   Other options passed to {#expand}
+    #   See options in {JSON::LD::API#initialize}
+    #   Other options passed to {JSON::LD::API.expand}
     # @option options [Boolean] :embed (true)
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
@@ -342,8 +342,8 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
     # @param [{Symbol,String => Object}] options
-    #   See options in {#initialize}
-    #   Options passed to {#expand}
+    #   See options in {JSON::LD::API#initialize}
+    #   Options passed to {JSON::LD::API.expand}
     # @raise [InvalidContext]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
@@ -373,7 +373,7 @@ module JSON::LD
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.
     # @param  [Hash{Symbol => Object}] options
-    #   See options in {#initialize}
+    #   See options in {JSON::LD::API#initialize}
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form

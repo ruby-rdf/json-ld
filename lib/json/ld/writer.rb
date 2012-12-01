@@ -54,10 +54,10 @@ module JSON::LD
     include Utils
     format Format
 
-    # @attr_reader [RDF::Graph] Graph of statements serialized
+    # @!attribute [RDF::Graph] Graph of statements serialized
     attr_reader :graph
     
-    # @attr_reader [EvaluationContext] context used to load and administer contexts
+    # @!attribute [EvaluationContext] context used to load and administer contexts
     attr_reader :context
 
     ##

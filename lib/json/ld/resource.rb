@@ -4,17 +4,17 @@ module JSON::LD
   class Resource
     # Object representation of resource
     #
-    # @attr_reader [Hash<String => Object] attributes
+    # @!attribute [Hash<String => Object] attributes
     attr_reader :attributes
 
     # ID of this resource
     #
-    # @attr_reader [String] id
+    # @!attribute [String] id
     attr_reader :id
 
     # Context associated with this resource
     #
-    # @attr_reader [JSON::LD::EvaluationContext] context
+    # @!attribute [JSON::LD::EvaluationContext] context
     attr_reader :context
 
     # Is this resource clean (i.e., saved to mongo?)

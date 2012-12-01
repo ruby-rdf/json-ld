@@ -1,7 +1,7 @@
 require 'rdf/nquads'
 
 module JSON::LD
-  module FromTriples
+  module FromRDF
     include Utils
 
     ##

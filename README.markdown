@@ -213,9 +213,9 @@ Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/
   * {JSON::LD::EvaluationContext}
   * {JSON::LD::Format}
   * {JSON::LD::Frame}
-  * {JSON::LD::FromTriples}
+  * {JSON::LD::FromRDF}
   * {JSON::LD::Reader}
-  * {JSON::LD::Triples}
+  * {JSON::LD::ToRDF}
   * {JSON::LD::Writer}
 
 ## Dependencies
