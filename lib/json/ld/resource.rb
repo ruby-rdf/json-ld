@@ -2,19 +2,16 @@ module JSON::LD
   # Simple Ruby reflector class to provide native
   # access to JSON-LD objects
   class Resource
-    # Object representation of resource
-    #
-    # @!attribute [Hash<String => Object] attributes
+    # @!attribute [r] attributes
+    # @return [Hash<String => Object] Object representation of resource
     attr_reader :attributes
 
-    # ID of this resource
-    #
-    # @!attribute [String] id
+    # @!attribute [r] id
+    # @return [String] ID of this resource
     attr_reader :id
 
-    # Context associated with this resource
-    #
-    # @!attribute [JSON::LD::EvaluationContext] context
+    # @!attribute [r] context
+    # @return [JSON::LD::EvaluationContext] Context associated with this resource
     attr_reader :context
 
     # Is this resource clean (i.e., saved to mongo?)

@@ -8,82 +8,71 @@ module JSON::LD
 
     # The base.
     #
-    # The document base IRI, used for expanding relative IRIs.
-    #
-    # @!attribute [RDF::URI] :base
+    # @!attribute [rw] base
+    # @return [RDF::URI] Document base IRI, used for expanding relative IRIs.
     attr_reader :base
 
-    # The base IRI of the context, if loaded remotely.
-    #
-    # @!attribute [RDF::URI] :context_base
+    # @!attribute [rw] context_base
+    # @return [RDF::URI] base IRI of the context, if loaded remotely.
     attr_accessor :context_base
 
-    # A list of current, in-scope mappings from term to IRI.
-    #
-    # @!attribute [Hash{String => String}] :mappings
+    # @!attribute [rw] mappings
+    # @return [Hash{String => String}] A list of current, in-scope mappings from term to IRI.
     attr_accessor :mappings
 
-    # Reverse mappings from IRI to a term or CURIE
-    #
-    # @!attribute [Hash{RDF::URI => String}] :iri_to_curie
+    # @!attribute [rw] iri_to_curie
+    # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to a term or CURIE
     attr_accessor :iri_to_curie
 
-    # Reverse mappings from IRI to term only for terms, not CURIEs
-    #
-    # @!attribute [Hash{RDF::URI => String}] :iri_to_term
+    # @!attribute [rw] iri_to_term
+    # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to term only for terms, not CURIEs
     attr_accessor :iri_to_term
 
     # Type coersion
     #
-    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the
-    # key is a String representation of the property for which String values will be coerced and
-    # the value is the datatype (or @id) to coerce to. Type coersion for
-    # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
-    # including CURIE processing for compact IRI Expressions like `foaf:homepage`.
+    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the datatype (or @id) to coerce to. Type coersion for the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI, including CURIE processing for compact IRI Expressions like `foaf:homepage`.
     #
-    # @!attribute [Hash{String => String}] :coercions
+    # @!attribute [rw] coercions
+    # @return [Hash{String => String}]
     attr_accessor :coercions
 
     # List coercion
     #
-    # The @container keyword is used to specify how arrays are to be treated.
-    # A value of @list indicates that arrays of values are to be treated as an ordered list.
-    # A value of @set indicates that arrays are to be treated as unordered and that
-    # singular values are always coerced to an array form on expansion and compaction.
-    # @!attribute [Hash{String => String}] :containers
+    # The @container keyword is used to specify how arrays are to be treated. A value of @list indicates that arrays of values are to be treated as an ordered list. A value of @set indicates that arrays are to be treated as unordered and that singular values are always coerced to an array form on expansion and compaction.
+    # @!attribute [rw] containers
+    # @return [Hash{String => String}]
     attr_accessor :containers
     
     # Language coercion
     #
-    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the
-    # key is a String representation of the property for which String values will be coerced and
-    # the value is the language to coerce to. If no property-specific language is given,
-    # any default language from the context is used.
+    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the language to coerce to. If no property-specific language is given, any default language from the context is used.
     #
-    # @!attribute [Hash{String => String}] :languages
+    # @!attribute [rw] languages
+    # @return [Hash{String => String}]
     attr_accessor :languages
     
     # Default language
     #
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @!attribute [String] :default_language
+    # @!attribute [rw] default_language
+    # @return [String]
     attr_accessor :default_language
     
     # Default vocabulary
     #
-    #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @!attribute [String] :vocab
+    # @!attribute [rw] vocab
+    # @return [String]
     attr_accessor :vocab
 
-    # Global options used in generating IRIs
-    # @!attribute [Hash] options :options
+    # @!attribute [rw] options
+    # @return [Hash{Symbol => Object}] Global options used in generating IRIs
     attr_accessor :options
 
-    # A context provided to us that we can use without re-serializing
-    # @!attribute [EvaluationContext] :provided_context
+    # @!attribute [rw] provided_context
+    # @return [EvaluationContext] A context provided to us that we can use without re-serializing
     attr_accessor :provided_context
 
     ##
