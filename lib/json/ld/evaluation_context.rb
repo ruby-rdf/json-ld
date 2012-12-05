@@ -142,7 +142,7 @@ module JSON::LD
         # Load context document, if it is a string
         ec = EvaluationContext.new(options)
       when String
-        debug("parse") {"remote: #{context}"}
+        debug("parse") {"remote: #{context}, base: #{context_base || base}"}
         # Load context document, if it is a string
         ec = nil
         begin
