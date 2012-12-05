@@ -513,7 +513,7 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
-          "term" => {"@id" => "term", "@type" => "datatype"}
+          "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
         }
       }, @debug)
     end
@@ -549,8 +549,7 @@ describe JSON::LD::EvaluationContext do
       {
         :subject => true,
         :predicate => false,
-        :object => true,
-        :datatype => false
+        :type => false
       }.each do |position, r|
         context "as #{position}" do
           {
@@ -580,8 +579,7 @@ describe JSON::LD::EvaluationContext do
         {
           :subject => true,
           :predicate => false,
-          :object => true,
-          :datatype => false
+          :type => false
         }.each do |position, r|
           context "as #{position}" do
             before(:each) do
@@ -610,8 +608,7 @@ describe JSON::LD::EvaluationContext do
       {
         :subject => false,
         :predicate => true,
-        :object => false,
-        :datatype => true
+        :type => true
       }.each do |position, r|
         context "as #{position}" do
           {
@@ -661,7 +658,7 @@ describe JSON::LD::EvaluationContext do
       {
         "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
         "term" =>          ["ex",                  "http://example.org/"],
-        "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
+        "prefix:suffix" => ["ex:suffix",              "http://example.org/suffix"],
         "keyword" =>       ["@type",               "@type"],
         "empty" =>         [":suffix",             "http://empty/suffix"],
         "unmapped" =>      ["foo",                 "foo"],
@@ -748,6 +745,32 @@ describe JSON::LD::EvaluationContext do
             end
           end
         end
+      end
+    end
+
+    context "compact-0020" do
+      let(:ctx) do
+        subject.parse({
+          "ex" => "http://example.org/ns#",
+          "ex:property" => {"@container" => "@list"}
+        })
+      end
+      it "Compact @id that is a property IRI when @container is @list" do
+        ctx.compact_iri("http://example.org/ns#property", :position => :subject).
+          should produce("ex:property", @debug)
+      end
+    end
+
+    context "compact-0021" do
+      let(:ctx) do
+        subject.parse({
+          "@vocab" => "http://example.com/",
+          "sub" => "http://example.com/subdir/"
+        })
+      end
+      it "Compact properties and types using @vocab" do
+        ctx.compact_iri("http://example.com/subdir/id/1", :position => :subject).
+          should produce("sub:id/1", @debug)
       end
     end
   end
@@ -960,6 +983,40 @@ describe JSON::LD::EvaluationContext do
             next unless type.is_a?(String)
             it "returns #{defn[:rank]} for #{type}" do
               ctx.send(:term_rank, "term", defn[:value]).should produce(defn[:rank], @debug)
+            end
+          end
+        end
+      end
+      
+      context "compact-0018" do
+        let(:ctx) do
+          subject.parse({
+            "@language" => "de",
+            "term1" => {"@id" => "http://example/term"},
+            "term2" => {"@id" => "http://example/term", "@language" => "en"}
+          })
+        end
+        {
+          "v1.1" => [{"@value" => "v1.1", "@language" => "de"}, 3, 0],
+          "v1.2" => [{"@value" => "v1.2", "@language" => "de"}, 3, 0],
+          "v1.3" => [{"@value" => "v1.3", "@language" => "de"}, 3, 0],
+          "v1.4" => [{"@value" => 4},                           2, 1],
+          "v1.5" => [{"@value" => "v1.5", "@language" => "de"}, 3, 0],
+          "v1.6" => [{"@value" => "v1.6", "@language" => "en"}, 1, 3],
+          "v2.1" => [{"@value" => "v2.1", "@language" => "en"}, 1, 3],
+          "v2.2" => [{"@value" => "v2.2", "@language" => "en"}, 1, 3],
+          "v2.3" => [{"@value" => "v2.3", "@language" => "en"}, 1, 3],
+          "v2.4" => [{"@value" => 4},                           2, 1],
+          "v2.5" => [{"@value" => "v2.5", "@language" => "en"}, 1, 3],
+          "v2.6" => [{"@value" => "v2.6", "@language" => "de"}, 3, 0],
+        }.each do |label, (val, r1, r2)|
+          context label do
+            it "has rank #{r1} for term1" do
+              ctx.send(:term_rank, "term1", val).should produce(r1, @debug)
+            end
+
+            it "has rank #{r2} for term2" do
+              ctx.send(:term_rank, "term2", val).should produce(r2, @debug)
             end
           end
         end

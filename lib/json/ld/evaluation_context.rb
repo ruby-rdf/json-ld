@@ -3,87 +3,77 @@ require 'json'
 require 'bigdecimal'
 
 module JSON::LD
-  class EvaluationContext # :nodoc:
+  class EvaluationContext
     include Utils
 
     # The base.
     #
-    # The document base IRI, used for expanding relative IRIs.
-    #
-    # @attr_reader [RDF::URI]
+    # @!attribute [rw] base
+    # @return [RDF::URI] Document base IRI, used for expanding relative IRIs.
     attr_reader :base
 
-    # The base IRI of the context, if loaded remotely.
-    #
-    # @attr [RDF::URI]
-    attr :context_base, true
+    # @!attribute [rw] context_base
+    # @return [RDF::URI] base IRI of the context, if loaded remotely.
+    attr_accessor :context_base
 
-    # A list of current, in-scope mappings from term to IRI.
-    #
-    # @attr [Hash{String => String}]
-    attr :mappings, true
+    # @!attribute [rw] mappings
+    # @return [Hash{String => String}] A list of current, in-scope mappings from term to IRI.
+    attr_accessor :mappings
 
-    # Reverse mappings from IRI to a term or CURIE
-    #
-    # @attr [Hash{RDF::URI => String}]
-    attr :iri_to_curie, true
+    # @!attribute [rw] iri_to_curie
+    # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to a term or CURIE
+    attr_accessor :iri_to_curie
 
-    # Reverse mappings from IRI to term only for terms, not CURIEs
-    #
-    # @attr [Hash{RDF::URI => String}]
-    attr :iri_to_term, true
+    # @!attribute [rw] iri_to_term
+    # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to term only for terms, not CURIEs
+    attr_accessor :iri_to_term
 
     # Type coersion
     #
-    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the
-    # key is a String representation of the property for which String values will be coerced and
-    # the value is the datatype (or @id) to coerce to. Type coersion for
-    # the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI,
-    # including CURIE processing for compact IRI Expressions like `foaf:homepage`.
+    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the datatype (or @id) to coerce to. Type coersion for the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI, including CURIE processing for compact IRI Expressions like `foaf:homepage`.
     #
-    # @attr [Hash{String => String}]
-    attr :coercions, true
+    # @!attribute [rw] coercions
+    # @return [Hash{String => String}]
+    attr_accessor :coercions
 
     # List coercion
     #
-    # The @container keyword is used to specify how arrays are to be treated.
-    # A value of @list indicates that arrays of values are to be treated as an ordered list.
-    # A value of @set indicates that arrays are to be treated as unordered and that
-    # singular values are always coerced to an array form on expansion and compaction.
-    # @attr [Hash{String => String}]
-    attr :containers, true
+    # The @container keyword is used to specify how arrays are to be treated. A value of @list indicates that arrays of values are to be treated as an ordered list. A value of @set indicates that arrays are to be treated as unordered and that singular values are always coerced to an array form on expansion and compaction.
+    # @!attribute [rw] containers
+    # @return [Hash{String => String}]
+    attr_accessor :containers
     
     # Language coercion
     #
-    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the
-    # key is a String representation of the property for which String values will be coerced and
-    # the value is the language to coerce to. If no property-specific language is given,
-    # any default language from the context is used.
+    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the language to coerce to. If no property-specific language is given, any default language from the context is used.
     #
-    # @attr [Hash{String => String}]
-    attr :languages, true
+    # @!attribute [rw] languages
+    # @return [Hash{String => String}]
+    attr_accessor :languages
     
     # Default language
     #
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @attr [String]
-    attr :default_language, true
+    # @!attribute [rw] default_language
+    # @return [String]
+    attr_accessor :default_language
     
     # Default vocabulary
     #
-    #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @attr [String]
-    attr :vocab, true
+    # @!attribute [rw] vocab
+    # @return [String]
+    attr_accessor :vocab
 
-    # Global options used in generating IRIs
-    # @attr [Hash] options
-    attr :options, true
+    # @!attribute [rw] options
+    # @return [Hash{Symbol => Object}] Global options used in generating IRIs
+    attr_accessor :options
 
-    # A context provided to us that we can use without re-serializing
-    attr :provided_context, true
+    # @!attribute [rw] provided_context
+    # @return [EvaluationContext] A context provided to us that we can use without re-serializing
+    attr_accessor :provided_context
 
     ##
     # Create new evaluation context
@@ -183,7 +173,7 @@ module JSON::LD
             new_ec.send(setter, v)
           elsif v
             raise InvalidContext::Syntax, "#{key.inspect} is invalid"
-            end
+          end
         end
 
         num_updates = 1
@@ -313,7 +303,7 @@ module JSON::LD
               debug {"=> coerce(#{k}) => #{coerce(k)}"}
               if coerce(k) && !NATIVE_DATATYPES.include?(coerce(k))
                 dt = coerce(k)
-                dt = compact_iri(dt, :position => :datatype) unless dt == '@id'
+                dt = compact_iri(dt, :position => :type) unless dt == '@id'
                 # Fold into existing definition
                 ctx[k]["@type"] = dt
                 debug {"=> datatype[#{k}] => #{dt}"}
@@ -478,7 +468,7 @@ module JSON::LD
     # @param [String] iri
     #   A keyword, term, prefix:suffix or possibly relative IRI
     # @param  [Hash{Symbol => Object}] options
-    # @option options [:subject, :predicate, :object, :datatype] position
+    # @option options [:subject, :predicate, :type] position
     #   Useful when determining how to serialize.
     # @option options [RDF::URI] base (self.base)
     #   Base IRI to use when expanding relative IRIs.
@@ -491,7 +481,7 @@ module JSON::LD
       prefix, suffix = iri.split(':', 2)
       return mapping(iri) if mapping(iri) # If it's an exact match
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = [:subject, :object].include?(options[:position]) ? options.fetch(:base, self.base) : nil
+      base = [:subject].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)
@@ -503,7 +493,7 @@ module JSON::LD
       else
         # Otherwise, it must be an absolute IRI
         u = uri(iri)
-        u if u.absolute? || [:subject, :object].include?(options[:position])
+        u if u.absolute? || [:subject].include?(options[:position])
       end
     end
 
@@ -512,7 +502,7 @@ module JSON::LD
     #
     # @param [RDF::URI] iri
     # @param  [Hash{Symbol => Object}] options ({})
-    # @option options [:subject, :predicate, :object, :datatype] position
+    # @option options [:subject, :predicate, :type] position
     #   Useful when determining how to serialize.
     # @option options [Object] :value
     #   Value, used to select among various maps for the same IRI
@@ -528,55 +518,54 @@ module JSON::LD
         value = options.fetch(:value, nil)
 
         # Get a list of terms which map to iri
-        terms = mappings.keys.select {|t| mapping(t).to_s == iri}
+        matched_terms = mappings.keys.select {|t| mapping(t).to_s == iri}
+        debug("compact_iri", "initial terms: #{matched_terms.inspect}")
 
-        # Create an association term map for terms to their associated
-        # term rank.
-        term_map = {}
+        # Create an empty list of terms _terms_ that will be populated with terms that are ranked according to how closely they match value. Initialize highest rank to 0, and set a flag list container to false.
+        terms = {}
 
         # If value is a @list add a term rank for each
         # term mapping to iri which has @container @list.
         debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}")
         if list?(value)
-          list_terms = terms.select {|t| container(t) == '@list'}
+          list_terms = matched_terms.select {|t| container(t) == '@list'}
             
-          term_map = list_terms.inject({}) do |memo, t|
+          terms = list_terms.inject({}) do |memo, t|
             memo[t] = term_rank(t, value)
             memo
           end unless list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{term_map.keys.select {|t| term_map[t] == 0}}"} if term_map.any? {|t,r| r == 0}
-          term_map.delete_if {|t, r| r == 0}
+          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
+          terms.delete_if {|t, r| r == 0}
         end
         
         # Otherwise, value is @value or a native type.
         # Add a term rank for each term mapping to iri
         # which does not have @container @list
-        if term_map.empty?
-          non_list_terms = terms.reject {|t| container(t) == '@list'}
+        if terms.empty?
+          non_list_terms = matched_terms.reject {|t| container(t) == '@list'}
 
           # If value is a @list, exclude from term map those terms
           # with @container @set
           non_list_terms.reject {|t| container(t) == '@set'} if list?(value)
 
-          term_map = non_list_terms.inject({}) do |memo, t|
+          terms = non_list_terms.inject({}) do |memo, t|
             memo[t] = term_rank(t, value)
             memo
           end unless non_list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{term_map.keys.select {|t| term_map[t] == 0}}"} if term_map.any? {|t,r| r == 0}
-          term_map.delete_if {|t, r| r == 0}
+          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
+          terms.delete_if {|t, r| r == 0}
         end
 
         # If we don't want terms, remove anything that's not a CURIE or IRI
-        term_map.keep_if {|t, v| t.index(':') } if options.fetch(:not_term, false)
+        terms.keep_if {|t, v| t.index(':') } if options.fetch(:not_term, false)
 
         # Find terms having the greatest term match value
-        least_distance = term_map.values.max
-        terms = term_map.keys.select {|t| term_map[t] == least_distance}
+        least_distance = terms.values.max
+        terms = terms.keys.select {|t| terms[t] == least_distance}
 
-        # If terms is empty, and the active context has a @vocab which is a 
-        # prefix of iri where the resulting relative IRI is not a term in the 
-        # active context. The resulting relative IRI is the unmatched part of iri.
-        if vocab && terms.empty? && iri.to_s.index(vocab) == 0
+        # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
+        if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
+           [:predicate, :type].include?(options[:position])
           terms << iri.to_s.sub(vocab, '')
           debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
         end
@@ -608,7 +597,7 @@ module JSON::LD
           end
 
           terms = curies.select do |curie|
-            container(curie) != '@list' &&
+            (options[:position] != :predicate || container(curie) != '@list') &&
             coerce(curie).nil? &&
             language(curie) == default_language
           end
@@ -755,7 +744,7 @@ module JSON::LD
           debug("else")
           case coerce(property)
           when '@id'
-            {'@id' => expand_iri(value, :position => :object).to_s}
+            {'@id' => expand_iri(value, :position => :subject).to_s}
           when nil
             debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
             language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
@@ -792,22 +781,22 @@ module JSON::LD
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
         result = case
-          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :datatype) == RDF::XSD[t]}
+          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :type) == RDF::XSD[t]}
         #  # Compact native type
         #  debug {" (native)"}
-        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :datatype))
+        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :type))
         #  l.canonicalize.object
         when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
           debug {" (@id & coerce)"}
-          compact_iri(value['@id'], :position => :object)
-        when value['@type'] && expand_iri(value['@type'], :position => :datatype) == coerce(property)
+          compact_iri(value['@id'], :position => :subject)
+        when value['@type'] && expand_iri(value['@type'], :position => :type) == coerce(property)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
         when value.has_key?('@id')
           # Compact an IRI
-          value[self.alias('@id')] = compact_iri(value['@id'], :position => :object)
+          value[self.alias('@id')] = compact_iri(value['@id'], :position => :subject)
           debug {" (#{self.alias('@id')} => #{value['@id']})"}
           value
         when value['@language'] && value['@language'] == language(property)
@@ -829,7 +818,7 @@ module JSON::LD
         when value['@type']
           # Compact datatype
           debug {" (@type)"}
-          value[self.alias('@type')] = compact_iri(value['@type'], :position => :datatype)
+          value[self.alias('@type')] = compact_iri(value['@type'], :position => :type)
           value
         else
           # Otherwise, use original value
@@ -928,7 +917,7 @@ module JSON::LD
         end
       elsif value?(value)
         val_type = value.fetch('@type', nil)
-        val_lang = value.fetch('@language', nil)
+        val_lang = value['@language'] || false if value.has_key?('@language')
         debug("term rank") {"@val_type: #{val_type.inspect}, val_lang: #{val_lang.inspect}"}
         if val_type
           coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
@@ -936,9 +925,15 @@ module JSON::LD
           default_term ? 2 : 1
         elsif val_lang.nil?
           debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
-          !language(term) && !coerce(term) ? 3 : 0
+          language(term) == false || (default_term && default_language.nil?) ? 3 : 0
         else
-          val_lang == language(term) ? 3 : (default_term ? 1 : 0)
+          if val_lang == language(term) || (default_term && default_language == val_lang)
+            3
+          elsif default_term
+            1
+          else
+            0
+          end
         end
       else # node definition/reference
         coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)

@@ -1,7 +1,7 @@
 require 'rdf/nquads'
 
 module JSON::LD
-  module Triples
+  module ToRDF
     include Utils
 
     ##
@@ -17,8 +17,8 @@ module JSON::LD
     # @param [RDF::Node] name
     #   Inherited inherited graph name
     # @return [RDF::Resource] defined by this element
-    # @yield :statement
-    # @yieldparam [RDF::Statement] :statement
+    # @yield statement
+    # @yieldparam [RDF::Statement] statement
     def statements(path, element, subject, property, name, &block)
       debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
       @node_seq = "t0" unless subject || property
@@ -127,8 +127,8 @@ module JSON::LD
     # @param [RDF::Resource] name
     #   Inherited named graph context
     # @return [RDF::Resource] BNode or nil for head of list
-    # @yield :statement
-    # @yieldparam [RDF::Statement] :statement
+    # @yield statement
+    # @yieldparam [RDF::Statement] statement
     def parse_list(path, list, property, name, &block)
       debug(path) {"list: #{list.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
 
@@ -167,8 +167,8 @@ module JSON::LD
     # @param [RDF::URI] predicate the predicate of the statement
     # @param [RDF::Term] object the object of the statement
     # @param [RDF::Resource] name the named graph context of the statement
-    # @yield :statement
-    # @yieldparam [RDF::Statement] :statement
+    # @yield statement
+    # @yieldparam [RDF::Statement] statement
     def add_quad(path, subject, predicate, object, name)
       predicate = RDF.type if predicate == '@type'
       object = context.expand_iri(object.to_s, :quiet => true) if object.literal? && predicate == RDF.type

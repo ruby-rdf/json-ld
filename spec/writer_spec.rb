@@ -8,7 +8,7 @@ describe JSON::LD::Writer do
     @writer = JSON::LD::Writer.new(StringIO.new(""))
   end
 
-  it_should_behave_like RDF_Writer
+  include RDF_Writer
 
   describe ".for" do
     formats = [

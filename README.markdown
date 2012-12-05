@@ -1,6 +1,7 @@
 # JSON-LD reader/writer
 
-[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] .
+[![Build Status](https://secure.travis-ci.org/gkellogg/json-ld.png?branch=master)](http://travis-ci.org/gkellogg/json-ld)
+[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD][] processor.
 
 ## Features
 
@@ -212,9 +213,9 @@ Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/
   * {JSON::LD::EvaluationContext}
   * {JSON::LD::Format}
   * {JSON::LD::Frame}
-  * {JSON::LD::FromTriples}
+  * {JSON::LD::FromRDF}
   * {JSON::LD::Reader}
-  * {JSON::LD::Triples}
+  * {JSON::LD::ToRDF}
   * {JSON::LD::Writer}
 
 ## Dependencies

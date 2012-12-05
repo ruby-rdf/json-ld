@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.email                 = 'public-linked-json@w3.org'
 
   gem.platform              = Gem::Platform::RUBY
-  gem.files                 = %w(AUTHORS README.markdown History.markdown UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
+  gem.files                 = %w(AUTHORS README.markdown UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
   gem.bindir               = %q(bin)
   gem.executables          = %w(jsonld)
   gem.default_executable   = gem.executables.first
@@ -27,18 +27,18 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 1.8.1'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '>= 0.3.5'
-  gem.add_runtime_dependency     'json',            '>= 1.6.5'
+  gem.add_runtime_dependency     'rdf',             '>= 0.3.11'
+  gem.add_runtime_dependency     'json',            '>= 1.7.5'
   gem.add_development_dependency 'equivalent-xml' , '>= 0.2.8'
   gem.add_development_dependency 'open-uri-cached', '>= 0.0.5'
-  gem.add_development_dependency 'yard' ,           '>= 0.7.4'
+  gem.add_development_dependency 'yard' ,           '>= 0.8.3'
   gem.add_development_dependency 'spira',           '>= 0.0.12'
-  gem.add_development_dependency 'rspec',           '>= 2.8.0'
-  gem.add_development_dependency 'rdf-spec',        '>= 0.3.5'
-  gem.add_development_dependency 'rdf-turtle',      '>= 0.1.1'
-  gem.add_development_dependency 'rdf-trig',        '>= 0.1.1'
+  gem.add_development_dependency 'rspec',           '>= 2.12.0'
+  gem.add_development_dependency 'rdf-spec',        '>= 0.3.11'
+  gem.add_development_dependency 'rdf-turtle',      '>= 0.3.2'
+  gem.add_development_dependency 'rdf-trig',        '>= 0.1.4'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 0.3.4'
-  gem.add_development_dependency 'rdf-xsd',         '>= 0.3.7'
+  gem.add_development_dependency 'rdf-xsd',         '>= 0.3.8'
   gem.add_runtime_dependency     'backports'
   gem.post_install_message  = nil
 end
