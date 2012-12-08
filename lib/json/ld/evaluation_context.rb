@@ -671,65 +671,37 @@ module JSON::LD
         dt = case value
         when RDF::Literal
           case value.datatype
-          when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double then value.datatype
-          else value
+          when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
+            # Use appropriate representation for native types
+            dtype = value.datatype
+            value = if options[:useNativeTypes]
+              value.object
+            else
+              RDF::Literal::Double.new(value, :canonicalize => true).to_s
+            end
+            dtype
+          else
+            value
           end
-        when RDF::Term then value.class.name
-        else value
+        when
+          RDF::Term then value.class.name
+        else
+          value
+        end
+
+        result = if dt || coerce(property)
+          {"@value" => value, "@type" => dt || coerce(property)}
+        else
+          value
         end
 
         result = case dt
-        when RDF::XSD.boolean
-          debug("xsd:boolean")
-          case coerce(property)
-          when RDF::XSD.double.to_s
-            {"@value" => value.to_s, "@type" => RDF::XSD.double.to_s}
-          else
-            if options[:useNativeTypes]
-              # Unless there's coercion, to not modify representation
-              {"@value" => (value.is_a?(RDF::Literal::Boolean) ? value.object : value)}
-            else
-              {"@value" => value.to_s, "@type" => RDF::XSD.boolean.to_s}
-            end
-          end
-        when RDF::XSD.integer
-          debug("xsd:integer")
-          case coerce(property)
-          when RDF::XSD.double.to_s
-            {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
-          when RDF::XSD.integer.to_s, nil
-            # Unless there's coercion, to not modify representation
-            if options[:useNativeTypes]
-              {"@value" => value.is_a?(RDF::Literal::Integer) ? value.object : value}
-            else
-              {"@value" => value.to_s, "@type" => RDF::XSD.integer.to_s}
-            end
-          else
-            res = Hash.ordered
-            res['@value'] = value.to_s
-            res['@type'] = coerce(property)
-            res
-          end
-        when RDF::XSD.double
-          debug("xsd:double")
-          case coerce(property)
-          when RDF::XSD.integer.to_s
-            {"@value" => value.to_int.to_s, "@type" => RDF::XSD.integer.to_s}
-          when RDF::XSD.double.to_s
-            {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
-          when nil
-            if options[:useNativeTypes]
-              # Unless there's coercion, to not modify representation
-              {"@value" => value.is_a?(RDF::Literal::Double) ? value.object : value}
-            else
-              {"@value" => RDF::Literal::Double.new(value, :canonicalize => true).to_s, "@type" => RDF::XSD.double.to_s}
-            end
-          else
-            res = Hash.ordered
-            res['@value'] = value.to_s
-            res['@type'] = coerce(property)
-            res
-          end
+        when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
+          debug("xsd:#{dt.to_s.split('#').last}")
+          res = Hash.ordered
+          res['@value'] = value
+          res['@type'] = coerce(property) if coerce(property)
+          res
         when "RDF::URI", "RDF::Node"
           debug("URI | BNode") { value.to_s }
           {'@id' => value.to_s}

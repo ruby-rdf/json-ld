@@ -1033,6 +1033,7 @@ describe JSON::LD::EvaluationContext do
       subject.set_coerce("foaf:age", RDF::XSD.integer.to_s)
       subject.set_coerce("foaf:knows", "@id")
       subject.set_coerce("dc:created", RDF::XSD.date.to_s)
+      subject.set_coerce("ex:integer", RDF::XSD.integer.to_s)
       subject.set_coerce("ex:double", RDF::XSD.double.to_s)
       subject.set_coerce("ex:boolean", RDF::XSD.boolean.to_s)
     end
@@ -1091,18 +1092,18 @@ describe JSON::LD::EvaluationContext do
     context "coercion" do
       before(:each) {subject.default_language = "en"}
       {
-        "boolean-boolean" => ["ex:boolean", true,   {"@value" => true}],
-        "boolean-double"  => ["ex:double",  true,   {"@value" => "true", "@type" => RDF::XSD.double.to_s}],
-        "boolean-int"     => ["foaf:age",   true,   {"@value" => true}],
-        "double-boolean"  => ["ex:boolean", 1.1,    {"@value" => "1.1", "@type" => RDF::XSD.boolean.to_s}],
-        "double-double"   => ["ex:double",  1.1,    {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
-        "double-int"      => ["foaf:age",   1.1,    {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-        "int-boolean"     => ["ex:boolean", 1,      {"@value" => "1", "@type" => RDF::XSD.boolean.to_s}],
-        "int-double"      => ["ex:double",  1,      {"@value" => "1.0E0", "@type" => RDF::XSD.double.to_s}],
-        "int-int"         => ["foaf:age",   1,      {"@value" => 1}],
+        "boolean-boolean" => ["ex:boolean", true,   {"@value" => true, "@type" => RDF::XSD.boolean.to_s}],
+        "boolean-integer" => ["ex:integer", true,   {"@value" => true, "@type" => RDF::XSD.integer.to_s}],
+        "boolean-double"  => ["ex:double",  true,   {"@value" => true, "@type" => RDF::XSD.double.to_s}],
+        "double-boolean"  => ["ex:boolean", 1.1,    {"@value" => 1.1, "@type" => RDF::XSD.boolean.to_s}],
+        "double-double"   => ["ex:double",  1.1,    {"@value" => 1.1, "@type" => RDF::XSD.double.to_s}],
+        "double-integer"  => ["foaf:age",   1.1,    {"@value" => 1.1, "@type" => RDF::XSD.integer.to_s}],
+        "integer-boolean" => ["ex:boolean", 1,      {"@value" => 1, "@type" => RDF::XSD.boolean.to_s}],
+        "integer-double"  => ["ex:double",  1,      {"@value" => 1, "@type" => RDF::XSD.double.to_s}],
+        "integer-integer" => ["foaf:age",   1,      {"@value" => 1, "@type" => RDF::XSD.integer.to_s}],
         "string-boolean"  => ["ex:boolean", "foo",  {"@value" => "foo", "@type" => RDF::XSD.boolean.to_s}],
         "string-double"   => ["ex:double",  "foo",  {"@value" => "foo", "@type" => RDF::XSD.double.to_s}],
-        "string-int"      => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
+        "string-integer"  => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.expand_value(key, compacted).should produce(expanded, @debug)

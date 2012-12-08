@@ -1,6 +1,7 @@
 # coding: utf-8
 $:.unshift "."
 require 'spec_helper'
+require "suite_expand_spec"
 
 describe JSON::LD do
   describe "test suite" do
@@ -13,8 +14,12 @@ describe JSON::LD do
             case t.property('input')
             when /expand-0029/
               pending("resolution of @type resolution in expand-0029")
-            when /expand-0030/
+            when /expand-(0030|0035)/
               pending("implementation of language maps")
+            when /expand-(0036)/
+              pending("implementation of @annotation")
+            when /expand-(0037|0038|0039)/
+              pending("implementation of property generators")
             end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')
