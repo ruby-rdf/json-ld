@@ -497,6 +497,24 @@ describe JSON::LD::API do
             ]
           }
         },
+        "Uses node reference in embedded graph" => {
+          :input => {
+            "@id" => "http://data.wikipedia.org/snaks/Assertions",
+            "@graph" => [{
+              "@id" => "http://data.wikipedia.org/snaks/BerlinFact",
+              "@graph" => [{"@id" => "http://data.wikipedia.org/snaks/ParisFact"}]
+            }]
+          },
+          :context => {"ws" => "http://data.wikipedia.org/snaks/"},
+          :output => {
+            "@context" => {"ws" => "http://data.wikipedia.org/snaks/"},
+            "@id" => "ws:Assertions",
+            "@graph" => [{
+              "@id" => "ws:BerlinFact",
+              "@graph" => [{"@id" => "ws:ParisFact"}]
+            }]
+          }
+        }
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)

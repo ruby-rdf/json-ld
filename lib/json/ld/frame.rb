@@ -36,7 +36,7 @@ module JSON::LD
         debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
       
         # For each id and node from the set of matched nodes ordered by id
-        matches.keys.sort.each do |id|
+        matches.keys.kw_sort.each do |id|
           element = matches[id]
           # If the active property is null, set the map of embeds in state to an empty map
           state = state.merge(:embeds => {}) if property.nil?
@@ -77,7 +77,7 @@ module JSON::LD
             debug("frame") {"add embedded_node: #{embedded_node.inspect}"}
         
             # Process each property and value in the matched node as follows
-            element.keys.sort.each do |prop|
+            element.keys.kw_sort.each do |prop|
               value = element[prop]
               if prop[0,1] == '@'
                 # If property is a keyword, add property and a copy of value to output and continue with the next property from node
@@ -138,7 +138,7 @@ module JSON::LD
             end
 
             # Process each property and value in frame in lexographical order, where property is not a keyword, as follows:
-            frame.keys.sort.each do |prop|
+            frame.keys.kw_sort.each do |prop|
               next if prop[0,1] == '@' || output.has_key?(prop)
               property_frame = frame[prop]
               debug("frame") {"frame prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}

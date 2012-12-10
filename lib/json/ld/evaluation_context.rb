@@ -281,7 +281,7 @@ module JSON::LD
           ctx['@vocab'] = vocab.to_s if vocab
 
           # Mappings
-          mappings.keys.sort{|a, b| a.to_s <=> b.to_s}.each do |k|
+          mappings.keys.kw_sort{|a, b| a.to_s <=> b.to_s}.each do |k|
             next unless term_valid?(k.to_s)
             debug {"=> mappings[#{k}] => #{mappings[k]}"}
             ctx[k] = mappings[k].to_s
@@ -388,8 +388,8 @@ module JSON::LD
     # @return [RDF::URI, '@id']
     def coerce(property)
       # Map property, if it's not an RDF::Value
-      # @type and @graph always is an IRI
-      return '@id' if [RDF.type, '@type', '@graph'].include?(property)
+      # @type is always is an IRI
+      return '@id' if [RDF.type, '@type'].include?(property)
       @coercions.fetch(property, nil)
     end
 
@@ -415,6 +415,7 @@ module JSON::LD
     # @param [String] property in unexpanded form
     # @return [String]
     def container(property)
+      return '@set' if property == '@graph'
       @containers.fetch(property.to_s, nil)
     end
 

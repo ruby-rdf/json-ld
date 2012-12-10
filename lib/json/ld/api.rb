@@ -218,7 +218,7 @@ module JSON::LD
         # If nodeMap has no property graph, return result, otherwise set definitions to its value.
         definitions = node_map.fetch(graph.to_s, {})
         
-        # Foreach property and valud of definitions
+        # Foreach property and value of definitions
         definitions.keys.sort.each do |prop|
           value = definitions[prop]
           result << value

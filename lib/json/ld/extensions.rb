@@ -62,6 +62,26 @@ module RDF
   end
 end
 
+class Array
+  # Sort values, but impose special keyword ordering
+  # @yield a, b
+  # @yieldparam [Object] a
+  # @yieldparam [Object] b
+  # @yieldreturn [Integer]
+  # @return [Array]
+  KW_ORDER = %(@id @value @type @language @vocab @container @graph @list @set)
+
+  def kw_sort
+    self.sort do |a, b|
+      if a.to_s[0,1] == b.to_s[0,1] && a.to_s[0,1] == '@'
+        KW_ORDER.index(a) <=> KW_ORDER.index(b)
+      else
+        a <=> b
+      end
+    end
+  end
+end
+
 if RUBY_VERSION < "1.9"
   class InsertOrderPreservingHash < Hash
     include Enumerable

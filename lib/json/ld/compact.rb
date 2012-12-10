@@ -46,7 +46,7 @@ module JSON::LD
         when '@value', '@id'
           # If element has an @value property or element is a node reference, return the result of performing Value Compaction on element using active property.
           v = context.compact_value(property, element, :depth => @depth)
-          debug("compact") {"value optimization, return as #{v.inspect}"}
+          debug("compact") {"value optimization for #{property}, return as #{v.inspect}"}
           return v
         when '@list'
           # Otherwise, if the active property has a @container mapping to @list and element has a corresponding @list property, recursively compact that property's value passing a copy of the active context and the active property ensuring that the result is an array with all null values removed.
@@ -118,10 +118,12 @@ module JSON::LD
             end
           end
         end
-        
+
         # Re-order result keys
         r = Hash.ordered
-        result.keys.sort.each {|k| r[k] = result[k]}
+        debug("compact(result)") {result.inspect}
+        result.keys.kw_sort.each {|k| r[k] = result[k]}
+        debug("compact(r)") {r.inspect}
         r
       else
         # For other types, the compacted value is the element value

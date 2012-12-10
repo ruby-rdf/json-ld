@@ -55,7 +55,7 @@ module JSON::LD
 
           # 1.7) For each key in the JSON object that has not already been processed,
           # perform the following steps:
-          element.keys.sort.each do |key|
+          element.keys.kw_sort.each do |key|
             value = element[key]
             active_property = case key
             when '@type'
