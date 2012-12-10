@@ -73,11 +73,9 @@ class Array
 
   def kw_sort
     self.sort do |a, b|
-      if a.to_s[0,1] == b.to_s[0,1] && a.to_s[0,1] == '@'
-        KW_ORDER.index(a) <=> KW_ORDER.index(b)
-      else
-        a <=> b
-      end
+      a = "@#{KW_ORDER.index(a)}" if KW_ORDER.include?(a)
+      b = "@#{KW_ORDER.index(b)}" if KW_ORDER.include?(b)
+      a <=> b
     end
   end
 end

@@ -1,7 +1,6 @@
 # coding: utf-8
 $:.unshift "."
 require 'spec_helper'
-require "suite_expand_spec"
 
 describe JSON::LD do
   describe "test suite" do
