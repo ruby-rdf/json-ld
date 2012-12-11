@@ -10,4 +10,5 @@ end
 
 group :debug do
   gem "wirble"
+  gem "debugger"
 end

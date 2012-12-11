@@ -176,8 +176,17 @@ module JSON::LD
             output_object = output_object.values.first unless output_object.has_key?('@list')
           end
 
-          # If element has just a @language property, set element to null.
-          output_object unless output_object.is_a?(Hash) && output_object.keys == %w(@language)
+          # Re-order result keys
+          if output_object.is_a?(Hash) && output_object.keys == %w(@language)
+            # If element has just a @language property, set element to null.
+            nil
+          elsif output_object.is_a?(Hash)
+            r = Hash.ordered
+            output_object.keys.kw_sort.each {|k| r[k] = output_object[k]}
+            r
+          else
+            output_object
+          end
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.

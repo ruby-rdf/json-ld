@@ -121,9 +121,7 @@ module JSON::LD
 
         # Re-order result keys
         r = Hash.ordered
-        debug("compact(result)") {result.inspect}
         result.keys.kw_sort.each {|k| r[k] = result[k]}
-        debug("compact(r)") {r.inspect}
         r
       else
         # For other types, the compacted value is the element value

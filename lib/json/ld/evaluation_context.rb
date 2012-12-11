@@ -193,16 +193,23 @@ module JSON::LD
               new_ec.set_container(key, nil)
               @languages.delete(key)
 
-              # Extract IRI mapping. This is complicated, as @id may have been aliased
-              value = value.fetch('@id', nil) if value.is_a?(Hash)
-              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless value.is_a?(String) || value.nil?
+              # Extract IRI mapping. This is complicated, as @id may have been aliased. Also, if @id is explicitly set to nil, it inhibits and automatic mapping, so treat it as false, to distinguish from no mapping at all.
+              value = case value
+              when Hash
+                value.has_key?('@id') && value['@id'].nil? ? false : value.fetch('@id', nil)
+              when nil
+                false
+              else
+                value
+              end
+              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless (value || "").is_a?(String)
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
               if iri && new_ec.mappings.fetch(key, nil) != iri
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
-              elsif value.nil?
+              elsif value == false  # Explicitly say this is not mapped
                 new_ec.set_mapping(key, nil)
               end
             else
@@ -344,14 +351,14 @@ module JSON::LD
     #
     # @return [RDF::URI, String]
     def mapping(term)
-      @mappings.fetch(term.to_s, nil)
+      @mappings.fetch(term.to_s, false)
     end
 
     ##
     # Set term mapping
     #
     # @param [#to_s] term
-    # @param [RDF::URI, String] value
+    # @param [RDF::URI, String, nil] value
     #
     # @return [RDF::URI, String]
     def set_mapping(term, value)
@@ -480,7 +487,11 @@ module JSON::LD
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
       prefix, suffix = iri.split(':', 2)
-      return mapping(iri) if mapping(iri) # If it's an exact match
+      unless (m = mapping(iri)) == false
+        # It's an exact match
+        debug("expand_iri") {"match: #{iri.inspect} to #{m.inspect}"} unless options[:quiet]
+        return m
+      end
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
       base = [:subject].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s

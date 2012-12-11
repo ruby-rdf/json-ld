@@ -204,6 +204,15 @@ describe JSON::LD::EvaluationContext do
           ]).vocab.should produce(nil, @debug)
         end
 
+        it "removes term if set to null with @vocab" do
+          subject.parse([
+            {
+              "@vocab" => "http://schema.org/",
+              "term" => nil
+            }
+          ]).mappings.should produce({"term" => nil}, @debug)
+        end
+
         it "loads initial context" do
           init_ec = JSON::LD::EvaluationContext.new
           nil_ec = subject.parse(nil)
@@ -626,6 +635,11 @@ describe JSON::LD::EvaluationContext do
             end
           end
         end
+      end
+      
+      it "removes term if set to null with @vocab" do
+        subject.set_mapping("term", nil)
+        subject.expand_iri("term").should produce(nil, @debug)
       end
     end
   end
