@@ -672,7 +672,7 @@ describe JSON::LD::EvaluationContext do
       {
         "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
         "term" =>          ["ex",                  "http://example.org/"],
-        "prefix:suffix" => ["ex:suffix",              "http://example.org/suffix"],
+        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
         "keyword" =>       ["@type",               "@type"],
         "empty" =>         [":suffix",             "http://empty/suffix"],
         "unmapped" =>      ["foo",                 "foo"],

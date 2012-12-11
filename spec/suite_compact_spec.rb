@@ -15,6 +15,10 @@ describe JSON::LD do
               pending("term rank")
             when /compact-(0025|0026|0027)/
               pending("implementation of language maps")
+            when /compact-(0029|0030)/
+              pending("implementation of annotation maps")
+            when /compact-(0031|0032)/
+              pending("implementation of property generators")
             end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')

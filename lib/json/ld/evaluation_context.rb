@@ -575,13 +575,6 @@ module JSON::LD
         least_distance = terms.values.max
         terms = terms.keys.select {|t| terms[t] == least_distance}
 
-        # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
-        if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
-           [:predicate, :type].include?(options[:position])
-          terms << iri.to_s.sub(vocab, '')
-          debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
-        end
-
         # If terms is empty, add a compact IRI representation of iri for each 
         # term in the active context which maps to an IRI which is a prefix for 
         # iri where the resulting compact IRI is not a term in the active 
@@ -615,6 +608,13 @@ module JSON::LD
           end
 
           debug("curies") {"selected #{terms.inspect}"}
+        end
+
+        # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
+        if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
+           [:predicate, :type].include?(options[:position])
+          terms << iri.to_s.sub(vocab, '')
+          debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
         end
 
         # If we still don't have any terms and we're using standard_prefixes,
