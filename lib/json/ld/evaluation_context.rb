@@ -202,7 +202,7 @@ module JSON::LD
               else
                 value
               end
-              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.class}" unless (value || "").is_a?(String)
+              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.inspect}" unless (value || "").is_a?(String)
 
               iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
               if iri && new_ec.mappings.fetch(key, nil) != iri
@@ -230,14 +230,14 @@ module JSON::LD
               iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
               case key2
               when '@type'
-                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.class}" unless value2.is_a?(String) || value2.nil?
+                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.inspect}" unless value2.is_a?(String) || value2.nil?
                 if new_ec.coerce(key) != iri
                   raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
                   # Record term coercion
                   new_ec.set_coerce(key, iri)
                 end
               when '@container'
-                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.class}" unless %w(@list @set).include?(value2)
+                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language).include?(value2)
                 if new_ec.container(key) != value2
                   debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
                   new_ec.set_container(key, value2)
@@ -317,7 +317,7 @@ module JSON::LD
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
-              if %w(@list @set).include?(container(k))
+              if %w(@list @set @language).include?(container(k))
                 ctx[k]["@container"] = container(k)
                 debug {"=> container[#{k}] => #{container(k).inspect}"}
               end
@@ -662,8 +662,8 @@ module JSON::LD
     ##
     # Expand a value from compacted to expanded form making the context
     # unnecessary. This method is used as part of more general expansion
-    # and operates on RHS values, using a supplied key to determine @type and @container
-    # coercion rules.
+    # and operates on RHS values, using a supplied key to determine @type and
+    # @container coercion rules.
     #
     # @param [String] property
     #   Associated property used to find coercion rules

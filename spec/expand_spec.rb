@@ -660,6 +660,74 @@ describe JSON::LD::API do
       end
     end
 
+    context "language maps" do
+      {
+        "simple map" => {
+          :input => {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {
+                "@id" => "vocab:label",
+                "@container" => "@language"
+              }
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ]
+            }
+          },
+          :output => [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"}
+              ]
+            }
+          ]
+        },
+        "expand-0035" => {
+          :input => {
+            "@context" => {
+              "@vocab" => "http://example.com/vocab/",
+              "@language" => "it",
+              "label" => {
+                "@container" => "@language"
+              }
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ]
+            },
+            "http://example.com/vocab/label" => [
+              "Il re",
+              { "@value" => "The king", "@language" => "en" }
+            ]
+          },
+          :output => [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "Il re", "@language" => "it"},
+                {"@value" => "The king", "@language" => "en"},
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"},
+              ]
+            }
+          ]
+        }
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "@list containing @list" => {

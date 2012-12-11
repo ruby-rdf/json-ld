@@ -47,7 +47,8 @@ module JSON::LD
         depth do
           output_object = Hash.ordered
           # Then, proceed and process each property and value in element as follows:
-          input.each do |key, value|
+          input.keys.kw_sort.each do |key|
+            value = input[key]
             # Remove property from element expand property according to the steps outlined in IRI Expansion
             property = context.expand_iri(key, :position => :predicate, :quiet => true)
 
@@ -112,8 +113,35 @@ module JSON::LD
 
               value
             else
-              # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
-              depth { expand(value, active_property, context, options) }
+              if context.container(active_property) == '@language'
+                # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @language, process the associated value as a language map:
+              
+                # Set multilingual array to an empty array.
+                multilingual_array = []
+
+                # For each key-value in the language map:
+                value.keys.sort.each do |k|
+                  [value[k]].flatten.each do |v|
+                    # Create a new JSON Object, referred to as an expanded language object.
+                    expanded_language_object = Hash.new
+
+                    # Add a key-value pair to the expanded language object where the key is @value and the value is the value associated with the key in the language map.
+                    raise ProcessingError::LanguageMap, "Expected #{vv.inspect} to be a string" unless v.is_a?(String)
+                    expanded_language_object['@value'] = v
+
+                    # Add a key-value pair to the expanded language object where the key is @language, and the value is the key in the language map, transformed to lowercase.
+                    # FIXME: check for BCP47 conformance
+                    expanded_language_object['@language'] = k.downcase
+                    # Append the expanded language object to the multilingual array.
+                    multilingual_array << expanded_language_object
+                  end
+                end
+                # Set the value associated with property to the multilingual array.
+                multilingual_array
+              else
+                # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
+                depth { expand(value, active_property, context, options) }
+              end
             end
 
             # moved from step 2.2.3

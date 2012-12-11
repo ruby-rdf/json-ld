@@ -89,6 +89,9 @@ module JSON
       # A list containing another list was detected.
       LIST_OF_LISTS_DETECTED = 3
       
+      # When processing a language map, a value not a 
+      ILLEGAL_LANGUAGE_MAP_DETECTED = 4
+      
       attr_reader :code
       
       class Lossy < ProcessingError
@@ -102,6 +105,13 @@ module JSON
         def initialize(*args)
           super
           @code = CONFLICTING_DATATYPES
+        end
+      end
+
+      class LanguageMap < ProcessingError
+        def initialize(*args)
+          super
+          @code = ILLEGAL_LANGUAGE_MAP_DETECTED
         end
       end
 
