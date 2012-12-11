@@ -78,7 +78,7 @@ module JSON::LD
                   [value].flatten.map do |v|
                     v = v['@id'] if node_reference?(v)
                     raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
-                    context.expand_iri(v, options.merge(:position => :property, :quiet => true)).to_s
+                    context.expand_iri(v, options.merge(:position => :subject, :quiet => true)).to_s
                   end
                 end
               when Hash

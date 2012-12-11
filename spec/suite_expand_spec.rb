@@ -11,8 +11,6 @@ describe JSON::LD do
         specify "#{t.property('input')}: #{t.name}" do
           begin
             case t.property('input')
-            when /expand-0029/
-              pending("resolution of @type resolution in expand-0029")
             when /expand-(0030|0035)/
               pending("implementation of language maps")
             when /expand-(0036)/
