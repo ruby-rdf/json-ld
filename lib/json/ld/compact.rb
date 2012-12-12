@@ -85,6 +85,9 @@ module JSON::LD
               compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
               compacted_value
             end
+          elsif key == '@annotation' && context.container(property) == '@annotation'
+            # Skip the annotation key if annotations being applied
+            next
           else
             if value.empty?
               # Make sure that an empty array is preserved
@@ -95,7 +98,8 @@ module JSON::LD
             end
 
             # For each item in value:
-            raise ProcessingError, "found #{value.inspect} for #{key} if #{element.inspect}" unless value.is_a?(Array)
+            value = [value] if key == '@annotation' && value.is_a?(String)
+            raise ProcessingError, "found #{value.inspect} for #{key} of #{element.inspect}" unless value.is_a?(Array)
             value.each do |item|
               compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
 
@@ -108,7 +112,7 @@ module JSON::LD
               # TODO: Property Generators
 
               # Language maps and annotations
-              if field = %w(@language @annoation).detect {|kk| context.container(compacted_key) == kk}
+              if field = %w(@language @annotation).detect {|kk| context.container(compacted_key) == kk}
                 item_result = result[compacted_key] ||= Hash.new
                 item_key = item[field]
               end

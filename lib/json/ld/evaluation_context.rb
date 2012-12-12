@@ -763,12 +763,14 @@ module JSON::LD
       depth(options) do
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
+        # Remove @annotation if property has annotation
+        value.delete('@annotation') if container(property) == '@annotation'
+
         result = case
-          #when %w(boolean integer double).any? {|t| expand_iri(value['@type'], :position => :type) == RDF::XSD[t]}
-        #  # Compact native type
-        #  debug {" (native)"}
-        #  l = RDF::Literal(value['@value'], :datatype => expand_iri(value['@type'], :position => :type))
-        #  l.canonicalize.object
+        when value.has_key?('@annotation')
+          # Don't compact the value
+          debug {" (@annotation without container @annotation)"}
+          value
         when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion
           debug {" (@id & coerce)"}
@@ -786,7 +788,7 @@ module JSON::LD
           # Compact language
           debug {" (@language) == #{language(property).inspect}"}
           value['@value']
-        when value['@value'] && !value['@value'].is_a?(String)
+        when !value.fetch('@value', "").is_a?(String)
           # Compact simple literal to string
           debug {" (@value not string)"}
           value['@value']

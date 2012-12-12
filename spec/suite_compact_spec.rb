@@ -13,8 +13,6 @@ describe JSON::LD do
             case t.property('input')
             when /compact-(0018|0024)/
               pending("term rank")
-            when /compact-(0029|0030)/
-              pending("implementation of annotation maps")
             when /compact-(0031|0032|0033|0034|0035)/
               pending("implementation of property generators")
             end
