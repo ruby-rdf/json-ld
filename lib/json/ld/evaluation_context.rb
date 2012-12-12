@@ -237,7 +237,7 @@ module JSON::LD
                   new_ec.set_coerce(key, iri)
                 end
               when '@container'
-                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language).include?(value2)
+                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language @annotation).include?(value2)
                 if new_ec.container(key) != value2
                   debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
                   new_ec.set_container(key, value2)

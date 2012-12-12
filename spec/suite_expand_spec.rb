@@ -11,8 +11,6 @@ describe JSON::LD do
         specify "#{t.property('input')}: #{t.name}" do
           begin
             case t.property('input')
-            when /expand-(0036|0040)/
-              pending("implementation of @annotation")
             when /expand-(0037|0038|0039)/
               pending("implementation of property generators")
             end

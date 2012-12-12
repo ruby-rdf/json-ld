@@ -94,6 +94,11 @@ module JSON::LD
               else
                 context.expand_iri(value, options.merge(:position => :property, :quiet => true)).to_s
               end
+            when '@annotation'
+              # Otherwise, if the property is @annotation, the value MUST be a string
+              value = value.first if value.is_a?(Array) && value.length == 1
+              raise ProcessingError, "Value of @annotation is not a string: #{value.inspect}" unless value.is_a?(String)
+              value
             when '@value', '@language'
               # Otherwise, if the property is @value or @language the value must not be a JSON object or an array.
               raise ProcessingError::Lossy, "Value of #{property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
@@ -113,7 +118,7 @@ module JSON::LD
 
               value
             else
-              if context.container(active_property) == '@language'
+              if context.container(active_property) == '@language' && value.is_a?(Hash)
                 # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @language, process the associated value as a language map:
               
                 # Set multilingual array to an empty array.
@@ -138,6 +143,24 @@ module JSON::LD
                 end
                 # Set the value associated with property to the multilingual array.
                 multilingual_array
+              elsif context.container(active_property) == '@annotation' && value.is_a?(Hash)
+                # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @annotation, process the associated value as a annotation:
+              
+                # Set ary to an empty array.
+                ary = []
+
+                # For each key-value in the object:
+                value.keys.sort.each do |k|
+                  [value[k]].flatten.each do |v|
+                    # Expand the value, adding an '@annotation' key with value equal to the key
+                    expanded_value = depth { expand(v, active_property, context, options) }
+                    next unless expanded_value
+                    expanded_value['@annotation'] ||= k
+                    ary << expanded_value
+                  end
+                end
+                # Set the value associated with property to the multilingual array.
+                ary
               else
                 # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
                 depth { expand(value, active_property, context, options) }
@@ -163,7 +186,7 @@ module JSON::LD
             end
 
             # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
-            if !%(@id @language @type @value).include?(property) && !expanded_value.is_a?(Array)
+            if !%(@id @language @type @value @annotation).include?(property) && !expanded_value.is_a?(Array)
               debug(" => make #{expanded_value.inspect} an array")
               expanded_value = [expanded_value]
             end
@@ -184,8 +207,8 @@ module JSON::LD
           if output_object.has_key?('@value')
             output_object.delete('@language') if output_object['@language'].to_s.empty?
             output_object.delete('@type') if output_object['@type'].to_s.empty?
-            if output_object.keys.length > 2 || (%w(@language @type) - output_object.keys).empty?
-              raise ProcessingError, "element must not have more than one other property, which can either be @language or @type with a string value." unless value.is_a?(String)
+            if (%w(@annotation @language @type) - output_object.keys).empty?
+              raise ProcessingError, "element must not have more than one other property other than @annotation, which can either be @language or @type with a string value." unless value.is_a?(String)
             end
 
             # if the value of @value equals null, replace element with the value of null.

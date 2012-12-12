@@ -728,6 +728,41 @@ describe JSON::LD::API do
       end
     end
 
+    context "annotations" do
+      {
+        "string annotation" => {
+          :input => {
+            "@context" => {
+              "container" => {
+                "@id" => "http://example.com/container",
+                "@container" => "@annotation"
+              }
+            },
+            "@id" => "http://example.com/annotationsTest",
+            "container" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ]
+            }
+          },
+          :output => [
+            {
+              "@id" => "http://example.com/annotationsTest",
+              "http://example.com/container" => [
+                {"@value" => "Die Königin", "@annotation" => "de"},
+                {"@value" => "Ihre Majestät", "@annotation" => "de"},
+                {"@value" => "The Queen", "@annotation" => "en"}
+              ]
+            }
+          ]
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "@list containing @list" => {
