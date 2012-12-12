@@ -91,29 +91,42 @@ module JSON::LD
               compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
               next if compacted_key.nil?
               result[compacted_key] = value
+              next
             end
 
             # For each item in value:
             raise ProcessingError, "found #{value.inspect} for #{key} if #{element.inspect}" unless value.is_a?(Array)
             value.each do |item|
               compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
+
+              # Result for this item, typically the output object itself
+              item_result = result
+              item_key = compacted_key
               debug {" => compacted key: #{compacted_key.inspect} for #{item.inspect}"}
               next if compacted_key.nil?
+
+              # TODO: Property Generators
+
+              # Language maps and annotations
+              if field = %w(@language @annoation).detect {|kk| context.container(compacted_key) == kk}
+                item_result = result[compacted_key] ||= Hash.new
+                item_key = item[field]
+              end
 
               compacted_item = depth {self.compact(item, compacted_key)}
               debug {" => compacted value: #{compacted_value.inspect}"}
             
-              case result[compacted_key]
+              case item_result[item_key]
               when Array
-                result[compacted_key] << compacted_item
+                item_result[item_key] << compacted_item
               when nil
                 if !compacted_value.is_a?(Array) && context.container(compacted_key) == '@set'
                   compacted_item = [compacted_item].compact
                   debug {" => as @set: #{compacted_item.inspect}"}
                 end
-                result[compacted_key] = compacted_item
+                item_result[item_key] = compacted_item
               else
-                result[compacted_key] = [result[compacted_key], compacted_item]
+                item_result[item_key] = [item_result[item_key], compacted_item]
               end
             end
           end
@@ -121,7 +134,7 @@ module JSON::LD
 
         # Re-order result keys
         r = Hash.ordered
-        result.keys.kw_sort.each {|k| r[k] = result[k]}
+        result.keys.kw_sort.each {|kk| r[kk] = result[kk]}
         r
       else
         # For other types, the compacted value is the element value

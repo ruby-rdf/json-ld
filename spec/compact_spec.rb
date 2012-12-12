@@ -393,6 +393,7 @@ describe JSON::LD::API do
         }
       }.each_pair do |title, params|
         it title do
+          pending("term rank") if title =~ /compact-0018/
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
@@ -457,6 +458,43 @@ describe JSON::LD::API do
             },
             "foo_en" => ["en"],
             "foo_de" => ["de"]
+          }
+        },
+      }.each_pair do |title, params|
+        it title do
+          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
+    context "language maps" do
+      {
+        "compact-0024" => {
+          :input => [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "The Queen", "@language" => "en"},
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"}
+              ]
+            }
+          ],
+          :context => {
+            "vocab" => "http://example.com/vocab/",
+            "label" => {"@id" => "vocab:label", "@container" => "@language"}
+          },
+          :output => {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {"@id" => "vocab:label", "@container" => "@language"}
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => ["Die Königin", "Ihre Majestät"]
+            }
           }
         },
       }.each_pair do |title, params|

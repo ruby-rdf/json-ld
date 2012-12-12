@@ -709,24 +709,16 @@ describe JSON::LD::EvaluationContext do
           "setdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
           "setdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
           "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
+          "langmap" => {"@id" => "http://example.com/langmap", "@container" => "@language"},
         })
         @debug.clear
         c
       end
 
       {
-        "setplain"   => [
-          {"@value" => "foo"},
-          {"@value" => "de", "@language" => "de"},
-          {"@value" => "other dt", "@language" => "http://example.com/other-datatype"}
-        ],
-        "setlang" => [{"@value" => "en", "@language" => "en"}],
-        "setbool" => [{"@value" => true}, {"@value" => false}, {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-        "setinteger" => [{"@value" => 1}, {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-        "setdouble" => [{"@value" => 1.1}, {"@value" => "1", "@type" => RDF::XSD.double.to_s}],
-        "setdate" => [{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}],
+        "langmap" => [{"@value" => "en", "@language" => "en"}],
       }.each do |prop, values|
-        context "uses #{prop}", :pending => "does algorithm favor @set?" do
+        context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
               ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value).should produce(prop, @debug)
@@ -1139,6 +1131,8 @@ describe JSON::LD::EvaluationContext do
       subject.set_coerce("dc:created", RDF::XSD.date.to_s)
       subject.set_container("list", "@list")
       subject.set_language("nolang", nil)
+      subject.set_mapping("langmap", "http://example.org/langmap")
+      subject.set_container("langmap", "@language")
     end
 
     {
@@ -1173,6 +1167,7 @@ describe JSON::LD::EvaluationContext do
         "no lang"                        => ["foo", {"@value" => "foo"  },                            {"@value" => "foo"}],
         "same lang"                      => ["foo", "foo",                                            {"@value" => "foo", "@language" => "en"}],
         "other lang"                     => ["foo",  {"@value" => "foo", "@language" => "bar"},       {"@value" => "foo", "@language" => "bar"}],
+        "langmap"                        => ["langmap", "en",                                         {"@value" => "en", "@language" => "en"}],
         "no lang with @type coercion"    => ["dc:created", {"@value" => "foo"},                       {"@value" => "foo"}],
         "no lang with @id coercion"      => ["foaf:knows", {"@value" => "foo"},                       {"@value" => "foo"}],
         "no lang with @language=null"    => ["nolang", "string",                                      {"@value" => "string"}],

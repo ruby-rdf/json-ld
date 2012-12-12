@@ -510,7 +510,7 @@ module JSON::LD
     end
 
     ##
-    # Compact an IRI
+    # Compacts an absolute IRI to the shortest matching term or compact IRI
     #
     # @param [RDF::URI] iri
     # @param  [Hash{Symbol => Object}] options ({})
@@ -536,9 +536,8 @@ module JSON::LD
         # Create an empty list of terms _terms_ that will be populated with terms that are ranked according to how closely they match value. Initialize highest rank to 0, and set a flag list container to false.
         terms = {}
 
-        # If value is a @list add a term rank for each
-        # term mapping to iri which has @container @list.
-        debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}")
+        # If value is a @list select terms that match every item equivalently.
+        debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}") if value
         if list?(value)
           list_terms = matched_terms.select {|t| container(t) == '@list'}
             
@@ -783,7 +782,7 @@ module JSON::LD
           value[self.alias('@id')] = compact_iri(value['@id'], :position => :subject)
           debug {" (#{self.alias('@id')} => #{value['@id']})"}
           value
-        when value['@language'] && value['@language'] == language(property)
+        when value['@language'] && (value['@language'] == language(property) || container(property) == '@language')
           # Compact language
           debug {" (@language) == #{language(property).inspect}"}
           value['@value']
@@ -896,8 +895,8 @@ module JSON::LD
           # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
           container(term) == '@list' ? 1 : 0
         else
-          # Otherwise, return the sum of the term ranks for every entry in the list.
-          depth {value['@list'].inject(0) {|memo, v| memo + term_rank(term, v)}}
+          # Otherwise, return the greatest rank of all elements in the term.
+          depth {value['@list'].map {|v| term_rank(term, v)}.max}
         end
       elsif value?(value)
         val_type = value.fetch('@type', nil)
@@ -911,8 +910,10 @@ module JSON::LD
           debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
           language(term) == false || (default_term && default_language.nil?) ? 3 : 0
         else
-          if val_lang == language(term) || (default_term && default_language == val_lang)
+          if val_lang && container(term) == '@language'
             3
+          elsif val_lang == language(term) || (default_term && default_language == val_lang)
+            2
           elsif default_term
             1
           else
