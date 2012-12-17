@@ -5,20 +5,15 @@ require 'spec_helper'
 describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/compact-manifest.jsonld')
+    require 'suite_helper'
+    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/flatten-manifest.jsonld')
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
-            case t.property('input')
-            when /compact-(0018|0024|0027)/
-              pending("term rank")
-            when /compact-(0031|0032|0033|0034|0035|0036|0037)/
-              pending("implementation of property generators")
-            end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-            t.debug << "context: #{t.context.read}" if t.property('context')
-            result = JSON::LD::API.compact(t.input, t.context, nil,
+            t.debug << "frame: #{t.frame.read}" if t.property('frame')
+            result = JSON::LD::API.flatten(t.input, nil, t.context, nil,
                                           :base => t.base,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)
