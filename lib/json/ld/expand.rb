@@ -10,9 +10,10 @@ module JSON::LD
     # @param [Array, Hash] input
     # @param [String] active_property
     # @param [EvaluationContext] context
+    # @param [BlankNodeNamer] namer
     # @param [Hash{Symbol => Object}] options
     # @return [Array, Hash]
-    def expand(input, active_property, context, options = {})
+    def expand(input, active_property, context, namer, options = {})
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -26,7 +27,7 @@ module JSON::LD
             # throw an exception as lists of lists are not allowed.
             raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array) && is_list
 
-            expand(v, active_property, context, options)
+            expand(v, active_property, context, namer, options)
           end.flatten.compact
 
           if is_list && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
@@ -51,6 +52,7 @@ module JSON::LD
             value = input[key]
             # Remove property from element expand property according to the steps outlined in IRI Expansion
             property = context.expand_iri(key, :position => :predicate, :quiet => true)
+            property = nil if property.is_a?(Array) && property.empty?
 
             # Set active property to the original un-expanded property if property if not a keyword
             active_property = key unless key[0,1] == '@'
@@ -62,7 +64,6 @@ module JSON::LD
               debug(" => ") {"skip nil key"}
               next
             end
-            property = property.to_s
 
             expanded_value = case property
             when '@id'
@@ -108,7 +109,7 @@ module JSON::LD
               # using this algorithm, passing copies of the active context and active property.
               # If the expanded value is not an array, convert it to an array.
               value = [value] unless value.is_a?(Array)
-              value = depth { expand(value, active_property, context, options) }
+              value = depth { expand(value, active_property, context, namer, options) }
 
               # If property is @list, and any expanded value
               # is an object containing an @list property, throw an exception, as lists of lists are not supported
@@ -153,7 +154,7 @@ module JSON::LD
                 value.keys.sort.each do |k|
                   [value[k]].flatten.each do |v|
                     # Expand the value, adding an '@annotation' key with value equal to the key
-                    expanded_value = depth { expand(v, active_property, context, options) }
+                    expanded_value = depth { expand(v, active_property, context, namer, options) }
                     next unless expanded_value
                     expanded_value['@annotation'] ||= k
                     ary << expanded_value
@@ -163,7 +164,7 @@ module JSON::LD
                 ary
               else
                 # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
-                depth { expand(value, active_property, context, options) }
+                depth { expand(value, active_property, context, namer, options) }
               end
             end
 
@@ -179,24 +180,38 @@ module JSON::LD
             # and the active property has a @container set to @list,
             # convert value to an object with an @list property whose value is set to value
             # (unless value is already in that form)
-            if expanded_value && property[0,1] != '@' && context.container(active_property) == '@list' &&
-               (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
-               debug(" => ") { "convert #{expanded_value.inspect} to list"}
+            if expanded_value &&
+              property.to_s[0,1] != '@' &&
+              context.container(active_property) == '@list' &&
+              (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
+
+              debug(" => ") { "convert #{expanded_value.inspect} to list"}
               expanded_value = {'@list' => [expanded_value].flatten}
             end
 
             # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
-            if !%(@id @language @type @value @annotation).include?(property) && !expanded_value.is_a?(Array)
+            if !(property.is_a?(String) && %(@id @language @type @value @annotation).include?(property)) &&
+              !expanded_value.is_a?(Array)
+
               debug(" => make #{expanded_value.inspect} an array")
               expanded_value = [expanded_value]
             end
 
-            if output_object.has_key?(property)
-              # If element already contains a property property, append value to the existing value.
-              output_object[property] += expanded_value
+            if property.is_a?(Array)
+              label_blanknodes(expanded_value, namer)
+              property.map(&:to_s).each do |prop|
+                # label all blank nodes in value with blank node identifiers by using the Label Blank Nodes Algorithm.
+                output_object[prop] ||= []
+                output_object[prop] += expanded_value.dup
+              end
             else
-              # Otherwise, create a property property with value as value.
-              output_object[property] = expanded_value
+              if output_object.has_key?(property.to_s)
+                # If element already contains a property property, append value to the existing value.
+                output_object[property.to_s] += expanded_value
+              else
+                # Otherwise, create a property property with value as value.
+                output_object[property.to_s] = expanded_value
+              end
             end
             debug {" => #{expanded_value.inspect}"}
           end
@@ -246,6 +261,24 @@ module JSON::LD
 
       debug {" => #{result.inspect}"}
       result
+    end
+
+    protected
+    # @param [Array, Hash] input
+    # @param [BlankNodeNamer] namer
+    def label_blanknodes(element, namer)
+      if element.is_a?(Array)
+        element.each {|e| label_blanknodes(e, namer)}
+      elsif list?(element)
+        element['@list'].each {|e| label_blanknodes(e, namer)}
+      elsif element.is_a?(Hash)
+        element.keys.sort.each do |k|
+          label_blanknodes(element[k], namer)
+        end
+        unless element.has_key?('@id')
+          element['@id'] = namer.get_name(nil)
+        end
+      end
     end
   end
 end

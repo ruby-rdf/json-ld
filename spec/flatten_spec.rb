@@ -100,7 +100,7 @@ describe JSON::LD::API do
         graph = params[:graph] || '@merged'
         jld = nil
         JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
-          expanded_value = api.expand(api.value, nil, api.context)
+          expanded_value = api.expand(api.value, nil, JSON::LD::BlankNodeNamer.new("e"), api.context)
           api.generate_node_map(expanded_value,
             @node_map,
             graph,

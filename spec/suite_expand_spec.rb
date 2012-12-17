@@ -10,10 +10,6 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
-            case t.property('input')
-            when /expand-(0037|0038|0039)/
-              pending("implementation of property generators")
-            end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')
             result = JSON::LD::API.expand(t.input, nil, nil,

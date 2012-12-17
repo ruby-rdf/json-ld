@@ -247,7 +247,11 @@ module JSON::LD
               when '@type'
                 raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.inspect}" unless value2.is_a?(String) || value2.nil?
                 if new_ec.coerce(key) != iri
-                  raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless RDF::URI(iri).absolute? || iri == '@id'
+                  case iri
+                  when '@id', /_:/, RDF::Node
+                  else
+                    raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless (RDF::URI(iri).absolute? rescue false)
+                  end
                   # Record term coercion
                   new_ec.set_coerce(key, iri)
                 end
@@ -516,12 +520,12 @@ module JSON::LD
       when prefix == '_' && suffix          then bnode(suffix)
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
-      when mapping = mappings.fetch(prefix, false) 
+      when mapping = mappings.fetch(prefix, false)
         if mapping.is_a?(Array)
           # Return array of IRIs, if it's a property generator
-          mapping.map {|m| uri(m + suffix.to_s)}
+          mapping.map {|m| uri(m.to_s + suffix.to_s)}
         else
-          uri(mapping + suffix.to_s)
+          uri(mapping.to_s + suffix.to_s)
         end
       when base                             then base.join(iri)
       when vocab                            then uri("#{vocab}#{iri}")
@@ -879,12 +883,17 @@ module JSON::LD
     private
 
     def uri(value, append = nil)
-      value = RDF::URI.new(value)
-      value = value.join(append) if append
-      value.validate! if @options[:validate]
-      value.canonicalize! if @options[:canonicalize]
-      value = RDF::URI.intern(value) if @options[:intern]
-      value
+      case value.to_s
+      when /_:/
+        RDF::Node.new(value)
+      else
+        value = RDF::URI.new(value)
+        value = value.join(append) if append
+        value.validate! if @options[:validate]
+        value.canonicalize! if @options[:canonicalize]
+        value = RDF::URI.intern(value) if @options[:intern]
+        value
+      end
     end
 
     # Keep track of allocated BNodes

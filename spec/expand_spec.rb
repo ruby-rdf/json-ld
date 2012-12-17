@@ -763,6 +763,73 @@ describe JSON::LD::API do
       end
     end
 
+    context "property generators" do
+      {
+        "expand-0038" => {
+          :input => {
+            "@context" => {
+              "site" => "http://example.com/",
+              "field_tags" => {
+                "@id" => [ "site:vocab/field_tags", "http://schema.org/about" ]
+              },
+              "field_related" => {
+                "@id" => [ "site:vocab/field_related", "http://schema.org/about" ]
+              }
+            },
+            "@id" => "site:node/1",
+            "field_tags" => [
+              { "@id" => "site:term/this-is-a-tag" }
+            ],
+            "field_related" => [
+              { "@id" => "site:node/this-is-related-news" }
+            ]
+          },
+          :output => [{
+             "@id" => "http://example.com/node/1",
+             "http://example.com/vocab/field_related" => [{
+                "@id" => "http://example.com/node/this-is-related-news"
+             }],
+             "http://schema.org/about" => [{
+                "@id" => "http://example.com/node/this-is-related-news"
+             }, {
+                "@id" => "http://example.com/term/this-is-a-tag"
+             }],
+             "http://example.com/vocab/field_tags" => [{
+                "@id" => "http://example.com/term/this-is-a-tag"
+             }]
+          }]
+        },
+        "generate bnodel ids" => {
+          :input => {
+            "@context" => {
+              "site" => "http://example.com/",
+              "field_tags" => {
+                "@id" => [ "site:vocab/field_tags", "http://schema.org/about" ]
+              }
+            },
+            "@id" => "site:node/1",
+            "field_tags" => { "@type" => "site:term/this-is-a-tag" }
+          },
+          :output => [{
+             "@id" => "http://example.com/node/1",
+             "http://schema.org/about" => [{
+               "@id" => "_:t0",
+               "@type" => ["http://example.com/term/this-is-a-tag"]
+             }],
+             "http://example.com/vocab/field_tags" => [{
+               "@id" => "_:t0",
+               "@type" => ["http://example.com/term/this-is-a-tag"]
+             }]
+          }]
+        }
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "@list containing @list" => {

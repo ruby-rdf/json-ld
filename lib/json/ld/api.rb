@@ -102,7 +102,7 @@ module JSON::LD
     def self.expand(input, context = nil, callback = nil, options = {})
       result = nil
       API.new(input, context, options) do |api|
-        result = api.expand(api.value, nil, api.context)
+        result = api.expand(api.value, nil, api.context, BlankNodeNamer.new("t"))
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
