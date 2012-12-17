@@ -162,6 +162,7 @@ module JSON::LD
         new_ec = self.dup
         new_ec.provided_context = context.dup
 
+        # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
         {
           '@language' => :default_language=,
           '@vocab'    => :vocab=
@@ -202,15 +203,29 @@ module JSON::LD
               else
                 value
               end
-              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.inspect}" unless (value || "").is_a?(String)
 
-              iri = new_ec.expand_iri(value, :position => :predicate) if value.is_a?(String)
+              # Explicitly say this is not mapped
+              if value == false
+                debug("parse") {"Map #{key} to nil"}
+                new_ec.set_mapping(key, nil)
+                next
+              end
+
+              iri = if value.is_a?(Array)
+                # expand each item according the IRI Expansion algorithm. If an item does not expand to a valid absolute IRI, raise an INVALID_PROPERTY_GENERATOR error; otherwise sort val and store it as IRI mapping in definition.
+                value.map do |v|
+                  raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{v.inspect}" unless v.is_a?(String)
+                  new_ec.expand_iri(v, :position => :predicate)
+                end.sort
+              elsif value
+                raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.inspect}" unless value.is_a?(String)
+                new_ec.expand_iri(value, :position => :predicate)
+              end
+
               if iri && new_ec.mappings.fetch(key, nil) != iri
                 # Record term definition
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
-              elsif value == false  # Explicitly say this is not mapped
-                new_ec.set_mapping(key, nil)
               end
             else
               raise InvalidContext::Syntax, "key #{key.inspect} is invalid"
@@ -291,7 +306,7 @@ module JSON::LD
           mappings.keys.kw_sort{|a, b| a.to_s <=> b.to_s}.each do |k|
             next unless term_valid?(k.to_s)
             debug {"=> mappings[#{k}] => #{mappings[k]}"}
-            ctx[k] = mappings[k].to_s
+            ctx[k] = mappings[k]
           end
 
           unless coercions.empty? && containers.empty? && languages.empty?
@@ -317,7 +332,7 @@ module JSON::LD
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
-              if %w(@list @set @language).include?(container(k))
+              if %w(@list @set @language @annotation).include?(container(k))
                 ctx[k]["@container"] = container(k)
                 debug {"=> container[#{k}] => #{container(k).inspect}"}
               end
@@ -481,7 +496,9 @@ module JSON::LD
     # @option options [RDF::URI] base (self.base)
     #   Base IRI to use when expanding relative IRIs.
     #
-    # @return [RDF::URI, String] IRI or String, if it's a keyword
+    # @return [RDF::URI, String, Array<RDF::URI>]
+    #   IRI or String, if it's a keyword, or array of IRI, if it matches
+    #   a property generator
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(iri, options = {})
@@ -499,7 +516,13 @@ module JSON::LD
       when prefix == '_' && suffix          then bnode(suffix)
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
-      when mappings.fetch(prefix, false)    then uri(mappings[prefix] + suffix.to_s)
+      when mapping = mappings.fetch(prefix, false) 
+        if mapping.is_a?(Array)
+          # Return array of IRIs, if it's a property generator
+          mapping.map {|m| uri(m + suffix.to_s)}
+        else
+          uri(mapping + suffix.to_s)
+        end
       when base                             then base.join(iri)
       when vocab                            then uri("#{vocab}#{iri}")
       else
@@ -838,15 +861,18 @@ module JSON::LD
     
     def dup
       # Also duplicate mappings, coerce and list
+      that = self
       ec = super
-      ec.mappings = mappings.dup
-      ec.coercions = coercions.dup
-      ec.containers = containers.dup
-      ec.languages = languages.dup
-      ec.default_language = default_language
-      ec.options = options
-      ec.iri_to_term = iri_to_term.dup
-      ec.iri_to_curie = iri_to_curie.dup
+      ec.instance_eval do
+        @mappings = that.mappings.dup
+        @coerceions = that.coercions.dup
+        @containers = that.containers.dup
+        @languages = that.languages.dup
+        @default_language = that.default_language
+        @options = that.options
+        @iri_to_term = that.iri_to_term.dup
+        @iri_to_curie = that.iri_to_curie.dup
+      end
       ec
     end
 
@@ -897,8 +923,14 @@ module JSON::LD
           # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
           container(term) == '@list' ? 1 : 0
         else
-          # Otherwise, return the greatest rank of all elements in the term.
-          depth {value['@list'].map {|v| term_rank(term, v)}.max}
+          # Otherwise, return the most specific term, for which the term has some match against every value.
+          depth do
+            value['@list'].map do |v|
+              r = term_rank(term, v)
+              raise "rank = 0" if r == 0
+              r
+            end.max rescue 0
+          end
         end
       elsif value?(value)
         val_type = value.fetch('@type', nil)

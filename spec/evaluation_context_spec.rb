@@ -227,6 +227,25 @@ describe JSON::LD::EvaluationContext do
           subject.parse({"name" => nil}).mapping("name").should be_nil
         end
       end
+
+      context "property generator" do
+        {
+          "empty" => [
+            {"term" => {"@id" => []}},
+            []
+          ],
+          "single" => [
+            {"term" => {"@id" => ["http://example.com/"]}},
+            ["http://example.com/"]
+          ],
+          "multiple" => [
+            {"term" => {"@id" => ["http://example.com/", "http://example.org/"]}},
+            ["http://example.com/", "http://example.org/"]
+          ],
+        }.each do |title, (input, result)|
+          specify(title) {subject.parse(input).mapping("term").should produce(result, @debug)}
+        end
+      end
     end
 
     describe "Syntax Errors" do
@@ -235,7 +254,8 @@ describe JSON::LD::EvaluationContext do
         "no @id, @type, or @container" => {"foo" => {}},
         "value as array" => {"foo" => []},
         "@id as object" => {"foo" => {"@id" => {}}},
-        "@id as array" => {"foo" => {"@id" => []}},
+        "@id as array of object" => {"foo" => {"@id" => [{}]}},
+        "@id as array of null" => {"foo" => {"@id" => [nil]}},
         "@type as object" => {"foo" => {"@type" => {}}},
         "@type as array" => {"foo" => {"@type" => []}},
         "@type as @list" => {"foo" => {"@type" => "@list"}},
@@ -338,6 +358,15 @@ describe JSON::LD::EvaluationContext do
       subject.serialize.should produce({
         "@context" => {
           "foo" => "http://example.com/"
+        }
+      }, @debug)
+    end
+
+    it "property generator" do
+      subject.set_mapping("foo", ["http://example.com/", "http://example.org/"])
+      subject.serialize.should produce({
+        "@context" => {
+          "foo" => ["http://example.com/", "http://example.org/"]
         }
       }, @debug)
     end
@@ -642,6 +671,18 @@ describe JSON::LD::EvaluationContext do
         subject.expand_iri("term").should produce(nil, @debug)
       end
     end
+    
+    context "property generator" do
+      before(:each) {subject.set_mapping("pg", ["http://a/", "http://b/"])}
+      {
+        "term" =>          ["pg",                  ["http://a/", "http://b/"]],
+        "prefix:suffix" => ["pg:suffix",           ["http://a/suffix", "http://b/suffix"]],
+      }.each do |title, (input,result)|
+        it title do
+          subject.expand_iri(input).should produce(result, @debug)
+        end
+      end
+    end
   end
 
   describe "#compact_iri" do
@@ -848,7 +889,7 @@ describe JSON::LD::EvaluationContext do
         "double value" => {:value => {"@value" => 1.1}, :rank => 1},
         "string value" => {:value => {"@value" => "foo"}, :rank => 0},
         "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
         "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
         "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
         "null"  => {:value => nil, :rank => 3},
@@ -891,7 +932,7 @@ describe JSON::LD::EvaluationContext do
           "double value" => {:value => {"@value" => 1.1}, :rank => 2},
           "string value" => {:value => {"@value" => "foo"}, :rank => 0},
           "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
           "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
           "value string" => {:value => {"@value" => "foo"}, :rank => 0},
           "null"  => {:value => nil, :rank => 3},
@@ -950,7 +991,7 @@ describe JSON::LD::EvaluationContext do
           "double value" => {:value => {"@value" => 1.1}, :rank => 1},
           "string value" => {:value => {"@value" => "foo"}, :rank => 0},
           "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 3},
+          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
           "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
           "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
           "null"  => {:value => nil, :rank => 3},
@@ -1003,18 +1044,18 @@ describe JSON::LD::EvaluationContext do
           })
         end
         {
-          "v1.1" => [{"@value" => "v1.1", "@language" => "de"}, 3, 0],
-          "v1.2" => [{"@value" => "v1.2", "@language" => "de"}, 3, 0],
-          "v1.3" => [{"@value" => "v1.3", "@language" => "de"}, 3, 0],
+          "v1.1" => [{"@value" => "v1.1", "@language" => "de"}, 2, 0],
+          "v1.2" => [{"@value" => "v1.2", "@language" => "de"}, 2, 0],
+          "v1.3" => [{"@value" => "v1.3", "@language" => "de"}, 2, 0],
           "v1.4" => [{"@value" => 4},                           2, 1],
-          "v1.5" => [{"@value" => "v1.5", "@language" => "de"}, 3, 0],
-          "v1.6" => [{"@value" => "v1.6", "@language" => "en"}, 1, 3],
-          "v2.1" => [{"@value" => "v2.1", "@language" => "en"}, 1, 3],
-          "v2.2" => [{"@value" => "v2.2", "@language" => "en"}, 1, 3],
-          "v2.3" => [{"@value" => "v2.3", "@language" => "en"}, 1, 3],
+          "v1.5" => [{"@value" => "v1.5", "@language" => "de"}, 2, 0],
+          "v1.6" => [{"@value" => "v1.6", "@language" => "en"}, 1, 2],
+          "v2.1" => [{"@value" => "v2.1", "@language" => "en"}, 1, 2],
+          "v2.2" => [{"@value" => "v2.2", "@language" => "en"}, 1, 2],
+          "v2.3" => [{"@value" => "v2.3", "@language" => "en"}, 1, 2],
           "v2.4" => [{"@value" => 4},                           2, 1],
-          "v2.5" => [{"@value" => "v2.5", "@language" => "en"}, 1, 3],
-          "v2.6" => [{"@value" => "v2.6", "@language" => "de"}, 3, 0],
+          "v2.5" => [{"@value" => "v2.5", "@language" => "en"}, 1, 2],
+          "v2.6" => [{"@value" => "v2.6", "@language" => "de"}, 2, 0],
         }.each do |label, (val, r1, r2)|
           context label do
             it "has rank #{r1} for term1" do
