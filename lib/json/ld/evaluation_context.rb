@@ -500,7 +500,7 @@ module JSON::LD
     # @option options [RDF::URI] base (self.base)
     #   Base IRI to use when expanding relative IRIs.
     #
-    # @return [RDF::URI, String, Array<RDF::URI>]
+    # @return [RDF::Term, String, Array<RDF::URI>]
     #   IRI or String, if it's a keyword, or array of IRI, if it matches
     #   a property generator
     # @raise [RDF::ReaderError] if the iri cannot be expanded
@@ -514,7 +514,7 @@ module JSON::LD
         return m
       end
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = [:subject].include?(options[:position]) ? options.fetch(:base, self.base) : nil
+      base = [:subject, :type].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then bnode(suffix)
@@ -532,7 +532,7 @@ module JSON::LD
       else
         # Otherwise, it must be an absolute IRI
         u = uri(iri)
-        u if u.absolute? || [:subject].include?(options[:position])
+        u if u.absolute? || [:subject, :type].include?(options[:position])
       end
     end
 
@@ -705,6 +705,44 @@ module JSON::LD
       options = {:useNativeTypes => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
+
+        #value = if value.is_a?(RDF::Value)
+        #  value
+        #elsif coerce(property) == '@id'
+        #  expand_iri(value, :position => :subject)
+        #else
+        #  RDF::Literal(value)
+        #end
+        #debug("expand_value") {"normalized: #{value.inspect}"}
+        #
+        #result = case value
+        #when RDF::Literal::Boolean, RDF::Literal::Integer, RDF::Literal::Double
+        #  debug("xsd:#{value.datatype.to_s.split('#').last}")
+        #  res = Hash.ordered
+        #  if options[:useNativeTypes]
+        #    res['@value'] = value.object
+        #  else
+        #    value.canonicalize! if value.is_a?(RDF::Literal::Double)
+        #    res['@value'] = value.to_s
+        #    res['@type'] = (coerce(property) || value.datatype).to_s
+        #  end
+        #  res
+        #when RDF::URI, RDF::Node
+        #  debug("URI | BNode") { value.to_s }
+        #  {'@id' => value.to_s}
+        #when RDF::Literal
+        #  debug("Literal")
+        #  res = Hash.ordered
+        #  res['@value'] = value.to_s
+        #  if coerce(property)
+        #    res['@type'] = coerce(property).to_s
+        #  elsif value.has_datatype?
+        #    res['@type'] = value.datatype.to_s
+        #  end
+        #  res['@language'] = value.language.to_s if value.has_language?
+        #  res
+        #end
+
         value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
         dt = case value
         when RDF::Literal
@@ -765,7 +803,7 @@ module JSON::LD
             res
           end
         end
-        
+
         debug {"=> #{result.inspect}"}
         result
       end

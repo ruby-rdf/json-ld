@@ -617,7 +617,7 @@ describe JSON::LD::EvaluationContext do
         {
           :subject => true,
           :predicate => false,
-          :type => false
+          :type => true
         }.each do |position, r|
           context "as #{position}" do
             before(:each) do
