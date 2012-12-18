@@ -511,7 +511,15 @@ module JSON::LD
       unless (m = mapping(iri)) == false
         # It's an exact match
         debug("expand_iri") {"match: #{iri.inspect} to #{m.inspect}"} unless options[:quiet]
-        return m
+        return case m
+        when nil
+          nil
+        when Array
+          # Return array of IRIs, if it's a property generator
+          m.map {|mm| uri(mm.to_s)}
+        else
+          uri(m.to_s)
+        end
       end
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
       base = [:subject, :type].include?(options[:position]) ? options.fetch(:base, self.base) : nil
@@ -520,8 +528,10 @@ module JSON::LD
       when prefix == '_' && suffix          then bnode(suffix)
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
-      when mapping = mappings.fetch(prefix, false)
-        if mapping.is_a?(Array)
+      when (mapping = mapping(prefix)) != false
+        debug("expand_iri") {"mapping: #{mapping(prefix).inspect}"} unless options[:quiet]
+        case mapping
+        when Array
           # Return array of IRIs, if it's a property generator
           mapping.map {|m| uri(m.to_s + suffix.to_s)}
         else
@@ -706,103 +716,93 @@ module JSON::LD
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
-        #value = if value.is_a?(RDF::Value)
-        #  value
-        #elsif coerce(property) == '@id'
-        #  expand_iri(value, :position => :subject)
-        #else
-        #  RDF::Literal(value)
-        #end
-        #debug("expand_value") {"normalized: #{value.inspect}"}
-        #
-        #result = case value
-        #when RDF::Literal::Boolean, RDF::Literal::Integer, RDF::Literal::Double
-        #  debug("xsd:#{value.datatype.to_s.split('#').last}")
-        #  res = Hash.ordered
-        #  if options[:useNativeTypes]
-        #    res['@value'] = value.object
+        value = if value.is_a?(RDF::Value)
+          value
+        elsif coerce(property) == '@id'
+          expand_iri(value, :position => :subject)
+        else
+          RDF::Literal(value)
+        end
+        debug("expand_value") {"normalized: #{value.inspect}"}
+        
+        result = case value
+        when RDF::URI, RDF::Node
+          debug("URI | BNode") { value.to_s }
+          {'@id' => value.to_s}
+        when RDF::Literal
+          debug("Literal") {"datatype: #{value.datatype.inspect}"}
+          res = Hash.ordered
+          if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+            res['@value'] = value.object
+            res['@type'] = coerce(property).to_s if coerce(property)
+          else
+            value.canonicalize! if value.datatype == RDF::XSD.double
+            res['@value'] = value.to_s
+            if coerce(property)
+              res['@type'] = coerce(property).to_s
+            elsif value.has_datatype?
+              res['@type'] = value.datatype.to_s
+            elsif value.has_language? || language(property)
+              res['@language'] = (value.language || language(property)).to_s
+            end
+          end
+          res
+        end
+
+        #value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
+        #dt = case value
+        #when RDF::Literal
+        #  case value.datatype
+        #  when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
+        #    # Use appropriate representation for native types
+        #    dtype = value.datatype
+        #    value = if options[:useNativeTypes]
+        #      value.object
+        #    else
+        #      RDF::Literal::Double.new(value, :canonicalize => true).to_s
+        #    end
+        #    dtype
         #  else
-        #    value.canonicalize! if value.is_a?(RDF::Literal::Double)
-        #    res['@value'] = value.to_s
-        #    res['@type'] = (coerce(property) || value.datatype).to_s
+        #    value
         #  end
+        #when
+        #  RDF::Term then value.class.name
+        #else
+        #  value
+        #end
+        #
+        #result = case dt
+        #when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
+        #  debug("xsd:#{dt.to_s.split('#').last}")
+        #  res = Hash.ordered
+        #  res['@value'] = value
+        #  res['@type'] = coerce(property) if coerce(property)
         #  res
-        #when RDF::URI, RDF::Node
+        #when "RDF::URI", "RDF::Node"
         #  debug("URI | BNode") { value.to_s }
         #  {'@id' => value.to_s}
         #when RDF::Literal
         #  debug("Literal")
         #  res = Hash.ordered
         #  res['@value'] = value.to_s
-        #  if coerce(property)
-        #    res['@type'] = coerce(property).to_s
-        #  elsif value.has_datatype?
-        #    res['@type'] = value.datatype.to_s
-        #  end
+        #  res['@type'] = value.datatype.to_s if value.has_datatype?
         #  res['@language'] = value.language.to_s if value.has_language?
         #  res
+        #else
+        #  debug("else")
+        #  case coerce(property)
+        #  when '@id'
+        #    {'@id' => expand_iri(value, :position => :subject).to_s}
+        #  when nil
+        #    debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
+        #    language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
+        #  else
+        #    res = Hash.ordered
+        #    res['@value'] = value.to_s
+        #    res['@type'] = coerce(property).to_s
+        #    res
+        #  end
         #end
-
-        value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
-        dt = case value
-        when RDF::Literal
-          case value.datatype
-          when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
-            # Use appropriate representation for native types
-            dtype = value.datatype
-            value = if options[:useNativeTypes]
-              value.object
-            else
-              RDF::Literal::Double.new(value, :canonicalize => true).to_s
-            end
-            dtype
-          else
-            value
-          end
-        when
-          RDF::Term then value.class.name
-        else
-          value
-        end
-
-        result = if dt || coerce(property)
-          {"@value" => value, "@type" => dt || coerce(property)}
-        else
-          value
-        end
-
-        result = case dt
-        when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
-          debug("xsd:#{dt.to_s.split('#').last}")
-          res = Hash.ordered
-          res['@value'] = value
-          res['@type'] = coerce(property) if coerce(property)
-          res
-        when "RDF::URI", "RDF::Node"
-          debug("URI | BNode") { value.to_s }
-          {'@id' => value.to_s}
-        when RDF::Literal
-          debug("Literal")
-          res = Hash.ordered
-          res['@value'] = value.to_s
-          res['@type'] = value.datatype.to_s if value.has_datatype?
-          res['@language'] = value.language.to_s if value.has_language?
-          res
-        else
-          debug("else")
-          case coerce(property)
-          when '@id'
-            {'@id' => expand_iri(value, :position => :subject).to_s}
-          when nil
-            debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
-            language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
-          else
-            res = Hash.ordered
-            res['@value'] = value.to_s
-            res['@type'] = coerce(property).to_s
-            res
-          end
-        end
 
         debug {"=> #{result.inspect}"}
         result

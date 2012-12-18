@@ -190,7 +190,8 @@ module JSON::LD
             end
 
             # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
-            if !(property.is_a?(String) && %(@id @language @type @value @annotation).include?(property)) &&
+            debug(" => ") {"property: #{property.inspect}"}
+            if !(!property.is_a?(Array) && %(@id @language @type @value @annotation).include?(property)) &&
               !expanded_value.is_a?(Array)
 
               debug(" => make #{expanded_value.inspect} an array")

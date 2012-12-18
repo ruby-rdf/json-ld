@@ -583,6 +583,15 @@ describe JSON::LD::EvaluationContext do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
 
+    context "keywords" do
+      %w(id type).each do |kw|
+        it "expands #{kw} to @#{kw}" do
+          subject.set_mapping(kw, "@#{kw}")
+          subject.expand_iri(kw).should produce("@#{kw}", @debug)
+        end
+      end
+    end
+
     context "relative IRI" do
       {
         :subject => true,
