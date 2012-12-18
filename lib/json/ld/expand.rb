@@ -275,7 +275,7 @@ module JSON::LD
         element.keys.sort.each do |k|
           label_blanknodes(element[k], namer)
         end
-        unless element.has_key?('@id')
+        if node?(element) and !element.has_key?('@id')
           element['@id'] = namer.get_name(nil)
         end
       end

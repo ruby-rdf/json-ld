@@ -10,6 +10,10 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
+            case t.property('input')
+            when /expand-(0038)/
+              pending("BNode re-naming")
+            end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')
             result = JSON::LD::API.expand(t.input, nil, nil,

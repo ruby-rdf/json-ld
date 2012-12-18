@@ -808,17 +808,24 @@ describe JSON::LD::API do
               }
             },
             "@id" => "site:node/1",
-            "field_tags" => { "@type" => "site:term/this-is-a-tag" }
+            "field_tags" => [
+              { "@type" => "site:term/this-is-a-tag" },
+              "foo"
+            ]
           },
           :output => [{
              "@id" => "http://example.com/node/1",
              "http://schema.org/about" => [{
                "@id" => "_:t0",
                "@type" => ["http://example.com/term/this-is-a-tag"]
+             }, {
+               "@value" => "foo"
              }],
              "http://example.com/vocab/field_tags" => [{
                "@id" => "_:t0",
                "@type" => ["http://example.com/term/this-is-a-tag"]
+             }, {
+               "@value" => "foo"
              }]
           }]
         }
