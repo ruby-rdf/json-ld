@@ -49,8 +49,8 @@ module JSON::LD
     # @option options [Boolean] :optimize (false)
     #   If set to `true`, the JSON-LD processor is allowed to optimize the output of the Compaction Algorithm to produce even compacter representations. The algorithm for compaction optimization is beyond the scope of this specification and thus not defined. Consequently, different implementations *MAY* implement different optimization algorithms.
     #   (Presently, this is a noop).
-    # @option options [Boolean] :useNativeDatatypes (true)
-    # If set to `true`, the JSON-LD processor will use the expanded `rdf:type` IRI as the property instead of `@type` when converting from RDF.
+    # @option options [Boolean] :useNativeTypes (true)
+    # If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
     # @option options [Boolean] :useRdfType (false) If set to `true`, the JSON-LD processor will try to convert datatyped literals to JSON native types instead of using the expanded object form when converting from RDF. `xsd:boolean` values will be converted to `true` or `false`. `xsd:integer` and `xsd:double` values will be converted to JSON numbers.
     # @yield [api]
     # @yieldparam [API]

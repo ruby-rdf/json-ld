@@ -79,7 +79,8 @@ module JSON::LD
   class BlankNodeNamer < Hash
     # @param [String] prefix
     def initialize(prefix)
-      @prefix = "_:#{prefix}0"
+      @prefix = "_:#{prefix}"
+      @num = 0
       super
     end
     
@@ -92,14 +93,12 @@ module JSON::LD
       if old && self.has_key?(old)
         self[old]
       elsif old
-        self[old] = @prefix.dup
-        @prefix.succ!
-        self[old]
+        @num += 1
+        self[old] = @prefix + (@num - 1).to_s
       else
         # Not referenced, just return a new unique value
-        cur = @prefix.dup
-        @prefix.succ!
-        cur
+        @num += 1
+        @prefix + (@num - 1).to_s
       end
     end
   end
