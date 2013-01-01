@@ -2,19 +2,19 @@
   "@context": { "foaf": "http://xmlns.com/foaf/0.1/" },
   "@graph": [
     {
-      "@id": "_:bnode1",
+      "@id": "_:t0",
       "@type": "foaf:Person",
       "foaf:homepage": "http://example.com/bob/",
       "foaf:name": "Bob"
     },
     {
-      "@id": "_:bnode2",
+      "@id": "_:t1",
       "@type": "foaf:Person",
       "foaf:homepage": "http://example.com/eve/",
       "foaf:name": "Eve"
     },
     {
-      "@id": "_:bnode3",
+      "@id": "_:t2",
       "@type": "foaf:Person",
       "foaf:homepage": "http://example.com/manu/",
       "foaf:name": "Manu"

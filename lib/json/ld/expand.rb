@@ -238,7 +238,8 @@ module JSON::LD
           # If element has an @set or @list property, it must be the only property. Set element to the value of @set;
           # leave @list untouched.
           if !(%w(@set @list) & output_object.keys).empty?
-            raise ProcessingError, "element must have only @set, @list or @graph" if output_object.keys.length > 1
+            o_keys = output_object.keys - %w(@set @list @annotation)
+            raise ProcessingError, "element must have only @set or  @list: #{output_object.keys.inspect}" if o_keys.length > 1
             
             output_object = output_object.values.first unless output_object.has_key?('@list')
           end
