@@ -75,6 +75,10 @@ module JSON::LD
     # @return [EvaluationContext] A context provided to us that we can use without re-serializing
     attr_accessor :provided_context
 
+    # @!attribute [r] remote_contexts
+    # @return [Array<String>] The list of remote contexts already processed
+    attr_accessor :remote_contexts
+
     ##
     # Create new evaluation context
     # @yield [ec]
@@ -91,6 +95,7 @@ module JSON::LD
         RDF.to_uri.to_s => "rdf",
         RDF::XSD.to_uri.to_s => "xsd"
       }
+      @remote_contexts = []
 
       @options = options
 
@@ -121,6 +126,7 @@ module JSON::LD
         # Load context document, if it is a string
         begin
           ctx = JSON.load(context)
+          raise JSON::LD::InvalidContext::LoadError, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
           parse(ctx["@context"] || {})
         rescue JSON::ParserError => e
           debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
@@ -137,6 +143,8 @@ module JSON::LD
         ec = nil
         begin
           url = expand_iri(context, :base => context_base || base, :position => :subject)
+          raise JSON::LD::InvalidContext::LoadError if remote_contexts.include?(url)
+          @remote_contexts = @remote_contexts + [url]
           ecdup = self.dup
           ecdup.context_base = url  # Set context_base for recursive remote contexts
           RDF::Util::File.open_file(url) {|f| ec = ecdup.parse(f)}
@@ -172,7 +180,7 @@ module JSON::LD
             context.delete(key)
             debug("parse") {"Set #{key} to #{v.inspect}"}
             new_ec.send(setter, v)
-          elsif v
+          elsif v && @options[:validate]
             raise InvalidContext::Syntax, "#{key.inspect} is invalid"
           end
         end
@@ -187,7 +195,8 @@ module JSON::LD
             debug("parse") {"Hash[#{key}] = #{value.inspect}"}
 
             if KEYWORDS.include?(key)
-              raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword"
+              raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword" if @options[:validate]
+              next
             elsif term_valid?(key)
               # Remove all coercion information for the property
               new_ec.set_coerce(key, nil)
@@ -227,7 +236,7 @@ module JSON::LD
                 new_ec.set_mapping(key, iri)
                 num_updates += 1
               end
-            else
+            elsif @options[:validate]
               raise InvalidContext::Syntax, "key #{key.inspect} is invalid"
             end
           end
@@ -499,6 +508,10 @@ module JSON::LD
     #   Useful when determining how to serialize.
     # @option options [RDF::URI] base (self.base)
     #   Base IRI to use when expanding relative IRIs.
+    # @option options [Array<String>] path ([])
+    #   Array of looked up iris, used to find cycles
+    # @option options [BlankNodeNamer] namer
+    #   Blank Node namer to use for renaming Blank Nodes
     #
     # @return [RDF::Term, String, Array<RDF::URI>]
     #   IRI or String, if it's a keyword, or array of IRI, if it matches
@@ -507,6 +520,9 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
+      raise "attempt to expand #{iri} having cyclic definition" if (options[:path] ||= []).include?(iri.to_s)
+      options[:path] << iri.to_s
+
       prefix, suffix = iri.split(':', 2)
       unless (m = mapping(iri)) == false
         # It's an exact match
@@ -516,16 +532,16 @@ module JSON::LD
           nil
         when Array
           # Return array of IRIs, if it's a property generator
-          m.map {|mm| uri(mm.to_s)}
+          m.map {|mm| uri(mm.to_s, options[:namer])}
         else
-          uri(m.to_s)
+          uri(m.to_s, options[:namer])
         end
       end
       debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
       base = [:subject, :type].include?(options[:position]) ? options.fetch(:base, self.base) : nil
       prefix = prefix.to_s
       case
-      when prefix == '_' && suffix          then bnode(suffix)
+      when prefix == '_' && suffix          then uri(bnode(suffix), options[:namer])
       when iri.to_s[0,1] == "@"             then iri
       when suffix.to_s[0,2] == '//'         then uri(iri)
       when (mapping = mapping(prefix)) != false
@@ -533,9 +549,9 @@ module JSON::LD
         case mapping
         when Array
           # Return array of IRIs, if it's a property generator
-          mapping.map {|m| uri(m.to_s + suffix.to_s)}
+          mapping.map {|m| uri(m.to_s + suffix.to_s, options[:namer])}
         else
-          uri(mapping.to_s + suffix.to_s)
+          uri(mapping.to_s + suffix.to_s, options[:namer])
         end
       when base                             then base.join(iri)
       when vocab                            then uri("#{vocab}#{iri}")
@@ -707,6 +723,8 @@ module JSON::LD
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options [Boolean] :useNativeTypes (true) use native representations
+    # @option options [BlankNodeNamer] namer
+    #   Blank Node namer to use for renaming Blank Nodes
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
@@ -719,7 +737,7 @@ module JSON::LD
         value = if value.is_a?(RDF::Value)
           value
         elsif coerce(property) == '@id'
-          expand_iri(value, :position => :subject)
+          expand_iri(value, :position => :subject, :namer => options[:namer])
         else
           RDF::Literal(value)
         end
@@ -734,75 +752,20 @@ module JSON::LD
           res = Hash.ordered
           if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
-            res['@type'] = coerce(property).to_s if coerce(property)
+            res['@type'] = uri(coerce(property), options[:namer]) if coerce(property)
           else
             value.canonicalize! if value.datatype == RDF::XSD.double
             res['@value'] = value.to_s
             if coerce(property)
-              res['@type'] = coerce(property).to_s
+              res['@type'] = uri(coerce(property), options[:namer]).to_s
             elsif value.has_datatype?
-              res['@type'] = value.datatype.to_s
+              res['@type'] = uri(value.datatype, options[:namer]).to_s
             elsif value.has_language? || language(property)
               res['@language'] = (value.language || language(property)).to_s
             end
           end
           res
         end
-
-        #value = RDF::Literal(value) if RDF::Literal(value).has_datatype?
-        #dt = case value
-        #when RDF::Literal
-        #  case value.datatype
-        #  when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
-        #    # Use appropriate representation for native types
-        #    dtype = value.datatype
-        #    value = if options[:useNativeTypes]
-        #      value.object
-        #    else
-        #      RDF::Literal::Double.new(value, :canonicalize => true).to_s
-        #    end
-        #    dtype
-        #  else
-        #    value
-        #  end
-        #when
-        #  RDF::Term then value.class.name
-        #else
-        #  value
-        #end
-        #
-        #result = case dt
-        #when RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double
-        #  debug("xsd:#{dt.to_s.split('#').last}")
-        #  res = Hash.ordered
-        #  res['@value'] = value
-        #  res['@type'] = coerce(property) if coerce(property)
-        #  res
-        #when "RDF::URI", "RDF::Node"
-        #  debug("URI | BNode") { value.to_s }
-        #  {'@id' => value.to_s}
-        #when RDF::Literal
-        #  debug("Literal")
-        #  res = Hash.ordered
-        #  res['@value'] = value.to_s
-        #  res['@type'] = value.datatype.to_s if value.has_datatype?
-        #  res['@language'] = value.language.to_s if value.has_language?
-        #  res
-        #else
-        #  debug("else")
-        #  case coerce(property)
-        #  when '@id'
-        #    {'@id' => expand_iri(value, :position => :subject).to_s}
-        #  when nil
-        #    debug("expand value") {"lang(prop): #{language(property).inspect}, def: #{default_language.inspect}"}
-        #    language(property) ? {"@value" => value.to_s, "@language" => language(property)} : {"@value" => value.to_s}
-        #  else
-        #    res = Hash.ordered
-        #    res['@value'] = value.to_s
-        #    res['@type'] = coerce(property).to_s
-        #    res
-        #  end
-        #end
 
         debug {"=> #{result.inspect}"}
         result
@@ -920,13 +883,14 @@ module JSON::LD
 
     private
 
-    def uri(value, append = nil)
+    def uri(value, namer = nil)
       case value.to_s
-      when /_:/
-        RDF::Node.new(value)
+      when /^_:(.*)$/
+        # Map BlankNodes if a namer is given
+        debug "uri(bnode)#{value}: #{$1}"
+        bnode(namer ? namer.get_sym($1) : $1)
       else
         value = RDF::URI.new(value)
-        value = value.join(append) if append
         value.validate! if @options[:validate]
         value.canonicalize! if @options[:canonicalize]
         value = RDF::URI.intern(value) if @options[:intern]

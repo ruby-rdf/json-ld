@@ -45,9 +45,8 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
       
-      it "allows a non-existing @context" do
-        ec = subject.parse(StringIO.new("{}"))
-        ec.mappings.should produce({}, @debug)
+      it "notes non-existing @context" do
+        lambda {subject.parse(StringIO.new("{}"))}.should raise_error
       end
       
       it "parses a referenced context at a relative URI" do

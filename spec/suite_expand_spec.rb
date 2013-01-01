@@ -11,8 +11,8 @@ describe JSON::LD do
         specify "#{t.property('input')}: #{t.name}" do
           begin
             case t.property('input')
-            when /expand-(0038)/
-              pending("BNode re-naming")
+            when /expand-(0039)/
+              pending("As if!")
             end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')

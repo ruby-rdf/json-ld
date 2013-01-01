@@ -51,7 +51,7 @@ module JSON::LD
           input.keys.kw_sort.each do |key|
             value = input[key]
             # Remove property from element expand property according to the steps outlined in IRI Expansion
-            property = context.expand_iri(key, :position => :predicate, :quiet => true)
+            property = context.expand_iri(key, :position => :predicate, :quiet => true, :namer => namer)
             property = nil if property.is_a?(Array) && property.empty?
 
             # Set active property to the original un-expanded property if property if not a keyword
@@ -68,7 +68,7 @@ module JSON::LD
             expanded_value = case property
             when '@id'
               # If the property is @id the value must be a string. Expand the value according to IRI Expansion.
-              context.expand_iri(value, :position => :subject, :quiet => true).to_s
+              context.expand_iri(value, :position => :subject, :quiet => true, :namer => namer).to_s
             when '@type'
               # Otherwise, if the property is @type the value must be a string, an array of strings
               # or an empty JSON Object.
@@ -80,20 +80,20 @@ module JSON::LD
                   [value].flatten.map do |v|
                     v = v['@id'] if node_reference?(v)
                     raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
-                    context.expand_iri(v, options.merge(:position => :subject, :quiet => true)).to_s
+                    context.expand_iri(v, options.merge(:position => :subject, :quiet => true, :namer => namer)).to_s
                   end
                 end
               when Hash
                 # Empty object used for @type wildcard or node reference
                 if node_reference?(value)
-                  context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true)).to_s
+                  context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
                 elsif !value.empty?
                   raise ProcessingError, "Object value of @type must be empty or a node reference: #{value.inspect}"
                 else
                   value
                 end
               else
-                context.expand_iri(value, options.merge(:position => :property, :quiet => true)).to_s
+                context.expand_iri(value, options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
               end
             when '@annotation'
               # Otherwise, if the property is @annotation, the value MUST be a string
@@ -191,7 +191,7 @@ module JSON::LD
 
             # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
             debug(" => ") {"property: #{property.inspect}"}
-            if !(!property.is_a?(Array) && %(@id @language @type @value @annotation).include?(property)) &&
+            if !(!property.is_a?(Array) && %(@id @language @type @value @annotation).include?(property.to_s)) &&
               !expanded_value.is_a?(Array)
 
               debug(" => make #{expanded_value.inspect} an array")
@@ -257,7 +257,9 @@ module JSON::LD
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
-        context.expand_value(active_property, input, :position => :subject, :depth => @depth) unless input.nil?
+        context.expand_value(active_property, input,
+          :position => :subject, :namer => namer, :depth => @depth
+        ) unless input.nil?
       end
 
       debug {" => #{result.inspect}"}

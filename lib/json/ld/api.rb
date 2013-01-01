@@ -50,8 +50,11 @@ module JSON::LD
     #   If set to `true`, the JSON-LD processor is allowed to optimize the output of the Compaction Algorithm to produce even compacter representations. The algorithm for compaction optimization is beyond the scope of this specification and thus not defined. Consequently, different implementations *MAY* implement different optimization algorithms.
     #   (Presently, this is a noop).
     # @option options [Boolean] :useNativeTypes (true)
-    # If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
-    # @option options [Boolean] :useRdfType (false) If set to `true`, the JSON-LD processor will try to convert datatyped literals to JSON native types instead of using the expanded object form when converting from RDF. `xsd:boolean` values will be converted to `true` or `false`. `xsd:integer` and `xsd:double` values will be converted to JSON numbers.
+    #   If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
+    # @option options [Boolean] :useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will try to convert datatyped literals to JSON native types instead of using the expanded object form when converting from RDF. `xsd:boolean` values will be converted to `true` or `false`. `xsd:integer` and `xsd:double` values will be converted to JSON numbers.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
@@ -100,9 +103,11 @@ module JSON::LD
     #   The expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
     def self.expand(input, context = nil, callback = nil, options = {})
+      options = {:rename_bnodes => true}.merge(options)
       result = nil
+      namer = options[:rename_bnodes] ? BlankNodeNamer.new("t") : BlankNodeMapper.new
       API.new(input, context, options) do |api|
-        result = api.expand(api.value, nil, api.context, BlankNodeNamer.new("t"))
+        result = api.expand(api.value, nil, api.context, namer)
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an

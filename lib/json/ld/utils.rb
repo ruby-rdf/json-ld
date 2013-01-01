@@ -76,28 +76,49 @@ module JSON::LD
   ##
   # Utility class for mapping old blank node identifiers, or unnamed blank
   # nodes to new identifiers
-  class BlankNodeNamer < Hash
-    # @param [String] prefix
-    def initialize(prefix)
-      @prefix = "_:#{prefix}"
-      @num = 0
-      super
+  class BlankNodeMapper < Hash
+    ##
+    # Just return a Blank Node based on `old`
+    # @param [String] old
+    # @return [String]
+    def get_sym(old)
+      old.to_s.sub(/_:/, '')
     end
-    
+
     ##
     # Get a new mapped name for `old`
     #
     # @param [String] old
     # @return [String]
     def get_name(old)
+      "_:" + get_sym(old)
+    end
+  end
+
+  class BlankNodeNamer < BlankNodeMapper
+    # @param [String] prefix
+    def initialize(prefix)
+      @prefix = prefix.to_s
+      @num = 0
+      super
+    end
+
+    ##
+    # Get a new symbol mapped from `old`
+    # @param [String] old
+    # @return [String]
+    def get_sym(old)
+      old = old.to_s.sub(/_:/, '')
       if old && self.has_key?(old)
         self[old]
-      elsif old
+      elsif !old.empty?
         @num += 1
+        #puts "allocate #{@prefix + (@num - 1).to_s} to #{old.inspect}"
         self[old] = @prefix + (@num - 1).to_s
       else
         # Not referenced, just return a new unique value
         @num += 1
+        #puts "allocate #{@prefix + (@num - 1).to_s} to #{old.inspect}"
         @prefix + (@num - 1).to_s
       end
     end
