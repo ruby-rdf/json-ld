@@ -1,3 +1,4 @@
+require 'rdf'
 require 'rdf/nquads'
 
 module JSON::LD
@@ -21,7 +22,6 @@ module JSON::LD
     # @yieldparam [RDF::Statement] statement
     def statements(path, element, subject, property, name, &block)
       debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
-      @node_seq = "t0" unless subject || property
 
       traverse_result = depth do
         case element
@@ -154,9 +154,7 @@ module JSON::LD
     ##
     # Create a new named node using the sequence
     def node
-      n = RDF::Node.new(@node_seq)
-      @node_seq = @node_seq.succ
-      n
+      RDF::Node.new(namer.get_sym)
     end
 
     ##

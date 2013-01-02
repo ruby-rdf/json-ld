@@ -100,7 +100,7 @@ describe JSON::LD::API do
           %q({
             "@type": "_:foo"
           }),
-          %q([ a _:a ] .)
+          %q([ a _:foo ] .)
         ]
       }.each do |title, (js, nt)|
         it title do

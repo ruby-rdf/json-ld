@@ -13,14 +13,13 @@ module JSON::LD
     #   Graph name for results
     # @param [Array] list
     #   List for saving list elements
-    # @param [BlankNodeNamer] namer
-    # @param [String] id
+    # @param [String] id (nil)
     #   Identifier already associated with element
-    def generate_node_map(element, node_map, graph, list, namer, id = nil)
+    def generate_node_map(element, node_map, graph, list = nil, id = nil)
       depth do
         debug("nodeMap") {"element: #{element.inspect}, graph: #{graph}"}
         if element.is_a?(Array)
-          element.map {|o| generate_node_map(o, node_map, graph, list, namer)}
+          element.map {|o| generate_node_map(o, node_map, graph, list)}
         elsif !element.is_a?(Hash) || value?(element)
           list << element if list
         else
@@ -48,7 +47,7 @@ module JSON::LD
             when '@graph'
               # If property is @graph, recursively call this algorithm passing value for element, nodeMap, nil for list and if graph is @merged use graph, otherwise use id for graph and then continue.
               graph = graph == '@merged' ? '@merged' : id
-              generate_node_map(value, node_map, graph, nil, namer)
+              generate_node_map(value, node_map, graph)
             when /^@(?!type)/
               # If property is not @type and is a keyword, merge property and value into node and then continue.
               debug("nodeMap") {"merge keyword#{prop}: #{value.inspect}"}
@@ -75,7 +74,7 @@ module JSON::LD
                   }
 
                   # Recursively call this algorithm passing v for value, nodeMap, graph, and nil for list.
-                  generate_node_map(v, node_map, graph, nil, namer, name)
+                  generate_node_map(v, node_map, graph, nil, name)
                 elsif list?(v)
                   # Otherwise if v has the property @list then recursively call this algorithm with the value of @list as element, nodeMap, graph, and a new array flattenedList as list.
                   debug("nodeMap") {"list value #{prop}: #{v.inspect}"}
@@ -83,8 +82,7 @@ module JSON::LD
                   generate_node_map(v['@list'],
                     node_map,
                     graph,
-                    flattened_list,
-                    namer)
+                    flattened_list)
                   # Create a new JSON object with the property @list set to flattenedList and add it to node for property.
                   (node[prop] ||= []) << {'@list' => flattened_list}
                 elsif prop == '@type'

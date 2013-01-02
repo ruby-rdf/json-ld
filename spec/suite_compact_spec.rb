@@ -11,8 +11,8 @@ describe JSON::LD do
         specify "#{t.property('input')}: #{t.name}" do
           begin
             case t.property('input')
-            when /compact-(0018|0024|0027)/
-              pending("term rank")
+            #when /compact-(0018|0024|0027)/
+            #  pending("term rank")
             when /compact-(0031|0032|0033|0034|0035|0036|0037)/
               pending("implementation of property generators")
             end

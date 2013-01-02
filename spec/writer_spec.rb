@@ -154,7 +154,7 @@ describe JSON::LD::Writer do
            owl:onClass <http://data.wikia.com/terms#Element>;
            owl:onProperty <http://data.wikia.com/terms#characterIn> .
       )
-      serialize(input, :prefixes => {
+      serialize(input, :rename_bnodes => false, :prefixes => {
         :owl  => "http://www.w3.org/2002/07/owl#",
         :rdfs => "http://www.w3.org/2000/01/rdf-schema#",
         :xsd  => "http://www.w3.org/2001/XMLSchema#"

@@ -10,10 +10,9 @@ module JSON::LD
     # @param [Array, Hash] input
     # @param [String] active_property
     # @param [EvaluationContext] context
-    # @param [BlankNodeNamer] namer
     # @param [Hash{Symbol => Object}] options
     # @return [Array, Hash]
-    def expand(input, active_property, context, namer, options = {})
+    def expand(input, active_property, context, options = {})
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -27,7 +26,7 @@ module JSON::LD
             # throw an exception as lists of lists are not allowed.
             raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array) && is_list
 
-            expand(v, active_property, context, namer, options)
+            expand(v, active_property, context, options)
           end.flatten.compact
 
           if is_list && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
@@ -109,7 +108,7 @@ module JSON::LD
               # using this algorithm, passing copies of the active context and active property.
               # If the expanded value is not an array, convert it to an array.
               value = [value] unless value.is_a?(Array)
-              value = depth { expand(value, active_property, context, namer, options) }
+              value = depth { expand(value, active_property, context, options) }
 
               # If property is @list, and any expanded value
               # is an object containing an @list property, throw an exception, as lists of lists are not supported
@@ -154,7 +153,7 @@ module JSON::LD
                 value.keys.sort.each do |k|
                   [value[k]].flatten.each do |v|
                     # Expand the value, adding an '@annotation' key with value equal to the key
-                    expanded_value = depth { expand(v, active_property, context, namer, options) }
+                    expanded_value = depth { expand(v, active_property, context, options) }
                     next unless expanded_value
                     expanded_value['@annotation'] ||= k
                     ary << expanded_value
@@ -164,7 +163,7 @@ module JSON::LD
                 ary
               else
                 # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
-                depth { expand(value, active_property, context, namer, options) }
+                depth { expand(value, active_property, context, options) }
               end
             end
 
@@ -199,7 +198,7 @@ module JSON::LD
             end
 
             if property.is_a?(Array)
-              label_blanknodes(expanded_value, namer)
+              label_blanknodes(expanded_value)
               property.map(&:to_s).each do |prop|
                 # label all blank nodes in value with blank node identifiers by using the Label Blank Nodes Algorithm.
                 output_object[prop] ||= []
@@ -269,15 +268,14 @@ module JSON::LD
 
     protected
     # @param [Array, Hash] input
-    # @param [BlankNodeNamer] namer
-    def label_blanknodes(element, namer)
+    def label_blanknodes(element)
       if element.is_a?(Array)
-        element.each {|e| label_blanknodes(e, namer)}
+        element.each {|e| label_blanknodes(e)}
       elsif list?(element)
-        element['@list'].each {|e| label_blanknodes(e, namer)}
+        element['@list'].each {|e| label_blanknodes(e)}
       elsif element.is_a?(Hash)
         element.keys.sort.each do |k|
-          label_blanknodes(element[k], namer)
+          label_blanknodes(element[k])
         end
         if node?(element) and !element.has_key?('@id')
           element['@id'] = namer.get_name(nil)

@@ -99,13 +99,11 @@ describe JSON::LD::API do
         @node_map = Hash.ordered
         graph = params[:graph] || '@merged'
         jld = nil
-        JSON::LD::API.new(params[:input], nil, :debug => @debug) do |api|
-          expanded_value = api.expand(api.value, nil, api.context, JSON::LD::BlankNodeNamer.new("t"))
+        expanded_value = JSON::LD::API.expand(params[:input])
+        JSON::LD::API.new(expanded_value, nil, :debug => @debug) do |api|
           api.generate_node_map(expanded_value,
             @node_map,
-            graph,
-            nil,
-            JSON::LD::BlankNodeNamer.new("t"))
+            graph)
         end
         @node_map.keys.should produce([graph], @debug)
         subjects = @node_map[graph]

@@ -55,12 +55,18 @@ module JSON::LD
           # FIXME: check for full-iri list coercion
 
           # Otherwise store the resulting array as value of active property if empty or property otherwise.
-          compacted_key = context.compact_iri(k, :position => :predicate, :depth => @depth)
+          compacted_key = context.compact_iri('@list', :position => :predicate, :depth => @depth)
           v = depth { compact(element[k], property) }
           
           # Return either the result as an array, as an object with a key of @list (or appropriate alias from active context
           v = [v].compact unless v.is_a?(Array)
-          v = {compacted_key => v} unless context.container(property) == k
+          unless context.container(property) == '@list'
+            v = {compacted_key => v}
+            if element['@annotation']
+              compacted_key = context.compact_iri('@annotation', :position => :predicate, :depth => @depth)
+              v[compacted_key] = element['@annotation']
+            end
+          end
           debug("compact") {"@list result, return as #{v.inspect}"}
           return v
         end

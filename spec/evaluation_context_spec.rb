@@ -780,6 +780,7 @@ describe JSON::LD::EvaluationContext do
         {
           "listplain"   => [
             [{"@value" => "foo"}],
+            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => "baz"}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1.1}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => true}],
@@ -798,6 +799,112 @@ describe JSON::LD::EvaluationContext do
                 ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", :value => {"@list" => value}).should produce(prop, @debug)
               end
             end
+          end
+        end
+      end
+    end
+
+    context "compact-0018" do
+      let(:ctx) do
+        subject.parse(JSON.parse %({
+          "id1": "http://example.com/id1",
+          "type1": "http://example.com/t1",
+          "type2": "http://example.com/t2",
+          "@language": "de",
+          "term": {
+            "@id": "http://example.com/term"
+          },
+          "term1": {
+            "@id": "http://example.com/term",
+            "@container": "@list"
+          },
+          "term2": {
+            "@id": "http://example.com/term",
+            "@container": "@list",
+            "@language": "en"
+          },
+          "term3": {
+            "@id": "http://example.com/term",
+            "@container": "@list",
+            "@language": null
+          },
+          "term4": {
+            "@id": "http://example.com/term",
+            "@container": "@list",
+            "@type": "type1"
+          },
+          "term5": {
+            "@id": "http://example.com/term",
+            "@container": "@list",
+            "@type": "type2"
+          }
+        }))
+      end
+
+      {
+        "term" => [
+          '{ "@value": "v0.1", "@language": "de" }',
+          '{ "@value": "v0.2", "@language": "en" }',
+          '{ "@value": "v0.3"}',
+          '{ "@value": 4}',
+          '{ "@value": true}',
+          '{ "@value": false}'
+        ],
+        "term1" => %q({
+          "@list": [
+            { "@value": "v1.1", "@language": "de" },
+            { "@value": "v1.2", "@language": "en" },
+            { "@value": "v1.3"},
+            { "@value": 14},
+            { "@value": true},
+            { "@value": false}
+          ]
+        }),
+        "term2" => %q({
+          "@list": [
+            { "@value": "v2.1", "@language": "en" },
+            { "@value": "v2.2", "@language": "en" },
+            { "@value": "v2.3", "@language": "en" },
+            { "@value": "v2.4", "@language": "en" },
+            { "@value": "v2.5", "@language": "en" },
+            { "@value": "v2.6", "@language": "en" }
+          ]
+        }),
+        "term3" => %q({
+          "@list": [
+            { "@value": "v3.1"},
+            { "@value": "v3.2"},
+            { "@value": "v3.3"},
+            { "@value": "v3.4"},
+            { "@value": "v3.5"},
+            { "@value": "v3.6"}
+          ]
+        }),
+        "term4" => %q({
+          "@list": [
+            { "@value": "v4.1", "@type": "http://example.com/t1" },
+            { "@value": "v4.2", "@type": "http://example.com/t1" },
+            { "@value": "v4.3", "@type": "http://example.com/t1" },
+            { "@value": "v4.4", "@type": "http://example.com/t1" },
+            { "@value": "v4.5", "@type": "http://example.com/t1" },
+            { "@value": "v4.6", "@type": "http://example.com/t1" }
+          ]
+        }),
+        "term5" => %q({
+          "@list": [
+            { "@value": "v5.1", "@type": "http://example.com/t2" },
+            { "@value": "v5.2", "@type": "http://example.com/t2" },
+            { "@value": "v5.3", "@type": "http://example.com/t2" },
+            { "@value": "v5.4", "@type": "http://example.com/t2" },
+            { "@value": "v5.5", "@type": "http://example.com/t2" },
+            { "@value": "v5.6", "@type": "http://example.com/t2" }
+          ]
+        }),
+      }.each do |term, value|
+        [value].flatten.each do |v|
+          it "Uses #{term} for #{v}" do
+            ctx.compact_iri("http://example.com/term", :value => JSON.parse(v)).
+              should produce(term, @debug)
           end
         end
       end
@@ -826,6 +933,18 @@ describe JSON::LD::EvaluationContext do
       it "Compact properties and types using @vocab" do
         ctx.compact_iri("http://example.com/subdir/id/1", :position => :subject).
           should produce("sub:id/1", @debug)
+      end
+    end
+
+    context "compact-0041" do
+      let(:ctx) do
+        subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
+      end
+      it "Does not use @list with @annotation" do
+        ctx.compact_iri("http://example.com/property", :value => {
+          "@list" => ["one item"],
+          "@annotation" => "an annotation"
+        }).should produce("http://example.com/property", @debug)
       end
     end
   end
@@ -938,11 +1057,11 @@ describe JSON::LD::EvaluationContext do
           "boolean value" => {:value => {"@value" => true}, :rank => 2},
           "integer value"    => {:value => {"@value" => 1}, :rank => 2},
           "double value" => {:value => {"@value" => 1.1}, :rank => 2},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
+          "string value" => {:value => {"@value" => "foo"}, :rank => 2},
           "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
           "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
           "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
-          "value string" => {:value => {"@value" => "foo"}, :rank => 0},
+          "value string" => {:value => {"@value" => "foo"}, :rank => 2},
           "null"  => {:value => nil, :rank => 3},
         },
         "boolean" => {

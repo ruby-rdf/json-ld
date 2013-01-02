@@ -28,8 +28,21 @@ module JSON::LD
     OPEN_OPTS = {
       :headers => %w(Accept: application/ld+json, application/json)
     }
+
+    # Current input
+    # @!attribute [rw] input
+    # @return [String, #read, Hash, Array]
     attr_accessor :value
+
+    # Input evaluation context
+    # @!attribute [rw] context
+    # @return [JSON::LD::EvaluationContext]
     attr_accessor :context
+
+    # Current Blank Node Namer
+    # @!attribute [r] namer
+    # @return [JSON::LD::BlankNodeNamer]
+    attr_reader :namer
 
     ##
     # Initialize the API, reading in any document and setting global options
@@ -59,6 +72,8 @@ module JSON::LD
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
       @options = {:compactArrays => true}.merge(options)
+      options = {:rename_bnodes => true}.merge(options)
+      @namer = options[:rename_bnodes] ? BlankNodeNamer.new("t") : BlankNodeMapper.new
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO then JSON.parse(input.read)
@@ -103,11 +118,9 @@ module JSON::LD
     #   The expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
     def self.expand(input, context = nil, callback = nil, options = {})
-      options = {:rename_bnodes => true}.merge(options)
       result = nil
-      namer = options[:rename_bnodes] ? BlankNodeNamer.new("t") : BlankNodeMapper.new
       API.new(input, context, options) do |api|
-        result = api.expand(api.value, nil, api.context, namer)
+        result = api.expand(api.value, nil, api.context)
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
@@ -212,11 +225,7 @@ module JSON::LD
 
         # Generate _nodeMap_
         node_map = Hash.ordered
-        self.generate_node_map(value,
-          node_map,
-          (graph.to_s == '@merged' ? '@merged' : '@default'),
-          nil,
-          BlankNodeNamer.new("t"))
+        self.generate_node_map(value, node_map, (graph.to_s == '@merged' ? '@merged' : '@default'))
         
         result = []
 
@@ -309,11 +318,7 @@ module JSON::LD
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         all_nodes = Hash.ordered
         depth do
-          generate_node_map(value,
-            all_nodes,
-            '@merged',
-            nil,
-            BlankNodeNamer.new("t"))
+          generate_node_map(value, all_nodes, '@merged')
         end
         @node_map = all_nodes['@merged']
         debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
@@ -358,14 +363,14 @@ module JSON::LD
     # @yield statement
     # @yieldparam [RDF::Statement] statement
     def self.toRDF(input, context = nil, callback = nil, options = {})
-      # 1) Perform the Expansion Algorithm on the JSON-LD input.
-      #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = expand(input, context, nil, options)
+      API.new(input, context, options) do |api|
+        # 1) Perform the Expansion Algorithm on the JSON-LD input.
+        #    This removes any existing context to allow the given context to be cleanly applied.
+        result = api.expand(api.value, nil, api.context)
 
-      API.new(expanded, nil, options) do
-        debug(".expand") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        api.send(:debug, ".expand") {"expanded input: #{result.to_json(JSON_STATE)}"}
         # Start generating statements
-        statements("", value, nil, nil, nil) do |statement|
+        api.statements("", result, nil, nil, nil) do |statement|
           callback.call(statement) if callback
           yield statement if block_given?
         end

@@ -520,8 +520,6 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(iri, options = {})
       return iri unless iri.is_a?(String)
-      raise "attempt to expand #{iri} having cyclic definition" if (options[:path] ||= []).include?(iri.to_s)
-      options[:path] << iri.to_s
 
       prefix, suffix = iri.split(':', 2)
       unless (m = mapping(iri)) == false
@@ -591,7 +589,7 @@ module JSON::LD
 
         # If value is a @list select terms that match every item equivalently.
         debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}") if value
-        if list?(value)
+        if list?(value) && !annotation?(value)
           list_terms = matched_terms.select {|t| container(t) == '@list'}
             
           terms = list_terms.inject({}) do |memo, t|
@@ -935,13 +933,7 @@ module JSON::LD
           container(term) == '@list' ? 1 : 0
         else
           # Otherwise, return the most specific term, for which the term has some match against every value.
-          depth do
-            value['@list'].map do |v|
-              r = term_rank(term, v)
-              raise "rank = 0" if r == 0
-              r
-            end.max rescue 0
-          end
+          depth {value['@list'].map {|v| term_rank(term, v)}}.min
         end
       elsif value?(value)
         val_type = value.fetch('@type', nil)
@@ -953,7 +945,15 @@ module JSON::LD
           default_term ? 2 : 1
         elsif val_lang.nil?
           debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
-          language(term) == false || (default_term && default_language.nil?) ? 3 : 0
+          if language(term) == false || (default_term && default_language.nil?)
+            # Value has no language, and there is no default language and the term has no language
+            3
+          elsif default_term
+            # The term has no language (or type), but it's different than the default
+            2
+          else
+            0
+          end
         else
           if val_lang && container(term) == '@language'
             3

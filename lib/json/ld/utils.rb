@@ -36,7 +36,16 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def list?(value)
-      value.is_a?(Hash) && value.keys == %w(@list)
+      value.is_a?(Hash) && value.has_key?('@list')
+    end
+
+    ##
+    # Is value annotated?
+    #
+    # @param [Object] value
+    # @return [Boolean]
+    def annotation?(value)
+      value.is_a?(Hash) && value.has_key?('@annotation')
     end
 
     ##
@@ -78,19 +87,21 @@ module JSON::LD
   # nodes to new identifiers
   class BlankNodeMapper < Hash
     ##
-    # Just return a Blank Node based on `old`
-    # @param [String] old
+    # Just return a Blank Node based on `old`. Manufactures
+    # a node if `old` is nil or empty
+    # @param [String] old ("")
     # @return [String]
-    def get_sym(old)
+    def get_sym(old = "")
+      old = RDF::Node.new.to_s if old.to_s.empty?
       old.to_s.sub(/_:/, '')
     end
 
     ##
     # Get a new mapped name for `old`
     #
-    # @param [String] old
+    # @param [String] old ("")
     # @return [String]
-    def get_name(old)
+    def get_name(old = "")
       "_:" + get_sym(old)
     end
   end
@@ -105,9 +116,9 @@ module JSON::LD
 
     ##
     # Get a new symbol mapped from `old`
-    # @param [String] old
+    # @param [String] old ("")
     # @return [String]
-    def get_sym(old)
+    def get_sym(old = "")
       old = old.to_s.sub(/_:/, '')
       if old && self.has_key?(old)
         self[old]
