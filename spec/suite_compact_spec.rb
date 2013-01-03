@@ -13,7 +13,7 @@ describe JSON::LD do
             case t.property('input')
             #when /compact-(0018|0024|0027)/
             #  pending("term rank")
-            when /compact-(0031|0032|0033|0034|0035|0036|0037)/
+            when /compact-(0031|0032|0033|0034|0035|0036|0037|0044)/
               pending("implementation of property generators")
             end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]

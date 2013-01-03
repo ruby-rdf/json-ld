@@ -714,7 +714,7 @@ describe JSON::LD::EvaluationContext do
         subject.compact_iri(input).should produce(result, @debug)
       end
     end
-    
+
     context "with @vocab" do
       before(:each) { subject.vocab = "http://example.org/"}
 
@@ -773,6 +773,8 @@ describe JSON::LD::EvaluationContext do
 
       {
         "langmap" => [{"@value" => "en", "@language" => "en"}],
+        "plain" => [{"@value" => "foo"}],
+        "setplain" => [{"@value" => "foo", "@language" => "pl"}] # looks like langmap
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|

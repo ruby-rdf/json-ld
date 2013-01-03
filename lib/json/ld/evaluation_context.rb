@@ -932,8 +932,10 @@ module JSON::LD
       elsif list?(value)
         if value['@list'].empty?
           # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
+          debug("term rank") { "empty list"}
           container(term) == '@list' ? 1 : 0
         else
+          debug("term rank") { "non-empty list"}
           # Otherwise, return the most specific term, for which the term has some match against every value.
           depth {value['@list'].map {|v| term_rank(term, v)}}.min
         end
@@ -942,8 +944,10 @@ module JSON::LD
         val_lang = value['@language'] || false if value.has_key?('@language')
         debug("term rank") {"@val_type: #{val_type.inspect}, val_lang: #{val_lang.inspect}"}
         if val_type
+          debug("term rank") { "typed value"}
           coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
         elsif !value['@value'].is_a?(String)
+          debug("term rank") { "native value"}
           default_term ? 2 : 1
         elsif val_lang.nil?
           debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
@@ -957,10 +961,13 @@ module JSON::LD
             0
           end
         else
+          debug("val_lang") {"#{language(term).inspect} && #{coerce(term).inspect}"}
           if val_lang && container(term) == '@language'
             3
           elsif val_lang == language(term) || (default_term && default_language == val_lang)
             2
+          elsif default_term && container(term) == '@set'
+            2 # Choose a set term before a non-set term, if there's a language
           elsif default_term
             1
           else
@@ -968,6 +975,7 @@ module JSON::LD
           end
         end
       else # node definition/reference
+        debug("node dev/ref")
         coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
       end
       
