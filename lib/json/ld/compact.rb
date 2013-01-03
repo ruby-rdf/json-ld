@@ -71,6 +71,52 @@ module JSON::LD
           return v
         end
 
+        # Check for property generators before continuing with other elements
+        # For each term pg in the active context which is a property generator
+        context.mappings.keys.sort.each do |term|
+          next unless (expanded_iris = context.mapping(term)).is_a?(Array)
+          # Using the first expanded IRI p associated with the property generator
+          p = expanded_iris.first.to_s
+          
+          # Skip to the next property generator term unless p is a property of element
+          next unless element.has_key?(p)
+
+          debug("compact") {"check pg #{term}: #{expanded_iris}"}
+
+          # For each node n which is a value of p in element
+          node_values = []
+          element[p].dup.each do |n|
+            # For each expanded IRI pi associated with the property generator other than p
+            next unless expanded_iris[1..-1].all? do |pi|
+              debug("compact") {"check #{pi} for (#{n.inspect})"}
+              element.has_key?(pi) && element[pi].values.any? do |ni|
+                nodesEquivalent(n, ni)
+              end
+            end
+
+            # Remove n as a value of all p and pi in element
+            debug("compact") {"removed matched value #{n.inspect} from #{expanded_iris.inspect}"}
+            expanded_iris.each do |pi|
+              # FIXME: This removes all values equivalent to n, not just the first
+              element[p] = element[p].reject {|ni| nodesEquivalent(n, ni)}
+            end
+              
+            # Add the result of performing the compaction algorithm on n to pg to output
+            node_values << n
+          end
+          
+          # If there are node_values, or all the values from expanded_iris are empty, add node_values to result, and remove the expanded_iris as keys from element
+          if node_values.length > 0 || expanded_iris.all? {|pi| element.has_key?(pi) && element[pi].empty?}
+            debug("compact") {"compact extracted pg values"}
+            result[term] = depth { compact(node_values, term)}
+            debug("compact") {"remove empty pg keys from element"}
+            expanded_iris.each do |pi|
+              debug(" =>") {"#{pi}? #{lement.fetch(pi, []).empty?}"}
+              element.delete(pi) if element.fetch(pi, []).empty?
+            end
+          end
+        end
+
         # Otherwise, for each property and value in element:
         element.each do |key, value|
           debug("compact") {"#{key}: #{value.inspect}"}
@@ -86,7 +132,7 @@ module JSON::LD
               context.compact_iri(value, :position => position, :depth => @depth)
             when Array
               # Otherwise, value must be an array. Perform IRI Compaction on every entry of value. If value contains just one entry, value is set to that entry
-              compacted_value = value.map {|v| context.compact_iri(v, :position => position, :depth => @depth)}
+              compacted_value = value.map {|v2| context.compact_iri(v2, :position => position, :depth => @depth)}
               debug {" => compacted value(#{key}): #{compacted_value.inspect}"}
               compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
               compacted_value
@@ -114,8 +160,6 @@ module JSON::LD
               item_key = compacted_key
               debug {" => compacted key: #{compacted_key.inspect} for #{item.inspect}"}
               next if compacted_key.nil?
-
-              # TODO: Property Generators
 
               # Language maps and annotations
               if field = %w(@language @annotation).detect {|kk| context.container(compacted_key) == kk}
