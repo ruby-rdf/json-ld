@@ -65,7 +65,7 @@ module JSON::LD
               # Otherwise, if property is @graph, process value algorithm recursively, using active subject
               # as graph name and null values for active subject and active property and then continue to
               # next property
-              statements("#{path}[#{key}]", value, nil, nil, active_subject, &block)
+              statements("#{path}[#{key}]", value, nil, nil, (active_subject unless active_subject.node?), &block)
               next
             when /^@/
               # Otherwise, if property is a keyword, skip this step.
