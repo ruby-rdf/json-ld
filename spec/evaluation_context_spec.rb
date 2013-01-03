@@ -731,6 +731,13 @@ describe JSON::LD::EvaluationContext do
           subject.compact_iri(input).should produce(result, @debug)
         end
       end
+
+      it "does not use @vocab if it would collide with a term" do
+        subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
+        subject.set_mapping("ex", nil)
+        subject.compact_iri("http://example.org/name", :position => :predicate).
+          should produce("http://example.org/name", @debug)
+      end
     end
 
     context "with value" do

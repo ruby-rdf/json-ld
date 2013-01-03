@@ -661,7 +661,9 @@ module JSON::LD
         end
 
         # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
+        # Don't use vocab, if the result would collide with a term
         if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
+          !mapping(iri.to_s.sub(vocab, '')) &&
            [:predicate, :type].include?(options[:position])
           terms << iri.to_s.sub(vocab, '')
           debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
