@@ -21,7 +21,7 @@ module JSON::LD
         #    active property.
         debug("compact") {"Array #{element.inspect}"}
         result = depth {element.map {|v| compact(v, property)}}
-        
+
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
@@ -35,13 +35,13 @@ module JSON::LD
       when Hash
         # 2) Otherwise, if element is an object:
         result = {}
-        
+
         if k = %w(@list @set @value).detect {|container| element.has_key?(container)}
           debug("compact") {"#{k}: container(#{property}) = #{context.container(property)}"}
         end
 
         k ||= '@id' if element.keys == ['@id']
-        
+
         case k
         when '@value', '@id'
           # If element has an @value property or element is a node reference, return the result of performing Value Compaction on element using active property.
@@ -50,14 +50,14 @@ module JSON::LD
           return v
         when '@list'
           # Otherwise, if the active property has a @container mapping to @list and element has a corresponding @list property, recursively compact that property's value passing a copy of the active context and the active property ensuring that the result is an array with all null values removed.
-          
+
           # If there already exists a value for active property in element and the full IRI of property is also coerced to @list, return an error.
           # FIXME: check for full-iri list coercion
 
           # Otherwise store the resulting array as value of active property if empty or property otherwise.
           compacted_key = context.compact_iri('@list', :position => :predicate, :depth => @depth)
           v = depth { compact(element[k], property) }
-          
+
           # Return either the result as an array, as an object with a key of @list (or appropriate alias from active context
           v = [v].compact unless v.is_a?(Array)
           unless context.container(property) == '@list'
@@ -73,11 +73,13 @@ module JSON::LD
 
         # Check for property generators before continuing with other elements
         # For each term pg in the active context which is a property generator
+        # Select property generator terms by shortest term
         context.mappings.keys.sort.each do |term|
-          next unless (expanded_iris = context.mapping(term)).is_a?(Array)
+          next unless context.mapping(term).is_a?(Array)
           # Using the first expanded IRI p associated with the property generator
+          expanded_iris = context.mapping(term).map(&:to_s)
           p = expanded_iris.first.to_s
-          
+
           # Skip to the next property generator term unless p is a property of element
           next unless element.has_key?(p)
 
@@ -89,8 +91,8 @@ module JSON::LD
             # For each expanded IRI pi associated with the property generator other than p
             next unless expanded_iris[1..-1].all? do |pi|
               debug("compact") {"check #{pi} for (#{n.inspect})"}
-              element.has_key?(pi) && element[pi].values.any? do |ni|
-                nodesEquivalent(n, ni)
+              element.has_key?(pi) && element[pi].any? do |ni|
+                nodesEquivalent?(n, ni)
               end
             end
 
@@ -98,20 +100,22 @@ module JSON::LD
             debug("compact") {"removed matched value #{n.inspect} from #{expanded_iris.inspect}"}
             expanded_iris.each do |pi|
               # FIXME: This removes all values equivalent to n, not just the first
-              element[p] = element[p].reject {|ni| nodesEquivalent(n, ni)}
+              element[pi] = element[pi].reject {|ni| nodesEquivalent?(n, ni)}
             end
-              
+
             # Add the result of performing the compaction algorithm on n to pg to output
             node_values << n
           end
-          
+
           # If there are node_values, or all the values from expanded_iris are empty, add node_values to result, and remove the expanded_iris as keys from element
           if node_values.length > 0 || expanded_iris.all? {|pi| element.has_key?(pi) && element[pi].empty?}
             debug("compact") {"compact extracted pg values"}
             result[term] = depth { compact(node_values, term)}
+            result[term] = [result[term]] if !result[term].is_a?(Array) && context.container(term) == '@set'
+
             debug("compact") {"remove empty pg keys from element"}
             expanded_iris.each do |pi|
-              debug(" =>") {"#{pi}? #{lement.fetch(pi, []).empty?}"}
+              debug(" =>") {"#{pi}? #{element.fetch(pi, []).empty?}"}
               element.delete(pi) if element.fetch(pi, []).empty?
             end
           end
@@ -169,7 +173,7 @@ module JSON::LD
 
               compacted_item = depth {self.compact(item, compacted_key)}
               debug {" => compacted value: #{compacted_value.inspect}"}
-            
+
               case item_result[item_key]
               when Array
                 item_result[item_key] << compacted_item
@@ -194,6 +198,37 @@ module JSON::LD
         # For other types, the compacted value is the element value
         debug("compact") {element.class.to_s}
         element
+      end
+    end
+
+    private
+
+    # Determines if two nodes are equivalent.
+    # * Value nodes are equivalent using a deep comparison
+    # * Arrays are equivalent if they have the same number of elements and each element is equivalent to the matching element
+    # * Node Defintions/References are equivalent IFF the have the same @id
+    def nodesEquivalent?(n1, n2)
+      depth do
+        r = if n1.is_a?(Array) && n2.is_a?(Array) && n1.length == n2.length
+          equiv = true
+          n1.each_with_index do |v1, i|
+            equiv &&= nodesEquivalent?(v1, n2[i]) if equiv
+          end
+          equiv
+        elsif value?(n1) && value?(n2)
+          n1 == n2
+        elsif list?(n1)
+          list?(n2) &&
+            n1.fetch('@annotation', true) == n2.fetch('@annotation', true) &&
+            nodesEquivalent?(n1['@list'], n2['@list'])
+        elsif (node?(n1) || node_reference?(n2))
+          (node?(n2) || node_reference?(n2)) && n1['@id'] == n2['@id']
+        else
+          false
+        end
+
+        debug("nodesEquivalent?(#{n1.inspect}, #{n2.inspect}): #{r.inspect}")
+        r
       end
     end
   end
