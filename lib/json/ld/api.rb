@@ -128,7 +128,7 @@ module JSON::LD
       result = result['@graph'] if result.is_a?(Hash) && result.keys == %w(@graph)
 
       # Finally, if element is a JSON object, it is wrapped into an array.
-      result = [result] unless result.is_a?(Array)
+      result = [result].compact unless result.is_a?(Array)
       callback.call(result) if callback
       yield result if block_given?
       result

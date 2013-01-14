@@ -47,176 +47,187 @@ module JSON::LD
         depth do
           output_object = Hash.ordered
           # Then, proceed and process each property and value in element as follows:
-          input.keys.kw_sort.each do |key|
-            value = input[key]
-            # Remove property from element expand property according to the steps outlined in IRI Expansion
-            property = context.expand_iri(key, :position => :predicate, :quiet => true, :namer => namer)
-            property = nil if property.is_a?(Array) && property.empty?
+          input.keys.kw_sort.each do |property|
+            value = input[property]
+            expanded_property = context.expand_iri(property, :position => :predicate, :quiet => true, :namer => namer)
 
-            # Set active property to the original un-expanded property if property if not a keyword
-            active_property = key unless key[0,1] == '@'
-            debug("expand property") {"#{active_property.inspect}, expanded: #{property}, value: #{value.inspect}"}
-          
-            # If property does not expand to a keyword or absolute IRI, remove property from element
-            # and continue to the next property from element
-            if property.nil?
-              debug(" => ") {"skip nil key"}
+            if expanded_property.is_a?(Array)
+              # If expanded property is an array, remove every element which is not a absolute IRI.
+              expanded_property = expanded_property.map {|p| p.to_s if p && p.uri? && p.absolute? || p.node?}.compact
+              expanded_property = nil if expanded_property.empty?
+            elsif expanded_property.is_a?(RDF::Resource)
+              expanded_property = expanded_property.to_s
+            end
+
+            debug("expand property") {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
+
+            # If expanded property is an empty array, or null, continue with the next property from element
+            if expanded_property.nil?
+              debug(" => ") {"skip nil property"}
+              next
+            end
+            expanded_property
+
+            if expanded_property.is_a?(String) && expanded_property[0,1] == '@'
+              expanded_value = case expanded_property
+              when '@id'
+                # If expanded property is @id, value must be a string. Set the @id member in result to the result of expanding value according the IRI Expansion algorithm relative to the document base and re-labeling Blank Nodes.
+                context.expand_iri(value, :position => :subject, :quiet => true, :namer => namer).to_s
+              when '@type'
+                # If expanded property is @type, value must be a string or array of strings. Set the @type member of result to the result of expanding value according the IRI Expansion algorithm relative to the document base and re-labeling Blank Nodes, unless that result is an empty array.
+                debug("@type") {"value: #{value.inspect}"}
+                case value
+                when Array
+                  depth do
+                    [value].flatten.map do |v|
+                      v = v['@id'] if node_reference?(v)
+                      raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
+                      context.expand_iri(v, options.merge(:position => :subject, :quiet => true, :namer => namer)).to_s
+                    end
+                  end
+                when Hash
+                  # Empty object used for @type wildcard or node reference
+                  if node_reference?(value)
+                    context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
+                  elsif !value.empty?
+                    raise ProcessingError, "Object value of @type must be empty or a node reference: #{value.inspect}"
+                  else
+                    value
+                  end
+                else
+                  context.expand_iri(value, options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
+                end
+              when '@value'
+                # If expanded property is @value, value must be a scalar or null. Set the @value member of result to value.
+                raise ProcessingError::Lossy, "Value of #{expanded_property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
+                value
+              when '@language'
+                # If expanded property is @language, value must be a string with the lexical form described in [BCP47] or null. Set the @language member of result to the lowercased value.
+                raise ProcessingError::Lossy, "Value of #{expanded_property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
+                value.to_s.downcase
+              when '@annotation'
+                # If expanded property is @annotation value must be a string. Set the @annotation member of result to value.
+                value = value.first if value.is_a?(Array) && value.length == 1
+                raise ProcessingError, "Value of @annotation is not a string: #{value.inspect}" unless value.is_a?(String)
+                value.to_s
+              when '@list', '@set', '@graph'
+                # If expanded property is @set, @list, or @graph, set the expanded property member of result to the result of expanding value by recursively using this algorithm, along with the active context and active property. If expanded property is @list and active property is null or @graph, pass @list as active property instead.
+                value = [value] unless value.is_a?(Array)
+                ap = expanded_property == '@list' && ((active_property || '@graph') == '@graph') ? '@list' : active_property
+                value = depth { expand(value, ap, context, options) }
+
+                # If expanded property is @list, and any expanded value
+                # is an object containing an @list property, throw an exception, as lists of lists are not supported
+                if expanded_property == '@list' && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
+                  raise ProcessingError::ListOfLists, "A list may not contain another list"
+                end
+
+                value
+              else
+                # Skip unknown keyword
+                next
+              end
+
+              debug("expand #{expanded_property}") { expanded_value.inspect}
+              output_object[expanded_property] = expanded_value
               next
             end
 
-            expanded_value = case property
-            when '@id'
-              # If the property is @id the value must be a string. Expand the value according to IRI Expansion.
-              context.expand_iri(value, :position => :subject, :quiet => true, :namer => namer).to_s
-            when '@type'
-              # Otherwise, if the property is @type the value must be a string, an array of strings
-              # or an empty JSON Object.
-              # Expand value or each of it's entries according to IRI Expansion
-              debug("@type") {"value: #{value.inspect}"}
-              case value
-              when Array
-                depth do
-                  [value].flatten.map do |v|
-                    v = v['@id'] if node_reference?(v)
-                    raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
-                    context.expand_iri(v, options.merge(:position => :subject, :quiet => true, :namer => namer)).to_s
-                  end
-                end
-              when Hash
-                # Empty object used for @type wildcard or node reference
-                if node_reference?(value)
-                  context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
-                elsif !value.empty?
-                  raise ProcessingError, "Object value of @type must be empty or a node reference: #{value.inspect}"
-                else
-                  value
-                end
-              else
-                context.expand_iri(value, options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
-              end
-            when '@annotation'
-              # Otherwise, if the property is @annotation, the value MUST be a string
-              value = value.first if value.is_a?(Array) && value.length == 1
-              raise ProcessingError, "Value of @annotation is not a string: #{value.inspect}" unless value.is_a?(String)
-              value
-            when '@value', '@language'
-              # Otherwise, if the property is @value or @language the value must not be a JSON object or an array.
-              raise ProcessingError::Lossy, "Value of #{property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
-              value
-            when '@list', '@set', '@graph'
-              # Otherwise, if the property is @list, @set, or @graph, expand value recursively
-              # using this algorithm, passing copies of the active context and active property.
-              # If the expanded value is not an array, convert it to an array.
-              value = [value] unless value.is_a?(Array)
-              value = depth { expand(value, active_property, context, options) }
+            expanded_value = if context.container(property) == '@language' && value.is_a?(Hash)
+              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @language, process the associated value as a language map:
+              
+              # Set multilingual array to an empty array.
+              language_map_values = []
 
-              # If property is @list, and any expanded value
-              # is an object containing an @list property, throw an exception, as lists of lists are not supported
-              if property == '@list' && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
-                raise ProcessingError::ListOfLists, "A list may not contain another list"
-              end
+              # For each key-value in the language map:
+              value.keys.sort.each do |k|
+                [value[k]].flatten.each do |v|
+                  # Create a new JSON Object, referred to as an expanded language object.
+                  expanded_language_object = Hash.new
 
-              value
+                  # Add a key-value pair to the expanded language object where the key is @value and the value is the value associated with the key in the language map.
+                  raise ProcessingError::LanguageMap, "Expected #{vv.inspect} to be a string" unless v.is_a?(String)
+                  expanded_language_object['@value'] = v
+
+                  # Add a key-value pair to the expanded language object where the key is @language, and the value is the key in the language map, transformed to lowercase.
+                  # FIXME: check for BCP47 conformance
+                  expanded_language_object['@language'] = k.downcase
+                  # Append the expanded language object to the multilingual array.
+                  language_map_values << expanded_language_object
+                end
+              end
+              # Set the value associated with property to the multilingual array.
+              language_map_values
+            elsif context.container(property) == '@annotation' && value.is_a?(Hash)
+              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @annotation, process the associated value as a annotation:
+              
+              # Set ary to an empty array.
+              annotation_map_values = []
+
+              # For each key-value in the object:
+              value.keys.sort.each do |k|
+                [value[k]].flatten.each do |v|
+                  # Expand the value, adding an '@annotation' key with value equal to the key
+                  expanded_value = depth { expand(v, property, context, options) }
+                  next unless expanded_value
+                  expanded_value['@annotation'] ||= k
+                  annotation_map_values << expanded_value
+                end
+              end
+              # Set the value associated with property to the multilingual array.
+              annotation_map_values
             else
-              if context.container(active_property) == '@language' && value.is_a?(Hash)
-                # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @language, process the associated value as a language map:
-              
-                # Set multilingual array to an empty array.
-                multilingual_array = []
-
-                # For each key-value in the language map:
-                value.keys.sort.each do |k|
-                  [value[k]].flatten.each do |v|
-                    # Create a new JSON Object, referred to as an expanded language object.
-                    expanded_language_object = Hash.new
-
-                    # Add a key-value pair to the expanded language object where the key is @value and the value is the value associated with the key in the language map.
-                    raise ProcessingError::LanguageMap, "Expected #{vv.inspect} to be a string" unless v.is_a?(String)
-                    expanded_language_object['@value'] = v
-
-                    # Add a key-value pair to the expanded language object where the key is @language, and the value is the key in the language map, transformed to lowercase.
-                    # FIXME: check for BCP47 conformance
-                    expanded_language_object['@language'] = k.downcase
-                    # Append the expanded language object to the multilingual array.
-                    multilingual_array << expanded_language_object
-                  end
-                end
-                # Set the value associated with property to the multilingual array.
-                multilingual_array
-              elsif context.container(active_property) == '@annotation' && value.is_a?(Hash)
-                # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @annotation, process the associated value as a annotation:
-              
-                # Set ary to an empty array.
-                ary = []
-
-                # For each key-value in the object:
-                value.keys.sort.each do |k|
-                  [value[k]].flatten.each do |v|
-                    # Expand the value, adding an '@annotation' key with value equal to the key
-                    expanded_value = depth { expand(v, active_property, context, options) }
-                    next unless expanded_value
-                    expanded_value['@annotation'] ||= k
-                    ary << expanded_value
-                  end
-                end
-                # Set the value associated with property to the multilingual array.
-                ary
-              else
-                # Otherwise, expand value recursively using this algorithm, passing copies of the active context and active property.
-                depth { expand(value, active_property, context, options) }
-              end
+              # Otherwise, expand value by recursively using this algorithm, passing copies of the active context and property as active property.
+              depth { expand(value, property, context, options) }
             end
 
-            # moved from step 2.2.3
-            # If expanded value is null and property is not @value, continue with the next property
-            # from element.
-            if property != '@value' && expanded_value.nil?
+            # Continue to the next property-value pair from element if value is null.
+            if expanded_value.nil?
               debug(" => skip nil value")
               next
             end
 
-            # If the expanded value is not null and property is not a keyword
-            # and the active property has a @container set to @list,
-            # convert value to an object with an @list property whose value is set to value
-            # (unless value is already in that form)
-            if expanded_value &&
-              property.to_s[0,1] != '@' &&
-              context.container(active_property) == '@list' &&
+            # If property's container mapping is set to @list and value is not a JSON object or is a JSON object without a @list member, replace value with a JSON object having a @list member whose value is set to value, ensuring that value is an array.
+            if context.container(property) == '@list' &&
               (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
 
               debug(" => ") { "convert #{expanded_value.inspect} to list"}
               expanded_value = {'@list' => [expanded_value].flatten}
             end
 
-            # Convert value to array form unless value is null or property is @id, @type, @value, or @language.
-            debug(" => ") {"property: #{property.inspect}"}
-            if !(!property.is_a?(Array) && %(@id @language @type @value @annotation).include?(property.to_s)) &&
-              !expanded_value.is_a?(Array)
+            # Convert value to array form
+            debug(" => ") {"expanded property: #{expanded_property.inspect}"}
+            expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
 
-              debug(" => make #{expanded_value.inspect} an array")
-              expanded_value = [expanded_value]
-            end
-
-            if property.is_a?(Array)
+            if expanded_property.is_a?(Array)
               label_blanknodes(expanded_value)
-              property.map(&:to_s).each do |prop|
+              expanded_property.map(&:to_s).each do |prop|
                 # label all blank nodes in value with blank node identifiers by using the Label Blank Nodes Algorithm.
                 output_object[prop] ||= []
                 output_object[prop] += expanded_value.dup
               end
             else
-              if output_object.has_key?(property.to_s)
-                # If element already contains a property property, append value to the existing value.
-                output_object[property.to_s] += expanded_value
+              if output_object.has_key?(expanded_property)
+                # If element already contains a expanded_property property, append value to the existing value.
+                output_object[expanded_property] += expanded_value
               else
                 # Otherwise, create a property property with value as value.
-                output_object[property.to_s] = expanded_value
+                output_object[expanded_property] = expanded_value
               end
             end
             debug {" => #{expanded_value.inspect}"}
           end
 
           debug("output object") {output_object.inspect}
+
+          # If the active property is null or @graph and element has a @value member without an @annotation member, or element consists of only an @id member, set element to null.
+          debug("output object(ap)") {((active_property || '@graph') == '@graph').inspect}
+          if (active_property || '@graph') == '@graph' &&
+             ((output_object.has_key?('@value') && !output_object.has_key?('@annotation')) ||
+              (output_object.keys - %w(@id)).empty?)
+            debug("empty top-level") {output_object.inspect}
+            return nil
+          end
 
           # If the processed element has an @value property
           if output_object.has_key?('@value')
@@ -234,7 +245,7 @@ module JSON::LD
             output_object['@type'] = [output_object['@type']]
           end
 
-          # If element has an @set or @list property, it must be the only property. Set element to the value of @set;
+          # If element has an @set or @list property, it must be the only property (other tha @annotation). Set element to the value of @set;
           # leave @list untouched.
           if !(%w(@set @list) & output_object.keys).empty?
             o_keys = output_object.keys - %w(@set @list @annotation)
@@ -259,7 +270,7 @@ module JSON::LD
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
         context.expand_value(active_property, input,
           :position => :subject, :namer => namer, :depth => @depth
-        ) unless input.nil?
+        ) unless input.nil? || active_property.nil? || active_property == '@graph'
       end
 
       debug {" => #{result.inspect}"}

@@ -9,7 +9,7 @@ describe JSON::LD::API do
     {
       "empty doc" => {
         :input => {},
-        :output => [{}]
+        :output => []
       },
       "coerced IRI" => {
         :input => {
@@ -313,29 +313,25 @@ describe JSON::LD::API do
           :input => {
             "http://example.com/foo" => nil
           },
-          :output => [{
-          }]
+          :output => []
         },
         "@value" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil}
           },
-          :output => [{
-          }]
+          :output => []
         },
         "@value and non-null @type" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}
           },
-          :output => [{
-          }]
+          :output => []
         },
         "@value and non-null @language" => {
           :input => {
             "http://example.com/foo" => {"@value" => nil, "@language" => "en"}
           },
-          :output => [{
-          }]
+          :output => []
         },
         "non-null @value and null @type" => {
           :input => {
@@ -490,8 +486,7 @@ describe JSON::LD::API do
           :input => {
             "foo" => "bar"
           },
-          :output => [{
-          }]
+          :output => []
         },
         "unmapped @type as datatype" => {
           :input => {
@@ -505,9 +500,7 @@ describe JSON::LD::API do
           :input => {
             "@foo" => "bar"
           },
-          :output => [{
-            "@foo" => [{"@value" => "bar"}]
-          }]
+          :output => []
         },
         "value" => {
           :input => {
@@ -515,9 +508,7 @@ describe JSON::LD::API do
             "@id" => "http://example.org/Subj",
             "idrange" => "unmapped"
           },
-          :output => [{
-            "@id" => "http://example.org/Subj",
-          }]
+          :output => []
         },
         "context reset" => {
           :input => {
