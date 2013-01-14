@@ -58,7 +58,7 @@ describe JSON::LD::API do
       "@id" => {
         :input => {"@id" => "http://example.org/test#example"},
         :context => {},
-        :output => {"@id" => "http://example.org/test#example"}
+        :output => {"@graph" => []}
       },
       "@id coercion" => {
         :input => {
@@ -280,7 +280,8 @@ describe JSON::LD::API do
         },
         "Uses subject alias" => {
           :input => [{
-            "@id" => "http://example.com/id1"
+            "@id" => "http://example.com/id1",
+            "http://example.com/id1" => {"@value" => "foo", "@language" => "de"}
           }],
           :context => {
             "id1" => "http://example.com/id1",
@@ -292,108 +293,11 @@ describe JSON::LD::API do
               "@language" => "de"
             },
             "@id" => "id1",
+            "id1" => "foo"
           }
-        },
-        #"Allows IRI to be aliased to null, but still output term using IRI" => {
-        #  :context => {
-        #    "http://example.com/comment" => nil,
-        #    "comment_en" => {"@id" => "http://example.com/comment", "@language" => "en"}
-        #  },
-        #  :input => [{
-        #    "http://example.com/comment" => [
-        #       {"@value" => "comment in english", "@language" => "en"},
-        #       {"@value" => "commentar auf deutsch", "@language" => "de"},
-        #       {"@value" => "日本語でのコメント", "@language" => "ja"},
-        #     ]
-        #  }],
-        #  :output => {
-        #    "@context" => {
-        #      "http://example.com/comment" => nil,
-        #      "comment_en" => {"@id" => "http://example.com/comment", "@language" => "en"}
-        #    },
-        #    "comment_en" => "comment in english",
-        #  }
-        #},
-        "compact-0018" => {
-          :context => %{{
-            "id1": "http://example.com/id1",
-            "type1": "http://example.com/t1",
-            "type2": "http://example.com/t2",
-            "@language": "de",
-            "term": { "@id": "http://example.com/term" },
-            "term1": { "@id": "http://example.com/term", "@container": "@list" },
-            "term2": { "@id": "http://example.com/term", "@container": "@list", "@language": "en" }
-          }},
-          :input => %{{
-            "http://example.com/term": [
-              {
-                "@list": [
-                  { "@value": "v1.1", "@language": "de" },
-                  { "@value": "v1.2", "@language": "de" },
-                  { "@value": "v1.3", "@language": "de" },
-                  4,
-                  { "@value": "v1.5", "@language": "de" },
-                  { "@value": "v1.6", "@language": "en" }
-                ]
-              },
-              {
-                "@list": [
-                  { "@value": "v2.1", "@language": "en" },
-                  { "@value": "v2.2", "@language": "en" },
-                  { "@value": "v2.3", "@language": "en" },
-                  4,
-                  { "@value": "v2.5", "@language": "en" },
-                  { "@value": "v2.6", "@language": "de" }
-                ]
-              }
-            ]
-          }},
-          :output => %q{{
-            "@context": {
-              "id1": "http://example.com/id1",
-              "type1": "http://example.com/t1",
-              "type2": "http://example.com/t2",
-              "@language": "de",
-              "term": {
-                "@id": "http://example.com/term"
-              },
-              "term1": {
-                "@id": "http://example.com/term",
-                "@container": "@list"
-              },
-              "term2": {
-                "@id": "http://example.com/term",
-                "@container": "@list",
-                "@language": "en"
-              }
-            },
-            "term1": [
-              "v1.1",
-              "v1.2",
-              "v1.3",
-              4,
-              "v1.5",
-              {
-                "@value": "v1.6",
-                "@language": "en"
-              }
-            ],
-            "term2": [
-              "v2.1",
-              "v2.2",
-              "v2.3",
-              4,
-              "v2.5",
-              {
-                "@value": "v2.6",
-                "@language": "de"
-              }
-            ]
-          }}
         }
       }.each_pair do |title, params|
         it title do
-          pending("term rank") if title =~ /compact-0018/
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
@@ -610,38 +514,6 @@ describe JSON::LD::API do
             ]
           }
         },
-        "Uses expanded node definitions for node references" => {
-          :input => [
-            {"@id" => "http://example.com/foo"},
-            {"@id" => "http://example.com/bar"}
-          ],
-          :context => {"ex" => "http://example.com/"},
-          :output => {
-            "@context" => {"ex" => "http://example.com/"},
-            "@graph" => [
-              {"@id" => "ex:foo"},
-              {"@id" => "ex:bar"}
-            ]
-          }
-        },
-        "Uses node reference in embedded graph" => {
-          :input => {
-            "@id" => "http://data.wikipedia.org/snaks/Assertions",
-            "@graph" => [{
-              "@id" => "http://data.wikipedia.org/snaks/BerlinFact",
-              "@graph" => [{"@id" => "http://data.wikipedia.org/snaks/ParisFact"}]
-            }]
-          },
-          :context => {"ws" => "http://data.wikipedia.org/snaks/"},
-          :output => {
-            "@context" => {"ws" => "http://data.wikipedia.org/snaks/"},
-            "@id" => "ws:Assertions",
-            "@graph" => [{
-              "@id" => "ws:BerlinFact",
-              "@graph" => [{"@id" => "ws:ParisFact"}]
-            }]
-          }
-        }
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
