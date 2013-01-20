@@ -1,6 +1,3 @@
-# Spira class for manipulating test-manifest style test suites.
-# Used for SWAP tests
-require 'spira'
 require 'json/ld'
 require 'open-uri'
 require 'support/extensions'
