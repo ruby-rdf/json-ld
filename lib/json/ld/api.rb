@@ -360,9 +360,10 @@ module JSON::LD
     #   See options in {JSON::LD::API#initialize}
     #   Options passed to {JSON::LD::API.expand}
     # @raise [InvalidContext]
+    # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.toRDF(input, context = nil, callback = nil, options = {})
+    def self.toRDF(input, context = nil, callback = nil, options = {}, &block)
       API.new(input, context, options) do |api|
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
@@ -370,10 +371,16 @@ module JSON::LD
 
         api.send(:debug, ".expand") {"expanded input: #{result.to_json(JSON_STATE)}"}
         # Start generating statements
+        results = []
         api.statements("", result, nil, nil, nil) do |statement|
-          callback.call(statement) if callback
-          yield statement if block_given?
+          callback ||= block if block_given?
+          if callback
+            callback.call(statement)
+          else
+            results << statement
+          end
         end
+        results
       end
     end
     
@@ -394,7 +401,7 @@ module JSON::LD
     #   The JSON-LD document in expanded form
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
-    def self.fromRDF(input, callback = nil, options = {})
+    def self.fromRDF(input, callback = nil, options = {}, &block)
       options = {:useNativeTypes => true}.merge(options)
       result = nil
 
@@ -402,8 +409,8 @@ module JSON::LD
         result = api.from_statements(input)
       end
 
+      callback ||= block if block_given?
       callback.call(result) if callback
-      yield result if block_given?
       result
     end
   end
