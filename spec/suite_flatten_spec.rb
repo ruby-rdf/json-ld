@@ -7,7 +7,7 @@ describe JSON::LD do
     require 'suite_helper'
     require 'suite_helper'
     m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/flatten-manifest.jsonld')
-    describe m.name do
+    describe m.name, :pending => "New flattening algorithm" do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
