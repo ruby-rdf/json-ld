@@ -206,7 +206,7 @@ Install with `gem install json-ld`
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.markdown)
 
-### Principle Classes
+### Principal Classes
 * {JSON::LD}
   * {JSON::LD::API}
   * {JSON::LD::Compact}
