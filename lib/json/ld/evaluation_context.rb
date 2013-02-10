@@ -116,8 +116,6 @@ module JSON::LD
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)
       case context
-      when nil
-        EvaluationContext.new
       when EvaluationContext
         debug("parse") {"context: #{context.inspect}"}
         context.dup
@@ -265,7 +263,7 @@ module JSON::LD
                   new_ec.set_coerce(key, iri)
                 end
               when '@container'
-                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language @annotation).include?(value2)
+                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language @index).include?(value2)
                 if new_ec.container(key) != value2
                   debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
                   new_ec.set_container(key, value2)
@@ -345,7 +343,7 @@ module JSON::LD
               end
 
               debug {"=> container(#{k}) => #{container(k)}"}
-              if %w(@list @set @language @annotation).include?(container(k))
+              if %w(@list @set @language @index).include?(container(k))
                 ctx[k]["@container"] = container(k)
                 debug {"=> container[#{k}] => #{container(k).inspect}"}
               end
@@ -589,7 +587,7 @@ module JSON::LD
 
         # If value is a @list select terms that match every item equivalently.
         debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}") if value
-        if list?(value) && !annotation?(value)
+        if list?(value) && !index?(value)
           list_terms = matched_terms.select {|t| container(t) == '@list'}
             
           terms = list_terms.inject({}) do |memo, t|
@@ -791,13 +789,13 @@ module JSON::LD
       depth(options) do
         debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
 
-        # Remove @annotation if property has annotation
-        value.delete('@annotation') if container(property) == '@annotation'
+        # Remove @index if property has annotation
+        value.delete('@index') if container(property) == '@index'
 
         result = case
-        when value.has_key?('@annotation')
+        when value.has_key?('@index')
           # Don't compact the value
-          debug {" (@annotation without container @annotation)"}
+          debug {" (@index without container @index)"}
           value
         when coerce(property) == '@id' && value.has_key?('@id')
           # Compact an @id coercion

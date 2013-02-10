@@ -44,8 +44,8 @@ module JSON::LD
     #
     # @param [Object] value
     # @return [Boolean]
-    def annotation?(value)
-      value.is_a?(Hash) && value.has_key?('@annotation')
+    def index?(value)
+      value.is_a?(Hash) && value.has_key?('@index')
     end
 
     ##

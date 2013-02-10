@@ -105,10 +105,10 @@ module JSON::LD
                 # If expanded property is @language, value must be a string with the lexical form described in [BCP47] or null. Set the @language member of result to the lowercased value.
                 raise ProcessingError::Lossy, "Value of #{expanded_property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
                 value.to_s.downcase
-              when '@annotation'
-                # If expanded property is @annotation value must be a string. Set the @annotation member of result to value.
+              when '@index'
+                # If expanded property is @index value must be a string. Set the @index member of result to value.
                 value = value.first if value.is_a?(Array) && value.length == 1
-                raise ProcessingError, "Value of @annotation is not a string: #{value.inspect}" unless value.is_a?(String)
+                raise ProcessingError, "Value of @index is not a string: #{value.inspect}" unless value.is_a?(String)
                 value.to_s
               when '@list', '@set', '@graph'
                 # If expanded property is @set, @list, or @graph, set the expanded property member of result to the result of expanding value by recursively using this algorithm, along with the active context and active property. If expanded property is @list and active property is null or @graph, pass @list as active property instead.
@@ -158,8 +158,8 @@ module JSON::LD
               end
               # Set the value associated with property to the multilingual array.
               language_map_values
-            elsif context.container(property) == '@annotation' && value.is_a?(Hash)
-              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @annotation, process the associated value as a annotation:
+            elsif context.container(property) == '@index' && value.is_a?(Hash)
+              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @index, process the associated value as a annotation:
               
               # Set ary to an empty array.
               annotation_map_values = []
@@ -167,10 +167,10 @@ module JSON::LD
               # For each key-value in the object:
               value.keys.sort.each do |k|
                 [value[k]].flatten.each do |v|
-                  # Expand the value, adding an '@annotation' key with value equal to the key
+                  # Expand the value, adding an '@index' key with value equal to the key
                   expanded_value = depth { expand(v, property, context, options) }
                   next unless expanded_value
-                  expanded_value['@annotation'] ||= k
+                  expanded_value['@index'] ||= k
                   annotation_map_values << expanded_value
                 end
               end
@@ -220,10 +220,10 @@ module JSON::LD
 
           debug("output object") {output_object.inspect}
 
-          # If the active property is null or @graph and element has a @value member without an @annotation member, or element consists of only an @id member, set element to null.
+          # If the active property is null or @graph and element has a @value member without an @index member, or element consists of only an @id member, set element to null.
           debug("output object(ap)") {((active_property || '@graph') == '@graph').inspect}
           if (active_property || '@graph') == '@graph' &&
-             ((output_object.has_key?('@value') && !output_object.has_key?('@annotation')) ||
+             ((output_object.has_key?('@value') && !output_object.has_key?('@index')) ||
               (output_object.keys - %w(@id)).empty?)
             debug("empty top-level") {output_object.inspect}
             return nil
@@ -233,8 +233,8 @@ module JSON::LD
           if output_object.has_key?('@value')
             output_object.delete('@language') if output_object['@language'].to_s.empty?
             output_object.delete('@type') if output_object['@type'].to_s.empty?
-            if (%w(@annotation @language @type) - output_object.keys).empty?
-              raise ProcessingError, "element must not have more than one other property other than @annotation, which can either be @language or @type with a string value." unless value.is_a?(String)
+            if (%w(@index @language @type) - output_object.keys).empty?
+              raise ProcessingError, "element must not have more than one other property other than @index, which can either be @language or @type with a string value." unless value.is_a?(String)
             end
 
             # if the value of @value equals null, replace element with the value of null.
@@ -245,10 +245,10 @@ module JSON::LD
             output_object['@type'] = [output_object['@type']]
           end
 
-          # If element has an @set or @list property, it must be the only property (other tha @annotation). Set element to the value of @set;
+          # If element has an @set or @list property, it must be the only property (other tha @index). Set element to the value of @set;
           # leave @list untouched.
           if !(%w(@set @list) & output_object.keys).empty?
-            o_keys = output_object.keys - %w(@set @list @annotation)
+            o_keys = output_object.keys - %w(@set @list @index)
             raise ProcessingError, "element must have only @set or  @list: #{output_object.keys.inspect}" if o_keys.length > 1
             
             output_object = output_object.values.first unless output_object.has_key?('@list')

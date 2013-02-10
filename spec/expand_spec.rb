@@ -726,7 +726,7 @@ describe JSON::LD::API do
             "@context" => {
               "container" => {
                 "@id" => "http://example.com/container",
-                "@container" => "@annotation"
+                "@container" => "@index"
               }
             },
             "@id" => "http://example.com/annotationsTest",
@@ -739,9 +739,9 @@ describe JSON::LD::API do
             {
               "@id" => "http://example.com/annotationsTest",
               "http://example.com/container" => [
-                {"@value" => "Die Königin", "@annotation" => "de"},
-                {"@value" => "Ihre Majestät", "@annotation" => "de"},
-                {"@value" => "The Queen", "@annotation" => "en"}
+                {"@value" => "Die Königin", "@index" => "de"},
+                {"@value" => "Ihre Majestät", "@index" => "de"},
+                {"@value" => "The Queen", "@index" => "en"}
               ]
             }
           ]

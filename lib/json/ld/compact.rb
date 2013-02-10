@@ -62,9 +62,9 @@ module JSON::LD
           v = [v].compact unless v.is_a?(Array)
           unless context.container(property) == '@list'
             v = {compacted_key => v}
-            if element['@annotation']
-              compacted_key = context.compact_iri('@annotation', :position => :predicate, :depth => @depth)
-              v[compacted_key] = element['@annotation']
+            if element['@index']
+              compacted_key = context.compact_iri('@index', :position => :predicate, :depth => @depth)
+              v[compacted_key] = element['@index']
             end
           end
           debug("compact") {"@list result, return as #{v.inspect}"}
@@ -141,7 +141,7 @@ module JSON::LD
               compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
               compacted_value
             end
-          elsif key == '@annotation' && context.container(property) == '@annotation'
+          elsif key == '@index' && context.container(property) == '@index'
             # Skip the annotation key if annotations being applied
             next
           else
@@ -154,7 +154,7 @@ module JSON::LD
             end
 
             # For each item in value:
-            value = [value] if key == '@annotation' && value.is_a?(String)
+            value = [value] if key == '@index' && value.is_a?(String)
             raise ProcessingError, "found #{value.inspect} for #{key} of #{element.inspect}" unless value.is_a?(Array)
             value.each do |item|
               compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
@@ -166,7 +166,7 @@ module JSON::LD
               next if compacted_key.nil?
 
               # Language maps and annotations
-              if field = %w(@language @annotation).detect {|kk| context.container(compacted_key) == kk}
+              if field = %w(@language @index).detect {|kk| context.container(compacted_key) == kk}
                 item_result = result[compacted_key] ||= Hash.new
                 item_key = item[field]
               end
@@ -219,7 +219,7 @@ module JSON::LD
           n1 == n2
         elsif list?(n1)
           list?(n2) &&
-            n1.fetch('@annotation', true) == n2.fetch('@annotation', true) &&
+            n1.fetch('@index', true) == n2.fetch('@index', true) &&
             nodesEquivalent?(n1['@list'], n2['@list'])
         elsif (node?(n1) || node_reference?(n2))
           (node?(n2) || node_reference?(n2)) && n1['@id'] == n2['@id']

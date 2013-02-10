@@ -949,10 +949,10 @@ describe JSON::LD::EvaluationContext do
       let(:ctx) do
         subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
       end
-      it "Does not use @list with @annotation" do
+      it "Does not use @list with @index" do
         ctx.compact_iri("http://example.com/property", :value => {
           "@list" => ["one item"],
-          "@annotation" => "an annotation"
+          "@index" => "an annotation"
         }).should produce("http://example.com/property", @debug)
       end
     end
