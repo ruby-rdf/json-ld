@@ -6,6 +6,55 @@ module JSON::LD
   class EvaluationContext
     include Utils
 
+    # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
+    class TermDefinition
+      # @!attribute [rw] id
+      # @return [String, Array[String]] IRI mapping
+      attr_accessor :id
+
+      # @!attribute [rw] type_mapping
+      # @return [String] Type mapping
+      attr_accessor :type_mapping
+
+      # @!attribute [rw] container_mapping
+      # @return [String] Container mapping
+      attr_accessor :container_mapping
+
+      # @!attribute [rw] language_mapping
+      # @return [String] Language mapping
+      attr_accessor :language_mapping
+
+      # Create a new Term Mapping with an ID
+      # @param [String, Array[String]] id
+      def initialize(id = nil)
+        @id = id
+      end
+
+      # Is term a property generator?
+      def property_generator?; id.is_a?(Array); end
+
+      def dup
+        definition = super
+        definition.type_mappings = type_mapping.dup
+        definition
+      end
+
+      # Output Hash or String definition for this definition
+      # @return [String, Hash{String => Array[String], String}]
+      def to_context_definition
+        if language_mapping.nil? && container_mapping.nil? && type_mapping.nil? && !property_generator?
+          id
+        else
+          defn = Hash.ordered
+          defn['@id'] = id
+          defn['@type'] = type_mapping if type_mapping
+          defn['@container'] = container_mapping if container_mapping
+          defn['@language'] = language_mapping if language_mapping
+          defn
+        end
+      end
+    end
+
     # The base.
     #
     # @!attribute [rw] base
@@ -16,41 +65,22 @@ module JSON::LD
     # @return [RDF::URI] base IRI of the context, if loaded remotely.
     attr_accessor :context_base
 
-    # @!attribute [rw] mappings
-    # @return [Hash{String => String}] A list of current, in-scope mappings from term to IRI.
-    attr_accessor :mappings
+    # Term definitions
+    # @!attribute [r] term_definitions
+    # @return [Hash{String => TermDefinition}]
+    attr_reader :term_definitions
 
-    # @!attribute [rw] iri_to_curie
-    # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to a term or CURIE
-    attr_accessor :iri_to_curie
+    # Keyword aliases. Aliases a keyword to the set of aliases, ordered
+    # by size and lexographically
+    #
+    # @!attribute [r] keyword_aliases
+    # @return [Hash{String => Array[String]}]
+    attr_reader :keyword_aliases
 
     # @!attribute [rw] iri_to_term
     # @return [Hash{RDF::URI => String}] Reverse mappings from IRI to term only for terms, not CURIEs
     attr_accessor :iri_to_term
 
-    # Type coersion
-    #
-    # The @type keyword is used to specify type coersion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the datatype (or @id) to coerce to. Type coersion for the value `@id` asserts that all vocabulary terms listed should undergo coercion to an IRI, including CURIE processing for compact IRI Expressions like `foaf:homepage`.
-    #
-    # @!attribute [rw] coercions
-    # @return [Hash{String => String}]
-    attr_accessor :coercions
-
-    # List coercion
-    #
-    # The @container keyword is used to specify how arrays are to be treated. A value of @list indicates that arrays of values are to be treated as an ordered list. A value of @set indicates that arrays are to be treated as unordered and that singular values are always coerced to an array form on expansion and compaction.
-    # @!attribute [rw] containers
-    # @return [Hash{String => String}]
-    attr_accessor :containers
-    
-    # Language coercion
-    #
-    # The @language keyword is used to specify language coercion rules for the data. For each key in the map, the key is a String representation of the property for which String values will be coerced and the value is the language to coerce to. If no property-specific language is given, any default language from the context is used.
-    #
-    # @!attribute [rw] languages
-    # @return [Hash{String => String}]
-    attr_accessor :languages
-    
     # Default language
     #
     #
@@ -86,11 +116,8 @@ module JSON::LD
     # @return [EvaluationContext]
     def initialize(options = {})
       @base = RDF::URI(options[:base]) if options[:base]
-      @mappings =  {}
-      @coercions = {}
-      @containers = {}
-      @languages = {}
-      @iri_to_curie = {}
+      @term_definitions = {}
+      @keyword_aliases = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
         RDF::XSD.to_uri.to_s => "xsd"
@@ -109,9 +136,16 @@ module JSON::LD
       yield(self) if block_given?
     end
 
-    # Create an Evaluation Context using an existing context as a start by parsing the input.
+    # Create an Evaluation Context
+    #
+    # When processing a JSON-LD data structure, each processing rule is applied using information provided by the active context. This section describes how to produce an active context.
+    #
+    # The active context contains the active term definitions which specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language. Each term definition consists of an IRI mapping and optionally a type mapping from terms to datatypes or language mapping from terms to language codes, and a container mapping. If an IRI mapping maps a term to multiple IRIs it is said to be a property generator. The active context also keeps track of keyword aliases.
+    #
+    # When processing, the active context is initialized without any term definitions, vocabulary mapping, or default language. If a local context is encountered during processing, a new active context is created by cloning the existing active context. Then the information from the local context is merged into the new active context. A local context is identified within a JSON object by the value of the @context key, which must be a string, an array, or a JSON object.
     #
     # @param [String, #read, Array, Hash, EvaluatoinContext] context
+    # @return [EvaluationContext]
     # @raise [InvalidContext]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)
@@ -133,23 +167,22 @@ module JSON::LD
         end
       when nil
         debug("parse") {"nil"}
-        # Load context document, if it is a string
-        ec = EvaluationContext.new(options)
+        # If context equals null, then set result to a newly-initialized active context
+        EvaluationContext.new(options)
       when String
         debug("parse") {"remote: #{context}, base: #{context_base || base}"}
         # Load context document, if it is a string
-        ec = nil
         begin
           url = expand_iri(context, :base => context_base || base, :position => :subject)
           raise JSON::LD::InvalidContext::LoadError if remote_contexts.include?(url)
           @remote_contexts = @remote_contexts + [url]
-          ecdup = self.dup
-          ecdup.context_base = url  # Set context_base for recursive remote contexts
-          RDF::Util::File.open_file(url) {|f| ec = ecdup.parse(f)}
-          ec.provided_context = context
-          ec.context_base = url
+          result = self.dup
+          result.context_base = url  # Set context_base for recursive remote contexts
+          RDF::Util::File.open_file(url) {|f| result = result.parse(f)}
+          result.provided_context = context
+          result.context_base = url
           debug("parse") {"=> provided_context: #{context.inspect}"}
-          ec
+          result
         rescue Exception => e
           debug("parse") {"Failed to retrieve @context from remote document at #{context.inspect}: #{e.message}"}
           raise JSON::LD::InvalidContext::LoadError, "Failed to retrieve remote context at #{context.inspect}: #{e.message}", e.backtrace if @options[:validate]
@@ -159,14 +192,17 @@ module JSON::LD
         # Process each member of the array in order, updating the active context
         # Updates evaluation context serially during parsing
         debug("parse") {"Array"}
-        ec = self
-        context.each {|c| ec = ec.parse(c)}
-        ec.provided_context = context
+        result = self
+        context.each {|c| result = result.parse(c)}
+        result.provided_context = context
         debug("parse") {"=> provided_context: #{context.inspect}"}
-        ec
+        result
       when Hash
-        new_ec = self.dup
-        new_ec.provided_context = context.dup
+        result = self.dup
+        result.provided_context = context.dup
+
+        # Create a JSON object defined to use to keep track of whether or not a term has already been defined or currently being defined during recursion.
+        defined = {}
 
         # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
         {
@@ -177,119 +213,142 @@ module JSON::LD
           if v.nil? || v.is_a?(String)
             context.delete(key)
             debug("parse") {"Set #{key} to #{v.inspect}"}
-            new_ec.send(setter, v)
+            result.send(setter, v)
           elsif v && @options[:validate]
             raise InvalidContext::Syntax, "#{key.inspect} is invalid"
           end
         end
 
-        num_updates = 1
-        while num_updates > 0 do
-          num_updates = 0
-
-          # Map terms to IRIs/keywords first
+        # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
+        depth do
           context.each do |key, value|
-            # Expand a string value, unless it matches a keyword
-            debug("parse") {"Hash[#{key}] = #{value.inspect}"}
-
-            if KEYWORDS.include?(key)
-              raise InvalidContext::Syntax, "key #{key.inspect} must not be a keyword" if @options[:validate]
-              next
-            elsif term_valid?(key)
-              # Remove all coercion information for the property
-              new_ec.set_coerce(key, nil)
-              new_ec.set_container(key, nil)
-              @languages.delete(key)
-
-              # Extract IRI mapping. This is complicated, as @id may have been aliased. Also, if @id is explicitly set to nil, it inhibits and automatic mapping, so treat it as false, to distinguish from no mapping at all.
-              value = case value
-              when Hash
-                value.has_key?('@id') && value['@id'].nil? ? false : value.fetch('@id', nil)
-              when nil
-                false
-              else
-                value
-              end
-
-              # Explicitly say this is not mapped
-              if value == false
-                debug("parse") {"Map #{key} to nil"}
-                new_ec.set_mapping(key, nil)
-                next
-              end
-
-              iri = if value.is_a?(Array)
-                # expand each item according the IRI Expansion algorithm. If an item does not expand to a valid absolute IRI, raise an INVALID_PROPERTY_GENERATOR error; otherwise sort val and store it as IRI mapping in definition.
-                value.map do |v|
-                  raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{v.inspect}" unless v.is_a?(String)
-                  new_ec.expand_iri(v, :position => :predicate)
-                end.sort
-              elsif value
-                raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{value.inspect}" unless value.is_a?(String)
-                new_ec.expand_iri(value, :position => :predicate)
-              end
-
-              if iri && new_ec.mappings.fetch(key, nil) != iri
-                # Record term definition
-                new_ec.set_mapping(key, iri)
-                num_updates += 1
-              end
-            elsif @options[:validate]
-              raise InvalidContext::Syntax, "key #{key.inspect} is invalid"
-            end
+            result.create_term_definition(context, key, defined)
           end
         end
 
-        # Next, look for coercion using new_ec
-        context.each do |key, value|
-          # Expand a string value, unless it matches a keyword
-          debug("parse") {"coercion/list: Hash[#{key}] = #{value.inspect}"}
-          case value
-          when Hash
-            # Must have one of @id, @language, @type or @container
-            raise InvalidContext::Syntax, "mapping for #{key.inspect} missing one of @id, @language, @type or @container" if (%w(@id @language @type @container) & value.keys).empty?
-            value.each do |key2, value2|
-              iri = new_ec.expand_iri(value2, :position => :predicate) if value2.is_a?(String)
-              case key2
-              when '@type'
-                raise InvalidContext::Syntax, "unknown mapping for '@type' to #{value2.inspect}" unless value2.is_a?(String) || value2.nil?
-                if new_ec.coerce(key) != iri
-                  case iri
-                  when '@id', /_:/, RDF::Node
-                  else
-                    raise InvalidContext::Syntax, "unknown mapping for '@type' to #{iri.inspect}" unless (RDF::URI(iri).absolute? rescue false)
-                  end
-                  # Record term coercion
-                  new_ec.set_coerce(key, iri)
-                end
-              when '@container'
-                raise InvalidContext::Syntax, "unknown mapping for '@container' to #{value2.inspect}" unless %w(@list @set @language @index).include?(value2)
-                if new_ec.container(key) != value2
-                  debug("parse") {"container #{key.inspect} as #{value2.inspect}"}
-                  new_ec.set_container(key, value2)
-                end
-              when '@language'
-                if !new_ec.languages.has_key?(key) || new_ec.languages[key] != value2
-                  debug("parse") {"language #{key.inspect} as #{value2.inspect}"}
-                  new_ec.set_language(key, value2)
-                end
-              end
-            end
-          
-            # If value has no @id, create a mapping from key
-            # to the expanded key IRI
-            unless value.has_key?('@id')
-              iri = new_ec.expand_iri(key, :position => :predicate)
-              new_ec.set_mapping(key, iri)
-            end
-          when nil, String
-            # handled in previous loop
+        # Return result
+        result
+      end
+    end
+
+    # Create Term Definition
+    #
+    # Term definitions are created by parsing the information in the given local context for the given term. If the given term is a compact IRI with a prefix that is a key in the local context, then that prefix is considered a dependency with its own term definition that must first be created, through recursion, before continuing. Because a term definition can depend on other term definitions, a mechanism must be used to detect cyclical dependencies. The solution employed here uses a map, defined, that keeps track of whether or not a term has been defined or is currently in the process of being defined. This map is checked before any recursion is attempted.
+    #
+    # After all dependencies have been defined, the rest of the information in the local context for the given term is taken into account, creating the appropriate IRI mapping, container mapping, and type mapping or language mapping for the term.
+    #
+    # @param [Hash] context
+    # @param [String] term
+    # @param [Hash] defined
+    # @raise [InvalidContext]
+    #   Represents a cyclical term dependency
+    def create_term_definition(context, term, defined)
+      require 'debugger'; breakpoint
+      # Expand a string value, unless it matches a keyword
+      debug("create_term_definition") {"term = #{term}"}
+
+      # If defined contains the key term, then the associated value must be true, indicating that the term definition has already been created, so return. Otherwise, a cyclical term definition has been detected, which is an error.
+      case defined[term]
+      when TrueClass then return
+      when nil
+        defined[term] = false
+      else
+        raise "Cyclical term dependency found for #{term}"
+      end
+
+      # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
+      prefix, suffix = term.split(':')
+      create_term_definition(context, prefix, defined) if suffix && context.has_key?(prefix)
+
+      if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
+        raise InvalidContext::Syntax, "term #{term.inspect} must not be a keyword" if @options[:validate]
+      elsif !term_valid?(term) && @options[:validate]
+        raise InvalidContext::Syntax, "term #{term.inspect} is invalid"
+      end
+
+      # If term is a keyword alias in active context, remove it.
+      if keyword_aliases.values.compact.include?(term)
+        keyword_aliases.each do |kw, aliases|
+          keyword_aliases[kw] -= term
+        end
+      end
+
+      case value = context[term]
+      when nil, {'@id' => nil}
+        # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
+        term_definitions[term] = nil
+        defined[term] = true
+        return
+      when String
+        if KEYWORDS.include?(value)
+          # If value is a keyword, then value must not be equal to @context or @preserve. Otherwise an invalid keyword alias has been detected, which is an error. Add term to active context as a keyword alias for value. If there is more than one keyword alias for value, then store its aliases as an array, sorted by length, breaking ties lexicographically.
+          raise InvalidContext::Syntax, "key #{value.inspect} must not be a @context or @preserve" if %w(@context @preserve).include?(value)
+          kw_alias = keyword_aliases[value] ||= []
+          keyword_aliases[value] = kw_alias.unshift[key].uniq.term_sort
+        else
+          # Otherwise, expand value by setting it to the result of using the IRI Expansion algorithm, passing active context, value, true for documentRelative, local context, and defined.
+          value = expand_iri(value, :documentRelative => true, :context => context, :defined => defined)
+          # Set the IRI mapping for the term definition for term in active context to value, set the value associated with defined's key term to true, and return.
+          term_definitions[term] = TermDefinition.new(value)
+          defined[term] = true
+        end
+        return
+      when Hash
+        debug("create_term_definition") {"Hash[#{term}] = #{value.inspect}"}
+        definition = TermDefinition.new
+        # If term is a compact IRI and its prefix has a term definition in active context, set definition to a copy of it.
+        definition = term_definitions[prefix].dup if suffix && term_definitions[prefix]
+
+        if value.has_key?('@id')
+          definition.id = case id = value['@id']
+          when Array
+            # expand each item according the IRI Expansion algorithm. If an item does not expand to a valid absolute IRI, raise an INVALID_PROPERTY_GENERATOR error; otherwise sort val and store it as IRI mapping in definition.
+            id.map do |v|
+              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{v.inspect}" unless v.is_a?(String)
+              expand_iri(value, :documentRelative => true, :context => context, :defined => defined)
+            end.sort
+          when String
+            expand_iri(id, :documentRelative => true, :context => context, :defined => defined)
           else
-            raise InvalidContext::Syntax, "attempt to map #{key.inspect} to #{value.class}"
+            raise InvalidContext::Syntax, "Expected #{term} definition to be a String or Hash, was #{value}"
           end
+        elsif suffix.nil?
+          # Otherwise, if term is not a compact IRI, then active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
+          raise InvalidContext::Syntax, "Expected #{term} to be relative to a @vocab, which is missing" unless self.vocab
+          definition.id = self.vocab + term
+        elsif term_definitions[prefix]
+          # Otherwise, if term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
+          definition.id = definition.id + term
+        else
+          # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term.
+          definition.id = term
         end
 
-        new_ec
+        if value.has_key?('@type')
+          type = value['@type']
+          # SPEC FIXME: @type may be nil
+          raise InvalidContext::Syntax, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
+          type = expand_iri(type, :documentRelative => true, :context => context, :defined => defined) if type.is_a?(String)
+          debug("create_term_definition") {"type_mapping: #{type.inspect}"}
+          definition.type_mapping = type
+        end
+
+        if value.has_key?('@container')
+          container = value['@container']
+          raise InvalidContext::Syntax, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
+          debug("create_term_definition") {"container_mapping: #{container.inspect}"}
+          definition.container_mapping = container
+        end
+
+        if value.has_key?('@language')
+          language = value['@language']
+          raise InvalidContext::Syntax, "language must be null or a string, was #{language.inspect}}" unless language.nil? || (language || "").is_a?(String)
+          language = language.downcase if language.is_a?(String)
+          debug("create_term_definition") {"language_mapping: #{language.inspect}"}
+          definition.language_mapping = language
+        end
+
+        term_definitions[term] = definition
       end
     end
 
@@ -313,50 +372,15 @@ module JSON::LD
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
 
-          # Mappings
-          mappings.keys.kw_sort{|a, b| a.to_s <=> b.to_s}.each do |k|
-            next unless term_valid?(k.to_s)
-            debug {"=> mappings[#{k}] => #{mappings[k]}"}
-            ctx[k] = mappings[k]
+          # Keyword Aliases
+          keyword_aliases.each do |kw, aliases|
+            debug {"=> kw_aliases[#{kw}] => #{aliases}"}
+            aliases.each {|a| ctx[a] = kw}
           end
 
-          unless coercions.empty? && containers.empty? && languages.empty?
-            # Coerce
-            (coercions.keys + containers.keys + languages.keys).uniq.sort.each do |k|
-              next if k == '@type'
-
-              # Turn into long form
-              ctx[k] ||= Hash.ordered
-              if ctx[k].is_a?(String)
-                defn = Hash.ordered
-                defn["@id"] = compact_iri(ctx[k], :position => :subject, :not_term => true)
-                ctx[k] = defn
-              end
-
-              debug {"=> coerce(#{k}) => #{coerce(k)}"}
-              if coerce(k) && !NATIVE_DATATYPES.include?(coerce(k))
-                dt = coerce(k)
-                dt = compact_iri(dt, :position => :type) unless dt == '@id'
-                # Fold into existing definition
-                ctx[k]["@type"] = dt
-                debug {"=> datatype[#{k}] => #{dt}"}
-              end
-
-              debug {"=> container(#{k}) => #{container(k)}"}
-              if %w(@list @set @language @index).include?(container(k))
-                ctx[k]["@container"] = container(k)
-                debug {"=> container[#{k}] => #{container(k).inspect}"}
-              end
-
-              debug {"=> language(#{k}) => #{language(k)}"}
-              if language(k) != default_language
-                ctx[k]["@language"] = language(k) ? language(k) : nil
-                debug {"=> language[#{k}] => #{language(k).inspect}"}
-              end
-              
-              # Remove an empty definition
-              ctx.delete(k) if ctx[k].empty?
-            end
+          # Term Definitions
+          term_definitions.each do |term, definition|
+            ctx[term] = definition.to_context_definition
           end
 
           debug {"start_doc: context=#{ctx.inspect}"}
@@ -370,36 +394,49 @@ module JSON::LD
       end
     end
     
-    ##
+    ## FIXME: this should go away
+    # Retrieve term mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def mappings
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.id
+        memo
+      end
+    end
+
+    ## FIXME: this should go away
     # Retrieve term mapping
     #
     # @param [String, #to_s] term
     #
     # @return [RDF::URI, String]
+    # @deprecated
     def mapping(term)
-      @mappings.fetch(term.to_s, false)
+      term_definitions[term] ? term_definitions[term].id : false
     end
 
-    ##
+    ## FIXME: this should go away
     # Set term mapping
     #
     # @param [#to_s] term
     # @param [RDF::URI, String, nil] value
     #
     # @return [RDF::URI, String]
+    # @deprecated
     def set_mapping(term, value)
-      term = term.to_s
-      term_sym = term.empty? ? "" : term.to_sym
-#      raise InvalidContext::Syntax, "mapping term #{term.inspect} must be a string" unless term.is_a?(String)
-#      raise InvalidContext::Syntax, "mapping value #{value.inspect} must be an RDF::URI" unless value.nil? || value.to_s[0,1] == '@' || value.is_a?(RDF::URI)
       debug {"map #{term.inspect} to #{value.inspect}"}
-      iri_to_term.delete(@mappings[term].to_s) if @mappings[term]
-      @mappings[term] = value
+      term = term.to_s
+      term_definitions[term] = value.to_s
+
+      term_sym = term.empty? ? "" : term.to_sym
+      iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
       @options[:prefixes][term_sym] = value if @options.has_key?(:prefixes)
       iri_to_term[value.to_s] = term
     end
 
-    ##
+    ## FIXME: this should go away
     # Reverse term mapping, typically used for finding aliases for keys.
     #
     # Returns either the original value, or a mapping for this value.
@@ -409,8 +446,21 @@ module JSON::LD
     #
     # @param [RDF::URI, String] value
     # @return [String]
+    # @deprecated
     def alias(value)
       iri_to_term.fetch(value, value)
+    end
+
+    ## FIXME: this should go away
+    # Retrieve type mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def coercions
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.type_mapping
+        memo
+      end
     end
 
     ##
@@ -419,11 +469,12 @@ module JSON::LD
     # @param [String] property in unexpanded form
     #
     # @return [RDF::URI, '@id']
+    # @deprecated
     def coerce(property)
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
       return '@id' if [RDF.type, '@type'].include?(property)
-      @coercions.fetch(property, nil)
+      term_mappings[property].type_mapping
     end
 
     ##
@@ -433,12 +484,21 @@ module JSON::LD
     # @param [RDF::URI, '@id'] value
     #
     # @return [RDF::URI, '@id']
+    # @deprecated
     def set_coerce(property, value)
-      debug {"coerce #{property.inspect} to #{value.inspect}"} unless @coercions[property.to_s] == value
-      if value
-        @coercions[property] = value
-      else
-        @coercions.delete(property)
+      debug {"coerce #{property.inspect} to #{value.inspect}"} unless term_definitions[property.to_s].type_mapping == value
+      term_definitions[property.to_s].type_mapping = value
+    end
+
+    ## FIXME: this should go away
+    # Retrieve container mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def containers
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.container_mapping
+        memo
       end
     end
 
@@ -447,9 +507,10 @@ module JSON::LD
     #
     # @param [String] property in unexpanded form
     # @return [String]
+    # @deprecated
     def container(property)
       return '@set' if property == '@graph'
-      @containers.fetch(property.to_s, nil)
+      term_definitions[property.to_s].container_mapping
     end
 
     ##
@@ -458,21 +519,31 @@ module JSON::LD
     # @param [String] property
     # @param [String] value one of @list, @set or nil
     # @return [Boolean]
+    # @deprecated
     def set_container(property, value)
       return if @containers[property.to_s] == value
-      debug {"coerce #{property.inspect} to #{value.inspect}"} 
-      if value
-        @containers[property.to_s] = value
-      else
-        @containers.delete(value)
+      debug {"coerce #{property.inspect} to #{value.inspect}"}
+      term_definitions[property.to_s].container_mapping = value
+    end
+
+    ## FIXME: this should go away
+    # Retrieve language mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def languages
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.language_mapping
+        memo
       end
     end
 
     ##
     # Retrieve the language associated with a property, or the default language otherwise
     # @return [String]
+    # @deprecated
     def language(property)
-      @languages.fetch(property.to_s, @default_language) if !coerce(property)
+      term_definitions[property.to_s].language_mapping || @default_language
     end
     
     ##
@@ -483,7 +554,7 @@ module JSON::LD
     # @return [String]
     def set_language(property, value)
       # Use false for nil language
-      @languages[property.to_s] = value ? value : false
+      term_definitions[property.to_s].language_mapping = value ? value : false
     end
 
     ##
@@ -503,26 +574,31 @@ module JSON::LD
     #   A keyword, term, prefix:suffix or possibly relative IRI
     # @param  [Hash{Symbol => Object}] options
     # @option options [:subject, :predicate, :type] position
-    #   Useful when determining how to serialize.
+    #   Useful when determining how to serialize (deprecated).
     # @option options [RDF::URI] base (self.base)
-    #   Base IRI to use when expanding relative IRIs.
+    #   Base IRI to use when expanding relative IRIs (deprecated).
     # @option options [Array<String>] path ([])
-    #   Array of looked up iris, used to find cycles
+    #   Array of looked up iris, used to find cycles (deprecated).
     # @option options [BlankNodeNamer] namer
     #   Blank Node namer to use for renaming Blank Nodes
-    #
+    # @option options [Boolean] documentRelative (false)
+    # @option options [Boolean] vocabRelative (false)
+    # @option options [EvaluationContext] local_context
+    #   Used during Context Processing.
+    # @option options [Hash] defined
+    #   Used during Context Processing.
     # @return [RDF::Term, String, Array<RDF::URI>]
     #   IRI or String, if it's a keyword, or array of IRI, if it matches
     #   a property generator
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
-    def expand_iri(iri, options = {})
-      return iri unless iri.is_a?(String)
+    def expand_iri(value, options = {})
+      return value unless value.is_a?(String)
 
-      prefix, suffix = iri.split(':', 2)
-      unless (m = mapping(iri)) == false
+      prefix, suffix = value.split(':', 2)
+      unless (m = mapping(value)) == false
         # It's an exact match
-        debug("expand_iri") {"match: #{iri.inspect} to #{m.inspect}"} unless options[:quiet]
+        debug("expand_iri") {"match: #{value.inspect} to #{m.inspect}"} unless options[:quiet]
         return case m
         when nil
           nil
@@ -538,22 +614,22 @@ module JSON::LD
       prefix = prefix.to_s
       case
       when prefix == '_' && suffix          then uri(bnode(suffix), options[:namer])
-      when iri.to_s[0,1] == "@"             then iri
-      when suffix.to_s[0,2] == '//'         then uri(iri)
+      when value.to_s[0,1] == "@"           then value
+      when suffix.to_s[0,2] == '//'         then uri(value)
       when (mapping = mapping(prefix)) != false
         debug("expand_iri") {"mapping: #{mapping(prefix).inspect}"} unless options[:quiet]
         case mapping
         when Array
           # Return array of IRIs, if it's a property generator
-          mapping.map {|m| uri(m.to_s + suffix.to_s, options[:namer])}
+          mapping.map {|pm| uri(pm.to_s + suffix.to_s, options[:namer])}
         else
           uri(mapping.to_s + suffix.to_s, options[:namer])
         end
-      when base                             then base.join(iri)
-      when vocab                            then uri("#{vocab}#{iri}")
+      when base                             then base.join(value)
+      when vocab                            then uri("#{vocab}#{value}")
       else
         # Otherwise, it must be an absolute IRI
-        u = uri(iri)
+        u = uri(value)
         u if u.absolute? || [:subject, :type].include?(options[:position])
       end
     end
@@ -854,11 +930,9 @@ module JSON::LD
 
     def inspect
       v = %w([EvaluationContext)
+      v << "vocab=#{vocab}"
       v << "def_language=#{default_language}"
-      v << "languages[#{languages.keys.length}]=#{languages}"
-      v << "mappings[#{mappings.keys.length}]=#{mappings}"
-      v << "coercions[#{coercions.keys.length}]=#{coercions}"
-      v << "containers[#{containers.length}]=#{containers}"
+      v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
       v.join(", ") + "]"
     end
     
@@ -867,14 +941,12 @@ module JSON::LD
       that = self
       ec = super
       ec.instance_eval do
-        @mappings = that.mappings.dup
-        @coerceions = that.coercions.dup
-        @containers = that.containers.dup
-        @languages = that.languages.dup
+        @vocab = that.vocab
         @default_language = that.default_language
+        @keyword_aliases = that.keyword_aliases.dup
+        @term_definitions = that.term_definitions.dup
         @options = that.options
         @iri_to_term = that.iri_to_term.dup
-        @iri_to_curie = that.iri_to_curie.dup
       end
       ec
     end

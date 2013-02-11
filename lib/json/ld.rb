@@ -124,6 +124,11 @@ module JSON
     end
     
     class InvalidContext < Exception
+      def initialize(*args)
+        super
+        @code = args.first
+      end
+
       # A general syntax error was detected in the @context. For example, if a @type key maps to anything
       # other than @id or an absolute IRI, this exception would be raised.
       INVALID_SYNTAX	= 1

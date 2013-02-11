@@ -71,11 +71,20 @@ class Array
   # @return [Array]
   KW_ORDER = %(@id @value @type @language @vocab @container @graph @list @set)
 
+  # Order, considering keywords to come before other strings
   def kw_sort
     self.sort do |a, b|
       a = "@#{KW_ORDER.index(a)}" if KW_ORDER.include?(a)
       b = "@#{KW_ORDER.index(b)}" if KW_ORDER.include?(b)
       a <=> b
+    end
+  end
+
+  # Order terms, length first, then lexographically
+  def term_sort
+    self.sort do |a, b|
+      len_diff = a.length <=> b.length
+      len_diff == 0 ? a <=> b : len_diff
     end
   end
 end

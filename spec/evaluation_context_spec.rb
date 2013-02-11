@@ -119,7 +119,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @list coercion with predicate" do
+      it "associates @list container mapping with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers.should produce({
@@ -127,7 +127,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @set coercion with predicate" do
+      it "associates @set container mapping with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
         }).containers.should produce({
@@ -135,7 +135,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates @id coercion with predicate" do
+      it "associates @id container mapping with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions.should produce({
@@ -143,7 +143,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates datatype coercion with predicate" do
+      it "associates type mapping with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coercions.should produce({
@@ -151,7 +151,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "associates language coercion with predicate" do
+      it "associates language mapping with predicate" do
         subject.parse({
           "foo" => {"@id" => "http://example.com/", "@language" => "en"}
         }).languages.should produce({
@@ -159,7 +159,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "expands chains of term definition/use with string values" do
+      it "expands chains of term definition/use with string values", :focus => true do
         subject.parse({
           "foo" => "bar",
           "bar" => "baz",
