@@ -49,7 +49,8 @@ module JSON::LD
           defn['@id'] = id
           defn['@type'] = type_mapping if type_mapping
           defn['@container'] = container_mapping if container_mapping
-          defn['@language'] = language_mapping if language_mapping
+          # Language set as false to be output as null
+          defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
           defn
         end
       end
@@ -109,6 +110,10 @@ module JSON::LD
     # @return [Array<String>] The list of remote contexts already processed
     attr_accessor :remote_contexts
 
+    # @!attribute [r] namer
+    # @return [BlankNodeNamer]
+    attr_accessor :namer
+
     ##
     # Create new evaluation context
     # @yield [ec]
@@ -123,6 +128,7 @@ module JSON::LD
         RDF::XSD.to_uri.to_s => "xsd"
       }
       @remote_contexts = []
+      @namer = BlankNodeNamer.new("t")
 
       @options = options
 
@@ -173,7 +179,7 @@ module JSON::LD
         debug("parse") {"remote: #{context}, base: #{context_base || base}"}
         # Load context document, if it is a string
         begin
-          url = expand_iri(context, :base => context_base || base, :position => :subject)
+          url = expand_iri(context, :base => context_base || base, :documentRelative => true)
           raise JSON::LD::InvalidContext::LoadError if remote_contexts.include?(url)
           @remote_contexts = @remote_contexts + [url]
           result = self.dup
@@ -237,15 +243,14 @@ module JSON::LD
     #
     # After all dependencies have been defined, the rest of the information in the local context for the given term is taken into account, creating the appropriate IRI mapping, container mapping, and type mapping or language mapping for the term.
     #
-    # @param [Hash] context
+    # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
     # @raise [InvalidContext]
     #   Represents a cyclical term dependency
-    def create_term_definition(context, term, defined)
-      require 'debugger'; breakpoint
+    def create_term_definition(local_context, term, defined)
       # Expand a string value, unless it matches a keyword
-      debug("create_term_definition") {"term = #{term}"}
+      debug("create_term_definition") {"term = #{term.inspect}"}
 
       # If defined contains the key term, then the associated value must be true, indicating that the term definition has already been created, so return. Otherwise, a cyclical term definition has been detected, which is an error.
       case defined[term]
@@ -253,82 +258,90 @@ module JSON::LD
       when nil
         defined[term] = false
       else
-        raise "Cyclical term dependency found for #{term}"
+        raise "Cyclical term dependency found for #{term.inspect}"
       end
 
-      # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
-      prefix, suffix = term.split(':')
-      create_term_definition(context, prefix, defined) if suffix && context.has_key?(prefix)
-
+      # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
         raise InvalidContext::Syntax, "term #{term.inspect} must not be a keyword" if @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
         raise InvalidContext::Syntax, "term #{term.inspect} is invalid"
       end
 
-      # If term is a keyword alias in active context, remove it.
-      if keyword_aliases.values.compact.include?(term)
-        keyword_aliases.each do |kw, aliases|
-          keyword_aliases[kw] -= term
-        end
-      end
+      # Remove any existing term definition for term in active context.
+      term_definitions.delete(term)
 
-      case value = context[term]
+      # If term is a keyword alias in active context, remove it.
+      #if keyword_aliases.values.compact.include?(term)
+      #  keyword_aliases.each do |kw, aliases|
+      #    keyword_aliases[kw] -= term
+      #  end
+      #end
+
+      case value = local_context.fetch(term, false)
       when nil, {'@id' => nil}
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
+        debug(" =>") {"nil"}
         term_definitions[term] = nil
         defined[term] = true
         return
       when String
+        # Expand value by setting it to the result of using the IRI Expansion algorithm, passing active context, value, true for vocabRelative, true for documentRelative, local context, and defined.
+        value = depth {expand_iri(value, :documentRelative => true, :vocabRelative => true, :local_context => local_context, :defined => defined)}
+
         if KEYWORDS.include?(value)
           # If value is a keyword, then value must not be equal to @context or @preserve. Otherwise an invalid keyword alias has been detected, which is an error. Add term to active context as a keyword alias for value. If there is more than one keyword alias for value, then store its aliases as an array, sorted by length, breaking ties lexicographically.
           raise InvalidContext::Syntax, "key #{value.inspect} must not be a @context or @preserve" if %w(@context @preserve).include?(value)
           kw_alias = keyword_aliases[value] ||= []
-          keyword_aliases[value] = kw_alias.unshift[key].uniq.term_sort
-        else
-          # Otherwise, expand value by setting it to the result of using the IRI Expansion algorithm, passing active context, value, true for documentRelative, local context, and defined.
-          value = expand_iri(value, :documentRelative => true, :context => context, :defined => defined)
-          # Set the IRI mapping for the term definition for term in active context to value, set the value associated with defined's key term to true, and return.
-          term_definitions[term] = TermDefinition.new(value)
-          defined[term] = true
+          keyword_aliases[value] = kw_alias.unshift(term).uniq.term_sort
+          debug(" =>") {value}
         end
-        return
+        # Set the IRI mapping for the term definition for term in active context to value, set the value associated with defined's key term to true, and return.
+        term_definitions[term] = TermDefinition.new(value)
+        defined[term] = true
+        debug(" =>") {value}
       when Hash
-        debug("create_term_definition") {"Hash[#{term}] = #{value.inspect}"}
+        debug("create_term_definition") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new
-        # If term is a compact IRI and its prefix has a term definition in active context, set definition to a copy of it.
-        definition = term_definitions[prefix].dup if suffix && term_definitions[prefix]
 
         if value.has_key?('@id')
           definition.id = case id = value['@id']
           when Array
             # expand each item according the IRI Expansion algorithm. If an item does not expand to a valid absolute IRI, raise an INVALID_PROPERTY_GENERATOR error; otherwise sort val and store it as IRI mapping in definition.
             id.map do |v|
-              raise InvalidContext::Syntax, "unknown mapping for #{key.inspect} to #{v.inspect}" unless v.is_a?(String)
-              expand_iri(value, :documentRelative => true, :context => context, :defined => defined)
+              raise InvalidContext::Syntax, "unknown mapping for #{term.inspect} to #{v.inspect}" unless v.is_a?(String)
+              expand_iri(v, :documentRelative => true, :local_context => local_context, :defined => defined)
             end.sort
           when String
-            expand_iri(id, :documentRelative => true, :context => context, :defined => defined)
+            expand_iri(id, :documentRelative => true, :local_context => local_context, :defined => defined)
           else
-            raise InvalidContext::Syntax, "Expected #{term} definition to be a String or Hash, was #{value}"
+            raise InvalidContext::Syntax, "Expected #{term.inspect} definition to be a String or Hash, was #{value}"
           end
-        elsif suffix.nil?
-          # Otherwise, if term is not a compact IRI, then active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise InvalidContext::Syntax, "Expected #{term} to be relative to a @vocab, which is missing" unless self.vocab
-          definition.id = self.vocab + term
-        elsif term_definitions[prefix]
-          # Otherwise, if term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
-          definition.id = definition.id + term
+        elsif term.include?(':')
+          # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
+          prefix, suffix = term.split(':')
+          depth {create_term_definition(local_context, prefix, defined)} if local_context.has_key?(prefix)
+
+          definition.id = if td = term_definitions[prefix]
+            # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
+            td.id + suffix
+          else
+            # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
+            term
+          end
+          debug(" =>") {definition.id}
         else
-          # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term.
-          definition.id = term
+          # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
+          raise InvalidContext::Syntax, "relative term definition without vocab" unless vocab
+          definition.id = vocab + value
+          debug(" =>") {definition.id}
         end
 
         if value.has_key?('@type')
           type = value['@type']
           # SPEC FIXME: @type may be nil
           raise InvalidContext::Syntax, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
-          type = expand_iri(type, :documentRelative => true, :context => context, :defined => defined) if type.is_a?(String)
+          type = expand_iri(type, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
           debug("create_term_definition") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
@@ -349,6 +362,8 @@ module JSON::LD
         end
 
         term_definitions[term] = definition
+      else
+        raise InvalidContext::Syntax, "Term definition for #{term.inspect} is an #{value.class}"
       end
     end
 
@@ -393,7 +408,7 @@ module JSON::LD
         r
       end
     end
-    
+
     ## FIXME: this should go away
     # Retrieve term mappings
     #
@@ -401,7 +416,7 @@ module JSON::LD
     # @deprecated
     def mappings
       term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.id
+        memo[t] = td ? td.id : nil
         memo
       end
     end
@@ -414,7 +429,7 @@ module JSON::LD
     # @return [RDF::URI, String]
     # @deprecated
     def mapping(term)
-      term_definitions[term] ? term_definitions[term].id : false
+      term_definitions[term] ? term_definitions[term].id : nil
     end
 
     ## FIXME: this should go away
@@ -428,7 +443,7 @@ module JSON::LD
     def set_mapping(term, value)
       debug {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
-      term_definitions[term] = value.to_s
+      term_definitions[term] = TermDefinition.new(value)
 
       term_sym = term.empty? ? "" : term.to_sym
       iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
@@ -474,7 +489,7 @@ module JSON::LD
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
       return '@id' if [RDF.type, '@type'].include?(property)
-      term_mappings[property].type_mapping
+      term_definitions[property].type_mapping if term_definitions.has_key?(property)
     end
 
     ##
@@ -510,7 +525,7 @@ module JSON::LD
     # @deprecated
     def container(property)
       return '@set' if property == '@graph'
-      term_definitions[property.to_s].container_mapping
+      term_definitions[property.to_s].container_mapping if term_definitions.has_key?(property)
     end
 
     ##
@@ -521,8 +536,8 @@ module JSON::LD
     # @return [Boolean]
     # @deprecated
     def set_container(property, value)
-      return if @containers[property.to_s] == value
       debug {"coerce #{property.inspect} to #{value.inspect}"}
+      raise "Can't set container mapping with no term definition" unless term_definitions.has_key?(property.to_s)
       term_definitions[property.to_s].container_mapping = value
     end
 
@@ -543,7 +558,9 @@ module JSON::LD
     # @return [String]
     # @deprecated
     def language(property)
-      term_definitions[property.to_s].language_mapping || @default_language
+      raise "Can't set language mapping with no term definition" unless term_definitions.has_key?(property.to_s)
+      lang = term_definitions[property.to_s].language_mapping if term_definitions.has_key?(property)
+      lang || @default_language
     end
     
     ##
@@ -579,15 +596,13 @@ module JSON::LD
     #   Base IRI to use when expanding relative IRIs (deprecated).
     # @option options [Array<String>] path ([])
     #   Array of looked up iris, used to find cycles (deprecated).
-    # @option options [BlankNodeNamer] namer
-    #   Blank Node namer to use for renaming Blank Nodes
     # @option options [Boolean] documentRelative (false)
     # @option options [Boolean] vocabRelative (false)
     # @option options [EvaluationContext] local_context
     #   Used during Context Processing.
     # @option options [Hash] defined
     #   Used during Context Processing.
-    # @return [RDF::Term, String, Array<RDF::URI>]
+    # @return [String, Array<String>]
     #   IRI or String, if it's a keyword, or array of IRI, if it matches
     #   a property generator
     # @raise [RDF::ReaderError] if the iri cannot be expanded
@@ -595,43 +610,75 @@ module JSON::LD
     def expand_iri(value, options = {})
       return value unless value.is_a?(String)
 
-      prefix, suffix = value.split(':', 2)
-      unless (m = mapping(value)) == false
-        # It's an exact match
-        debug("expand_iri") {"match: #{value.inspect} to #{m.inspect}"} unless options[:quiet]
-        return case m
-        when nil
-          nil
-        when Array
-          # Return array of IRIs, if it's a property generator
-          m.map {|mm| uri(mm.to_s, options[:namer])}
-        else
-          uri(m.to_s, options[:namer])
-        end
+      return value if KEYWORDS.include?(value) # FIXME: Spec bug: otherwise becomes relative
+      local_context = options[:local_context]
+      defined = options.fetch(:defined, {})
+
+      # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
+      if local_context && local_context.has_key?(value) && !defined[value]
+        depth {create_term_definition(local_context, value, defined)}
       end
-      debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-      base = [:subject, :type].include?(options[:position]) ? options.fetch(:base, self.base) : nil
-      prefix = prefix.to_s
-      case
-      when prefix == '_' && suffix          then uri(bnode(suffix), options[:namer])
-      when value.to_s[0,1] == "@"           then value
-      when suffix.to_s[0,2] == '//'         then uri(value)
-      when (mapping = mapping(prefix)) != false
-        debug("expand_iri") {"mapping: #{mapping(prefix).inspect}"} unless options[:quiet]
-        case mapping
-        when Array
-          # Return array of IRIs, if it's a property generator
-          mapping.map {|pm| uri(pm.to_s + suffix.to_s, options[:namer])}
-        else
-          uri(mapping.to_s + suffix.to_s, options[:namer])
+
+      # If local context is not null then active context must not have a term definition for value that is a property generator. Otherwise, an invalid error has been detected, which is an error.
+      if local_context && term_definitions[value] && term_definitions[value].property_generator?
+        raise InvalidContext::Syntax, "can't expand a context term which is a property generator"
+      end
+
+      # If value has a null mapping in active context, then explicitly ignore value by returning null.
+      if term_definitions.has_key?(value) && term_definitions[value].nil?
+        return nil
+      end
+
+      # If active context indicates that value is a keyword alias then return the associated keyword.
+      if kwa = keyword_aliases.keys.detect {|k| keyword_aliases[k].include?(value)}
+        return kwa
+      end
+
+      result, isAbsoluteIri = value, false
+
+      # If active context has a term definition for value, then set result to the associated IRI mapping and isAbsoluteIri to true.
+      if td = term_definitions[value]
+        debug("expand_iri") {"match: #{value.inspect} to #{td.id}"} unless options[:quiet]
+        result, isAbsoluteIri = td.id, true
+      end
+
+      # If isAbsoluteIri equals false and result contains a colon (:), then it is either an absolute IRI or a compact IRI:
+      if !isAbsoluteIri && value.include?(':')
+        prefix, suffix = value.split(':', 2)
+        debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
+
+        # If prefix does not equal underscore (_) and suffix does not begin with double-forward-slash (//), then it may be a compact IRI:
+        if prefix != '_' && suffix[0,2] != '//'
+          # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
+          create_term_definition(local_context, prefix, defined) if local_context && defined[prefix]
+
+          # If active context contains a term definition for prefix that is not a property generator then set result to the result of concatenating the value associated with the prefix's IRI mapping and suffix.
+          result = td.id + suffix if (td = term_definitions[prefix]) && !td.property_generator?
         end
-      when base                             then base.join(value)
-      when vocab                            then uri("#{vocab}#{value}")
+        isAbsoluteIri = true
+      end
+      debug("expand_iri") {"result: #{result.inspect}, abs: #{isAbsoluteIri.inspect}"} unless options[:quiet]
+
+      result = if isAbsoluteIri
+        # If local context equals null and result begins with and underscore and colon (_:) then result is a blank node identifier. Set result to the result of the Generate Blank Node Identifier algorithm, passing active context and result for identifier.
+        result[0,2] == '_:' ? namer.get_name(result) : result
+      elsif options[:vocabRelative] && vocab
+        # Otherwise, if vocabRelative equals true and active context has a vocabulary mapping, then set result to the result of concatenating the vocabulary mapping with result.
+        vocab + result
+      elsif options[:documentRelative] && base = options.fetch(:base, self.base)
+        # Otherwise, if documentRelative equals true, set result to the result of resolving result against the document base as per [RFC3986]
+        RDF::URI(base).join(result).to_s
       else
-        # Otherwise, it must be an absolute IRI
-        u = uri(value)
-        u if u.absolute? || [:subject, :type].include?(options[:position])
+        result
       end
+      debug(" =>") {result} unless options[:quiet]
+
+      # If local context is not null then result must be an absolute IRI. Otherwise, an invalid context value has been detected, which is an error. Return result.
+      unless result.include?(':') || KEYWORDS.include?(result)
+        raise InvalidContext::Syntax, "Expected #{value.inspect} to be absolute" if options[:validate]
+        result = nil
+      end
+      result
     end
 
     ##
@@ -797,8 +844,6 @@ module JSON::LD
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options [Boolean] :useNativeTypes (true) use native representations
-    # @option options [BlankNodeNamer] namer
-    #   Blank Node namer to use for renaming Blank Nodes
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
@@ -811,7 +856,7 @@ module JSON::LD
         value = if value.is_a?(RDF::Value)
           value
         elsif coerce(property) == '@id'
-          expand_iri(value, :position => :subject, :namer => options[:namer])
+          expand_iri(value, :position => :subject)
         else
           RDF::Literal(value)
         end
@@ -826,14 +871,14 @@ module JSON::LD
           res = Hash.ordered
           if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
-            res['@type'] = uri(coerce(property), options[:namer]) if coerce(property)
+            res['@type'] = uri(coerce(property)) if coerce(property)
           else
             value.canonicalize! if value.datatype == RDF::XSD.double
             res['@value'] = value.to_s
             if coerce(property)
-              res['@type'] = uri(coerce(property), options[:namer]).to_s
+              res['@type'] = uri(coerce(property)).to_s
             elsif value.has_datatype?
-              res['@type'] = uri(value.datatype, options[:namer]).to_s
+              res['@type'] = uri(value.datatype).to_s
             elsif value.has_language? || language(property)
               res['@language'] = (value.language || language(property)).to_s
             end
@@ -942,6 +987,7 @@ module JSON::LD
       ec = super
       ec.instance_eval do
         @vocab = that.vocab
+        @namer = that.namer
         @default_language = that.default_language
         @keyword_aliases = that.keyword_aliases.dup
         @term_definitions = that.term_definitions.dup
@@ -953,12 +999,12 @@ module JSON::LD
 
     private
 
-    def uri(value, namer = nil)
+    def uri(value)
       case value.to_s
       when /^_:(.*)$/
         # Map BlankNodes if a namer is given
         debug "uri(bnode)#{value}: #{$1}"
-        bnode(namer ? namer.get_sym($1) : $1)
+        bnode(namer.get_sym($1))
       else
         value = RDF::URI.new(value)
         value.validate! if @options[:validate]
@@ -966,6 +1012,13 @@ module JSON::LD
         value = RDF::URI.intern(value) if @options[:intern]
         value
       end
+    end
+
+    # Clear the provided context, used for testing
+    # @return [EvaluationContext] self
+    def clear_provided_context
+      provided_context = nil
+      self
     end
 
     # Keep track of allocated BNodes

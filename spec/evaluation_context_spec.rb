@@ -15,7 +15,8 @@ describe JSON::LD::EvaluationContext do
       }
     })
   }
-  subject { JSON::LD::EvaluationContext.new(:debug => @debug, :validate => true)}
+  let(:context) {JSON::LD::EvaluationContext.new(:debug => @debug, :validate => true)}
+  subject {context}
 
   describe "#parse" do
     context "remote" do
@@ -159,7 +160,7 @@ describe JSON::LD::EvaluationContext do
         }, @debug)
       end
 
-      it "expands chains of term definition/use with string values", :focus => true do
+      it "expands chains of term definition/use with string values" do
         subject.parse({
           "foo" => "bar",
           "bar" => "baz",
@@ -353,8 +354,9 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "term mappings" do
-      subject.set_mapping("foo", "http://example.com/")
-      subject.serialize.should produce({
+      subject.
+        parse({'foo' => "http://example.com/"}).send(:clear_provided_context).
+        serialize.should produce({
         "@context" => {
           "foo" => "http://example.com/"
         }
@@ -362,19 +364,23 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "property generator" do
-      subject.set_mapping("foo", ["http://example.com/", "http://example.org/"])
-      subject.serialize.should produce({
+      subject.
+        parse({'foo' => {'@id' => ["http://example.com/", "http://example.org/"]}}).
+        send(:clear_provided_context).
+        serialize.should produce({
         "@context" => {
-          "foo" => ["http://example.com/", "http://example.org/"]
+          "foo" => {"@id" => ["http://example.com/", "http://example.org/"]}
         }
       }, @debug)
     end
 
     it "@type with dependent prefixes in a single context" do
-      subject.set_mapping("xsd", RDF::XSD.to_uri.to_s)
-      subject.set_mapping("homepage", RDF::FOAF.homepage.to_s)
-      subject.set_coerce("homepage", "@id")
-      subject.serialize.should produce({
+      subject.parse({
+        'xsd' => RDF::XSD.to_uri.to_s,
+        'homepage' => {'@id' => RDF::FOAF.homepage.to_s, '@type' => '@id'}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri,
           "homepage" => {"@id" => RDF::FOAF.homepage.to_s, "@type" => "@id"}
@@ -383,9 +389,11 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "@list with @id definition in a single context" do
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_container("knows", '@list')
-      subject.serialize.should produce({
+      subject.parse({
+        'knows' => {'@id' => RDF::FOAF.knows.to_s, '@container' => '@list'}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
         }
@@ -393,9 +401,11 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "@set with @id definition in a single context" do
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_container("knows", '@set')
-      subject.serialize.should produce({
+      subject.parse({
+        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
         }
@@ -403,9 +413,11 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "@language with @id definition in a single context" do
-      subject.set_mapping("name", RDF::FOAF.name.to_s)
-      subject.set_language("name", 'en')
-      subject.serialize.should produce({
+      subject.parse({
+        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "en"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "en"}
         }
@@ -413,22 +425,26 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "@language with @id definition in a single context and equivalent default" do
-      subject.set_mapping("name", RDF::FOAF.name.to_s)
-      subject.default_language = 'en'
-      subject.set_language("name", 'en')
-      subject.serialize.should produce({
+      subject.parse({
+        "@language" => 'en',
+        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => 'en'}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::FOAF.name.to_s}
+          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => 'en'}
         }
       }, @debug)
     end
 
     it "@language with @id definition in a single context and different default" do
-      subject.set_mapping("name", RDF::FOAF.name.to_s)
-      subject.default_language = 'en'
-      subject.set_language("name", 'de')
-      subject.serialize.should produce({
+      subject.parse({
+        "@language" => 'en',
+        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "de"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "@language" => 'en',
           "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "de"}
@@ -437,10 +453,12 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "null @language with @id definition in a single context and default" do
-      subject.set_mapping("name", RDF::FOAF.name.to_s)
-      subject.default_language = 'en'
-      subject.set_language("name", nil)
-      subject.serialize.should produce({
+      subject.parse({
+        "@language" => 'en',
+        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => nil}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "@language" => 'en',
           "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => nil}
@@ -449,10 +467,11 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "prefix with @type and @list" do
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_coerce("knows", "@id")
-      subject.set_container("knows", '@list')
-      subject.serialize.should produce({
+      subject.parse({
+        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
         }
@@ -460,10 +479,11 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "prefix with @type and @set" do
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_coerce("knows", "@id")
-      subject.set_container("knows", '@set')
-      subject.serialize.should produce({
+      subject.parse({
+        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
         }
@@ -471,21 +491,32 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "CURIE with @type" do
-      subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_container("foaf:knows", '@list')
-      subject.serialize.should produce({
+      subject.parse({
+        "foaf" => RDF::FOAF.to_uri.to_s,
+        "foaf:knows" => {
+          "@id" => RDF::FOAF.knows.to_s,
+          "@container" => "@list"
+        }
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
-          "foaf" => RDF::FOAF.to_uri,
-          "foaf:knows" => {"@container" => "@list"}
+          "foaf" => RDF::FOAF.to_uri.to_s,
+          "foaf:knows" => {
+            "@id" => RDF::FOAF.knows.to_s,
+            "@container" => "@list"
+          }
         }
       }, @debug)
     end
 
     it "does not use aliased @id in key position" do
-      subject.set_mapping("id", '@id')
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_container("knows", '@list')
-      subject.serialize.should produce({
+      subject.parse({
+        "id" => "@id",
+        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "id" => "@id",
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
@@ -494,23 +525,35 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "does not use aliased @id in value position" do
-      subject.set_mapping("id", "@id")
-      subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_coerce("foaf:homepage", "@id")
-      subject.serialize.should produce({
+      subject.parse({
+        "foaf" => RDF::FOAF.to_uri.to_s,
+        "id" => "@id",
+        "foaf:homepage" => {
+          "@id" => RDF::FOAF.homepage.to_s,
+          "@type" => "@id"
+        }
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "id" => "@id",
-          "foaf:homepage" => {"@type" => "@id"}
+          "foaf:homepage" => {
+            "@id" => RDF::FOAF.homepage.to_s,
+            "@type" => "@id"
+          }
         }
       }, @debug)
     end
 
     it "does not use aliased @type" do
-      subject.set_mapping("type", "@type")
-      subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_coerce("foaf:homepage", "@id")
-      subject.serialize.should produce({
+      subject.parse({
+        "foaf" => RDF::FOAF.to_uri.to_s,
+        "type" => "@type",
+        "foaf:homepage" => {"@type" => "@id"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "type" => "@type",
@@ -520,10 +563,12 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "does not use aliased @container" do
-      subject.set_mapping("container", '@container')
-      subject.set_mapping("knows", RDF::FOAF.knows.to_s)
-      subject.set_container("knows", '@list')
-      subject.serialize.should produce({
+      subject.parse({
+        "container" => "@container",
+        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "container" => "@container",
           "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
@@ -532,10 +577,12 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "compacts IRIs to CURIEs" do
-      subject.set_mapping("ex", 'http://example.org/')
-      subject.set_mapping("term", 'http://example.org/term')
-      subject.set_coerce("term", "http://example.org/datatype")
-      subject.serialize.should produce({
+      subject.parse({
+        "ex" => 'http://example.org/',
+        "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "ex" => 'http://example.org/',
           "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
@@ -544,10 +591,12 @@ describe JSON::LD::EvaluationContext do
     end
 
     it "compacts IRIs using @vocab" do
-      subject.vocab = 'http://example.org/'
-      subject.set_mapping("term", 'http://example.org/term')
-      subject.set_coerce("term", "http://example.org/datatype")
-      subject.serialize.should produce({
+      subject.parse({
+        "@vocab" => 'http://example.org/',
+        "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
+      }).
+      send(:clear_provided_context).
+      serialize.should produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
           "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
@@ -572,13 +621,15 @@ describe JSON::LD::EvaluationContext do
   end
 
   describe "#expand_iri" do
-    before(:each) do
-      subject.set_mapping("ex", "http://example.org/")
-      subject.set_mapping("", "http://empty/")
-      subject.set_mapping("_", "http://underscore/")
-    end
+    subject {
+      context.parse({
+        'ex' => 'http://example.org/',
+        '' => 'http://empty/',
+        '_' => 'http://underscore/'
+      })
+    }
 
-    it "bnode" do
+    it "bnode", :pending => "maybe not" do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
 
@@ -593,11 +644,10 @@ describe JSON::LD::EvaluationContext do
 
     context "relative IRI" do
       {
-        :subject => true,
-        :predicate => false,
-        :type => false
-      }.each do |position, r|
-        context "as #{position}" do
+        :documentRelative => true,
+        :vocabRelative => false,
+      }.each do |relative, r|
+        context "as #{relative}" do
           {
             "absolute IRI" =>  ["http://example.org/", "http://example.org/", true],
             "term" =>          ["ex",                  "http://example.org/", true],
@@ -609,7 +659,7 @@ describe JSON::LD::EvaluationContext do
             "another abs IRI"=>["ex://foo",            "ex://foo", true],
             "absolute IRI looking like a curie" =>
                                ["foo:bar",             "foo:bar", true],
-            "bnode" =>         ["_:foo",               RDF::Node("foo"), true],
+            "bnode" =>         ["_:t0",                 RDF::Node("t0").to_s, true],
             "_" =>             ["_",                   "http://underscore/", true],
           }.each do |title, (input,result,abs)|
             result = nil unless r || abs
@@ -623,14 +673,13 @@ describe JSON::LD::EvaluationContext do
 
       context "with base IRI" do
         {
-          :subject => true,
-          :predicate => false,
-          :type => true
-        }.each do |position, r|
-          context "as #{position}" do
+          :documentRelative => {:documentRelative => true},
+          :vocabRelative => {:vocabRelative => true},
+        }.each do |relative, r|
+          context "as #{relative}" do
             before(:each) do
               subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
-              subject.mappings.delete("")
+              subject.term_definitions.delete("")
             end
 
             {
@@ -639,9 +688,9 @@ describe JSON::LD::EvaluationContext do
               "hash" =>     ["#a",          RDF::URI("http://example.org/#a")],
               "absolute" => ["http://foo/", RDF::URI("http://foo/")]
             }.each do |title, (input,result)|
-              result = nil unless r || title == 'absolute'
+              result = nil unless relative == :documentRelative || title == 'absolute'
               it title do
-                subject.expand_iri(input, :position => position).should produce(result, @debug)
+                subject.expand_iri(input, r).should produce(result, @debug)
               end
             end
           end
@@ -652,35 +701,34 @@ describe JSON::LD::EvaluationContext do
     context "@vocab" do
       before(:each) { subject.vocab = "http://example.com/"}
       {
-        :subject => false,
-        :predicate => true,
-        :type => true
-      }.each do |position, r|
-        context "as #{position}" do
+        :documentRelative => {:documentRelative => true},
+        :vocabRelative => {:vocabRelative => true},
+      }.each do |relative, r|
+        context "as #{relative}" do
           {
             "absolute IRI" =>  ["http://example.org/", "http://example.org/", true],
             "term" =>          ["ex",                  "http://example.org/", true],
             "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix", true],
             "keyword" =>       ["@type",               "@type", true],
             "empty" =>         [":suffix",             "http://empty/suffix", true],
-            "unmapped" =>      ["foo",                 "http://example.com/foo", true],
+            "unmapped" =>      ["foo",                 "http://example.com/foo", false],
             "empty term" =>    ["",                    "http://empty/", true],
           }.each do |title, (input,result,abs)|
-            result = nil unless r || abs
+            result = nil unless relative == :vocabRelative || abs
             it title do
-              subject.expand_iri(input).should produce(result, @debug)
+              subject.expand_iri(input, r).should produce(result, @debug)
             end
           end
         end
       end
       
       it "removes term if set to null with @vocab" do
-        subject.set_mapping("term", nil)
+        subject.term_definitions['term'] = nil
         subject.expand_iri("term").should produce(nil, @debug)
       end
     end
     
-    context "property generator" do
+    context "property generator", :pending => "maybe not" do
       before(:each) {subject.set_mapping("pg", ["http://a/", "http://b/"])}
       {
         "term" =>          ["pg",                  ["http://a/", "http://b/"]],
@@ -694,11 +742,13 @@ describe JSON::LD::EvaluationContext do
   end
 
   describe "#compact_iri" do
-    before(:each) do
-      subject.set_mapping("ex", "http://example.org/")
-      subject.set_mapping("", "http://empty/")
-      subject.set_mapping("http://example.com/null", nil)
-    end
+    subject {
+      context.parse({
+        'ex' => 'http://example.org/',
+        '' => 'http://empty/',
+        '_' => 'http://underscore/'
+      })
+    }
 
     {
       "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
