@@ -856,7 +856,7 @@ module JSON::LD
         value = if value.is_a?(RDF::Value)
           value
         elsif coerce(property) == '@id'
-          expand_iri(value, :position => :subject)
+          expand_iri(value, :documentRelative => true)
         else
           RDF::Literal(value)
         end
@@ -922,7 +922,7 @@ module JSON::LD
           # Compact an @id coercion
           debug {" (@id & coerce)"}
           compact_iri(value['@id'], :position => :subject)
-        when value['@type'] && expand_iri(value['@type'], :position => :type) == coerce(property)
+        when value['@type'] && expand_iri(value['@type'], :vocabRelative => true) == coerce(property)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(property)}"}
           value['@value']

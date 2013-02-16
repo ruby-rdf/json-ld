@@ -1258,18 +1258,20 @@ describe JSON::LD::EvaluationContext do
   end
 
   describe "#expand_value" do
-    before(:each) do
-      subject.set_mapping("dc", RDF::DC.to_uri.to_s)
-      subject.set_mapping("ex", "http://example.org/")
-      subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_mapping("xsd", RDF::XSD.to_uri.to_s)
-      subject.set_coerce("foaf:age", RDF::XSD.integer.to_s)
-      subject.set_coerce("foaf:knows", "@id")
-      subject.set_coerce("dc:created", RDF::XSD.date.to_s)
-      subject.set_coerce("ex:integer", RDF::XSD.integer.to_s)
-      subject.set_coerce("ex:double", RDF::XSD.double.to_s)
-      subject.set_coerce("ex:boolean", RDF::XSD.boolean.to_s)
-    end
+    subject {
+      context.parse({
+        "dc" => RDF::DC.to_uri.to_s,
+        "ex" => "http://example.org/",
+        "foaf" => RDF::FOAF.to_uri.to_s,
+        "xsd" => RDF::XSD.to_uri.to_s,
+        "foaf:age" => {"@type" => "xsd:integer"},
+        "foaf:knows" => {"@type" => "@id"},
+        "dc:created" => {"@type" => "xsd:date"},
+        "dc:integer" => {"@type" => "xsd:integer"},
+        "dc:double" => {"@type" => "xsd:double"},
+        "dc:boolean" => {"@type" => "xsd:boolean"},
+      })
+    }
 
     %w(boolean integer string dateTime date time).each do |dt|
       it "expands datatype xsd:#{dt}" do
