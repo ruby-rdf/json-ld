@@ -364,6 +364,7 @@ module JSON::LD
     # @yield statement
     # @yieldparam [RDF::Statement] statement
     def self.toRDF(input, context = nil, callback = nil, options = {}, &block)
+      results = []
       API.new(input, context, options) do |api|
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
@@ -371,7 +372,6 @@ module JSON::LD
 
         api.send(:debug, ".expand") {"expanded input: #{result.to_json(JSON_STATE)}"}
         # Start generating statements
-        results = []
         api.statements("", result, nil, nil, nil) do |statement|
           callback ||= block if block_given?
           if callback
@@ -380,8 +380,8 @@ module JSON::LD
             results << statement
           end
         end
-        results
       end
+      results
     end
     
     ##
