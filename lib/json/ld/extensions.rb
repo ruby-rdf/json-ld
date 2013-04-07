@@ -32,12 +32,6 @@ module RDF
     end
   end
   
-  class URI
-    def to_s
-      @uri.to_s
-    end
-  end
-  
   class Literal
     class Double
       ##
