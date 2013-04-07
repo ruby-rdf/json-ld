@@ -17,7 +17,7 @@ describe JSON::LD::EvaluationContext do
   }
   subject { JSON::LD::EvaluationContext.new(:debug => @debug, :validate => true)}
 
-  describe "#parse" do
+  describe "#parse", :pending => "Major update" do
     context "remote" do
       before(:each) do
         @ctx = StringIO.new(@ctx_json)
@@ -313,7 +313,7 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    it "context array" do
+    it "context array", :pending => "Major update" do
       ctx = [
         {"foo" => "http://example.com/"},
         {"baz" => "bob"}
@@ -555,7 +555,7 @@ describe JSON::LD::EvaluationContext do
       }, @debug)
     end
 
-    context "extra keys or values" do
+    context "extra keys or values", :pending => "Major update" do
       {
         "extra key" => {
           :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
@@ -582,7 +582,7 @@ describe JSON::LD::EvaluationContext do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
 
-    context "keywords" do
+    context "keywords", :pending => "Major update" do
       %w(id type).each do |kw|
         it "expands #{kw} to @#{kw}" do
           subject.set_mapping(kw, "@#{kw}")
@@ -591,7 +591,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
 
-    context "relative IRI" do
+    context "relative IRI", :pending => "Major update" do
       {
         :subject => true,
         :predicate => false,
@@ -740,7 +740,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
 
-    context "with value" do
+    context "with value", :pending => "Major update" do
       let(:ctx) do
         c = subject.parse({
           "xsd" => RDF::XSD.to_s,
@@ -813,7 +813,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
 
-    context "compact-0018" do
+    context "compact-0018", :pending => "Major update" do
       let(:ctx) do
         subject.parse(JSON.parse %({
           "id1": "http://example.com/id1",
@@ -958,7 +958,7 @@ describe JSON::LD::EvaluationContext do
     end
   end
 
-  describe "#term_rank" do
+  describe "#term_rank", :pending => "Major update" do
     {
       "no coercions" => {
         :defn => {},

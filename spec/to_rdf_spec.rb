@@ -211,7 +211,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "overriding keywords" do
+    context "overriding keywords", :pending => "Major update" do
       {
         "'url' for @id, 'a' for @type" => [
           %q({
@@ -355,7 +355,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "context" do
+    context "context", :pending => "Major update" do
       {
         "@id coersion" =>
         [
@@ -546,7 +546,7 @@ describe JSON::LD::API do
       end
 
       context "lists" do
-        context "term def with @id + @type + @container" do
+        context "term def with @id + @type + @container", :pending => "Major update" do
           {
             "dt with term" => [
               %q({
