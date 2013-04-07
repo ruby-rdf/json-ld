@@ -26,9 +26,9 @@ module JSON::LD
     # @yieldreturn [void] ignored
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
     def initialize(input = $stdin, options = {}, &block)
-      options[:base_uri] ||= options[:base] if options.has_key?(:base)
-      options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
+      options[:base_uri] ||= options[:base]
       super do
+        @options[:base] ||= base_uri.to_s if base_uri
         begin
           @doc = JSON.load(input)
         rescue JSON::ParserError => e

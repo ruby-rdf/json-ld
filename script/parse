@@ -47,10 +47,10 @@ rescue
 end
 
 parser_options = {
-  :base => "",
-  :progress   => false,
+  :base     => nil,
+  :progress => false,
   :validate => false,
-  :strict => false,
+  :strict   => false,
 }
 
 options = {
@@ -90,7 +90,7 @@ opts.each do |opt, arg|
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--quiet'        then options[:quiet] = true
-  when '--uri'          then options[:base] = parser_options[:base] = arg
+  when '--uri'          then parser_options[:base] = arg
   when '--verbose'      then $verbose = true
   end
 end
