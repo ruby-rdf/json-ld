@@ -3,7 +3,7 @@ require 'json'
 require 'bigdecimal'
 
 module JSON::LD
-  class EvaluationContext
+  class Context
     include Utils
 
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
@@ -103,7 +103,7 @@ module JSON::LD
     attr_accessor :options
 
     # @!attribute [rw] provided_context
-    # @return [EvaluationContext] A context provided to us that we can use without re-serializing
+    # @return [Context] A context provided to us that we can use without re-serializing
     attr_accessor :provided_context
 
     # @!attribute [r] remote_contexts
@@ -117,8 +117,8 @@ module JSON::LD
     ##
     # Create new evaluation context
     # @yield [ec]
-    # @yieldparam [EvaluationContext]
-    # @return [EvaluationContext]
+    # @yieldparam [Context]
+    # @return [Context]
     def initialize(options = {})
       @base = RDF::URI(options[:base]) if options[:base]
       @term_definitions = {}
@@ -151,12 +151,12 @@ module JSON::LD
     # When processing, the active context is initialized without any term definitions, vocabulary mapping, or default language. If a local context is encountered during processing, a new active context is created by cloning the existing active context. Then the information from the local context is merged into the new active context. A local context is identified within a JSON object by the value of the @context key, which must be a string, an array, or a JSON object.
     #
     # @param [String, #read, Array, Hash, EvaluatoinContext] context
-    # @return [EvaluationContext]
+    # @return [Context]
     # @raise [InvalidContext]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     def parse(context)
       case context
-      when EvaluationContext
+      when Context
         debug("parse") {"context: #{context.inspect}"}
         context.dup
       when IO, StringIO
@@ -174,7 +174,7 @@ module JSON::LD
       when nil
         debug("parse") {"nil"}
         # If context equals null, then set result to a newly-initialized active context
-        EvaluationContext.new(options)
+        Context.new(options)
       when String
         debug("parse") {"remote: #{context}, base: #{context_base || base}"}
         # Load context document, if it is a string
@@ -598,7 +598,7 @@ module JSON::LD
     #   Array of looked up iris, used to find cycles (deprecated).
     # @option options [Boolean] documentRelative (false)
     # @option options [Boolean] vocabRelative (false)
-    # @option options [EvaluationContext] local_context
+    # @option options [Context] local_context
     #   Used during Context Processing.
     # @option options [Hash] defined
     #   Used during Context Processing.
@@ -974,7 +974,7 @@ module JSON::LD
     end
 
     def inspect
-      v = %w([EvaluationContext)
+      v = %w([Context)
       v << "vocab=#{vocab}"
       v << "def_language=#{default_language}"
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
@@ -1015,7 +1015,7 @@ module JSON::LD
     end
 
     # Clear the provided context, used for testing
-    # @return [EvaluationContext] self
+    # @return [Context] self
     def clear_provided_context
       provided_context = nil
       self

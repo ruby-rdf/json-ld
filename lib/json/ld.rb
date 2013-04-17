@@ -26,7 +26,7 @@ module JSON
     require 'json/ld/format'
     require 'json/ld/utils'
     autoload :API,                'json/ld/api'
-    autoload :EvaluationContext,  'json/ld/evaluation_context'
+    autoload :Context,  'json/ld/context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'

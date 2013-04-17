@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'rdf/xsd'
 require 'rdf/spec/reader'
 
-describe JSON::LD::EvaluationContext do
+describe JSON::LD::Context do
   before(:each) {
     @debug = []
     @ctx_json = %q({
@@ -15,7 +15,7 @@ describe JSON::LD::EvaluationContext do
       }
     })
   }
-  let(:context) {JSON::LD::EvaluationContext.new(:debug => @debug, :validate => true)}
+  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
   subject {context}
 
   describe "#parse" do
@@ -63,7 +63,7 @@ describe JSON::LD::EvaluationContext do
       end
     end
 
-    context "EvaluationContext" do
+    context "Context" do
       it "uses a duplicate of that provided" do
         ec = subject.parse(StringIO.new(@ctx_json))
         ec.mappings.should produce({
@@ -214,7 +214,7 @@ describe JSON::LD::EvaluationContext do
         end
 
         it "loads initial context" do
-          init_ec = JSON::LD::EvaluationContext.new
+          init_ec = JSON::LD::Context.new
           nil_ec = subject.parse(nil)
           nil_ec.default_language.should == init_ec.default_language
           nil_ec.languages.should == init_ec.languages

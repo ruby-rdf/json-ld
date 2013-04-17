@@ -15,7 +15,7 @@ module JSON::LD
       graphs = {'' => defaultGraph}
 
       value = nil
-      ec = EvaluationContext.new
+      ec = Context.new
 
       # Create a map for node to object representation
 

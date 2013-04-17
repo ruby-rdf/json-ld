@@ -11,7 +11,7 @@ module JSON::LD
     attr_reader :id
 
     # @!attribute [r] context
-    # @return [JSON::LD::EvaluationContext] Context associated with this resource
+    # @return [JSON::LD::Context] Context associated with this resource
     attr_reader :context
 
     # Is this resource clean (i.e., saved to mongo?)
@@ -51,9 +51,9 @@ module JSON::LD
     # Manage contexts used by resources.
     #
     # @param [String] ctx
-    # @return [JSON::LD::EvaluationContext]
+    # @return [JSON::LD::Context]
     def self.set_context(ctx)
-      (@@contexts ||= {})[ctx] = JSON::LD::EvaluationContext.new.parse(ctx)
+      (@@contexts ||= {})[ctx] = JSON::LD::Context.new.parse(ctx)
     end
 
     # A new resource from the parsed graph

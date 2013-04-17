@@ -36,7 +36,7 @@ module JSON::LD
 
     # Input evaluation context
     # @!attribute [rw] context
-    # @return [JSON::LD::EvaluationContext]
+    # @return [JSON::LD::Context]
     attr_accessor :context
 
     # Current Blank Node Namer
@@ -48,7 +48,7 @@ module JSON::LD
     # Initialize the API, reading in any document and setting global options
     #
     # @param [String, #read, Hash, Array] input
-    # @param [String, #read,, Hash, Array, JSON::LD::EvaluationContext] context
+    # @param [String, #read,, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     # @option options [Boolean] :base
@@ -83,7 +83,7 @@ module JSON::LD
         RDF::Util::File.open_file(input, OPEN_OPTS) {|f| content = JSON.parse(f.read)}
         content
       end
-      @context = EvaluationContext.new(@options)
+      @context = Context.new(@options)
       @context = @context.parse(context) if context
       
       if block_given?
@@ -104,7 +104,7 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
-    # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
+    # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -146,7 +146,7 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the compaction upon.
-    # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
+    # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   The base context to use when compacting the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -198,7 +198,7 @@ module JSON::LD
     #   The JSON-LD object or array of JSON-LD objects to flatten or an IRI referencing the JSON-LD document to flatten.
     # @param [String, RDF::URI] graph
     #   The graph in the document that should be flattened. To return the default graph @default has to be passed, for the merged graph @merged and for any other graph the IRI identifying the graph has to be passed. The default value is @merged.
-    # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
+    # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -352,7 +352,7 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
-    # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
+    # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameteres.

@@ -210,7 +210,7 @@ Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/
 * {JSON::LD}
   * {JSON::LD::API}
   * {JSON::LD::Compact}
-  * {JSON::LD::EvaluationContext}
+  * {JSON::LD::Context}
   * {JSON::LD::Format}
   * {JSON::LD::Frame}
   * {JSON::LD::FromRDF}

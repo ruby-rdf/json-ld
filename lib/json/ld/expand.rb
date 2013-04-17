@@ -9,7 +9,7 @@ module JSON::LD
     #
     # @param [Array, Hash] input
     # @param [String] active_property
-    # @param [EvaluationContext] context
+    # @param [Context] context
     # @param [Hash{Symbol => Object}] options
     # @return [Array, Hash]
     def expand(input, active_property, context, options = {})
