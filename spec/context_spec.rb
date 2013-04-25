@@ -1173,9 +1173,9 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#expand_value", :pending => "TODO" do
+  describe "#expand_value" do
     subject {
-      context.parse({
+      ctx = context.parse({
         "dc" => RDF::DC.to_uri.to_s,
         "ex" => "http://example.org/",
         "foaf" => RDF::FOAF.to_uri.to_s,
@@ -1183,10 +1183,12 @@ describe JSON::LD::Context do
         "foaf:age" => {"@type" => "xsd:integer"},
         "foaf:knows" => {"@type" => "@id"},
         "dc:created" => {"@type" => "xsd:date"},
-        "dc:integer" => {"@type" => "xsd:integer"},
-        "dc:double" => {"@type" => "xsd:double"},
-        "dc:boolean" => {"@type" => "xsd:boolean"},
+        "ex:integer" => {"@type" => "xsd:integer"},
+        "ex:double" => {"@type" => "xsd:double"},
+        "ex:boolean" => {"@type" => "xsd:boolean"},
       })
+      @debug.clear
+      ctx
     }
 
     %w(boolean integer string dateTime date time).each do |dt|
@@ -1197,7 +1199,7 @@ describe JSON::LD::Context do
 
     {
       "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
-      "term" =>           ["foaf:knows",  "ex",                   {"@id" => "http://example.org/"}],
+      "term" =>           ["foaf:knows",  "ex",                   {"@id" => "ex"}],
       "prefix:suffix" =>  ["foaf:knows",  "ex:suffix",            {"@id" => "http://example.org/suffix"}],
       "no IRI" =>         ["foo",         "http://example.com/",  {"@value" => "http://example.com/"}],
       "no term" =>        ["foo",         "ex",                   {"@value" => "ex"}],

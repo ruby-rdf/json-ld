@@ -846,35 +846,40 @@ module JSON::LD
     end
 
     ##
-    # Expand a value from compacted to expanded form making the context
-    # unnecessary. This method is used as part of more general expansion
-    # and operates on RHS values, using a supplied key to determine @type and
-    # @container coercion rules.
+    # If active property has a type mapping in the active context set to @id or @vocab, a JSON object with a single member @id whose value is the result of using the IRI Expansion algorithm on value is returned.
+    #
+    # Otherwise, the result will be a JSON object containing an @value member whose value is the passed value. Additionally, an @type member will be included if there is a type mapping associated with the active property or an @language member if value is a string and there is language mapping associated with the active property.
     #
     # @param [String] property
     #   Associated property used to find coercion rules
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :useNativeTypes (true) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {:useNativeTypes => true}.merge(options)
       depth(options) do
-        debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
+        debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
-        value = if value.is_a?(RDF::Value)
-          value
-        elsif coerce(property) == '@id'
-          expand_iri(value, :documentRelative => true)
-        else
-          RDF::Literal(value)
+        # If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
+        if (td = term_definitions.fetch(property, TermDefinition.new)) && td.type_mapping == '@id'
+          debug("expand_value") {"as relative IRI: #{value.inspect}"}
+          return {'@id' => expand_iri(value, :documentRelative => true).to_s}
         end
-        debug("expand_value") {"normalized: #{value.inspect}"}
-        
+
+        # If active property has a type mapping in active context that is @vocab, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
+        if td.type_mapping == '@vocab'
+          debug("expand_value") {"as vocab IRI: #{value.inspect}"}
+          return {'@id' => expand_iri(value, :vocab => true, :documentRelative => true).to_s}
+        end
+
+        value = RDF::Literal(value) if
+          value.is_a?(Date) ||
+          value.is_a?(DateTime) ||
+          value.is_a?(Time)
+
         result = case value
         when RDF::URI, RDF::Node
           debug("URI | BNode") { value.to_s }
@@ -882,7 +887,7 @@ module JSON::LD
         when RDF::Literal
           debug("Literal") {"datatype: #{value.datatype.inspect}"}
           res = Hash.ordered
-          if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+          if [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
             res['@type'] = uri(coerce(property)) if coerce(property)
           else
@@ -894,6 +899,20 @@ module JSON::LD
               res['@type'] = uri(value.datatype).to_s
             elsif value.has_language? || language(property)
               res['@language'] = (value.language || language(property)).to_s
+            end
+          end
+          res
+        else
+          # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
+          res = {'@value' => value}
+
+          if td.type_mapping
+            res['@type'] = td.type_mapping.to_s
+          elsif value.is_a?(String)
+            if td.language_mapping
+              res['@language'] = td.language_mapping
+            elsif default_language
+              res['@language'] = default_language
             end
           end
           res
