@@ -80,103 +80,51 @@ module JSON
     def self.debug=(value); @debug = value; end
     
     class ProcessingError < Exception
-      # The compaction would lead to a loss of information, such as a @language value.
-      LOSSY_COMPACTION = 1
-
-      # The target datatype specified in the coercion rule and the datatype for the typed literal do not match.
-      CONFLICTING_DATATYPES = 2
-      
-      # A list containing another list was detected.
-      LIST_OF_LISTS_DETECTED = 3
-      
-      # When processing a language map, a value not a 
-      ILLEGAL_LANGUAGE_MAP_DETECTED = 4
-      
-      attr_reader :code
-      
-      class Lossy < ProcessingError
-        def initialize(*args)
-          super
-          @code = LOSSY_COMPACTION
-        end
-      end
-
-      class Conflict < ProcessingError
-        def initialize(*args)
-          super
-          @code = CONFLICTING_DATATYPES
-        end
-      end
-
-      class LanguageMap < ProcessingError
-        def initialize(*args)
-          super
-          @code = ILLEGAL_LANGUAGE_MAP_DETECTED
-        end
-      end
-
-      class ListOfLists < ProcessingError
-        def initialize(*args)
-          super
-          @code = LIST_OF_LISTS_DETECTED
-        end
-      end
+      class CompactionToListOfLists < ProcessingError; end
+      class Conflict < ProcessingError; end
+      class ConflictingIndexes < ProcessingError; end
+      class InvalidIdValue < ProcessingError; end
+      class InvalidIndexValue < ProcessingError; end
+      class InvalidLanguageMapValue < ProcessingError; end
+      class InvalidLanguageTaggedString < ProcessingError; end
+      class InvalidLanguageTaggedValue < ProcessingError; end
+      class InvalidReversePropertyMap < ProcessingError; end
+      class InvalidReversePropertyValue < ProcessingError; end
+      class InvalidReverseValue < ProcessingError; end
+      class InvalidSetOrListObject < ProcessingError; end
+      class InvalidTypedValue < ProcessingError; end
+      class InvalidTypeValue < ProcessingError; end
+      class InvalidValueObject < ProcessingError; end
+      class InvalidValueObjectValue < ProcessingError; end
+      class LanguageMap < ProcessingError; end
+      class ListOfLists < ProcessingError; end
+      class LoadingDocumentFailed < ProcessingError; end
+      class Lossy < ProcessingError; end
     end
     
     class InvalidContext < Exception
-      def initialize(*args)
-        super
-        @code = args.first
-      end
-
-      # A general syntax error was detected in the @context. For example, if a @type key maps to anything
-      # other than @id or an absolute IRI, this exception would be raised.
-      INVALID_SYNTAX	= 1
-
-      # There was a problem encountered loading a remote context.
-      LOAD_ERROR = 2
-      
-      attr_reader :code
-      
-      class Syntax < InvalidContext
-        def initialize(*args)
-          super
-          @code = INVALID_SYNTAX
-        end
-      end
-
-      class LoadError < InvalidContext
-        def initialize(*args)
-          super
-          @code = LOAD_ERROR
-        end
-      end
+      class CollidingKeywords < InvalidContext; end
+      class CyclicIRIMapping < InvalidContext; end
+      class InvalidBaseIRI < InvalidContext; end
+      class InvalidBaseIRI < InvalidContext; end
+      class InvalidContainerMapping < InvalidContext; end
+      class InvalidDefaultLanguage < InvalidContext; end
+      class InvalidIRIMapping < InvalidContext; end
+      class InvalidKeywordAlias < InvalidContext; end
+      class InvalidLanguageMapping < InvalidContext; end
+      class InvalidLocalContext < InvalidContext; end
+      class InvalidRemoteContext < InvalidContext; end
+      class InvalidReverseProperty < InvalidContext; end
+      class InvalidTermDefinition < InvalidContext; end
+      class InvalidTypeMapping < InvalidContext; end
+      class InvalidVocabMapping < InvalidContext; end
+      class KeywordRedefinition < InvalidContext; end
+      class LoadingRemoteContextFailed < InvalidContext; end
+      class RecursiveContextInclusion < InvalidContext; end
     end
     
     class InvalidFrame < Exception
-      # A frame must be either an object or an array of objects, if the frame is neither of these types,
-      # this exception is thrown.
-      INVALID_SYNTAX	= 1
-
-      # A subject IRI was specified in more than one place in the input frame.
-      # More than one embed of a given subject IRI is not allowed, and if requested, must result in this exception.
-      MULTIPLE_EMBEDS = 2
-      
-      attr_reader :code
-
-      class Syntax < InvalidFrame
-        def initialize(*args)
-          super
-          @code = INVALID_SYNTAX
-        end
-      end
-
-      class MultipleEmbeds < InvalidFrame
-        def initialize(*args)
-          super
-          @code = MULTIPLE_EMBEDS
-        end
-      end
+      class MultipleEmbeds < InvalidFrame; end
     end
   end
 end

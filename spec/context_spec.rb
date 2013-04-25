@@ -33,7 +33,7 @@ describe JSON::LD::Context do
 
       it "fails given a missing remote @context" do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext, /Failed to retrieve remote context/)
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext::InvalidRemoteContext, "http://example.com/context")
       end
 
       it "creates mappings" do
@@ -55,17 +55,6 @@ describe JSON::LD::Context do
         RDF::Util::File.stub(:open_file).with("http://example.com/c1").and_yield(c1)
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/c1")
-        ec.mappings.should produce({
-          "name"     => "http://xmlns.com/foaf/0.1/name",
-          "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
-        }, @debug)
-      end
-    end
-
-    context "Context" do
-      it "uses a duplicate of that provided" do
-        ec = subject.parse(StringIO.new(@ctx_json))
         ec.mappings.should produce({
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
@@ -227,25 +216,6 @@ describe JSON::LD::Context do
           subject.parse({"name" => nil}).mapping("name").should be_nil
         end
       end
-
-      context "property generator" do
-        {
-          "empty" => [
-            {"term" => {"@id" => []}},
-            []
-          ],
-          "single" => [
-            {"term" => {"@id" => ["http://example.com/"]}},
-            ["http://example.com/"]
-          ],
-          "multiple" => [
-            {"term" => {"@id" => ["http://example.com/", "http://example.org/"]}},
-            ["http://example.com/", "http://example.org/"]
-          ],
-        }.each do |title, (input, result)|
-          specify(title) {subject.parse(input).mapping("term").should produce(result, @debug)}
-        end
-      end
     end
 
     describe "Syntax Errors" do
@@ -270,7 +240,7 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse(context)
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext::Syntax)
+          }.should raise_error(JSON::LD::InvalidContext)
         end
       end
       
@@ -279,14 +249,14 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse({kw => "http://example.com/"})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext::Syntax)
+          }.should raise_error(JSON::LD::InvalidContext)
         end
 
         it "does not redefine #{kw} with an @id" do
           lambda {
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext::Syntax)
+          }.should raise_error(JSON::LD::InvalidContext)
         end
       end
     end
@@ -296,7 +266,7 @@ describe JSON::LD::Context do
         "fixme" => "FIXME",
       }.each do |title, context|
         it title do
-          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::LoadError)
+          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::InvalidRemoteContext)
         end
       end
     end
@@ -311,18 +281,6 @@ describe JSON::LD::Context do
       ec = subject.parse("http://example.com/context")
       ec.serialize.should produce({
         "@context" => "http://example.com/context"
-      }, @debug)
-    end
-
-    it "context array" do
-      ctx = [
-        {"foo" => "http://example.com/"},
-        {"baz" => "bob"}
-      ]
-
-      ec = subject.parse(ctx)
-      ec.serialize.should produce({
-        "@context" => ctx
       }, @debug)
     end
 
@@ -359,17 +317,6 @@ describe JSON::LD::Context do
         serialize.should produce({
         "@context" => {
           "foo" => "http://example.com/"
-        }
-      }, @debug)
-    end
-
-    it "property generator" do
-      subject.
-        parse({'foo' => {'@id' => ["http://example.com/", "http://example.org/"]}}).
-        send(:clear_provided_context).
-        serialize.should produce({
-        "@context" => {
-          "foo" => {"@id" => ["http://example.com/", "http://example.org/"]}
         }
       }, @debug)
     end
@@ -557,7 +504,7 @@ describe JSON::LD::Context do
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "type" => "@type",
-          "foaf:homepage" => {"@type" => "@id"}
+          "foaf:homepage" => {"@id" => RDF::FOAF.homepage.to_s, "@type" => "@id"}
         }
       }, @debug)
     end
@@ -576,7 +523,7 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    it "compacts IRIs to CURIEs" do
+    it "compacts IRIs to CURIEs", :pending => "TODO" do
       subject.parse({
         "ex" => 'http://example.org/',
         "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
@@ -590,7 +537,7 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    it "compacts IRIs using @vocab" do
+    it "compacts IRIs using @vocab", :pending => "TODO" do
       subject.parse({
         "@vocab" => 'http://example.org/',
         "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
@@ -604,7 +551,7 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    context "extra keys or values" do
+    context "extra keys or values", :pending => "TODO" do
       {
         "extra key" => {
           :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
@@ -623,13 +570,15 @@ describe JSON::LD::Context do
   describe "#expand_iri" do
     subject {
       context.parse({
+        '@base' => 'http://base/',
+        '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '' => 'http://empty/',
         '_' => 'http://underscore/'
       })
     }
 
-    it "bnode", :pending => "maybe not" do
+    it "bnode" do
       subject.expand_iri("_:a").should be_a(RDF::Node)
     end
 
@@ -637,111 +586,78 @@ describe JSON::LD::Context do
       %w(id type).each do |kw|
         it "expands #{kw} to @#{kw}" do
           subject.set_mapping(kw, "@#{kw}")
-          subject.expand_iri(kw).should produce("@#{kw}", @debug)
+          subject.expand_iri(kw, :vocab => true).should produce("@#{kw}", @debug)
         end
       end
     end
 
     context "relative IRI" do
-      {
-        :documentRelative => true,
-        :vocabRelative => false,
-      }.each do |relative, r|
-        context "as #{relative}" do
-          {
-            "absolute IRI" =>  ["http://example.org/", "http://example.org/", true],
-            "term" =>          ["ex",                  "http://example.org/", true],
-            "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix", true],
-            "keyword" =>       ["@type",               "@type", true],
-            "empty" =>         [":suffix",             "http://empty/suffix", true],
-            "unmapped" =>      ["foo",                 "foo", false],
-            "empty term" =>    ["",                    "http://empty/", true],
-            "another abs IRI"=>["ex://foo",            "ex://foo", true],
-            "absolute IRI looking like a curie" =>
-                               ["foo:bar",             "foo:bar", true],
-            "bnode" =>         ["_:t0",                 RDF::Node("t0").to_s, true],
-            "_" =>             ["_",                   "http://underscore/", true],
-          }.each do |title, (input,result,abs)|
-            result = nil unless r || abs
-            result = nil if title == 'unmapped'
-            it title do
-              subject.expand_iri(input).should produce(result, @debug)
-            end
+      context "with no options" do
+        {
+          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" =>          ["ex",                  RDF::URI("ex")],
+          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "keyword" =>       ["@type",               "@type"],
+          "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
+          "unmapped" =>      ["foo",                 RDF::URI("foo")],
+          "empty term" =>    ["",                    RDF::URI("")],
+          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI looking like a curie" =>
+                             ["foo:bar",             RDF::URI("foo:bar")],
+          "bnode" =>         ["_:t0",                RDF::Node("t0")],
+          "_" =>             ["_",                   RDF::URI("_")],
+        }.each do |title, (input, result)|
+          it title do
+            subject.expand_iri(input).should produce(result, @debug)
           end
         end
       end
 
       context "with base IRI" do
         {
-          :documentRelative => {:documentRelative => true},
-          :vocabRelative => {:vocabRelative => true},
-        }.each do |relative, r|
-          context "as #{relative}" do
-            before(:each) do
-              subject.instance_variable_set(:@base, RDF::URI("http://example.org/"))
-              subject.term_definitions.delete("")
-            end
-
-            {
-              "base" =>     ["",            RDF::URI("http://example.org/")],
-              "relative" => ["a/b",         RDF::URI("http://example.org/a/b")],
-              "hash" =>     ["#a",          RDF::URI("http://example.org/#a")],
-              "absolute" => ["http://foo/", RDF::URI("http://foo/")]
-            }.each do |title, (input,result)|
-              result = nil unless relative == :documentRelative || title == 'absolute'
-              it title do
-                subject.expand_iri(input, r).should produce(result, @debug)
-              end
-            end
+          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" =>          ["ex",                  RDF::URI("http://base/ex")],
+          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "keyword" =>       ["@type",               "@type"],
+          "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
+          "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
+          "empty term" =>    ["",                    RDF::URI("http://base/")],
+          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI looking like a curie" =>
+                             ["foo:bar",             RDF::URI("foo:bar")],
+          "bnode" =>         ["_:t0",                RDF::Node("t0")],
+          "_" =>             ["_",                   RDF::URI("http://base/_")],
+        }.each do |title, (input, result)|
+          it title do
+            subject.expand_iri(input, :documentRelative => true).should produce(result, @debug)
           end
         end
       end
-    end
     
-    context "@vocab" do
-      before(:each) { subject.vocab = "http://example.com/"}
-      {
-        :documentRelative => {:documentRelative => true},
-        :vocabRelative => {:vocabRelative => true},
-      }.each do |relative, r|
-        context "as #{relative}" do
-          {
-            "absolute IRI" =>  ["http://example.org/", "http://example.org/", true],
-            "term" =>          ["ex",                  "http://example.org/", true],
-            "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix", true],
-            "keyword" =>       ["@type",               "@type", true],
-            "empty" =>         [":suffix",             "http://empty/suffix", true],
-            "unmapped" =>      ["foo",                 "http://example.com/foo", false],
-            "empty term" =>    ["",                    "http://empty/", true],
-          }.each do |title, (input,result,abs)|
-            result = nil unless relative == :vocabRelative || abs
-            it title do
-              subject.expand_iri(input, r).should produce(result, @debug)
-            end
+      context "@vocab" do
+        {
+          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" =>          ["ex",                  RDF::URI("http://example.org/")],
+          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "keyword" =>       ["@type",               "@type"],
+          "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
+          "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],
+          "empty term" =>    ["",                    RDF::URI("http://empty/")],
+          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI looking like a curie" =>
+                             ["foo:bar",             RDF::URI("foo:bar")],
+          "bnode" =>         ["_:t0",                RDF::Node("t0")],
+          "_" =>             ["_",                   RDF::URI("http://underscore/")],
+        }.each do |title, (input, result)|
+          it title do
+            subject.expand_iri(input, :vocab => true).should produce(result, @debug)
           end
-        end
-      end
-      
-      it "removes term if set to null with @vocab" do
-        subject.term_definitions['term'] = nil
-        subject.expand_iri("term").should produce(nil, @debug)
-      end
-    end
-    
-    context "property generator", :pending => "maybe not" do
-      before(:each) {subject.set_mapping("pg", ["http://a/", "http://b/"])}
-      {
-        "term" =>          ["pg",                  ["http://a/", "http://b/"]],
-        "prefix:suffix" => ["pg:suffix",           ["http://a/suffix", "http://b/suffix"]],
-      }.each do |title, (input,result)|
-        it title do
-          subject.expand_iri(input).should produce(result, @debug)
         end
       end
     end
   end
 
-  describe "#compact_iri" do
+  describe "#compact_iri", :pending => "TODO" do
     subject {
       context.parse({
         'ex' => 'http://example.org/',
@@ -1008,7 +924,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#term_rank" do
+  describe "#term_rank", :pending => "TODO" do
     {
       "no coercions" => {
         :defn => {},
@@ -1257,7 +1173,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#expand_value" do
+  describe "#expand_value", :pending => "TODO" do
     subject {
       context.parse({
         "dc" => RDF::DC.to_uri.to_s,
@@ -1347,7 +1263,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "compact_value" do
+  describe "compact_value", :pending => "TODO" do
     before(:each) do
       subject.set_mapping("dc", RDF::DC.to_uri.to_s)
       subject.set_mapping("ex", "http://example.org/")
