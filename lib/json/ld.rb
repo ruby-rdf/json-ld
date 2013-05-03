@@ -40,11 +40,15 @@ module JSON
     }.freeze
 
     KEYWORDS = %w(
+      @base
       @container
       @context
       @id
+      @index
+      @graph
       @language
       @list
+      @reverse
       @set
       @type
       @value

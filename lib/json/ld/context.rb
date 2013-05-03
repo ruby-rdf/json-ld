@@ -51,6 +51,15 @@ module JSON::LD
           defn
         end
       end
+
+      def inspect
+        v = %w([TD)
+        v << "id=#{@id}"
+        v << "rev" if reverse_property
+        v << "container=#{container_mapping}" if container_mapping
+        v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
+        v.join(" ") + "]"
+      end
     end
 
     # The base.
@@ -68,6 +77,7 @@ module JSON::LD
       else
         @base = nil
       end
+
     end
 
     # @return [RDF::URI] base IRI of the context, if loaded remotely. XXX
@@ -369,7 +379,7 @@ module JSON::LD
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
           raise InvalidContext::InvalidIRIMapping, "relative term definition without vocab" unless vocab
-          definition.id = vocab + value
+          definition.id = vocab + term
           debug(" =>") {definition.id}
         end
 
@@ -377,7 +387,7 @@ module JSON::LD
           type = value['@type']
           # SPEC FIXME: @type may be nil
           raise InvalidContext::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
-          type = expand_iri(type, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
+          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
           debug("create_term_definition") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
@@ -558,6 +568,7 @@ module JSON::LD
     # @deprecated
     def container(property)
       return '@set' if property == '@graph'
+      return property if KEYWORDS.include?(property)
       term_definitions[property.to_s].container_mapping if term_definitions.has_key?(property)
     end
 
@@ -911,7 +922,7 @@ module JSON::LD
           elsif value.is_a?(String)
             if td.language_mapping
               res['@language'] = td.language_mapping
-            elsif default_language
+            elsif default_language && td.language_mapping.nil?
               res['@language'] = default_language
             end
           end
@@ -1007,10 +1018,10 @@ module JSON::LD
 
     def inspect
       v = %w([Context)
-      v << "vocab=#{vocab}"
-      v << "def_language=#{default_language}"
+      v << "vocab=#{vocab}" if vocab
+      v << "def_language=#{default_language}" if default_language
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
-      v.join(", ") + "]"
+      v.join(" ") + "]"
     end
     
     def dup

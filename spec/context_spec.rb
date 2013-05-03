@@ -244,7 +244,7 @@ describe JSON::LD::Context do
         end
       end
       
-      (JSON::LD::KEYWORDS - %w(@language @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           lambda {
             ec = subject.parse({kw => "http://example.com/"})

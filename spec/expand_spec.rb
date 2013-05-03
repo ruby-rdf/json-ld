@@ -11,47 +11,6 @@ describe JSON::LD::API do
         :input => {},
         :output => []
       },
-      "coerced IRI" => {
-        :input => {
-          "@context" => {
-            "a" => {"@id" => "http://example.com/a"},
-            "b" => {"@id" => "http://example.com/b", "@type" => "@id"},
-            "c" => {"@id" => "http://example.com/c"},
-          },
-          "@id" => "a",
-          "b"   => "c"
-        },
-        :output => [{
-          "@id" => "http://example.com/a",
-          "http://example.com/b" => [{"@id" =>"http://example.com/c"}]
-        }]
-      },
-      "coerced IRI in array" => {
-        :input => {
-          "@context" => {
-            "a" => {"@id" => "http://example.com/a"},
-            "b" => {"@id" => "http://example.com/b", "@type" => "@id"},
-            "c" => {"@id" => "http://example.com/c"},
-          },
-          "@id" => "a",
-          "b"   => ["c"]
-        },
-        :output => [{
-          "@id" => "http://example.com/a",
-          "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-        }]
-      },
-      "empty term" => {
-        :input => {
-          "@context" => {"" => "http://example.com/"},
-          "@id" => "",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-        :output => [{
-          "@id" => "http://example.com/",
-          "@type" => ["#{RDF::RDFS.Resource}"]
-        }]
-      },
       "@list coercion" => {
         :input => {
           "@context" => {
@@ -82,14 +41,6 @@ describe JSON::LD::API do
         :output => [
           {"http://example.com/foo" => [{"@value" => "foo"}]},
           {"http://example.com/bar" => [{"@value" => "bar"}]}
-        ]
-      },
-      "@type with empty object" => {
-        :input => {
-          "@type" => {}
-        },
-        :output => [
-          {"@type" => [{}]}
         ]
       },
       "@type with CURIE" => {
@@ -310,44 +261,20 @@ describe JSON::LD::API do
     context "null" do
       {
         "value" => {
-          :input => {
-            "http://example.com/foo" => nil
-          },
+          :input => {"http://example.com/foo" => nil},
           :output => []
         },
         "@value" => {
-          :input => {
-            "http://example.com/foo" => {"@value" => nil}
-          },
+          :input => {"http://example.com/foo" => {"@value" => nil}},
           :output => []
         },
         "@value and non-null @type" => {
-          :input => {
-            "http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}
-          },
+          :input => {"http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}},
           :output => []
         },
         "@value and non-null @language" => {
-          :input => {
-            "http://example.com/foo" => {"@value" => nil, "@language" => "en"}
-          },
+          :input => {"http://example.com/foo" => {"@value" => nil, "@language" => "en"}},
           :output => []
-        },
-        "non-null @value and null @type" => {
-          :input => {
-            "http://example.com/foo" => {"@value" => "foo", "@type" => nil}
-          },
-          :output => [{
-            "http://example.com/foo" => [{"@value" => "foo"}]
-          }]
-        },
-        "non-null @value and null @language" => {
-          :input => {
-            "http://example.com/foo" => {"@value" => "foo", "@language" => nil}
-          },
-          :output => [{
-            "http://example.com/foo" => [{"@value" => "foo"}]
-          }]
         },
         "array with null elements" => {
           :input => {
@@ -377,15 +304,6 @@ describe JSON::LD::API do
 
     context "default language" do
       {
-        "value with null language" => {
-          :input => {
-            "@context" => {"@language" => "en"},
-            "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
-          },
-          :output => [{
-            "http://example.org/nolang" => [{"@value" => "no language"}]
-          }]
-        },
         "value with coerced null language" => {
           :input => {
             "@context" => {
@@ -493,7 +411,7 @@ describe JSON::LD::API do
             "http://example.com/foo" => {"@value" => "bar", "@type" => "baz"}
           },
           :output => [{
-            "http://example.com/foo" => [{"@value" => "bar"}]
+            "http://example.com/foo" => [{"@value" => "bar", "@type" => "http://example/baz"}]
           }]
         },
         "unknown keyword" => {
@@ -529,7 +447,7 @@ describe JSON::LD::API do
         ]}
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug, :base => 'http://example/')
           jld.should produce(params[:output], @debug)
         end
       end
@@ -538,30 +456,22 @@ describe JSON::LD::API do
     context "lists" do
       {
         "empty" => {
-          :input => {
-            "http://example.com/foo" => {"@list" => []}
-          },
-          :output => [{
-            "http://example.com/foo" => [{"@list" => []}]
-          }]
+          :input => {"http://example.com/foo" => {"@list" => []}},
+          :output => [{"http://example.com/foo" => [{"@list" => []}]}]
         },
         "coerced empty" => {
           :input => {
             "@context" => {"http://example.com/foo" => {"@container" => "@list"}},
             "http://example.com/foo" => []
           },
-          :output => [{
-            "http://example.com/foo" => [{"@list" => []}]
-          }]
+          :output => [{"http://example.com/foo" => [{"@list" => []}]}]
         },
         "coerced single element" => {
           :input => {
             "@context" => {"http://example.com/foo" => {"@container" => "@list"}},
             "http://example.com/foo" => [ "foo" ]
           },
-          :output => [{
-            "http://example.com/foo" => [{"@list" => [{"@value" => "foo"}]}]
-          }]
+          :output => [{"http://example.com/foo" => [{"@list" => [{"@value" => "foo"}]}]}]
         },
         "coerced multiple elements" => {
           :input => {
@@ -754,82 +664,23 @@ describe JSON::LD::API do
       end
     end
 
-    context "property generators" do
-      {
-        "expand-0038" => {
-          :input => {
-            "@context" => {
-              "site" => "http://example.com/",
-              "field_tags" => {
-                "@id" => [ "site:vocab/field_tags", "http://schema.org/about" ]
-              },
-              "field_related" => {
-                "@id" => [ "site:vocab/field_related", "http://schema.org/about" ]
-              }
-            },
-            "@id" => "site:node/1",
-            "field_tags" => [
-              { "@id" => "site:term/this-is-a-tag" }
-            ],
-            "field_related" => [
-              { "@id" => "site:node/this-is-related-news" }
-            ]
-          },
-          :output => [{
-             "@id" => "http://example.com/node/1",
-             "http://example.com/vocab/field_related" => [{
-                "@id" => "http://example.com/node/this-is-related-news"
-             }],
-             "http://schema.org/about" => [{
-                "@id" => "http://example.com/node/this-is-related-news"
-             }, {
-                "@id" => "http://example.com/term/this-is-a-tag"
-             }],
-             "http://example.com/vocab/field_tags" => [{
-                "@id" => "http://example.com/term/this-is-a-tag"
-             }]
-          }]
-        },
-        "generate bnodel ids" => {
-          :input => {
-            "@context" => {
-              "site" => "http://example.com/",
-              "field_tags" => {
-                "@id" => [ "site:vocab/field_tags", "http://schema.org/about" ]
-              }
-            },
-            "@id" => "site:node/1",
-            "field_tags" => [
-              { "@type" => "site:term/this-is-a-tag" },
-              "foo"
-            ]
-          },
-          :output => [{
-             "@id" => "http://example.com/node/1",
-             "http://schema.org/about" => [{
-               "@id" => "_:t0",
-               "@type" => ["http://example.com/term/this-is-a-tag"]
-             }, {
-               "@value" => "foo"
-             }],
-             "http://example.com/vocab/field_tags" => [{
-               "@id" => "_:t0",
-               "@type" => ["http://example.com/term/this-is-a-tag"]
-             }, {
-               "@value" => "foo"
-             }]
-          }]
-        }
-      }.each do |title, params|
-        it title do
-          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
-          jld.should produce(params[:output], @debug)
-        end
-      end
-    end
-
     context "exceptions" do
       {
+        "non-null @value and null @type" => {
+          :input => {"http://example.com/foo" => {"@value" => "foo", "@type" => nil}},
+          :exception => JSON::LD::ProcessingError::InvalidTypeValue
+        },
+        "non-null @value and null @language" => {
+          :input => {"http://example.com/foo" => {"@value" => "foo", "@language" => nil}},
+          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+        },
+        "value with null language" => {
+          :input => {
+            "@context" => {"@language" => "en"},
+            "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
+          },
+          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+        },
         "@list containing @list" => {
           :input => {
             "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}

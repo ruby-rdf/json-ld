@@ -16,282 +16,308 @@ module JSON::LD
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
-        # If element is an array, process each item in element recursively using this algorithm,
-        # passing copies of the active context and active property. If the expanded entry is null, drop it.
+        # If element is an array,
         depth do
           is_list = context.container(active_property) == '@list'
           value = input.map do |v|
-            # If active property has a @container set to @list, and item is an array,
-            # or the result of expanding any item is an object containing an @list property,
-            # throw an exception as lists of lists are not allowed.
-            raise ProcessingError::ListOfLists, "A list may not contain another list" if v.is_a?(Array) && is_list
+            # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
+            v = expand(v, active_property, context, options)
 
-            expand(v, active_property, context, options)
+            # If the active property is @list or its container mapping is set to @list, the expanded item must not be an array or a list object, otherwise a list of lists error has been detected and processing is aborted.
+            raise ProcessingError::ListOfLists,
+                  "A list may not contain another list" if
+                  is_list && (v.is_a?(Array) || list?(v))
+            v
           end.flatten.compact
-
-          if is_list && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
-            raise ProcessingError::ListOfLists, "A list may not contain another list"
-          end
 
           value
         end
       when Hash
-        # Otherwise, if element is an object
-        # If element has a @context property, update the active context according to the steps outlined
-        # in Context Processing and remove the @context property.
+        # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
           context = context.parse(input.delete('@context'))
-          debug("expand") {"evaluation context: #{context.inspect}"}
+          debug("expand") {"context: #{context.inspect}"}
         end
 
         depth do
           output_object = Hash.ordered
           # Then, proceed and process each property and value in element as follows:
-          input.keys.kw_sort.each do |property|
-            value = input[property]
-            expanded_property = context.expand_iri(property, :position => :predicate, :quiet => true, :namer => namer)
+          input.keys.kw_sort.each do |key|
+            # For each key and value in element, ordered lexicographically by key:
+            value = input[key]
+            expanded_property = context.expand_iri(key, :vocab => true, :depth => @depth)
 
-            if expanded_property.is_a?(Array)
-              # If expanded property is an array, remove every element which is not a absolute IRI.
-              expanded_property = expanded_property.map {|p| p.to_s if p && p.uri? && p.absolute? || p.node?}.compact
-              expanded_property = nil if expanded_property.empty?
-            elsif expanded_property.is_a?(RDF::Resource)
-              expanded_property = expanded_property.to_s
-            end
+            # If expanded property is null or it neither contains a colon (:) nor it is a keyword, drop key by continuing to the next key.
+            next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
+            expanded_property = expanded_property.to_s if expanded_property.is_a?(RDF::Resource)
 
             debug("expand property") {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
 
-            # If expanded property is an empty array, or null, continue with the next property from element
             if expanded_property.nil?
               debug(" => ") {"skip nil property"}
               next
             end
-            expanded_property
 
-            if expanded_property.is_a?(String) && expanded_property[0,1] == '@'
+            if KEYWORDS.include?(expanded_property)
+              # If active property equals @reverse, an invalid reverse property map error has been detected and processing is aborted.
+              raise ProcessingError::InvalidReversePropertyMap,
+                    "@reverse not appropriate at this point" if active_property == '@reverse'
+
+              # If result has already an expanded property member, an colliding keywords error has been detected and processing is aborted.
+              raise ProcessingError::CollidingKeywords,
+                    "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property)
+
               expanded_value = case expanded_property
               when '@id'
-                # If expanded property is @id, value must be a string. Set the @id member in result to the result of expanding value according the IRI Expansion algorithm relative to the document base and re-labeling Blank Nodes.
-                context.expand_iri(value, :position => :subject, :quiet => true, :namer => namer).to_s
+                # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
+                raise ProcessingError::InvalidIdValue,
+                      "value of @id must be a string: #{value.inspect}" unless value.is_a?(String)
+
+                # Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
+                context.expand_iri(value, :documentRelative => true, :depth => @depth).to_s
               when '@type'
-                # If expanded property is @type, value must be a string or array of strings. Set the @type member of result to the result of expanding value according the IRI Expansion algorithm relative to the document base and re-labeling Blank Nodes, unless that result is an empty array.
+                # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
                 debug("@type") {"value: #{value.inspect}"}
                 case value
                 when Array
                   depth do
                     [value].flatten.map do |v|
-                      v = v['@id'] if node_reference?(v)
-                      raise ProcessingError, "Object value must be a string or a node reference: #{v.inspect}" unless v.is_a?(String)
-                      context.expand_iri(v, options.merge(:position => :subject, :quiet => true, :namer => namer)).to_s
+                      raise ProcessingError::InvalidTypeValue,
+                            "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
+                      context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true).to_s
                     end
                   end
-                when Hash
-                  # Empty object used for @type wildcard or node reference
-                  if node_reference?(value)
-                    context.expand_iri(value['@id'], options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
-                  elsif !value.empty?
-                    raise ProcessingError, "Object value of @type must be empty or a node reference: #{value.inspect}"
-                  else
-                    value
-                  end
+                when String
+                  context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true).to_s
                 else
-                  context.expand_iri(value, options.merge(:position => :property, :quiet => true, :namer => namer)).to_s
+                  raise ProcessingError::InvalidTypeValue,
+                        "@type value must be a string or array of strings: #{value.inspect}"
                 end
+              when '@graph'
+                # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
+                depth { expand(value, '@graph', context, options) }
               when '@value'
-                # If expanded property is @value, value must be a scalar or null. Set the @value member of result to value.
-                raise ProcessingError::Lossy, "Value of #{expanded_property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
+                # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
+                raise ProcessingError::InvalidValueObjectValue,
+                      "Value of #{expanded_property} must be a scalar or null: #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
+                if value.nil?
+                  output_object['@value'] = nil
+                  next;
+                end
                 value
               when '@language'
-                # If expanded property is @language, value must be a string with the lexical form described in [BCP47] or null. Set the @language member of result to the lowercased value.
-                raise ProcessingError::Lossy, "Value of #{expanded_property} must be a string, was #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
-                value.to_s.downcase
+                # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
+                raise ProcessingError::InvalidLanguageTaggedString,
+                      "Value of #{expanded_property} must be a string: #{value.inspect}" unless value.is_a?(String)
+                value.downcase
               when '@index'
-                # If expanded property is @index value must be a string. Set the @index member of result to value.
-                value = value.first if value.is_a?(Array) && value.length == 1
-                raise ProcessingError, "Value of @index is not a string: #{value.inspect}" unless value.is_a?(String)
-                value.to_s
-              when '@list', '@set', '@graph'
-                # If expanded property is @set, @list, or @graph, set the expanded property member of result to the result of expanding value by recursively using this algorithm, along with the active context and active property. If expanded property is @list and active property is null or @graph, pass @list as active property instead.
-                value = [value] unless value.is_a?(Array)
-                ap = expanded_property == '@list' && ((active_property || '@graph') == '@graph') ? '@list' : active_property
-                value = depth { expand(value, ap, context, options) }
+                # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
+                raise ProcessingError::InvalidIndexValue,
+                      "Value of @index is not a string: #{value.inspect}" unless value.is_a?(String)
+                value
+              when '@list'
+                # If expanded property is @list:
 
-                # If expanded property is @list, and any expanded value
-                # is an object containing an @list property, throw an exception, as lists of lists are not supported
-                if expanded_property == '@list' && value.any? {|v| v.is_a?(Hash) && v.has_key?('@list')}
-                  raise ProcessingError::ListOfLists, "A list may not contain another list"
-                end
+                # If active property is null or @graph, continue with the next key from element to remove the free-floating list.
+                next if (active_property || '@graph') == '@graph'
+
+                # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
+                value = depth { expand(value, active_property, context, options) }
+
+                # If expanded value is a list object, a list of lists error has been detected and processing is aborted.
+                # Spec FIXME: Also look at each object if result is an array
+                raise ProcessingError::ListOfLists,
+                      "A list may not contain another list" if [value].flatten.any? {|v| list?(v)}
 
                 value
+              when '@set'
+                # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
+                depth { expand(value, active_property, context, options) }
+              when '@reverse'
+                # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
+                raise ProcessingError::InvalidReverseValueError,
+                      "@reverse value must be an object: #{value.inspect}" unless value.is_a?(Hash)
+
+                # Otherwise
+                # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
+                value = depth { expand(value, '@reverse', context, options) }
+
+                # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
+                if value.has_key?('@reverse')
+                  value.each do |property, item|
+                    # If result does not have a property member, create one and set its value to an empty array.
+                    # Append item to the value of the property member of result.
+                    (output_object[property] ||= []) << item
+                  end
+                end
+
+                # If expanded value contains members other than @reverse:
+                unless value.keys.reject {|k| k == '@reverse'}.empty?
+                  # If result does not have an @reverse member, create one and set its value to an empty JSON object.
+                  reverse_map = output_object['@reverse'] ||= {}
+                  value.each do |property, items|
+                    next if property == '@reverse'
+                    items.each do |item|
+                      if value?(item) || list?(item)
+                        raise ProcessingError::InvalidReversePropertyValue,
+                              "invalid reverse property value: #{item.inspect}"
+                      end
+                      (output_object[property] ||= []) << item
+                    end
+                  end
+                end
               else
                 # Skip unknown keyword
                 next
               end
 
+              # Unless expanded value is null, set the expanded property member of result to expanded value.
               debug("expand #{expanded_property}") { expanded_value.inspect}
-              output_object[expanded_property] = expanded_value
+              output_object[expanded_property] = expanded_value if expanded_value
               next
             end
 
-            expanded_value = if context.container(property) == '@language' && value.is_a?(Hash)
-              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @language, process the associated value as a language map:
+            expanded_value = if context.container(key) == '@language' && value.is_a?(Hash)
+              # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
               
               # Set multilingual array to an empty array.
-              language_map_values = []
+              ary = []
 
-              # For each key-value in the language map:
+              # For each key-value pair language-language value in value, ordered lexicographically by language
               value.keys.sort.each do |k|
-                [value[k]].flatten.each do |v|
-                  # Create a new JSON Object, referred to as an expanded language object.
-                  expanded_language_object = Hash.new
+                [value[k]].flatten.each do |item|
+                  # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
+                  raise ProcessingError::InvalidLanguageMapValue,
+                        "Expected #{item.inspect} to be a string" unless item.is_a?(String)
 
-                  # Add a key-value pair to the expanded language object where the key is @value and the value is the value associated with the key in the language map.
-                  raise ProcessingError::LanguageMap, "Expected #{vv.inspect} to be a string" unless v.is_a?(String)
-                  expanded_language_object['@value'] = v
-
-                  # Add a key-value pair to the expanded language object where the key is @language, and the value is the key in the language map, transformed to lowercase.
-                  # FIXME: check for BCP47 conformance
-                  expanded_language_object['@language'] = k.downcase
-                  # Append the expanded language object to the multilingual array.
-                  language_map_values << expanded_language_object
+                  # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
+                  ary << {
+                    '@value' => item,
+                    '@language' => k.downcase
+                  }
                 end
               end
-              # Set the value associated with property to the multilingual array.
-              language_map_values
-            elsif context.container(property) == '@index' && value.is_a?(Hash)
-              # Otherwise, if value is a JSON object and property is not a keyword and its associated term entry in the active context has a @container key associated with a value of @index, process the associated value as a annotation:
+
+              ary
+            elsif context.container(key) == '@index' && value.is_a?(Hash)
+              # Otherwise, if key's container mapping in active context is @index and value is a JSON object then value is expanded from an index map as follows:
               
               # Set ary to an empty array.
-              annotation_map_values = []
+              ary = []
 
               # For each key-value in the object:
               value.keys.sort.each do |k|
-                [value[k]].flatten.each do |v|
-                  # Expand the value, adding an '@index' key with value equal to the key
-                  expanded_value = depth { expand(v, property, context, options) }
-                  next unless expanded_value
-                  expanded_value['@index'] ||= k
-                  annotation_map_values << expanded_value
+                # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
+                index_value = depth { expand([value[k]].flatten, key, context, options) }
+                index_value.each do |item|
+                  item['@index'] ||= k
+                  ary << item
                 end
               end
-              # Set the value associated with property to the multilingual array.
-              annotation_map_values
+              ary
             else
-              # Otherwise, expand value by recursively using this algorithm, passing copies of the active context and property as active property.
-              depth { expand(value, property, context, options) }
+              # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
+              depth { expand(value, key, context, options) }
             end
 
-            # Continue to the next property-value pair from element if value is null.
+            # If expanded value is null, ignore key by continuing to the next key from element.
             if expanded_value.nil?
               debug(" => skip nil value")
               next
             end
+            debug {" => #{expanded_value.inspect}"}
 
-            # If property's container mapping is set to @list and value is not a JSON object or is a JSON object without a @list member, replace value with a JSON object having a @list member whose value is set to value, ensuring that value is an array.
-            if context.container(property) == '@list' &&
-              (!expanded_value.is_a?(Hash) || !expanded_value.fetch('@list', false))
-
+            # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
+            if context.container(key) == '@list' && !list?(expanded_value)
               debug(" => ") { "convert #{expanded_value.inspect} to list"}
               expanded_value = {'@list' => [expanded_value].flatten}
             end
+            debug {" => #{expanded_value.inspect}"}
 
-            # Convert value to array form
-            debug(" => ") {"expanded property: #{expanded_property.inspect}"}
-            expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
+            # Otherwise, if the term definition associated to key indicates that it is a reverse property
+            # Spec FIXME: this is not an otherwise.
+            if (td = context.term_definitions[key]) && td.reverse_property
+              # If result has no @reverse member, create one and initialize its value to an empty JSON object.
+              reverse_map = output_object['@reverse'] ||= {}
+              [expanded_value].flatten.each do |item|
+                # If item is a value object or list object, an invalid reverse property value has been detected and processing is aborted.
+                raise ProcessingError::InvalidReversePropertyValue,
+                      "invalid reverse property value: #{item.inspect}" if value?(item) || list?(item)
 
-            if expanded_property.is_a?(Array)
-              label_blanknodes(expanded_value)
-              expanded_property.map(&:to_s).each do |prop|
-                # label all blank nodes in value with blank node identifiers by using the Label Blank Nodes Algorithm.
-                output_object[prop] ||= []
-                output_object[prop] += expanded_value.dup
+                # If reverse map has no expanded property member, create one and initialize its value to an empty array.
+                # Append item to the value of the expanded property member of reverse map.
+                (reverse_map[expanded_property] ||= []) << item
               end
             else
-              if output_object.has_key?(expanded_property)
-                # If element already contains a expanded_property property, append value to the existing value.
-                output_object[expanded_property] += expanded_value
-              else
-                # Otherwise, create a property property with value as value.
-                output_object[expanded_property] = expanded_value
-              end
+              # Otherwise, if key is not a reverse property:
+              # If result does not have an expanded property member, create one and initialize its value to an empty array.
+              (output_object[expanded_property] ||= []).concat([expanded_value].flatten)
             end
-            debug {" => #{expanded_value.inspect}"}
           end
 
           debug("output object") {output_object.inspect}
 
-          # If the active property is null or @graph and element has a @value member without an @index member, or element consists of only an @id member, set element to null.
-          debug("output object(ap)") {((active_property || '@graph') == '@graph').inspect}
+          # If result contains the key @value:
+          if value?(output_object)
+            unless (output_object.keys - %w(@value @language @type @index)).empty?
+              # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
+              raise ProcessingError::InvalidValueObjectError,
+              "value object has unknown keys: #{output_object.inspect}"
+            end
+
+            output_object.delete('@language') if output_object['@language'].to_s.empty?
+            output_object.delete('@type') if output_object['@type'].to_s.empty?
+
+            # If the value of result's @value key is null, then set result to null.
+            return nil if output_object['@value'].nil?
+
+            if !output_object['@value'].is_a?(String) && output_object.has_key?('@language')
+              # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
+              raise ProcessingError::InvalidLanguageTaggedValue,
+                    "when @language is used, @value must be a string: #{@value.inspect}"
+            elsif !output_object.fetch('@type', "").is_a?(String)
+              # Otherwise, if the result has a @type member and its value is not a string, an invalid typed value error has been detected and processing is aborted.
+              raise ProcessingError::InvalidTypedValue,
+                    "value of @type must be a string: #{output_object['@type'].inspect}"
+            end
+          elsif !output_object.fetch('@type', []).is_a?(Array)
+            # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.
+            output_object['@type'] = [output_object['@type']]
+          elsif output_object.keys.any? {|k| %w(@set @list).include?(k)}
+            # Otherwise, if result contains the key @set or @list:
+            # The result must contain at most one other key and that key must be @index. Otherwise, an invalid set or list object error has been detected and processing is aborted.
+            raise ProcessingError::InvalidSetOrListObject,
+                  "@set or @list may only contain @index: #{output_object.keys.inspect}" unless
+                  (output_object.keys - %w(@set @list @index)).empty?
+
+            # If result contains the key @set, then set result to the key's associated value.
+            return output_object['@set'] if output_object.keys.include?('@set')
+          end
+
+          # If result contains only the key @language, set result to null.
+          return nil if output_object.keys == %w(@language)
+
+          # If active property is null or @graph, drop free-floating values as follows:
           if (active_property || '@graph') == '@graph' &&
-             ((output_object.has_key?('@value') && !output_object.has_key?('@index')) ||
-              (output_object.keys - %w(@id)).empty?)
+            ((output_object.keys - %w(@value @list)).empty? ||
+             (output_object.keys - %w(@id)).empty?)
             debug("empty top-level") {output_object.inspect}
             return nil
           end
 
-          # If the processed element has an @value property
-          if output_object.has_key?('@value')
-            output_object.delete('@language') if output_object['@language'].to_s.empty?
-            output_object.delete('@type') if output_object['@type'].to_s.empty?
-            if (%w(@index @language @type) - output_object.keys).empty?
-              raise ProcessingError, "element must not have more than one other property other than @index, which can either be @language or @type with a string value." unless value.is_a?(String)
-            end
-
-            # if the value of @value equals null, replace element with the value of null.
-            return nil if output_object['@value'].nil?
-          elsif !output_object.fetch('@type', []).is_a?(Array)
-            # Otherwise, if element has an @type property and it's value is not in the form of an array,
-            # convert it to an array.
-            output_object['@type'] = [output_object['@type']]
-          end
-
-          # If element has an @set or @list property, it must be the only property (other tha @index). Set element to the value of @set;
-          # leave @list untouched.
-          if !(%w(@set @list) & output_object.keys).empty?
-            o_keys = output_object.keys - %w(@set @list @index)
-            raise ProcessingError, "element must have only @set or  @list: #{output_object.keys.inspect}" if o_keys.length > 1
-            
-            output_object = output_object.values.first unless output_object.has_key?('@list')
-          end
-
           # Re-order result keys
-          if output_object.is_a?(Hash) && output_object.keys == %w(@language)
-            # If element has just a @language property, set element to null.
-            nil
-          elsif output_object.is_a?(Hash)
-            r = Hash.ordered
-            output_object.keys.kw_sort.each {|k| r[k] = output_object[k]}
-            r
-          else
-            output_object
-          end
+          r = Hash.ordered
+          output_object.keys.kw_sort.each {|k| r[k] = output_object[k]}
+          r
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
-        context.expand_value(active_property, input,
-          :position => :subject, :namer => namer, :depth => @depth
-        ) unless input.nil? || active_property.nil? || active_property == '@graph'
+        return nil if input.nil? || active_property.nil? || active_property == '@graph'
+        context.expand_value(active_property, input, :depth => @depth)
       end
 
       debug {" => #{result.inspect}"}
       result
-    end
-
-    protected
-    # @param [Array, Hash] input
-    def label_blanknodes(element)
-      if element.is_a?(Array)
-        element.each {|e| label_blanknodes(e)}
-      elsif list?(element)
-        element['@list'].each {|e| label_blanknodes(e)}
-      elsif element.is_a?(Hash)
-        element.keys.sort.each do |k|
-          label_blanknodes(element[k])
-        end
-        if node?(element) and !element.has_key?('@id')
-          element['@id'] = namer.get_name(nil)
-        end
-      end
     end
   end
 end
