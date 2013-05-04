@@ -3,11 +3,11 @@ module JSON::LD
     include Utils
 
     ##
-    # Build hash of nodes used for framing. Also returns flattened representation of input.
+    # This algorithm creates a JSON object node map holding an indexed representation of the graphs and nodes represented in the passed expanded document. All nodes that are not uniquely identified by an IRI get assigned a (new) blank node identifier. The resulting node map will have a member for every graph in the document whose value is another object with a member for every node represented in the document. The default graph is stored under the @default member, all other graphs are stored under their graph name.
     #
     # @param [Array, Hash] element
     #   Expanded element
-    # @param [Hash{String => Hash}] nodeMap
+    # @param [Hash{String => Hash}] node_map
     #   map of nodes
     # @param [String] active_graph
     #   Graph name for results
@@ -16,81 +16,80 @@ module JSON::LD
     # @param [String] id (nil)
     #   Identifier already associated with element
     def generate_node_map(element,
-                          nodeMap,
+                          node_map,
                           active_graph    = '@default',
                           active_subject  = nil,
                           active_property = nil,
                           list            = nil)
       depth do
-        debug("nodeMap") {"active_graph: #{active_graph}, element: #{element.inspect}"}
+        debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}"}
         if element.is_a?(Array)
           # If element is an array, process each entry in element recursively, using this algorithm and return
           element.map {|o|
             generate_node_map(o,
-                              nodeMap,
+                              node_map,
                               active_graph,
                               active_subject,
                               active_property,
                               list)
           }
         else
-          # Otherwise element is a JSON object. Let activeGraph be the JSON object which is the value of the active graph member of nodeMap.
+          # Otherwise element is a JSON object. Reference the JSON object which is the value of the active graph member of node map using the variable graph. If the active subject is null, set node to null otherwise reference the active subject member of graph using the variable node.
           # Spec FIXME: initializing it to an empty JSON object, if necessary
           raise "Expected element to be a hash, was #{element.class}" unless element.is_a?(Hash)
-          activeGraph = nodeMap[active_graph] ||= Hash.ordered
+          graph = node_map[active_graph] ||= Hash.ordered
+          node = graph[active_subject] if active_subject
 
-          # If it has an @type member, perform for each item the following steps:
-          # Spec FIXME: each item which is a value of @type
-          [element['@type']].flatten.each do |item|
-            # If item is a blank node identifier, replace it with a new blank node identifier.
-            item = namer.get_name(item) if item[0,2] == '_:'
+          # If element has an @type member, perform for each item the following steps:
+          if element.has_key?('@type')
+            types = [element['@type']].flatten.map do |item|
+              # If item is a blank node identifier, replace it with a newly generated blank node identifier passing item for identifier.
+              item = namer.get_name(item) if blank_node?(item)
 
-            # If activeGraph has no member item, create it and initialize its value to a JSON object consisting of a single member @id with the value item.
-            activeGraph[item] ||= {'@id' => item}
-          end if element.has_key?('@type')
+              # If graph has no member item, create it and initialize its value to a JSON object consisting of a single member @id with the value item.
+              graph[item] ||= {'@id' => item}
+              item
+            end
+
+            element['@type'] = element['@type'].is_a?(Array) ? types : types.first
+          end
 
           # If element has an @value member, perform the following steps:
-          if element.has_key?('@value')
+          if value?(element)
             unless list
-              # If no list has been passed, merge element into the active property member of the active subject in activeGraph.
-              merge_value(activeGraph[active_subject], active_property, element)
+              # If no list has been passed, merge element into the active property member of the active subject in graph.
+              merge_value(node, active_property, element)
             else
               # Otherwise, append element to the @list member of list.
               merge_value(list, '@list', element)
             end
-          elsif element.has_key?('@list')
+          elsif list?(element)
             # Otherwise, if element has an @list member, perform the following steps:
             # Initialize a new JSON object result having a single member @list whose value is initialized to an empty array.
             result = {'@list' => []}
 
             # Recursively call this algorithm passing the value of element's @list member as new element and result as list.
             generate_node_map(element['@list'],
-                              nodeMap,
+                              node_map,
                               active_graph,
                               active_subject,
                               active_property,
                               result)
 
-            if (active_property || '@graph') == '@graph'
-              # If active property equals null or @graph, generate a blank node identifier id and store result as value of the member id in activeGraph.
-              # FIXME: Free-floating list, should be dropped
-              activeGraph[namer.get_name] = result
-            else
-              # Otherwise, add result to the the value of the active property member of the active subject in activeGraph.
-              merge_value(activeGraph[active_subject], active_property, result)
-            end
+            # Append result to the the value of the active property member of node.
+            merge_value(node, active_property, result)
           else
             # Otherwise element is a node object, perform the following steps:
           
-            # If element has an @id member, store its value in id and remove the member from element. If id is a blank node identifier, replace it with a new blank node identifier.
-            # Otherwise generate a new blank node identifier and store it as id.
+            # If element has an @id member, set id to its value and remove the member from element. If id is a blank node identifier, replace it with a newly generated blank node identifier passing id for identifier.
+            # Otherwise, set id to the result of the Generate Blank Node Identifier algorithm passing null for identifier.
             id = element.delete('@id')
-            id = namer.get_name(id) if id.nil? || id[0,2] == '_:'
-            debug("nodeMap") {"id: #{id.inspect}"}
+            id = namer.get_name(id) if blank_node?(id)
+            debug("node_map") {"id: #{id.inspect}"}
 
-            # If activeGraph does not contain a member id, create one and initialize it to a JSON object consisting of a single member @id whose value is set to id.
-            activeGraph[id] ||= Hash.ordered
-            activeGraph[id]['@id'] ||= id
+            # If graph does not contain a member id, create one and initialize it to a JSON object consisting of a single member @id whose value is set to id.
+            graph[id] ||= Hash.ordered
+            graph[id]['@id'] ||= id
 
             # If active property is not null, perform the following steps:
             if active_property
@@ -98,62 +97,92 @@ module JSON::LD
               reference = Hash.ordered
               reference['@id'] = id
 
-              # If no list has been passed, merge element into the active property member of the active subject in activeGraph.
+              # If list is null:
               unless list
-                merge_value(activeGraph[active_subject], active_property, reference)
+                merge_value(node, active_property, reference)
               else
                 merge_value(list, '@list', reference)
               end
             end
 
-            # If element has an @type member, merge each value into the @type of active subject in activeGraph. Then remove the @type member from element.
-            # Spec FIXME: should be id, not active subject
+            # Reference the value of the id member of graph using the variable node.
+            node = graph[id]
+
+            # If element has an @type key, append each item of its associated array to the array associated with the @type key of node unless it is already in that array. Finally remove the @type member from element.
             if element.has_key?('@type')
               [element.delete('@type')].flatten.each do |t|
-                merge_value(activeGraph[id], '@type', t)
+                merge_value(node, '@type', t)
               end
             end
 
-            # If element has an @index member, set the @index of active subject in activeGraph to its value. If such a member already exists in active subject and has a different value, raise a conflicting indexes error. Otherwise continue and remove the @index from element.
+            # If element has an @index member, set the @index member of node to its value. If node has already an @index member with a different value, a conflicting indexes error has been detected and processing is aborted. Otherwise, continue by removing the @index member from element.
             if element.has_key?('@index')
-              # FIXME: check for duplicates?
-              activeGraph[active_subject]['@index'] = element.delete('@index')
+              raise ProcessingError::ConflictingIndexesError,
+                    "Element already has index #{node['@index']} dfferent from #{element['@index']}" if
+                    node['@index'] && node['@index'] != element['@index']
+              node['@index'] = element.delete('@index')
             end
 
-            # If element has an @graph member, recursively invoke this algorithm passing the value of the @graph member as new element and id as new active subject. Then remove the @graph member from element.
-            # Spec FIXME: as active_graph, not active_subject
-            # Spec FIXME: creating an entry in nodeMap for id initialized to an empty JSON Object if necessary
+            # If element has an @reverse member:
+            if element.has_key?('@reverse')
+              element.delete('@reverse').each do |property, values|
+                values.each do |value|
+                  debug("node_map") {"@reverse(#{id}): #{value.inspect}"}
+                  # If value has a property member, append referenced node to its value; otherwise create a property member whose value is an array containing referenced node.
+                  (value[property] ||= []) << {'@id' => id}
+
+                  # Recursively invoke this algorithm passing value for element, node map, and active graph.
+                  generate_node_map(value,
+                                    node_map,
+                                    active_graph)
+                end
+              end
+            end
+
+            # If element has an @graph member, recursively invoke this algorithm passing the value of the @graph member for element, node map, and id for active graph before removing the @graph member from element.
             if element.has_key?('@graph')
               generate_node_map(element.delete('@graph'),
-                                nodeMap,
+                                node_map,
                                 id)
             end
 
-            # Finally for each property-value pair in element ordered by property perform the following steps:
+            # Finally, for each key-value pair property-value in element ordered by property perform the following steps:
             element.keys.sort.each do |property|
               value = element[property]
 
-              # If no property member exists in the JSON object which is the value of the id member of activeGraph create the member and initialize its value to an empty array.
-              activeGraph[id][property] ||= []
+              # If property is a blank node identifier, replace it with a newly generated blank node identifier passing property for identifier.
+              property = namer.get_name(property) if blank_node?(property)
+
+              # If node does not have a property member, create one and initialize its value to an empty array.
+              node[property] ||= []
 
               # Recursively invoke this algorithm passing value as new element, id as new active subject, and property as new active property.
               generate_node_map(value,
-                                nodeMap,
+                                node_map,
                                 active_graph,
                                 id,
-                                property)
+                                property,
+                                list)
             end
           end
         end
 
-        debug("nodeMap") {nodeMap.to_json(JSON_STATE)}
+        debug("node_map") {node_map.to_json(JSON_STATE)}
       end
     end
 
     private
-    # Merge the last value into an array based for the specified key
+    # Merge the last value into an array based for the specified key if hash is not null and value is not already in that array
     def merge_value(hash, key, value)
-      (hash[key] ||= []) << value
+      return unless hash
+      values = hash[key] ||= []
+      if key == '@list'
+        values << value
+      elsif list?(value)
+        values << value
+      elsif !values.include?(value)
+        values << value
+      end
     end
 
   end

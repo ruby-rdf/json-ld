@@ -27,7 +27,12 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def blank_node?(value)
-      (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+      case value
+      when nil    then true
+      when String then value[0,2] == '_:'
+      else
+        (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+      end
     end
 
     ##

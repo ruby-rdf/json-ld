@@ -93,7 +93,7 @@ module Fixtures
 
       # Alias input, context, expect and frame
       %w(input context expect frame).each do |m|
-        define_method(m.to_sym) {RDF::Util::File.open_file "#{SUITE}tests/#{property(m)}"}
+        define_method(m.to_sym) {property(m) && RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}")}
       end
 
       def positiveTest

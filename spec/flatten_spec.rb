@@ -53,17 +53,61 @@ describe JSON::LD::API do
         },
         :output => [
           {
-            "@id" => "_:t0",
+            "@id" => "_:b0",
             "@type" => [RDF::FOAF.Person.to_s]
           },
           {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
           },
           {"@id" => RDF::FOAF.Person.to_s},
           {"@id" => RDF::FOAF.PersonalProfile.to_s},
         ]
+      },
+      "reverse properties" => {
+        :input => ::JSON.parse(%([
+          {
+            "@id": "http://example.com/people/markus",
+            "@reverse": {
+              "http://xmlns.com/foaf/0.1/knows": [
+                {
+                  "@id": "http://example.com/people/dave"
+                },
+                {
+                  "@id": "http://example.com/people/gregg"
+                }
+              ]
+            },
+            "http://xmlns.com/foaf/0.1/name": [ { "@value": "Markus Lanthaler" } ]
+          }
+        ])),
+        :output => ::JSON.parse(%([
+          {
+            "@id": "http://example.com/people/dave",
+            "http://xmlns.com/foaf/0.1/knows": [
+              {
+                "@id": "http://example.com/people/markus"
+              }
+            ]
+          },
+          {
+            "@id": "http://example.com/people/gregg",
+            "http://xmlns.com/foaf/0.1/knows": [
+              {
+                "@id": "http://example.com/people/markus"
+              }
+            ]
+          },
+          {
+            "@id": "http://example.com/people/markus",
+            "http://xmlns.com/foaf/0.1/name": [
+              {
+                "@value": "Markus Lanthaler"
+              }
+            ]
+          }
+        ]))
       }
     }.each do |title, params|
       it title do

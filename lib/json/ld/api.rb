@@ -73,7 +73,7 @@ module JSON::LD
     def initialize(input, context, options = {}, &block)
       @options = {:compactArrays => true}.merge(options)
       options = {:rename_bnodes => true}.merge(options)
-      @namer = options[:rename_bnodes] ? BlankNodeNamer.new("t") : BlankNodeMapper.new
+      @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO then JSON.parse(input.read)
@@ -188,7 +188,7 @@ module JSON::LD
     end
 
     ##
-    # Flattens the given input according to the steps in the Flattening Algorithm. The input must be flattened and returned if there are no errors. If the flattening fails, an appropriate exception must be thrown.
+    # This algorithm flattens an expanded JSON-LD document by collecting all properties of a node in a single JSON object and labeling all blank nodes with blank node identifiers. This resulting uniform shape of the document, may drastically simplify the code required to process JSON-LD data in certain applications.
     #
     # The resulting `Array` is returned via the provided callback.
     #
@@ -214,22 +214,22 @@ module JSON::LD
       flattened = []
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input)
+      expanded_input = API.expand(input, nil, nil, options)
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
-        # Generate _nodeMap_
+        # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         node_map = Hash.ordered
         node_map['@default'] = Hash.ordered
         self.generate_node_map(value, node_map)
 
         default_graph = node_map['@default']
-        node_map.keys.kw_sort.reject {|k| k == '@default'}.each do |graphName|
-          graph = node_map[graphName]
-          default_graph[graphName] ||= {'@id' => graphName}
-          nodes = graph['@graph'] ||= []
+        node_map.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
+          graph = node_map[graph_name]
+          entry = default_graph[graph_name] ||= {'@id' => graph_name}
+          nodes = entry['@graph'] ||= []
           graph.keys.kw_sort.each do |id|
             nodes << graph[id]
           end
@@ -239,6 +239,7 @@ module JSON::LD
         end
 
         if context && !flattened.empty?
+          # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = compact(flattened, nil)
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', :quiet => true)
