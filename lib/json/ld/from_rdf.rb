@@ -11,8 +11,8 @@ module JSON::LD
     # @param [Array<RDF::Statement>, RDF::Enumerable] input
     # @return [Array<Hash>] the JSON-LD document in normalized form
     def from_statements(input)
-      default_graph = {:node_map => {}, :listMap => {}, :name => ''}
-      graph_map = {'' => default_graph}
+      default_graph = {:node_map => {}, :listMap => {}, :name => '@default'}
+      graph_map = {'@default' => default_graph}
 
       value = nil
       ec = Context.new
@@ -24,7 +24,7 @@ module JSON::LD
         debug("statement") { statement.to_nquads.chomp}
 
         subject = ec.expand_iri(statement.subject).to_s
-        name = statement.context ? ec.expand_iri(statement.context).to_s : ''
+        name = statement.context ? ec.expand_iri(statement.context).to_s : '@default'
         
         # Create a graph entry as needed
         graph = graph_map[name] ||= {:node_map => {}, :listMap => {}, :name => name}
@@ -56,8 +56,8 @@ module JSON::LD
           next
         end
 
-        # Add entry to default graph for name unless it is empty
-        default_graph[:node_map][name] ||= {'@id' => name} unless name.empty?
+        # Add entry to default graph for name unless it is @default
+        default_graph[:node_map][name] ||= {'@id' => name} unless name == '@default'
         
         # Get value from graph nodes for subject, initializing it to a new node declaration for subject if it does not exist
         debug("@id") { "new subject: #{subject}"} unless graph[:node_map].has_key?(subject)
