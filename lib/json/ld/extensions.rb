@@ -32,12 +32,6 @@ module RDF
     end
   end
   
-  class URI
-    def to_s
-      @uri.to_s
-    end
-  end
-
   class Node
     # Odd case of appending to a BNode identifier
     def +(value)

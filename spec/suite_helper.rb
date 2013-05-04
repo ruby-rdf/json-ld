@@ -25,7 +25,9 @@ module RDF::Util
       when /^#{REMOTE_PATH}/
         begin
           #puts "attempt to open #{filename_or_url} locally"
-          if response = ::File.open(filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH))
+          local_filename = filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
+          if ::File.exist?(local_filename)
+            response = ::File.open(local_filename)
             #puts "use #{filename_or_url} locally"
             case filename_or_url.to_s
             when /\.jsonld$/
@@ -46,11 +48,10 @@ module RDF::Util
           else
             Kernel.open(filename_or_url.to_s, &block)
           end
-        rescue Errno::ENOENT
+        rescue Errno::ENOENT #, OpenURI::HTTPError
           # Not there, don't run tests
           StringIO.new("")
         end
-      else
       end
     end
   end

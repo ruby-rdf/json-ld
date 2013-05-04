@@ -57,6 +57,14 @@ module JSON::LD
       value.is_a?(Hash) && value.has_key?('@value')
     end
 
+    ##
+    # Represent an id as an IRI or Blank Node
+    # @param [String] id
+    # @return [RDF::Resource]
+    def as_resource(id)
+      id[0,2] == '_:' ? RDF::Node.new(id[2..-1]) : RDF::URI(id)
+    end
+
     private
 
     # Add debug event to debug array, if specified

@@ -7,145 +7,134 @@ module JSON::LD
 
     ##
     #
-    # @param [String] path
-    #   location within JSON hash
-    # @param [Hash, Array, String] element
-    #   The current JSON element being processed
-    # @param [RDF::Node] subject
-    #   Inherited subject
-    # @param [RDF::URI] property
-    #   Inherited property
-    # @param [RDF::Node] name
-    #   Inherited inherited graph name
-    # @return [RDF::Resource] defined by this element
-    # @yield statement
-    # @yieldparam [RDF::Statement] statement
-    def statements(path, element, subject, property, name, &block)
-      debug(path) {"statements: e=#{element.inspect}, s=#{subject.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
+    # @param [Hash{String => Hash}] activeGraph
+    #   A hash of IRI to Node definitions
+    # @return [Array<RDF::Statement>] statements in this graph, without context
+    def graph_to_rdf(activeGraph)
+      debug('graph_to_rdf') {"graph_to_rdf: #{activeGraph.inspect}"}
 
-      traverse_result = depth do
-        case element
-        when Hash
-          # Other shortcuts to allow use of this method for terminal associative arrays
-          object = if element.has_key?('@value')
-            # 1.2) If the JSON object has a @value key, set the active object to a literal value as follows ...
-            literal_opts = {}
-            literal_opts[:datatype] = RDF::URI(element['@type']) if element['@type']
-            literal_opts[:language] = element['@language'].to_sym if element['@language']
-            RDF::Literal.new(element['@value'], literal_opts)
-          elsif element.has_key?('@list')
-            # 1.3 (Lists)
-            parse_list("#{path}[#{'@list'}]", element['@list'], property, name, &block)
-          end
+      # Initialize results as an empty array
+      results = []
 
-          if object
-            # 1.4
-            add_quad(path, subject, property, object, name, &block) if subject && property
-            return object
-          end
-        
-          active_subject = if element.fetch('@id', nil).is_a?(String)
-            # 1.5 Subject
-            # 1.5.1 Set active object (subject)
-            context.expand_iri(element['@id'], :quiet => true)
-          else
-            # 1.6) Generate a blank node identifier and set it as the active subject.
-            node
-          end
+      depth do
+        # For each id-node in activeGraph
+        activeGraph.each do |id, node|
+          # Initialize subject as the IRI or BNode representation of id
+          subject = as_resource(id)
+          debug("graph_to_rdf")  {"subject: #{subject.to_ntriples}"}
 
-          # 1.7) For each key in the JSON object that has not already been processed,
-          # perform the following steps:
-          element.keys.kw_sort.each do |key|
-            value = element[key]
-            active_property = case key
+          # For each property-values in node
+          node.each do |property, values|
+            case property
             when '@type'
-              # If the key is @type, set the active property to rdf:type.
-              RDF.type
-            when '@graph'
-              # Otherwise, if property is @graph, process value algorithm recursively, using active subject
-              # as graph name and null values for active subject and active property and then continue to
-              # next property
-              statements("#{path}[#{key}]", value, nil, nil, (active_subject unless active_subject.node?), &block)
-              next
+              # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
+              results += values.map do |value|
+                object = as_resource(value)
+                debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
+                RDF::Statement.new(subject, RDF.type, object)
+              end
             when /^@/
-              # Otherwise, if property is a keyword, skip this step.
-              next
+              # Otherwise, if @type is any other keyword, skip to the next property-values pair
             else
-              # 1.7.1) If a key that is not @id, @graph, or @type, set the active property by
-              # performing Property Processing on the key.
-              context.expand_iri(key, :quiet => true)
-            end
+              # Otherwise, property is an IRI or Blank Node identifier
+              # Initialize predicate from  property as an IRI or Blank node
+              predicate = as_resource(property)
+              debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
 
-            debug("statements[Step 1.7.4]")
-            statements("#{path}[#{key}]", value, active_subject, active_property, name, &block)
+              # For each item in values
+              values.each do |item|
+                if item.has_key?('@list')
+                  debug("graph_to_rdf")  {"list: #{item.inspect}"}
+                  # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
+                  list_results = []
+                  object = parse_list(item['@list'], list_results)
+
+                  # Append a triple composed of subject, prediate, and object to results and add all triples from list_results to results.
+                  results << RDF::Statement.new(subject, predicate, object)
+                  results += list_results
+                else
+                  # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
+                  object = parse_object(item)
+                  debug("graph_to_rdf")  {"object: #{object.to_ntriples}"}
+                  # Append a triple composed of subject, prediate, and literal to results.
+                  results << RDF::Statement.new(subject, predicate, object)
+                end
+              end
+            end
           end
-        
-          # 1.8) The active_subject is returned
-          active_subject
-        when Array
-          # 2) If a regular array is detected ...
-          debug("statements[Step 2]")
-          element.each_with_index do |v, i|
-            statements("#{path}[#{i}]", v, subject, property, name, &block)
-          end
-          nil # No real value returned from an array
-        when String
-          object = RDF::Literal.new(element)
-          debug(path) {"statements[Step 3]: plain: #{object.inspect}"}
-          object
-        when Float
-          object = RDF::Literal::Double.new(element)
-          debug(path) {"statements[Step 4]: native: #{object.inspect}"}
-          object
-        when Fixnum
-          object = RDF::Literal.new(element)
-          debug(path) {"statements[Step 5]: native: #{object.inspect}"}
-          object
-        when TrueClass, FalseClass
-          object = RDF::Literal::Boolean.new(element)
-          debug(path) {"statements[Step 6]: native: #{object.inspect}"}
-          object
-        else
-          raise RDF::ReaderError, "Traverse to unknown element: #{element.inspect} of type #{element.class}"
         end
       end
+      
+      # Return results
+      results
+    end
 
-      # Yield and return traverse_result
-      add_quad(path, subject, property, traverse_result, name, &block) if subject && property && traverse_result
-      traverse_result
+    ##
+    # Parse an item, either a value object or a node definition
+    # @param [Hash] item
+    # @return [RDF::Value]
+    def parse_object(item)
+      if item.has_key?('@value')
+        # Otherwise, if element is a JSON object that contains the key @value
+        # Initialize value to the value associated with the @value key in element. Initialize datatype to the value associated with the @type key in element, or null if element does not contain that key.
+        value, datatype = item.fetch('@value'), item.fetch('@type', nil)
+
+        case value
+        when TrueClass, FalseClass
+          # If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
+          value = value.to_s
+          datatype ||= RDF::XSD.boolean.to_s
+        when Float, Fixnum
+          # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
+          lit = RDF::Literal.new(value, :canonicalize => true)
+          value = lit.to_s
+          datatype ||= lit.datatype.to_s
+        else
+          # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
+          datatype ||= RDF::XSD.send(item.has_key?('@language') ? :langString : :string).to_s
+        end
+                  
+        # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
+        language = item.fetch('@language', nil)
+        literal = RDF::Literal.new(value, :datatype => datatype, :language => language)
+
+        # Return literal
+        literal
+      else
+        # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
+        raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)
+        # Return value associated with @id as an IRI or Blank node
+        as_resource(item['@id'])
+      end
     end
 
     ##
     # Parse a List
     #
-    # @param [String] path
-    #   location within JSON hash
     # @param [Array] list
     #   The Array to serialize as a list
-    # @param [RDF::URI] property
-    #   Inherited property
-    # @param [RDF::Resource] name
-    #   Inherited named graph context
+    # @param [Array<RDF::Statement>] list_results
+    #   Statements for each item in the list
     # @return [RDF::Resource] BNode or nil for head of list
-    # @yield statement
-    # @yieldparam [RDF::Statement] statement
-    def parse_list(path, list, property, name, &block)
-      debug(path) {"list: #{list.inspect}, p=#{property.inspect}, n=#{name.inspect}"}
+    def parse_list(list, list_results)
+      debug('parse_list') {"list: #{list.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? node : RDF.nil
 
       depth do
         list.each do |list_item|
-          # Traverse the value
-          statements("#{path}", list_item, first_bnode, RDF.first, name, &block)
+          # Set first to the result of the Object Converstion algorithm passing item.
+          object = parse_object(list_item)
+          list_results << RDF::Statement.new(first_bnode, RDF.first, object)
           rest_bnode = node
-          add_quad("#{path}", first_bnode, RDF.rest, rest_bnode, name, &block)
+          list_results << RDF::Statement.new(first_bnode, RDF.rest, rest_bnode)
           first_bnode = rest_bnode
         end
         if last
-          statements("#{path}", last, first_bnode, RDF.first, name, &block)
-          add_quad("#{path}", first_bnode, RDF.rest, RDF.nil, name, &block)
+          object = parse_object(last)
+          list_results << RDF::Statement.new(first_bnode, RDF.first, object)
+          list_results << RDF::Statement.new(first_bnode, RDF.rest, RDF.nil)
         end
       end
       result

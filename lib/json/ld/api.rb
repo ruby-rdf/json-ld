@@ -196,9 +196,7 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object or array of JSON-LD objects to flatten or an IRI referencing the JSON-LD document to flatten.
-    # @param [String, RDF::URI] graph
-    #   The graph in the document that should be flattened. To return the default graph @default has to be passed, for the merged graph @merged and for any other graph the IRI identifying the graph has to be passed. The default value is @merged.
-    # @param [String, #read, Hash, Array, JSON::LD::Context] context
+    # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
     # @param [Proc] callback (&block)
     #   Alternative to using block, with same parameters.
@@ -212,9 +210,8 @@ module JSON::LD
     #   The framed JSON-LD document
     # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
-    def self.flatten(input, graph, context, callback = nil, options = {})
-      result = nil
-      graph ||= '@merged'
+    def self.flatten(input, context, callback = nil, options = {})
+      flattened = []
 
       # Expand input to simplify processing
       expanded_input = API.expand(input)
@@ -225,25 +222,33 @@ module JSON::LD
 
         # Generate _nodeMap_
         node_map = Hash.ordered
-        self.generate_node_map(value, node_map, (graph.to_s == '@merged' ? '@merged' : '@default'))
-        
-        result = []
+        node_map['@default'] = Hash.ordered
+        self.generate_node_map(value, node_map)
 
-        # If nodeMap has no property graph, return result, otherwise set definitions to its value.
-        definitions = node_map.fetch(graph.to_s, {})
-        
-        # Foreach property and value of definitions
-        definitions.keys.sort.each do |prop|
-          value = definitions[prop]
-          result << value
+        default_graph = node_map['@default']
+        node_map.keys.kw_sort.reject {|k| k == '@default'}.each do |graphName|
+          graph = node_map[graphName]
+          default_graph[graphName] ||= {'@id' => graphName}
+          nodes = graph['@graph'] ||= []
+          graph.keys.kw_sort.each do |id|
+            nodes << graph[id]
+          end
         end
-        
-        result
+        default_graph.keys.kw_sort.each do |id|
+          flattened << default_graph[id]
+        end
+
+        if context && !flattened.empty?
+          compacted = compact(flattened, nil)
+          compacted = [compacted] unless compacted.is_a?(Array)
+          kwgraph = self.context.compact_iri('@graph', :quiet => true)
+          flattened = self.context.serialize.merge(kwgraph => compacted)
+        end
       end
 
-      callback.call(result) if callback
-      yield result if block_given?
-      result
+      callback.call(flattened) if callback
+      yield flattened if block_given?
+      flattened
     end
 
     ##
@@ -361,27 +366,36 @@ module JSON::LD
     #   Options passed to {JSON::LD::API.expand}
     # @raise [InvalidContext]
     # @return [Array<RDF::Statement>] if no block given
-    # @yield statement
-    # @yieldparam [RDF::Statement] statement
+    # @yield statements
+    # @yieldparam [Array<RDF::Statement>] statements
     def self.toRDF(input, context = nil, callback = nil, options = {}, &block)
-      API.new(input, context, options) do |api|
+      results = []
+      results.extend(RDF::Enumerable)
+
+      API.new(input, context, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        result = api.expand(api.value, nil, api.context)
+        expanded_input = expand(value, nil, self.context)
+        debug(".toRDF") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
 
-        api.send(:debug, ".expand") {"expanded input: #{result.to_json(JSON_STATE)}"}
+        # Generate _nodeMap_
+        node_map = Hash.ordered
+        node_map['@default'] = Hash.ordered
+        generate_node_map(expanded_input, node_map)
+
         # Start generating statements
-        results = []
-        api.statements("", result, nil, nil, nil) do |statement|
-          callback ||= block if block_given?
-          if callback
-            callback.call(statement)
-          else
+        node_map.each do |graph_name, graph|
+          context = as_resource(graph_name) unless graph_name == '@default'
+          debug(".toRDF") {"context: #{context ? context.to_ntriples : 'null'}"}
+          graph_to_rdf(graph).each do |statement|
+            statement.context = context if context
             results << statement
           end
         end
-        results
       end
+      callback.call(results) if callback
+      yield results if block_given?
+      results
     end
     
     ##

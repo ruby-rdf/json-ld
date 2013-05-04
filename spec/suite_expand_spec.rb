@@ -9,6 +9,10 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
+          case t.property('input')
+          when /(0069|0070|0071|0072)/
+            pending "Contridiction on cyclical term definition from commit 657c90f3fc4050fce006fa11a2a420e7e4efe049"
+          end
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')

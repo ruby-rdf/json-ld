@@ -49,7 +49,9 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRDF(@doc, @options[:context], nil, @options, &block)
+      JSON::LD::API.toRDF(@doc, @options[:context], nil, @options).each do |statement|
+        block.call(statement)
+      end
     end
 
     ##
