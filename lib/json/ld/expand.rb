@@ -84,11 +84,11 @@ module JSON::LD
                     [value].flatten.map do |v|
                       raise ProcessingError::InvalidTypeValue,
                             "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
-                      context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true).to_s
+                      context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
                     end
                   end
                 when String
-                  context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true).to_s
+                  context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
                 else
                   raise ProcessingError::InvalidTypeValue,
                         "@type value must be a string or array of strings: #{value.inspect}"
@@ -124,10 +124,13 @@ module JSON::LD
                 # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
                 value = depth { expand(value, active_property, context, options) }
 
+                # Spec FIXME: need to be sure that result is an array
+                value = [value] unless value.is_a?(Array)
+
                 # If expanded value is a list object, a list of lists error has been detected and processing is aborted.
                 # Spec FIXME: Also look at each object if result is an array
                 raise ProcessingError::ListOfLists,
-                      "A list may not contain another list" if [value].flatten.any? {|v| list?(v)}
+                      "A list may not contain another list" if value.any? {|v| list?(v)}
 
                 value
               when '@set'
@@ -144,10 +147,11 @@ module JSON::LD
 
                 # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
                 if value.has_key?('@reverse')
-                  value.each do |property, item|
+                  debug("@reverse") {"double reverse: #{value.inspect}"}
+                  value['@reverse'].each do |property, item|
                     # If result does not have a property member, create one and set its value to an empty array.
                     # Append item to the value of the property member of result.
-                    (output_object[property] ||= []) << item
+                    (output_object[property] ||= []).concat([item].flatten.compact)
                   end
                 end
 
@@ -162,10 +166,13 @@ module JSON::LD
                         raise ProcessingError::InvalidReversePropertyValue,
                               "invalid reverse property value: #{item.inspect}"
                       end
-                      (output_object[property] ||= []) << item
+                      (reverse_map[property] ||= []) << item
                     end
                   end
                 end
+
+                # Continue with the next key from element
+                next
               else
                 # Skip unknown keyword
                 next
@@ -173,7 +180,7 @@ module JSON::LD
 
               # Unless expanded value is null, set the expanded property member of result to expanded value.
               debug("expand #{expanded_property}") { expanded_value.inspect}
-              output_object[expanded_property] = expanded_value if expanded_value
+              output_object[expanded_property] = expanded_value unless expanded_value.nil?
               next
             end
 
@@ -299,9 +306,9 @@ module JSON::LD
 
           # If active property is null or @graph, drop free-floating values as follows:
           if (active_property || '@graph') == '@graph' &&
-            ((output_object.keys - %w(@value @list)).empty? ||
+            (output_object.keys.any? {|k| %w(@value @list).include?(k)} ||
              (output_object.keys - %w(@id)).empty?)
-            debug("empty top-level") {output_object.inspect}
+            debug(" =>") { "empty top-level: " + output_object.inspect}
             return nil
           end
 

@@ -61,6 +61,10 @@ describe JSON::LD::API do
           {"@type" => ["http://example.com/type1", "http://example.com/type2"]}
         ]
       },
+      "@value with false" => {
+        :input => {"http://example.com/ex" => {"@value" => false}},
+        :output => [{"http://example.com/ex" => [{"@value" => false}]}]
+      }
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
@@ -500,6 +504,30 @@ describe JSON::LD::API do
             "http://example.com/foo" => [{"@list" => [{"@value" => "2012-04-12", "@type" => RDF::XSD.date.to_s}]}]
           }]
         },
+        "expand-0004" => {
+          :input => ::JSON.parse(%({
+            "@context": {
+              "mylist1": {"@id": "http://example.com/mylist1", "@container": "@list"},
+              "mylist2": {"@id": "http://example.com/mylist2", "@container": "@list"},
+              "myset2": {"@id": "http://example.com/myset2", "@container": "@set"},
+              "myset3": {"@id": "http://example.com/myset3", "@container": "@set"}
+            },
+            "http://example.org/property": { "@list": "one item" }
+          })),
+          :output => ::JSON.parse(%([
+            {
+              "http://example.org/property": [
+                {
+                  "@list": [
+                    {
+                      "@value": "one item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]))
+        }
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
@@ -629,7 +657,104 @@ describe JSON::LD::API do
       end
     end
 
-    context "annotations" do
+    context "@reverse" do
+      {
+        "expand-0037" => {
+          :input => ::JSON.parse(%({
+            "@context": {
+              "name": "http://xmlns.com/foaf/0.1/name"
+            },
+            "@id": "http://example.com/people/markus",
+            "name": "Markus Lanthaler",
+            "@reverse": {
+              "http://xmlns.com/foaf/0.1/knows": {
+                "@id": "http://example.com/people/dave",
+                "name": "Dave Longley"
+              }
+            }
+          })),
+          :output => ::JSON.parse(%([
+            {
+              "@id": "http://example.com/people/markus",
+              "@reverse": {
+                "http://xmlns.com/foaf/0.1/knows": [
+                  {
+                    "@id": "http://example.com/people/dave",
+                    "http://xmlns.com/foaf/0.1/name": [
+                      {
+                        "@value": "Dave Longley"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "http://xmlns.com/foaf/0.1/name": [
+                {
+                  "@value": "Markus Lanthaler"
+                }
+              ]
+            }
+          ]))
+        },
+        "expand-0043" => {
+          :input => ::JSON.parse(%({
+            "@context": {
+              "name": "http://xmlns.com/foaf/0.1/name",
+              "isKnownBy": { "@reverse": "http://xmlns.com/foaf/0.1/knows" }
+            },
+            "@id": "http://example.com/people/markus",
+            "name": "Markus Lanthaler",
+            "@reverse": {
+              "isKnownBy": [
+                {
+                  "@id": "http://example.com/people/dave",
+                  "name": "Dave Longley"
+                },
+                {
+                  "@id": "http://example.com/people/gregg",
+                  "name": "Gregg Kellogg"
+                }
+              ]
+            }
+          })),
+          :output => ::JSON.parse(%([
+            {
+              "@id": "http://example.com/people/markus",
+              "http://xmlns.com/foaf/0.1/knows": [
+                {
+                  "@id": "http://example.com/people/dave",
+                  "http://xmlns.com/foaf/0.1/name": [
+                    {
+                      "@value": "Dave Longley"
+                    }
+                  ]
+                },
+                {
+                  "@id": "http://example.com/people/gregg",
+                  "http://xmlns.com/foaf/0.1/name": [
+                    {
+                      "@value": "Gregg Kellogg"
+                    }
+                  ]
+                }
+              ],
+              "http://xmlns.com/foaf/0.1/name": [
+                {
+                  "@value": "Markus Lanthaler"
+                }
+              ]
+            }
+          ]))
+        },
+      }.each do |title, params|
+        it title do
+          jld = JSON::LD::API.expand(params[:input], nil, nil, :debug => @debug)
+          jld.should produce(params[:output], @debug)
+        end
+      end
+    end
+
+    context "@index" do
       {
         "string annotation" => {
           :input => {

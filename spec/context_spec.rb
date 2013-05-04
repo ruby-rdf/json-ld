@@ -4,6 +4,40 @@ require 'spec_helper'
 require 'rdf/xsd'
 require 'rdf/spec/reader'
 
+# Add for testing
+class JSON::LD::Context
+  # Retrieve type mappings
+  def coercions
+    term_definitions.inject({}) do |memo, (t,td)|
+      memo[t] = td.type_mapping
+      memo
+    end
+  end
+
+  def set_coerce(property, value)
+    debug {"coerce #{property.inspect} to #{value.inspect}"} unless term_definitions[property.to_s].type_mapping == value
+    term_definitions[property].type_mapping = value
+  end
+
+  def containers
+    term_definitions.inject({}) do |memo, (t,td)|
+      memo[t] = td.container_mapping
+      memo
+    end
+  end
+
+  def set_container(property, value)
+    debug {"coerce #{property.inspect} to #{value.inspect}"}
+    raise "Can't set container mapping with no term definition" unless term_definitions.has_key?(property.to_s)
+    term_definitions[property].container_mapping = value
+  end
+  
+  def set_language(property, value)
+    # Use false for nil language
+    term_definitions[property].language_mapping = value ? value : false
+  end
+end
+
 describe JSON::LD::Context do
   before(:each) {
     @debug = []

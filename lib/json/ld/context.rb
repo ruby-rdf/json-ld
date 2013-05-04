@@ -67,19 +67,6 @@ module JSON::LD
     # @return [RDF::URI] Document base IRI, used for expanding relative IRIs.
     attr_reader :base
 
-    # @param [String] value must be an absolute IRI
-    def base=(value)
-      if value
-        raise InvalidContext::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String)
-        @base = RDF::URI(value)
-        raise InvalidContext::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
-        @base
-      else
-        @base = nil
-      end
-
-    end
-
     # @return [RDF::URI] base IRI of the context, if loaded remotely. XXX
     attr_accessor :context_base
 
@@ -98,16 +85,6 @@ module JSON::LD
     # @!attribute [rw] default_language
     # @return [String]
     attr_reader :default_language
-
-    # @param [String] value
-    def default_language=(value)
-      @default_language = if value
-        raise InvalidContext::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
-        value.downcase
-      else
-        nil
-      end
-    end
     
     # Default vocabulary
     #
@@ -115,18 +92,6 @@ module JSON::LD
     # aren't otherwise absolute IRIs
     # @return [String]
     attr_reader :vocab
-
-    # @param [String] value must be an absolute IRI
-    def vocab=(value)
-      if value
-        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}" unless value.is_a?(String)
-        @vocab = RDF::URI(value)
-        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" unless @vocab.absolute?
-        @vocab
-      else
-        @vocab = nil
-      end
-    end
 
     # @return [Hash{Symbol => Object}] Global options used in generating IRIs
     attr_accessor :options
@@ -148,14 +113,14 @@ module JSON::LD
     # @yieldparam [Context]
     # @return [Context]
     def initialize(options = {})
-      @base = RDF::URI(options[:base]) if options[:base]
+      @orig_base = @base = RDF::URI(options[:base]) if options[:base]
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
         RDF::XSD.to_uri.to_s => "xsd"
       }
       @remote_contexts = []
-      @namer = BlankNodeNamer.new("t")
+      @namer = BlankNodeMapper.new("t")
 
       @options = options
 
@@ -167,6 +132,41 @@ module JSON::LD
       debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
       
       yield(self) if block_given?
+    end
+
+    # @param [String] value must be an absolute IRI
+    def base=(value)
+      if value
+        raise InvalidContext::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String)
+        @base = RDF::URI(value)
+        raise InvalidContext::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
+        @base
+      else
+        @base = @orig_base
+      end
+
+    end
+
+    # @param [String] value
+    def default_language=(value)
+      @default_language = if value
+        raise InvalidContext::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
+        value.downcase
+      else
+        nil
+      end
+    end
+
+    # @param [String] value must be an absolute IRI
+    def vocab=(value)
+      if value
+        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}" unless value.is_a?(String)
+        @vocab = RDF::URI(value)
+        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" unless @vocab.absolute?
+        @vocab
+      else
+        @vocab = nil
+      end
     end
 
     # Create an Evaluation Context
@@ -308,7 +308,7 @@ module JSON::LD
       when nil, {'@id' => nil}
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
         debug(" =>") {"nil"}
-        term_definitions[term] = nil
+        term_definitions[term] = TermDefinition.new
         defined[term] = true
         return
       when String
@@ -351,7 +351,7 @@ module JSON::LD
           definition.type_mapping = '@id'
 
           # If value contains an @container member, set the container mapping of definition to @index if that is the value of the @container member; otherwise an invalid reverse property error has been detected (reverse properties only support index-containers) and processing is aborted.
-          if container = value['@container'] && container != '@index'
+          if (container = value['@container']) && container != '@index'
             raise InvalidContext::InvalidReverseProperty, "unknown mapping for '@container' to #{container.inspect}"
           end
           definition.reverse_property = true
@@ -509,80 +509,29 @@ module JSON::LD
       iri_to_term.fetch(value, value)
     end
 
-    ## FIXME: this should go away
-    # Retrieve type mappings
-    #
-    # @return [Array<String>]
-    # @deprecated
-    def coercions
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.type_mapping
-        memo
-      end
-    end
-
     ##
     # Retrieve term coercion
     #
     # @param [String] property in unexpanded form
     #
     # @return [RDF::URI, '@id']
-    # @deprecated
     def coerce(property)
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
       return '@id' if [RDF.type, '@type'].include?(property)
-      term_definitions[property].type_mapping if term_definitions.has_key?(property)
+      term_definitions[property] && term_definitions[property].type_mapping
     end
-
-    ##
-    # Set term coercion
-    #
-    # @param [String] property in unexpanded form
-    # @param [RDF::URI, '@id'] value
-    #
-    # @return [RDF::URI, '@id']
-    # @deprecated
-    def set_coerce(property, value)
-      debug {"coerce #{property.inspect} to #{value.inspect}"} unless term_definitions[property.to_s].type_mapping == value
-      term_definitions[property.to_s].type_mapping = value
-    end
-
-    ## FIXME: this should go away
-    # Retrieve container mappings
-    #
-    # @return [Array<String>]
-    # @deprecated
-    def containers
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.container_mapping
-        memo
-      end
-    end
+    protected :coerce
 
     ##
     # Retrieve container mapping, add it if `value` is provided
     #
     # @param [String] property in unexpanded form
     # @return [String]
-    # @deprecated
     def container(property)
       return '@set' if property == '@graph'
       return property if KEYWORDS.include?(property)
-      term_definitions[property.to_s].container_mapping if term_definitions.has_key?(property)
-    end
-
-    ##
-    # Set container mapping
-    #
-    # @param [String] property
-    # @param [String] value one of @list, @set or nil
-    # @return [Boolean]
-    # @deprecated
-    def set_container(property, value)
-      debug {"coerce #{property.inspect} to #{value.inspect}"}
-      raise "Can't set container mapping with no term definition" unless term_definitions.has_key?(property.to_s)
-      term_definitions[property.to_s].container_mapping = value
+      term_definitions[property] && term_definitions[property].container_mapping
     end
 
     ## FIXME: this should go away
@@ -600,22 +549,10 @@ module JSON::LD
     ##
     # Retrieve the language associated with a property, or the default language otherwise
     # @return [String]
-    # @deprecated
     def language(property)
       raise "Can't set language mapping with no term definition" unless term_definitions.has_key?(property.to_s)
-      lang = term_definitions[property.to_s].language_mapping if term_definitions.has_key?(property)
+      lang = term_definitions[property] && term_definitions[property].language_mapping
       lang || @default_language
-    end
-    
-    ##
-    # Set language mapping
-    #
-    # @param [String] property
-    # @param [String] value
-    # @return [String]
-    def set_language(property, value)
-      # Use false for nil language
-      term_definitions[property.to_s].language_mapping = value ? value : false
     end
 
     ##
@@ -627,6 +564,7 @@ module JSON::LD
     def term_valid?(term)
       term.is_a?(String)
     end
+    protected :term_valid?
 
     ##
     # Expand an IRI. Relative IRIs are expanded against any document base.
@@ -648,61 +586,63 @@ module JSON::LD
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
-      local_context = options[:local_context]
-      defined = options.fetch(:defined, {})
+      depth(options) do
+        local_context = options[:local_context]
+        defined = options.fetch(:defined, {})
 
-      # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
-      if local_context && local_context.has_key?(value) && !defined[value]
-        depth {create_term_definition(local_context, value, defined)}
-      end
-
-      # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
-      if options[:vocab] && td = term_definitions[value]
-        debug("expand_iri") {"match: #{value.inspect} to #{td.id}"} unless options[:quiet]
-        return td.id
-      end
-
-      # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
-      if value.include?(':')
-        prefix, suffix = value.split(':', 2)
-        debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
-
-        # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
-        return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
-        return RDF::URI(value) if suffix[0,2] == '//'
-
-        # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
-        if local_context && local_context.has_key?(prefix) && !defined[prefix]
-          create_term_definition(local_context, prefix, defined)
+        # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
+        if local_context && local_context.has_key?(value) && !defined[value]
+          depth {create_term_definition(local_context, value, defined)}
         end
 
-        # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
-        result = if (td = term_definitions[prefix])
-          result = td.id + suffix
+        # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
+        if options[:vocab] && td = term_definitions[value]
+          debug("expand_iri") {"match: #{value.inspect} to #{td.id}"} unless options[:quiet]
+          return td.id
+        end
+
+        # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
+        if value.include?(':')
+          prefix, suffix = value.split(':', 2)
+          debug("expand_iri") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
+
+          # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
+          return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
+          return RDF::URI(value) if suffix[0,2] == '//'
+
+          # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
+          if local_context && local_context.has_key?(prefix) && !defined[prefix]
+            create_term_definition(local_context, prefix, defined)
+          end
+
+          # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
+          result = if (td = term_definitions[prefix])
+            result = td.id + suffix
+          else
+            # (Otherwise) Return value as it is already an absolute IRI.
+            RDF::URI(value)
+          end
+
+          debug("expand_iri") {"result: #{result.inspect}"} unless options[:quiet]
+          return result
+        end
+        debug("expand_iri") {"result: #{result.inspect}"} unless options[:quiet]
+
+        result = if options[:vocab] && vocab
+          # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
+          vocab + value
+        elsif options[:documentRelative] && base = options.fetch(:base, self.base)
+          # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
+          RDF::URI(base).join(value).to_s
+        elsif local_context && RDF::URI(value).relative?
+          # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
+          raise JSON::LD::InvalidContext::InvalidIRIMapping, "not an absolute IRI: #{value}"
         else
-          # (Otherwise) Return value as it is already an absolute IRI.
           RDF::URI(value)
         end
-
-        debug("expand_iri") {"result: #{result.inspect}"} unless options[:quiet]
-        return result
+        debug(" =>") {result} unless options[:quiet]
+        result
       end
-      debug("expand_iri") {"result: #{result.inspect}"} unless options[:quiet]
-
-      result = if options[:vocab] && vocab
-        # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
-        vocab + value
-      elsif options[:documentRelative] && base = options.fetch(:base, self.base)
-        # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-        RDF::URI(base).join(value).to_s
-      elsif local_context && RDF::URI(value).relative?
-        # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
-        raise JSON::LD::InvalidContext::InvalidIRIMapping, "not an absolute IRI: #{value}"
-      else
-        RDF::URI(value)
-      end
-      debug(" =>") {result} unless options[:quiet]
-      result
     end
 
     ##
@@ -1029,11 +969,7 @@ module JSON::LD
       that = self
       ec = super
       ec.instance_eval do
-        @vocab = that.vocab
-        @namer = that.namer
-        @default_language = that.default_language
         @term_definitions = that.term_definitions.dup
-        @options = that.options
         @iri_to_term = that.iri_to_term.dup
       end
       ec

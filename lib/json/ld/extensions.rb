@@ -37,7 +37,14 @@ module RDF
       @uri.to_s
     end
   end
-  
+
+  class Node
+    # Odd case of appending to a BNode identifier
+    def +(value)
+      Node.new(id + value.to_s)
+    end
+  end
+
   class Literal
     class Double
       ##
@@ -69,7 +76,7 @@ class Array
   # @yieldparam [Object] b
   # @yieldreturn [Integer]
   # @return [Array]
-  KW_ORDER = %(@id @value @type @language @vocab @container @graph @list @set)
+  KW_ORDER = %w(@base @id @value @type @language @vocab @container @graph @list @set @index).freeze
 
   # Order, considering keywords to come before other strings
   def kw_sort
