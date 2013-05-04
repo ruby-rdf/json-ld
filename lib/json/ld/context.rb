@@ -550,7 +550,6 @@ module JSON::LD
     # Retrieve the language associated with a property, or the default language otherwise
     # @return [String]
     def language(property)
-      raise "Can't set language mapping with no term definition" unless term_definitions.has_key?(property.to_s)
       lang = term_definitions[property] && term_definitions[property].language_mapping
       lang || @default_language
     end
@@ -806,11 +805,13 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Boolean] :useNativeTypes (true) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
+      options = {:useNativeTypes => true}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
@@ -838,7 +839,7 @@ module JSON::LD
         when RDF::Literal
           debug("Literal") {"datatype: #{value.datatype.inspect}"}
           res = Hash.ordered
-          if [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+          if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
             res['@type'] = uri(coerce(property)) if coerce(property)
           else
