@@ -29,17 +29,13 @@ module JSON::LD
         @id = id
       end
 
-      # Is term a property generator?
-      def property_generator?; id.is_a?(Array); end
-
       # Output Hash or String definition for this definition
       # @return [String, Hash{String => Array[String], String}]
       def to_context_definition
         if language_mapping.nil? &&
            container_mapping.nil? &&
            type_mapping.nil? &&
-           reverse_property.nil? &&
-           !property_generator?
+           reverse_property.nil?
           id
         else
           defn = Hash.ordered
@@ -303,33 +299,17 @@ module JSON::LD
       # Remove any existing term definition for term in active context.
       term_definitions.delete(term)
 
-      # Initialize value to the value associated with the key term in local context.
-      case value = local_context.fetch(term, false)
+      # Initialize value to a the value associated with the key term in local context.
+      value = local_context.fetch(term, false)
+      value = {'@id' => value} if value.is_a?(String)
+
+      case value
       when nil, {'@id' => nil}
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
         debug(" =>") {"nil"}
         term_definitions[term] = TermDefinition.new
         defined[term] = true
         return
-      when String
-        # Expand value by setting it to the result of using the IRI Expansion algorithm, passing active context, value, true for vocabRelative, true for documentRelative, local context, and defined.
-        value = depth {
-          expand_iri(value,
-                     :documentRelative => true,
-                     :vocab => true,
-                     :local_context => local_context,
-                     :defined => defined)}
-
-        if KEYWORDS.include?(value)
-          # If value is @context, an invalid keyword alias error has been detected and processing is aborted.
-          raise InvalidContext::InvalidKeywordAlias, "key #{value.inspect} must not be a @context or @preserve" if
-            %w(@context @preserve).include?(value)
-        end
-
-        # Set the IRI mapping for the term definition for term in active context to value, set the value associated with defined's key term to true, and return.
-        term_definitions[term] = TermDefinition.new(value)
-        defined[term] = true
-        debug(" =>") {value}
       when Hash
         debug("create_term_definition") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new
@@ -355,7 +335,7 @@ module JSON::LD
             raise InvalidContext::InvalidReverseProperty, "unknown mapping for '@container' to #{container.inspect}"
           end
           definition.reverse_property = true
-        elsif value.has_key?('@id')
+        elsif value.has_key?('@id') && value['@id'] != term
           raise InvalidContext::InvalidIRIMapping, "expected value of @reverse to be a string" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
