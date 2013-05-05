@@ -7,18 +7,18 @@ module JSON::LD
 
     ##
     #
-    # @param [Hash{String => Hash}] activeGraph
+    # @param [Hash{String => Hash}] active_graph
     #   A hash of IRI to Node definitions
     # @return [Array<RDF::Statement>] statements in this graph, without context
-    def graph_to_rdf(activeGraph)
-      debug('graph_to_rdf') {"graph_to_rdf: #{activeGraph.inspect}"}
+    def graph_to_rdf(active_graph)
+      debug('graph_to_rdf') {"graph_to_rdf: #{active_graph.inspect}"}
 
       # Initialize results as an empty array
       results = []
 
       depth do
-        # For each id-node in activeGraph
-        activeGraph.each do |id, node|
+        # For each id-node in active_graph
+        active_graph.each do |id, node|
           # Initialize subject as the IRI or BNode representation of id
           subject = as_resource(id)
           debug("graph_to_rdf")  {"subject: #{subject.to_ntriples}"}
@@ -88,10 +88,10 @@ module JSON::LD
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
           lit = RDF::Literal.new(value, :canonicalize => true)
           value = lit.to_s
-          datatype ||= lit.datatype.to_s
+          datatype ||= lit.datatype
         else
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
-          datatype ||= RDF::XSD.send(item.has_key?('@language') ? :langString : :string).to_s
+          datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
         end
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.

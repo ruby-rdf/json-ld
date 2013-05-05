@@ -373,16 +373,19 @@ module JSON::LD
       results = []
       results.extend(RDF::Enumerable)
 
-      API.new(input, context, options) do
+      # Expand input to simplify processing
+      expanded_input = API.expand(input, nil, context, options)
+
+      API.new(expanded_input, context, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        expanded_input = expand(value, nil, self.context)
         debug(".toRDF") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
 
         # Generate _nodeMap_
         node_map = Hash.ordered
         node_map['@default'] = Hash.ordered
         generate_node_map(expanded_input, node_map)
+        debug(".toRDF") {"node map: #{node_map.to_json(JSON_STATE)}"}
 
         # Start generating statements
         node_map.each do |graph_name, graph|

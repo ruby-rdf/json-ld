@@ -108,6 +108,69 @@ describe JSON::LD::API do
             ]
           }
         ]))
+      },
+      "Simple named graph (Wikidata)" => {
+        :input => ::JSON.parse(%q({
+          "@context": {
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "ex": "http://example.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "ex:locatedIn": {"@type": "@id"},
+            "ex:hasPopulaton": {"@type": "xsd:integer"},
+            "ex:hasReference": {"@type": "@id"}
+          },
+          "@graph": [
+            {
+              "@id": "http://example.org/ParisFact1",
+              "@type": "rdf:Graph",
+              "@graph": {
+                "@id": "http://example.org/location/Paris#this",
+                "ex:locatedIn": "http://example.org/location/France#this"
+              },
+              "ex:hasReference": ["http://www.britannica.com/", "http://www.wikipedia.org/", "http://www.brockhaus.de/"]
+            },
+            {
+              "@id": "http://example.org/ParisFact2",
+              "@type": "rdf:Graph",
+              "@graph": {
+                "@id": "http://example.org/location/Paris#this",
+                "ex:hasPopulation": 7000000
+              },
+              "ex:hasReference": "http://www.wikipedia.org/"
+            }
+          ]
+        })),
+        :output => ::JSON.parse(%q([{
+          "@id": "http://example.org/ParisFact1",
+          "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
+          "http://example.org/hasReference": [
+            {"@id": "http://www.britannica.com/"},
+            {"@id": "http://www.wikipedia.org/"},
+            {"@id": "http://www.brockhaus.de/"}
+          ],
+          "@graph": [{
+              "@id": "http://example.org/location/France#this"
+          }, {
+              "@id": "http://example.org/location/Paris#this",
+              "http://example.org/locatedIn": [{"@id": "http://example.org/location/France#this"}]
+            }]
+          }, {
+            "@id": "http://example.org/ParisFact2",
+            "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
+            "http://example.org/hasReference": [{"@id": "http://www.wikipedia.org/"}],
+            "@graph": [{
+              "@id": "http://example.org/location/Paris#this",
+              "http://example.org/hasPopulation": [{"@value": 7000000}]
+            }]
+          }, {
+            "@id": "http://www.britannica.com/"
+          }, {
+            "@id": "http://www.brockhaus.de/"
+          }, {
+            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"
+          }, {
+            "@id": "http://www.wikipedia.org/"
+          }])),
       }
     }.each do |title, params|
       it title do

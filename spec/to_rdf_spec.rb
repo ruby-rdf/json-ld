@@ -12,18 +12,19 @@ describe JSON::LD::API do
           %q({
             "http://example.com/foo": "bar"
           }),
-          %q([ <http://example.com/foo> "bar"] .)
+          %q([ <http://example.com/foo> "bar"^^xsd:string] .)
         ],
         "@id with _:a" => [
           %q({
             "@id": "_:a",
             "http://example.com/foo": "bar"
           }),
-          %q([ <http://example.com/foo> "bar"] .)
+          %q([ <http://example.com/foo> "bar"^^xsd:string] .)
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -37,17 +38,10 @@ describe JSON::LD::API do
           }),
           %q(<http://example.com/a> <http://example.com/foo> "bar" .)
         ],
-        "with empty term" => [
-          %({
-            "@context": {"": "http://example.com/"},
-            "@id": "",
-            "@type": "#{RDF::RDFS.Resource}"
-          }),
-          %(<http://example.com/> a <#{RDF::RDFS.Resource}>)
-        ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
       
@@ -74,9 +68,10 @@ describe JSON::LD::API do
             }),
             %(<http://example.org/#a> a <#{RDF::RDFS.Resource}>)
           ],
-        }.each do |title, (js, nt)|
+        }.each do |title, (js, ttl)|
           it title do
-            parse(js, :base => "http://example.org/").should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            parse(js, :base => "http://example.org/").should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
           end
         end
       end
@@ -102,9 +97,10 @@ describe JSON::LD::API do
           }),
           %q([ a _:foo ] .)
         ]
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -115,13 +111,13 @@ describe JSON::LD::API do
           %q({
             "http://example.com/foo": "bar"
           }),
-          %q([ <http://example.com/foo> "bar" ] .)
+          %q([ <http://example.com/foo> "bar"^^xsd:string ] .)
         ],
         "strings" => [
           %q({
             "http://example.com/foo": ["bar", "baz"]
           }),
-          %q([ <http://example.com/foo> "bar", "baz" ] .)
+          %q([ <http://example.com/foo> "bar"^^xsd:string, "baz"^^xsd:string ] .)
         ],
         "IRI" => [
           %q({
@@ -135,9 +131,10 @@ describe JSON::LD::API do
           }),
           %q([ <http://example.com/foo> <http://example.com/bar>, <http://example.com/baz> ] .)
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -152,7 +149,7 @@ describe JSON::LD::API do
         "explicit plain literal" =>
         [
           %q({"http://xmlns.com/foaf/0.1/name": {"@value": "Gregg Kellogg"}}),
-          %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .)
+          %q(_:a <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg"^^xsd:string .)
         ],
         "language tagged literal" =>
         [
@@ -183,9 +180,10 @@ describe JSON::LD::API do
             <http://greggkellogg.net/foaf#me> <http://purl.org/dc/terms/created> "1957-02-27"^^<http://www.w3.org/2001/XMLSchema#date> .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -194,19 +192,20 @@ describe JSON::LD::API do
       {
         "empty prefix" => [
           %q({"@context": {"": "http://example.com/default#"}, ":foo": "bar"}),
-          %q(_:a <http://example.com/default#foo> "bar" .)
+          %q(_:a <http://example.com/default#foo> "bar"^^xsd:string .)
         ],
         "empty suffix" => [
           %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:": "bar"}),
-          %q(_:a <http://example.com/default#> "bar" .)
+          %q(_:a <http://example.com/default#> "bar"^^xsd:string .)
         ],
         "prefix:suffix" => [
           %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:foo": "bar"}),
-          %q(_:a <http://example.com/default#foo> "bar" .)
+          %q(_:a <http://example.com/default#foo> "bar"^^xsd:string .)
         ]
-      }.each_pair do |title, (js, nt)|
+      }.each_pair do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -222,12 +221,13 @@ describe JSON::LD::API do
           }),
           %q(
             <http://example.com/about#gregg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> .
-            <http://example.com/about#gregg> <http://schema.org/name> "Gregg Kellogg" .
+            <http://example.com/about#gregg> <http://schema.org/name> "Gregg Kellogg"^^xsd:string .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -260,12 +260,13 @@ describe JSON::LD::API do
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://xmlns.com/foaf/0.1/name> "Manu Sporny" .
+            _:a <http://xmlns.com/foaf/0.1/name> "Manu Sporny"^^xsd:string .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -284,9 +285,10 @@ describe JSON::LD::API do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> "Ivan Herman" .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -313,7 +315,7 @@ describe JSON::LD::API do
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny"^^xsd:string .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
@@ -329,7 +331,7 @@ describe JSON::LD::API do
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny"^^xsd:string .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
@@ -342,15 +344,16 @@ describe JSON::LD::API do
           }),
           %q(
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> _:a .
-            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny" .
+            _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Manu Sporny"^^xsd:string .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .
-            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Dave Longley" .
+            _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "Dave Longley"^^xsd:string .
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end
@@ -395,7 +398,7 @@ describe JSON::LD::API do
           }),
           %q(
             _:a <http://example.com/foo> _:b .
-            _:b <http://example.org/foo> "bar" .
+            _:b <http://example.org/foo> "bar"^^xsd:string .
           )
         ],
         "contexts with a list processed in order" => [
@@ -407,7 +410,7 @@ describe JSON::LD::API do
             "foo":  "bar"
           }),
           %q(
-            _:b <http://example.org/foo> "bar" .
+            _:b <http://example.org/foo> "bar"^^xsd:string .
           )
         ],
         "term definition resolves term as IRI" => [
@@ -419,7 +422,7 @@ describe JSON::LD::API do
             "bar":  "bar"
           }),
           %q(
-            _:b <http://example.com/foo> "bar" .
+            _:b <http://example.com/foo> "bar"^^xsd:string .
           )
         ],
         "term definition resolves prefix as IRI" => [
@@ -431,22 +434,7 @@ describe JSON::LD::API do
             "bar":  "bar"
           }),
           %q(
-            _:b <http://example.com/foo#bar> "bar" .
-          )
-        ],
-        "IRI resolution uses term from current context, not active context" => [
-          %q({
-            "@context": [
-              {"foo": "not-this#"},
-              {
-                "foo": "http://example.com/foo#",
-                "bar": "foo:bar"
-              }
-            ],
-            "bar":  "bar"
-          }),
-          %q(
-            _:b <http://example.com/foo#bar> "bar" .
+            _:b <http://example.com/foo#bar> "bar"^^xsd:string .
           )
         ],
         "@language" => [
@@ -482,12 +470,13 @@ describe JSON::LD::API do
             "foo:bar":  {"@value": "baz"}
           }),
           %q(
-            _:a <http://example.com/foo#bar> "baz" .
+            _:a <http://example.com/foo#bar> "baz"^^xsd:string .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :base => "http://example/", :trace => @debug, :inputDocument => js)
         end
       end
       
@@ -537,9 +526,10 @@ describe JSON::LD::API do
                 [ dc:date "2011-11-23"^^xsd:date] .
               )
             ],
-          }.each do |title, (js, nt)|
+          }.each do |title, (js, ttl)|
             it title do
-              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+              ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+              parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
             end
           end
         end
@@ -572,9 +562,10 @@ describe JSON::LD::API do
                 _:a <http://example.org/foo#bar> (<http://example.org/foo#bar>) .
               )
             ],
-          }.each do |title, (js, nt)|
+          }.each do |title, (js, ttl)|
             it title do
-              parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+              ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+              parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
             end
           end
         end
@@ -586,12 +577,12 @@ describe JSON::LD::API do
         "number syntax (decimal)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3}),
-          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (double)" =>
         [
           %q({"@context": { "measure": "http://example/measure#"}, "measure:cups": 5.3e0}),
-          %q(_:a <http://example/measure#cups> "5.3"^^<http://www.w3.org/2001/XMLSchema#double> .)
+          %q(_:a <http://example/measure#cups> "5.3E0"^^<http://www.w3.org/2001/XMLSchema#double> .)
         ],
         "number syntax (integer)" =>
         [
@@ -628,9 +619,10 @@ describe JSON::LD::API do
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
-      }.each do |title, (js, nt)|
+      }.each do |title, (js, ttl)|
         it title do
-          parse(js).should be_equivalent_graph(nt, :trace => @debug, :inputDocument => js)
+          ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+          parse(js).should be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
         end
       end
     end

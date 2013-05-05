@@ -67,7 +67,8 @@ module JSON::LD
     # @param [String] id
     # @return [RDF::Resource]
     def as_resource(id)
-      id[0,2] == '_:' ? RDF::Node.new(id[2..-1]) : RDF::URI(id)
+      @nodes ||= {} # Re-use BNodes
+      id[0,2] == '_:' ? (@nodes[id] ||= RDF::Node.new(id[2..-1])) : RDF::URI(id)
     end
 
     private
