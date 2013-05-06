@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 require 'rdf/spec/writer'
 
-describe JSON::LD::Writer do
+describe JSON::LD::Writer, :pending => "Writer update" do
   before :each do
     @writer = JSON::LD::Writer.new(StringIO.new(""))
   end

@@ -47,17 +47,17 @@ describe JSON::LD::API do
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
-        it "compacts" do
+        it "compacts", :pending => "Compaction update" do
           jld = JSON::LD::API.compact(File.open(filename), File.open(context), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
-        it "frame" do
+        it "frame", :pending => "Framing update" do
           jld = JSON::LD::API.frame(File.open(filename), File.open(frame), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
-        it "toRDF" do
+        it "toRDF", :pending => "API toRDF test update" do
           RDF::Graph.load(filename, :debug => @debug).should be_equivalent_graph(RDF::Graph.load(ttl), :trace => @debug)
         end if File.exist?(ttl)
       end

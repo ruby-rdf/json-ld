@@ -5,7 +5,7 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  describe ".frame", :pending => "Must investigate" do
+  describe ".frame", :pending => "Frame update" do
     {
       "frame with @type matches subject with @type" => {
         :frame => {
