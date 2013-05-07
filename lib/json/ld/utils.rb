@@ -73,6 +73,19 @@ module JSON::LD
 
     private
 
+    # Merge the last value into an array based for the specified key if hash is not null and value is not already in that array
+    def merge_value(hash, key, value)
+      return unless hash
+      values = hash[key] ||= []
+      if key == '@list'
+        values << value
+      elsif list?(value)
+        values << value
+      elsif !values.include?(value)
+        values << value
+      end
+    end
+
     # Add debug event to debug array, if specified
     #
     #   param [String] message

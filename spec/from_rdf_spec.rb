@@ -12,7 +12,10 @@ describe JSON::LD::API do
         {
           '@id'         => "http://a/b",
           "http://a/c"  => [{"@id" => "http://a/d"}]
-        }], @debug)
+          }, {
+            '@id' => 'http://a/d'
+          }
+        ], @debug)
       end
 
       it "should generate object list" do
@@ -24,7 +27,10 @@ describe JSON::LD::API do
             {"@id" => "http://example.com/d"},
             {"@id" => "http://example.com/e"}
           ]
-        }], @debug)
+        },
+        {"@id" => "http://example.com/d"},
+        {"@id" => "http://example.com/e"}
+        ], @debug)
       end
     
       it "should generate property list" do
@@ -34,7 +40,10 @@ describe JSON::LD::API do
           '@id'   => "http://example.com/b",
           "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
           "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
-        }], @debug)
+        },
+        {"@id" => "http://example.com/d"},
+        {"@id" => "http://example.com/f"}
+        ], @debug)
       end
     
       it "serializes multiple subjects" do
@@ -46,8 +55,9 @@ describe JSON::LD::API do
         )
         serialize(input).
         should produce([
+          {'@id'  => "http://www.w3.org/2006/03/test-description#TestCase"},
           {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
-          {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]}
+          {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
         ], @debug)
       end
     end
@@ -56,10 +66,12 @@ describe JSON::LD::API do
       context "coercion" do
         it "typed literal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
-          serialize(input).should produce([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
-          }], @debug)
+          serialize(input).should produce([
+            {
+              '@id'   => "http://example.com/a",
+              "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
+            }
+          ], @debug)
         end
 
         it "integer" do
@@ -154,10 +166,13 @@ describe JSON::LD::API do
     context "anons" do
       it "should generate bare anon" do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
-        serialize(input).should produce([{
+        serialize(input).should produce([
+        {
           "@id" => "_:a",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
-        }], @debug)
+        },
+        {"@id" => "http://example.com/b"}
+        ], @debug)
       end
     
       it "should generate anon as object" do
@@ -171,6 +186,7 @@ describe JSON::LD::API do
             "@id" => "http://example.com/a",
             "http://example.com/b"  => [{"@id" => "_:a"}]
           },
+          {"@id" => "http://example.com/d"},
         ], @debug)
       end
     end
@@ -202,7 +218,7 @@ describe JSON::LD::API do
               {"@id" => "http://example.com/c"}
             ]
           }]
-        }], @debug)
+        }, {"@id" => "http://example.com/c"}], @debug)
       end
     
       it "should generate empty list" do
@@ -249,8 +265,8 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-              }]
-            }
+              }, {"@id" => "http://example.com/c"}]
+            },
           ]
         },
         "with properties" => {
@@ -264,9 +280,10 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-              }],
+              }, {"@id" => "http://example.com/c"}],
               "http://example.com/d" => [{"@id" => "http://example.com/e"}]
-            }
+            },
+            {"@id" => "http://example.com/e"}
           ]
         },
         "with lists" => {
@@ -284,9 +301,10 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@list" => [{"@id" => "http://example.com/c"}]}]
-              }],
+              }, {"@id" => "http://example.com/c"}],
               "http://example.com/d" => [{"@list" => [{"@id" => "http://example.com/e"}]}]
-            }
+            },
+            {"@id" => "http://example.com/e"}
           ]
         },
         "Two Graphs with same subject and lists" => {
@@ -307,7 +325,8 @@ describe JSON::LD::API do
                   "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/c"}]
                   }]
-                }
+                },
+                {"@id" => "http://example.com/c"}
               ]
             },
             {
@@ -318,7 +337,8 @@ describe JSON::LD::API do
                   "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/e"}]
                   }]
-                }
+                },
+                {"@id" => "http://example.com/e"}
               ]
             }
           ]
@@ -337,15 +357,15 @@ describe JSON::LD::API do
         serialize(input, :useRdfType => false).should produce([{
           '@id'   => "http://example.com/a",
           "@type"    => ["http://example.com/b"]
-        }], @debug)
+        }, {'@id' => "http://example.com/b"}], @debug)
       end
       
       it "does not use @type if set to true" do
         input = %(@prefix ex: <http://example.com/> . ex:a a ex:b .)
         serialize(input, :useRdfType => true).should produce([{
           '@id'   => "http://example.com/a",
-          RDF.type.to_s    => [{"@id" => "http://example.com/b"}]
-        }], @debug)
+          '@type'    => ["http://example.com/b"]
+        }, {"@id" => "http://example.com/b"}], @debug)
       end
     end
   
@@ -363,7 +383,7 @@ describe JSON::LD::API do
             "http://www.w3.org/2000/01/rdf-schema#range" => [
               { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }
             ]
-          }]
+          }, { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }]
         ],
       }.each do |t, (input, output)|
         it "#{t}" do
