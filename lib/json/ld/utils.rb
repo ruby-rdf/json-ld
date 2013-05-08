@@ -103,9 +103,9 @@ module JSON::LD
     def depth(options = {})
       old_depth = @depth || 0
       @depth = (options[:depth] || old_depth) + 1
-      ret = yield
+      yield
+    ensure
       @depth = old_depth
-      ret
     end
   end
 

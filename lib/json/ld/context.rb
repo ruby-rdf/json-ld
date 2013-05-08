@@ -17,6 +17,7 @@ module JSON::LD
       # @return [String] Container mapping
       attr_accessor :container_mapping
 
+      # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
       # @return [String] Language mapping
       attr_accessor :language_mapping
 
@@ -54,6 +55,7 @@ module JSON::LD
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
+        v << "type=#{type_mapping}" unless type_mapping.nil?
         v.join(" ") + "]"
       end
     end
@@ -263,6 +265,7 @@ module JSON::LD
     end
 
 
+    ##
     # Create Term Definition
     #
     # Term definitions are created by parsing the information in the given local context for the given term. If the given term is a compact IRI, it may omit an IRI mapping by depending on its prefix having its own term definition. If the prefix is a key in the local context, then its term definition must first be created, through recursion, before continuing. Because a term definition can depend on other term definitions, a mechanism must be used to detect cyclical dependencies. The solution employed here uses a map, defined, that keeps track of whether or not a term has been defined or is currently in the process of being defined. This map is checked before any recursion is attempted.
@@ -575,9 +578,9 @@ module JSON::LD
         end
 
         # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
-        if options[:vocab] && td = term_definitions[value]
-          debug("expand_iri") {"match: #{value.inspect} to #{td.id}"} unless options[:quiet]
-          return td.id
+        if options[:vocab] && (v_td = term_definitions[value])
+          debug("expand_iri") {"match: #{value.inspect} to #{v_td.id}"} unless options[:quiet]
+          return v_td.id
         end
 
         # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
@@ -629,149 +632,155 @@ module JSON::LD
     #
     # @param [RDF::URI] iri
     # @param  [Hash{Symbol => Object}] options ({})
-    # @option options [:subject, :predicate, :type] position
-    #   Useful when determining how to serialize.
     # @option options [Object] :value
     #   Value, used to select among various maps for the same IRI
-    # @option options [Boolean] :not_term (false)
-    #   Don't return a term, but only a CURIE or IRI.
+    # @option options [Boolean] :vocab
+    #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
+    # @option options [Boolean] :reverse
+    #   specifies whether a reverse property is being compacted 
     #
     # @return [String] compacted form of IRI
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-compaction
     def compact_iri(iri, options = {})
+      return if iri.nil?
+      iri = iri.to_s
       depth(options) do
         debug {"compact_iri(#{iri.inspect}, #{options.inspect})"}
 
         value = options.fetch(:value, nil)
 
-        # Get a list of terms which map to iri
-        matched_terms = mappings.keys.select {|t| mapping(t).to_s == iri}
-        debug("compact_iri", "initial terms: #{matched_terms.inspect}")
+        if options[:vocab] && inverse_context.has_key?(iri)
+          debug("compact_iri", "vocab and key in inverse context")
+          default_language = self.default_language || @none
+          containers = []
+          tl, tl_value = "@language", "@null"
+          containers << '@index' if index?(value)
+          if options[:reverse]
+            tl, tl_value = "@type", "@reverse"
+            containers << '@set'
+          elsif list?(value)
+            debug("compact_iri", "list(#{value.inspect})")
+            # if value is a list object, then set type/language and type/language value to the most specific values that work for all items in the list as follows:
+            containers << "@list" unless index?(value)
+            list = value['@list']
+            common_type = nil
+            common_language = default_language if list.empty?
+            list.each do |item|
+              item_language, item_type = "@none", "@none"
+              if value?(item)
+                if item.has_key?('@language')
+                  item_language = item['@language']
+                elsif item.has_key?('@type')
+                  item_type = item['@type']
+                else
+                  item_language = "@null"
+                end
+              else
+                item_type = '@id'
+              end
+              common_language ||= item_language
+              if item_language != common_language && value?(item)
+                debug("--") {"#{item_language} conflicts with #{common_language}, use @none"}
+                common_language = '@none'
+              end
+              common_type ||= item_type
+              if item_type != common_type
+                common_type = '@none'
+                debug("compact_iri") {"#{item_type} conflicts with #{common_type}, use @none"}
+              end
+            end
 
-        # Create an empty list of terms _terms_ that will be populated with terms that are ranked according to how closely they match value. Initialize highest rank to 0, and set a flag list container to false.
-        terms = {}
-
-        # If value is a @list select terms that match every item equivalently.
-        debug("compact_iri", "#{value.inspect} is a list? #{list?(value).inspect}") if value
-        if list?(value) && !index?(value)
-          list_terms = matched_terms.select {|t| container(t) == '@list'}
-            
-          terms = list_terms.inject({}) do |memo, t|
-            memo[t] = term_rank(t, value)
-            memo
-          end unless list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
-          terms.delete_if {|t, r| r == 0}
-        end
-        
-        # Otherwise, value is @value or a native type.
-        # Add a term rank for each term mapping to iri
-        # which does not have @container @list
-        if terms.empty?
-          non_list_terms = matched_terms.reject {|t| container(t) == '@list'}
-
-          # If value is a @list, exclude from term map those terms
-          # with @container @set
-          non_list_terms.reject {|t| container(t) == '@set'} if list?(value)
-
-          terms = non_list_terms.inject({}) do |memo, t|
-            memo[t] = term_rank(t, value)
-            memo
-          end unless non_list_terms.empty?
-          debug("term map") {"remove zero rank terms: #{terms.keys.select {|t| terms[t] == 0}}"} if terms.any? {|t,r| r == 0}
-          terms.delete_if {|t, r| r == 0}
-        end
-
-        # If we don't want terms, remove anything that's not a CURIE or IRI
-        terms.keep_if {|t, v| t.index(':') } if options.fetch(:not_term, false)
-
-        # Find terms having the greatest term match value
-        least_distance = terms.values.max
-        terms = terms.keys.select {|t| terms[t] == least_distance}
-
-        # If terms is empty, add a compact IRI representation of iri for each 
-        # term in the active context which maps to an IRI which is a prefix for 
-        # iri where the resulting compact IRI is not a term in the active 
-        # context. The resulting compact IRI is the term associated with the 
-        # partially matched IRI in the active context concatenated with a colon 
-        # (:) character and the unmatched part of iri.
-        if terms.empty?
-          debug("curies") {"mappings: #{mappings.inspect}"}
-          curies = mappings.keys.map do |k|
-            debug("curies[#{k}]") {"#{mapping(k).inspect}"}
-            #debug("curies[#{k}]") {"#{(mapping(k).to_s.length > 0).inspect}, #{iri.to_s.index(mapping(k).to_s)}"}
-            iri.to_s.sub(mapping(k).to_s, "#{k}:") if
-              mapping(k).to_s.length > 0 &&
-              iri.to_s.index(mapping(k).to_s) == 0 &&
-              iri.to_s != mapping(k).to_s
-          end.compact
-
-          debug("curies") do
-            curies.map do |c|
-              "#{c}: " +
-              "container: #{container(c).inspect}, " +
-              "coerce: #{coerce(c).inspect}, " +
-              "lang: #{language(c).inspect}"
-            end.inspect
+            common_language ||= '@none'
+            common_type ||= '@none'
+            debug("compact_iri", "common type: #{common_type}, common language: #{common_language}")
+            if common_type != '@none'
+              tl, tl_value = '@type', common_type
+            else
+              tl_value = common_language
+            end
+            debug("compact_iri", "list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}")
+          else
+            if value?(value)
+              if value.has_key?('@language') && !index?(value)
+                tl_value = value['@language']
+                containers << '@language'
+              elsif value.has_key?('@type')
+                tl_value = '@id'
+              end
+              containers << '@set'
+            end
+            debug("compact_iri", "value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}")
           end
 
-          terms = curies.select do |curie|
-            (options[:position] != :predicate || container(curie) != '@list') &&
-            coerce(curie).nil? &&
-            language(curie) == default_language
+          containers << '@none'
+          tl_value ||= '@null'
+          preferred_values = []
+          preferred_values << '@reverse' if tl_value == '@reverse'
+          if %w(@id @reverse).include?(tl_value) && value.has_key?('@id')
+            t_iri = compact_iri(value['@id'], :vocab => true, :document_relative => true)
+            if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
+              preferred_values.concat(%w(@vocab @id @none))
+            else
+              preferred_values.concat(%w(@id @vocab @none))
+            end
+          else
+            preferred_values.concat([tl_value, '@none'])
           end
-
-          debug("curies") {"selected #{terms.inspect}"}
+          debug("compact_iri", "preferred_values: #{preferred_values.inspect}")
+          if p_term = select_term(iri, containers, tl, preferred_values)
+            debug("=>") {"term: #{p_term.inspect}"}
+            return p_term
+          end
         end
 
-        # If terms is empty, and the active context has a @vocab which is a  prefix of iri where the resulting relative IRI is not a term in the  active context. The resulting relative IRI is the unmatched part of iri.
-        # Don't use vocab, if the result would collide with a term
-        if vocab && terms.empty? && iri.to_s.index(vocab) == 0 &&
-          !mapping(iri.to_s.sub(vocab, '')) &&
-           [:predicate, :type].include?(options[:position])
-          terms << iri.to_s.sub(vocab, '')
-          debug("vocab") {"vocab: #{vocab}, rel: #{terms.first}"}
+        # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
+        if iri.start_with?(vocab) && iri.length > vocab.length
+          suffix = iri[vocab.length..-1]
+          debug("=>") {"vocab suffix: #{suffix.inspect}"}
+          return suffix unless term_definitions.has_key?(suffix)
+        end
+
+        # The iri could not be compacted using the active context's vocabulary mapping. Try to create a compact IRI, starting by initializing compact IRI to null. This variable will be used to tore the created compact IRI, if any.
+        candidates = []
+
+        term_definitions.each do |term, td|
+          next if term.include?(":")
+          next if td.nil? || td.id == iri || !iri.start_with?(td.id)
+          suffix = iri[td.id.length..-1]
+          candidates << "#{term}:#{suffix}"
+        end
+
+        if !candidates.empty?
+          debug("=>") {"compact iri: #{candidates.term_sort.first.inspect}"}
+          return candidates.term_sort.first
         end
 
         # If we still don't have any terms and we're using standard_prefixes,
         # try those, and add to mapping
-        if terms.empty? && @options[:standard_prefixes]
-          terms = RDF::Vocabulary.
-            select {|v| iri.index(v.to_uri.to_s) == 0}.
+        if @options[:standard_prefixes]
+          candidates = RDF::Vocabulary.
+            select {|v| iri.start_with?(v.to_uri.to_s)}.
             map do |v|
               prefix = v.__name__.to_s.split('::').last.downcase
               set_mapping(prefix, v.to_uri.to_s)
               iri.sub(v.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
             end
-          debug("curies") {"using standard prefies: #{terms.inspect}"}
-        end
 
-        if terms.empty?
-          # If there is a mapping from the complete IRI to null, return null,
-          # otherwise, return the complete IRI.
-          if mappings.has_key?(iri.to_s) && !mapping(iri)
-            debug("iri") {"use nil IRI mapping"}
-            terms << nil
-          else
-            terms << iri.to_s
+          if !candidates.empty?
+            debug("=>") {"standard prefies: #{candidates.term_sort.first.inspect}"}
+            return candidates.term_sort.first
           end
         end
 
-        # Get the first term based on distance and lexecographical order
-        # Prefer terms that don't have @container @set over other terms, unless as set is true
-        terms = terms.sort do |a, b|
-          debug("term sort") {"c(a): #{container(a).inspect}, c(b): #{container(b)}"}
-          if a.to_s.length == b.to_s.length
-            a.to_s <=> b.to_s
-          else
-            a.to_s.length <=> b.to_s.length
-          end
+        if !options[:vocab] && iri.start_with?(base.to_s)
+          # transform iri to a relative IRI using the document's base IRI
+          iri = iri[base.to_s.length..-1]
+          debug("=>") {"relative iri: #{iri.inspect}"}
+          return iri
+        else
+          debug("=>") {"absolute iri: #{iri.inspect}"}
+          return iri
         end
-        debug("sorted terms") {terms.inspect}
-        result = terms.first
-
-        debug {"=> #{result.inspect}"}
-        result
       end
     end
 
@@ -990,79 +999,77 @@ module JSON::LD
     end
 
     ##
-    # Get a "match value" given a term and a value. The value
-    # is lowest when the relative match between the term and the value
-    # is closest.
+    # Inverse Context creation
     #
-    # @param [String] term
-    # @param [Object] value
-    # @return [Integer]
-    def term_rank(term, value)
-      default_term = !coerce(term) && !languages.has_key?(term)
-      debug("term rank") {
-        "term: #{term.inspect}, " +
-        "value: #{value.inspect}, " +
-        "coerce: #{coerce(term).inspect}, " +
-        "lang: #{languages.fetch(term, nil).inspect}/#{language(term).inspect} " +
-        "default_term: #{default_term.inspect}"
-      }
-
-      # value is null
-      rank = if value.nil?
-        debug("term rank") { "null value: 3"}
-        3
-      elsif list?(value)
-        if value['@list'].empty?
-          # If the @list property is an empty array, if term has @container set to @list, term rank is 1, otherwise 0.
-          debug("term rank") { "empty list"}
-          container(term) == '@list' ? 1 : 0
-        else
-          debug("term rank") { "non-empty list"}
-          # Otherwise, return the most specific term, for which the term has some match against every value.
-          depth {value['@list'].map {|v| term_rank(term, v)}}.min
-        end
-      elsif value?(value)
-        val_type = value.fetch('@type', nil)
-        val_lang = value['@language'] || false if value.has_key?('@language')
-        debug("term rank") {"@val_type: #{val_type.inspect}, val_lang: #{val_lang.inspect}"}
-        if val_type
-          debug("term rank") { "typed value"}
-          coerce(term) == val_type ? 3 :  (default_term ? 1 : 0)
-        elsif !value['@value'].is_a?(String)
-          debug("term rank") { "native value"}
-          default_term ? 2 : 1
-        elsif val_lang.nil?
-          debug("val_lang.nil") {"#{language(term).inspect} && #{coerce(term).inspect}"}
-          if language(term) == false || (default_term && default_language.nil?)
-            # Value has no language, and there is no default language and the term has no language
-            3
-          elsif default_term
-            # The term has no language (or type), but it's different than the default
-            2
+    # When there is more than one term that could be chosen to compact an IRI, it has to be ensured that the term selection is both deterministic and represents the most context-appropriate choice whilst taking into consideration algorithmic complexity.
+    #
+    # In order to make term selections, the concept of an inverse context is introduced. An inverse context is essentially a reverse lookup table that maps container mappings, type mappings, and language mappings to a simple term for a given active context. A inverse context only needs to be generated for an active context if it is being used for compaction.
+    #
+    # To make use of an inverse context, a list of preferred container mappings and the type mapping or language mapping are gathered for a particular value associated with an IRI. These parameters are then fed to the Term Selection algorithm, which will find the term that most appropriately matches the value's mappings.
+    #
+    # @return [Hash{String => Hash{String => String}}]
+    def inverse_context
+      @inverse_context ||= begin
+        result = {}
+        default_language = self.default_language || '@none'
+        term_definitions.keys.sort do |a, b|
+          a.length == b.length ? (a <=> b) : (a.length <=> b.length)
+        end.each do |term|
+          next unless td = term_definitions[term]
+          container = td.container_mapping || '@none'
+          container_map = result[td.id.to_s] ||= {}
+          tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}}
+          type_map = tl_map['@type']
+          language_map = tl_map['@language']
+          if td.reverse_property
+            type_map['@reverse'] ||= term
+          elsif td.type_mapping
+            type_map[td.type_mapping.to_s] ||= term
+          elsif !td.language_mapping.nil?
+            language = td.language_mapping || '@null'
+            language_map[language] ||= term
           else
-            0
-          end
-        else
-          debug("val_lang") {"#{language(term).inspect} && #{coerce(term).inspect}"}
-          if val_lang && container(term) == '@language'
-            3
-          elsif val_lang == language(term) || (default_term && default_language == val_lang)
-            2
-          elsif default_term && container(term) == '@set'
-            2 # Choose a set term before a non-set term, if there's a language
-          elsif default_term
-            1
-          else
-            0
+            language_map[default_language] ||= term
+            language_map['@none'] ||= term
+            type_map['@none'] ||= term
           end
         end
-      else # node definition/reference
-        debug("node dev/ref")
-        coerce(term) == '@id' ? 3 : (default_term ? 1 : 0)
+        result
       end
-      
-      debug(" =>") {rank.inspect}
-      rank
+    end
+
+    ##
+    # This algorithm, invoked via the IRI Compaction algorithm, makes use of an active context's inverse context to find the term that is best used to compact an IRI. Other information about a value associated with the IRI is given, including which container mappings and which type mapping or language mapping would be best used to express the value.
+    #
+    # @param [String] iri
+    # @param [Array<String>] containers
+    #   represents an ordered list of preferred container mappings
+    # @param [String] type_language
+    #   indicates whether to look for a term with a matching type mapping or language mapping
+    # @param [Array<String>] preferred_values
+    #   for the type mapping or language mapping
+    # @return [String]
+    def select_term(iri, containers, type_language, preferred_values)
+      debug("select_term") {
+        "iri: #{iri.inspect}, " +
+        "containers: #{containers.inspect}, " +
+        "type_language: #{type_language.inspect}, " +
+        "preferred_values: #{preferred_values.inspect}"
+      }
+      container_map = inverse_context[iri]
+      debug("  ") {"container_map: #{container_map.inspect}"}
+      containers.each do |container|
+        next unless container_map.has_key?(container)
+        tl_map = container_map[container]
+        value_map = tl_map[type_language]
+        preferred_values.each do |item|
+          next unless value_map.has_key?(item)
+          debug("=>") {value_map[item].inspect}
+          return value_map[item]
+        end
+      end
+      debug("=>") {"nil"}
+      nil
     end
   end
 end

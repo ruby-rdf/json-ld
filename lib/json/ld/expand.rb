@@ -166,7 +166,7 @@ module JSON::LD
                         raise ProcessingError::InvalidReversePropertyValue,
                               "invalid reverse property value: #{item.inspect}"
                       end
-                      (reverse_map[property] ||= []) << item
+                      merge_value(reverse_map, property, item)
                     end
                   end
                 end
@@ -253,7 +253,7 @@ module JSON::LD
 
                 # If reverse map has no expanded property member, create one and initialize its value to an empty array.
                 # Append item to the value of the expanded property member of reverse map.
-                (reverse_map[expanded_property] ||= []) << item
+                merge_value(reverse_map, expanded_property, item)
               end
             else
               # Otherwise, if key is not a reverse property:

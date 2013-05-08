@@ -43,6 +43,7 @@ describe JSON::LD::Context do
     @debug = []
     @ctx_json = %q({
       "@context": {
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
@@ -74,6 +75,7 @@ describe JSON::LD::Context do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
+          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
@@ -90,6 +92,7 @@ describe JSON::LD::Context do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
         ec = subject.parse("http://example.com/c1")
         ec.mappings.should produce({
+          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
@@ -357,7 +360,7 @@ describe JSON::LD::Context do
 
     it "@type with dependent prefixes in a single context" do
       subject.parse({
-        'xsd' => RDF::XSD.to_uri.to_s,
+        'xsd' => "http://www.w3.org/2001/XMLSchema#",
         'homepage' => {'@id' => RDF::FOAF.homepage.to_s, '@type' => '@id'}
       }).
       send(:clear_provided_context).
@@ -691,27 +694,50 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#compact_iri", :pending => "TODO" do
+  describe "#compact_iri" do
     subject {
-      context.parse({
-        'ex' => 'http://example.org/',
-        '' => 'http://empty/',
-        '_' => 'http://underscore/'
+      c = context.parse({
+        '@base' => 'http://base/',
+        "xsd"   => "http://www.w3.org/2001/XMLSchema#",
+        'ex'    => 'http://example.org/',
+        ''      => 'http://empty/',
+        '_'     => 'http://underscore/',
+        'rex'   => {'@reverse' => "ex"},
+        'lex'   => {'@id' => 'ex', '@language' => 'en'},
+        'tex'   => {'@id' => 'ex', '@type' => 'xsd:string'}
       })
+      @debug.clear
+      c
     }
 
     {
-      "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
-      "term" =>          ["ex",                  "http://example.org/"],
+      "nil" => [nil, nil],
+      "absolute IRI"  => ["http://example.com/", "http://example.com/"],
       "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-      "keyword" =>       ["@type",               "@type"],
-      "empty" =>         [":suffix",             "http://empty/suffix"],
-      "unmapped" =>      ["foo",                 "foo"],
-      "bnode" =>         ["_:a",                 RDF::Node("a")],
-      "null IRI" =>      [nil,                   "http://example.com/null"],
+      "keyword"       => ["@type",               "@type"],
+      "empty"         => [":suffix",             "http://empty/suffix"],
+      "unmapped"      => ["foo",                 "foo"],
+      "bnode"         => ["_:a",                 RDF::Node("a")],
+      "relative"      => ["foo/bar",             "http://base/foo/bar"]
     }.each do |title, (result, input)|
       it title do
         subject.compact_iri(input).should produce(result, @debug)
+      end
+    end
+
+    context "with :vocab option" do
+      {
+        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
+        "keyword"       => ["@type",               "@type"],
+        "empty"         => [":suffix",             "http://empty/suffix"],
+        "unmapped"      => ["foo",                 "foo"],
+        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"]
+      }.each do |title, (result, input)|
+        it title do
+          subject.compact_iri(input, :vocab => true).should produce(result, @debug)
+        end
       end
     end
 
@@ -719,16 +745,16 @@ describe JSON::LD::Context do
       before(:each) { subject.vocab = "http://example.org/"}
 
       {
-        "absolute IRI" =>  ["http://example.com/", "http://example.com/"],
-        "term" =>          ["ex",                  "http://example.org/"],
-        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-        "keyword" =>       ["@type",               "@type"],
-        "empty" =>         [":suffix",             "http://empty/suffix"],
-        "unmapped" =>      ["foo",                 "foo"],
-        "bnode" =>         ["_:a",                 RDF::Node("a")],
+        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
+        "keyword"       => ["@type",               "@type"],
+        "empty"         => [":suffix",             "http://empty/suffix"],
+        "unmapped"      => ["foo",                 "foo"],
+        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"]
       }.each do |title, (result, input)|
         it title do
-          subject.compact_iri(input).should produce(result, @debug)
+          subject.compact_iri(input, :vocab => true).should produce(result, @debug)
         end
       end
 
@@ -736,7 +762,7 @@ describe JSON::LD::Context do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
         subject.compact_iri("http://example.org/name", :position => :predicate).
-          should produce("http://example.org/name", @debug)
+          should produce("lex:name", @debug)
       end
     end
 
@@ -773,13 +799,13 @@ describe JSON::LD::Context do
 
       {
         "langmap" => [{"@value" => "en", "@language" => "en"}],
-        "plain" => [{"@value" => "foo"}],
-        "setplain" => [{"@value" => "foo", "@language" => "pl"}] # looks like langmap
+        #"plain" => [{"@value" => "foo"}],
+        "setplain" => [{"@value" => "foo", "@language" => "pl"}]
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value).should produce(prop, @debug)
+              ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value, :vocab => true).should produce(prop, @debug)
             end
           end
         end
@@ -795,17 +821,19 @@ describe JSON::LD::Context do
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => true}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
             [{"@value" => "de", "@language" => "de"}, {"@value" => "jp", "@language" => "jp"}],
+            [{"@value" => true}], [{"@value" => false}], 
+            [[{"@value" => 1}], [{"@value" => 1.1}], 
           ],
           "listlang" => [[{"@value" => "en", "@language" => "en"}]],
-          "listbool" => [[{"@value" => true}], [{"@value" => false}], [{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
-          "listinteger" => [[{"@value" => 1}], [{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
-          "listdouble" => [[{"@value" => 1.1}], [{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
+          "listbool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
+          "listinteger" => [{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
+          "listdouble" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
           "listdate" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
         }.each do |prop, values|
           context "uses #{prop}" do
             values.each do |value|
               it "for #{{"@list" => value}.inspect}" do
-                ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", :value => {"@list" => value}).should produce(prop, @debug)
+                ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", :value => {"@list" => value}, :vocab => true).should produce(prop, @debug)
               end
             end
           end
@@ -912,7 +940,7 @@ describe JSON::LD::Context do
       }.each do |term, value|
         [value].flatten.each do |v|
           it "Uses #{term} for #{v}" do
-            ctx.compact_iri("http://example.com/term", :value => JSON.parse(v)).
+            ctx.compact_iri("http://example.com/term", :value => JSON.parse(v), :vocab => true).
               should produce(term, @debug)
           end
         end
@@ -932,19 +960,6 @@ describe JSON::LD::Context do
       end
     end
 
-    context "compact-0021" do
-      let(:ctx) do
-        subject.parse({
-          "@vocab" => "http://example.com/",
-          "sub" => "http://example.com/subdir/"
-        })
-      end
-      it "Compact properties and types using @vocab" do
-        ctx.compact_iri("http://example.com/subdir/id/1", :position => :subject).
-          should produce("sub:id/1", @debug)
-      end
-    end
-
     context "compact-0041" do
       let(:ctx) do
         subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
@@ -958,262 +973,13 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#term_rank", :pending => "TODO" do
-    {
-      "no coercions" => {
-        :defn => {},
-        "boolean value" => {:value => {"@value" => true}, :rank => 2},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 2},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 2},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 3},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 1},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "boolean" => {
-        :defn => {"@type" => RDF::XSD.boolean.to_s},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-        "value boolean" => {:value => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}, :rank => 3},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "integer" => {
-        :defn => {"@type" => RDF::XSD.integer.to_s},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-        "value integer" => {:value => {"@value" => "1", "@type" => RDF::XSD.integer.to_s}, :rank => 3},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "double" => {
-        :defn => {"@type" => RDF::XSD.double.to_s},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-        "value double" => {:value => {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}, :rank => 3},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "date" => {
-        :defn => {"@type" => RDF::XSD.date.to_s},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 3},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "lang" => {
-        :defn => {"@language" => "en"},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
-        "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-        "null"  => {:value => nil, :rank => 3},
-      },
-      "id" => {
-        :defn => {"@type" => "@id"},
-        "boolean value" => {:value => {"@value" => true}, :rank => 1},
-        "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-        "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-        "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-        "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-        "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-        "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
-        "id"    => {:value => {"@id" => "http://example/id"}, :rank => 3},
-        "null"  => {:value => nil, :rank => 3},
-      },
-    }.each do |title, properties|
-      context title do
-        let(:ctx) do
-          subject.parse({
-            "term" => properties[:defn].merge("@id" => "http://example.org/term")
-          })
-        end
-        properties.each do |type, defn|
-          next unless type.is_a?(String)
-          it "returns #{defn[:rank]} for #{type}" do
-            ctx.send(:term_rank, "term", defn[:value]).should produce(defn[:rank], @debug)
-          end
-        end
-      end
-    end
-    
-    context "with default language" do
-      before(:each) {subject.default_language = "en"}
-      {
-        "no coercions" => {
-          :defn => {},
-          "boolean value" => {:value => {"@value" => true}, :rank => 2},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 2},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 2},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 2},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 1},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 1},
-          "value string" => {:value => {"@value" => "foo"}, :rank => 2},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "boolean" => {
-          :defn => {"@type" => RDF::XSD.boolean.to_s},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "value boolean" => {:value => {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}, :rank => 3},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "integer" => {
-          :defn => {"@type" => RDF::XSD.integer.to_s},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "value integer" => {:value => {"@value" => "1", "@type" => RDF::XSD.integer.to_s}, :rank => 3},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "double" => {
-          :defn => {"@type" => RDF::XSD.double.to_s},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "value double" => {:value => {"@value" => "1.1", "@type" => RDF::XSD.double.to_s}, :rank => 3},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "date" => {
-          :defn => {"@type" => RDF::XSD.date.to_s},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 3},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "lang" => {
-          :defn => {"@language" => "en"},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 2},
-          "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "null lang" => {
-          :defn => {"@language" => nil},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string value" => {:value => {"@value" => "foo"}, :rank => 3},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 0},
-          "null"  => {:value => nil, :rank => 3},
-        },
-        "id" => {
-          :defn => {"@type" => "@id"},
-          "boolean value" => {:value => {"@value" => true}, :rank => 1},
-          "integer value"    => {:value => {"@value" => 1}, :rank => 1},
-          "double value" => {:value => {"@value" => 1.1}, :rank => 1},
-          "string" => {:value => {"@value" => "foo"}, :rank => 0},
-          "date"  => {:value => {"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}, :rank => 0},
-          "lang"  => {:value => {"@value" => "apple", "@language" => "en"}, :rank => 0},
-          "other lang" => {:value => {"@value" => "apple", "@language" => "de"}, :rank => 0},
-          "id"    => {:value => {"@id" => "http://example/id"}, :rank => 3},
-          "null"  => {:value => nil, :rank => 3},
-        },
-      }.each do |title, properties|
-        context title do
-          let(:ctx) do
-            subject.parse({
-              "term" => properties[:defn].merge("@id" => "http://example.org/term")
-            })
-          end
-          properties.each do |type, defn|
-            next unless type.is_a?(String)
-            it "returns #{defn[:rank]} for #{type}" do
-              ctx.send(:term_rank, "term", defn[:value]).should produce(defn[:rank], @debug)
-            end
-          end
-        end
-      end
-      
-      context "compact-0018" do
-        let(:ctx) do
-          subject.parse({
-            "@language" => "de",
-            "term1" => {"@id" => "http://example/term"},
-            "term2" => {"@id" => "http://example/term", "@language" => "en"}
-          })
-        end
-        {
-          "v1.1" => [{"@value" => "v1.1", "@language" => "de"}, 2, 0],
-          "v1.2" => [{"@value" => "v1.2", "@language" => "de"}, 2, 0],
-          "v1.3" => [{"@value" => "v1.3", "@language" => "de"}, 2, 0],
-          "v1.4" => [{"@value" => 4},                           2, 1],
-          "v1.5" => [{"@value" => "v1.5", "@language" => "de"}, 2, 0],
-          "v1.6" => [{"@value" => "v1.6", "@language" => "en"}, 1, 2],
-          "v2.1" => [{"@value" => "v2.1", "@language" => "en"}, 1, 2],
-          "v2.2" => [{"@value" => "v2.2", "@language" => "en"}, 1, 2],
-          "v2.3" => [{"@value" => "v2.3", "@language" => "en"}, 1, 2],
-          "v2.4" => [{"@value" => 4},                           2, 1],
-          "v2.5" => [{"@value" => "v2.5", "@language" => "en"}, 1, 2],
-          "v2.6" => [{"@value" => "v2.6", "@language" => "de"}, 2, 0],
-        }.each do |label, (val, r1, r2)|
-          context label do
-            it "has rank #{r1} for term1" do
-              ctx.send(:term_rank, "term1", val).should produce(r1, @debug)
-            end
-
-            it "has rank #{r2} for term2" do
-              ctx.send(:term_rank, "term2", val).should produce(r2, @debug)
-            end
-          end
-        end
-      end
-    end
-  end
-
   describe "#expand_value" do
     subject {
       ctx = context.parse({
         "dc" => RDF::DC.to_uri.to_s,
         "ex" => "http://example.org/",
         "foaf" => RDF::FOAF.to_uri.to_s,
-        "xsd" => RDF::XSD.to_uri.to_s,
+        "xsd" => "http://www.w3.org/2001/XMLSchema#",
         "foaf:age" => {"@type" => "xsd:integer"},
         "foaf:knows" => {"@type" => "@id"},
         "dc:created" => {"@type" => "xsd:date"},
@@ -1304,7 +1070,7 @@ describe JSON::LD::Context do
       subject.set_mapping("dc", RDF::DC.to_uri.to_s)
       subject.set_mapping("ex", "http://example.org/")
       subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_mapping("xsd", RDF::XSD.to_uri.to_s)
+      subject.set_mapping("xsd", "http://www.w3.org/2001/XMLSchema#")
       subject.set_mapping("list", "http://example.org/list")
       subject.set_mapping("nolang", "http://example.org/nolang")
       subject.set_coerce("foaf:age", RDF::XSD.integer.to_s)

@@ -129,7 +129,7 @@ module JSON::LD
                 values.each do |value|
                   debug("node_map") {"@reverse(#{id}): #{value.inspect}"}
                   # If value has a property member, append referenced node to its value; otherwise create a property member whose value is an array containing referenced node.
-                  (value[property] ||= []) << {'@id' => id}
+                  merge_value(value, property, {'@id' => id})
 
                   # Recursively invoke this algorithm passing value for element, node map, and active graph.
                   generate_node_map(value,
