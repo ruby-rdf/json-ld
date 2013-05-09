@@ -538,6 +538,13 @@ module JSON::LD
     end
 
     ##
+    # Is this a reverse term
+    # @return [Boolean]
+    def reverse?(property)
+      term_definitions[property] && term_definitions[property].reverse_property
+    end
+
+    ##
     # Determine if `term` is a suitable term.
     # Term may be any valid JSON string.
     #
@@ -645,12 +652,12 @@ module JSON::LD
       return if iri.nil?
       iri = iri.to_s
       depth(options) do
-        debug {"compact_iri(#{iri.inspect}, #{options.inspect})"}
+        debug {"compact_iri(#{iri.inspect}, #{options.inspect})"} unless options[:quiet]
 
         value = options.fetch(:value, nil)
 
         if options[:vocab] && inverse_context.has_key?(iri)
-          debug("compact_iri", "vocab and key in inverse context")
+          debug("compact_iri", "vocab and key in inverse context") unless options[:quiet]
           default_language = self.default_language || @none
           containers = []
           tl, tl_value = "@language", "@null"
@@ -659,7 +666,7 @@ module JSON::LD
             tl, tl_value = "@type", "@reverse"
             containers << '@set'
           elsif list?(value)
-            debug("compact_iri", "list(#{value.inspect})")
+            debug("compact_iri", "list(#{value.inspect})") unless options[:quiet]
             # if value is a list object, then set type/language and type/language value to the most specific values that work for all items in the list as follows:
             containers << "@list" unless index?(value)
             list = value['@list']
@@ -680,36 +687,39 @@ module JSON::LD
               end
               common_language ||= item_language
               if item_language != common_language && value?(item)
-                debug("--") {"#{item_language} conflicts with #{common_language}, use @none"}
+                debug("--") {"#{item_language} conflicts with #{common_language}, use @none"} unless options[:quiet]
                 common_language = '@none'
               end
               common_type ||= item_type
               if item_type != common_type
                 common_type = '@none'
-                debug("compact_iri") {"#{item_type} conflicts with #{common_type}, use @none"}
+                debug("compact_iri") {"#{item_type} conflicts with #{common_type}, use @none"} unless options[:quiet]
               end
             end
 
             common_language ||= '@none'
             common_type ||= '@none'
-            debug("compact_iri", "common type: #{common_type}, common language: #{common_language}")
+            debug("compact_iri", "common type: #{common_type}, common language: #{common_language}") unless options[:quiet]
             if common_type != '@none'
               tl, tl_value = '@type', common_type
             else
               tl_value = common_language
             end
-            debug("compact_iri", "list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}")
+            debug("compact_iri", "list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}") unless options[:quiet]
           else
             if value?(value)
               if value.has_key?('@language') && !index?(value)
                 tl_value = value['@language']
                 containers << '@language'
               elsif value.has_key?('@type')
-                tl_value = '@id'
+                tl_value = value['@type']
+                tl = '@type'
               end
+            else
+              tl, tl_value = '@type', '@id'
               containers << '@set'
             end
-            debug("compact_iri", "value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}")
+            debug("compact_iri", "value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}") unless options[:quiet]
           end
 
           containers << '@none'
@@ -726,9 +736,9 @@ module JSON::LD
           else
             preferred_values.concat([tl_value, '@none'])
           end
-          debug("compact_iri", "preferred_values: #{preferred_values.inspect}")
+          debug("compact_iri", "preferred_values: #{preferred_values.inspect}") unless options[:quiet]
           if p_term = select_term(iri, containers, tl, preferred_values)
-            debug("=>") {"term: #{p_term.inspect}"}
+            debug("=>") {"term: #{p_term.inspect}"} unless options[:quiet]
             return p_term
           end
         end
@@ -736,7 +746,7 @@ module JSON::LD
         # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
         if iri.start_with?(vocab) && iri.length > vocab.length
           suffix = iri[vocab.length..-1]
-          debug("=>") {"vocab suffix: #{suffix.inspect}"}
+          debug("=>") {"vocab suffix: #{suffix.inspect}"} unless options[:quiet]
           return suffix unless term_definitions.has_key?(suffix)
         end
 
@@ -751,7 +761,7 @@ module JSON::LD
         end
 
         if !candidates.empty?
-          debug("=>") {"compact iri: #{candidates.term_sort.first.inspect}"}
+          debug("=>") {"compact iri: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
           return candidates.term_sort.first
         end
 
@@ -767,7 +777,7 @@ module JSON::LD
             end
 
           if !candidates.empty?
-            debug("=>") {"standard prefies: #{candidates.term_sort.first.inspect}"}
+            debug("=>") {"standard prefies: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
             return candidates.term_sort.first
           end
         end
@@ -775,10 +785,10 @@ module JSON::LD
         if !options[:vocab] && iri.start_with?(base.to_s)
           # transform iri to a relative IRI using the document's base IRI
           iri = iri[base.to_s.length..-1]
-          debug("=>") {"relative iri: #{iri.inspect}"}
+          debug("=>") {"relative iri: #{iri.inspect}"} unless options[:quiet]
           return iri
         else
-          debug("=>") {"absolute iri: #{iri.inspect}"}
+          debug("=>") {"absolute iri: #{iri.inspect}"} unless options[:quiet]
           return iri
         end
       end
@@ -878,53 +888,45 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     # FIXME: revisit the specification version of this.
     def compact_value(property, value, options = {})
-      raise ProcessingError::Lossy, "attempt to compact a non-object value: #{value.inspect}" unless value.is_a?(Hash)
 
       depth(options) do
-        debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}, coerce: #{coerce(property).inspect}"}
+        debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
-        # Remove @index if property has annotation
-        value.delete('@index') if container(property) == '@index'
+        num_members = value.keys.length
+
+        num_members -= 1 if index?(value) && container(property) == '@list'
+        if num_members > 2
+          debug {"can't compact value with # members > 2"}
+          return value
+        end
 
         result = case
-        when value.has_key?('@index')
-          # Don't compact the value
-          debug {" (@index without container @index)"}
-          value
-        when coerce(property) == '@id' && value.has_key?('@id')
+        when coerce(property) == '@id' && value.has_key?('@id') && num_members == 1
           # Compact an @id coercion
           debug {" (@id & coerce)"}
-          compact_iri(value['@id'], :position => :subject)
+          compact_iri(value['@id'])
+        when coerce(property) == '@vocab' && value.has_key?('@id') && num_members == 1
+          # Compact an @id coercion
+          debug {" (@id & coerce & vocab)"}
+          compact_iri(value['@id'], :vocab => true)
+        when value.has_key?('@id')
+          debug {" (@id)"}
+          # return value as is
+          value
         when value['@type'] && expand_iri(value['@type'], :vocab => true) == coerce(property)
           # Compact common datatype
           debug {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
-        when value.has_key?('@id')
-          # Compact an IRI
-          value[self.alias('@id')] = compact_iri(value['@id'], :position => :subject)
-          debug {" (#{self.alias('@id')} => #{value['@id']})"}
-          value
-        when value['@language'] && (value['@language'] == language(property) || container(property) == '@language')
+        when value['@language'] && (value['@language'] == language(property))
           # Compact language
           debug {" (@language) == #{language(property).inspect}"}
           value['@value']
-        when !value.fetch('@value', "").is_a?(String)
-          # Compact simple literal to string
-          debug {" (@value not string)"}
+        when num_members == 1 && !value['@value'].is_a?(String)
+          debug {" (native)"}
           value['@value']
-        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !default_language
-          # Compact simple literal to string
-          debug {" (@value && !@language && !@type && !coerce && !language)"}
+        when num_members == 1 && default_language.nil? || language(property) == false
+          debug {" (!@language)"}
           value['@value']
-        when value['@value'] && !value['@language'] && !value['@type'] && !coerce(property) && !language(property)
-          # Compact simple literal to string
-          debug {" (@value && !@language && !@type && !coerce && language(property).false)"}
-          value['@value']
-        when value['@type']
-          # Compact datatype
-          debug {" (@type)"}
-          value[self.alias('@type')] = compact_iri(value['@type'], :position => :type)
-          value
         else
           # Otherwise, use original value
           debug {" (no change)"}
@@ -1050,26 +1052,28 @@ module JSON::LD
     #   for the type mapping or language mapping
     # @return [String]
     def select_term(iri, containers, type_language, preferred_values)
-      debug("select_term") {
-        "iri: #{iri.inspect}, " +
-        "containers: #{containers.inspect}, " +
-        "type_language: #{type_language.inspect}, " +
-        "preferred_values: #{preferred_values.inspect}"
-      }
-      container_map = inverse_context[iri]
-      debug("  ") {"container_map: #{container_map.inspect}"}
-      containers.each do |container|
-        next unless container_map.has_key?(container)
-        tl_map = container_map[container]
-        value_map = tl_map[type_language]
-        preferred_values.each do |item|
-          next unless value_map.has_key?(item)
-          debug("=>") {value_map[item].inspect}
-          return value_map[item]
+      depth do
+        debug("select_term") {
+          "iri: #{iri.inspect}, " +
+          "containers: #{containers.inspect}, " +
+          "type_language: #{type_language.inspect}, " +
+          "preferred_values: #{preferred_values.inspect}"
+        }
+        container_map = inverse_context[iri]
+        debug("  ") {"container_map: #{container_map.inspect}"}
+        containers.each do |container|
+          next unless container_map.has_key?(container)
+          tl_map = container_map[container]
+          value_map = tl_map[type_language]
+          preferred_values.each do |item|
+            next unless value_map.has_key?(item)
+            debug("=>") {value_map[item].inspect}
+            return value_map[item]
+          end
         end
+        debug("=>") {"nil"}
+        nil
       end
-      debug("=>") {"nil"}
-      nil
     end
   end
 end

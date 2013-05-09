@@ -14,27 +14,11 @@ class JSON::LD::Context
     end
   end
 
-  def set_coerce(property, value)
-    debug {"coerce #{property.inspect} to #{value.inspect}"} unless term_definitions[property.to_s].type_mapping == value
-    term_definitions[property].type_mapping = value
-  end
-
   def containers
     term_definitions.inject({}) do |memo, (t,td)|
       memo[t] = td.container_mapping
       memo
     end
-  end
-
-  def set_container(property, value)
-    debug {"coerce #{property.inspect} to #{value.inspect}"}
-    raise "Can't set container mapping with no term definition" unless term_definitions.has_key?(property.to_s)
-    term_definitions[property].container_mapping = value
-  end
-  
-  def set_language(property, value)
-    # Use false for nil language
-    term_definitions[property].language_mapping = value ? value : false
   end
 end
 
@@ -1065,31 +1049,31 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "compact_value", :pending => "TODO" do
-    before(:each) do
-      subject.set_mapping("dc", RDF::DC.to_uri.to_s)
-      subject.set_mapping("ex", "http://example.org/")
-      subject.set_mapping("foaf", RDF::FOAF.to_uri.to_s)
-      subject.set_mapping("xsd", "http://www.w3.org/2001/XMLSchema#")
-      subject.set_mapping("list", "http://example.org/list")
-      subject.set_mapping("nolang", "http://example.org/nolang")
-      subject.set_coerce("foaf:age", RDF::XSD.integer.to_s)
-      subject.set_coerce("foaf:knows", "@id")
-      subject.set_coerce("dc:created", RDF::XSD.date.to_s)
-      subject.set_container("list", "@list")
-      subject.set_language("nolang", nil)
-      subject.set_mapping("langmap", "http://example.org/langmap")
-      subject.set_container("langmap", "@language")
+  describe "compact_value" do
+    let(:ctx) do
+      c = context.parse({
+        "dc"         => RDF::DC.to_uri.to_s,
+        "ex"         => "http://example.org/",
+        "foaf"       => RDF::FOAF.to_uri.to_s,
+        "xsd"        => RDF::XSD.to_s,
+        "langmap"    => {"@id" => "http://example.com/langmap", "@container" => "@language"},
+        "list"       => {"@id" => "http://example.org/list", "@container" => "@list"},
+        "nolang"     => {"@id" => "http://example.org/nolang", "@language" => nil},
+        "dc:created" => {"@type" => RDF::XSD.date.to_s},
+        "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
+        "foaf:knows" => {"@type" => "@id"},
+      })
+      @debug.clear
+      c
     end
+    subject {ctx}
 
     {
       "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
-      "term" =>           ["foaf:knows",  "ex",                   {"@id" => "http://example.org/"}],
       "prefix:suffix" =>  ["foaf:knows",  "ex:suffix",            {"@id" => "http://example.org/suffix"}],
       "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
-      "no IRI (term)" =>  ["foo", {"@id" => "ex"},                {"@id" => "http://example.org/"}],
       "no IRI (CURIE)" => ["foo", {"@id" => "foaf:Person"},       {"@id" => RDF::FOAF.Person.to_s}],
       "no boolean" =>     ["foo", {"@value" => "true", "@type" => "xsd:boolean"},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "no integer" =>     ["foo", {"@value" => "54", "@type" => "xsd:integer"},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],

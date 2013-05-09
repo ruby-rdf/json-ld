@@ -2,7 +2,7 @@
 $:.unshift "."
 require 'spec_helper'
 
-describe JSON::LD::API, :pending => "Compact update" do
+describe JSON::LD::API do
   before(:each) { @debug = []}
 
   describe ".compact" do
