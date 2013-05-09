@@ -43,7 +43,7 @@ module JSON::LD
            container_mapping.nil? &&
            type_mapping.nil? &&
            reverse_property.nil?
-          id
+          context.compact_iri(id)
         else
           defn = Hash.ordered
           cid = context.compact_iri(id)
@@ -203,7 +203,9 @@ module JSON::LD
             begin
               ctx = JSON.load(context)
               raise JSON::LD::InvalidContext::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
-              parse(ctx["@context"] || {})
+              result = parse(ctx["@context"] ? ctx["@context"].dup : {})
+              result.provided_context = ctx["@context"]
+              result
             rescue JSON::ParserError => e
               debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
               raise JSON::LD::InvalidContext::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
@@ -415,14 +417,18 @@ module JSON::LD
     def serialize(options = {})
       depth(options) do
         # FIXME: not setting provided_context now
-        use_context = if provided_context
+        use_context = case provided_context
+        when RDF::URI
           debug "serlialize: reuse context: #{provided_context.inspect}"
           provided_context.to_s
+        when Hash, Array
+          debug "serlialize: reuse context: #{provided_context.inspect}"
+          provided_context
         else
           debug("serlialize: generate context")
           debug("") {"=> context: #{inspect}"}
           ctx = Hash.ordered
-          ctx['@base'] = base.to_s if base
+          ctx['@base'] = base.to_s if base && base != @options[:base]
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
 
@@ -765,7 +771,8 @@ module JSON::LD
           next if term.include?(":")
           next if td.nil? || td.id == iri || !iri.start_with?(td.id)
           suffix = iri[td.id.length..-1]
-          candidates << "#{term}:#{suffix}"
+          ciri = "#{term}:#{suffix}"
+          candidates << ciri unless value && term_definitions.has_key?(ciri)
         end
 
         if !candidates.empty?

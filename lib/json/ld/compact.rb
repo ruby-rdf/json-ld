@@ -126,7 +126,7 @@ module JSON::LD
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
                   key = context.compact_iri('@index', :quiet => true)
-                  compacted_item[key] = expaned_item['@index']
+                  compacted_item[key] = expanded_item['@index']
                 end
               else
                 raise ProcessingError::CompactionToListOfLists,

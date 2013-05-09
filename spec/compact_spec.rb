@@ -58,7 +58,7 @@ describe JSON::LD::API do
       "@id" => {
         :input => {"@id" => "http://example.org/test#example"},
         :context => {},
-        :output => {"@graph" => []}
+        :output => {}
       },
       "@id coercion" => {
         :input => {
@@ -295,6 +295,22 @@ describe JSON::LD::API do
             "@id" => "id1",
             "id1" => "foo"
           }
+        },
+        "compact-0007" => {
+          :input => ::JSON.parse(%(
+            {"http://example.org/vocab#contains": "this-is-not-an-IRI"}
+          )),
+          :context => ::JSON.parse(%({
+            "ex": "http://example.org/vocab#",
+            "ex:contains": {"@type": "@id"}
+          })),
+          :output => ::JSON.parse(%({
+            "@context": {
+              "ex": "http://example.org/vocab#",
+              "ex:contains": {"@type": "@id"}
+            },
+            "http://example.org/vocab#contains": "this-is-not-an-IRI"
+          }))
         }
       }.each_pair do |title, params|
         it title do

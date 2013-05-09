@@ -10,12 +10,15 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
-            case t.property('input')
-            when /compact-(0032|0033|0034)/
-              pending("undesireable property generator corner cases")
-            end
+            #case t.property('input')
+            #when /compact-(0032|0033|0034)/
+            #  pending("undesireable property generator corner cases")
+            #end
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-            t.debug << "context: #{t.context.read}" if t.property('context')
+            if t.property('context')
+              t.debug << "context: #{t.context.read}"
+              t.context.rewind
+            end
             result = JSON::LD::API.compact(t.input, t.context, nil,
                                           :base => t.base,
                                           :debug => t.debug)

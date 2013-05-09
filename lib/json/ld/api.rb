@@ -172,15 +172,12 @@ module JSON::LD
         result = compact(value, nil)
 
         # xxx) Add the given context to the output
-        result = case result
-        when Hash then self.context.serialize.merge(result)
-        when Array
-          kwgraph = self.context.compact_iri('@graph', :quiet => true)
-          self.context.serialize.merge(kwgraph => result)
-        when String
-          kwid = self.context.compact_iri('@id', :quiet => true)
-          self.context.serialize.merge(kwid => result)
+        ctx = self.context.serialize
+        if result.is_a?(Array)
+          kwgraph = self.context.compact_iri('@graph', :vocab => true, :quiet => true)
+          result = result.empty? ? {} : {kwgraph => result}
         end
+        result = ctx.merge(result) unless ctx.empty?
       end
       callback.call(result) if callback
       yield result if block_given?
