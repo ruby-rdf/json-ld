@@ -86,15 +86,38 @@ module JSON::LD
       end
     end
 
+    # Merge values into compacted results, creating arrays if necessary
+    def merge_compacted_value(hash, key, value)
+      return unless hash
+      case hash[key]
+      when nil then hash[key] = value
+      when Array
+        if value.is_a?(Array)
+          hash[key].concat(value)
+        else
+          hash[key] << value
+        end
+      else
+        hash[key] = [hash[key]]
+        if value.is_a?(Array)
+          hash[key].concat(value)
+        else
+          hash[key] << value
+        end
+      end
+    end
+
     # Add debug event to debug array, if specified
     #
     #   param [String] message
     #   yieldreturn [String] appended to message, to allow for lazy-evaulation of message
     def debug(*args)
+      options = args.last.is_a?(Hash) ? args.pop : {}
       return unless ::JSON::LD.debug? || @options[:debug]
+      depth = options[:depth] || @depth || 0
       list = args
       list << yield if block_given?
-      message = " " * (@depth || 0) * 2 + (list.empty? ? "" : list.join(": "))
+      message = " " * depth * 2 + (list.empty? ? "" : list.join(": "))
       puts message if JSON::LD::debug?
       @options[:debug] << message if @options[:debug].is_a?(Array)
     end

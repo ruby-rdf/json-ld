@@ -471,7 +471,6 @@ describe JSON::LD::Context do
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "foaf:knows" => {
-            "@id" => RDF::FOAF.knows.to_s,
             "@container" => "@list"
           }
         }
@@ -507,7 +506,6 @@ describe JSON::LD::Context do
           "foaf" => RDF::FOAF.to_uri.to_s,
           "id" => "@id",
           "foaf:homepage" => {
-            "@id" => RDF::FOAF.homepage.to_s,
             "@type" => "@id"
           }
         }
@@ -525,7 +523,7 @@ describe JSON::LD::Context do
         "@context" => {
           "foaf" => RDF::FOAF.to_uri.to_s,
           "type" => "@type",
-          "foaf:homepage" => {"@id" => RDF::FOAF.homepage.to_s, "@type" => "@id"}
+          "foaf:homepage" => {"@type" => "@id"}
         }
       }, @debug)
     end
@@ -1049,7 +1047,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "compact_value" do
+  describe "compact_value", :pending => true do
     let(:ctx) do
       c = context.parse({
         "dc"         => RDF::DC.to_uri.to_s,

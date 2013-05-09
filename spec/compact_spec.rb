@@ -264,7 +264,7 @@ describe JSON::LD::API do
       {
         "Uses term with nil language when two terms conflict on language" => {
           :input => [{
-            "http://example.com/term" => {"@value" => "v1", "@language" => nil}
+            "http://example.com/term" => {"@value" => "v1"}
           }],
           :context => {
             "term5" => {"@id" => "http://example.com/term","@language" => nil},
@@ -400,95 +400,6 @@ describe JSON::LD::API do
               "de" => ["Die Königin", "Ihre Majestät"]
             }
           }
-        },
-      }.each_pair do |title, params|
-        it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
-          jld.should produce(params[:output], @debug)
-        end
-      end
-    end
-
-    context "property generators" do
-      {
-        "exactly matching" => {
-          :input => [{
-            "http://example.com/foo" => [{"@value" => "baz"}],
-            "http://example.com/bar"=> [{"@value" => "baz"}],
-          }],
-          :context => {
-            "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-          },
-          :output => {
-            "@context" => {
-              "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-            },
-            "foobar" => "baz"
-          }
-        },
-        "overlapping" => {
-          :input => [{
-            "http://example.com/foo" => [{"@value" => "baz"}, {"@value" => "baz1"}],
-            "http://example.com/bar"=> [{"@value" => "baz"}, {"@value" => "baz2"}],
-          }],
-          :context => {
-            "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-          },
-          :output => {
-            "@context" => {
-              "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-            },
-            "foobar" => "baz",
-            "http://example.com/foo" => "baz1",
-            "http://example.com/bar" => "baz2"
-          }
-        },
-        "compact-0031" => {
-          :input => JSON.parse(%q([{
-             "@id": "http://example.com/node/1",
-             "http://example.com/vocab/field_related": [{
-                "@id": "http://example.com/node/this-is-related-news"
-             }],
-             "http://schema.org/about": [{
-                "@id": "http://example.com/node/this-is-related-news"
-             }, {
-                "@id": "http://example.com/term/this-is-a-tag"
-             }],
-             "http://example.com/vocab/field_tags": [{
-                "@id": "http://example.com/term/this-is-a-tag"
-             }]
-          }])),
-          :context => JSON.parse(%q({
-            "site": "http://example.com/",
-            "field_tags": {
-              "@id": [ "site:vocab/field_tags", "http://schema.org/about" ],
-              "@container": "@set"
-            },
-            "field_related": {
-              "@id": [ "site:vocab/field_related", "http://schema.org/about" ]
-            }
-          })),
-          :output => JSON.parse(%q({
-            "@context": {
-              "site": "http://example.com/",
-              "field_tags": {
-                "@id": [
-                  "site:vocab/field_tags",
-                  "http://schema.org/about"
-                ],
-                "@container": "@set"
-              },
-              "field_related": {
-                "@id": [
-                  "site:vocab/field_related",
-                  "http://schema.org/about"
-                ]
-              }
-            },
-            "@id": "site:node/1",
-            "field_tags": [{"@id": "site:term/this-is-a-tag"}],
-            "field_related": {"@id": "site:node/this-is-related-news"}
-          })),
         },
       }.each_pair do |title, params|
         it title do

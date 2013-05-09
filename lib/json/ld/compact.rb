@@ -16,7 +16,7 @@ module JSON::LD
       end
       case element
       when Array
-        debug("compact") {"Array #{element.inspect}"}
+        debug("") {"Array #{element.inspect}"}
         result = depth {element.map {|item| compact(item, property)}.compact}
 
         # If element has a single member and the active property has no
@@ -33,9 +33,9 @@ module JSON::LD
         # Otherwise element is a JSON object.
 
         if element.keys.any? {|k| %w(@id @value).include?(k)}
-          result = depth {context.compact_value(property, element)}
+          result = context.compact_value(property, element, :depth => @depth)
           unless result.is_a?(Hash)
-            debug("=> scalar result: #{result.inspect}")
+            debug("") {"=> scalar result: #{result.inspect}"}
             return result
           end
         end
@@ -45,15 +45,15 @@ module JSON::LD
 
         element.keys.each do |expanded_property|
           expanded_value = element[expanded_property]
-          debug("compact") {"#{expanded_property}: #{expanded_value.inspect}"}
+          debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
           if %w(@id @type).include?(expanded_property)
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
-              depth {context.compact_iri(expanded_type, :vocab => true)}
+              depth {context.compact_iri(expanded_type, :vocab => true, :depth => @depth)}
             end
             compacted_value = compacted_value.first if compacted_value.length == 1
 
-            al = context.compact_iri(expanded_property, :quiet => true)
+            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
             debug(expanded_property) {"result[#{al}] = #{compacted_value.inspect}"}
             result[al] = compacted_value
             next
@@ -65,7 +65,7 @@ module JSON::LD
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
                 value = [value] unless value.is_a?(Array) || @options[:compactArrays]
-                debug {"merge #{prop} => #{value.inspect}"}
+                debug("") {"merge #{prop} => #{value.inspect}"}
                 merge_value(result, prop, value)
                 compacted_value.delete(prop)
               end
@@ -73,7 +73,7 @@ module JSON::LD
 
             unless compacted_value.empty?
               al = context.compact_iri('@reverse', :quiet => true)
-              debug {"remainder: #{al} => #{compacted_value.inspect}"}
+              debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
               next
             end
@@ -86,7 +86,7 @@ module JSON::LD
 
           # Otherwise, if expanded property is @index, @value, or @language:
           if %w(@index @value @language).include?(expanded_property)
-            al = context.compact_iri(expanded_property, :quiet => true)
+            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
             debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value
             next
@@ -97,7 +97,8 @@ module JSON::LD
               context.compact_iri(expanded_property,
                                   :value => expanded_value,
                                   :vocab => true,
-                                  :reverse => inside_reverse)
+                                  :reverse => inside_reverse,
+                                  :depth => @depth)
             end
 
             iap = result[item_active_property] ||= []
@@ -110,17 +111,18 @@ module JSON::LD
               context.compact_iri(expanded_property,
                                   :value => expanded_item,
                                   :vocab => true,
-                                  :reverse => inside_reverse)
+                                  :reverse => inside_reverse,
+                                  :depth => @depth)
             end
             container = context.container(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
             compacted_item = depth {compact(value, item_active_property)}
-            debug {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
+            debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
 
             if list?(expanded_item)
               compacted_item = [compacted_item] unless compacted_item.is_a?(Array)
               unless container == '@list'
-                al = context.compact_iri('@list', :quiet => true)
+                al = context.compact_iri('@list', :vocab => true, :quiet => true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
                   key = context.compact_iri('@index', :quiet => true)
@@ -133,10 +135,10 @@ module JSON::LD
             end
 
             if %w(@language @index).include?(container)
-              map_object = result.fetch(item_active_property, {})
+              map_object = result[item_active_property] ||= {}
               compacted_item = compacted_item['@value'] if container == '@language' && value?(compacted_item)
-              map_key = expanded_itme[container]
-              merge_value(map_object, map_key, compacted_item)
+              map_key = expanded_item[container]
+              merge_compacted_value(map_object, map_key, compacted_item)
             else
               compacted_item = [compacted_item] if
                 !compacted_item.is_a?(Array) && (
@@ -144,14 +146,7 @@ module JSON::LD
                   %w(@set @list).include?(container) ||
                   %w(@list @graph).include?(expanded_property)
                 )
-                rp = result[item_active_property]
-                if !rp
-                  result[item_active_property] = compacted_item
-                else
-                  result[item_active_property] = [rp] unless rp.is_a?(Array)
-                  result[item_active_property].concat([compacted_item].flatten.compact)
-                  merge_value(result, item_active_property, compacted_item)
-                end
+              merge_compacted_value(result, item_active_property, compacted_item)
             end
           end
         end
