@@ -5,28 +5,6 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  context "callbacks" do
-    describe ".compact" do
-      it "needs to be implemented"
-    end
-
-    describe ".expand" do
-      it "needs to be implemented"
-    end
-
-    describe ".frame" do
-      it "needs to be implemented"
-    end
-
-    describe ".fromRDF" do
-      it "needs to be implemented"
-    end
-
-    describe ".toRDF" do
-      it "needs to be implemented"
-    end
-  end
-
   context "Test Files" do
     Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
       test = File.basename(filename).sub(/-input\..*$/, '')
@@ -39,15 +17,12 @@ describe JSON::LD::API do
       ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
       context test do
-        before(:all) do
-        end
-
         it "expands" do
           jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
-        it "compacts", :pending => "Compaction update" do
+        it "compacts" do
           jld = JSON::LD::API.compact(File.open(filename), File.open(context), nil, :debug => @debug)
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
@@ -57,7 +32,7 @@ describe JSON::LD::API do
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
-        it "toRDF", :pending => "API toRDF test update" do
+        it "toRDF" do
           RDF::Graph.load(filename, :debug => @debug).should be_equivalent_graph(RDF::Graph.load(ttl), :trace => @debug)
         end if File.exist?(ttl)
       end

@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 require 'rdf/spec/writer'
 
-describe JSON::LD::Writer, :pending => "Writer update" do
+describe JSON::LD::Writer do
   before :each do
     @writer = JSON::LD::Writer.new(StringIO.new(""))
   end
@@ -31,6 +31,8 @@ describe JSON::LD::Writer, :pending => "Writer update" do
       serialize(input).should produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
+      }, {
+        "@id" => "http://a/d"
       }], @debug)
     end
 

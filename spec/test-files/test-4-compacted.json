@@ -6,5 +6,5 @@
   "@id":       ":#me",
   "@type":          "foaf:Person",
   "foaf:name":      "Manu Sporny",
-  "foaf:homepage":  { "@id": "" }
+  "foaf:homepage":  { "@id": "http://manu.sporny.org/" }
 }

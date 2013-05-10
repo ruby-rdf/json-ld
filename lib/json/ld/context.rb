@@ -32,7 +32,7 @@ module JSON::LD
       # @param [String] id
       def initialize(term, id = nil)
         @term = term
-        @id = id
+        @id = id.to_s if id
       end
 
       # Output Hash or String definition for this definition
@@ -43,7 +43,8 @@ module JSON::LD
            container_mapping.nil? &&
            type_mapping.nil? &&
            reverse_property.nil?
-          context.compact_iri(id)
+           cid = context.compact_iri(id)
+           cid == term ? id : cid
         else
           defn = Hash.ordered
           cid = context.compact_iri(id)
@@ -211,6 +212,9 @@ module JSON::LD
           when nil
             # 3.1 If niil, set to a new empty context
             result = Context.new(options)
+          when Context
+             debug("parse") {"context: #{context.inspect}"}
+             result = context.dup
           when IO, StringIO
             debug("parse") {"io: #{context}"}
             # Load context document, if it is a string
