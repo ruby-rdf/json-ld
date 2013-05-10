@@ -542,7 +542,7 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    it "compacts IRIs to CURIEs", :pending => "TODO" do
+    it "compacts IRIs to CURIEs" do
       subject.parse({
         "ex" => 'http://example.org/',
         "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
@@ -556,7 +556,7 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    it "compacts IRIs using @vocab", :pending => "TODO" do
+    it "compacts IRIs using @vocab" do
       subject.parse({
         "@vocab" => 'http://example.org/',
         "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
@@ -570,11 +570,11 @@ describe JSON::LD::Context do
       }, @debug)
     end
 
-    context "extra keys or values", :pending => "TODO" do
+    context "extra keys or values" do
       {
         "extra key" => {
           :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
-          :result => {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
+          :result => {"@context" => {"foo" => "http://example.com/foo"}}
         }
       }.each do |title, params|
         it title do
@@ -1047,7 +1047,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "compact_value", :pending => true do
+  describe "compact_value" do
     let(:ctx) do
       c = context.parse({
         "dc"         => RDF::DC.to_uri.to_s,
@@ -1072,10 +1072,10 @@ describe JSON::LD::Context do
       "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
-      "no IRI (CURIE)" => ["foo", {"@id" => "foaf:Person"},       {"@id" => RDF::FOAF.Person.to_s}],
-      "no boolean" =>     ["foo", {"@value" => "true", "@type" => "xsd:boolean"},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-      "no integer" =>     ["foo", {"@value" => "54", "@type" => "xsd:integer"},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-      "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => "xsd:date"}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+      "no IRI (CURIE)" => ["foo", {"@id" => RDF::FOAF.Person.to_s},       {"@id" => RDF::FOAF.Person.to_s}],
+      "no boolean" =>     ["foo", {"@value" => "true", "@type" => RDF::XSD.boolean.to_s},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+      "no integer" =>     ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
+      "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no string " =>     ["foo", "string",                       {"@value" => "string"}],
       "no lang " =>       ["nolang", "string",                    {"@value" => "string"}],
       "native boolean" => ["foo", true,                           {"@value" => true}],
@@ -1091,8 +1091,8 @@ describe JSON::LD::Context do
     context "@language" do
       {
         "@id"                            => ["foo", {"@id" => "foo"},                                 {"@id" => "foo"}],
-        "integer"                        => ["foo", {"@value" => "54", "@type" => "xsd:integer"},     {"@value" => "54", "@type" => "xsd:integer"}],
-        "date"                           => ["foo", {"@value" => "2011-12-27Z","@type" => "xsd:date"},{"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+        "integer"                        => ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},     {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
+        "date"                           => ["foo", {"@value" => "2011-12-27Z","@type" => RDF::XSD.date.to_s},{"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
         "no lang"                        => ["foo", {"@value" => "foo"  },                            {"@value" => "foo"}],
         "same lang"                      => ["foo", "foo",                                            {"@value" => "foo", "@language" => "en"}],
         "other lang"                     => ["foo",  {"@value" => "foo", "@language" => "bar"},       {"@value" => "foo", "@language" => "bar"}],
@@ -1116,12 +1116,6 @@ describe JSON::LD::Context do
       end
     end
 
-    [[], true, false, 1, 1.1, "string"].each do |v|
-      it "raises error given #{v.class}" do
-        lambda {subject.compact_value("foo", v)}.should raise_error(JSON::LD::ProcessingError::Lossy)
-      end
-    end
-
     context "keywords" do
       before(:each) do
         subject.set_mapping("id", "@id")
@@ -1137,8 +1131,6 @@ describe JSON::LD::Context do
         "@type" =>    [{"literal" => "foo", "type" => "http://example.com/"},
                                                                     {"@value" => "foo", "@type" => "http://example.com/"}],
         "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
-        "@list" =>    [{"list" => ["foo"]},                         {"@list" => ["foo"]  }],
-        "@set" =>     [{"set" => ["foo"]},                         {"@set" => ["foo"]  }],
       }.each do |title, (compacted, expanded)|
         it title do
           subject.compact_value("foo", expanded).should produce(compacted, @debug)
