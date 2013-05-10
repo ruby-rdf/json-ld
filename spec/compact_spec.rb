@@ -136,18 +136,6 @@ describe JSON::LD::API do
           "b" => []
         }
       },
-      "empty term" => {
-        :input => {
-          "@id" => "http://example.com/",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-        :context => {"" => "http://example.com/"},
-        :output => {
-          "@context" => {"" => "http://example.com/"},
-          "@id" => "",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-      },
       "@type with string @id" => {
         :input => {
           "@id" => "http://example.com/",
@@ -292,7 +280,7 @@ describe JSON::LD::API do
               "id1" => "http://example.com/id1",
               "@language" => "de"
             },
-            "@id" => "id1",
+            "@id" => "http://example.com/id1",
             "id1" => "foo"
           }
         },
@@ -311,6 +299,54 @@ describe JSON::LD::API do
             },
             "http://example.org/vocab#contains": "this-is-not-an-IRI"
           }))
+        }
+      }.each_pair do |title, params|
+        it title do
+          input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
+          ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
+          output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
+          jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug)
+          jld.should produce(output, @debug)
+        end
+      end
+    end
+
+    context "@reverse" do
+      {
+        "compact-0033" => {
+          :input => %([
+            {
+              "@id": "http://example.com/people/markus",
+              "@reverse": {
+                "http://xmlns.com/foaf/0.1/knows": [
+                  {
+                    "@id": "http://example.com/people/dave",
+                    "http://xmlns.com/foaf/0.1/name": [ { "@value": "Dave Longley" } ]
+                  }
+                ]
+              },
+              "http://xmlns.com/foaf/0.1/name": [ { "@value": "Markus Lanthaler" } ]
+            }
+          ]),
+          :context => %({
+            "name": "http://xmlns.com/foaf/0.1/name",
+            "isKnownBy": { "@reverse": "http://xmlns.com/foaf/0.1/knows" }
+          }),
+          :output => %({
+            "@context": {
+              "name": "http://xmlns.com/foaf/0.1/name",
+              "isKnownBy": {
+                "@reverse": "http://xmlns.com/foaf/0.1/knows",
+                "@type": "@id"
+              }
+            },
+            "@id": "http://example.com/people/markus",
+            "name": "Markus Lanthaler",
+            "isKnownBy": {
+              "@id": "http://example.com/people/dave",
+              "name": "Dave Longley"
+            }
+          })
         }
       }.each_pair do |title, params|
         it title do

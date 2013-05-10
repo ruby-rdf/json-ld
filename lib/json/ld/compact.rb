@@ -49,7 +49,7 @@ module JSON::LD
 
           if %w(@id @type).include?(expanded_property)
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
-              depth {context.compact_iri(expanded_type, :vocab => true, :depth => @depth)}
+              depth {context.compact_iri(expanded_type, :vocab => (expanded_property == '@type'), :depth => @depth)}
             end
             compacted_value = compacted_value.first if compacted_value.length == 1
 
@@ -66,7 +66,7 @@ module JSON::LD
               if context.reverse?(prop)
                 value = [value] unless value.is_a?(Array) || @options[:compactArrays]
                 debug("") {"merge #{prop} => #{value.inspect}"}
-                merge_value(result, prop, value)
+                merge_compacted_value(result, prop, value)
                 compacted_value.delete(prop)
               end
             end
@@ -75,8 +75,8 @@ module JSON::LD
               al = context.compact_iri('@reverse', :quiet => true)
               debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
-              next
             end
+            next
           end
 
           if expanded_property == '@index' && context.container(property) == '@index'
@@ -125,7 +125,7 @@ module JSON::LD
                 al = context.compact_iri('@list', :vocab => true, :quiet => true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
-                  key = context.compact_iri('@index', :quiet => true)
+                  key = context.compact_iri('@index', :vocab => true, :quiet => true)
                   compacted_item[key] = expanded_item['@index']
                 end
               else

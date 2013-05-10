@@ -48,7 +48,13 @@ module JSON::LD
           defn = Hash.ordered
           cid = context.compact_iri(id)
           defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
-          defn['@type'] = context.compact_iri(type_mapping) if type_mapping
+          if type_mapping
+            defn['@type'] = if KEYWORDS.include?(type_mapping)
+              type_mapping
+            else
+              context.compact_iri(type_mapping, :vocab => true)
+            end
+          end
           defn['@container'] = container_mapping if container_mapping
           # Language set as false to be output as null
           defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
@@ -118,7 +124,12 @@ module JSON::LD
     # @yieldparam [Context]
     # @return [Context]
     def initialize(options = {})
-      @orig_base = @base = RDF::URI(options[:base]) if options[:base]
+      if options[:base]
+        @doc_base = RDF::URI(options[:base])
+        @doc_base.canonicalize!
+        @doc_base.fragment = nil
+        @doc_base.query = nil
+      end
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -144,10 +155,13 @@ module JSON::LD
       if value
         raise InvalidContext::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String)
         @base = RDF::URI(value)
+        @base.canonicalize!
+        @base.fragment = nil
+        @base.query = nil
         raise InvalidContext::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
         @base
       else
-        @base = @orig_base
+        @base = nil
       end
 
     end
@@ -216,7 +230,7 @@ module JSON::LD
             # Load context document, if it is a string
             begin
               # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-              context = RDF::URI(result.context_base || result.base).join(context)
+              context = RDF::URI(result.context_base || result.base || @doc_base).join(context)
 
               raise InvalidContext::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context)
               @remote_contexts = @remote_contexts + [context]
@@ -428,7 +442,7 @@ module JSON::LD
           debug("serlialize: generate context")
           debug("") {"=> context: #{inspect}"}
           ctx = Hash.ordered
-          ctx['@base'] = base.to_s if base && base != @options[:base]
+          ctx['@base'] = base.to_s if base
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
 
@@ -634,7 +648,7 @@ module JSON::LD
         result = if options[:vocab] && vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
           vocab + value
-        elsif options[:documentRelative] && base = options.fetch(:base, self.base)
+        elsif options[:documentRelative] && base = options.fetch(:base, self.base || @doc_base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           RDF::URI(base).join(value).to_s
         elsif local_context && RDF::URI(value).relative?
@@ -758,7 +772,7 @@ module JSON::LD
         end
 
         # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
-        if iri.start_with?(vocab) && iri.length > vocab.length
+        if options[:vocab] && iri.start_with?(vocab) && iri.length > vocab.length
           suffix = iri[vocab.length..-1]
           debug("") {"=> vocab suffix: #{suffix.inspect}"} unless options[:quiet]
           return suffix unless term_definitions.has_key?(suffix)
@@ -797,9 +811,9 @@ module JSON::LD
           end
         end
 
-        if !options[:vocab] && iri.start_with?(base.to_s)
+        if !options[:vocab]
           # transform iri to a relative IRI using the document's base IRI
-          iri = iri[base.to_s.length..-1]
+          iri = remove_base(iri)
           debug("") {"=> relative iri: #{iri.inspect}"} unless options[:quiet]
           return iri
         else
@@ -909,7 +923,7 @@ module JSON::LD
 
         num_members = value.keys.length
 
-        num_members -= 1 if index?(value) && container(property) == '@list'
+        num_members -= 1 if index?(value) && container(property) == '@index'
         if num_members > 2
           debug("") {"can't compact value with # members > 2"}
           return value
@@ -1089,6 +1103,31 @@ module JSON::LD
         debug("=>") {"nil"}
         nil
       end
+    end
+
+    ##
+    # Removes a base IRI from the given absolute IRI.
+    #
+    # @param [String] iri the absolute IRI
+    # @return [String]
+    #   the relative IRI if relative to base, otherwise the absolute IRI.
+    def remove_base(iri)
+      return iri unless base || @doc_base
+      @base_and_parents ||= begin
+        u = base || @doc_base
+        iri_set = u.to_s.end_with?('/') ? [u.to_s] : []
+        iri_set << u.to_s while (u = u.parent)
+        iri_set
+      end
+      b = (base || @doc_base).to_s
+      return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
+
+      @base_and_parents.each_with_index do |b, index|
+        next unless iri.start_with?(b)
+        rel = "../" * index + iri[b.length..-1]
+        return rel.empty? ? "./" : rel
+      end
+      iri
     end
   end
 end
