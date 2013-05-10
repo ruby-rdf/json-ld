@@ -503,7 +503,7 @@ describe JSON::LD::API do
       it title do
         @debug = []
         begin
-          jld = JSON::LD::API.frame(params[:input], params[:frame], nil, :debug => @debug)
+          jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
           jld.should produce(params[:output], @debug)
         rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +

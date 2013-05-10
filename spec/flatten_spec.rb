@@ -175,7 +175,7 @@ describe JSON::LD::API do
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.flatten(params[:input], nil, nil, :debug => @debug) 
+        jld = JSON::LD::API.flatten(params[:input], nil, :debug => @debug) 
         jld.should produce(params[:output], @debug)
       end
     end

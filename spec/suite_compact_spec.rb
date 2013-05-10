@@ -19,7 +19,7 @@ describe JSON::LD do
               t.debug << "context: #{t.context.read}"
               t.context.rewind
             end
-            result = JSON::LD::API.compact(t.input, t.context, nil,
+            result = JSON::LD::API.compact(t.input, t.context,
                                           :base => t.base,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)

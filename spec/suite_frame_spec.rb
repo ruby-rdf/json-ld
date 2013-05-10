@@ -13,7 +13,7 @@ describe JSON::LD do
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "frame: #{t.frame.read}" if t.property('frame')
-            result = JSON::LD::API.frame(t.input, t.frame, nil, 
+            result = JSON::LD::API.frame(t.input, t.frame,
                                           :base => t.base,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)

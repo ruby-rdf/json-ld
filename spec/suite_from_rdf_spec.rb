@@ -15,7 +15,7 @@ describe JSON::LD do
             t.debug << "result: #{t.expect.read}"
             repo = RDF::Repository.load(t.base)
             t.debug << "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
-            result = JSON::LD::API.fromRDF(repo.each_statement.to_a, nil,
+            result = JSON::LD::API.fromRDF(repo.each_statement.to_a,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)
             result.should produce(expected, t.debug)

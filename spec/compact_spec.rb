@@ -179,7 +179,7 @@ describe JSON::LD::API do
       },
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+        jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
         jld.should produce(params[:output], @debug)
       end
     end
@@ -242,7 +242,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -305,7 +305,7 @@ describe JSON::LD::API do
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
-          jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug)
+          jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
           jld.should produce(output, @debug)
         end
       end
@@ -353,7 +353,7 @@ describe JSON::LD::API do
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
-          jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug)
+          jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
           jld.should produce(output, @debug)
         end
       end
@@ -373,7 +373,7 @@ describe JSON::LD::API do
           },
           "foo" => "bar"
         }
-        jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -389,7 +389,7 @@ describe JSON::LD::API do
           "b" => "c"
         }
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -418,7 +418,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -455,7 +455,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -479,7 +479,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -502,7 +502,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          lambda {JSON::LD::API.compact(params[:input], {}, nil)}.should raise_error(params[:exception])
+          lambda {JSON::LD::API.compact(params[:input], {})}.should raise_error(params[:exception])
         end
       end
     end

@@ -11,7 +11,7 @@ describe JSON::LD do
         specify "#{t.property('input')}: #{t.name}" do
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-            quads = JSON::LD::API.toRDF(t.input, nil, nil,
+            quads = JSON::LD::API.toRDF(t.input, nil,
                                         :base => t.base,
                                         :debug => t.debug
             ).map do |statement|

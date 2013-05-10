@@ -12,7 +12,7 @@ describe JSON::LD do
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')
-            result = JSON::LD::API.expand(t.input, nil, nil,
+            result = JSON::LD::API.expand(t.input, nil,
                                           :base => t.base,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)

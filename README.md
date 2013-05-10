@@ -208,6 +208,15 @@ Install with `gem install json-ld`
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.markdown)
 
+## Differences from [JSON-LD API][]
+The specified JSON-LD API is based on a WebIDL definition intended for use within the browser.
+This version implements a more Ruby-like variation of this API without the use
+of futures and callback arguments, preferring Ruby blocks. All API methods
+execute synchronously, so that the return from a method can be used as well as a block.
+
+Note, the API method signatures differed in versions before 1.0, in that they also had
+a callback parameter.
+
 ### Principal Classes
 * {JSON::LD}
   * {JSON::LD::API}
@@ -269,3 +278,4 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [RDF.rb]:           http://rubygems.org/gems/rdf
 [Backports]:        http://rubygems.org/gems/backports
 [JSON-LD]:          http://json-ld.org/spec/latest/
+[JSON-LD API]:      http://json-ld.org/spec/latest/json-ld-api/

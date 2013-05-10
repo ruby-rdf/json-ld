@@ -149,7 +149,7 @@ module JSON::LD
       # Turn graph into a triple array
       statements = @repo.each_statement.to_a
       debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
-      result = API.fromRDF(statements, nil, @options)
+      result = API.fromRDF(statements, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
@@ -166,7 +166,7 @@ module JSON::LD
       # Perform compaction, if we have a context
       if context
         debug("writer") { "compact result"}
-        result = API.compact(result, context, nil, @options)
+        result = API.compact(result, context,  @options)
       end
 
       @output.write(result.to_json(JSON_STATE))

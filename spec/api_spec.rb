@@ -18,17 +18,17 @@ describe JSON::LD::API do
       
       context test do
         it "expands" do
-          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), nil, :debug => @debug)
+          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
         it "compacts" do
-          jld = JSON::LD::API.compact(File.open(filename), File.open(context), nil, :debug => @debug)
+          jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "frame", :pending => "Framing update" do
-          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), nil, :debug => @debug)
+          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), :debug => @debug)
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
