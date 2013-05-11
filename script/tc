@@ -131,7 +131,7 @@ def to_quad(thing)
   when RDF::Literal
     v = quoted(escaped(thing.value))
     case thing.datatype
-    when nil, "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#langString"
+    when nil, "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
       # Ignore these
     else
       v += "^^<#{thing.datatype}>"
