@@ -5,17 +5,17 @@ require 'spec_helper'
 describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/toRdf-manifest.jsonld')
-    describe m.name, :pending => "Major update" do
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/toRdf-manifest.jsonld")
+    describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-            quads = []
-            JSON::LD::API.toRDF(t.input, nil, nil,
-                                :base => t.base,
-                                :debug => t.debug) do |statement|
-              quads << to_quad(statement)
+            quads = JSON::LD::API.toRDF(t.input, nil,
+                                        :base => t.base,
+                                        :debug => t.debug
+            ).map do |statement|
+              to_quad(statement)
             end
 
             sorted_expected = t.expect.readlines.sort.join("")
@@ -51,9 +51,15 @@ describe JSON::LD do
         %("#{i}.#{f}E#{e}"^^<http://www.w3.org/2001/XMLSchema#double>)
       end
     when RDF::Literal
-      quoted(escaped(thing.value)) +
-      (thing.datatype? ? "^^<#{thing.datatype}>" : "") +
-      (thing.language? ? "@#{thing.language}" : "")
+      v = quoted(escaped(thing.value))
+      case thing.datatype
+      when nil, "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#langString"
+        # Ignore these
+      else
+        v += "^^<#{thing.datatype}>"
+      end
+      v += "@#{thing.language}" if thing.language
+      v
     when RDF::Statement
       thing.to_quad.map {|r| to_quad(r)}.compact.join(" ") + " .\n"
     end

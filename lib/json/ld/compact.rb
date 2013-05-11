@@ -3,7 +3,7 @@ module JSON::LD
     include Utils
 
     ##
-    # Compact an expanded Array or Hash given an active property and a context.
+    # This algorithm compacts a JSON-LD document, such that the given context is applied. This must result in shortening any applicable IRIs to terms or compact IRIs, any applicable keywords to keyword aliases, and any applicable JSON-LD values expressed in expanded form to simple values such as strings or numbers.
     #
     # @param [Array, Hash] element
     # @param [String] property (nil)
@@ -16,16 +16,13 @@ module JSON::LD
       end
       case element
       when Array
-        # 1) If value is an array, process each item in value recursively using
-        #    this algorithm, passing copies of the active context and the
-        #    active property.
-        debug("compact") {"Array #{element.inspect}"}
-        result = depth {element.map {|v| compact(v, property)}}
+        debug("") {"Array #{element.inspect}"}
+        result = depth {element.map {|item| compact(item, property)}.compact}
 
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
-        if result.length == 1 && @options[:compactArrays]
+        if result.length == 1 && context.container(property).nil? && @options[:compactArrays]
           debug("=> extract single element: #{result.first.inspect}")
           result.first
         else
@@ -33,159 +30,126 @@ module JSON::LD
           result
         end
       when Hash
-        # 2) Otherwise, if element is an object:
+        # Otherwise element is a JSON object.
+
+        # @null objects are used in framing
+        return nil if element.has_key?('@null')
+
+        if element.keys.any? {|k| %w(@id @value).include?(k)}
+          result = context.compact_value(property, element, :depth => @depth)
+          unless result.is_a?(Hash)
+            debug("") {"=> scalar result: #{result.inspect}"}
+            return result
+          end
+        end
+
+        inside_reverse = property == '@reverse'
         result = {}
 
-        if k = %w(@list @set @value).detect {|container| element.has_key?(container)}
-          debug("compact") {"#{k}: container(#{property}) = #{context.container(property)}"}
-        end
+        element.keys.each do |expanded_property|
+          expanded_value = element[expanded_property]
+          debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
-        k ||= '@id' if element.keys == ['@id']
-
-        case k
-        when '@value', '@id'
-          # If element has an @value property or element is a node reference, return the result of performing Value Compaction on element using active property.
-          v = context.compact_value(property, element, :depth => @depth)
-          debug("compact") {"value optimization for #{property}, return as #{v.inspect}"}
-          return v
-        when '@list'
-          # Otherwise, if the active property has a @container mapping to @list and element has a corresponding @list property, recursively compact that property's value passing a copy of the active context and the active property ensuring that the result is an array with all null values removed.
-
-          # If there already exists a value for active property in element and the full IRI of property is also coerced to @list, return an error.
-          # FIXME: check for full-iri list coercion
-
-          # Otherwise store the resulting array as value of active property if empty or property otherwise.
-          compacted_key = context.compact_iri('@list', :position => :predicate, :depth => @depth)
-          v = depth { compact(element[k], property) }
-
-          # Return either the result as an array, as an object with a key of @list (or appropriate alias from active context
-          v = [v].compact unless v.is_a?(Array)
-          unless context.container(property) == '@list'
-            v = {compacted_key => v}
-            if element['@index']
-              compacted_key = context.compact_iri('@index', :position => :predicate, :depth => @depth)
-              v[compacted_key] = element['@index']
+          if %w(@id @type).include?(expanded_property)
+            compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
+              depth {context.compact_iri(expanded_type, :vocab => (expanded_property == '@type'), :depth => @depth)}
             end
-          end
-          debug("compact") {"@list result, return as #{v.inspect}"}
-          return v
-        end
+            compacted_value = compacted_value.first if compacted_value.length == 1
 
-        # Check for property generators before continuing with other elements
-        # For each term pg in the active context which is a property generator
-        # Select property generator terms by shortest term
-        context.mappings.keys.sort.each do |term|
-          next unless context.mapping(term).is_a?(Array)
-          # Using the first expanded IRI p associated with the property generator
-          expanded_iris = context.mapping(term).map(&:to_s)
-          p = expanded_iris.first.to_s
-
-          # Skip to the next property generator term unless p is a property of element
-          next unless element.has_key?(p)
-
-          debug("compact") {"check pg #{term}: #{expanded_iris}"}
-
-          # For each node n which is a value of p in element
-          node_values = []
-          element[p].dup.each do |n|
-            # For each expanded IRI pi associated with the property generator other than p
-            next unless expanded_iris[1..-1].all? do |pi|
-              debug("compact") {"check #{pi} for (#{n.inspect})"}
-              element.has_key?(pi) && element[pi].any? do |ni|
-                nodesEquivalent?(n, ni)
-              end
-            end
-
-            # Remove n as a value of all p and pi in element
-            debug("compact") {"removed matched value #{n.inspect} from #{expanded_iris.inspect}"}
-            expanded_iris.each do |pi|
-              # FIXME: This removes all values equivalent to n, not just the first
-              element[pi] = element[pi].reject {|ni| nodesEquivalent?(n, ni)}
-            end
-
-            # Add the result of performing the compaction algorithm on n to pg to output
-            node_values << n
-          end
-
-          # If there are node_values, or all the values from expanded_iris are empty, add node_values to result, and remove the expanded_iris as keys from element
-          if node_values.length > 0 || expanded_iris.all? {|pi| element.has_key?(pi) && element[pi].empty?}
-            debug("compact") {"compact extracted pg values"}
-            result[term] = depth { compact(node_values, term)}
-            result[term] = [result[term]] if !result[term].is_a?(Array) && context.container(term) == '@set'
-
-            debug("compact") {"remove empty pg keys from element"}
-            expanded_iris.each do |pi|
-              debug(" =>") {"#{pi}? #{element.fetch(pi, []).empty?}"}
-              element.delete(pi) if element.fetch(pi, []).empty?
-            end
-          end
-        end
-
-        # Otherwise, for each property and value in element:
-        element.each do |key, value|
-          debug("compact") {"#{key}: #{value.inspect}"}
-
-          if %(@id @type).include?(key)
-            position = key == '@id' ? :subject : :type
-            compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
-
-            result[compacted_key] = case value
-            when String
-              # If value is a string, the compacted value is the result of performing IRI Compaction on value.
-              debug {" => compacted string for #{key}"}
-              context.compact_iri(value, :position => position, :depth => @depth)
-            when Array
-              # Otherwise, value must be an array. Perform IRI Compaction on every entry of value. If value contains just one entry, value is set to that entry
-              compacted_value = value.map {|v2| context.compact_iri(v2, :position => position, :depth => @depth)}
-              debug {" => compacted value(#{key}): #{compacted_value.inspect}"}
-              compacted_value = compacted_value.first if compacted_value.length == 1 && @options[:compactArrays]
-              compacted_value
-            end
-          elsif key == '@index' && context.container(property) == '@index'
-            # Skip the annotation key if annotations being applied
+            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
+            debug(expanded_property) {"result[#{al}] = #{compacted_value.inspect}"}
+            result[al] = compacted_value
             next
-          else
-            if value.empty?
-              # Make sure that an empty array is preserved
-              compacted_key = context.compact_iri(key, :position => :predicate, :depth => @depth)
-              next if compacted_key.nil?
-              result[compacted_key] = value
-              next
+          end
+
+          if expanded_property == '@reverse'
+            compacted_value = depth {compact(expanded_value, '@reverse')}
+            debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
+            compacted_value.each do |prop, value|
+              if context.reverse?(prop)
+                value = [value] unless value.is_a?(Array) || @options[:compactArrays]
+                debug("") {"merge #{prop} => #{value.inspect}"}
+                merge_compacted_value(result, prop, value)
+                compacted_value.delete(prop)
+              end
             end
 
-            # For each item in value:
-            value = [value] if key == '@index' && value.is_a?(String)
-            raise ProcessingError, "found #{value.inspect} for #{key} of #{element.inspect}" unless value.is_a?(Array)
-            value.each do |item|
-              compacted_key = context.compact_iri(key, :position => :predicate, :value => item, :depth => @depth)
+            unless compacted_value.empty?
+              al = context.compact_iri('@reverse', :quiet => true)
+              debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
+              result[al] = compacted_value
+            end
+            next
+          end
 
-              # Result for this item, typically the output object itself
-              item_result = result
-              item_key = compacted_key
-              debug {" => compacted key: #{compacted_key.inspect} for #{item.inspect}"}
-              next if compacted_key.nil?
+          if expanded_property == '@index' && context.container(property) == '@index'
+            debug("@index") {"drop @index"}
+            next
+          end
 
-              # Language maps and annotations
-              if field = %w(@language @index).detect {|kk| context.container(compacted_key) == kk}
-                item_result = result[compacted_key] ||= Hash.new
-                item_key = item[field]
-              end
+          # Otherwise, if expanded property is @index, @value, or @language:
+          if %w(@index @value @language).include?(expanded_property)
+            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
+            debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
+            result[al] = expanded_value
+            next
+          end
 
-              compacted_item = depth {self.compact(item, compacted_key)}
-              debug {" => compacted value: #{compacted_value.inspect}"}
+          if expanded_value == []
+            item_active_property = depth do
+              context.compact_iri(expanded_property,
+                                  :value => expanded_value,
+                                  :vocab => true,
+                                  :reverse => inside_reverse,
+                                  :depth => @depth)
+            end
 
-              case item_result[item_key]
-              when Array
-                item_result[item_key] << compacted_item
-              when nil
-                if !compacted_value.is_a?(Array) && context.container(compacted_key) == '@set'
-                  compacted_item = [compacted_item].compact
-                  debug {" => as @set: #{compacted_item.inspect}"}
+            iap = result[item_active_property] ||= []
+            result[item_active_property] = [iap] unless iap.is_a?(Array)
+          end
+
+          # At this point, expanded value must be an array due to the Expansion algorithm.
+          expanded_value.each do |expanded_item|
+            item_active_property = depth do
+              context.compact_iri(expanded_property,
+                                  :value => expanded_item,
+                                  :vocab => true,
+                                  :reverse => inside_reverse,
+                                  :depth => @depth)
+            end
+            container = context.container(item_active_property)
+            value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
+            compacted_item = depth {compact(value, item_active_property)}
+            debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
+
+            if list?(expanded_item)
+              compacted_item = [compacted_item] unless compacted_item.is_a?(Array)
+              unless container == '@list'
+                al = context.compact_iri('@list', :vocab => true, :quiet => true)
+                compacted_item = {al => compacted_item}
+                if expanded_item.has_key?('@index')
+                  key = context.compact_iri('@index', :vocab => true, :quiet => true)
+                  compacted_item[key] = expanded_item['@index']
                 end
-                item_result[item_key] = compacted_item
               else
-                item_result[item_key] = [item_result[item_key], compacted_item]
+                raise ProcessingError::CompactionToListOfLists,
+                      "key cannot have more than one list value" if result.has_key?(item_active_property)
               end
+            end
+
+            if %w(@language @index).include?(container)
+              map_object = result[item_active_property] ||= {}
+              compacted_item = compacted_item['@value'] if container == '@language' && value?(compacted_item)
+              map_key = expanded_item[container]
+              merge_compacted_value(map_object, map_key, compacted_item)
+            else
+              compacted_item = [compacted_item] if
+                !compacted_item.is_a?(Array) && (
+                  !@options[:compactArrays] ||
+                  %w(@set @list).include?(container) ||
+                  %w(@list @graph).include?(expanded_property)
+                )
+              merge_compacted_value(result, item_active_property, compacted_item)
             end
           end
         end
@@ -198,37 +162,6 @@ module JSON::LD
         # For other types, the compacted value is the element value
         debug("compact") {element.class.to_s}
         element
-      end
-    end
-
-    private
-
-    # Determines if two nodes are equivalent.
-    # * Value nodes are equivalent using a deep comparison
-    # * Arrays are equivalent if they have the same number of elements and each element is equivalent to the matching element
-    # * Node Defintions/References are equivalent IFF the have the same @id
-    def nodesEquivalent?(n1, n2)
-      depth do
-        r = if n1.is_a?(Array) && n2.is_a?(Array) && n1.length == n2.length
-          equiv = true
-          n1.each_with_index do |v1, i|
-            equiv &&= nodesEquivalent?(v1, n2[i]) if equiv
-          end
-          equiv
-        elsif value?(n1) && value?(n2)
-          n1 == n2
-        elsif list?(n1)
-          list?(n2) &&
-            n1.fetch('@index', true) == n2.fetch('@index', true) &&
-            nodesEquivalent?(n1['@list'], n2['@list'])
-        elsif (node?(n1) || node_reference?(n2))
-          (node?(n2) || node_reference?(n2)) && n1['@id'] == n2['@id']
-        else
-          false
-        end
-
-        debug("nodesEquivalent?(#{n1.inspect}, #{n2.inspect}): #{r.inspect}")
-        r
       end
     end
   end

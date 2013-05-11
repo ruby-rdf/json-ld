@@ -27,7 +27,12 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def blank_node?(value)
-      (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+      case value
+      when nil    then true
+      when String then value[0,2] == '_:'
+      else
+        (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+      end
     end
 
     ##
@@ -57,17 +62,62 @@ module JSON::LD
       value.is_a?(Hash) && value.has_key?('@value')
     end
 
+    ##
+    # Represent an id as an IRI or Blank Node
+    # @param [String] id
+    # @return [RDF::Resource]
+    def as_resource(id)
+      @nodes ||= {} # Re-use BNodes
+      id[0,2] == '_:' ? (@nodes[id] ||= RDF::Node.new(id[2..-1])) : RDF::URI(id)
+    end
+
     private
+
+    # Merge the last value into an array based for the specified key if hash is not null and value is not already in that array
+    def merge_value(hash, key, value)
+      return unless hash
+      values = hash[key] ||= []
+      if key == '@list'
+        values << value
+      elsif list?(value)
+        values << value
+      elsif !values.include?(value)
+        values << value
+      end
+    end
+
+    # Merge values into compacted results, creating arrays if necessary
+    def merge_compacted_value(hash, key, value)
+      return unless hash
+      case hash[key]
+      when nil then hash[key] = value
+      when Array
+        if value.is_a?(Array)
+          hash[key].concat(value)
+        else
+          hash[key] << value
+        end
+      else
+        hash[key] = [hash[key]]
+        if value.is_a?(Array)
+          hash[key].concat(value)
+        else
+          hash[key] << value
+        end
+      end
+    end
 
     # Add debug event to debug array, if specified
     #
     #   param [String] message
     #   yieldreturn [String] appended to message, to allow for lazy-evaulation of message
     def debug(*args)
+      options = args.last.is_a?(Hash) ? args.pop : {}
       return unless ::JSON::LD.debug? || @options[:debug]
+      depth = options[:depth] || @depth || 0
       list = args
       list << yield if block_given?
-      message = " " * (@depth || 0) * 2 + (list.empty? ? "" : list.join(": "))
+      message = " " * depth * 2 + (list.empty? ? "" : list.join(": "))
       puts message if JSON::LD::debug?
       @options[:debug] << message if @options[:debug].is_a?(Array)
     end
@@ -76,9 +126,9 @@ module JSON::LD
     def depth(options = {})
       old_depth = @depth || 0
       @depth = (options[:depth] || old_depth) + 1
-      ret = yield
+      yield
+    ensure
       @depth = old_depth
-      ret
     end
   end
 

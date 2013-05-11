@@ -31,6 +31,8 @@ describe JSON::LD::Writer do
       serialize(input).should produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
+      }, {
+        "@id" => "http://a/d"
       }], @debug)
     end
 

@@ -5,119 +5,14 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  describe "#generate_node_map" do
-    {
-      "single object" => {
-        :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :subjects => %w(http://example.com),
-        :output => {
-          "http://example.com" => {
-            "@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]
-          }
-        }
-      },
-      "embedded object" => {
-        :input => {
-          "@context" => {"foaf" => RDF::FOAF.to_s},
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => ["foaf:PersonalProfile"],
-          "foaf:primaryTopic" => [{
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => ["foaf:Person"]
-          }]
-        },
-        :subjects => %w(http://greggkellogg.net/foaf http://greggkellogg.net/foaf#me),
-        :output => {
-          "http://greggkellogg.net/foaf" => {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
-          },
-          "http://greggkellogg.net/foaf#me" => {
-            "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => [RDF::FOAF.Person.to_s]
-          }
-        }
-      },
-      "embedded anon" => {
-        :input => {
-          "@context" => {"foaf" => RDF::FOAF.to_s},
-          "@id" => "http://greggkellogg.net/foaf",
-          "@type" => "foaf:PersonalProfile",
-          "foaf:primaryTopic" => {
-            "@type" => "foaf:Person"
-          }
-        },
-        :subjects => %w(http://greggkellogg.net/foaf _:t0),
-        :output => {
-          "_:t0" => {
-            "@id" => "_:t0",
-            "@type" => [RDF::FOAF.Person.to_s]
-          },
-          "http://greggkellogg.net/foaf" => {
-            "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
-          },
-        }
-      },
-      "anon in list" => {
-        :input => [{
-          "@id" => "_:a",
-          "http://example.com/list" => [{"@list" => [{"@id" => "_:b"}]}]
-        }, {
-          "@id" => "_:b",
-          "http://example.com/name" => "foo"
-        }],
-        :subjects => %w(_:t0 _:t1),
-        :output => {
-          "_:t0" => {
-            "@id" => "_:t0",
-            "http://example.com/list" => [
-              {
-                "@list" => [
-                  {
-                    "@id" => "_:t1"
-                  }
-                ]
-              }
-            ]
-          },
-          "_:t1" => {
-            "@id" => "_:t1",
-            "http://example.com/name" => [
-              {
-                "@value" => "foo"
-              }
-            ]
-          }
-        }
-      }
-    }.each do |title, params|
-      it title do
-        @debug = []
-        @node_map = Hash.ordered
-        graph = params[:graph] || '@merged'
-        jld = nil
-        expanded_value = JSON::LD::API.expand(params[:input])
-        JSON::LD::API.new(expanded_value, nil, :debug => @debug) do |api|
-          api.generate_node_map(expanded_value,
-            @node_map,
-            graph)
-        end
-        @node_map.keys.should produce([graph], @debug)
-        subjects = @node_map[graph]
-        subjects.keys.should produce(params[:subjects], @debug)
-        subjects.should produce(params[:output], @debug)
-      end
-    end
-  end
-
   describe ".flatten" do
     {
       "single object" => {
         :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :output => [{"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}]
+        :output => [
+          {"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]},
+          {"@id" => RDF::RDFS.Resource.to_s}
+        ]
       },
       "embedded object" => {
         :input => {
@@ -140,7 +35,9 @@ describe JSON::LD::API do
           {
             "@id" => "http://greggkellogg.net/foaf#me",
             "@type" => [RDF::FOAF.Person.to_s]
-          }
+          },
+          {"@id" => RDF::FOAF.Person.to_s},
+          {"@id" => RDF::FOAF.PersonalProfile.to_s},
         ]
       },
       "embedded anon" => {
@@ -156,21 +53,129 @@ describe JSON::LD::API do
         },
         :output => [
           {
-            "@id" => "_:t0",
+            "@id" => "_:b0",
             "@type" => [RDF::FOAF.Person.to_s]
           },
           {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:t0"}]
+            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
           },
+          {"@id" => RDF::FOAF.Person.to_s},
+          {"@id" => RDF::FOAF.PersonalProfile.to_s},
         ]
+      },
+      "reverse properties" => {
+        :input => ::JSON.parse(%([
+          {
+            "@id": "http://example.com/people/markus",
+            "@reverse": {
+              "http://xmlns.com/foaf/0.1/knows": [
+                {
+                  "@id": "http://example.com/people/dave"
+                },
+                {
+                  "@id": "http://example.com/people/gregg"
+                }
+              ]
+            },
+            "http://xmlns.com/foaf/0.1/name": [ { "@value": "Markus Lanthaler" } ]
+          }
+        ])),
+        :output => ::JSON.parse(%([
+          {
+            "@id": "http://example.com/people/dave",
+            "http://xmlns.com/foaf/0.1/knows": [
+              {
+                "@id": "http://example.com/people/markus"
+              }
+            ]
+          },
+          {
+            "@id": "http://example.com/people/gregg",
+            "http://xmlns.com/foaf/0.1/knows": [
+              {
+                "@id": "http://example.com/people/markus"
+              }
+            ]
+          },
+          {
+            "@id": "http://example.com/people/markus",
+            "http://xmlns.com/foaf/0.1/name": [
+              {
+                "@value": "Markus Lanthaler"
+              }
+            ]
+          }
+        ]))
+      },
+      "Simple named graph (Wikidata)" => {
+        :input => ::JSON.parse(%q({
+          "@context": {
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "ex": "http://example.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "ex:locatedIn": {"@type": "@id"},
+            "ex:hasPopulaton": {"@type": "xsd:integer"},
+            "ex:hasReference": {"@type": "@id"}
+          },
+          "@graph": [
+            {
+              "@id": "http://example.org/ParisFact1",
+              "@type": "rdf:Graph",
+              "@graph": {
+                "@id": "http://example.org/location/Paris#this",
+                "ex:locatedIn": "http://example.org/location/France#this"
+              },
+              "ex:hasReference": ["http://www.britannica.com/", "http://www.wikipedia.org/", "http://www.brockhaus.de/"]
+            },
+            {
+              "@id": "http://example.org/ParisFact2",
+              "@type": "rdf:Graph",
+              "@graph": {
+                "@id": "http://example.org/location/Paris#this",
+                "ex:hasPopulation": 7000000
+              },
+              "ex:hasReference": "http://www.wikipedia.org/"
+            }
+          ]
+        })),
+        :output => ::JSON.parse(%q([{
+          "@id": "http://example.org/ParisFact1",
+          "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
+          "http://example.org/hasReference": [
+            {"@id": "http://www.britannica.com/"},
+            {"@id": "http://www.wikipedia.org/"},
+            {"@id": "http://www.brockhaus.de/"}
+          ],
+          "@graph": [{
+              "@id": "http://example.org/location/France#this"
+          }, {
+              "@id": "http://example.org/location/Paris#this",
+              "http://example.org/locatedIn": [{"@id": "http://example.org/location/France#this"}]
+            }]
+          }, {
+            "@id": "http://example.org/ParisFact2",
+            "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
+            "http://example.org/hasReference": [{"@id": "http://www.wikipedia.org/"}],
+            "@graph": [{
+              "@id": "http://example.org/location/Paris#this",
+              "http://example.org/hasPopulation": [{"@value": 7000000}]
+            }]
+          }, {
+            "@id": "http://www.britannica.com/"
+          }, {
+            "@id": "http://www.brockhaus.de/"
+          }, {
+            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"
+          }, {
+            "@id": "http://www.wikipedia.org/"
+          }])),
       }
     }.each do |title, params|
       it title do
         @debug = []
-        graph = params[:graph] || '@merged'
-        jld = JSON::LD::API.flatten(params[:input], graph, nil, nil, :debug => @debug) 
+        jld = JSON::LD::API.flatten(params[:input], nil, :debug => @debug) 
         jld.should produce(params[:output], @debug)
       end
     end

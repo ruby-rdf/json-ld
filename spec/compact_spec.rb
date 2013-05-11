@@ -58,7 +58,7 @@ describe JSON::LD::API do
       "@id" => {
         :input => {"@id" => "http://example.org/test#example"},
         :context => {},
-        :output => {"@graph" => []}
+        :output => {}
       },
       "@id coercion" => {
         :input => {
@@ -136,18 +136,6 @@ describe JSON::LD::API do
           "b" => []
         }
       },
-      "empty term" => {
-        :input => {
-          "@id" => "http://example.com/",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-        :context => {"" => "http://example.com/"},
-        :output => {
-          "@context" => {"" => "http://example.com/"},
-          "@id" => "",
-          "@type" => "#{RDF::RDFS.Resource}"
-        },
-      },
       "@type with string @id" => {
         :input => {
           "@id" => "http://example.com/",
@@ -191,7 +179,7 @@ describe JSON::LD::API do
       },
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+        jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
         jld.should produce(params[:output], @debug)
       end
     end
@@ -254,7 +242,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -264,7 +252,7 @@ describe JSON::LD::API do
       {
         "Uses term with nil language when two terms conflict on language" => {
           :input => [{
-            "http://example.com/term" => {"@value" => "v1", "@language" => nil}
+            "http://example.com/term" => {"@value" => "v1"}
           }],
           :context => {
             "term5" => {"@id" => "http://example.com/term","@language" => nil},
@@ -292,16 +280,80 @@ describe JSON::LD::API do
               "id1" => "http://example.com/id1",
               "@language" => "de"
             },
-            "@id" => "id1",
+            "@id" => "http://example.com/id1",
             "id1" => "foo"
           }
+        },
+        "compact-0007" => {
+          :input => ::JSON.parse(%(
+            {"http://example.org/vocab#contains": "this-is-not-an-IRI"}
+          )),
+          :context => ::JSON.parse(%({
+            "ex": "http://example.org/vocab#",
+            "ex:contains": {"@type": "@id"}
+          })),
+          :output => ::JSON.parse(%({
+            "@context": {
+              "ex": "http://example.org/vocab#",
+              "ex:contains": {"@type": "@id"}
+            },
+            "http://example.org/vocab#contains": "this-is-not-an-IRI"
+          }))
         }
       }.each_pair do |title, params|
         it title do
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
-          jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug)
+          jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
+          jld.should produce(output, @debug)
+        end
+      end
+    end
+
+    context "@reverse" do
+      {
+        "compact-0033" => {
+          :input => %([
+            {
+              "@id": "http://example.com/people/markus",
+              "@reverse": {
+                "http://xmlns.com/foaf/0.1/knows": [
+                  {
+                    "@id": "http://example.com/people/dave",
+                    "http://xmlns.com/foaf/0.1/name": [ { "@value": "Dave Longley" } ]
+                  }
+                ]
+              },
+              "http://xmlns.com/foaf/0.1/name": [ { "@value": "Markus Lanthaler" } ]
+            }
+          ]),
+          :context => %({
+            "name": "http://xmlns.com/foaf/0.1/name",
+            "isKnownBy": { "@reverse": "http://xmlns.com/foaf/0.1/knows" }
+          }),
+          :output => %({
+            "@context": {
+              "name": "http://xmlns.com/foaf/0.1/name",
+              "isKnownBy": {
+                "@reverse": "http://xmlns.com/foaf/0.1/knows",
+                "@type": "@id"
+              }
+            },
+            "@id": "http://example.com/people/markus",
+            "name": "Markus Lanthaler",
+            "isKnownBy": {
+              "@id": "http://example.com/people/dave",
+              "name": "Dave Longley"
+            }
+          })
+        }
+      }.each_pair do |title, params|
+        it title do
+          input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
+          ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
+          output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
+          jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
           jld.should produce(output, @debug)
         end
       end
@@ -321,7 +373,7 @@ describe JSON::LD::API do
           },
           "foo" => "bar"
         }
-        jld = JSON::LD::API.compact(input, ctx, nil, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -337,7 +389,7 @@ describe JSON::LD::API do
           "b" => "c"
         }
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", nil, :debug => @debug, :validate => true)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
     end
@@ -366,7 +418,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -403,96 +455,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
-          jld.should produce(params[:output], @debug)
-        end
-      end
-    end
-
-    context "property generators" do
-      {
-        "exactly matching" => {
-          :input => [{
-            "http://example.com/foo" => [{"@value" => "baz"}],
-            "http://example.com/bar"=> [{"@value" => "baz"}],
-          }],
-          :context => {
-            "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-          },
-          :output => {
-            "@context" => {
-              "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-            },
-            "foobar" => "baz"
-          }
-        },
-        "overlapping" => {
-          :input => [{
-            "http://example.com/foo" => [{"@value" => "baz"}, {"@value" => "baz1"}],
-            "http://example.com/bar"=> [{"@value" => "baz"}, {"@value" => "baz2"}],
-          }],
-          :context => {
-            "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-          },
-          :output => {
-            "@context" => {
-              "foobar" => {"@id" => ["http://example.com/foo", "http://example.com/bar"]}
-            },
-            "foobar" => "baz",
-            "http://example.com/foo" => "baz1",
-            "http://example.com/bar" => "baz2"
-          }
-        },
-        "compact-0031" => {
-          :input => JSON.parse(%q([{
-             "@id": "http://example.com/node/1",
-             "http://example.com/vocab/field_related": [{
-                "@id": "http://example.com/node/this-is-related-news"
-             }],
-             "http://schema.org/about": [{
-                "@id": "http://example.com/node/this-is-related-news"
-             }, {
-                "@id": "http://example.com/term/this-is-a-tag"
-             }],
-             "http://example.com/vocab/field_tags": [{
-                "@id": "http://example.com/term/this-is-a-tag"
-             }]
-          }])),
-          :context => JSON.parse(%q({
-            "site": "http://example.com/",
-            "field_tags": {
-              "@id": [ "site:vocab/field_tags", "http://schema.org/about" ],
-              "@container": "@set"
-            },
-            "field_related": {
-              "@id": [ "site:vocab/field_related", "http://schema.org/about" ]
-            }
-          })),
-          :output => JSON.parse(%q({
-            "@context": {
-              "site": "http://example.com/",
-              "field_tags": {
-                "@id": [
-                  "site:vocab/field_tags",
-                  "http://schema.org/about"
-                ],
-                "@container": "@set"
-              },
-              "field_related": {
-                "@id": [
-                  "site:vocab/field_related",
-                  "http://schema.org/about"
-                ]
-              }
-            },
-            "@id": "site:node/1",
-            "field_tags": [{"@id": "site:term/this-is-a-tag"}],
-            "field_related": {"@id": "site:node/this-is-related-news"}
-          })),
-        },
-      }.each_pair do |title, params|
-        it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -516,7 +479,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], nil, :debug => @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -539,7 +502,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          lambda {JSON::LD::API.compact(params[:input], {}, nil)}.should raise_error(params[:exception])
+          lambda {JSON::LD::API.compact(params[:input], {})}.should raise_error(params[:exception])
         end
       end
     end

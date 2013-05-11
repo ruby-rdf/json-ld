@@ -1,7 +1,8 @@
 @prefix avatar: <http://xmlns.com/foaf/0.1/avatar> .
 @prefix homepage: <http://xmlns.com/foaf/0.1/homepage> .
 @prefix name: <http://xmlns.com/foaf/0.1/name> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
- [ avatar: "http://twitter.com/account/profile_image/manusporny";
-    homepage: "http://manu.sporny.org/";
-    name: "Manu Sporny"] .
+ [ avatar: "http://twitter.com/account/profile_image/manusporny"^^xsd:string;
+    homepage: "http://manu.sporny.org/"^^xsd:string;
+    name: "Manu Sporny"^^xsd:string] .

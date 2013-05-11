@@ -5,7 +5,7 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
-  describe ".frame", :pending => "Must investigate" do
+  describe ".frame" do
     {
       "frame with @type matches subject with @type" => {
         :frame => {
@@ -477,15 +477,15 @@ describe JSON::LD::API do
           },
           "@graph" => [
             {
-              "@id" => "_:t0",
+              "@id" => "_:b0",
               "@type" => "mf:Manifest",
               "comment" => "Positive processor tests",
               "entries" => [
                 {
-                  "@id" => "_:t1",
+                  "@id" => "_:b1",
                   "@type" => "mf:ManifestEntry",
                   "action" => {
-                    "@id" => "_:t2",
+                    "@id" => "_:b2",
                     "@type" => "mq:QueryTest",
                     "data" => "http://www.w3.org/TR/microdata-rdf/tests/0001.html",
                     "query" => "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
@@ -503,7 +503,7 @@ describe JSON::LD::API do
       it title do
         @debug = []
         begin
-          jld = JSON::LD::API.frame(params[:input], params[:frame], nil, :debug => @debug)
+          jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
           jld.should produce(params[:output], @debug)
         rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +

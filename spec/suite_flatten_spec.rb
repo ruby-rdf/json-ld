@@ -6,14 +6,14 @@ describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/flatten-manifest.jsonld')
-    describe m.name, :pending => "New flattening algorithm" do
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/flatten-manifest.jsonld")
+    describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "frame: #{t.frame.read}" if t.property('frame')
-            result = JSON::LD::API.flatten(t.input, nil, t.context, nil,
+            result = JSON::LD::API.flatten(t.input, t.context,
                                           :base => t.base,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)

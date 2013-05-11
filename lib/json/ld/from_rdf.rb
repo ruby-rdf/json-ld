@@ -11,11 +11,11 @@ module JSON::LD
     # @param [Array<RDF::Statement>, RDF::Enumerable] input
     # @return [Array<Hash>] the JSON-LD document in normalized form
     def from_statements(input)
-      defaultGraph = {:nodes => {}, :listMap => {}, :name => ''}
-      graphs = {'' => defaultGraph}
+      default_graph = {}
+      graph_map = {'@default' => default_graph}
 
       value = nil
-      ec = EvaluationContext.new
+      ec = Context.new
 
       # Create a map for node to object representation
 
@@ -23,125 +23,95 @@ module JSON::LD
       input.each do |statement|
         debug("statement") { statement.to_nquads.chomp}
 
-        subject = ec.expand_iri(statement.subject).to_s
-        name = statement.context ? ec.expand_iri(statement.context).to_s : ''
+        name = statement.context ? ec.expand_iri(statement.context).to_s : '@default'
         
         # Create a graph entry as needed
-        graph = graphs[name] ||= {:nodes => {}, :listMap => {}, :name => name}
+        node_map = graph_map[name] ||= {}
+        default_graph[name] ||= {'@id' => name} unless name == '@default'
         
-        case statement.predicate
-        when RDF.first
-          # If property is rdf:first,
-          # create a new entry in _listMap_ for _name_ and _subject_ and an array value
-          # containing the object representation and continue to the next statement.
-          listMap = graph[:listMap]
-          entry = listMap[subject] ||= {}
-          object_rep = ec.expand_value(nil, statement.object)
-          entry[:first] = object_rep
-          debug("rdf:first") { "save entry for #{subject.inspect} #{entry.inspect}"}
-          next
-        when RDF.rest
-          # If property is rdf:rest,
-          # and object is a blank node,
-          # create a new entry in _restMap_ for _name_ and _subject_ and a value being the
-          # result of IRI expansion on the object and continue to the next statement.
-          next unless statement.object.is_a?(RDF::Node)
+        subject = ec.expand_iri(statement.subject).to_s
+        node = node_map[subject] ||= {'@id' => subject}
 
-          listMap = graph[:listMap]
-          entry = listMap[subject] ||= {}
+        # If object is an IRI or blank node identifier, does not equal rdf:nil, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
+        node_map[statement.object.to_s] ||= {'@id' => statement.object.to_s} unless
+        statement.object.literal? || statement.object == RDF.nil
 
-          object_rep = ec.expand_iri(statement.object).to_s
-          entry[:rest] = object_rep
-          debug("rdf:rest") { "save entry for #{subject.inspect} #{entry.inspect}"}
+        # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
+        if statement.predicate == RDF.type && statement.object.resource?
+          merge_value(node, '@type', statement.object.to_s)
           next
         end
 
-        # Add entry to default graph for name unless it is empty
-        defaultGraph[:nodes][name] ||= {'@id' => name} unless name.empty?
-        
-        # Get value from graph nodes for subject, initializing it to a new node declaration for subject if it does not exist
-        debug("@id") { "new subject: #{subject}"} unless graph[:nodes].has_key?(subject)
-        value = graph[:nodes][subject] ||= {'@id' => subject}
-
-        # If property is http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-        # and the useRdfType option is not true
-        if statement.predicate == RDF.type && !@options[:useRdfType]
-          object = ec.expand_iri(statement.object).to_s
-          debug("@type") { object.inspect}
-          # append the string representation of object to the array value for the key @type, creating
-          # an entry if necessary
-          (value['@type'] ||= []) << object
-        # FIXME: 3.7) If object is a typed literal and the useNativeTypes option is set to true:
-        elsif statement.object == RDF.nil
-          # Otherwise, if object is http://www.w3.org/1999/02/22-rdf-syntax-ns#nil, let
-          # key be the string representation of predicate. Set the value
-          # for key to an empty @list representation {"@list": []}
-          key = ec.expand_iri(statement.predicate).to_s
-          (value[key] ||= []) << {"@list" => []}
+        # If object equals rdf:nil and predicate does not equal rdf:rest, set value to a new JSON object consisting of a single member @list whose value is set to an empty array.
+        value = if statement.object == RDF.nil && statement.predicate != RDF.rest
+          {'@list' => []}
         else
-          # Otherwise, let key be the string representation of predicate and 
-          # let object representation be object represented in expanded form as 
-          # described in Value Expansion.
-          key = ec.expand_iri(statement.predicate).to_s
-          object = ec.expand_value(key, statement.object, @options)
-          if blank_node?(object)
-            # if object is an Unnamed Node, set as the head element in the listMap
-            # entry for object
-            listMap = graph[:listMap]
-            entry = listMap[object['@id']] ||= {}
-            entry[:head] = object
-            debug("bnode") { "save entry #{entry.inspect}"}
-          end
+          ec.expand_value(nil, statement.object, @options)
+        end
 
-          debug("key/value") { "key: #{key}, :value #{object.inspect}"}
-          
-          # append the object object representation to the array value for key, creating
-          # an entry if necessary
-          (value[key] ||= []) << object
+        merge_value(node, statement.predicate.to_s, value)
+
+        # If object is a blank node identifier and predicate equals neither rdf:first nor rdf:rest, it might represent the head of a RDF list:
+        if statement.object.node? && ![RDF.first, RDF.rest].include?(statement.predicate)
+          merge_value(node_map[statement.object.to_s], :usages, value)
         end
       end
 
-      # Build lists for each graph
-      graphs.each do |name, graph|
-        graph[:listMap].each do |subject, entry|
-          debug("listMap(#{name}, #{subject})") { entry.inspect}
-          if entry.has_key?(:head) && entry.has_key?(:first)
-            debug("@list") { "List head for #{subject.inspect} in #{name.inspect}: #{entry.inspect}"}
-            value = entry[:head]
-            value.delete('@id')
-            list = value['@list'] = [entry[:first]].compact
-            
-            while rest = entry.fetch(:rest, nil)
-              entry = graph[:listMap][rest]
-              debug(" => ") { "add #{entry.inspect}"}
-              raise JSON::LD::ProcessingError, "list entry missing rdf:first" unless entry.has_key?(:first)
-              list << entry[:first]
+      # For each name and graph object in graph map:
+      graph_map.each do |name, graph_object|
+        subjects = graph_object.keys
+        subjects.each do |subj|
+          next unless graph_object.has_key?(subj)
+          node = graph_object[subj]
+          next unless node[:usages].is_a?(Array) && node[:usages].length == 1
+          debug("list head") {node.to_json(JSON_STATE)}
+          value = node[:usages].first
+          list, list_nodes, subject = [], [], subj
+
+          while subject != RDF.nil.to_s && list
+            if node.nil? ||
+               !blank_node?(node) ||
+               node.keys.any? {|k| !["@id", :usages, RDF.first.to_s, RDF.rest.to_s].include?(k)} ||
+               !(f = node[RDF.first.to_s]).is_a?(Array) || f.length != 1 ||
+               !(r = node[RDF.rest.to_s]).is_a?(Array) || r.length != 1 || !node_reference?(r.first) ||
+               list_nodes.include?(subject)
+
+              debug("list") {"not valid list element: #{node.to_json(JSON_STATE)}"}
+              list = nil
+            else
+              list << f.first
+              list_nodes << node['@id']
+              subject = r.first['@id']
+              node = graph_object[subject]
+              debug("list") {"rest: #{node.to_json(JSON_STATE)}"}
+              list = nil if list_nodes.include?(subject)
             end
           end
+
+          next if list.nil?
+          value.delete('@id')
+          value['@list'] = list
+          list_nodes.each {|s| graph_object.delete(s)}
         end
       end
 
-      # Build graphs in @id order
-      debug("graphs") {graphs.to_json(JSON_STATE)}
-      array = defaultGraph[:nodes].keys.sort.map do |subject|
-        entry = defaultGraph[:nodes][subject]
-        debug("=> default") {entry.to_json(JSON_STATE)}
-        
-        # If subject is a named graph, add serialized subject defintions
-        if graphs.has_key?(subject) && !subject.empty?
-          entry['@graph'] = graphs[subject][:nodes].keys.sort.map do |s|
-            debug("=> #{s.inspect}")
-            graphs[subject][:nodes][s]
+      result = []
+      debug("graph_map") {graph_map.to_json(JSON_STATE)}
+      default_graph.keys.sort.each do |subject|
+        node = default_graph[subject]
+        if graph_map.has_key?(subject)
+          node['@graph'] = []
+          graph_map[subject].keys.sort.each do |s|
+            n = graph_map[subject][s]
+            n.delete(:usages)
+            node['@graph'] << n
           end
         end
-        
-        debug("default graph") {entry.inspect}
-        entry
+        node.delete(:usages)
+        result << node
       end
-
-      # Return array as the graph representation.
-      debug("fromRDF") {array.to_json(JSON_STATE)}
-      array
+      debug("fromRDF") {result.to_json(JSON_STATE)}
+      result
     end
   end
 end

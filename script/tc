@@ -1,0 +1,203 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+$:.unshift(File.expand_path(File.join(File.dirname(__FILE__), "..", 'lib')))
+require "bundler/setup"
+require 'json/ld'
+require 'rdf/isomorphic'
+require File.expand_path(File.join(File.dirname(__FILE__), "..", 'spec', 'spec_helper'))
+require File.expand_path(File.join(File.dirname(__FILE__), "..", 'spec', 'suite_helper'))
+require 'getoptlong'
+
+ASSERTOR = "http://greggkellogg.net/foaf#me"
+RUN_TIME = Time.now
+
+def earl_preamble(options)
+  options[:output].write File.read(File.expand_path("../../etc/doap.ttl", __FILE__))
+  options[:output].puts %(
+<#{ASSERTOR}> a foaf:Person, earl:Assertor;
+  foaf:name "Gregg Kellogg";
+  foaf:title "Implementor";
+  foaf:homepage <http://greggkellogg.net/> .
+)
+end
+
+def run_tc(man, tc, options)
+  STDERR.write "run #{man}#{tc.id}"
+
+  if options[:verbose]
+    puts "\nTestCase: #{tc.inspect}"
+    puts "\nInput:\n" + tc.input.read 
+    puts "\nContext:\n" + tc.context.read if tc.context
+    puts "\nFrame:\n" + tc.frame.read if tc.frame
+    puts "\nExpected:\n" + tc.expect.read
+    tc.input.rewind
+    tc.context.rewind if tc.context
+    tc.frame.rewind if tc.frame
+    tc.expect.rewind
+  end
+
+  output = ""
+  begin
+    puts "open #{tc.id}" if options[:verbose]
+
+    result = case tc.testType
+    when 'jld:CompactTest'
+      output = JSON::LD::API.compact(tc.input, tc.context, :base => tc.base)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
+    when 'jld:ExpandTest'
+      output = JSON::LD::API.expand(tc.input, nil, :base => tc.base)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
+    when 'jld:FlattenTest'
+      output = JSON::LD::API.flatten(tc.input, tc.context, :base => tc.base)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
+    when 'jld:FrameTest'
+      output = JSON::LD::API.frame(tc.input, tc.frame, :base => tc.base)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
+    when 'jld:FromRDFTest'
+      repo = RDF::Repository.load(tc.base)
+      output = JSON::LD::API.fromRDF(repo.each_statement.to_a)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
+    when 'jld:ToRDFTest'
+      quads = JSON::LD::API.toRDF(tc.input, nil, :base => tc.base).map do |statement|
+        to_quad(statement)
+      end
+
+      expected = tc.expect.readlines.sort.join("")
+      output = quads.sort.join("")
+      output == expected ? 'passed' : 'failed'
+    end || "untested"
+
+  rescue Exception => e
+    STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
+    if options[:quiet]
+      return
+    else
+      raise
+    end
+  end
+  
+  #options[:output].puts("\nOutput:\n" + output) unless options[:quiet]
+
+  if options[:earl]
+    options[:output].puts %{
+[ a earl:Assertion;
+  earl:assertedBy <#{ASSERTOR}>;
+  earl:subject <http://rubygems.org/gems/json-ld>;
+  earl:test <#{Fixtures::SuiteTest::SUITE}tests/#{man}-manifest.jsonld#{tc.id}>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:#{result};
+    dc:date "#{RUN_TIME.xmlschema}"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+}
+  end
+
+  puts "#{"test result:" unless options[:quiet]} #{result}"
+end
+
+
+# Don't use NQuads writer so that we don't escape Unicode
+def to_quad(thing)
+  case thing
+  when RDF::URI
+    "<#{escaped(thing.to_s)}>"
+  when RDF::Node
+    escaped(thing.to_s)
+  when RDF::Literal::Double
+    case
+    when thing.object.nan?, thing.object.infinite?, thing.object.zero?
+      thing.canonicalize.to_ntriples
+    else
+      i, f, e = ('%.15E' % thing.object.to_f).split(/[\.E]/)
+      f.sub!(/0*$/, '')           # remove any trailing zeroes
+      f = '0' if f.empty?         # ...but there must be a digit to the right of the decimal point
+      e.sub!(/^\+?0+(\d)$/, '\1') # remove the optional leading '+' sign and any extra leading zeroes
+      %("#{i}.#{f}E#{e}"^^<http://www.w3.org/2001/XMLSchema#double>)
+    end
+  when RDF::Literal
+    v = quoted(escaped(thing.value))
+    case thing.datatype
+    when nil, "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/2001/XMLSchema#langString"
+      # Ignore these
+    else
+      v += "^^<#{thing.datatype}>"
+    end
+    v += "@#{thing.language}" if thing.language
+    v
+  when RDF::Statement
+    thing.to_quad.map {|r| to_quad(r)}.compact.join(" ") + " .\n"
+  end
+end
+
+##
+# @param  [String] string
+# @return [String]
+def quoted(string)
+  "\"#{string}\""
+end
+
+##
+# @param  [String] string
+# @return [String]
+def escaped(string)
+  string.gsub('\\', '\\\\').gsub("\t", '\\t').
+    gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
+end
+
+options = {
+  :output => STDOUT,
+}
+
+opts = GetoptLong.new(
+  ["--help", "-?", GetoptLong::NO_ARGUMENT],
+  ["--dbg", GetoptLong::NO_ARGUMENT],
+  ["--earl", GetoptLong::NO_ARGUMENT],
+  ["--quiet", "-q", GetoptLong::NO_ARGUMENT],
+  ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
+  ["--validate", GetoptLong::NO_ARGUMENT],
+  ["--verbose", "-v", GetoptLong::NO_ARGUMENT]
+)
+
+def help(options)
+  puts "Usage: #{$0} [options] [test-number ...]"
+  puts "Options:"
+  puts "      --debug:              Display detailed debug output"
+  puts "      --earl:               Generate EARL report"
+  puts "      --quiet:              Minimal output"
+  puts "      --output:             Output to specified file"
+  puts "      --validate:           Validate input"
+  puts "      --verbose:            Verbose processing"
+  puts "      --help,-?:            This message"
+  exit(0)
+end
+
+
+opts.each do |opt, arg|
+  case opt
+  when '--help'             then help(options)
+  when '--dbg'              then ::JSON::LD::debug = true
+  when '--earl'             then options[:quiet] = options[:earl] = true
+  when '--output'           then options[:output] = File.open(arg, "w")
+  when '--quiet'            then options[:quiet] = true
+  when '--validate'         then options[:validate] = true
+  when '--verbose'          then options[:verbose] = true
+  end
+end
+
+manifests = %w(expand compact flatten frame fromRdf toRdf)
+
+earl_preamble(options) if options[:earl]
+
+manifests.each do |man|
+  Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/#{man}-manifest.jsonld") do |m|
+    m.entries.each do |tc|
+      next unless ARGV.empty? || ARGV.any? {|n| "#{man}#{tc.id}".match(/#{n}/)}
+      run_tc(man, tc, options)
+    end
+  end
+end

@@ -5,7 +5,7 @@ require 'spec_helper'
 describe JSON::LD do
   describe "test suite" do
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/fromRdf-manifest.jsonld')
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/fromRdf-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
@@ -14,8 +14,8 @@ describe JSON::LD do
             t.input.rewind
             t.debug << "result: #{t.expect.read}"
             repo = RDF::Repository.load(t.base)
-            t.debug << "repo: #{repo.dump(:trig)}"
-            result = JSON::LD::API.fromRDF(repo.each_statement.to_a, nil,
+            t.debug << "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
+            result = JSON::LD::API.fromRDF(repo.each_statement.to_a,
                                           :debug => t.debug)
             expected = JSON.load(t.expect)
             result.should produce(expected, t.debug)

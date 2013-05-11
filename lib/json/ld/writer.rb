@@ -59,7 +59,7 @@ module JSON::LD
     attr_reader :graph
     
     # @!attribute [r] context
-    # @return [EvaluationContext] context used to load and administer contexts
+    # @return [Context] context used to load and administer contexts
     attr_reader :context
 
     ##
@@ -83,7 +83,7 @@ module JSON::LD
     #   the prefix mappings to use (not supported by all writers)
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
-    # @option options [IO, Array, Hash, String, EvaluationContext]     :context     (Hash.ordered)
+    # @option options [IO, Array, Hash, String, Context]     :context     (Hash.ordered)
     #   context to use when serializing. Constructed context for native serialization.
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer
@@ -149,13 +149,13 @@ module JSON::LD
       # Turn graph into a triple array
       statements = @repo.each_statement.to_a
       debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
-      result = API.fromRDF(statements, nil, @options)
+      result = API.fromRDF(statements, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
       context ||= @options[:context]
       context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
-        ctx = EvaluationContext.new(@options)
+        ctx = Context.new(@options)
         ctx.language = @options[:language] if @options[:language]
         @options[:prefixes].each do |prefix, iri|
           ctx.set_mapping(prefix, iri) if prefix && iri
@@ -166,7 +166,7 @@ module JSON::LD
       # Perform compaction, if we have a context
       if context
         debug("writer") { "compact result"}
-        result = API.compact(result, context, nil, @options)
+        result = API.compact(result, context,  @options)
       end
 
       @output.write(result.to_json(JSON_STATE))
