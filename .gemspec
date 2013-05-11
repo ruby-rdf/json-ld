@@ -38,6 +38,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-trig'
   gem.add_development_dependency 'rdf-isomorphic'
   gem.add_development_dependency 'rdf-xsd'
-  gem.add_runtime_dependency     'backports'
   gem.post_install_message  = nil
 end
