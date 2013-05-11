@@ -89,6 +89,11 @@ module JSON::LD
                   end
                 when String
                   context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
+                when Hash
+                  # For framing
+                  raise ProcessingError::InvalidTypeValue,
+                        "@type value must be a an empty object for framing: #{value.inspect}" unless
+                        value.empty?
                 else
                   raise ProcessingError::InvalidTypeValue,
                         "@type value must be a string or array of strings: #{value.inspect}"
@@ -173,6 +178,9 @@ module JSON::LD
 
                 # Continue with the next key from element
                 next
+              when '@explicit', '@default', '@embed', '@embedChildren', '@omitDefault'
+                # Framing keywords
+                depth { [expand(value, expanded_property, context, options)].flatten }
               else
                 # Skip unknown keyword
                 next

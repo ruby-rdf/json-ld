@@ -32,6 +32,9 @@ module JSON::LD
       when Hash
         # Otherwise element is a JSON object.
 
+        # @null objects are used in framing
+        return nil if element.has_key?('@null')
+
         if element.keys.any? {|k| %w(@id @value).include?(k)}
           result = context.compact_value(property, element, :depth => @depth)
           unless result.is_a?(Hash)

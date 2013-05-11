@@ -43,11 +43,16 @@ module JSON
       @base
       @container
       @context
+      @default
+      @embed
+      @embedChildren
+      @explicit
       @id
       @index
       @graph
       @language
       @list
+      @omitDefault
       @reverse
       @set
       @type
@@ -129,6 +134,7 @@ module JSON
     
     class InvalidFrame < Exception
       class MultipleEmbeds < InvalidFrame; end
+      class Syntax < InvalidFrame; end
     end
   end
 end

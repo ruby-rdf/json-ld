@@ -294,19 +294,22 @@ module JSON::LD
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         #debug(".frame") {"context from frame: #{context.inspect}"}
-        #debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
-        #debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE)}"}
+        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
+        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         all_nodes = Hash.ordered
+        old_dbg, @options[:debug] = @options[:debug], nil
         depth do
           generate_node_map(value, all_nodes, '@merged')
         end
+        @options[:debug] = old_dbg
         @node_map = all_nodes['@merged']
         debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @node_map, expanded_frame[0], result, nil)
+        frame(framing_state, @node_map, (expanded_frame.first || {}), result, nil)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame

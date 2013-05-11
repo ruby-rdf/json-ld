@@ -255,7 +255,7 @@ module JSON::LD
 
     def validate_frame(state, frame)
       raise InvalidFrame::Syntax,
-            "Invalid JSON-LD syntax; a JSON-LD frame must be an object" unless frame.is_a?(Hash)
+            "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless frame.is_a?(Hash)
     end
     
     # Return value of @name in frame, or default from state if it doesn't exist

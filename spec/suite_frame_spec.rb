@@ -7,7 +7,7 @@ describe JSON::LD do
     require 'suite_helper'
     require 'suite_helper'
     m = Fixtures::SuiteTest::Manifest.open('http://json-ld.org/test-suite/tests/frame-manifest.jsonld')
-    describe m.name, :pending => "New framing algorithm" do
+    describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
           begin
@@ -19,11 +19,11 @@ describe JSON::LD do
             expected = JSON.load(t.expect)
             result.should produce(expected, t.debug)
           rescue JSON::LD::ProcessingError => e
-            fail("Processing error: #{e.message}")
+            fail("Processing error: #{e.message}\n#{t.debug.join("\n")}\n#{e.backtrace.join("\n")}}")
           rescue JSON::LD::InvalidContext => e
-            fail("Invalid Context: #{e.message}")
+            fail("Invalid Context: #{e.message}\n#{t.debug.join("\n")}\n#{e.backtrace.join("\n")}}")
           rescue JSON::LD::InvalidFrame => e
-            fail("Invalid Frame: #{e.message}")
+            fail("Invalid Frame: #{e.message}\n#{t.debug.join("\n")}\n#{e.backtrace.join("\n")}}")
           end
         end
       end

@@ -27,7 +27,7 @@ describe JSON::LD::API do
           jld.should produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
-        it "frame", :pending => "Framing update" do
+        it "frame" do
           jld = JSON::LD::API.frame(File.open(filename), File.open(frame), :debug => @debug)
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
