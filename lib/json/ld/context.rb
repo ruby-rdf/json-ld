@@ -776,7 +776,7 @@ module JSON::LD
         end
 
         # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
-        if options[:vocab] && iri.start_with?(vocab) && iri.length > vocab.length
+        if options[:vocab] && vocab && iri.start_with?(vocab) && iri.length > vocab.length
           suffix = iri[vocab.length..-1]
           debug("") {"=> vocab suffix: #{suffix.inspect}"} unless options[:quiet]
           return suffix unless term_definitions.has_key?(suffix)
@@ -787,7 +787,7 @@ module JSON::LD
 
         term_definitions.each do |term, td|
           next if term.include?(":")
-          next if td.nil? || td.id == iri || !iri.start_with?(td.id)
+          next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
           suffix = iri[td.id.length..-1]
           ciri = "#{term}:#{suffix}"
           candidates << ciri unless value && term_definitions.has_key?(ciri)

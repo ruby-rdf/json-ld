@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.email                 = 'public-linked-json@w3.org'
 
   gem.platform              = Gem::Platform::RUBY
-  gem.files                 = %w(AUTHORS README.markdown UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
+  gem.files                 = %w(AUTHORS README.md UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
   gem.bindir               = %q(bin)
   gem.executables          = %w(jsonld)
   gem.default_executable   = gem.executables.first
@@ -25,7 +25,7 @@ Gem::Specification.new do |gem|
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
   gem.has_rdoc              = false
 
-  gem.required_ruby_version = '>= 1.8.1'
+  gem.required_ruby_version = '>= 1.9.3'
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '>= 1.0'
   gem.add_runtime_dependency     'json',            '>= 1.7.5'

@@ -230,7 +230,7 @@ a callback parameter.
   * {JSON::LD::Writer}
 
 ## Dependencies
-* [Ruby](http://ruby-lang.org/) (>= 1.8.7) or (>= 1.8.1 with [Backports][])
+* [Ruby](http://ruby-lang.org/) (>= 1.9.2)
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 1.0)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5)
 

@@ -11,5 +11,5 @@ end
 
 group :debug do
   gem "wirble"
-  gem "debugger"
+  gem "debugger", :platforms => :mri_19
 end
