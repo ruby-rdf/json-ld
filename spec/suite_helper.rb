@@ -65,7 +65,11 @@ module Fixtures
         #puts "open: #{file}"
         RDF::Util::File.open_file(file) do |f|
           json = JSON.parse(f.read)
-          self.from_jsonld(json)
+          if block_given?
+            yield self.from_jsonld(json)
+          else
+            self.from_jsonld(json)
+          end
         end
       end
 
@@ -96,8 +100,12 @@ module Fixtures
         define_method(m.to_sym) {property(m) && RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}")}
       end
 
-      def positiveTest
-        property('positiveTest') == 'true'
+      def testType
+        property('@type').reject {|t| t =~ /EvaluationTest/}.first
+      end
+
+      def positiveTest?
+        property('@type').include?('jld:PositiveEvaluationTest')
       end
       
       def trace; @debug.join("\n"); end
