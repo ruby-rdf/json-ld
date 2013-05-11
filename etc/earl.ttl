@@ -41,7 +41,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -51,7 +51,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -61,7 +61,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -71,7 +71,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -81,7 +81,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -91,7 +91,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -101,7 +101,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -111,7 +111,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -121,7 +121,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -131,7 +131,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -141,7 +141,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -151,7 +151,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -161,7 +161,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -171,7 +171,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -181,7 +181,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -191,7 +191,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -201,7 +201,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -211,7 +211,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -221,7 +221,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -231,7 +231,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -241,7 +241,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -251,7 +251,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -261,7 +261,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -271,7 +271,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -281,7 +281,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -291,7 +291,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -301,7 +301,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -311,7 +311,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -321,7 +321,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -331,7 +331,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -341,7 +341,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -351,7 +351,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -361,7 +361,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -371,7 +371,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -381,7 +381,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -391,7 +391,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -401,7 +401,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -411,7 +411,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -421,7 +421,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -431,7 +431,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -441,7 +441,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -451,7 +451,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -461,7 +461,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -471,7 +471,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -481,7 +481,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -491,7 +491,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -501,7 +501,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -511,7 +511,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -521,7 +521,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -531,7 +531,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -541,7 +541,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -551,7 +551,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -561,7 +561,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -571,7 +571,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -581,7 +581,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -591,7 +591,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -601,7 +601,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -611,7 +611,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -621,7 +621,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -631,7 +631,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -641,7 +641,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -651,7 +651,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -661,7 +661,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -671,7 +671,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -681,7 +681,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -691,7 +691,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -701,7 +701,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -711,7 +711,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -721,7 +721,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -731,7 +731,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -741,7 +741,17 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <http://rubygems.org/gems/json-ld>;
+  earl:test <http://json-ld.org/test-suite/tests/error-expand-manifest.jsonld#t0001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -751,7 +761,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -761,7 +771,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -771,7 +781,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -781,7 +791,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -791,7 +801,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -801,7 +811,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -811,7 +821,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -821,7 +831,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -831,7 +841,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -841,7 +851,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -851,7 +861,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -861,7 +871,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -871,7 +881,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -881,7 +891,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -891,7 +901,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -901,7 +911,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -911,7 +921,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -921,7 +931,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -931,7 +941,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -941,7 +951,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -951,7 +961,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -961,7 +971,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -971,7 +981,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -981,7 +991,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -991,7 +1001,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1001,7 +1011,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1011,7 +1021,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1021,7 +1031,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1031,7 +1041,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1041,7 +1051,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1051,7 +1061,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1061,7 +1071,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1071,7 +1081,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1081,7 +1091,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1091,7 +1101,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1101,7 +1111,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1111,7 +1121,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1121,7 +1131,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1131,7 +1141,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1141,7 +1151,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1151,7 +1161,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1161,7 +1171,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1171,7 +1181,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1181,7 +1191,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1191,7 +1201,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1201,7 +1211,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1211,7 +1221,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1221,7 +1231,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1231,7 +1241,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1241,7 +1251,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1251,7 +1261,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1261,7 +1271,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1271,7 +1281,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1281,7 +1291,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1291,7 +1301,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1301,7 +1311,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1311,7 +1321,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1321,7 +1331,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1331,7 +1341,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1341,7 +1351,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1351,7 +1361,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1361,7 +1371,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1371,7 +1381,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1381,7 +1391,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1391,7 +1401,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1401,7 +1411,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1411,7 +1421,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1421,7 +1431,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1431,7 +1441,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1441,7 +1451,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1451,7 +1461,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1461,7 +1471,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1471,7 +1481,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1481,7 +1491,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1491,7 +1501,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1501,7 +1511,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1511,7 +1521,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1521,7 +1531,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1531,7 +1541,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1541,7 +1551,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1551,7 +1561,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1561,7 +1571,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1571,7 +1581,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1581,7 +1591,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1591,7 +1601,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1601,7 +1611,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1611,7 +1621,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1621,7 +1631,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1631,7 +1641,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1641,7 +1651,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1651,7 +1661,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1661,7 +1671,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1671,7 +1681,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1681,7 +1691,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1691,7 +1701,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1701,7 +1711,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1711,7 +1721,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1721,7 +1731,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1731,7 +1741,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1741,7 +1751,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1751,7 +1761,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1761,7 +1771,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1771,7 +1781,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1781,7 +1791,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1791,7 +1801,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1801,7 +1811,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1811,7 +1821,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1821,7 +1831,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1831,7 +1841,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1841,7 +1851,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1851,7 +1861,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1861,7 +1871,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1871,7 +1881,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1881,7 +1891,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1891,7 +1901,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1901,7 +1911,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1911,7 +1921,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1921,7 +1931,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1931,7 +1941,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1941,7 +1951,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1951,7 +1961,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1961,7 +1971,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1971,7 +1981,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1981,7 +1991,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -1991,7 +2001,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2001,7 +2011,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2011,7 +2021,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2021,7 +2031,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2031,7 +2041,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2041,7 +2051,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2051,7 +2061,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2061,7 +2071,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2071,7 +2081,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2081,7 +2091,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2091,7 +2101,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2101,7 +2111,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2111,7 +2121,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2121,7 +2131,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2131,7 +2141,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2141,7 +2151,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2151,7 +2161,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2161,7 +2171,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2171,7 +2181,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2181,7 +2191,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2191,7 +2201,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2201,7 +2211,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2211,7 +2221,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2221,7 +2231,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2231,7 +2241,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2241,7 +2251,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2251,7 +2261,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2261,7 +2271,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2271,7 +2281,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2281,7 +2291,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2291,7 +2301,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2301,7 +2311,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2311,7 +2321,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2321,7 +2331,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2331,7 +2341,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2341,7 +2351,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2351,7 +2361,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2361,7 +2371,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2371,7 +2381,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2381,7 +2391,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2391,7 +2401,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2401,7 +2411,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2411,7 +2421,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2421,7 +2431,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2431,7 +2441,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2441,7 +2451,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2451,7 +2461,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2461,7 +2471,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2471,7 +2481,7 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .
 
 [ a earl:Assertion;
@@ -2481,5 +2491,5 @@
   earl:result [
     a earl:TestResult;
     earl:outcome earl:passed;
-    dc:date "2013-05-10T19:06:23-07:00"^^xsd:dateTime];
+    dc:date "2013-05-10T19:29:01-07:00"^^xsd:dateTime];
   earl:mode earl:automatic ] .

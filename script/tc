@@ -46,9 +46,18 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ExpandTest'
-      output = JSON::LD::API.expand(tc.input, nil, :base => tc.base)
-      expected = JSON.load(tc.expect)
-      output == expected ? 'passed' : 'failed'
+      if tc.positiveTest?
+        output = JSON::LD::API.expand(tc.input, nil, :base => tc.base)
+        expected = JSON.load(tc.expect)
+        output == expected ? 'passed' : 'failed'
+      else
+        begin
+          JSON::LD::API.expand(tc.input, nil, :base => tc.base, :validate => true)
+          "failed"
+        rescue JSON::LD::InvalidContext, JSON::LD::ProcessingError
+          "passed"
+        end
+      end
     when 'jld:FlattenTest'
       output = JSON::LD::API.flatten(tc.input, tc.context, :base => tc.base)
       expected = JSON.load(tc.expect)
@@ -189,7 +198,7 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand compact flatten frame fromRdf toRdf)
+manifests = %w(expand error-expand compact flatten frame fromRdf toRdf)
 
 earl_preamble(options) if options[:earl]
 
