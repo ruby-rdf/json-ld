@@ -24,7 +24,7 @@ module JSON::LD
       depth do
         debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}"}
         if element.is_a?(Array)
-          # If element is an array, process each entry in element recursively, using this algorithm and return
+          # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
           element.map {|o|
             generate_node_map(o,
                               node_map,
@@ -37,7 +37,7 @@ module JSON::LD
           # Otherwise element is a JSON object. Reference the JSON object which is the value of the active graph member of node map using the variable graph. If the active subject is null, set node to null otherwise reference the active subject member of graph using the variable node.
           # Spec FIXME: initializing it to an empty JSON object, if necessary
           raise "Expected element to be a hash, was #{element.class}" unless element.is_a?(Hash)
-          graph = node_map[active_graph] ||= Hash.ordered
+          graph = node_map[active_graph] ||= {}
           node = graph[active_subject] if active_subject
 
           # If element has an @type member, perform for each item the following steps:
@@ -77,6 +77,7 @@ module JSON::LD
                               result)
 
             # Append result to the the value of the active property member of node.
+            debug("node_map") {"@list: #{result.inspect}"}
             merge_value(node, active_property, result)
           else
             # Otherwise element is a node object, perform the following steps:
@@ -88,14 +89,12 @@ module JSON::LD
             debug("node_map") {"id: #{id.inspect}"}
 
             # If graph does not contain a member id, create one and initialize it to a JSON object consisting of a single member @id whose value is set to id.
-            graph[id] ||= Hash.ordered
-            graph[id]['@id'] ||= id
+            graph[id] ||= {'@id' => id}
 
             # If active property is not null, perform the following steps:
             if active_property
               # Create a new JSON object reference consisting of a single member @id whose value is id.
-              reference = Hash.ordered
-              reference['@id'] = id
+              reference = {'@id' => id}
 
               # If list is null:
               unless list
@@ -148,6 +147,7 @@ module JSON::LD
 
             # Finally, for each key-value pair property-value in element ordered by property perform the following steps:
             element.keys.sort.each do |property|
+              #require 'debugger'; breakpoint
               value = element[property]
 
               # If property is a blank node identifier, replace it with a newly generated blank node identifier passing property for identifier.
@@ -161,8 +161,7 @@ module JSON::LD
                                 node_map,
                                 active_graph,
                                 id,
-                                property,
-                                list)
+                                property)
             end
           end
         end

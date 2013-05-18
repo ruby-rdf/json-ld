@@ -26,17 +26,22 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:expand]
-    output = JSON::LD::API.expand(input, options[:context], nil, options)
+    output = JSON::LD::API.expand(input, options[:context], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Expanded in #{secs} seconds." unless options[:quiet]
   elsif options[:compact]
-    output = JSON::LD::API.compact(input, options[:context], nil, options)
+    output = JSON::LD::API.compact(input, options[:context], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Compacted in #{secs} seconds." unless options[:quiet]
+  elsif options[:flatten]
+    output = JSON::LD::API.flatten(input, options[:context], options)
+    secs = Time.new - start
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
+    STDERR.puts "Flattened in #{secs} seconds." unless options[:quiet]
   elsif options[:frame]
-    output = JSON::LD::API.frame(input, options[:frame], nil, options)
+    output = JSON::LD::API.frame(input, options[:frame], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
@@ -76,6 +81,7 @@ OPT_ARGS = [
   ["--context",       GetoptLong::REQUIRED_ARGUMENT,"Context to apply for expand, compact and converting from RDF"],
   ["--evaluate","-e", GetoptLong::REQUIRED_ARGUMENT,"Evaluate argument as a JSON-LD document"],
   ["--expand",        GetoptLong::NO_ARGUMENT,      "Expand document, using an optional --context"],
+  ["--flatten",       GetoptLong::NO_ARGUMENT,      "Flatten document, using an optional --context"],
   ["--format",        GetoptLong::REQUIRED_ARGUMENT,"Specify output format when converting to RDF"],
   ["--frame",         GetoptLong::REQUIRED_ARGUMENT,"Frame document, using the file or URL as a frame specification"],
   ["--input-format",  GetoptLong::REQUIRED_ARGUMENT,"Format of the input document, when converting from RDF."],
@@ -112,6 +118,7 @@ opts.each do |opt, arg|
   when '--execute'      then input = arg
   when '--expand'       then options[:expand] = true
   when '--format'       then options[:output_format] = arg.to_sym
+  when '--flatten'      then options[:flatten] = arg
   when '--frame'        then options[:frame] = arg
   when '--input-format' then options[:input_format] = arg.to_sym
   when '--output'       then options[:output] = File.open(arg, "w")

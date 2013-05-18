@@ -171,11 +171,38 @@ describe JSON::LD::API do
           }, {
             "@id": "http://www.wikipedia.org/"
           }])),
+      },
+      "Test Manifest (shortened)" => {
+        :input => ::JSON.parse(%q{
+          {
+            "@id": "",
+            "http://example/sequence": {"@list": [
+              {
+                "@id": "#t0001",
+                "http://example/name": "Keywords cannot be aliased to other keywords",
+                "http://example/input": {"@id": "error-expand-0001-in.jsonld"}
+              }
+            ]}
+          }
+        }),
+        :output => ::JSON.parse(%q{
+          [{
+            "@id": "",
+            "http://example/sequence": [{"@list": [{"@id": "#t0001"}]}]
+          }, {
+            "@id": "#t0001",
+            "http://example/input": [{"@id": "error-expand-0001-in.jsonld"}],
+            "http://example/name": [{"@value": "Keywords cannot be aliased to other keywords"}]
+          }, {
+            "@id": "error-expand-0001-in.jsonld"
+          }]
+        }),
+        :options => {}
       }
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.flatten(params[:input], nil, :debug => @debug) 
+        jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(:debug => @debug)) 
         jld.should produce(params[:output], @debug)
       end
     end
