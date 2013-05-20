@@ -1,18 +1,21 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-$:.unshift(File.expand_path(File.join(File.dirname(__FILE__), "..", 'lib')))
+$:.unshift(File.expand_path("../../lib", __FILE__))
 require "bundler/setup"
 require 'json/ld'
+require 'linkeddata'
 require 'rdf/isomorphic'
-require File.expand_path(File.join(File.dirname(__FILE__), "..", 'spec', 'spec_helper'))
-require File.expand_path(File.join(File.dirname(__FILE__), "..", 'spec', 'suite_helper'))
+require File.expand_path("../../spec/spec_helper", __FILE__)
+require File.expand_path("../../spec/suite_helper", __FILE__)
 require 'getoptlong'
 
 ASSERTOR = "http://greggkellogg.net/foaf#me"
 RUN_TIME = Time.now
 
 def earl_preamble(options)
-  options[:output].write File.read(File.expand_path("../../etc/doap.ttl", __FILE__))
+  g = RDF::Graph.new
+  JSON::LD::Reader.new(File.read(File.expand_path("../../etc/doap.jsonld", __FILE__))) {|r| g << r}
+  options[:output].write g.dump(:ttl, :standard_prefixes => true)
   options[:output].puts %(
 <#{ASSERTOR}> a foaf:Person, earl:Assertor;
   foaf:name "Gregg Kellogg";
