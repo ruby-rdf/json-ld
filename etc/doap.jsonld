@@ -15,6 +15,7 @@
       "doap:maintainer": {"@type": "@id"},
       "doap:documenter": {"@type": "@id"},
       "doap:license": {"@type": "@id"},
+      "doap:name": {"@language": "en"},
       "doap:description": {"@language": "en"},
       "doap:shortdesc": {"@language": "en"},
       "foaf:maker": {"@type": "@id"},

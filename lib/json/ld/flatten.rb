@@ -147,7 +147,6 @@ module JSON::LD
 
             # Finally, for each key-value pair property-value in element ordered by property perform the following steps:
             element.keys.sort.each do |property|
-              #require 'debugger'; breakpoint
               value = element[property]
 
               # If property is a blank node identifier, replace it with a newly generated blank node identifier passing property for identifier.

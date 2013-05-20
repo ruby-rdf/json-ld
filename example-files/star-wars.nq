@@ -1,0 +1,20 @@
+<http://movies.example.org/StarWarsIV> <http://schema.org/name> "Star Wars IV" <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/director> <http://people.example.org/Lucas> <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/actor> <http://people.example.org/Ford> <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/actor> <http://people.example.org/Alec> <http://movies.example.org/StarWarsIV> .
+<http://people.example.org/HarrisonFord> <http://schema.org/name> "Harrison Ford" <http://people.example.org/HarrisonFord> .
+<http://people.example.org/AlecGuinness> <http://schema.org/name> "Alec Guinness" <http://people.example.org/AlecGuinness> .
+<http://people.example.org/AlecGuinness> <http://schema.org/birthDate> "1914-04-02"^^<http://www.w3.org/2001/XMLSchema#date> <http://people.example.org/AlecGuinness> .
+<http://people.example.org/AlecGuinness> <http://schema.org/deathDate> "2000-08-05"^^<http://www.w3.org/2001/XMLSchema#date> <http://people.example.org/AlecGuinness> .
+<http://people.example.org/GeorgeLucas> <http://schema.org/name> "George Lucas" <http://people.example.org/GeorgeLucas> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/relationships> <http://movies.example.org/StarWarsIV/Lucas> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/relationships> <http://movies.example.org/StarWarsIV/Ford> .
+<http://movies.example.org/StarWarsIV> <http://schema.org/relationships> <http://movies.example.org/StarWarsIV/Alec> .
+<http://movies.example.org/StarWarsIV/Lucas> <http://schema.org/source> <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV/Lucas> <http://schema.org/destination> <http://people.example.org/GeorgeLucas> .
+<http://movies.example.org/StarWarsIV/Ford> <http://schema.org/source> <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV/Ford> <http://schema.org/destination> <http://people.example.org/HarrisonFord> .
+<http://movies.example.org/StarWarsIV/Ford> <http://schema.org/asCharacter> "Han Solo" .
+<http://movies.example.org/StarWarsIV/Alec> <http://schema.org/source> <http://movies.example.org/StarWarsIV> .
+<http://movies.example.org/StarWarsIV/Alec> <http://schema.org/destination> <http://people.example.org/AlecGuinness> .
+<http://movies.example.org/StarWarsIV/Alec> <http://schema.org/asCharacter> "Obi-Wan Kenobi" .

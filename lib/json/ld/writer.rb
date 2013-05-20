@@ -94,7 +94,7 @@ module JSON::LD
       options[:base_uri] ||= options[:base] if options.has_key?(:base)
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
-        @repo = RDF::Graph.new
+        @repo = RDF::Repository.new
 
         if block_given?
           case block.arity
@@ -146,10 +146,8 @@ module JSON::LD
     def write_epilogue
       @debug = @options[:debug]
 
-      # Turn graph into a triple array
-      statements = @repo.each_statement.to_a
-      debug("writer") { "serialize #{statements.length} statements, #{@options.inspect}"}
-      result = API.fromRDF(statements, @options)
+      debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
+      result = API.fromRDF(@repo, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)

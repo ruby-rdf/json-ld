@@ -19,8 +19,8 @@
      <http://json-ld.org/spec/latest/json-ld-syntax/>;
    doap:license <http://creativecommons.org/licenses/publicdomain/>;
    doap:maintainer <http://greggkellogg.net/foaf#me>;
-   doap:name "JSON::LD"^^xsd:string;
-   doap:platform "Ruby"^^xsd:string;
+   doap:name "JSON::LD";
+   doap:platform "Ruby";
    doap:shortdesc "JSON-LD support for RDF.rb."@en;
    foaf:maker <http://greggkellogg.net/foaf#me> .
 
