@@ -54,7 +54,7 @@ module JSON::LD
         statement.object.datatype = nil if
           RDF::VERSION.to_s < "1.1" &&
           statement.object.literal? &&
-          statement.object.datatype = RDF::XSD.string
+          statement.object.datatype == RDF::XSD.string
         block.call(statement)
       end
     end

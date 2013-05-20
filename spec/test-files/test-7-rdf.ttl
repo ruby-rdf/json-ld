@@ -2,13 +2,13 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
  [ a foaf:Person;
-    foaf:homepage "http://example.com/manu/"^^xsd:string;
-    foaf:name "Manu"^^xsd:string] .
+    foaf:homepage "http://example.com/manu/";
+    foaf:name "Manu"] .
 
  [ a foaf:Person;
-    foaf:homepage "http://example.com/eve/"^^xsd:string;
-    foaf:name "Eve"^^xsd:string] .
+    foaf:homepage "http://example.com/eve/";
+    foaf:name "Eve"] .
 
  [ a foaf:Person;
-    foaf:homepage "http://example.com/bob/"^^xsd:string;
-    foaf:name "Bob"^^xsd:string] .
+    foaf:homepage "http://example.com/bob/";
+    foaf:name "Bob"] .
