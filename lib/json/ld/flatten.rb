@@ -10,11 +10,13 @@ module JSON::LD
     # @param [Hash{String => Hash}] node_map
     #   map of nodes
     # @param [String] active_graph
-    #   Graph name for results
+    #   The name of the currently active graph that the processor should use when processing.
+    # @param [String] active_subject
+    #   The currently active subject that the processor should use when processing.
+    # @param [String] active_property
+    #   The currently active property or keyword that the processor should use when processing.
     # @param [Array] list
     #   List for saving list elements
-    # @param [String] id (nil)
-    #   Identifier already associated with element
     def generate_node_map(element,
                           node_map,
                           active_graph    = '@default',

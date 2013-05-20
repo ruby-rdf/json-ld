@@ -206,7 +206,7 @@ Install with `gem install json-ld`
     graph.dump(:jsonld, :standard_prefixes => true)
 
 ## Documentation
-Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.markdown)
+Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
 The specified JSON-LD API is based on a WebIDL definition intended for use within the browser.
