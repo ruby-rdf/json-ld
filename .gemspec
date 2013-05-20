@@ -6,7 +6,7 @@ Gem::Specification.new do |gem|
   gem.date                  = File.mtime('VERSION').strftime('%Y-%m-%d')
 
   gem.name                  = "json-ld"
-  gem.homepage              = "http://github.com/gkellogg/json-ld"
+  gem.homepage              = "http://github.com/ruby-rdf/json-ld"
   gem.license               = 'Public Domain' if gem.respond_to?(:license=)
   gem.summary               = "JSON-LD reader/writer for Ruby."
   gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."

@@ -3,7 +3,7 @@
 [JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD][] processor.
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
-[![Build Status](https://secure.travis-ci.org/gkellogg/json-ld.png?branch=master)](http://travis-ci.org/gkellogg/json-ld)
+[![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
 
 ## Features
 
