@@ -184,7 +184,7 @@ Install with `gem install json-ld`
       }
     }
 
-    JSON::LD::fromRDF(input, context) =>
+    JSON::LD::API::fromRDF(input, context) =>
     {
       "@context": {
         "":       "http://manu.sporny.org/",
