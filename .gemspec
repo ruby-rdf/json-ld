@@ -27,15 +27,15 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 1.9.3'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '>= 1.0'
+  gem.add_runtime_dependency     'rdf',             '>= 1.0.7'
   gem.add_runtime_dependency     'json',            '>= 1.7.5'
   gem.add_development_dependency 'equivalent-xml' , '>= 0.2.8'
   gem.add_development_dependency 'open-uri-cached', '>= 0.0.5'
   gem.add_development_dependency 'yard' ,           '>= 0.8.3'
   gem.add_development_dependency 'rspec',           '>= 2.12.0'
   gem.add_development_dependency 'rdf-spec',        '>= 1.0'
-  gem.add_development_dependency 'rdf-turtle'
-  gem.add_development_dependency 'rdf-trig'
+  gem.add_development_dependency 'rdf-turtle',      '>= 1.0.7'
+  gem.add_development_dependency 'rdf-trig',        '>= 1.0.1'
   gem.add_development_dependency 'rdf-isomorphic'
   gem.add_development_dependency 'rdf-xsd'
   gem.post_install_message  = nil
