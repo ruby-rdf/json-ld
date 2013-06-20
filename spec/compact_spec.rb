@@ -336,8 +336,7 @@ describe JSON::LD::API do
             "@context": {
               "name": "http://xmlns.com/foaf/0.1/name",
               "isKnownBy": {
-                "@reverse": "http://xmlns.com/foaf/0.1/knows",
-                "@type": "@id"
+                "@reverse": "http://xmlns.com/foaf/0.1/knows"
               }
             },
             "@id": "http://example.com/people/markus",

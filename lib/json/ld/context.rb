@@ -345,8 +345,6 @@ module JSON::LD
         definition = TermDefinition.new(term)
 
         if value.has_key?('@reverse')
-          raise InvalidContext::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
-            value.keys.any? {|k| ['@id', '@type', '@language'].include?(k)}
           raise InvalidContext::InvalidIRIMapping, "expected value of @reverse to be a string" unless
             value['@reverse'].is_a?(String)
 
@@ -358,11 +356,13 @@ module JSON::LD
                                       :defined => defined)
           raise InvalidContext::InvalidIRImapping, "non-absolute @reverse IRI: #{definition.id}" unless
             definition.id.absolute?
-          definition.type_mapping = '@id'
 
-          # If value contains an @container member, set the container mapping of definition to @index if that is the value of the @container member; otherwise an invalid reverse property error has been detected (reverse properties only support index-containers) and processing is aborted.
-          if (container = value['@container']) && container != '@index'
-            raise InvalidContext::InvalidReverseProperty, "unknown mapping for '@container' to #{container.inspect}"
+          # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
+          if (container = value['@container'])
+            raise InvalidContext::InvalidReverseProperty,
+                  "unknown mapping for '@container' to #{container.inspect}" unless
+                   ['@set', '@index', nil].include?(container)
+            definition.container_mapping = container
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
