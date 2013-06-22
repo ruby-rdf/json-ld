@@ -1,0 +1,12 @@
+{
+  "@context": {
+    "@vocab": "http://schema.org/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "http://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+
+    "rdfs:subClassOf": {"@type": "@id"},
+    "name": "rdfs:label",
+    "description": "rdfs:comment"
+  }
+}
