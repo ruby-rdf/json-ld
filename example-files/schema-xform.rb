@@ -54,7 +54,7 @@ ARGV.each do |infile|
 
   # Build type heirarchy
   object_map.each do |id, obj|
-    [obj['rdfs:subClassOf']].flatten.compact.each do |super_class|
+    Array(obj['rdfs:subClassOf']).each do |super_class|
       so = object_map[super_class]
       next if so.nil?
       raise "super class not found: #{super_class}" if so.nil?

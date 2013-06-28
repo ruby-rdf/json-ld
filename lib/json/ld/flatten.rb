@@ -42,7 +42,7 @@ module JSON::LD
 
           # If element has an @type member, perform for each item the following steps:
           if element.has_key?('@type')
-            types = [element['@type']].flatten.map do |item|
+            types = Array(element['@type']).map do |item|
               # If item is a blank node identifier, replace it with a newly generated blank node identifier passing item for identifier.
               item = namer.get_name(item) if blank_node?(item)
 
@@ -109,7 +109,7 @@ module JSON::LD
 
             # If element has an @type key, append each item of its associated array to the array associated with the @type key of node unless it is already in that array. Finally remove the @type member from element.
             if element.has_key?('@type')
-              [element.delete('@type')].flatten.each do |t|
+              Array(element.delete('@type')).each do |t|
                 merge_value(node, '@type', t)
               end
             end
