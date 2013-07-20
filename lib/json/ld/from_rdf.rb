@@ -34,7 +34,7 @@ module JSON::LD
 
         # If object is an IRI or blank node identifier, does not equal rdf:nil, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
         node_map[statement.object.to_s] ||= {'@id' => statement.object.to_s} unless
-        statement.object.literal? || statement.object == RDF.nil
+          statement.object.literal? || statement.object == RDF.nil
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
         if statement.predicate == RDF.type && statement.object.resource?
@@ -104,11 +104,11 @@ module JSON::LD
           graph_map[subject].keys.sort.each do |s|
             n = graph_map[subject][s]
             n.delete(:usages)
-            node['@graph'] << n
+            node['@graph'] << n unless node_reference?(n)
           end
         end
         node.delete(:usages)
-        result << node
+        result << node unless node_reference?(node)
       end
       debug("fromRDF") {result.to_json(JSON_STATE)}
       result
