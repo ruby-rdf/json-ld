@@ -90,7 +90,7 @@ module JSON::LD
           value = lit.to_s
           datatype ||= lit.datatype
         else
-          # Otherwise, if datatype is null, set it to xsd:string or rdf:langString, depending on if item has a @language key.
+          # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
         end
                   

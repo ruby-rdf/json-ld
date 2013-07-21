@@ -44,11 +44,7 @@ module JSON::LD
           if element.has_key?('@type')
             types = Array(element['@type']).map do |item|
               # If item is a blank node identifier, replace it with a newly generated blank node identifier passing item for identifier.
-              item = namer.get_name(item) if blank_node?(item)
-
-              # If graph has no member item, create it and initialize its value to a JSON object consisting of a single member @id with the value item.
-#              graph[item] ||= {'@id' => item}
-              item
+              blank_node?(item) ? namer.get_name(item) : item
             end
 
             element['@type'] = element['@type'].is_a?(Array) ? types : types.first
