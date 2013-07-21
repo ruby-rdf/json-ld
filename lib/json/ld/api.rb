@@ -212,11 +212,11 @@ module JSON::LD
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []
           graph.keys.kw_sort.each do |id|
-            nodes << graph[id]
+            nodes << graph[id] unless node_reference?(graph[id])
           end
         end
         default_graph.keys.kw_sort.each do |id|
-          flattened << default_graph[id]
+          flattened << default_graph[id] unless node_reference?(default_graph[id])
         end
 
         if context && !flattened.empty?

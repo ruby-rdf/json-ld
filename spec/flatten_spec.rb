@@ -10,8 +10,7 @@ describe JSON::LD::API do
       "single object" => {
         :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
         :output => [
-          {"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]},
-          {"@id" => RDF::RDFS.Resource.to_s}
+          {"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}
         ]
       },
       "embedded object" => {
@@ -35,9 +34,7 @@ describe JSON::LD::API do
           {
             "@id" => "http://greggkellogg.net/foaf#me",
             "@type" => [RDF::FOAF.Person.to_s]
-          },
-          {"@id" => RDF::FOAF.Person.to_s},
-          {"@id" => RDF::FOAF.PersonalProfile.to_s},
+          }
         ]
       },
       "embedded anon" => {
@@ -60,9 +57,7 @@ describe JSON::LD::API do
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfile.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
-          },
-          {"@id" => RDF::FOAF.Person.to_s},
-          {"@id" => RDF::FOAF.PersonalProfile.to_s},
+          }
         ]
       },
       "reverse properties" => {
@@ -149,8 +144,6 @@ describe JSON::LD::API do
             {"@id": "http://www.brockhaus.de/"}
           ],
           "@graph": [{
-              "@id": "http://example.org/location/France#this"
-          }, {
               "@id": "http://example.org/location/Paris#this",
               "http://example.org/locatedIn": [{"@id": "http://example.org/location/France#this"}]
             }]
@@ -162,14 +155,6 @@ describe JSON::LD::API do
               "@id": "http://example.org/location/Paris#this",
               "http://example.org/hasPopulation": [{"@value": 7000000}]
             }]
-          }, {
-            "@id": "http://www.britannica.com/"
-          }, {
-            "@id": "http://www.brockhaus.de/"
-          }, {
-            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"
-          }, {
-            "@id": "http://www.wikipedia.org/"
           }])),
       },
       "Test Manifest (shortened)" => {
@@ -193,8 +178,6 @@ describe JSON::LD::API do
             "@id": "#t0001",
             "http://example/input": [{"@id": "error-expand-0001-in.jsonld"}],
             "http://example/name": [{"@value": "Keywords cannot be aliased to other keywords"}]
-          }, {
-            "@id": "error-expand-0001-in.jsonld"
           }]
         }),
         :options => {}

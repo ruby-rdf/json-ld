@@ -47,7 +47,7 @@ module JSON::LD
               item = namer.get_name(item) if blank_node?(item)
 
               # If graph has no member item, create it and initialize its value to a JSON object consisting of a single member @id with the value item.
-              graph[item] ||= {'@id' => item}
+#              graph[item] ||= {'@id' => item}
               item
             end
 
@@ -81,7 +81,7 @@ module JSON::LD
             merge_value(node, active_property, result)
           else
             # Otherwise element is a node object, perform the following steps:
-          
+
             # If element has an @id member, set id to its value and remove the member from element. If id is a blank node identifier, replace it with a newly generated blank node identifier passing id for identifier.
             # Otherwise, set id to the result of the Generate Blank Node Identifier algorithm passing null for identifier.
             id = element.delete('@id')
