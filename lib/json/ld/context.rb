@@ -344,9 +344,18 @@ module JSON::LD
         debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new(term)
 
+        if value.has_key?('@type')
+          type = value['@type']
+          # SPEC FIXME: @type may be nil
+          raise InvalidContext::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
+          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
+          debug("") {"type_mapping: #{type.inspect}"}
+          definition.type_mapping = type
+        end
+
         if value.has_key?('@reverse')
           raise InvalidContext::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
-            value.keys.any? {|k| ['@id', '@type', '@language'].include?(k)}
+            value.keys.any? {|k| %w(@id).include?(k)}
           raise InvalidContext::InvalidIRIMapping, "expected value of @reverse to be a string" unless
             value['@reverse'].is_a?(String)
 
@@ -358,11 +367,13 @@ module JSON::LD
                                       :defined => defined)
           raise InvalidContext::InvalidIRImapping, "non-absolute @reverse IRI: #{definition.id}" unless
             definition.id.absolute?
-          definition.type_mapping = '@id'
 
           # If value contains an @container member, set the container mapping of definition to @index if that is the value of the @container member; otherwise an invalid reverse property error has been detected (reverse properties only support index-containers) and processing is aborted.
-          if (container = value['@container']) && container != '@index'
-            raise InvalidContext::InvalidReverseProperty, "unknown mapping for '@container' to #{container.inspect}"
+          if (container = value['@container'])
+            raise InvalidContext::InvalidReverseProperty,
+                  "unknown mapping for '@container' to #{container.inspect}" unless
+                  %w(@set @index).include?(container)
+            definition.container_mapping = container
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
@@ -391,15 +402,6 @@ module JSON::LD
           raise InvalidContext::InvalidIRIMapping, "relative term definition without vocab" unless vocab
           definition.id = vocab + term
           debug("") {"=> #{definition.id}"}
-        end
-
-        if value.has_key?('@type')
-          type = value['@type']
-          # SPEC FIXME: @type may be nil
-          raise InvalidContext::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
-          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
-          debug("") {"type_mapping: #{type.inspect}"}
-          definition.type_mapping = type
         end
 
         if value.has_key?('@container')
