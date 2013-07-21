@@ -46,7 +46,7 @@ module JSON::LD
            cid = context.compact_iri(id)
            cid == term ? id : cid
         else
-          defn = Hash.ordered
+          defn = {}
           cid = context.compact_iri(id)
           defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
           if type_mapping
@@ -447,7 +447,7 @@ module JSON::LD
         else
           debug("serlialize: generate context")
           debug("") {"=> context: #{inspect}"}
-          ctx = Hash.ordered
+          ctx = {}
           ctx['@base'] = base.to_s if base
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
@@ -462,7 +462,7 @@ module JSON::LD
         end
 
         # Return hash with @context, or empty
-        r = Hash.ordered
+        r = {}
         r['@context'] = use_context unless use_context.nil? || use_context.empty?
         r
       end
@@ -872,7 +872,7 @@ module JSON::LD
           {'@id' => value.to_s}
         when RDF::Literal
           debug("Literal") {"datatype: #{value.datatype.inspect}"}
-          res = Hash.ordered
+          res = {}
           if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
             res['@type'] = uri(coerce(property)) if coerce(property)
