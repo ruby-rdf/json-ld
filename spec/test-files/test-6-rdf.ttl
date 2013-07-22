@@ -2,5 +2,5 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.org/people#joebob> a foaf:Person;
-   foaf:name "Joe Bob"^^xsd:string;
-   foaf:nick ("joe"^^xsd:string "bob"^^xsd:string "jaybe"^^xsd:string) .
+   foaf:name "Joe Bob";
+   foaf:nick ("joe" "bob" "jaybe") .

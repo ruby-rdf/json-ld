@@ -77,6 +77,13 @@ module JSON::LD
                list_nodes.include?(subject)
 
               debug("list") {"not valid list element: #{node.to_json(JSON_STATE)}"}
+              debug {
+                "bnode?: #{!blank_node?(node).inspect} " +
+                "keys: #{node.keys.any? {|k| !["@id", :usages, RDF.first.to_s, RDF.rest.to_s].include?(k)}.inspect} " +
+                "first: #{node[RDF.first.to_s].inspect} " +
+                "rest: #{node[RDF.rest.to_s].inspect} " +
+                "has sub: #{list_nodes.include?(subject).inspect}"
+              }
               list = nil
             else
               list << f.first

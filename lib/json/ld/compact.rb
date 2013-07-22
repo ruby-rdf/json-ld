@@ -67,7 +67,8 @@ module JSON::LD
             debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
-                value = [value] unless value.is_a?(Array) || @options[:compactArrays]
+                value = [value] if !value.is_a?(Array) &&
+                  (context.container(prop) == '@set' || !@options[:compactArrays])
                 debug("") {"merge #{prop} => #{value.inspect}"}
                 merge_compacted_value(result, prop, value)
                 compacted_value.delete(prop)

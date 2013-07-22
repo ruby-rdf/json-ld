@@ -368,11 +368,11 @@ module JSON::LD
           raise InvalidContext::InvalidIRImapping, "non-absolute @reverse IRI: #{definition.id}" unless
             definition.id.absolute?
 
-          # If value contains an @container member, set the container mapping of definition to @index if that is the value of the @container member; otherwise an invalid reverse property error has been detected (reverse properties only support index-containers) and processing is aborted.
+          # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
           if (container = value['@container'])
             raise InvalidContext::InvalidReverseProperty,
                   "unknown mapping for '@container' to #{container.inspect}" unless
-                  %w(@set @index).include?(container)
+                   ['@set', '@index', nil].include?(container)
             definition.container_mapping = container
           end
           definition.reverse_property = true

@@ -5,4 +5,4 @@
 
  [ age: 41;
     homepage: <http://manu.sporny.org/>;
-    name: "Manu Sporny"^^xsd:string] .
+    name: "Manu Sporny"] .
