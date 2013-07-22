@@ -3,5 +3,5 @@
 
 <http://manu.sporny.org/#me> a foaf:Person;
    foaf:knows [ a foaf:Person;
-     foaf:name "Gregg Kellogg"^^xsd:string];
-   foaf:name "Manu Sporny"^^xsd:string .
+     foaf:name "Gregg Kellogg"];
+   foaf:name "Manu Sporny" .

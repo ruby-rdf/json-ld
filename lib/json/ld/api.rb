@@ -26,7 +26,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      :headers => %w(Accept: application/ld+json, application/json)
+      :headers => {"Accept" => "application/ld+json, application/json"}
     }
 
     # Current input
@@ -302,10 +302,10 @@ module JSON::LD
         all_nodes = Hash.ordered
         old_dbg, @options[:debug] = @options[:debug], nil
         depth do
-          generate_node_map(value, all_nodes, '@merged')
+          generate_node_map(value, all_nodes)
         end
         @options[:debug] = old_dbg
-        @node_map = all_nodes['@merged']
+        @node_map = all_nodes['@default']
         debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
 
         result = []

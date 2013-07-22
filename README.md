@@ -3,7 +3,7 @@
 [JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD][] processor.
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
-[![Build Status](https://secure.travis-ci.org/gkellogg/json-ld.png?branch=master)](http://travis-ci.org/gkellogg/json-ld)
+[![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
 
 ## Features
 
@@ -184,7 +184,7 @@ Install with `gem install json-ld`
       }
     }
 
-    JSON::LD::fromRDF(input, context) =>
+    JSON::LD::API::fromRDF(input, context) =>
     {
       "@context": {
         "":       "http://manu.sporny.org/",
@@ -206,7 +206,7 @@ Install with `gem install json-ld`
     graph.dump(:jsonld, :standard_prefixes => true)
 
 ## Documentation
-Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.markdown)
+Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
 The specified JSON-LD API is based on a WebIDL definition intended for use within the browser.
