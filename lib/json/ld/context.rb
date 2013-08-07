@@ -184,13 +184,17 @@ module JSON::LD
 
     # @param [String] value must be an absolute IRI
     def vocab=(value)
-      if value
-        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}" unless value.is_a?(String)
-        @vocab = RDF::URI(value)
-        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" unless @vocab.absolute?
-        @vocab
+      @vocab = case value
+      when /_:/
+        value
+      when String
+        v = as_resource(value)
+        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative?
+        v
+      when nil
+        nil
       else
-        @vocab = nil
+        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}"
       end
     end
 
