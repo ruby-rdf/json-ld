@@ -79,8 +79,8 @@ def run_tc(man, tc, options)
         to_quad(statement)
       end
 
-      expected = tc.expect.readlines.sort.join("")
-      output = quads.sort.join("")
+      expected = tc.expect.readlines.uniq.sort.join("")
+      output = quads.uniq.sort.join("")
       output == expected ? 'passed' : 'failed'
     end || "untested"
 
