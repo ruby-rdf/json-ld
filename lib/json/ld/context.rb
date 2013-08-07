@@ -76,8 +76,13 @@ module JSON::LD
 
     # The base.
     #
-    # @return [RDF::URI] Document base IRI, used for expanding relative IRIs.
+    # @return [RDF::URI] Current base IRI, used for expanding relative IRIs.
     attr_reader :base
+
+    # The base.
+    #
+    # @return [RDF::URI] Document base IRI, to initialize `base`.
+    attr_reader :doc_base
 
     # @return [RDF::URI] base IRI of the context, if loaded remotely. XXX
     attr_accessor :context_base
@@ -234,7 +239,7 @@ module JSON::LD
             # Load context document, if it is a string
             begin
               # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-              context = RDF::URI(result.context_base || result.base || @doc_base).join(context)
+              context = RDF::URI(result.context_base || result.base || doc_base).join(context)
 
               raise InvalidContext::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context)
               @remote_contexts = @remote_contexts + [context]
@@ -654,7 +659,7 @@ module JSON::LD
         result = if options[:vocab] && vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
           vocab + value
-        elsif options[:documentRelative] && base = options.fetch(:base, self.base || @doc_base)
+        elsif options[:documentRelative] && base = options.fetch(:base, self.base || doc_base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           RDF::URI(base).join(value).to_s
         elsif local_context && RDF::URI(value).relative?
@@ -1118,14 +1123,14 @@ module JSON::LD
     # @return [String]
     #   the relative IRI if relative to base, otherwise the absolute IRI.
     def remove_base(iri)
-      return iri unless base || @doc_base
+      return iri unless base || doc_base
       @base_and_parents ||= begin
-        u = base || @doc_base
+        u = base || doc_base
         iri_set = u.to_s.end_with?('/') ? [u.to_s] : []
         iri_set << u.to_s while (u = u.parent)
         iri_set
       end
-      b = (base || @doc_base).to_s
+      b = (base || doc_base).to_s
       return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
 
       @base_and_parents.each_with_index do |b, index|
