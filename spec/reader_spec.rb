@@ -36,7 +36,7 @@ describe JSON::LD::Reader do
 
     describe "#initialize" do
       it "yields reader given string" do
-        inner = mock("inner")
+        inner = double("inner")
         inner.should_receive(:called).with(JSON::LD::Reader)
         JSON::LD::Reader.new(subject) do |reader|
           inner.called(reader.class)
@@ -44,7 +44,7 @@ describe JSON::LD::Reader do
       end
 
       it "yields reader given IO" do
-        inner = mock("inner")
+        inner = double("inner")
         inner.should_receive(:called).with(JSON::LD::Reader)
         JSON::LD::Reader.new(StringIO.new(subject)) do |reader|
           inner.called(reader.class)
@@ -58,7 +58,7 @@ describe JSON::LD::Reader do
 
     describe "#each_statement" do
       it "yields statements" do
-        inner = mock("inner")
+        inner = double("inner")
         inner.should_receive(:called).with(RDF::Statement).exactly(3)
         JSON::LD::Reader.new(subject).each_statement do |statement|
           inner.called(statement.class)
@@ -68,7 +68,7 @@ describe JSON::LD::Reader do
 
     describe "#each_triple" do
       it "yields statements" do
-        inner = mock("inner")
+        inner = double("inner")
         inner.should_receive(:called).exactly(3)
         JSON::LD::Reader.new(subject).each_triple do |subject, predicate, object|
           inner.called(subject.class, predicate.class, object.class)

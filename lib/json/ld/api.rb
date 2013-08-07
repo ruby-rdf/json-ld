@@ -212,11 +212,11 @@ module JSON::LD
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []
           graph.keys.kw_sort.each do |id|
-            nodes << graph[id]
+            nodes << graph[id] unless node_reference?(graph[id])
           end
         end
         default_graph.keys.kw_sort.each do |id|
-          flattened << default_graph[id]
+          flattened << default_graph[id] unless node_reference?(default_graph[id])
         end
 
         if context && !flattened.empty?
@@ -339,6 +339,8 @@ module JSON::LD
     # @param [{Symbol,String => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Options passed to {JSON::LD::API.expand}
+    # @option options [Boolean] :produceGeneralizedRDF (false)
+    #   If true, output will include statements having blank node predicates, otherwise they are dropped.
     # @raise [InvalidContext]
     # @return [Array<RDF::Statement>] if no block given
     # @yield statement
@@ -366,6 +368,7 @@ module JSON::LD
           context = as_resource(graph_name) unless graph_name == '@default'
           debug(".toRDF") {"context: #{context ? context.to_ntriples : 'null'}"}
           graph_to_rdf(graph).each do |statement|
+            next if statement.predicate.node? && !options[:produceGeneralizedRDF]
             statement.context = context if context
             if block_given?
               yield statement

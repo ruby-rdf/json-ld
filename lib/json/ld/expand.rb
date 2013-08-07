@@ -81,7 +81,7 @@ module JSON::LD
                 case value
                 when Array
                   depth do
-                    [value].flatten.map do |v|
+                    value.map do |v|
                       raise ProcessingError::InvalidTypeValue,
                             "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
                       context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s

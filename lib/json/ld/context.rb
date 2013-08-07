@@ -46,7 +46,7 @@ module JSON::LD
            cid = context.compact_iri(id)
            cid == term ? id : cid
         else
-          defn = Hash.ordered
+          defn = {}
           cid = context.compact_iri(id)
           defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
           if type_mapping
@@ -76,8 +76,13 @@ module JSON::LD
 
     # The base.
     #
-    # @return [RDF::URI] Document base IRI, used for expanding relative IRIs.
+    # @return [RDF::URI] Current base IRI, used for expanding relative IRIs.
     attr_reader :base
+
+    # The base.
+    #
+    # @return [RDF::URI] Document base IRI, to initialize `base`.
+    attr_reader :doc_base
 
     # @return [RDF::URI] base IRI of the context, if loaded remotely. XXX
     attr_accessor :context_base
@@ -126,7 +131,7 @@ module JSON::LD
     # @return [Context]
     def initialize(options = {})
       if options[:base]
-        @doc_base = RDF::URI(options[:base])
+        @base = @doc_base = RDF::URI(options[:base])
         @doc_base.canonicalize!
         @doc_base.fragment = nil
         @doc_base.query = nil
@@ -179,13 +184,17 @@ module JSON::LD
 
     # @param [String] value must be an absolute IRI
     def vocab=(value)
-      if value
-        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}" unless value.is_a?(String)
-        @vocab = RDF::URI(value)
-        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" unless @vocab.absolute?
-        @vocab
+      @vocab = case value
+      when /_:/
+        value
+      when String
+        v = as_resource(value)
+        raise InvalidContext::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative?
+        v
+      when nil
+        nil
       else
-        @vocab = nil
+        raise InvalidContext::InvalidVocabMapping, "@value must be a string: #{value.inspect}"
       end
     end
 
@@ -234,7 +243,7 @@ module JSON::LD
             # Load context document, if it is a string
             begin
               # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-              context = RDF::URI(result.context_base || result.base || @doc_base).join(context)
+              context = RDF::URI(result.context_base || result.base).join(context)
 
               raise InvalidContext::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context)
               @remote_contexts = @remote_contexts + [context]
@@ -344,7 +353,18 @@ module JSON::LD
         debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new(term)
 
+        if value.has_key?('@type')
+          type = value['@type']
+          # SPEC FIXME: @type may be nil
+          raise InvalidContext::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
+          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
+          debug("") {"type_mapping: #{type.inspect}"}
+          definition.type_mapping = type
+        end
+
         if value.has_key?('@reverse')
+          raise InvalidContext::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
+            value.keys.any? {|k| %w(@id).include?(k)}
           raise InvalidContext::InvalidIRIMapping, "expected value of @reverse to be a string" unless
             value['@reverse'].is_a?(String)
 
@@ -393,15 +413,6 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         end
 
-        if value.has_key?('@type')
-          type = value['@type']
-          # SPEC FIXME: @type may be nil
-          raise InvalidContext::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
-          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
-          debug("") {"type_mapping: #{type.inspect}"}
-          definition.type_mapping = type
-        end
-
         if value.has_key?('@container')
           container = value['@container']
           raise InvalidContext::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
@@ -445,8 +456,8 @@ module JSON::LD
         else
           debug("serlialize: generate context")
           debug("") {"=> context: #{inspect}"}
-          ctx = Hash.ordered
-          ctx['@base'] = base.to_s if base
+          ctx = {}
+          ctx['@base'] = base.to_s if base && base != doc_base
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
 
@@ -460,7 +471,7 @@ module JSON::LD
         end
 
         # Return hash with @context, or empty
-        r = Hash.ordered
+        r = {}
         r['@context'] = use_context unless use_context.nil? || use_context.empty?
         r
       end
@@ -652,9 +663,9 @@ module JSON::LD
         result = if options[:vocab] && vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
           vocab + value
-        elsif options[:documentRelative] && base = options.fetch(:base, self.base || @doc_base)
+        elsif options[:documentRelative] && base = options.fetch(:base, self.base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-          RDF::URI(base).join(value).to_s
+          RDF::URI(base).join(value)
         elsif local_context && RDF::URI(value).relative?
           # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
           raise JSON::LD::InvalidContext::InvalidIRIMapping, "not an absolute IRI: #{value}"
@@ -870,7 +881,7 @@ module JSON::LD
           {'@id' => value.to_s}
         when RDF::Literal
           debug("Literal") {"datatype: #{value.datatype.inspect}"}
-          res = Hash.ordered
+          res = {}
           if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
             res['@type'] = uri(coerce(property)) if coerce(property)
@@ -1116,14 +1127,14 @@ module JSON::LD
     # @return [String]
     #   the relative IRI if relative to base, otherwise the absolute IRI.
     def remove_base(iri)
-      return iri unless base || @doc_base
+      return iri unless base
       @base_and_parents ||= begin
-        u = base || @doc_base
+        u = base
         iri_set = u.to_s.end_with?('/') ? [u.to_s] : []
         iri_set << u.to_s while (u = u.parent)
         iri_set
       end
-      b = (base || @doc_base).to_s
+      b = base.to_s
       return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
 
       @base_and_parents.each_with_index do |b, index|

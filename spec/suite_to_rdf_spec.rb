@@ -18,8 +18,8 @@ describe JSON::LD do
               to_quad(statement)
             end
 
-            sorted_expected = t.expect.readlines.sort.join("")
-            quads.sort.join("").should produce(sorted_expected, t.debug)
+            sorted_expected = t.expect.readlines.uniq.sort.join("")
+            quads.uniq.sort.join("").should produce(sorted_expected, t.debug)
           rescue JSON::LD::ProcessingError => e
             fail("Processing error: #{e.message}")
           rescue JSON::LD::InvalidContext => e

@@ -12,9 +12,7 @@ describe JSON::LD::API do
         {
           '@id'         => "http://a/b",
           "http://a/c"  => [{"@id" => "http://a/d"}]
-          }, {
-            '@id' => 'http://a/d'
-          }
+        }
         ], @debug)
       end
 
@@ -27,9 +25,7 @@ describe JSON::LD::API do
             {"@id" => "http://example.com/d"},
             {"@id" => "http://example.com/e"}
           ]
-        },
-        {"@id" => "http://example.com/d"},
-        {"@id" => "http://example.com/e"}
+        }
         ], @debug)
       end
     
@@ -40,9 +36,7 @@ describe JSON::LD::API do
           '@id'   => "http://example.com/b",
           "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
           "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
-        },
-        {"@id" => "http://example.com/d"},
-        {"@id" => "http://example.com/f"}
+        }
         ], @debug)
       end
     
@@ -55,7 +49,6 @@ describe JSON::LD::API do
         )
         serialize(input).
         should produce([
-          {'@id'  => "http://www.w3.org/2006/03/test-description#TestCase"},
           {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
           {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
         ], @debug)
@@ -170,8 +163,7 @@ describe JSON::LD::API do
         {
           "@id" => "_:a",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
-        },
-        {"@id" => "http://example.com/b"}
+        }
         ], @debug)
       end
     
@@ -185,8 +177,7 @@ describe JSON::LD::API do
           {
             "@id" => "http://example.com/a",
             "http://example.com/b"  => [{"@id" => "_:a"}]
-          },
-          {"@id" => "http://example.com/d"},
+          }
         ], @debug)
       end
     end
@@ -218,7 +209,7 @@ describe JSON::LD::API do
               {"@id" => "http://example.com/c"}
             ]
           }]
-        }, {"@id" => "http://example.com/c"}], @debug)
+        }], @debug)
       end
     
       it "should generate empty list" do
@@ -265,7 +256,7 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-              }, {"@id" => "http://example.com/c"}]
+              }]
             },
           ]
         },
@@ -280,10 +271,9 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@id" => "http://example.com/c"}]
-              }, {"@id" => "http://example.com/c"}],
+              }],
               "http://example.com/d" => [{"@id" => "http://example.com/e"}]
-            },
-            {"@id" => "http://example.com/e"}
+            }
           ]
         },
         "with lists" => {
@@ -301,10 +291,9 @@ describe JSON::LD::API do
               "@graph" => [{
                 "@id" => "http://example.com/a",
                 "http://example.com/b" => [{"@list" => [{"@id" => "http://example.com/c"}]}]
-              }, {"@id" => "http://example.com/c"}],
+              }],
               "http://example.com/d" => [{"@list" => [{"@id" => "http://example.com/e"}]}]
-            },
-            {"@id" => "http://example.com/e"}
+            }
           ]
         },
         "Two Graphs with same subject and lists" => {
@@ -325,8 +314,7 @@ describe JSON::LD::API do
                   "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/c"}]
                   }]
-                },
-                {"@id" => "http://example.com/c"}
+                }
               ]
             },
             {
@@ -337,8 +325,7 @@ describe JSON::LD::API do
                   "http://example.com/b" => [{
                     "@list" => [{"@id" => "http://example.com/e"}]
                   }]
-                },
-                {"@id" => "http://example.com/e"}
+                }
               ]
             }
           ]
@@ -357,7 +344,7 @@ describe JSON::LD::API do
         serialize(input, :useRdfType => false).should produce([{
           '@id'   => "http://example.com/a",
           "@type"    => ["http://example.com/b"]
-        }, {'@id' => "http://example.com/b"}], @debug)
+        }], @debug)
       end
       
       it "does not use @type if set to true" do
@@ -365,7 +352,7 @@ describe JSON::LD::API do
         serialize(input, :useRdfType => true).should produce([{
           '@id'   => "http://example.com/a",
           '@type'    => ["http://example.com/b"]
-        }, {"@id" => "http://example.com/b"}], @debug)
+        }], @debug)
       end
     end
   
@@ -383,7 +370,7 @@ describe JSON::LD::API do
             "http://www.w3.org/2000/01/rdf-schema#range" => [
               { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }
             ]
-          }, { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }]
+          }]
         ],
       }.each do |t, (input, output)|
         it "#{t}" do
