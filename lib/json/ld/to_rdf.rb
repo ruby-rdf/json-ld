@@ -20,7 +20,7 @@ module JSON::LD
         # For each id-node in active_graph
         active_graph.each do |id, node|
           # Initialize subject as the IRI or BNode representation of id
-          subject = as_resource(id)
+          subject = as_resource(id, context.doc_base)
           debug("graph_to_rdf")  {"subject: #{subject.to_ntriples}"}
 
           # For each property-values in node
@@ -29,7 +29,7 @@ module JSON::LD
             when '@type'
               # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
               results += values.map do |value|
-                object = as_resource(value)
+                object = as_resource(value, context.doc_base)
                 debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
                 RDF::Statement.new(subject, RDF.type, object)
               end
@@ -38,7 +38,7 @@ module JSON::LD
             else
               # Otherwise, property is an IRI or Blank Node identifier
               # Initialize predicate from  property as an IRI or Blank node
-              predicate = as_resource(property)
+              predicate = as_resource(property, context.doc_base)
               debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
 
               # For each item in values
@@ -104,7 +104,7 @@ module JSON::LD
         # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
         raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)
         # Return value associated with @id as an IRI or Blank node
-        as_resource(item['@id'])
+        as_resource(item['@id'], context.doc_base)
       end
     end
 
@@ -144,24 +144,6 @@ module JSON::LD
     # Create a new named node using the sequence
     def node
       RDF::Node.new(namer.get_sym)
-    end
-
-    ##
-    # add a statement, object can be literal or URI or bnode
-    #
-    # @param [String] path
-    # @param [RDF::Resource] subject the subject of the statement
-    # @param [RDF::URI] predicate the predicate of the statement
-    # @param [RDF::Term] object the object of the statement
-    # @param [RDF::Resource] name the named graph context of the statement
-    # @yield statement
-    # @yieldparam [RDF::Statement] statement
-    def add_quad(path, subject, predicate, object, name)
-      predicate = RDF.type if predicate == '@type'
-      object = context.expand_iri(object.to_s, :quiet => true) if object.literal? && predicate == RDF.type
-      statement = RDF::Statement.new(subject, predicate, object, :context => name)
-      debug(path) {"statement: #{statement.to_nquads}"}
-      yield statement
     end
   end
 end

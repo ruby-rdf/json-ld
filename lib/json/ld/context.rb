@@ -131,7 +131,7 @@ module JSON::LD
     # @return [Context]
     def initialize(options = {})
       if options[:base]
-        @doc_base = RDF::URI(options[:base])
+        @base = @doc_base = RDF::URI(options[:base])
         @doc_base.canonicalize!
         @doc_base.fragment = nil
         @doc_base.query = nil
@@ -243,7 +243,7 @@ module JSON::LD
             # Load context document, if it is a string
             begin
               # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-              context = RDF::URI(result.context_base || result.base || doc_base).join(context)
+              context = RDF::URI(result.context_base || result.base).join(context)
 
               raise InvalidContext::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context)
               @remote_contexts = @remote_contexts + [context]
@@ -457,7 +457,7 @@ module JSON::LD
           debug("serlialize: generate context")
           debug("") {"=> context: #{inspect}"}
           ctx = {}
-          ctx['@base'] = base.to_s if base
+          ctx['@base'] = base.to_s if base && base != doc_base
           ctx['@language'] = default_language.to_s if default_language
           ctx['@vocab'] = vocab.to_s if vocab
 
@@ -663,9 +663,9 @@ module JSON::LD
         result = if options[:vocab] && vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
           vocab + value
-        elsif options[:documentRelative] && base = options.fetch(:base, self.base || doc_base)
+        elsif options[:documentRelative] && base = options.fetch(:base, self.base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-          RDF::URI(base).join(value).to_s
+          RDF::URI(base).join(value)
         elsif local_context && RDF::URI(value).relative?
           # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
           raise JSON::LD::InvalidContext::InvalidIRIMapping, "not an absolute IRI: #{value}"
@@ -1127,14 +1127,14 @@ module JSON::LD
     # @return [String]
     #   the relative IRI if relative to base, otherwise the absolute IRI.
     def remove_base(iri)
-      return iri unless base || doc_base
+      return iri unless base
       @base_and_parents ||= begin
-        u = base || doc_base
+        u = base
         iri_set = u.to_s.end_with?('/') ? [u.to_s] : []
         iri_set << u.to_s while (u = u.parent)
         iri_set
       end
-      b = (base || doc_base).to_s
+      b = base.to_s
       return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
 
       @base_and_parents.each_with_index do |b, index|

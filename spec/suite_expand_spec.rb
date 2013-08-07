@@ -9,9 +9,6 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}" do
-          if t.property('input') =~ /expand-0060/
-            pending "reset base to nil fix"
-          end
           begin
             t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
             t.debug << "context: #{t.context.read}" if t.property('context')

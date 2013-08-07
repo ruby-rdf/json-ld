@@ -65,10 +65,17 @@ module JSON::LD
     ##
     # Represent an id as an IRI or Blank Node
     # @param [String] id
+    # @param [RDF::URI] base (nil)
     # @return [RDF::Resource]
-    def as_resource(id)
+    def as_resource(id, base = nil)
       @nodes ||= {} # Re-use BNodes
-      id[0,2] == '_:' ? (@nodes[id] ||= RDF::Node.new(id[2..-1])) : RDF::URI(id)
+      if id[0,2] == '_:'
+        (@nodes[id] ||= RDF::Node.new(id[2..-1]))
+      elsif base
+        base.join(id)
+      else
+        RDF::URI(id)
+      end
     end
 
     private
