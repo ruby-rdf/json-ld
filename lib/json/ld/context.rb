@@ -159,7 +159,7 @@ module JSON::LD
     # @param [String] value must be an absolute IRI
     def base=(value)
       if value
-        raise InvalidContext::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String)
+        raise InvalidContext::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
         @base = RDF::URI(value)
         @base.canonicalize!
         @base.fragment = nil
@@ -266,8 +266,8 @@ module JSON::LD
               result = context
               debug("parse") {"=> provided_context: #{context.inspect}"}
             rescue Exception => e
-              debug("parse") {"Failed to retrieve @context from remote document at #{context.inspect}: #{e.message}"}
-              raise InvalidContext::InvalidRemoteContext, "#{context}", e.backtrace if @options[:validate]
+              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              raise InvalidContext::InvalidRemoteContext, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
             end
           when Hash
             # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
