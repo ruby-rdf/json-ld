@@ -18,7 +18,7 @@ Install with `gem install json-ld`
 
 ### Expand a Document
 
-    input = {
+    input = JSON.parse %({
       "@context": {
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": "http://xmlns.com/foaf/0.1/homepage",
@@ -27,7 +27,7 @@ Install with `gem install json-ld`
       "name": "Manu Sporny",
       "homepage": "http://manu.sporny.org/",
       "avatar": "http://twitter.com/account/profile_image/manusporny"
-    }
+    })
     JSON::LD::API.expand(input) =>
     
     [{
@@ -38,26 +38,26 @@ Install with `gem install json-ld`
 
 ### Compact a Document
 
-    input = [{
+    input = JSON.parse %([{
         "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
-        "http://xmlns.com/foaf/0.1/homepage": ["http://manu.sporny.org/"],
-        "http://xmlns.com/foaf/0.1/avatar": ["http://twitter.com/account/profile_image/manusporny"]
-    }]
+        "http://xmlns.com/foaf/0.1/homepage": [{"@id": "http://manu.sporny.org/"}],
+        "http://xmlns.com/foaf/0.1/avatar": [{"@id": "http://twitter.com/account/profile_image/manusporny"}]
+    }])
     
-    context = {
+    context = JSON.parse(%({
       "@context": {
         "name": "http://xmlns.com/foaf/0.1/name",
-        "homepage": "http://xmlns.com/foaf/0.1/homepage",
-        "avatar": "http://xmlns.com/foaf/0.1/avatar"
+        "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+        "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    }
+    }))['@context']
     
     JSON::LD::API.compact(input, context) =>
     {
         "@context": {
-            "avatar": "http://xmlns.com/foaf/0.1/avatar",
-            "homepage": "http://xmlns.com/foaf/0.1/homepage",
-            "name": "http://xmlns.com/foaf/0.1/name"
+          "name": "http://xmlns.com/foaf/0.1/name",
+          "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+          "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
         },
         "avatar": "http://twitter.com/account/profile_image/manusporny",
         "homepage": "http://manu.sporny.org/",
@@ -66,7 +66,7 @@ Install with `gem install json-ld`
 
 ### Frame a Document
 
-    input = {
+    input = JSON.parse %({
       "@context": {
         "Book":         "http://example.org/vocab#Book",
         "Chapter":      "http://example.org/vocab#Chapter",
@@ -95,9 +95,9 @@ Install with `gem install json-ld`
         "description": "An introductory chapter on The Republic.",
         "title": "The Introduction"
       }]
-    }
+    })
     
-    frame = {
+    frame = JSON.parse %({
       "@context": {
         "Book":         "http://example.org/vocab#Book",
         "Chapter":      "http://example.org/vocab#Chapter",
@@ -114,8 +114,9 @@ Install with `gem install json-ld`
           "@type": "Chapter"
         }
       }
-    }
-    JSON::LD.frame(input, frame) =>
+    })
+
+    JSON::LD::API.frame(input, frame) =>
     {
       "@context": {
         "Book": "http://example.org/vocab#Book",
@@ -148,7 +149,7 @@ Install with `gem install json-ld`
 
 ### Turn JSON-LD into RDF (Turtle)
 
-    input = {
+    input = JSON.parse %({
       "@context": {
         "":       "http://manu.sporny.org/",
         "foaf":   "http://xmlns.com/foaf/0.1/"
@@ -157,9 +158,12 @@ Install with `gem install json-ld`
       "@type":          "foaf:Person",
       "foaf:name":      "Joe Bob",
       "foaf:nick":      { "@list": [ "joe", "bob", "jaybe" ] }
-    }
+    })
     
-    JSON::LD::API.toRDF(input) =>
+    graph = RDF::Graph.new << JSON::LD::API.toRDF(input)
+
+    require 'rdf/turtle'
+    graph.dump(:ttl, :prefixes => {:foaf => "http://xmlns.com/foaf/0.1/"})
     @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
     <http://example.org/people#joebob> a foaf:Person;
@@ -168,42 +172,49 @@ Install with `gem install json-ld`
 
 ### Turn RDF into JSON-LD
 
-    input =
-    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+    require 'rdf/turtle'
+    input = RDF::Graph.new << RDF::Turtle::Reader.new(%(
+      @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
-    <http://manu.sporny.org/#me> a foaf:Person;
-       foaf:knows [ a foaf:Person;
-         foaf:name "Gregg Kellogg"];
-       foaf:name "Manu Sporny" .
+      <http://manu.sporny.org/#me> a foaf:Person;
+         foaf:knows [ a foaf:Person;
+           foaf:name "Gregg Kellogg"];
+         foaf:name "Manu Sporny" .
+    ))
     
-    context =
-    {
+    context = JSON.parse %({
       "@context": {
         "":       "http://manu.sporny.org/",
         "foaf":   "http://xmlns.com/foaf/0.1/"
       }
-    }
+    })
 
-    JSON::LD::API::fromRDF(input, context) =>
-    {
-      "@context": {
-        "":       "http://manu.sporny.org/",
-        "foaf":   "http://xmlns.com/foaf/0.1/"
-      },
-      "@id":       ":#me",
-      "@type":          "foaf:Person",
-      "foaf:name":      "Manu Sporny",
-      "foaf:knows": {
-        "@type":          "foaf:Person",
-        "foaf:name":      "Gregg Kellogg"
-      }
-    }
+    compacted = nil
+    JSON::LD::API::fromRDF(input) do |expanded|
+      compacted = JSON::LD::API.compact(expanded, context['@context'])
+    end
+    compacted =>
+      [
+        {
+          "@id": "_:g70265766605380",
+          "@type": ["http://xmlns.com/foaf/0.1/Person"],
+          "http://xmlns.com/foaf/0.1/name": [{"@value": "Gregg Kellogg"}]
+        },
+        {
+          "@id": "http://manu.sporny.org/#me",
+          "@type": ["http://xmlns.com/foaf/0.1/Person"],
+          "http://xmlns.com/foaf/0.1/knows": [{"@id": "_:g70265766605380"}],
+          "http://xmlns.com/foaf/0.1/name": [{"@value": "Manu Sporny"}]
+        }
+      ]
 
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
 
     graph = RDF::Graph.load("etc/doap.jsonld", :format => :jsonld)
     graph.dump(:jsonld, :standard_prefixes => true)
+
+`RDF::GRAPH#dump` can also take a `:context` option to use a separately defined context
 
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
