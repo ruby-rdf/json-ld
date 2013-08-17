@@ -25,7 +25,7 @@ Gem::Specification.new do |gem|
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
   gem.has_rdoc              = false
 
-  gem.required_ruby_version = '>= 1.9.3'
+  gem.required_ruby_version = '>= 1.9.2'
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '>= 1.0.7'
   gem.add_runtime_dependency     'json',            '>= 1.7.5'
