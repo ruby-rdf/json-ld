@@ -1,10 +1,10 @@
 {
   "@context": {
-      "dc":       "http://purl.org/dc/terms/",
+      "dc":   "http://purl.org/dc/terms/",
       "doap": "http://usefulinc.com/ns/doap#",
       "foaf": "http://xmlns.com/foaf/0.1/",
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-      "xsd":      "http://www.w3.org/2001/XMLSchema#",
+      "xsd":  "http://www.w3.org/2001/XMLSchema#",
       "dc:creator": {"@type": "@id"},
       "doap:created": {"@type": "xsd:date"},
       "doap:homepage": {"@type": "@id"},

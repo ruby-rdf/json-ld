@@ -20,8 +20,8 @@ module JSON::LD
         # For each id-node in active_graph
         active_graph.each do |id, node|
           # Initialize subject as the IRI or BNode representation of id
-          subject = as_resource(id, context.doc_base)
-          debug("graph_to_rdf")  {"subject: #{subject.to_ntriples}"}
+          subject = as_resource(id)
+          debug("graph_to_rdf")  {"subject: #{subject.to_ntriples} (id: #{id})"}
 
           # For each property-values in node
           node.each do |property, values|
@@ -29,7 +29,7 @@ module JSON::LD
             when '@type'
               # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
               results += values.map do |value|
-                object = as_resource(value, context.doc_base)
+                object = as_resource(value)
                 debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
                 RDF::Statement.new(subject, RDF.type, object)
               end
@@ -38,7 +38,7 @@ module JSON::LD
             else
               # Otherwise, property is an IRI or Blank Node identifier
               # Initialize predicate from  property as an IRI or Blank node
-              predicate = as_resource(property, context.doc_base)
+              predicate = as_resource(property)
               debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
 
               # For each item in values
@@ -104,7 +104,7 @@ module JSON::LD
         # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
         raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)
         # Return value associated with @id as an IRI or Blank node
-        as_resource(item['@id'], context.doc_base)
+        as_resource(item['@id'])
       end
     end
 
