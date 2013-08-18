@@ -60,6 +60,8 @@ end
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
+    TEST_IRI_BASE = RDF::URI("http://example/").freeze
+
     class Manifest < JSON::LD::Resource
       def self.open(file)
         #puts "open: #{file}"
@@ -109,6 +111,45 @@ module Fixtures
       end
       
       def trace; @debug.join("\n"); end
+
+      # Don't use NQuads writer so that we don't escape Unicode
+      def to_quad(thing)
+        case thing
+        when RDF::URI
+          TEST_IRI_BASE.join(thing).canonicalize.to_ntriples
+        when RDF::Node
+          escaped(thing)
+        when RDF::Literal::Double
+          thing.canonicalize.to_ntriples
+        when RDF::Literal
+          v = quoted(escaped(thing.value))
+          case thing.datatype
+          when nil, "http://www.w3.org/2001/XMLSchema#string", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
+            # Ignore these
+          else
+            v += "^^#{to_quad(thing.datatype)}"
+          end
+          v += "@#{thing.language}" if thing.language
+          v
+        when RDF::Statement
+          thing.to_quad.map {|r| to_quad(r)}.compact.join(" ") + " .\n"
+        end
+      end
+
+      ##
+      # @param  [String] string
+      # @return [String]
+      def quoted(string)
+        "\"#{string}\""
+      end
+
+      ##
+      # @param  [String, #to_s] string
+      # @return [String]
+      def escaped(string)
+        string.to_s.gsub('\\', '\\\\').gsub("\t", '\\t').
+          gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
+      end
     end
   end
 end

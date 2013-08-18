@@ -24,7 +24,8 @@
    doap:shortdesc "JSON-LD support for RDF.rb."@en;
    foaf:maker <http://greggkellogg.net/foaf#me> .
 
-<http://greggkellogg.net/foaf#me> rdfs:isDefinedBy <http://greggkellogg.net/foaf>;
+<http://greggkellogg.net/foaf#me> a foaf:Person;
+   rdfs:isDefinedBy <http://greggkellogg.net/foaf>;
    foaf:made <http://rubygems.org/gems/json-ld>;
    foaf:mbox <mailto:gregg@greggkellogg.net>;
    foaf:name "Gregg Kellogg"^^xsd:string .
