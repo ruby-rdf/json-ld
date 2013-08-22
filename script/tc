@@ -85,6 +85,8 @@ def run_tc(man, tc, options)
       output == expected ? 'passed' : 'failed'
     end || "untested"
 
+    options[:results][result] ||= 0
+    options[:results][result] += 1
   rescue Exception => e
     STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
     if options[:quiet]
@@ -115,6 +117,7 @@ end
 
 options = {
   :output => STDOUT,
+  :results => {}
 }
 
 opts = GetoptLong.new(
@@ -165,3 +168,5 @@ manifests.each do |man|
     end
   end
 end
+
+options[:results].each {|k, v| puts "#{k}: #{v}"}
