@@ -367,8 +367,29 @@ module JSON::LD
         node_map.each do |graph_name, graph|
           context = as_resource(graph_name) unless graph_name == '@default'
           debug(".toRDF") {"context: #{context ? context.to_ntriples : 'null'}"}
+          # Drop results for graphs which are named with relative IRIs
+          if graph_name.is_a?(RDF::URI) && !graph_name.absolute
+            debug(".toRDF") {"drop relative graph_name: #{statement.to_ntriples}"}
+            next
+          end
           graph_to_rdf(graph).each do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRDF]
+            # Drop results with relative IRIs
+            relative = statement.to_a.any? do |r|
+              case r
+              when RDF::URI
+                r.relative?
+              when RDF::Literal
+                r.has_datatype? && r.datatype.relative?
+              else
+                false
+              end
+            end
+            if relative
+              debug(".toRDF") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
+              next
+            end
+
             statement.context = context if context
             if block_given?
               yield statement

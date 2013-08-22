@@ -60,7 +60,6 @@ end
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
-    TEST_IRI_BASE = RDF::URI("http://example/").freeze
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
@@ -116,7 +115,7 @@ module Fixtures
       def to_quad(thing)
         case thing
         when RDF::URI
-          TEST_IRI_BASE.join(thing).canonicalize.to_ntriples
+          thing.canonicalize.to_ntriples
         when RDF::Node
           escaped(thing)
         when RDF::Literal::Double
