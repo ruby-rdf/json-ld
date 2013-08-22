@@ -462,7 +462,7 @@ module JSON::LD
           ctx['@vocab'] = vocab.to_s if vocab
 
           # Term Definitions
-          term_definitions.each do |term, definition|
+          term_definitions.dup.each do |term, definition|
             ctx[term] = definition.to_context_definition(self)
           end
 
@@ -813,7 +813,7 @@ module JSON::LD
         # try those, and add to mapping
         if @options[:standard_prefixes]
           candidates = RDF::Vocabulary.
-            select {|v| iri.start_with?(v.to_uri.to_s)}.
+            select {|v| iri.start_with?(v.to_uri.to_s) && iri != v.to_uri.to_s}.
             map do |v|
               prefix = v.__name__.to_s.split('::').last.downcase
               set_mapping(prefix, v.to_uri.to_s)
