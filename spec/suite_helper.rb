@@ -93,7 +93,11 @@ module Fixtures
 
       # Base is expanded input file
       def base
-        "#{SUITE}tests/#{property('input')}"
+        options.fetch('base', "#{SUITE}tests/#{property('input')}")
+      end
+
+      def options
+        @options ||= (property('option') || {}).inject({}) {|h, k, v| h[k.to_sym] = v; h}
       end
 
       # Alias input, context, expect and frame
@@ -102,7 +106,11 @@ module Fixtures
       end
 
       def testType
-        property('@type').reject {|t| t =~ /EvaluationTest/}.first
+        property('@type').reject {|t| t =~ /EvaluationTest|SyntaxTest/}.first
+      end
+
+      def evaluationTest?
+        property('@type').to_s.include?('EvaluationTest')
       end
 
       def positiveTest?
@@ -110,6 +118,85 @@ module Fixtures
       end
       
       def trace; @debug.join("\n"); end
+
+      # Execute the test
+      def run
+        debug = ["test: #{inspect}", "source: #{input.read}"]
+        debug << "context: #{context.read}" if context
+        debug << "options: #{options.inspect}" unless options.empty?
+        debug << "context: #{frame.read}" if frame
+
+        if positiveTest?
+          debug << "expected: #{expect}" if expect
+          begin
+            result = case testType
+            when "jld:ExpandTest"
+              JSON::LD::API.expand(input, context, options.merge(:debug => debug))
+            when "jld:CompactTest"
+              JSON::LD::API.compact(input, context, options.merge(:debug => debug))
+            when "jld:FlattenTest"
+              JSON::LD::API.flatten(input, context, options.merge(:debug => debug))
+            when "jld:FrameTest"
+              JSON::LD::API.frame(input, frame, options.merge(:debug => debug))
+            when "jld:FromRDFTest"
+              repo = RDF::Repository.load(input)
+              debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+            when "jld:ToRDFTest"
+              JSON::LD::API.toRDF(input, context, options.merge(:debug => debug)).map do |statement|
+                to_quad(statement)
+              end
+            else
+              fail("Unknown test type: #{testType}")
+            end
+            if evaluationTest?
+              if testType == "jld:ToRDFTest"
+                sorted_expected = expect.readlines.uniq.sort.join("")
+                result.uniq.sort.join("").should produce(sorted_expected, debug)
+              else
+                expected = JSON.load(expect)
+                result.should produce(expected, debug)
+              end
+            else
+              expect(result).to_not be_nil
+            end
+          rescue JSON::LD::ProcessingError => e
+            fail("Processing error: #{e.message}")
+          rescue JSON::LD::InvalidContext => e
+            fail("Invalid Context: #{e.message}")
+          rescue JSON::LD::InvalidFrame => e
+            fail("Invalid Frame: #{e.message}")
+          end
+        else
+          debug << "expected: #{property('expect')}" if property('expect')
+          if evaluationTest?
+            lambda do
+              case testType
+              when "jld:ExpandTest"
+                JSON::LD::API.expand(input, context, options.merge(:debug => debug))
+              when "jld:CompactTest"
+                JSON::LD::API.compact(input, context, options.merge(:debug => debug))
+              when "jld:FlattenTest"
+                JSON::LD::API.flatten(input, context, options.merge(:debug => debug))
+              when "jld:FrameTest"
+                JSON::LD::API.frame(input, frame, options.merge(:debug => debug))
+              when "jld:FromRDFTest"
+                repo = RDF::Repository.load(input)
+                debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+              when "jld:ToRDFTest"
+                JSON::LD::API.toRDF(input, context, options.merge(:debug => debug)).map do |statement|
+                  to_quad(statement)
+                end
+              else
+                success("Unknown test type: #{testType}")
+              end
+            end.should raise_error
+          else
+            fail("No support for NegativeSyntaxTest")
+          end
+        end
+      end
 
       # Don't use NQuads writer so that we don't escape Unicode
       def to_quad(thing)
