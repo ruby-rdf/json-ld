@@ -76,7 +76,9 @@ module JSON::LD
       @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
       @value = case input
       when Array, Hash then input.dup
-      when IO, StringIO then JSON.parse(input.read)
+      when IO, StringIO
+        @options = {:base => input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+        JSON.parse(input.read)
       when String
         content = nil
         @options = {:base => input}.merge(@options)
