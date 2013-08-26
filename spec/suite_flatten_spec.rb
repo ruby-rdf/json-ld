@@ -10,7 +10,7 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('input')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          t.run
+          t.run self
         end
       end
     end

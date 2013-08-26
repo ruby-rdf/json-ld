@@ -89,47 +89,44 @@ module JSON
     def self.debug=(value); @debug = value; end
     
     class ProcessingError < Exception
-      class CompactionToListOfLists < ProcessingError; end
-      class Conflict < ProcessingError; end
-      class ConflictingIndexes < ProcessingError; end
-      class InvalidIdValue < ProcessingError; end
-      class InvalidIndexValue < ProcessingError; end
-      class InvalidLanguageMapValue < ProcessingError; end
-      class InvalidLanguageTaggedString < ProcessingError; end
-      class InvalidLanguageTaggedValue < ProcessingError; end
-      class InvalidReversePropertyMap < ProcessingError; end
-      class InvalidReversePropertyValue < ProcessingError; end
-      class InvalidReverseValue < ProcessingError; end
-      class InvalidSetOrListObject < ProcessingError; end
-      class InvalidTypedValue < ProcessingError; end
-      class InvalidTypeValue < ProcessingError; end
-      class InvalidValueObject < ProcessingError; end
-      class InvalidValueObjectValue < ProcessingError; end
-      class LanguageMap < ProcessingError; end
-      class ListOfLists < ProcessingError; end
-      class LoadingDocumentFailed < ProcessingError; end
-      class Lossy < ProcessingError; end
-    end
-    
-    class InvalidContext < Exception
-      class CollidingKeywords < InvalidContext; end
-      class CyclicIRIMapping < InvalidContext; end
-      class InvalidBaseIRI < InvalidContext; end
-      class InvalidBaseIRI < InvalidContext; end
-      class InvalidContainerMapping < InvalidContext; end
-      class InvalidDefaultLanguage < InvalidContext; end
-      class InvalidIRIMapping < InvalidContext; end
-      class InvalidKeywordAlias < InvalidContext; end
-      class InvalidLanguageMapping < InvalidContext; end
-      class InvalidLocalContext < InvalidContext; end
-      class InvalidRemoteContext < InvalidContext; end
-      class InvalidReverseProperty < InvalidContext; end
-      class InvalidTermDefinition < InvalidContext; end
-      class InvalidTypeMapping < InvalidContext; end
-      class InvalidVocabMapping < InvalidContext; end
-      class KeywordRedefinition < InvalidContext; end
-      class LoadingRemoteContextFailed < InvalidContext; end
-      class RecursiveContextInclusion < InvalidContext; end
+      def to_s
+        "#{self.class.instance_variable_get :@base_message}: #{super}"
+      end
+      class LoadingDocumentFailed < ProcessingError; @base_message = "loading document failed"; end
+      class ListOfLists < ProcessingError; @base_message = "list of lists"; end
+      class InvalidIndexValue < ProcessingError; @base_message = "invalid @index value"; end
+      class ConflictingIndexes < ProcessingError; @base_message = "conflicting indexes"; end
+      class InvalidIdValue < ProcessingError; @base_message = "invalid @id value"; end
+      class InvalidLocalContext < ProcessingError; @base_message = "invalid local context"; end
+      class MultipleContextLinkHeaders < ProcessingError; @base_message = "multiple context link headers"; end
+      class LoadingRemoteContextFailed < ProcessingError; @base_message = "loading remote context failed"; end
+      class InvalidRemoteContext < ProcessingError; @base_message = "invalid remote context"; end
+      class RecursiveContextInclusion < ProcessingError; @base_message = "recursive context inclusion"; end
+      class InvalidBaseIRI < ProcessingError; @base_message = "invalid base IRI"; end
+      class InvalidVocabMapping < ProcessingError; @base_message = "invalid vocab mapping"; end
+      class InvalidDefaultLanguage < ProcessingError; @base_message = "invalid default language"; end
+      class KeywordRedefinition < ProcessingError; @base_message = "keyword redefinition"; end
+      class InvalidTermDefinition < ProcessingError; @base_message = "invalid term definition"; end
+      class InvalidReverseProperty < ProcessingError; @base_message = "invalid reverse property"; end
+      class InvalidIRIMapping < ProcessingError; @base_message = "invalid IRI mapping"; end
+      class CyclicIRIMapping < ProcessingError; @base_message = "cyclic IRI mapping"; end
+      class InvalidKeywordAlias < ProcessingError; @base_message = "invalid keyword alias"; end
+      class InvalidTypeMapping < ProcessingError; @base_message = "invalid type mapping"; end
+      class InvalidLanguageMapping < ProcessingError; @base_message = "invalid language mapping"; end
+      class CollidingKeywords < ProcessingError; @base_message = "colliding keywords"; end
+      class InvalidContainerMapping < ProcessingError; @base_message = "invalid container mapping"; end
+      class InvalidTypeValue < ProcessingError; @base_message = "invalid type value"; end
+      class InvalidValueObject < ProcessingError; @base_message = "invalid value object"; end
+      class InvalidValueObjectValue < ProcessingError; @base_message = "invalid value object value"; end
+      class InvalidLanguageTaggedString < ProcessingError; @base_message = "invalid language-tagged string"; end
+      class InvalidLanguageTaggedValue < ProcessingError; @base_message = "invalid language-tagged value"; end
+      class InvalidTypedValue < ProcessingError; @base_message = "invalid typed value"; end
+      class InvalidSetOrListObject < ProcessingError; @base_message = "invalid set or list object"; end
+      class InvalidLanguageMapValue < ProcessingError; @base_message = "invalid language map value"; end
+      class CompactionToListOfLists < ProcessingError; @base_message = "compaction to list of lists"; end
+      class InvalidReversePropertyMap < ProcessingError; @base_message = "invalid reverse property map"; end
+      class InvalidReverseValue < ProcessingError; @base_message = "invalid @reverse value"; end
+      class InvalidReversePropertyValue < ProcessingError; @base_message = "invalid reverse property value"; end
     end
     
     class InvalidFrame < Exception

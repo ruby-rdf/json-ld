@@ -33,11 +33,7 @@ def run_tc(man, tc, options)
     puts "\nInput:\n" + tc.input.read 
     puts "\nContext:\n" + tc.context.read if tc.context
     puts "\nFrame:\n" + tc.frame.read if tc.frame
-    puts "\nExpected:\n" + tc.expect.read
-    tc.input.rewind
-    tc.context.rewind if tc.context
-    tc.frame.rewind if tc.frame
-    tc.expect.rewind
+    puts "\nExpected:\n" + tc.expect.read if tc.positiveTest?
   end
 
   output = ""
@@ -58,7 +54,7 @@ def run_tc(man, tc, options)
         begin
           JSON::LD::API.expand(tc.input, nil, :base => tc.base, :validate => true)
           "failed"
-        rescue JSON::LD::InvalidContext, JSON::LD::ProcessingError
+        rescue JSON::LD::ProcessingError, JSON::LD::ProcessingError
           "passed"
         end
       end
@@ -85,14 +81,23 @@ def run_tc(man, tc, options)
       output == expected ? 'passed' : 'failed'
     end || "untested"
 
+    result = result ? 'failed' : 'passed' unless tc.positiveTest?
     options[:results][result] ||= 0
     options[:results][result] += 1
   rescue Exception => e
-    STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
-    if options[:quiet]
-      return
+    if tc.positiveTest?
+      STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
+      if options[:quiet]
+        options[:results]['failed'] ||= 0
+        options[:results]['failed'] += 1
+      else
+        raise
+      end
     else
-      raise
+      if e.message.include?(tc.property('expect'))
+        options[:results]['passed'] ||= 0
+        options[:results]['passed'] += 1
+      end
     end
   end
   
@@ -156,7 +161,7 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand error-expand compact flatten frame fromRdf toRdf)
+manifests = %w(expand error compact flatten frame fromRdf toRdf)
 
 earl_preamble(options) if options[:earl]
 

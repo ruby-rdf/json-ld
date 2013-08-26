@@ -48,28 +48,30 @@ module JSON::LD
     # Initialize the API, reading in any document and setting global options
     #
     # @param [String, #read, Hash, Array] input
-    # @param [String, #read,, Hash, Array, JSON::LD::Context] context
+    # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     # @option options [Boolean] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
-    # @option options [Boolean] :optimize (false)
-    #   If set to `true`, the JSON-LD processor is allowed to optimize the output of the Compaction Algorithm to produce even compacter representations. The algorithm for compaction optimization is beyond the scope of this specification and thus not defined. Consequently, different implementations *MAY* implement different optimization algorithms.
-    #   (Presently, this is a noop).
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [String] :produceGeneralizedRDF (false)
+    #   Unless the produce generalized RDF flag is set to true, RDF triples containing a blank node predicate are excluded from output.
     # @option options [Boolean] :useNativeTypes (true)
     #   If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
-    # @option options [Boolean] :useRdfType (false)
-    #   If set to `true`, the JSON-LD processor will try to convert datatyped literals to JSON native types instead of using the expanded object form when converting from RDF. `xsd:boolean` values will be converted to `true` or `false`. `xsd:integer` and `xsd:double` values will be converted to JSON numbers.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
       @options = {:compactArrays => true}.merge(options)
+      @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       options = {:rename_bnodes => true}.merge(options)
       @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
       @value = case input
@@ -104,7 +106,7 @@ module JSON::LD
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
-    # @raise [InvalidContext]
+    # @raise [ProcessingError]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
     #   The expanded JSON-LD document
@@ -147,7 +149,7 @@ module JSON::LD
     #   The compacted JSON-LD document
     # @return [Hash]
     #   The compacted JSON-LD document
-    # @raise [InvalidContext, ProcessingError]
+    # @raise [ProcessingError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
     def self.compact(input, context, options = {})
       expanded = result = nil
@@ -341,7 +343,7 @@ module JSON::LD
     #   Options passed to {JSON::LD::API.expand}
     # @option options [Boolean] :produceGeneralizedRDF (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
-    # @raise [InvalidContext]
+    # @raise [ProcessingError]
     # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement

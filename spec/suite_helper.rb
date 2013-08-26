@@ -97,7 +97,13 @@ module Fixtures
       end
 
       def options
-        @options ||= (property('option') || {}).inject({}) {|h, k, v| h[k.to_sym] = v; h}
+        @options ||= begin
+          opts = {}
+          {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
+            opts[k.to_sym] = v
+          end
+          opts
+        end
       end
 
       # Alias input, context, expect and frame
@@ -120,7 +126,7 @@ module Fixtures
       def trace; @debug.join("\n"); end
 
       # Execute the test
-      def run
+      def run(rspec_example = nil)
         debug = ["test: #{inspect}", "source: #{input.read}"]
         debug << "context: #{context.read}" if context
         debug << "options: #{options.inspect}" unless options.empty?
@@ -162,7 +168,7 @@ module Fixtures
             end
           rescue JSON::LD::ProcessingError => e
             fail("Processing error: #{e.message}")
-          rescue JSON::LD::InvalidContext => e
+          rescue JSON::LD::ProcessingError => e
             fail("Invalid Context: #{e.message}")
           rescue JSON::LD::InvalidFrame => e
             fail("Invalid Frame: #{e.message}")
@@ -170,28 +176,31 @@ module Fixtures
         else
           debug << "expected: #{property('expect')}" if property('expect')
           if evaluationTest?
-            lambda do
-              case testType
-              when "jld:ExpandTest"
-                JSON::LD::API.expand(input, context, options.merge(:debug => debug))
-              when "jld:CompactTest"
-                JSON::LD::API.compact(input, context, options.merge(:debug => debug))
-              when "jld:FlattenTest"
-                JSON::LD::API.flatten(input, context, options.merge(:debug => debug))
-              when "jld:FrameTest"
-                JSON::LD::API.frame(input, frame, options.merge(:debug => debug))
-              when "jld:FromRDFTest"
-                repo = RDF::Repository.load(input)
-                debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
-              when "jld:ToRDFTest"
-                JSON::LD::API.toRDF(input, context, options.merge(:debug => debug)).map do |statement|
-                  to_quad(statement)
+            t = self
+            rspec_example.instance_eval do
+              expect do
+                case t.testType
+                when "jld:ExpandTest"
+                  JSON::LD::API.expand(t.input, t.context, t.options.merge(:debug => debug))
+                when "jld:CompactTest"
+                  JSON::LD::API.compact(t.input, t.context, t.options.merge(:debug => debug))
+                when "jld:FlattenTest"
+                  JSON::LD::API.flatten(t.input, t.context, t.options.merge(:debug => debug))
+                when "jld:FrameTest"
+                  JSON::LD::API.frame(t.input, t.frame, t.options.merge(:debug => debug))
+                when "jld:FromRDFTest"
+                  repo = RDF::Repository.load(t.input)
+                  debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  JSON::LD::API.fromRDF(repo, t.options.merge(:debug => debug))
+                when "jld:ToRDFTest"
+                  JSON::LD::API.toRDF(t.input, t.context, t.options.merge(:debug => debug)).map do |statement|
+                    t.to_quad(statement)
+                  end
+                else
+                  success("Unknown test type: #{testType}")
                 end
-              else
-                success("Unknown test type: #{testType}")
-              end
-            end.should raise_error
+              end.to raise_error(/#{t.property('expect')}/)
+            end
           else
             fail("No support for NegativeSyntaxTest")
           end

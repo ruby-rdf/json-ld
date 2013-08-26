@@ -83,7 +83,7 @@ describe JSON::LD::Writer do
           '@id' => ":b",
           ":c"    => {"@id" => ":d"}
         }, @debug)
-      rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, TypeError => e
+      rescue JSON::LD::ProcessingError, JSON::LD::ProcessingError, TypeError => e
         fail("#{e.class}: #{e.message}\n" +
           "#{@debug.join("\n")}\n" +
           "Backtrace:\n#{e.backtrace.join("\n")}")
