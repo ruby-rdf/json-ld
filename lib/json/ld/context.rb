@@ -116,10 +116,6 @@ module JSON::LD
     # @return [Context] A context provided to us that we can use without re-serializing XXX
     attr_accessor :provided_context
 
-    # @!attribute [r] remote_contexts
-    # @return [Array<String>] The list of remote contexts already processed
-    attr_accessor :remote_contexts
-
     # @!attribute [r] namer
     # @return [BlankNodeNamer]
     attr_accessor :namer
@@ -141,7 +137,6 @@ module JSON::LD
         RDF.to_uri.to_s => "rdf",
         RDF::XSD.to_uri.to_s => "xsd"
       }
-      @remote_contexts = []
       @namer = BlankNodeMapper.new("t")
 
       @options = options
@@ -213,7 +208,7 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
       result = self.dup
-      local_context = [local_context] unless local_context.is_a?(Array)
+      local_context = [local_context].compact unless local_context.is_a?(Array)
 
       local_context.each do |context|
         depth do
@@ -238,37 +233,39 @@ module JSON::LD
               raise JSON::LD::ProcessingError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
               self.dup
             end
-          when String
+          when String, RDF::URI
             debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
             # Load context document, if it is a string
+            # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
+            context = RDF::URI(result.context_base || result.base).join(context)
+
+            raise ProcessingError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
+            remote_contexts << context.to_s
+
+            context_no_base = self.dup
+            context_no_base.base = nil
+            context_no_base.provided_context = context.to_s
+            context_no_base.context_base = context.to_s
+
             begin
-              # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-              context = RDF::URI(result.context_base || result.base).join(context)
-
-              raise ProcessingError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context)
-              @remote_contexts = @remote_contexts + [context]
-
-              context_no_base = self.dup
-              context_no_base.base = nil
-              context_no_base.provided_context = context
-              context_no_base.context_base = context
-
               RDF::Util::File.open_file(context) do |f|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 jo = JSON.load(f)
                 raise ProcessingError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
               end
-
-              # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-              context = context_no_base.parse(context, remote_contexts.dup)
-              context.base = result.base unless result.base.nil?
-              result = context
-              debug("parse") {"=> provided_context: #{context.inspect}"}
+            rescue ProcessingError::InvalidRemoteContext
+              raise
             rescue Exception => e
               debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise ProcessingError::InvalidRemoteContext, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
+              raise ProcessingError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
             end
+
+            # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
+            context = context_no_base.parse(context, remote_contexts.dup)
+            context.base = result.base unless result.base.nil?
+            result = context
+            debug("parse") {"=> provided_context: #{context.inspect}"}
           when Hash
             # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
             {
