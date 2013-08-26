@@ -35,6 +35,8 @@ module RDF::Util
             when /\.sparql$/
               def response.content_type; 'application/sparql-query'; end
             end
+            response.instance_variable_set(:@base_uri, filename_or_url)
+            def response.base_uri; @base_uri; end
 
             if block_given?
               begin
@@ -52,6 +54,8 @@ module RDF::Util
           # Not there, don't run tests
           StringIO.new("")
         end
+      else
+        Kernel.open(filename_or_url.to_s, &block)
       end
     end
   end
