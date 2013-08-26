@@ -52,7 +52,7 @@ describe JSON::LD::Context do
 
       it "fails given a missing remote @context" do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::ProcessingError::InvalidRemoteContext, %r{http://example.com/context})
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::ProcessingError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
@@ -278,16 +278,6 @@ describe JSON::LD::Context do
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
           }.should raise_error(JSON::LD::ProcessingError)
-        end
-      end
-    end
-
-    describe "Load Errors" do
-      {
-        "fixme" => "FIXME",
-      }.each do |title, context|
-        it title do
-          lambda { subject.parse(context) }.should raise_error(JSON::LD::ProcessingError::InvalidRemoteContext)
         end
       end
     end

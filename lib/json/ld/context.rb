@@ -208,7 +208,7 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
       result = self.dup
-      local_context = [local_context].compact unless local_context.is_a?(Array)
+      local_context = [local_context] unless local_context.is_a?(Array)
 
       local_context.each do |context|
         depth do
@@ -353,8 +353,17 @@ module JSON::LD
         if value.has_key?('@type')
           type = value['@type']
           # SPEC FIXME: @type may be nil
-          raise ProcessingError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}" unless type.is_a?(String) || type.nil?
-          type = expand_iri(type, :vocab => true, :documentRelative => true, :local_context => local_context, :defined => defined) if type.is_a?(String)
+          type = case type
+          when nil
+            type
+          when String
+            expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
+          else
+            :error
+          end
+          unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
+            raise ProcessingError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}"
+          end
           debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
@@ -371,8 +380,8 @@ module JSON::LD
                                       :documentRelative => true,
                                       :local_context => local_context,
                                       :defined => defined)
-          raise ProcessingError::InvalidIRImapping, "non-absolute @reverse IRI: #{definition.id}" unless
-            definition.id.absolute?
+          raise ProcessingError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id}" unless
+            definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
           if (container = value['@container'])
@@ -383,13 +392,15 @@ module JSON::LD
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
-          raise ProcessingError::InvalidIRIMapping, "expected value of @reverse to be a string" unless
+          raise ProcessingError::InvalidIRIMapping, "expected value of @id to be a string" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
             :vocab => true,
             :documentRelative => true,
             :local_context => local_context,
             :defined => defined)
+          raise ProcessingError::InvalidKeywordAlias, "expected value of @id to not be @context" if
+            definition.id == '@context'
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':')
@@ -444,7 +455,7 @@ module JSON::LD
       depth(options) do
         # FIXME: not setting provided_context now
         use_context = case provided_context
-        when RDF::URI
+        when String, RDF::URI
           debug "serlialize: reuse context: #{provided_context.inspect}"
           provided_context.to_s
         when Hash, Array
