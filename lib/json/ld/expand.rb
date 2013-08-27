@@ -169,7 +169,7 @@ module JSON::LD
                     items.each do |item|
                       if value?(item) || list?(item)
                         raise ProcessingError::InvalidReversePropertyValue,
-                              "invalid reverse property value: #{item.inspect}"
+                              item.inspect
                       end
                       merge_value(reverse_map, property, item)
                     end
@@ -257,7 +257,7 @@ module JSON::LD
               [expanded_value].flatten.each do |item|
                 # If item is a value object or list object, an invalid reverse property value has been detected and processing is aborted.
                 raise ProcessingError::InvalidReversePropertyValue,
-                      "invalid reverse property value: #{item.inspect}" if value?(item) || list?(item)
+                      item.inspect if value?(item) || list?(item)
 
                 # If reverse map has no expanded property member, create one and initialize its value to an empty array.
                 # Append item to the value of the expanded property member of reverse map.
@@ -274,9 +274,10 @@ module JSON::LD
 
           # If result contains the key @value:
           if value?(output_object)
-            unless (output_object.keys - %w(@value @language @type @index)).empty?
+            unless (output_object.keys - %w(@value @language @type @index)).empty? &&
+                   (output_object.keys & %w(@language @type)).length < 2
               # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
-              raise ProcessingError::InvalidValueObjectError,
+              raise ProcessingError::InvalidValueObject,
               "value object has unknown keys: #{output_object.inspect}"
             end
 
@@ -290,10 +291,11 @@ module JSON::LD
               # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
               raise ProcessingError::InvalidLanguageTaggedValue,
                     "when @language is used, @value must be a string: #{@value.inspect}"
-            elsif !output_object.fetch('@type', "").is_a?(String)
-              # Otherwise, if the result has a @type member and its value is not a string, an invalid typed value error has been detected and processing is aborted.
+            elsif !output_object.fetch('@type', "").is_a?(String) ||
+                  !context.expand_iri(output_object.fetch('@type', ""), :vocab => true, :depth => @depth).is_a?(RDF::URI)
+              # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
               raise ProcessingError::InvalidTypedValue,
-                    "value of @type must be a string: #{output_object['@type'].inspect}"
+                    "value of @type must be an IRI: #{output_object['@type'].inspect}"
             end
           elsif !output_object.fetch('@type', []).is_a?(Array)
             # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.
