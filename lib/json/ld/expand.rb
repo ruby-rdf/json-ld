@@ -143,7 +143,7 @@ module JSON::LD
                 depth { expand(value, active_property, context, options) }
               when '@reverse'
                 # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
-                raise ProcessingError::InvalidReverseValueError,
+                raise ProcessingError::InvalidReverseValue,
                       "@reverse value must be an object: #{value.inspect}" unless value.is_a?(Hash)
 
                 # Otherwise

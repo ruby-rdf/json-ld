@@ -76,7 +76,7 @@ def run_tc(man, tc, options)
     options[:results][result] ||= 0
     options[:results][result] += 1
   rescue Exception => e
-    if tc.positiveTest?
+    result = if tc.positiveTest?
       STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
       if options[:quiet]
         options[:results]['failed'] ||= 0
@@ -84,10 +84,14 @@ def run_tc(man, tc, options)
       else
         raise
       end
+      "failed"
     else
       if e.message.include?(tc.property('expect'))
         options[:results]['passed'] ||= 0
         options[:results]['passed'] += 1
+        "passed"
+      else
+        "failed"
       end
     end
   end

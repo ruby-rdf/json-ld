@@ -826,6 +826,26 @@ describe JSON::LD::API do
           },
           :exception => JSON::LD::ProcessingError::ListOfLists
         },
+        "@reverse object with an @id property" => {
+          :input => JSON.parse(%({
+            "@id": "http://example/foo",
+            "@reverse": {
+              "@id": "http://example/bar"
+            }
+          })),
+          :exception => JSON::LD::ProcessingError::InvalidReversePropertyMap,
+        },
+        "colliding keywords" => {
+          :input => JSON.parse(%({
+            "@context": {
+              "id": "@id",
+              "ID": "@id"
+            },
+            "id": "http://example/foo",
+            "ID": "http://example/bar"
+          })),
+          :exception => JSON::LD::ProcessingError::CollidingKeywords,
+        }
       }.each do |title, params|
         it title do
           #JSON::LD::API.expand(params[:input], nil, :debug => @debug).should produce([], @debug)

@@ -149,7 +149,7 @@ module Fixtures
             when "jld:FrameTest"
               JSON::LD::API.frame(input, frame, options.merge(:debug => debug))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input)
+              repo = RDF::Repository.new << RDF::NQuads::Reader.new(input)
               debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
             when "jld:ToRDFTest"
