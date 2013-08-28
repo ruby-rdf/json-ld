@@ -18,7 +18,9 @@ describe JSON::LD::API do
       
       context test do
         it "expands" do
-          jld = JSON::LD::API.expand(File.open(filename), (File.open(context) if context), :debug => @debug)
+          options = {:debug => @debug}
+          options[:expandContext] = File.open(context) if context
+          jld = JSON::LD::API.expand(File.open(filename), options)
           jld.should produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         

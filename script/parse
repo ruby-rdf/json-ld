@@ -16,7 +16,8 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:expand]
-    output = JSON::LD::API.expand(input, options[:context], options)
+    options = options.merge(:expandContext => options.delete(:context)) if options.has_key?(:context)
+    output = JSON::LD::API.expand(input, options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Expanded in #{secs} seconds."

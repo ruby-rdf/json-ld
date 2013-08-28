@@ -104,8 +104,6 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
-    # @param [String, #read, Hash, Array, JSON::LD::Context] context
-    #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
     # @raise [ProcessingError]
@@ -115,9 +113,9 @@ module JSON::LD
     # @return [Array<Hash>]
     #   The expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
-    def self.expand(input, context = nil, options = {})
+    def self.expand(input, options = {})
       result = nil
-      API.new(input, context, options) do |api|
+      API.new(input, options[:expandContext], options) do |api|
         result = api.expand(api.value, nil, api.context)
       end
 
@@ -158,7 +156,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = API.expand(input, nil, options.merge(:debug => nil))
+      expanded = API.expand(input, options.merge(:debug => nil))
 
       API.new(expanded, context, options) do
         debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
@@ -199,10 +197,10 @@ module JSON::LD
       flattened = []
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, nil, options)
+      expanded_input = API.expand(input, options)
 
       # Initialize input using frame as context
-      API.new(expanded_input, nil, options) do
+      API.new(expanded_input, context, options) do
         debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
@@ -225,7 +223,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = compact(flattened, nil)
+          compacted = depth {compact(flattened, nil)}
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', :quiet => true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
@@ -290,10 +288,10 @@ module JSON::LD
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame)
+      expanded_frame = API.expand(frame, options)
       
       # Expand input to simplify processing
-      expanded_input = API.expand(input)
+      expanded_input = API.expand(input, options)
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
@@ -354,7 +352,7 @@ module JSON::LD
       results.extend(RDF::Enumerable)
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, context, options)
+      expanded_input = API.expand(input, options)
 
       API.new(expanded_input, context, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.

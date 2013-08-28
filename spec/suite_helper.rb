@@ -141,7 +141,7 @@ module Fixtures
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input, context, options.merge(:debug => debug))
+              JSON::LD::API.expand(input, options.merge(:debug => debug))
             when "jld:CompactTest"
               JSON::LD::API.compact(input, context, options.merge(:debug => debug))
             when "jld:FlattenTest"
@@ -185,7 +185,7 @@ module Fixtures
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input, t.context, t.options.merge(:debug => debug))
+                  JSON::LD::API.expand(t.input, t.options.merge(:debug => debug))
                 when "jld:CompactTest"
                   JSON::LD::API.compact(t.input, t.context, t.options.merge(:debug => debug))
                 when "jld:FlattenTest"

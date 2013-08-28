@@ -128,7 +128,7 @@ module JSON::LD
       end
 
       compacted = nil
-      JSON::LD::API.expand(node_definition, @context) do |expanded|
+      JSON::LD::API.expand(node_definition, :expandContext => @context) do |expanded|
         compacted = JSON::LD::API.compact(expanded, @context)
       end
       compacted.delete_if {|k, v| k == '@context'}
