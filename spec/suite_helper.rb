@@ -113,6 +113,7 @@ module Fixtures
       # Alias input, context, expect and frame
       %w(input context expect frame).each do |m|
         define_method(m.to_sym) {property(m) && RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}")}
+        define_method("#{m}_loc".to_sym) {property(m) && "#{SUITE}tests/#{property(m)}"}
       end
 
       def testType
@@ -141,19 +142,19 @@ module Fixtures
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input, options.merge(:debug => debug))
+              JSON::LD::API.expand(input_loc, options.merge(:debug => debug))
             when "jld:CompactTest"
-              JSON::LD::API.compact(input, context, options.merge(:debug => debug))
+              JSON::LD::API.compact(input_loc, context_loc, options.merge(:debug => debug))
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input, context, options.merge(:debug => debug))
+              JSON::LD::API.flatten(input_loc, context_loc, options.merge(:debug => debug))
             when "jld:FrameTest"
-              JSON::LD::API.frame(input, frame, options.merge(:debug => debug))
+              JSON::LD::API.frame(input_loc, frame_loc, options.merge(:debug => debug))
             when "jld:FromRDFTest"
               repo = RDF::Repository.new << RDF::NQuads::Reader.new(input)
               debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRDF(input, context, options.merge(:debug => debug)).map do |statement|
+              JSON::LD::API.toRDF(input_loc, context_loc, options.merge(:debug => debug)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -162,13 +163,19 @@ module Fixtures
             if evaluationTest?
               if testType == "jld:ToRDFTest"
                 sorted_expected = expect.readlines.uniq.sort.join("")
-                result.uniq.sort.join("").should produce(sorted_expected, debug)
+                rspec_example.instance_eval {
+                  expect(result.uniq.sort.join("")).to produce(sorted_expected, debug)
+                }
               else
                 expected = JSON.load(expect)
-                result.should produce(expected, debug)
+                rspec_example.instance_eval {
+                  expect(result).to produce(expected, debug)
+                }
               end
             else
-              expect(result).to_not be_nil
+              rspec_example.instance_eval {
+                expect(result).to_not be_nil
+              }
             end
           rescue JSON::LD::ProcessingError => e
             fail("Processing error: #{e.message}")
@@ -179,9 +186,9 @@ module Fixtures
           end
         else
           debug << "expected: #{property('expect')}" if property('expect')
-          if evaluationTest?
-            t = self
-            rspec_example.instance_eval do
+          t = self
+          rspec_example.instance_eval do
+            if t.evaluationTest?
               expect do
                 case t.testType
                 when "jld:ExpandTest"
@@ -204,9 +211,9 @@ module Fixtures
                   success("Unknown test type: #{testType}")
                 end
               end.to raise_error(/#{t.property('expect')}/)
+            else
+              fail("No support for NegativeSyntaxTest")
             end
-          else
-            fail("No support for NegativeSyntaxTest")
           end
         end
       end
