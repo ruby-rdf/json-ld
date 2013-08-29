@@ -244,7 +244,9 @@ module JSON::LD
 
             context_no_base = self.dup
             context_no_base.base = nil
-            context_no_base.provided_context = context.to_s
+            unless @options[:processingMode] == "json-ld-1.0"
+              context_no_base.provided_context = context.to_s
+            end
             context_no_base.context_base = context.to_s
 
             begin
@@ -253,6 +255,9 @@ module JSON::LD
                 jo = JSON.load(f)
                 raise ProcessingError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
+                if @options[:processingMode] == "json-ld-1.0"
+                  context_no_base.provided_context = context.dup
+                end
               end
             rescue ProcessingError::InvalidRemoteContext
               raise
@@ -263,6 +268,7 @@ module JSON::LD
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts.dup)
+            context.provided_context = context_no_base.provided_context
             context.base = result.base unless result.base.nil?
             result = context
             debug("parse") {"=> provided_context: #{context.inspect}"}
