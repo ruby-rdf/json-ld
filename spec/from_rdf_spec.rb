@@ -69,7 +69,7 @@ describe JSON::LD::API do
 
         it "integer" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-          serialize(input).should produce([{
+          serialize(input, :useNativeTypes => true).should produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1}]
           }], @debug)
@@ -85,7 +85,7 @@ describe JSON::LD::API do
 
         it "boolean" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-          serialize(input).should produce([{
+          serialize(input, :useNativeTypes => true).should produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => true}]
           }], @debug)
@@ -101,7 +101,7 @@ describe JSON::LD::API do
 
         it "decmal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
-          serialize(input).should produce([{
+          serialize(input, :useNativeTypes => true).should produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
           }], @debug)
@@ -109,7 +109,7 @@ describe JSON::LD::API do
 
         it "double" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-          serialize(input).should produce([{
+          serialize(input, :useNativeTypes => true).should produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1.0E0}]
           }], @debug)

@@ -418,7 +418,7 @@ module JSON::LD
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
     def self.fromRDF(input, options = {}, &block)
-      options = {:useNativeTypes => true}.merge(options)
+      options = {:useNativeTypes => false}.merge(options)
       result = nil
 
       API.new(nil, nil, options) do |api|
