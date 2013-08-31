@@ -51,8 +51,9 @@ module JSON::LD
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :base
+    # @option options [String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
@@ -72,7 +73,7 @@ module JSON::LD
     def initialize(input, context, options = {}, &block)
       @options = {:compactArrays => true}.merge(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
-      options = {:rename_bnodes => true}.merge(options)
+      options[:rename_bnodes] ||= true
       @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
       @value = case input
       when Array, Hash then input.dup
@@ -85,6 +86,7 @@ module JSON::LD
         RDF::Util::File.open_file(input, OPEN_OPTS) {|f| content = JSON.parse(f.read)}
         content
       end
+      options[:base] ||= @options[:base] if @options[:base]
       @context = Context.new(@options)
       @context = @context.parse(context) if context
       
@@ -156,8 +158,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
-      expanded = API.expand(input, options.merge(:debug => nil))
+      expanded = API.expand(input, options)
 
       API.new(expanded, context, options) do
         debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
@@ -197,10 +198,8 @@ module JSON::LD
     def self.flatten(input, context, options = {})
       flattened = []
 
-      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
-
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options.merge(:debug => nil))
+      expanded_input = API.expand(input, options)
 
       # Initialize input using frame as context
       API.new(expanded_input, context, options) do
@@ -280,8 +279,6 @@ module JSON::LD
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
       framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
 
-      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
-
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
@@ -292,11 +289,11 @@ module JSON::LD
         content
       end
 
-      # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(:debug => nil))
-      
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options.merge(:debug => nil))
+      expanded_input = API.expand(input, options)
+
+      # Expand frame to simplify processing
+      expanded_frame = API.expand(frame, options)
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do

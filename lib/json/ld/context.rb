@@ -269,7 +269,7 @@ module JSON::LD
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts.dup)
             context.provided_context = context_no_base.provided_context
-            context.base = result.base unless result.base.nil?
+            context.base ||= result.base
             result = context
             debug("parse") {"=> provided_context: #{context.inspect}"}
           when Hash
@@ -1008,6 +1008,7 @@ module JSON::LD
 
     def inspect
       v = %w([Context)
+      v << "base=#{base}" if base
       v << "vocab=#{vocab}" if vocab
       v << "def_language=#{default_language}" if default_language
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
