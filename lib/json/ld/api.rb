@@ -156,6 +156,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
+      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
       expanded = API.expand(input, options.merge(:debug => nil))
 
       API.new(expanded, context, options) do
@@ -196,8 +197,10 @@ module JSON::LD
     def self.flatten(input, context, options = {})
       flattened = []
 
+      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
+
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options)
+      expanded_input = API.expand(input, options.merge(:debug => nil))
 
       # Initialize input using frame as context
       API.new(expanded_input, context, options) do
@@ -277,6 +280,8 @@ module JSON::LD
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
       framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
 
+      options = {:base => input.base_uri}.merge(options) if input.respond_to?(:base_uri)
+
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
@@ -288,10 +293,10 @@ module JSON::LD
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options)
+      expanded_frame = API.expand(frame, options.merge(:debug => nil))
       
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options)
+      expanded_input = API.expand(input, options.merge(:debug => nil))
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
@@ -336,8 +341,6 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
-    # @param [String, #read, Hash, Array, JSON::LD::Context] context
-    #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param [{Symbol,String => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Options passed to {JSON::LD::API.expand}
@@ -347,14 +350,14 @@ module JSON::LD
     # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.toRDF(input, context = nil, options = {}, &block)
+    def self.toRDF(input, options = {}, &block)
       results = []
       results.extend(RDF::Enumerable)
 
       # Expand input to simplify processing
       expanded_input = API.expand(input, options)
 
-      API.new(expanded_input, context, options) do
+      API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
         debug(".toRDF") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}

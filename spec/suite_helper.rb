@@ -154,7 +154,7 @@ module Fixtures
               debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRDF(input_loc, context_loc, options.merge(:debug => debug)).map do |statement|
+              JSON::LD::API.toRDF(input_loc, options.merge(:debug => debug)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -204,7 +204,7 @@ module Fixtures
                   debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRDF(repo, t.options.merge(:debug => debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRDF(t.input, t.context, t.options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRDF(t.input, t.options.merge(:debug => debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else

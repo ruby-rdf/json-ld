@@ -646,7 +646,7 @@ describe JSON::LD::API do
     @debug = []
     graph = options[:graph] || RDF::Graph.new
     options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
-    JSON::LD::API.toRDF(StringIO.new(input), nil, options) {|st| graph << st}
+    JSON::LD::API.toRDF(StringIO.new(input), options) {|st| graph << st}
     graph
   end
 end
