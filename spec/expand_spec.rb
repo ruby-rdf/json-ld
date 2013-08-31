@@ -793,38 +793,38 @@ describe JSON::LD::API do
       {
         "non-null @value and null @type" => {
           :input => {"http://example.com/foo" => {"@value" => "foo", "@type" => nil}},
-          :exception => JSON::LD::ProcessingError::InvalidTypeValue
+          :exception => JSON::LD::JsonLdError::InvalidTypeValue
         },
         "non-null @value and null @language" => {
           :input => {"http://example.com/foo" => {"@value" => "foo", "@language" => nil}},
-          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "value with null language" => {
           :input => {
             "@context" => {"@language" => "en"},
             "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
           },
-          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "@list containing @list" => {
           :input => {
             "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "@list containing @list (with coercion)" => {
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "coerced @list containing an array" => {
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [["baz"]]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "@reverse object with an @id property" => {
           :input => JSON.parse(%({
@@ -833,7 +833,7 @@ describe JSON::LD::API do
               "@id": "http://example/bar"
             }
           })),
-          :exception => JSON::LD::ProcessingError::InvalidReversePropertyMap,
+          :exception => JSON::LD::JsonLdError::InvalidReversePropertyMap,
         },
         "colliding keywords" => {
           :input => JSON.parse(%({
@@ -844,7 +844,7 @@ describe JSON::LD::API do
             "id": "http://example/foo",
             "ID": "http://example/bar"
           })),
-          :exception => JSON::LD::ProcessingError::CollidingKeywords,
+          :exception => JSON::LD::JsonLdError::CollidingKeywords,
         }
       }.each do |title, params|
         it title do

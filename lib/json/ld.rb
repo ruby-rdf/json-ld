@@ -88,45 +88,49 @@ module JSON
     def self.debug?; @debug; end
     def self.debug=(value); @debug = value; end
     
-    class ProcessingError < Exception
+    class JsonLdError < Exception
       def to_s
-        "#{self.class.instance_variable_get :@base_message}: #{super}"
+        "#{self.class.instance_variable_get :@code}: #{super}"
       end
-      class LoadingDocumentFailed < ProcessingError; @base_message = "loading document failed"; end
-      class ListOfLists < ProcessingError; @base_message = "list of lists"; end
-      class InvalidIndexValue < ProcessingError; @base_message = "invalid @index value"; end
-      class ConflictingIndexes < ProcessingError; @base_message = "conflicting indexes"; end
-      class InvalidIdValue < ProcessingError; @base_message = "invalid @id value"; end
-      class InvalidLocalContext < ProcessingError; @base_message = "invalid local context"; end
-      class MultipleContextLinkHeaders < ProcessingError; @base_message = "multiple context link headers"; end
-      class LoadingRemoteContextFailed < ProcessingError; @base_message = "loading remote context failed"; end
-      class InvalidRemoteContext < ProcessingError; @base_message = "invalid remote context"; end
-      class RecursiveContextInclusion < ProcessingError; @base_message = "recursive context inclusion"; end
-      class InvalidBaseIRI < ProcessingError; @base_message = "invalid base IRI"; end
-      class InvalidVocabMapping < ProcessingError; @base_message = "invalid vocab mapping"; end
-      class InvalidDefaultLanguage < ProcessingError; @base_message = "invalid default language"; end
-      class KeywordRedefinition < ProcessingError; @base_message = "keyword redefinition"; end
-      class InvalidTermDefinition < ProcessingError; @base_message = "invalid term definition"; end
-      class InvalidReverseProperty < ProcessingError; @base_message = "invalid reverse property"; end
-      class InvalidIRIMapping < ProcessingError; @base_message = "invalid IRI mapping"; end
-      class CyclicIRIMapping < ProcessingError; @base_message = "cyclic IRI mapping"; end
-      class InvalidKeywordAlias < ProcessingError; @base_message = "invalid keyword alias"; end
-      class InvalidTypeMapping < ProcessingError; @base_message = "invalid type mapping"; end
-      class InvalidLanguageMapping < ProcessingError; @base_message = "invalid language mapping"; end
-      class CollidingKeywords < ProcessingError; @base_message = "colliding keywords"; end
-      class InvalidContainerMapping < ProcessingError; @base_message = "invalid container mapping"; end
-      class InvalidTypeValue < ProcessingError; @base_message = "invalid type value"; end
-      class InvalidValueObject < ProcessingError; @base_message = "invalid value object"; end
-      class InvalidValueObjectValue < ProcessingError; @base_message = "invalid value object value"; end
-      class InvalidLanguageTaggedString < ProcessingError; @base_message = "invalid language-tagged string"; end
-      class InvalidLanguageTaggedValue < ProcessingError; @base_message = "invalid language-tagged value"; end
-      class InvalidTypedValue < ProcessingError; @base_message = "invalid typed value"; end
-      class InvalidSetOrListObject < ProcessingError; @base_message = "invalid set or list object"; end
-      class InvalidLanguageMapValue < ProcessingError; @base_message = "invalid language map value"; end
-      class CompactionToListOfLists < ProcessingError; @base_message = "compaction to list of lists"; end
-      class InvalidReversePropertyMap < ProcessingError; @base_message = "invalid reverse property map"; end
-      class InvalidReverseValue < ProcessingError; @base_message = "invalid @reverse value"; end
-      class InvalidReversePropertyValue < ProcessingError; @base_message = "invalid reverse property value"; end
+      def code
+        self.class.instance_variable_get :@code
+      end
+
+      class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
+      class ListOfLists < JsonLdError; @code = "list of lists"; end
+      class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
+      class ConflictingIndexes < JsonLdError; @code = "conflicting indexes"; end
+      class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
+      class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
+      class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
+      class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
+      class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
+      class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
+      class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
+      class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
+      class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
+      class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
+      class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
+      class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
+      class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
+      class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
+      class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
+      class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
+      class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
+      class CollidingKeywords < JsonLdError; @code = "colliding keywords"; end
+      class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
+      class InvalidTypeValue < JsonLdError; @code = "invalid type value"; end
+      class InvalidValueObject < JsonLdError; @code = "invalid value object"; end
+      class InvalidValueObjectValue < JsonLdError; @code = "invalid value object value"; end
+      class InvalidLanguageTaggedString < JsonLdError; @code = "invalid language-tagged string"; end
+      class InvalidLanguageTaggedValue < JsonLdError; @code = "invalid language-tagged value"; end
+      class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
+      class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
+      class InvalidLanguageMapValue < JsonLdError; @code = "invalid language map value"; end
+      class CompactionToListOfLists < JsonLdError; @code = "compaction to list of lists"; end
+      class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
+      class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
+      class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
     end
     
     class InvalidFrame < Exception

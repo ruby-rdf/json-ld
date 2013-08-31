@@ -505,7 +505,7 @@ describe JSON::LD::API do
         begin
           jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
           jld.should produce(params[:output], @debug)
-        rescue JSON::LD::ProcessingError, JSON::LD::ProcessingError, JSON::LD::InvalidFrame => e
+        rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +
             "#{@debug.join("\n")}\n" +
             "Backtrace:\n#{e.backtrace.join("\n")}")

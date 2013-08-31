@@ -490,14 +490,14 @@ describe JSON::LD::API do
           :input => {
             "http://example.org/foo" => {"@list" => [{"@list" => ["baz"]}]}
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "@list containing @list (with coercion)" => {
           :input => {
             "@context" => {"http://example.org/foo" => {"@container" => "@list"}},
             "http://example.org/foo" => [{"@list" => ["baz"]}]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
       }.each do |title, params|
         it title do

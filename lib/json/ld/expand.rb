@@ -24,7 +24,7 @@ module JSON::LD
             v = expand(v, active_property, context, options)
 
             # If the active property is @list or its container mapping is set to @list, the expanded item must not be an array or a list object, otherwise a list of lists error has been detected and processing is aborted.
-            raise ProcessingError::ListOfLists,
+            raise JsonLdError::ListOfLists,
                   "A list may not contain another list" if
                   is_list && (v.is_a?(Array) || list?(v))
             v
@@ -60,17 +60,17 @@ module JSON::LD
 
             if KEYWORDS.include?(expanded_property)
               # If active property equals @reverse, an invalid reverse property map error has been detected and processing is aborted.
-              raise ProcessingError::InvalidReversePropertyMap,
+              raise JsonLdError::InvalidReversePropertyMap,
                     "@reverse not appropriate at this point" if active_property == '@reverse'
 
               # If result has already an expanded property member, an colliding keywords error has been detected and processing is aborted.
-              raise ProcessingError::CollidingKeywords,
+              raise JsonLdError::CollidingKeywords,
                     "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property)
 
               expanded_value = case expanded_property
               when '@id'
                 # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
-                raise ProcessingError::InvalidIdValue,
+                raise JsonLdError::InvalidIdValue,
                       "value of @id must be a string: #{value.inspect}" unless value.is_a?(String)
 
                 # Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
@@ -82,7 +82,7 @@ module JSON::LD
                 when Array
                   depth do
                     value.map do |v|
-                      raise ProcessingError::InvalidTypeValue,
+                      raise JsonLdError::InvalidTypeValue,
                             "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
                       context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
                     end
@@ -91,11 +91,11 @@ module JSON::LD
                   context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
                 when Hash
                   # For framing
-                  raise ProcessingError::InvalidTypeValue,
+                  raise JsonLdError::InvalidTypeValue,
                         "@type value must be a an empty object for framing: #{value.inspect}" unless
                         value.empty?
                 else
-                  raise ProcessingError::InvalidTypeValue,
+                  raise JsonLdError::InvalidTypeValue,
                         "@type value must be a string or array of strings: #{value.inspect}"
                 end
               when '@graph'
@@ -103,7 +103,7 @@ module JSON::LD
                 depth { expand(value, '@graph', context, options) }
               when '@value'
                 # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
-                raise ProcessingError::InvalidValueObjectValue,
+                raise JsonLdError::InvalidValueObjectValue,
                       "Value of #{expanded_property} must be a scalar or null: #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
                 if value.nil?
                   output_object['@value'] = nil
@@ -112,12 +112,12 @@ module JSON::LD
                 value
               when '@language'
                 # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
-                raise ProcessingError::InvalidLanguageTaggedString,
+                raise JsonLdError::InvalidLanguageTaggedString,
                       "Value of #{expanded_property} must be a string: #{value.inspect}" unless value.is_a?(String)
                 value.downcase
               when '@index'
                 # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
-                raise ProcessingError::InvalidIndexValue,
+                raise JsonLdError::InvalidIndexValue,
                       "Value of @index is not a string: #{value.inspect}" unless value.is_a?(String)
                 value
               when '@list'
@@ -134,7 +134,7 @@ module JSON::LD
 
                 # If expanded value is a list object, a list of lists error has been detected and processing is aborted.
                 # Spec FIXME: Also look at each object if result is an array
-                raise ProcessingError::ListOfLists,
+                raise JsonLdError::ListOfLists,
                       "A list may not contain another list" if value.any? {|v| list?(v)}
 
                 value
@@ -143,7 +143,7 @@ module JSON::LD
                 depth { expand(value, active_property, context, options) }
               when '@reverse'
                 # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
-                raise ProcessingError::InvalidReverseValue,
+                raise JsonLdError::InvalidReverseValue,
                       "@reverse value must be an object: #{value.inspect}" unless value.is_a?(Hash)
 
                 # Otherwise
@@ -168,7 +168,7 @@ module JSON::LD
                     next if property == '@reverse'
                     items.each do |item|
                       if value?(item) || list?(item)
-                        raise ProcessingError::InvalidReversePropertyValue,
+                        raise JsonLdError::InvalidReversePropertyValue,
                               item.inspect
                       end
                       merge_value(reverse_map, property, item)
@@ -202,7 +202,7 @@ module JSON::LD
               value.keys.sort.each do |k|
                 [value[k]].flatten.each do |item|
                   # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
-                  raise ProcessingError::InvalidLanguageMapValue,
+                  raise JsonLdError::InvalidLanguageMapValue,
                         "Expected #{item.inspect} to be a string" unless item.is_a?(String)
 
                   # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
@@ -256,7 +256,7 @@ module JSON::LD
               reverse_map = output_object['@reverse'] ||= {}
               [expanded_value].flatten.each do |item|
                 # If item is a value object or list object, an invalid reverse property value has been detected and processing is aborted.
-                raise ProcessingError::InvalidReversePropertyValue,
+                raise JsonLdError::InvalidReversePropertyValue,
                       item.inspect if value?(item) || list?(item)
 
                 # If reverse map has no expanded property member, create one and initialize its value to an empty array.
@@ -277,7 +277,7 @@ module JSON::LD
             unless (output_object.keys - %w(@value @language @type @index)).empty? &&
                    (output_object.keys & %w(@language @type)).length < 2
               # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
-              raise ProcessingError::InvalidValueObject,
+              raise JsonLdError::InvalidValueObject,
               "value object has unknown keys: #{output_object.inspect}"
             end
 
@@ -289,12 +289,12 @@ module JSON::LD
 
             if !output_object['@value'].is_a?(String) && output_object.has_key?('@language')
               # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
-              raise ProcessingError::InvalidLanguageTaggedValue,
+              raise JsonLdError::InvalidLanguageTaggedValue,
                     "when @language is used, @value must be a string: #{@value.inspect}"
             elsif !output_object.fetch('@type', "").is_a?(String) ||
                   !context.expand_iri(output_object.fetch('@type', ""), :vocab => true, :depth => @depth).is_a?(RDF::URI)
               # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
-              raise ProcessingError::InvalidTypedValue,
+              raise JsonLdError::InvalidTypedValue,
                     "value of @type must be an IRI: #{output_object['@type'].inspect}"
             end
           elsif !output_object.fetch('@type', []).is_a?(Array)
@@ -303,7 +303,7 @@ module JSON::LD
           elsif output_object.keys.any? {|k| %w(@set @list).include?(k)}
             # Otherwise, if result contains the key @set or @list:
             # The result must contain at most one other key and that key must be @index. Otherwise, an invalid set or list object error has been detected and processing is aborted.
-            raise ProcessingError::InvalidSetOrListObject,
+            raise JsonLdError::InvalidSetOrListObject,
                   "@set or @list may only contain @index: #{output_object.keys.inspect}" unless
                   (output_object.keys - %w(@set @list @index)).empty?
 

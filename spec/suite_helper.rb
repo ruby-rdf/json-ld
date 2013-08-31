@@ -177,9 +177,9 @@ module Fixtures
                 expect(result).to_not be_nil
               }
             end
-          rescue JSON::LD::ProcessingError => e
+          rescue JSON::LD::JsonLdError => e
             fail("Processing error: #{e.message}")
-          rescue JSON::LD::ProcessingError => e
+          rescue JSON::LD::JsonLdError => e
             fail("Invalid Context: #{e.message}")
           rescue JSON::LD::InvalidFrame => e
             fail("Invalid Frame: #{e.message}")

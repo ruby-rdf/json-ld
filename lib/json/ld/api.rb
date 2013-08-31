@@ -106,7 +106,7 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the expansion upon.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
-    # @raise [ProcessingError]
+    # @raise [JsonLdError]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
     #   The expanded JSON-LD document
@@ -149,7 +149,7 @@ module JSON::LD
     #   The compacted JSON-LD document
     # @return [Hash]
     #   The compacted JSON-LD document
-    # @raise [ProcessingError]
+    # @raise [JsonLdError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
     def self.compact(input, context, options = {})
       expanded = result = nil
@@ -343,7 +343,7 @@ module JSON::LD
     #   Options passed to {JSON::LD::API.expand}
     # @option options [Boolean] :produceGeneralizedRDF (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
-    # @raise [ProcessingError]
+    # @raise [JsonLdError]
     # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement

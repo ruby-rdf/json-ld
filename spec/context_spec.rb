@@ -52,7 +52,7 @@ describe JSON::LD::Context do
 
       it "fails given a missing remote @context" do
         RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::ProcessingError::LoadingRemoteContextFailed, %r{http://example.com/context})
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
@@ -261,7 +261,7 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse(context)
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::ProcessingError)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
       end
       
@@ -270,14 +270,14 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse({kw => "http://example.com/"})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::ProcessingError)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @id" do
           lambda {
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::ProcessingError)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
       end
     end

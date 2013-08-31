@@ -154,12 +154,12 @@ module JSON::LD
     # @param [String] value must be an absolute IRI
     def base=(value)
       if value
-        raise ProcessingError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
+        raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
         @base = RDF::URI(value)
         @base.canonicalize!
         @base.fragment = nil
         @base.query = nil
-        raise ProcessingError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
+        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
         @base
       else
         @base = nil
@@ -170,7 +170,7 @@ module JSON::LD
     # @param [String] value
     def default_language=(value)
       @default_language = if value
-        raise ProcessingError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
+        raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
         value.downcase
       else
         nil
@@ -184,12 +184,12 @@ module JSON::LD
         value
       when String
         v = as_resource(value)
-        raise ProcessingError::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative?
+        raise JsonLdError::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative?
         v
       when nil
         nil
       else
-        raise ProcessingError::InvalidVocabMapping, "@value must be a string: #{value.inspect}"
+        raise JsonLdError::InvalidVocabMapping, "@value must be a string: #{value.inspect}"
       end
     end
 
@@ -203,7 +203,7 @@ module JSON::LD
     # 
     #
     # @param [String, #read, Array, Hash, Context] local_context
-    # @raise [ProcessingError]
+    # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
@@ -224,13 +224,13 @@ module JSON::LD
             # Load context document, if it is a string
             begin
               ctx = JSON.load(context)
-              raise JSON::LD::ProcessingError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
+              raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
               result = parse(ctx["@context"] ? ctx["@context"].dup : {})
               result.provided_context = ctx["@context"]
               result
             rescue JSON::ParserError => e
               debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
-              raise JSON::LD::ProcessingError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
+              raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
               self.dup
             end
           when String, RDF::URI
@@ -239,7 +239,7 @@ module JSON::LD
             # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
             context = RDF::URI(result.context_base || result.base).join(context)
 
-            raise ProcessingError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
+            raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
             remote_contexts << context.to_s
 
             context_no_base = self.dup
@@ -253,17 +253,17 @@ module JSON::LD
               RDF::Util::File.open_file(context) do |f|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 jo = JSON.load(f)
-                raise ProcessingError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
+                raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
                 if @options[:processingMode] == "json-ld-1.0"
                   context_no_base.provided_context = context.dup
                 end
               end
-            rescue ProcessingError::InvalidRemoteContext
+            rescue JsonLdError::InvalidRemoteContext
               raise
             rescue Exception => e
               debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise ProcessingError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
+              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
@@ -296,7 +296,7 @@ module JSON::LD
             end
           else
             # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-            raise ProcessingError::InvalidLocalContext
+            raise JsonLdError::InvalidLocalContext
           end
         end
       end
@@ -314,7 +314,7 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
-    # @raise [ProcessingError]
+    # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
     def create_term_definition(local_context, term, defined)
@@ -327,15 +327,15 @@ module JSON::LD
       when nil
         defined[term] = false
       else
-        raise ProcessingError::CyclicIRIMapping, "Cyclical term dependency found for #{term.inspect}"
+        raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found for #{term.inspect}"
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
-        raise ProcessingError::KeywordRedefinition, "term #{term.inspect} must not be a keyword" if
+        raise JsonLdError::KeywordRedefinition, "term #{term.inspect} must not be a keyword" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
-        raise ProcessingError::InvalidTermDefinition, "term #{term.inspect} is invalid"
+        raise JsonLdError::InvalidTermDefinition, "term #{term.inspect} is invalid"
       end
 
       # Remove any existing term definition for term in active context.
@@ -368,16 +368,16 @@ module JSON::LD
             :error
           end
           unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
-            raise ProcessingError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}"
+            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}"
           end
           debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
 
         if value.has_key?('@reverse')
-          raise ProcessingError::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
+          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
             value.keys.any? {|k| %w(@id).include?(k)}
-          raise ProcessingError::InvalidIRIMapping, "expected value of @reverse to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string" unless
             value['@reverse'].is_a?(String)
 
           # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
@@ -386,26 +386,26 @@ module JSON::LD
                                       :documentRelative => true,
                                       :local_context => local_context,
                                       :defined => defined)
-          raise ProcessingError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id}" unless
+          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
           if (container = value['@container'])
-            raise ProcessingError::InvalidReverseProperty,
+            raise JsonLdError::InvalidReverseProperty,
                   "unknown mapping for '@container' to #{container.inspect}" unless
                    ['@set', '@index', nil].include?(container)
             definition.container_mapping = container
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
-          raise ProcessingError::InvalidIRIMapping, "expected value of @id to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
             :vocab => true,
             :documentRelative => true,
             :local_context => local_context,
             :defined => defined)
-          raise ProcessingError::InvalidKeywordAlias, "expected value of @id to not be @context" if
+          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context" if
             definition.id == '@context'
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
@@ -422,21 +422,21 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise ProcessingError::InvalidIRIMapping, "relative term definition without vocab" unless vocab
+          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab" unless vocab
           definition.id = vocab + term
           debug("") {"=> #{definition.id}"}
         end
 
         if value.has_key?('@container')
           container = value['@container']
-          raise ProcessingError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
+          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
           debug("") {"container_mapping: #{container.inspect}"}
           definition.container_mapping = container
         end
 
         if value.has_key?('@language')
           language = value['@language']
-          raise ProcessingError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}}" unless language.nil? || (language || "").is_a?(String)
+          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}}" unless language.nil? || (language || "").is_a?(String)
           language = language.downcase if language.is_a?(String)
           debug("") {"language_mapping: #{language.inspect}"}
           definition.language_mapping = language || false
@@ -445,7 +445,7 @@ module JSON::LD
         term_definitions[term] = definition
         defined[term] = true
       else
-        raise ProcessingError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class}"
+        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class}"
       end
     end
 
@@ -625,7 +625,7 @@ module JSON::LD
     #   Used during Context Processing.
     # @return [RDF::URI, String]
     #   IRI or String, if it's a keyword
-    # @raise [JSON::LD::ProcessingError::InvalidIRIMapping] if the value cannot be expanded
+    # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
     def expand_iri(value, options = {})
       return value unless value.is_a?(String)
@@ -682,7 +682,7 @@ module JSON::LD
           RDF::URI(base).join(value)
         elsif local_context && RDF::URI(value).relative?
           # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
-          raise JSON::LD::ProcessingError::InvalidIRIMapping, "not an absolute IRI: #{value}"
+          raise JSON::LD::JsonLdError::InvalidIRIMapping, "not an absolute IRI: #{value}"
         else
           RDF::URI(value)
         end
@@ -942,7 +942,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     #
     # @return [Hash] Object representation of value
-    # @raise [ProcessingError] if the iri cannot be expanded
+    # @raise [JsonLdError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     # FIXME: revisit the specification version of this.
     def compact_value(property, value, options = {})
