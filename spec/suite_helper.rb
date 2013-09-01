@@ -112,7 +112,13 @@ module Fixtures
 
       # Alias input, context, expect and frame
       %w(input context expect frame).each do |m|
-        define_method(m.to_sym) {property(m) && RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}")}
+        define_method(m.to_sym) do
+          return nil unless property(m)
+          res = nil
+          RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}") {|f| res = f.read}
+          res
+        end
+
         define_method("#{m}_loc".to_sym) {property(m) && "#{SUITE}tests/#{property(m)}"}
       end
 
@@ -132,13 +138,13 @@ module Fixtures
 
       # Execute the test
       def run(rspec_example = nil)
-        debug = ["test: #{inspect}", "source: #{input.read}"]
-        debug << "context: #{context.read}" if context
+        debug = ["test: #{inspect}", "source: #{input}"]
+        debug << "context: #{context}" if context_loc
         debug << "options: #{options.inspect}" unless options.empty?
-        debug << "context: #{frame.read}" if frame
+        debug << "frame: #{frame}" if frame_loc
 
         if positiveTest?
-          debug << "expected: #{expect}" if expect
+          debug << "expected: #{expect}" if expect_loc
           begin
             result = case testType
             when "jld:ExpandTest"
@@ -150,7 +156,7 @@ module Fixtures
             when "jld:FrameTest"
               JSON::LD::API.frame(input_loc, frame_loc, options.merge(:debug => debug))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.new << RDF::NQuads::Reader.new(input)
+              repo = RDF::Repository.load(input_loc, :format => :nquads)
               debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
             when "jld:ToRDFTest"
@@ -162,9 +168,9 @@ module Fixtures
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                sorted_expected = expect.readlines.uniq.sort.join("")
+                expected = expect
                 rspec_example.instance_eval {
-                  expect(result.uniq.sort.join("")).to produce(sorted_expected, debug)
+                  expect(result.sort.join("")).to produce(expected, debug)
                 }
               else
                 expected = JSON.load(expect)
@@ -192,19 +198,19 @@ module Fixtures
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input, t.options.merge(:debug => debug))
+                  JSON::LD::API.expand(t.input_loc, t.options.merge(:debug => debug))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input, t.context, t.options.merge(:debug => debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_loc, t.options.merge(:debug => debug))
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input, t.context, t.options.merge(:debug => debug))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, t.options.merge(:debug => debug))
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input, t.frame, t.options.merge(:debug => debug))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, t.options.merge(:debug => debug))
                 when "jld:FromRDFTest"
-                  repo = RDF::Repository.load(t.input)
+                  repo = RDF::Repository.load(t.input_loc)
                   debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRDF(repo, t.options.merge(:debug => debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRDF(t.input, t.options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRDF(t.input_loc, t.options.merge(:debug => debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else
