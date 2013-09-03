@@ -56,6 +56,8 @@ module JSON::LD
     #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
@@ -73,19 +75,28 @@ module JSON::LD
     def initialize(input, context, options = {}, &block)
       @options = {:compactArrays => true}.merge(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
+      @options[:documentLoader] ||= self.class.method(:documentLoader)
       options[:rename_bnodes] ||= true
       @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
+      content_type = nil
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
         @options = {:base => input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
         JSON.parse(input.read)
       when String
-        content = nil
-        @options = {:base => input}.merge(@options)
-        RDF::Util::File.open_file(input, OPEN_OPTS) {|f| content = JSON.parse(f.read)}
-        content
+        remote_doc = @options[:documentLoader].call(input, @options)
+
+        @options = {:base => remote_doc.documentUrl}.merge(@options)
+        context = context ? [context, remote_doc.contextUrl].compact : remote_doc.contextUrl
+
+        case remote_doc.document
+        when String then JSON.parse(remote_doc.document)
+        else remote_doc.document
+        end
       end
+
+      # Update calling context :base option, if not defined
       options[:base] ||= @options[:base] if @options[:base]
       @context = Context.new(@options)
       @context = @context.parse(context) if context
@@ -278,15 +289,18 @@ module JSON::LD
       framing_state[:embed] = options[:embed] if options.has_key?(:embed)
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
       framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
+      options[:documentLoader] ||= method(:documentLoader)
 
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
       when IO, StringIO then JSON.parse(frame.read)
       when String
-        content = nil
-        RDF::Util::File.open_file(frame, OPEN_OPTS) {|f| content = JSON.parse(f.read)}
-        content
+        remote_doc = options[:documentLoader].call(frame)
+        case remote_doc.document
+        when String then JSON.parse(remote_doc.document)
+        else remote_doc.document
+        end
       end
 
       # Expand input to simplify processing
@@ -427,6 +441,59 @@ module JSON::LD
 
       yield result if block_given?
       result
+    end
+
+    ##
+    # Default document loader.
+    # @param [RDF::URI, String] url
+    # @param [Hash<Symbol => Object>] options
+    # @option options [Boolean] :validate
+    #   Allow only appropriate content types
+    # @return [RemoteDocument] retrieved remote document and context information unless block given
+    # @yield remote_document
+    # @yieldparam [RemoteDocument] remote_document
+    # @raise [JsonLdError]
+    def self.documentLoader(url, options = {})
+      remote_document = nil
+      RDF::Util::File.open_file(url, OPEN_OPTS) do |f|
+        remote_document = RemoteDocument.new(url, f.read)
+        content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
+        if content_type && options[:validate]
+          main, sub = content_type.split("/")
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+            main != 'application' ||
+            sub !~ /^(.*\+)?json$/
+        end
+
+        yield remote_document if block_given?
+      end
+      remote_document
+    end
+
+    ##
+    # A {RemoteDocument} is returned from a {documentLoader}.
+    class RemoteDocument
+      # @param [String] documentUrl URL of the loaded document, after redirects
+      attr_reader :documentUrl
+
+      # @param [String, Array<Hash>, Hash] document
+      #   The retrieved document, either as raw text or parsed JSON
+      attr_reader :document
+
+      # @param [String] contextUrl
+      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
+      attr_reader :contextUrl
+
+      # @param [String] url URL of the loaded document, after redirects
+      # @param [String, Array<Hash>, Hash] document
+      #   The retrieved document, either as raw text or parsed JSON
+      # @param [String] contextUrl (nil)
+      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
+      def initialize(url, document, context_url = nil)
+        @documentUrl = url
+        @document = document
+        @contextUrl = context_url
+      end
     end
   end
 end

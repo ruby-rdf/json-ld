@@ -122,6 +122,13 @@ module JSON::LD
 
     ##
     # Create new evaluation context
+    # @param [Hash] options
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [Hash{Symbol => String}] :prefixes
+    #   See `RDF::Reader#initialize`
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
@@ -132,6 +139,7 @@ module JSON::LD
         @doc_base.fragment = nil
         @doc_base.query = nil
       end
+      options[:documentLoader] ||= JSON::LD::API.method(:documentLoader)
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -250,16 +258,19 @@ module JSON::LD
             context_no_base.context_base = context.to_s
 
             begin
-              RDF::Util::File.open_file(context) do |f|
+              @options[:documentLoader].call(context) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                jo = JSON.load(f)
+                jo = case remote_doc.document
+                when String then JSON.parse(remote_doc.document)
+                else remote_doc.document
+                end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
                 if @options[:processingMode] == "json-ld-1.0"
                   context_no_base.provided_context = context.dup
                 end
               end
-            rescue JsonLdError::InvalidRemoteContext
+            rescue JsonLdError
               raise
             rescue Exception => e
               debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}

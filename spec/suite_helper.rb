@@ -1,6 +1,7 @@
 require 'json/ld'
 require 'open-uri'
 require 'support/extensions'
+require 'curb'
 
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util
@@ -64,6 +65,7 @@ end
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
+    #SUITE = RDF::URI("http://localhost/~gregg/json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
@@ -115,7 +117,7 @@ module Fixtures
         define_method(m.to_sym) do
           return nil unless property(m)
           res = nil
-          RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}") {|f| res = f.read}
+          RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}") {|f| res = f.read} rescue nil
           res
         end
 
@@ -142,6 +144,12 @@ module Fixtures
         debug << "context: #{context}" if context_loc
         debug << "options: #{options.inspect}" unless options.empty?
         debug << "frame: #{frame}" if frame_loc
+
+        options = if self.options[:useDocumentLoader]
+          self.options.merge(:documentLoader => method(:documentLoader))
+        else
+          self.options.dup
+        end
 
         if positiveTest?
           debug << "expected: #{expect}" if expect_loc
@@ -198,19 +206,19 @@ module Fixtures
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input_loc, t.options.merge(:debug => debug))
+                  JSON::LD::API.expand(t.input_loc, options.merge(:debug => debug))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_loc, t.options.merge(:debug => debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_loc, options.merge(:debug => debug))
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input_loc, t.context_loc, t.options.merge(:debug => debug))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(:debug => debug))
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input_loc, t.frame_loc, t.options.merge(:debug => debug))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(:debug => debug))
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
                   debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRDF(repo, t.options.merge(:debug => debug))
+                  JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRDF(t.input_loc, t.options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRDF(t.input_loc, options.merge(:debug => debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else
@@ -261,6 +269,29 @@ module Fixtures
       def escaped(string)
         string.to_s.gsub('\\', '\\\\').gsub("\t", '\\t').
           gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
+      end
+
+      ##
+      # Document loader to use for tests having `useDocumentLoader` option
+      #
+      # @param [RDF::URI, String] url
+      # @return [Hash] RemoteDocument
+      def documentLoader(url, options = {})
+        res = {
+          :documentUrl => url,
+        }
+        c = Curl::Easy.perform(url) do |curl|
+          curl.headers = JSON::LD::API::OPEN_OPTS
+          curl.follow_location = true
+          curl.on_body {|body| res[:document] = body; body.length}
+          #curl.on_debug {|type, data| STDERR.puts "type: #{type.inspect}, data: #{data.inspect}"}
+          #curl.on_success {|easy, code| io_obj.instance_variable_set(:@status, code || 200)}
+          curl.on_failure {|easy, code| raise JSON::LD::JsonLdError::LoadingDocumentFailed, "status: #{code}"}
+        end
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "status: #{c.status}" if c.status.to_i >= 400
+        content_type, ct_param = c.content_type.to_s.downcase.split(";")
+        res[:contentType] = content_type
+        res
       end
     end
   end

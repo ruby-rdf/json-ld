@@ -45,18 +45,18 @@ describe JSON::LD::Context do
       end
 
       it "retrieves and parses a remote context document" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
         ec.provided_context.should produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_raise(IOError)
         lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
         ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -72,8 +72,8 @@ describe JSON::LD::Context do
       
       it "parses a referenced context at a relative URI" do
         c1 = StringIO.new(%({"@context": "context"}))
-        RDF::Util::File.stub(:open_file).with("http://example.com/c1").and_yield(c1)
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        RDF::Util::File.stub(:open_file).with("http://example.com/c1", an_instance_of(Hash)).and_yield(c1)
+        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
         ec = subject.parse("http://example.com/c1")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -288,7 +288,7 @@ describe JSON::LD::Context do
       ctx = StringIO.new(@ctx_json)
       def ctx.content_type; "application/ld+json"; end
 
-      RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
+      RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(ctx)
       ec = subject.parse("http://example.com/context")
       ec.serialize.should produce({
         "@context" => "http://example.com/context"
