@@ -158,7 +158,7 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand error compact flatten frame fromRdf toRdf)
+manifests = %w(expand error compact flatten frame fromRdf remote-doc toRdf)
 
 earl_preamble(options) if options[:earl]
 
