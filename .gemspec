@@ -31,7 +31,6 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'json',            '>= 1.7.5'
   gem.add_development_dependency 'equivalent-xml' , '>= 0.2.8'
   gem.add_development_dependency 'open-uri-cached', '>= 0.0.5'
-  gem.add_development_dependency 'curb',               '>= 0.8.3'
   gem.add_development_dependency 'yard' ,           '>= 0.8.3'
   gem.add_development_dependency 'rspec',           '>= 2.12.0'
   gem.add_development_dependency 'rdf-spec',        '>= 1.0'

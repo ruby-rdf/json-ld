@@ -1,66 +1,6 @@
 require 'json/ld'
 require 'open-uri'
 require 'support/extensions'
-require 'curb'
-
-# For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
-module RDF::Util
-  module File
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
-    LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
-
-    ##
-    # Override to use Patron for http and https, Kernel.open otherwise.
-    #
-    # @param [String] filename_or_url to open
-    # @param  [Hash{Symbol => Object}] options
-    # @option options [Array, String] :headers
-    #   HTTP Request headers.
-    # @return [IO] File stream
-    # @yield [IO] File stream
-    def self.open_file(filename_or_url, options = {}, &block)
-      case filename_or_url.to_s
-      when /^file:/
-        path = filename_or_url[5..-1]
-        Kernel.open(path.to_s, &block)
-      when /^#{REMOTE_PATH}/
-        begin
-          #puts "attempt to open #{filename_or_url} locally"
-          local_filename = filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
-          if ::File.exist?(local_filename)
-            response = ::File.open(local_filename)
-            #puts "use #{filename_or_url} locally"
-            case filename_or_url.to_s
-            when /\.jsonld$/
-              def response.content_type; 'application/ld+json'; end
-            when /\.sparql$/
-              def response.content_type; 'application/sparql-query'; end
-            end
-            response.instance_variable_set(:@base_uri, filename_or_url)
-            def response.base_uri; @base_uri; end
-
-            if block_given?
-              begin
-                yield response
-              ensure
-                response.close
-              end
-            else
-              response
-            end
-          else
-            Kernel.open(filename_or_url.to_s, &block)
-          end
-        rescue Errno::ENOENT #, OpenURI::HTTPError
-          # Not there, don't run tests
-          StringIO.new("")
-        end
-      else
-        Kernel.open(filename_or_url.to_s, &block)
-      end
-    end
-  end
-end
 
 module Fixtures
   module SuiteTest
@@ -104,7 +44,7 @@ module Fixtures
 
       def options
         @options ||= begin
-          opts = {}
+          opts = {:documentLoader => self.class.method(:documentLoader)}
           {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
@@ -117,7 +57,9 @@ module Fixtures
         define_method(m.to_sym) do
           return nil unless property(m)
           res = nil
-          RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}") {|f| res = f.read} rescue nil
+          self.class.documentLoader("#{SUITE}tests/#{property(m)}", :safe => true) do |remote_doc|
+            res = remote_doc.document
+          end
           res
         end
 
@@ -152,7 +94,7 @@ module Fixtures
         end
 
         if positiveTest?
-          debug << "expected: #{expect}" if expect_loc
+          debug << "expected: #{expect rescue nil}" if expect_loc
           begin
             result = case testType
             when "jld:ExpandTest"
@@ -193,8 +135,6 @@ module Fixtures
             end
           rescue JSON::LD::JsonLdError => e
             fail("Processing error: #{e.message}")
-          rescue JSON::LD::JsonLdError => e
-            fail("Invalid Context: #{e.message}")
           rescue JSON::LD::InvalidFrame => e
             fail("Invalid Frame: #{e.message}")
           end
@@ -271,27 +211,102 @@ module Fixtures
           gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
       end
 
+      REMOTE_PATH = "http://json-ld.org/test-suite/"
+      LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
       ##
       # Document loader to use for tests having `useDocumentLoader` option
       #
       # @param [RDF::URI, String] url
-      # @return [Hash] RemoteDocument
-      def documentLoader(url, options = {})
-        res = {
-          :documentUrl => url,
-        }
-        c = Curl::Easy.perform(url) do |curl|
-          curl.headers = JSON::LD::API::OPEN_OPTS
-          curl.follow_location = true
-          curl.on_body {|body| res[:document] = body; body.length}
-          #curl.on_debug {|type, data| STDERR.puts "type: #{type.inspect}, data: #{data.inspect}"}
-          #curl.on_success {|easy, code| io_obj.instance_variable_set(:@status, code || 200)}
-          curl.on_failure {|easy, code| raise JSON::LD::JsonLdError::LoadingDocumentFailed, "status: #{code}"}
+      # @param [Hash<Symbol => Object>] options
+      # @option options [Boolean] :validate
+      #   Allow only appropriate content types
+      # @return [RemoteDocument] retrieved remote document and context information unless block given
+      # @yield remote_document
+      # @yieldparam [RemoteDocument] remote_document
+      # @raise [JsonLdError]
+      def self.documentLoader(url, options = {})
+        require 'net/http' unless defined?(Net::HTTP)
+        remote_document = nil
+        options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
+
+        url = url.to_s[5..-1] if url.to_s.start_with?("file:")
+
+        if url.to_s.start_with?(REMOTE_PATH) && ::File.exist?(LOCAL_PATH) && url.to_s !~ /remote-doc/
+          #puts "attempt to open #{filename_or_url} locally"
+          local_filename = url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
+          if ::File.exist?(local_filename)
+            remote_document = JSON::LD::API::RemoteDocument.new(url.to_s, ::File.read(local_filename))
+            yield remote_document if block_given?
+          else
+            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "no such file #{local_filename}"
+          end
+          return remote_document
         end
-        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "status: #{c.status}" if c.status.to_i >= 400
-        content_type, ct_param = c.content_type.to_s.downcase.split(";")
-        res[:contentType] = content_type
-        res
+
+        case url.to_s
+        when /^http/
+          parsed_url = ::URI.parse(url.to_s)
+          until remote_document do
+            Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
+              request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
+              http.request(request) do |response|
+                case response
+                when Net::HTTPSuccess
+                  # found object
+                  content_type, ct_param = response.content_type.to_s.downcase.split(";")
+                  if content_type && options[:validate]
+                    main, sub = content_type.split("/")
+                    raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+                      main != 'application' ||
+                      sub !~ /^(.*\+)?json$/
+                  end
+
+                  remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
+
+                  unless content_type.start_with?("application/ld+json")
+                    links = response["link"].to_s.
+                      split(",").
+                      map(&:strip).
+                      select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
+                    case links.length
+                    when 0  then #nothing to do
+                    when 1
+                      remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
+                    else
+                      raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+                        "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
+                    end
+                  end
+                  yield remote_document if block_given?
+                when Net::HTTPRedirection
+                  # Follow redirection
+                  parsed_url = ::URI.parse(response["Location"])
+                else
+                  raise JSON::LD::JsonLdError::LoadingDocumentFailed,
+                    "<#{parsed_url}>: #{response.msg}(#{response.code})"
+                end
+              end
+            end
+          end
+        else
+          # Use regular open
+          RDF::Util::File.open_file(url, options) do |f|
+            remote_document = JSON::LD::API::RemoteDocument.new(url, f.read)
+            content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
+            if content_type && options[:validate]
+              main, sub = content_type.split("/")
+              raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+                main != 'application' ||
+                sub !~ /^(.*\+)?json$/
+            end
+
+            yield remote_document if block_given?
+          end
+        end
+        remote_document
+      rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
+        raise unless options[:safe]
+        "don't raise error"
       end
     end
   end

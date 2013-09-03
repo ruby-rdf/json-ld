@@ -25,38 +25,36 @@ end
 describe JSON::LD::Context do
   before(:each) {
     @debug = []
-    @ctx_json = %q({
+  }
+  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
+  let(:remote_doc) do
+    JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    })
-  }
-  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
+    }))
+  end
   subject {context}
 
   describe "#parse" do
     context "remote" do
-      before(:each) do
-        @ctx = StringIO.new(@ctx_json)
-        def @ctx.content_type; "application/ld+json"; end
-      end
 
       it "retrieves and parses a remote context document" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         ec.provided_context.should produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_raise(IOError)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_raise(IOError)
         lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -71,9 +69,9 @@ describe JSON::LD::Context do
       end
       
       it "parses a referenced context at a relative URI" do
-        c1 = StringIO.new(%({"@context": "context"}))
-        RDF::Util::File.stub(:open_file).with("http://example.com/c1", an_instance_of(Hash)).and_yield(c1)
-        RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(@ctx)
+        rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/c1").and_yield(rd1)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -285,10 +283,7 @@ describe JSON::LD::Context do
 
   describe "#serialize" do
     it "context document" do
-      ctx = StringIO.new(@ctx_json)
-      def ctx.content_type; "application/ld+json"; end
-
-      RDF::Util::File.stub(:open_file).with("http://example.com/context", an_instance_of(Hash)).and_yield(ctx)
+      JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
       ec.serialize.should produce({
         "@context" => "http://example.com/context"

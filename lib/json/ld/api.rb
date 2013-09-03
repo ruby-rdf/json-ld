@@ -454,18 +454,73 @@ module JSON::LD
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
     def self.documentLoader(url, options = {})
+      require 'net/http' unless defined?(Net::HTTP)
       remote_document = nil
-      RDF::Util::File.open_file(url, OPEN_OPTS) do |f|
-        remote_document = RemoteDocument.new(url, f.read)
-        content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
-        if content_type && options[:validate]
-          main, sub = content_type.split("/")
-          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-            main != 'application' ||
-            sub !~ /^(.*\+)?json$/
-        end
+      options[:headers] ||= OPEN_OPTS[:headers]
 
-        yield remote_document if block_given?
+      url = url.to_s[5..-1] if url.to_s.start_with?("file:")
+      case url.to_s
+      when /^http/
+        parsed_url = ::URI.parse(url.to_s)
+        until remote_document do
+          Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
+            request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
+            http.request(request) do |response|
+              case response
+              when Net::HTTPSuccess
+                # found object
+                content_type, ct_param = response.content_type.to_s.downcase.split(";")
+
+                # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
+                if content_type && options[:validate]
+                  main, sub = content_type.split("/")
+                  raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+                    main != 'application' ||
+                    sub !~ /^(.*\+)?json$/
+                end
+
+                remote_document = RemoteDocument.new(parsed_url.to_s, response.body)
+
+                # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
+                unless content_type.start_with?("application/ld+json")
+                  links = response["link"].to_s.
+                    split(",").
+                    map(&:strip).
+                    select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
+                  case links.length
+                  when 0  then #nothing to do
+                  when 1
+                    remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
+                  else
+                    raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+                      "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
+                  end
+                end
+
+                yield remote_document if block_given?
+              when Net::HTTPRedirection
+                # Follow redirection
+                parsed_url = ::URI.parse(response["Location"])
+              else
+                raise JSON::LD::JsonLdError::LoadingDocumentFailed, "<#{parsed_url}>: #{response.msg}(#{response.code})"
+              end
+            end
+          end
+        end
+      else
+        # Use regular open
+        RDF::Util::File.open_file(url, options) do |f|
+          remote_document = RemoteDocument.new(url, f.read)
+          content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
+          if content_type && options[:validate]
+            main, sub = content_type.split("/")
+            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+              main != 'application' ||
+              sub !~ /^(.*\+)?json$/
+          end
+
+          yield remote_document if block_given?
+        end
       end
       remote_document
     end
@@ -482,7 +537,7 @@ module JSON::LD
 
       # @param [String] contextUrl
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-      attr_reader :contextUrl
+      attr_accessor :contextUrl
 
       # @param [String] url URL of the loaded document, after redirects
       # @param [String, Array<Hash>, Hash] document
