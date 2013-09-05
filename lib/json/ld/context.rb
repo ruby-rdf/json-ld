@@ -374,7 +374,11 @@ module JSON::LD
           when nil
             type
           when String
-            expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
+            begin
+              expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
+            rescue JsonLdError::InvalidIRIMapping
+              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type' to #{type.inspect}"
+            end
           else
             :error
           end
