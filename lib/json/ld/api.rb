@@ -64,7 +64,7 @@ module JSON::LD
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
     # @option options [String] :processingMode ("json-ld-1.0")
     #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
-    # @option options [String] :produceGeneralizedRDF (false)
+    # @option options [String] :produceGeneralizedRdf (false)
     #   Unless the produce generalized RDF flag is set to true, RDF triples containing a blank node predicate are excluded from output.
     # @option options [Boolean] :useNativeTypes (true)
     #   If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
@@ -355,7 +355,7 @@ module JSON::LD
     # @param [{Symbol,String => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Options passed to {JSON::LD::API.expand}
-    # @option options [Boolean] :produceGeneralizedRDF (false)
+    # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
     # @raise [JsonLdError]
     # @return [Array<RDF::Statement>] if no block given
@@ -389,7 +389,7 @@ module JSON::LD
             next
           end
           graph_to_rdf(graph).each do |statement|
-            next if statement.predicate.node? && !options[:produceGeneralizedRDF]
+            next if statement.predicate.node? && !options[:produceGeneralizedRdf]
             # Drop results with relative IRIs
             relative = statement.to_a.any? do |r|
               case r
