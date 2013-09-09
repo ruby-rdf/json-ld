@@ -378,8 +378,10 @@ describe JSON::LD::API do
     end
 
     context "context as reference" do
+      let(:remote_doc) do
+        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({"@context": {"b": "http://example.com/b"}}))
+      end
       it "uses referenced context" do
-        ctx = StringIO.new(%q({"@context": {"b": "http://example.com/b"}}))
         input = {
           "http://example.com/b" => "c"
         }
@@ -387,7 +389,7 @@ describe JSON::LD::API do
           "@context" => "http://example.com/context",
           "b" => "c"
         }
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
         jld.should produce(expected, @debug)
       end
@@ -490,14 +492,14 @@ describe JSON::LD::API do
           :input => {
             "http://example.org/foo" => {"@list" => [{"@list" => ["baz"]}]}
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "@list containing @list (with coercion)" => {
           :input => {
             "@context" => {"http://example.org/foo" => {"@container" => "@list"}},
             "http://example.org/foo" => [{"@list" => ["baz"]}]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
       }.each do |title, params|
         it title do

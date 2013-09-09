@@ -2,65 +2,10 @@ require 'json/ld'
 require 'open-uri'
 require 'support/extensions'
 
-# For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
-module RDF::Util
-  module File
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
-    LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
-
-    ##
-    # Override to use Patron for http and https, Kernel.open otherwise.
-    #
-    # @param [String] filename_or_url to open
-    # @param  [Hash{Symbol => Object}] options
-    # @option options [Array, String] :headers
-    #   HTTP Request headers.
-    # @return [IO] File stream
-    # @yield [IO] File stream
-    def self.open_file(filename_or_url, options = {}, &block)
-      case filename_or_url.to_s
-      when /^file:/
-        path = filename_or_url[5..-1]
-        Kernel.open(path.to_s, &block)
-      when /^#{REMOTE_PATH}/
-        begin
-          #puts "attempt to open #{filename_or_url} locally"
-          local_filename = filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
-          if ::File.exist?(local_filename)
-            response = ::File.open(local_filename)
-            #puts "use #{filename_or_url} locally"
-            case filename_or_url.to_s
-            when /\.jsonld$/
-              def response.content_type; 'application/ld+json'; end
-            when /\.sparql$/
-              def response.content_type; 'application/sparql-query'; end
-            end
-
-            if block_given?
-              begin
-                yield response
-              ensure
-                response.close
-              end
-            else
-              response
-            end
-          else
-            Kernel.open(filename_or_url.to_s, &block)
-          end
-        rescue Errno::ENOENT #, OpenURI::HTTPError
-          # Not there, don't run tests
-          StringIO.new("")
-        end
-      end
-    end
-  end
-end
-
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
-    TEST_IRI_BASE = RDF::URI("http://example/").freeze
+    #SUITE = RDF::URI("http://localhost/~gregg/json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
@@ -94,16 +39,39 @@ module Fixtures
 
       # Base is expanded input file
       def base
-        "#{SUITE}tests/#{property('input')}"
+        options.fetch('base', "#{SUITE}tests/#{property('input')}")
+      end
+
+      def options
+        @options ||= begin
+          opts = {:documentLoader => self.class.method(:documentLoader)}
+          {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
+            opts[k.to_sym] = v
+          end
+          opts
+        end
       end
 
       # Alias input, context, expect and frame
       %w(input context expect frame).each do |m|
-        define_method(m.to_sym) {property(m) && RDF::Util::File.open_file("#{SUITE}tests/#{property(m)}")}
+        define_method(m.to_sym) do
+          return nil unless property(m)
+          res = nil
+          self.class.documentLoader("#{SUITE}tests/#{property(m)}", :safe => true) do |remote_doc|
+            res = remote_doc.document
+          end
+          res
+        end
+
+        define_method("#{m}_loc".to_sym) {property(m) && "#{SUITE}tests/#{property(m)}"}
       end
 
       def testType
-        property('@type').reject {|t| t =~ /EvaluationTest/}.first
+        property('@type').reject {|t| t =~ /EvaluationTest|SyntaxTest/}.first
+      end
+
+      def evaluationTest?
+        property('@type').to_s.include?('EvaluationTest')
       end
 
       def positiveTest?
@@ -112,11 +80,103 @@ module Fixtures
       
       def trace; @debug.join("\n"); end
 
+      # Execute the test
+      def run(rspec_example = nil)
+        debug = ["test: #{inspect}", "source: #{input}"]
+        debug << "context: #{context}" if context_loc
+        debug << "options: #{options.inspect}" unless options.empty?
+        debug << "frame: #{frame}" if frame_loc
+
+        options = if self.options[:useDocumentLoader]
+          self.options.merge(:documentLoader => method(:documentLoader))
+        else
+          self.options.dup
+        end
+
+        if positiveTest?
+          debug << "expected: #{expect rescue nil}" if expect_loc
+          begin
+            result = case testType
+            when "jld:ExpandTest"
+              JSON::LD::API.expand(input_loc, options.merge(:debug => debug))
+            when "jld:CompactTest"
+              JSON::LD::API.compact(input_loc, context_loc, options.merge(:debug => debug))
+            when "jld:FlattenTest"
+              JSON::LD::API.flatten(input_loc, context_loc, options.merge(:debug => debug))
+            when "jld:FrameTest"
+              JSON::LD::API.frame(input_loc, frame_loc, options.merge(:debug => debug))
+            when "jld:FromRDFTest"
+              repo = RDF::Repository.load(input_loc, :format => :nquads)
+              debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+            when "jld:ToRDFTest"
+              JSON::LD::API.toRDF(input_loc, options.merge(:debug => debug)).map do |statement|
+                to_quad(statement)
+              end
+            else
+              fail("Unknown test type: #{testType}")
+            end
+            if evaluationTest?
+              if testType == "jld:ToRDFTest"
+                expected = expect
+                rspec_example.instance_eval {
+                  expect(result.sort.join("")).to produce(expected, debug)
+                }
+              else
+                expected = JSON.load(expect)
+                rspec_example.instance_eval {
+                  expect(result).to produce(expected, debug)
+                }
+              end
+            else
+              rspec_example.instance_eval {
+                expect(result).to_not be_nil
+              }
+            end
+          rescue JSON::LD::JsonLdError => e
+            fail("Processing error: #{e.message}")
+          rescue JSON::LD::InvalidFrame => e
+            fail("Invalid Frame: #{e.message}")
+          end
+        else
+          debug << "expected: #{property('expect')}" if property('expect')
+          t = self
+          rspec_example.instance_eval do
+            if t.evaluationTest?
+              expect do
+                case t.testType
+                when "jld:ExpandTest"
+                  JSON::LD::API.expand(t.input_loc, options.merge(:debug => debug))
+                when "jld:CompactTest"
+                  JSON::LD::API.compact(t.input_loc, t.context_loc, options.merge(:debug => debug))
+                when "jld:FlattenTest"
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(:debug => debug))
+                when "jld:FrameTest"
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(:debug => debug))
+                when "jld:FromRDFTest"
+                  repo = RDF::Repository.load(t.input_loc)
+                  debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+                when "jld:ToRDFTest"
+                  JSON::LD::API.toRDF(t.input_loc, options.merge(:debug => debug)).map do |statement|
+                    t.to_quad(statement)
+                  end
+                else
+                  success("Unknown test type: #{testType}")
+                end
+              end.to raise_error(/#{t.property('expect')}/)
+            else
+              fail("No support for NegativeSyntaxTest")
+            end
+          end
+        end
+      end
+
       # Don't use NQuads writer so that we don't escape Unicode
       def to_quad(thing)
         case thing
         when RDF::URI
-          TEST_IRI_BASE.join(thing).canonicalize.to_ntriples
+          thing.canonicalize.to_ntriples
         when RDF::Node
           escaped(thing)
         when RDF::Literal::Double
@@ -149,6 +209,104 @@ module Fixtures
       def escaped(string)
         string.to_s.gsub('\\', '\\\\').gsub("\t", '\\t').
           gsub("\n", '\\n').gsub("\r", '\\r').gsub('"', '\\"')
+      end
+
+      REMOTE_PATH = "http://json-ld.org/test-suite/"
+      LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
+      ##
+      # Document loader to use for tests having `useDocumentLoader` option
+      #
+      # @param [RDF::URI, String] url
+      # @param [Hash<Symbol => Object>] options
+      # @option options [Boolean] :validate
+      #   Allow only appropriate content types
+      # @return [RemoteDocument] retrieved remote document and context information unless block given
+      # @yield remote_document
+      # @yieldparam [RemoteDocument] remote_document
+      # @raise [JsonLdError]
+      def self.documentLoader(url, options = {})
+        require 'net/http' unless defined?(Net::HTTP)
+        remote_document = nil
+        options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
+
+        url = url.to_s[5..-1] if url.to_s.start_with?("file:")
+
+        if url.to_s.start_with?(REMOTE_PATH) && ::File.exist?(LOCAL_PATH) && url.to_s !~ /remote-doc/
+          #puts "attempt to open #{filename_or_url} locally"
+          local_filename = url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
+          if ::File.exist?(local_filename)
+            remote_document = JSON::LD::API::RemoteDocument.new(url.to_s, ::File.read(local_filename))
+            yield remote_document if block_given?
+          else
+            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "no such file #{local_filename}"
+          end
+          return remote_document
+        end
+
+        case url.to_s
+        when /^http/
+          parsed_url = ::URI.parse(url.to_s)
+          until remote_document do
+            Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
+              request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
+              http.request(request) do |response|
+                case response
+                when Net::HTTPSuccess
+                  # found object
+                  content_type, ct_param = response.content_type.to_s.downcase.split(";")
+                  if content_type && options[:validate]
+                    main, sub = content_type.split("/")
+                    raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+                      main != 'application' ||
+                      sub !~ /^(.*\+)?json$/
+                  end
+
+                  remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
+
+                  unless content_type.start_with?("application/ld+json")
+                    links = response["link"].to_s.
+                      split(",").
+                      map(&:strip).
+                      select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
+                    case links.length
+                    when 0  then #nothing to do
+                    when 1
+                      remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
+                    else
+                      raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+                        "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
+                    end
+                  end
+                  yield remote_document if block_given?
+                when Net::HTTPRedirection
+                  # Follow redirection
+                  parsed_url = ::URI.parse(response["Location"])
+                else
+                  raise JSON::LD::JsonLdError::LoadingDocumentFailed,
+                    "<#{parsed_url}>: #{response.msg}(#{response.code})"
+                end
+              end
+            end
+          end
+        else
+          # Use regular open
+          RDF::Util::File.open_file(url, options) do |f|
+            remote_document = JSON::LD::API::RemoteDocument.new(url, f.read)
+            content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
+            if content_type && options[:validate]
+              main, sub = content_type.split("/")
+              raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+                main != 'application' ||
+                sub !~ /^(.*\+)?json$/
+            end
+
+            yield remote_document if block_given?
+          end
+        end
+        remote_document
+      rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
+        raise unless options[:safe]
+        "don't raise error"
       end
     end
   end

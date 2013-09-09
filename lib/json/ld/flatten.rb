@@ -114,7 +114,7 @@ module JSON::LD
 
             # If element has an @index member, set the @index member of node to its value. If node has already an @index member with a different value, a conflicting indexes error has been detected and processing is aborted. Otherwise, continue by removing the @index member from element.
             if element.has_key?('@index')
-              raise ProcessingError::ConflictingIndexesError,
+              raise JsonLdError::ConflictingIndexes,
                     "Element already has index #{node['@index']} dfferent from #{element['@index']}" if
                     node['@index'] && node['@index'] != element['@index']
               node['@index'] = element.delete('@index')

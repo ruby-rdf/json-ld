@@ -575,13 +575,13 @@ describe JSON::LD::API do
     context "blank node predicates" do
       subject {%q({"@id": "http://example/subj", "_:foo": "bar"})}
 
-      it "outputs statements with blank node predicates if :produceGeneralizedRDF is true" do
-        graph = parse(subject, :produceGeneralizedRDF => true)
+      it "outputs statements with blank node predicates if :produceGeneralizedRdf is true" do
+        graph = parse(subject, :produceGeneralizedRdf => true)
         expect(graph.count).to eq 1
       end
 
-      it "rejects statements with blank node predicates if :produceGeneralizedRDF is false" do
-        graph = parse(subject, :produceGeneralizedRDF => false)
+      it "rejects statements with blank node predicates if :produceGeneralizedRdf is false" do
+        graph = parse(subject, :produceGeneralizedRdf => false)
         expect(graph.count).to eq 0
       end
     end
@@ -646,7 +646,7 @@ describe JSON::LD::API do
     @debug = []
     graph = options[:graph] || RDF::Graph.new
     options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
-    JSON::LD::API.toRDF(StringIO.new(input), nil, options) {|st| graph << st}
+    JSON::LD::API.toRDF(StringIO.new(input), options) {|st| graph << st}
     graph
   end
 end

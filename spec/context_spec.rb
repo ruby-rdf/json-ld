@@ -25,38 +25,36 @@ end
 describe JSON::LD::Context do
   before(:each) {
     @debug = []
-    @ctx_json = %q({
+  }
+  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
+  let(:remote_doc) do
+    JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    })
-  }
-  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
+    }))
+  end
   subject {context}
 
   describe "#parse" do
     context "remote" do
-      before(:each) do
-        @ctx = StringIO.new(@ctx_json)
-        def @ctx.content_type; "application/ld+json"; end
-      end
 
       it "retrieves and parses a remote context document" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         ec.provided_context.should produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_raise(IOError)
-        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::InvalidContext::InvalidRemoteContext, "http://example.com/context")
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_raise(IOError)
+        lambda {subject.parse("http://example.com/context")}.should raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -71,9 +69,9 @@ describe JSON::LD::Context do
       end
       
       it "parses a referenced context at a relative URI" do
-        c1 = StringIO.new(%({"@context": "context"}))
-        RDF::Util::File.stub(:open_file).with("http://example.com/c1").and_yield(c1)
-        RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(@ctx)
+        rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/c1").and_yield(rd1)
+        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
         ec.mappings.should produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -261,7 +259,7 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse(context)
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
       end
       
@@ -270,24 +268,14 @@ describe JSON::LD::Context do
           lambda {
             ec = subject.parse({kw => "http://example.com/"})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @id" do
           lambda {
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
             ec.serialize.should produce({}, @debug)
-          }.should raise_error(JSON::LD::InvalidContext)
-        end
-      end
-    end
-
-    describe "Load Errors" do
-      {
-        "fixme" => "FIXME",
-      }.each do |title, context|
-        it title do
-          lambda { subject.parse(context) }.should raise_error(JSON::LD::InvalidContext::InvalidRemoteContext)
+          }.should raise_error(JSON::LD::JsonLdError)
         end
       end
     end
@@ -295,10 +283,7 @@ describe JSON::LD::Context do
 
   describe "#serialize" do
     it "context document" do
-      ctx = StringIO.new(@ctx_json)
-      def ctx.content_type; "application/ld+json"; end
-
-      RDF::Util::File.stub(:open_file).with("http://example.com/context").and_yield(ctx)
+      JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
       ec.serialize.should produce({
         "@context" => "http://example.com/context"
@@ -994,10 +979,10 @@ describe JSON::LD::Context do
       "native date" =>    ["foo", Date.parse("2011-12-27Z"),      {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.time.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
-      "rdf boolean" =>    ["foo", RDF::Literal(true),             {"@value" => true}],
-      "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => 1}],
+      "rdf boolean" =>    ["foo", RDF::Literal(true),             {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+      "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
       "rdf decimal" =>    ["foo", RDF::Literal::Decimal.new(1.1), {"@value" => "1.1", "@type" => RDF::XSD.decimal.to_s}],
-      "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => 1.1}],
+      "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27Z")), {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "rdf nonNeg" =>     ["foo", RDF::Literal::NonNegativeInteger.new(1), {"@value" => "1", "@type" => RDF::XSD.nonNegativeInteger}],

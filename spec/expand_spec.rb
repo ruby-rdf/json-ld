@@ -67,7 +67,7 @@ describe JSON::LD::API do
       }
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+        jld = JSON::LD::API.expand(params[:input], :debug => @debug)
         jld.should produce(params[:output], @debug)
       end
     end
@@ -114,7 +114,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :base => "http://example.org/", :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :base => "http://example.org/", :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -173,7 +173,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -228,7 +228,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -256,7 +256,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -300,7 +300,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -328,7 +328,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -394,7 +394,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil,
+          jld = JSON::LD::API.expand(params[:input],
             :base => "http://foo/bar/",
             :debug => @debug)
           jld.should produce(params[:output], @debug)
@@ -451,7 +451,7 @@ describe JSON::LD::API do
         ]}
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug, :base => 'http://example/')
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug, :base => 'http://example/')
           jld.should produce(params[:output], @debug)
         end
       end
@@ -530,7 +530,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -583,7 +583,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -651,7 +651,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -748,7 +748,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -783,7 +783,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], nil, :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
           jld.should produce(params[:output], @debug)
         end
       end
@@ -793,43 +793,63 @@ describe JSON::LD::API do
       {
         "non-null @value and null @type" => {
           :input => {"http://example.com/foo" => {"@value" => "foo", "@type" => nil}},
-          :exception => JSON::LD::ProcessingError::InvalidTypeValue
+          :exception => JSON::LD::JsonLdError::InvalidTypeValue
         },
         "non-null @value and null @language" => {
           :input => {"http://example.com/foo" => {"@value" => "foo", "@language" => nil}},
-          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "value with null language" => {
           :input => {
             "@context" => {"@language" => "en"},
             "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
           },
-          :exception => JSON::LD::ProcessingError::InvalidLanguageTaggedString
+          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "@list containing @list" => {
           :input => {
             "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "@list containing @list (with coercion)" => {
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
         "coerced @list containing an array" => {
           :input => {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [["baz"]]
           },
-          :exception => JSON::LD::ProcessingError::ListOfLists
+          :exception => JSON::LD::JsonLdError::ListOfLists
         },
+        "@reverse object with an @id property" => {
+          :input => JSON.parse(%({
+            "@id": "http://example/foo",
+            "@reverse": {
+              "@id": "http://example/bar"
+            }
+          })),
+          :exception => JSON::LD::JsonLdError::InvalidReversePropertyMap,
+        },
+        "colliding keywords" => {
+          :input => JSON.parse(%({
+            "@context": {
+              "id": "@id",
+              "ID": "@id"
+            },
+            "id": "http://example/foo",
+            "ID": "http://example/bar"
+          })),
+          :exception => JSON::LD::JsonLdError::CollidingKeywords,
+        }
       }.each do |title, params|
         it title do
-          #JSON::LD::API.expand(params[:input], nil, :debug => @debug).should produce([], @debug)
-          lambda {JSON::LD::API.expand(params[:input], nil)}.should raise_error(params[:exception])
+          #JSON::LD::API.expand(params[:input], :debug => @debug).should produce([], @debug)
+          lambda {JSON::LD::API.expand(params[:input])}.should raise_error(params[:exception])
         end
       end
     end

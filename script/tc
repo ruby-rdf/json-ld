@@ -33,11 +33,7 @@ def run_tc(man, tc, options)
     puts "\nInput:\n" + tc.input.read 
     puts "\nContext:\n" + tc.context.read if tc.context
     puts "\nFrame:\n" + tc.frame.read if tc.frame
-    puts "\nExpected:\n" + tc.expect.read
-    tc.input.rewind
-    tc.context.rewind if tc.context
-    tc.frame.rewind if tc.frame
-    tc.expect.rewind
+    puts "\nExpected:\n" + tc.expect.read if tc.positiveTest?
   end
 
   output = ""
@@ -46,51 +42,59 @@ def run_tc(man, tc, options)
 
     result = case tc.testType
     when 'jld:CompactTest'
-      output = JSON::LD::API.compact(tc.input, tc.context, :base => tc.base)
+      output = JSON::LD::API.compact(tc.input_loc, tc.context_loc, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ExpandTest'
-      if tc.positiveTest?
-        output = JSON::LD::API.expand(tc.input, nil, :base => tc.base)
-        expected = JSON.load(tc.expect)
-        output == expected ? 'passed' : 'failed'
-      else
-        begin
-          JSON::LD::API.expand(tc.input, nil, :base => tc.base, :validate => true)
-          "failed"
-        rescue JSON::LD::InvalidContext, JSON::LD::ProcessingError
-          "passed"
-        end
-      end
+      output = JSON::LD::API.expand(tc.input_loc, tc.options)
+      expected = JSON.load(tc.expect)
+      output == expected ? 'passed' : 'failed'
     when 'jld:FlattenTest'
-      output = JSON::LD::API.flatten(tc.input, tc.context, :base => tc.base)
+      output = JSON::LD::API.flatten(tc.input_loc, tc.context_loc, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:FrameTest'
-      output = JSON::LD::API.frame(tc.input, tc.frame, :base => tc.base)
+      output = JSON::LD::API.frame(tc.input_loc, tc.frame_loc, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:FromRDFTest'
-      repo = RDF::Repository.load(tc.base)
-      output = JSON::LD::API.fromRDF(repo.each_statement.to_a)
+      repo = RDF::Repository.load(tc.input_loc)
+      output = JSON::LD::API.fromRDF(repo, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ToRDFTest'
-      quads = JSON::LD::API.toRDF(tc.input, nil, :base => tc.base).map do |statement|
+      quads = JSON::LD::API.toRDF(tc.input_loc, tc.options).map do |statement|
         tc.to_quad(statement)
       end
 
-      expected = tc.expect.readlines.uniq.sort.join("")
-      output = quads.uniq.sort.join("")
+      expected = tc.expect
+      output = quads.sort.join("")
       output == expected ? 'passed' : 'failed'
     end || "untested"
 
+    puts "\nOutput:\n" + output.to_json(JSON::LD::JSON_STATE) if result == 'failed' && !options[:quiet]
+
+    result = result ? 'failed' : 'passed' unless tc.positiveTest?
+    options[:results][result] ||= 0
+    options[:results][result] += 1
   rescue Exception => e
-    STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
-    if options[:quiet]
-      return
+    result = if tc.positiveTest?
+      STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
+      if options[:quiet]
+        options[:results]['failed'] ||= 0
+        options[:results]['failed'] += 1
+      else
+        raise
+      end
+      "failed"
     else
-      raise
+      if e.message.include?(tc.property('expect'))
+        options[:results]['passed'] ||= 0
+        options[:results]['passed'] += 1
+        "passed"
+      else
+        "failed"
+      end
     end
   end
   
@@ -115,6 +119,7 @@ end
 
 options = {
   :output => STDOUT,
+  :results => {}
 }
 
 opts = GetoptLong.new(
@@ -153,7 +158,7 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand error-expand compact flatten frame fromRdf toRdf)
+manifests = %w(expand error compact flatten frame fromRdf remote-doc toRdf)
 
 earl_preamble(options) if options[:earl]
 
@@ -165,3 +170,5 @@ manifests.each do |man|
     end
   end
 end
+
+options[:results].each {|k, v| puts "#{k}: #{v}"}

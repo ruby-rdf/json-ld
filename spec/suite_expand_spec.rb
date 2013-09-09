@@ -8,22 +8,8 @@ describe JSON::LD do
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/expand-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
-        specify "#{t.property('input')}: #{t.name}" do
-          begin
-            t.debug = ["test: #{t.inspect}", "source: #{t.input.read}"]
-            t.debug << "context: #{t.context.read}" if t.property('context')
-            result = JSON::LD::API.expand(t.input, nil,
-                                          :base => t.base,
-                                          :debug => t.debug)
-            expected = JSON.load(t.expect)
-            result.should produce(expected, t.debug)
-          rescue JSON::LD::ProcessingError => e
-            fail("Processing error: #{e.message}")
-          rescue JSON::LD::InvalidContext => e
-            fail("Invalid Context: #{e.message}")
-          rescue JSON::LD::InvalidFrame => e
-            fail("Invalid Frame: #{e.message}")
-          end
+        specify "#{t.property('input')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
+          t.run self
         end
       end
     end

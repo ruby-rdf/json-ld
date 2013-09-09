@@ -133,7 +133,7 @@ module JSON::LD
                   compacted_item[key] = expanded_item['@index']
                 end
               else
-                raise ProcessingError::CompactionToListOfLists,
+                raise JsonLdError::CompactionToListOfLists,
                       "key cannot have more than one list value" if result.has_key?(item_active_property)
               end
             end

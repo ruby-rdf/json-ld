@@ -83,17 +83,17 @@ describe JSON::LD::Writer do
           '@id' => ":b",
           ":c"    => {"@id" => ":d"}
         }, @debug)
-      rescue JSON::LD::ProcessingError, JSON::LD::InvalidContext, TypeError => e
+      rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, TypeError => e
         fail("#{e.class}: #{e.message}\n" +
           "#{@debug.join("\n")}\n" +
           "Backtrace:\n#{e.backtrace.join("\n")}")
       end
     end
     
-    it "should use terms if no suffix" do
+    it "should not use terms if no suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       serialize(input, :standard_prefixes => true).
-      should produce({
+      should_not produce({
         "@context" => {"foaf" => "http://xmlns.com/foaf/0.1/"},
         '@id'   => "foaf",
         "foaf"   => {"@id" => "foaf"}

@@ -20,7 +20,7 @@ module JSON::LD
     #
     # @param  [IO, File, String]       input
     # @param  [Hash{Symbol => Object}] options
-    #   any additional options (see `RDF::Reader#initialize`)
+    #   any additional options (see `RDF::Reader#initialize` and {JSON::LD::API.initialize})
     # @yield  [reader] `self`
     # @yieldparam  [RDF::Reader] reader
     # @yieldreturn [void] ignored
@@ -49,7 +49,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRDF(@doc, @options[:context], @options).each do |statement|
+      JSON::LD::API.toRDF(@doc, @options).each do |statement|
         # If RDF version is 1.0, fold literals with xsd:string to be just simple literals
         statement.object.datatype = nil if
           RDF::VERSION.to_s < "1.1" &&
