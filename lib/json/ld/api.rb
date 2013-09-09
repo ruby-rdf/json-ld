@@ -528,21 +528,21 @@ module JSON::LD
     ##
     # A {RemoteDocument} is returned from a {documentLoader}.
     class RemoteDocument
-      # @param [String] documentUrl URL of the loaded document, after redirects
+      # @return [String] URL of the loaded document, after redirects
       attr_reader :documentUrl
 
-      # @param [String, Array<Hash>, Hash] document
+      # @return [String, Array<Hash>, Hash]
       #   The retrieved document, either as raw text or parsed JSON
       attr_reader :document
 
-      # @param [String] contextUrl
+      # @return [String]
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
       attr_accessor :contextUrl
 
       # @param [String] url URL of the loaded document, after redirects
       # @param [String, Array<Hash>, Hash] document
       #   The retrieved document, either as raw text or parsed JSON
-      # @param [String] contextUrl (nil)
+      # @param [String] context_url (nil)
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
       def initialize(url, document, context_url = nil)
         @documentUrl = url

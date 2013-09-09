@@ -126,7 +126,7 @@ module JSON::LD
     # @option options [String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
     # @option options [Proc] :documentLoader
-    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
     # @yield [ec]

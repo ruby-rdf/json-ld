@@ -1,6 +1,6 @@
 # JSON-LD reader/writer
 
-[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD][] processor.
+[JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD API][] processor. Additionally this gem implements [JSON-LD Framing][].
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
 [![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
@@ -220,13 +220,12 @@ Install with `gem install json-ld`
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
-The specified JSON-LD API is based on a WebIDL definition intended for use within the browser.
+The specified JSON-LD API is based on a WebIDL definition implementing [Promises][] intended for use within a browser.
 This version implements a more Ruby-like variation of this API without the use
-of futures and callback arguments, preferring Ruby blocks. All API methods
-execute synchronously, so that the return from a method can be used as well as a block.
+of promises or callback arguments, preferring Ruby blocks. All API methods
+execute synchronously, so that the return from a method can typically be used as well as a block.
 
-Note, the API method signatures differed in versions before 1.0, in that they also had
-a callback parameter.
+Note, the API method signatures differed in versions before 1.0, in that they also had a callback parameter. And 1.0.6 has some other minor method signature differences than previous versions. This should be the only exception to the use of semantic versioning.
 
 ### Principal Classes
 * {JSON::LD}
@@ -288,5 +287,7 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [PDD]:              http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
 [RDF.rb]:           http://rubygems.org/gems/rdf
 [Backports]:        http://rubygems.org/gems/backports
-[JSON-LD]:          http://json-ld.org/spec/latest/
-[JSON-LD API]:      http://json-ld.org/spec/latest/json-ld-api/
+[JSON-LD]:          http://www.w3.org/TR/json-ld/ "JSON-LD 1.0"
+[JSON-LD API]:      http://www.w3.org/TR/json-ld-api/ "JSON-LD 1.0 Processing Algorithms and API"
+[JSON-LD Framing]:  http://json-ld.org/spec/latest/json-ld-framing/ "JSON-LD Framing 1.0"
+[Promises]:         http://dom.spec.whatwg.org/#promises
