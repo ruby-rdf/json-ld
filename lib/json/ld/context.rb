@@ -877,7 +877,7 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :useNativeTypes (true) use native representations
+    # @option options [Boolean] :useNativeTypes (false) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded

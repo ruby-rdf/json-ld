@@ -66,8 +66,10 @@ module JSON::LD
     #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
     # @option options [String] :produceGeneralizedRdf (false)
     #   Unless the produce generalized RDF flag is set to true, RDF triples containing a blank node predicate are excluded from output.
-    # @option options [Boolean] :useNativeTypes (true)
+    # @option options [Boolean] :useNativeTypes (false)
     #   If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
+    # @option options [Boolean] :useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @yield [api]
@@ -497,7 +499,7 @@ module JSON::LD
                   end
                 end
 
-                yield remote_document if block_given?
+                return block_given? ? yield(remote_document) : remote_document
               when Net::HTTPRedirection
                 # Follow redirection
                 parsed_url = ::URI.parse(response["Location"])
@@ -519,10 +521,9 @@ module JSON::LD
               sub !~ /^(.*\+)?json$/
           end
 
-          yield remote_document if block_given?
+          return block_given? ? yield(remote_document) : remote_document
         end
       end
-      remote_document
     end
 
     ##
