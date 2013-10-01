@@ -37,7 +37,7 @@ module JSON::LD
           statement.object.literal?
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
-        if statement.predicate == RDF.type && statement.object.resource?
+        if statement.predicate == RDF.type && statement.object.resource? && !@options[:useRdfType]
           merge_value(node, '@type', statement.object.to_s)
           next
         end
