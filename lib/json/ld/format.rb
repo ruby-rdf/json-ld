@@ -47,5 +47,11 @@ module JSON::LD
     def self.to_sym
       :jsonld
     end
+
+    ##
+    # Override normal format name
+    def self.name
+      "JSON-LD"
+    end
   end
 end
