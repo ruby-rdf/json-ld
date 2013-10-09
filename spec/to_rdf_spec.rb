@@ -3,9 +3,13 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  before(:each) {@debug = []}
 
   context ".toRDF" do
+    it "should implement RDF::Enumerable" do
+      expect(JSON::LD::API.toRDF({})).to be_a(RDF::Enumerable)
+    end
+
     context "unnamed nodes" do
       {
         "no @id" => [
