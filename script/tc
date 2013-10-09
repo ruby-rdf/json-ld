@@ -59,11 +59,11 @@ def run_tc(man, tc, options)
       output == expected ? 'passed' : 'failed'
     when 'jld:FromRDFTest'
       repo = RDF::Repository.load(tc.input_loc)
-      output = JSON::LD::API.fromRDF(repo, tc.options)
+      output = JSON::LD::API.fromRdf(repo, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ToRDFTest'
-      quads = JSON::LD::API.toRDF(tc.input_loc, tc.options).map do |statement|
+      quads = JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
         tc.to_quad(statement)
       end
 

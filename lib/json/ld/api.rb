@@ -363,7 +363,7 @@ module JSON::LD
     # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement
-    def self.toRDF(input, options = {}, &block)
+    def self.toRdf(input, options = {}, &block)
       results = []
       results.extend(RDF::Enumerable)
 
@@ -373,21 +373,21 @@ module JSON::LD
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        debug(".toRDF") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
 
         # Generate _nodeMap_
         node_map = Hash.ordered
         node_map['@default'] = Hash.ordered
         generate_node_map(expanded_input, node_map)
-        debug(".toRDF") {"node map: #{node_map.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE)}"}
 
         # Start generating statements
         node_map.each do |graph_name, graph|
           context = as_resource(graph_name) unless graph_name == '@default'
-          debug(".toRDF") {"context: #{context ? context.to_ntriples : 'null'}"}
+          debug(".toRdf") {"context: #{context ? context.to_ntriples : 'null'}"}
           # Drop results for graphs which are named with relative IRIs
           if graph_name.is_a?(RDF::URI) && !graph_name.absolute
-            debug(".toRDF") {"drop relative graph_name: #{statement.to_ntriples}"}
+            debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
             next
           end
           graph_to_rdf(graph).each do |statement|
@@ -404,7 +404,7 @@ module JSON::LD
               end
             end
             if relative
-              debug(".toRDF") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
+              debug(".toRdf") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
               next
             end
 
@@ -433,7 +433,7 @@ module JSON::LD
     #   The JSON-LD document in expanded form
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
-    def self.fromRDF(input, options = {}, &block)
+    def self.fromRdf(input, options = {}, &block)
       options = {:useNativeTypes => false}.merge(options)
       result = nil
 
@@ -524,6 +524,12 @@ module JSON::LD
           return block_given? ? yield(remote_document) : remote_document
         end
       end
+    end
+
+    # Add class method aliases for backwards compatibility
+    class << self
+      alias :toRDF :toRdf
+      alias :fromRDF :fromRdf
     end
 
     ##

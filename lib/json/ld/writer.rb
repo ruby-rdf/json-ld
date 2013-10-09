@@ -147,7 +147,7 @@ module JSON::LD
       @debug = @options[:debug]
 
       debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-      result = API.fromRDF(@repo, @options)
+      result = API.fromRdf(@repo, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
       context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
