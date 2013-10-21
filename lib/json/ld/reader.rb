@@ -49,7 +49,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRDF(@doc, @options).each do |statement|
+      JSON::LD::API.toRdf(@doc, @options).each do |statement|
         # If RDF version is 1.0, fold literals with xsd:string to be just simple literals
         statement.object.datatype = nil if
           RDF::VERSION.to_s < "1.1" &&

@@ -108,9 +108,9 @@ module Fixtures
             when "jld:FromRDFTest"
               repo = RDF::Repository.load(input_loc, :format => :nquads)
               debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-              JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+              JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRDF(input_loc, options.merge(:debug => debug)).map do |statement|
+              JSON::LD::API.toRdf(input_loc, options.merge(:debug => debug)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -156,9 +156,9 @@ module Fixtures
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
                   debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRDF(repo, options.merge(:debug => debug))
+                  JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRDF(t.input_loc, options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(:debug => debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else

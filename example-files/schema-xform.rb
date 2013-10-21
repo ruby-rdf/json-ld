@@ -40,7 +40,7 @@ ARGV.each do |infile|
   outfile = infile.sub('.html', '.jsonld')
   puts outfile
   RDF::Repository.load(infile) do |repo|
-    JSON::LD::API.fromRDF(repo) do |expanded|
+    JSON::LD::API.fromRdf(repo) do |expanded|
       JSON::LD::API.compact(expanded, context) do |compacted|
         compacted['@graph'].each do |obj|
           next if type_exclusion.include?(obj['name'])

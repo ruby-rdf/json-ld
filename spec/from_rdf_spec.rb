@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do
-  describe ".fromRDF" do
+  describe ".fromRdf" do
     context "simple tests" do
       it "One subject IRI object" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
@@ -374,6 +374,6 @@ describe JSON::LD::API do
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug << g.dump(:trig)
     statements = g.each_statement.to_a
-    JSON::LD::API.fromRDF(statements, options.merge(:debug => @debug))
+    JSON::LD::API.fromRdf(statements, options.merge(:debug => @debug))
   end
 end

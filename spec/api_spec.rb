@@ -34,7 +34,7 @@ describe JSON::LD::API do
           jld.should produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
-        it "toRDF" do
+        it "toRdf" do
           RDF::Repository.load(filename, :debug => @debug).should be_equivalent_graph(RDF::Repository.load(ttl), :trace => @debug)
         end if File.exist?(ttl)
       end

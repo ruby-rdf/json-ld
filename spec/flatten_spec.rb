@@ -181,6 +181,35 @@ describe JSON::LD::API do
           }]
         }),
         :options => {}
+      },
+      "@reverse bnode issue (0045)" => {
+        :input => ::JSON.parse(%q{
+          {
+            "@context": {
+              "foo": "http://example.org/foo",
+              "bar": { "@reverse": "http://example.org/bar", "@type": "@id" }
+            },
+            "foo": "Foo",
+            "bar": [ "http://example.org/origin", "_:b0" ]
+          }
+        }),
+        :output => ::JSON.parse(%q{
+          [
+            {
+              "@id": "_:b0",
+              "http://example.org/foo": [ { "@value": "Foo" } ]
+            },
+            {
+              "@id": "_:b1",
+              "http://example.org/bar": [ { "@id": "_:b0" } ]
+            },
+            {
+              "@id": "http://example.org/origin",
+              "http://example.org/bar": [ { "@id": "_:b0" } ]
+            }
+          ]
+        }),
+        :options => {}
       }
     }.each do |title, params|
       it title do

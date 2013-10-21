@@ -20,7 +20,7 @@ def run(input, options)
   if options[:format] == :jsonld && options[:input_format] != :jsonld
     r = reader_class.new(input, options[:parser_options])
     g = RDF::Repository.new << r
-    input = JSON::LD::API.fromRDF(g)
+    input = JSON::LD::API.fromRdf(g)
   end
 
   prefixes = {}

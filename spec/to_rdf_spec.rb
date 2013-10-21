@@ -3,9 +3,13 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  before(:each) {@debug = []}
 
-  context ".toRDF" do
+  context ".toRdf" do
+    it "should implement RDF::Enumerable" do
+      expect(JSON::LD::API.toRdf({})).to be_a(RDF::Enumerable)
+    end
+
     context "unnamed nodes" do
       {
         "no @id" => [
@@ -646,7 +650,7 @@ describe JSON::LD::API do
     @debug = []
     graph = options[:graph] || RDF::Graph.new
     options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
-    JSON::LD::API.toRDF(StringIO.new(input), options) {|st| graph << st}
+    JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
     graph
   end
 end

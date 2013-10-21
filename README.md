@@ -160,7 +160,7 @@ Install with `gem install json-ld`
       "foaf:nick":      { "@list": [ "joe", "bob", "jaybe" ] }
     })
     
-    graph = RDF::Graph.new << JSON::LD::API.toRDF(input)
+    graph = RDF::Graph.new << JSON::LD::API.toRdf(input)
 
     require 'rdf/turtle'
     graph.dump(:ttl, :prefixes => {:foaf => "http://xmlns.com/foaf/0.1/"})
@@ -190,7 +190,7 @@ Install with `gem install json-ld`
     })
 
     compacted = nil
-    JSON::LD::API::fromRDF(input) do |expanded|
+    JSON::LD::API::fromRdf(input) do |expanded|
       compacted = JSON::LD::API.compact(expanded, context['@context'])
     end
     compacted =>

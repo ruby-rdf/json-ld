@@ -113,7 +113,7 @@ module JSON::LD
         node.delete(:usages)
         result << node unless node_reference?(node)
       end
-      debug("fromRDF") {result.to_json(JSON_STATE)}
+      debug("fromRdf") {result.to_json(JSON_STATE)}
       result
     end
   end

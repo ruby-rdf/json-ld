@@ -25,6 +25,7 @@ module JSON::LD
                           list            = nil)
       depth do
         debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}"}
+        debug("  =>") {"active_subject: #{active_subject.inspect}, active_property: #{active_property.inspect}, list: #{list.inspect}"}
         if element.is_a?(Array)
           # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
           element.map {|o|
@@ -90,7 +91,10 @@ module JSON::LD
             graph[id] ||= {'@id' => id}
 
             # If active property is not null, perform the following steps:
-            if active_property
+            if node?(active_subject) || node_reference?(active_subject)
+              debug("node_map") {"active_subject is an object, merge into #{id}"}
+              merge_value(graph[id], active_property, active_subject)
+            elsif active_property
               # Create a new JSON object reference consisting of a single member @id whose value is id.
               reference = {'@id' => id}
 
@@ -125,13 +129,12 @@ module JSON::LD
               element.delete('@reverse').each do |property, values|
                 values.each do |value|
                   debug("node_map") {"@reverse(#{id}): #{value.inspect}"}
-                  # If value has a property member, append referenced node to its value; otherwise create a property member whose value is an array containing referenced node.
-                  merge_value(value, property, {'@id' => id})
-
                   # Recursively invoke this algorithm passing value for element, node map, and active graph.
                   generate_node_map(value,
                                     node_map,
-                                    active_graph)
+                                    active_graph,
+                                    {'@id' => id},
+                                    property)
                 end
               end
             end
