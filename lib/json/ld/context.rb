@@ -273,8 +273,18 @@ module JSON::LD
             rescue JsonLdError
               raise
             rescue Exception => e
-              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
+              # Speical case for schema.org, until they get their act together
+              if context.to_s == 'http://schema.org/'
+                RDF::Util::File.open_file("http://json-ld.org/contexts/schema.org.jsonld") do |f|
+                  context = JSON.parse(f.read)['@context']
+                  if @options[:processingMode] == "json-ld-1.0"
+                    context_no_base.provided_context = context.dup
+                  end
+                end
+              else
+                debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+                raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
+              end
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
