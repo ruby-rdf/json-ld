@@ -19,7 +19,7 @@ describe JSON::LD::API do
             "foaf" => RDF::FOAF.to_s
           },
           "@id" => "http://greggkellogg.net/foaf",
-          "@type" => ["foaf:PersonalProfile"],
+          "@type" => ["foaf:PersonalProfileDocument"],
           "foaf:primaryTopic" => [{
             "@id" => "http://greggkellogg.net/foaf#me",
             "@type" => ["foaf:Person"]
@@ -28,7 +28,7 @@ describe JSON::LD::API do
         :output => [
           {
             "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
+            "@type" => [RDF::FOAF.PersonalProfileDocument.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
           },
           {
@@ -43,7 +43,7 @@ describe JSON::LD::API do
             "foaf" => RDF::FOAF.to_s
           },
           "@id" => "http://greggkellogg.net/foaf",
-          "@type" => "foaf:PersonalProfile",
+          "@type" => "foaf:PersonalProfileDocument",
           "foaf:primaryTopic" => {
             "@type" => "foaf:Person"
           }
@@ -55,7 +55,7 @@ describe JSON::LD::API do
           },
           {
             "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfile.to_s],
+            "@type" => [RDF::FOAF.PersonalProfileDocument.to_s],
             RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
           }
         ]
