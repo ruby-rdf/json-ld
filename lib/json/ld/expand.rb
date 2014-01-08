@@ -40,7 +40,7 @@ module JSON::LD
         end
 
         depth do
-          output_object = Hash.ordered
+          output_object = {}
           # Then, proceed and process each property and value in element as follows:
           input.keys.kw_sort.each do |key|
             # For each key and value in element, ordered lexicographically by key:
@@ -323,9 +323,7 @@ module JSON::LD
           end
 
           # Re-order result keys
-          r = Hash.ordered
-          output_object.keys.kw_sort.each {|k| r[k] = output_object[k]}
-          r
+          output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.

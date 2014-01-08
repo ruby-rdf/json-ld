@@ -79,11 +79,11 @@ module JSON::LD
     #   the encoding to use on the output stream (Ruby 1.9+)
     # @option options [Boolean]  :canonicalize (false)
     #   whether to canonicalize literals when serializing
-    # @option options [Hash]     :prefixes     (Hash.ordered)
+    # @option options [Hash]     :prefixes     ({})
     #   the prefix mappings to use (not supported by all writers)
     # @option options [Boolean]  :standard_prefixes   (false)
     #   Add standard prefixes to @prefixes, if necessary.
-    # @option options [IO, Array, Hash, String, Context]     :context     (Hash.ordered)
+    # @option options [IO, Array, Hash, String, Context]     :context     ({})
     #   context to use when serializing. Constructed context for native serialization.
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer

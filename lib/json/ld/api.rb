@@ -219,8 +219,7 @@ module JSON::LD
         debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
-        node_map = Hash.ordered
-        node_map['@default'] = Hash.ordered
+        node_map = {'@default' => {}}
         self.generate_node_map(value, node_map)
 
         default_graph = node_map['@default']
@@ -319,7 +318,7 @@ module JSON::LD
         debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        all_nodes = Hash.ordered
+        all_nodes = {}
         old_dbg, @options[:debug] = @options[:debug], nil
         depth do
           generate_node_map(value, all_nodes)
@@ -376,8 +375,7 @@ module JSON::LD
         debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
 
         # Generate _nodeMap_
-        node_map = Hash.ordered
-        node_map['@default'] = Hash.ordered
+        node_map = {'@default' => {}}
         generate_node_map(expanded_input, node_map)
         debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE)}"}
 

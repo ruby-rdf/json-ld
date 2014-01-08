@@ -156,9 +156,7 @@ module JSON::LD
         end
 
         # Re-order result keys
-        r = Hash.ordered
-        result.keys.kw_sort.each {|kk| r[kk] = result[kk]}
-        r
+        result.keys.kw_sort.inject({}) {|map, kk| map[kk] = result[kk]; map}
       else
         # For other types, the compacted value is the element value
         debug("compact") {element.class.to_s}
