@@ -80,7 +80,6 @@ module JSON::LD
       @options[:documentLoader] ||= self.class.method(:documentLoader)
       options[:rename_bnodes] ||= true
       @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
-      content_type = nil
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
@@ -280,7 +279,6 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.frame(input, frame, options = {})
       result = nil
-      match_limit = 0
       framing_state = {
         :embed       => true,
         :explicit    => false,
@@ -359,15 +357,20 @@ module JSON::LD
     # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
     # @raise [JsonLdError]
-    # @return [Array<RDF::Statement>] if no block given
     # @yield statement
     # @yieldparam [RDF::Statement] statement
     def self.toRdf(input, options = {}, &block)
-      results = []
-      results.extend(RDF::Enumerable)
+      unless block_given?
+        results = []
+        results.extend(RDF::Enumerable)
+        self.toRdf(input, options) do |stmt|
+          results << stmt
+        end
+        return results
+      end
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options)
+      expanded_input = API.expand(input, options.merge(:ordered => false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -388,7 +391,7 @@ module JSON::LD
             debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
             next
           end
-          graph_to_rdf(graph).each do |statement|
+          graph_to_rdf(graph) do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRdf]
             # Drop results with relative IRIs
             relative = statement.to_a.any? do |r|

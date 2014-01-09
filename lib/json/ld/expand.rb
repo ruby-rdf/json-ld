@@ -11,8 +11,11 @@ module JSON::LD
     # @param [String] active_property
     # @param [Context] context
     # @param [Hash{Symbol => Object}] options
+    # @option options [Boolean] :ordered (true)
+    #   Ensure output objects have keys ordered properly
     # @return [Array, Hash]
     def expand(input, active_property, context, options = {})
+      options = {:ordered => true}.merge(options)
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -42,7 +45,8 @@ module JSON::LD
         depth do
           output_object = {}
           # Then, proceed and process each property and value in element as follows:
-          input.keys.kw_sort.each do |key|
+          keys = options[:ordered] ? input.keys.kw_sort : input.keys
+          keys.each do |key|
             # For each key and value in element, ordered lexicographically by key:
             value = input[key]
             expanded_property = context.expand_iri(key, :vocab => true, :depth => @depth)
@@ -199,7 +203,8 @@ module JSON::LD
               ary = []
 
               # For each key-value pair language-language value in value, ordered lexicographically by language
-              value.keys.sort.each do |k|
+              keys = options[:ordered] ? value.keys.sort : value.keys
+              keys.each do |k|
                 [value[k]].flatten.each do |item|
                   # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
                   raise JsonLdError::InvalidLanguageMapValue,
@@ -221,7 +226,8 @@ module JSON::LD
               ary = []
 
               # For each key-value in the object:
-              value.keys.sort.each do |k|
+              keys = options[:ordered] ? value.keys.sort : value.keys
+              keys.each do |k|
                 # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
                 index_value = depth { expand([value[k]].flatten, key, context, options) }
                 index_value.each do |item|
@@ -322,8 +328,12 @@ module JSON::LD
             return nil
           end
 
-          # Re-order result keys
-          output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
+          # Re-order result keys if ordering
+          if options[:ordered]
+            output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
+          else
+            output_object
+          end
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.

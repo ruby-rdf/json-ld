@@ -49,22 +49,15 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRdf(@doc, @options).each do |statement|
-        # If RDF version is 1.0, fold literals with xsd:string to be just simple literals
-        statement.object.datatype = nil if
-          RDF::VERSION.to_s < "1.1" &&
-          statement.object.literal? &&
-          statement.object.datatype == RDF::XSD.string
-        block.call(statement)
-      end
+      JSON::LD::API.toRdf(@doc, @options, &block)
     end
 
     ##
     # @private
     # @see   RDF::Reader#each_triple
-    def each_triple(&block)
-      each_statement do |statement|
-        block.call(*statement.to_triple)
+    def each_triple
+      JSON::LD::API.toRdf(@doc, @options) do |statement|
+        yield *statement.to_triple
       end
     end
   end
