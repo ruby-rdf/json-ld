@@ -5,17 +5,36 @@ begin
   require 'linkeddata'
 rescue LoadError
 end
+require 'ruby-prof'
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
 
 def run(input, options)
+  if options[:profile]
+    output_dir = File.expand_path("../../doc/profiles/#{File.basename __FILE__, ".rb"}", __FILE__)
+    FileUtils.mkdir_p(output_dir)
+    result = RubyProf.profile do
+      run(input, options.merge(:profile => false))
+    end
+    result.eliminate_methods!([/Hash#each/, /JSON::LD::Utils#debug/, /Array#map/, /JSON::LD::Utils#depth/])
+    # Print a graph profile to text
+    printer = RubyProf::MultiPrinter.new(result)
+    printer.print(path: output_dir, profile: "profile")
+    puts "output saved in #{output_dir}"
+    return
+  end
   reader_class = RDF::Reader.for(options[:input_format].to_sym)
   raise "Reader not found for #{options[:input_format]}" unless reader_class
 
   prefixes = {}
   start = Time.new
-  if options[:expand]
+  if options[:flatten]
+    output = JSON::LD::API.flatten(input, options.delete(:context), options)
+    secs = Time.new - start
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
+    puts "Flattened in #{secs} seconds."
+  elsif options[:expand]
     options = options.merge(:expandContext => options.delete(:context)) if options.has_key?(:context)
     output = JSON::LD::API.expand(input, options)
     secs = Time.new - start
@@ -31,14 +50,25 @@ def run(input, options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Framed in #{secs} seconds."
+  elsif options[:frame]
+    output = JSON::LD::API.frame(input, options[:frame], options)
+    secs = Time.new - start
+    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
+    puts "Framed in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
-    g = RDF::Repository.new << r
-    secs = Time.new - start
-    num = g.count
-    parser_options = options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true)
-    options[:output].puts g.dump(options[:output_format], parser_options)
-    puts
+    if options[:output_format] == :none
+      num = 0
+      r.each_statement { num += 1 } # Eat statements
+      secs = Time.new - start
+    else
+      g = RDF::Repository.new << r
+      secs = Time.new - start
+      num = g.count
+      parser_options = options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true)
+      options[:output].puts g.dump(options[:output_format], parser_options)
+      puts
+    end
     puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."
   end
 rescue
@@ -50,6 +80,7 @@ end
 parser_options = {
   :base     => nil,
   :progress => false,
+  :profile  => false,
   :validate => false,
   :strict   => false,
 }
@@ -69,10 +100,12 @@ opts = GetoptLong.new(
   ["--context", GetoptLong::REQUIRED_ARGUMENT],
   ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT],
   ["--expand", GetoptLong::NO_ARGUMENT],
+  ["--flatten", GetoptLong::NO_ARGUMENT],
   ["--format", GetoptLong::REQUIRED_ARGUMENT],
   ["--frame", GetoptLong::REQUIRED_ARGUMENT],
   ["--input-format", GetoptLong::REQUIRED_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
+  ["--profile", GetoptLong::NO_ARGUMENT],
   ["--parse-only", GetoptLong::NO_ARGUMENT],
   ["--quiet", GetoptLong::NO_ARGUMENT],
   ["--uri", GetoptLong::REQUIRED_ARGUMENT],
@@ -85,11 +118,13 @@ opts.each do |opt, arg|
   when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
   when '--expand'       then options[:expand] = true
+  when '--flatten'      then options[:flatten] = true
   when '--format'       then options[:output_format] = arg.to_sym
   when '--frame'        then options[:frame] = arg
   when '--input-format' then options[:input_format] = arg.to_sym
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
+  when '--profile'      then options[:profile] = true
   when '--quiet'        then options[:quiet] = true
   when '--uri'          then parser_options[:base] = arg
   when '--verbose'      then $verbose = true

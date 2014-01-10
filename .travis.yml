@@ -8,3 +8,4 @@ rvm:
   - 2.0.0
   - jruby-19mode
   - rbx
+cache: bundler

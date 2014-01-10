@@ -1,6 +1,5 @@
 $:.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 require 'rdf' # @see http://rubygems.org/gems/rdf
-require 'backports' if RUBY_VERSION < "1.9"
 
 module JSON
   ##

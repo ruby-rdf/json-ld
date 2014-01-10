@@ -9,64 +9,55 @@ module JSON::LD
     #
     # @param [Hash{String => Hash}] active_graph
     #   A hash of IRI to Node definitions
-    # @return [Array<RDF::Statement>] statements in this graph, without context
-    def graph_to_rdf(active_graph)
+    # @yield statement
+    # @yieldparam [RDF::Statement] statement
+    def graph_to_rdf(active_graph, &block)
       debug('graph_to_rdf') {"graph_to_rdf: #{active_graph.inspect}"}
 
-      # Initialize results as an empty array
-      results = []
+      # For each id-node in active_graph
+      active_graph.each do |id, node|
+        # Initialize subject as the IRI or BNode representation of id
+        subject = as_resource(id)
+        debug("graph_to_rdf")  {"subject: #{subject.to_ntriples} (id: #{id})"}
 
-      depth do
-        # For each id-node in active_graph
-        active_graph.each do |id, node|
-          # Initialize subject as the IRI or BNode representation of id
-          subject = as_resource(id)
-          debug("graph_to_rdf")  {"subject: #{subject.to_ntriples} (id: #{id})"}
+        # For each property-values in node
+        node.each do |property, values|
+          case property
+          when '@type'
+            # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
+            values.each do |value|
+              object = as_resource(value)
+              debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
+              yield RDF::Statement.new(subject, RDF.type, object)
+            end
+          when /^@/
+            # Otherwise, if @type is any other keyword, skip to the next property-values pair
+          else
+            # Otherwise, property is an IRI or Blank Node identifier
+            # Initialize predicate from  property as an IRI or Blank node
+            predicate = as_resource(property)
+            debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
 
-          # For each property-values in node
-          node.each do |property, values|
-            case property
-            when '@type'
-              # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
-              results += values.map do |value|
-                object = as_resource(value)
-                debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
-                RDF::Statement.new(subject, RDF.type, object)
-              end
-            when /^@/
-              # Otherwise, if @type is any other keyword, skip to the next property-values pair
-            else
-              # Otherwise, property is an IRI or Blank Node identifier
-              # Initialize predicate from  property as an IRI or Blank node
-              predicate = as_resource(property)
-              debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
+            # For each item in values
+            values.each do |item|
+              if item.has_key?('@list')
+                debug("graph_to_rdf")  {"list: #{item.inspect}"}
+                # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
+                object = parse_list(item['@list']) {|stmt| yield stmt}
 
-              # For each item in values
-              values.each do |item|
-                if item.has_key?('@list')
-                  debug("graph_to_rdf")  {"list: #{item.inspect}"}
-                  # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
-                  list_results = []
-                  object = parse_list(item['@list'], list_results)
-
-                  # Append a triple composed of subject, prediate, and object to results and add all triples from list_results to results.
-                  results << RDF::Statement.new(subject, predicate, object)
-                  results += list_results
-                else
-                  # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
-                  object = parse_object(item)
-                  debug("graph_to_rdf")  {"object: #{object.to_ntriples}"}
-                  # Append a triple composed of subject, prediate, and literal to results.
-                  results << RDF::Statement.new(subject, predicate, object)
-                end
+                # Append a triple composed of subject, prediate, and object to results and add all triples from list_results to results.
+                yield RDF::Statement.new(subject, predicate, object)
+              else
+                # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
+                object = parse_object(item)
+                debug("graph_to_rdf")  {"object: #{object.to_ntriples}"}
+                # Append a triple composed of subject, prediate, and literal to results.
+                yield RDF::Statement.new(subject, predicate, object)
               end
             end
           end
         end
       end
-      
-      # Return results
-      results
     end
 
     ##
@@ -96,10 +87,7 @@ module JSON::LD
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
         language = item.fetch('@language', nil)
-        literal = RDF::Literal.new(value, :datatype => datatype, :language => language)
-
-        # Return literal
-        literal
+        RDF::Literal.new(value, :datatype => datatype, :language => language)
       else
         # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
         raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)
@@ -115,27 +103,26 @@ module JSON::LD
     #   The Array to serialize as a list
     # @param [Array<RDF::Statement>] list_results
     #   Statements for each item in the list
-    # @return [RDF::Resource] BNode or nil for head of list
-    def parse_list(list, list_results)
+    # @yield statement
+    # @yieldparam [RDF::Resource] statement
+    def parse_list(list)
       debug('parse_list') {"list: #{list.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? node : RDF.nil
 
-      depth do
-        list.each do |list_item|
-          # Set first to the result of the Object Converstion algorithm passing item.
-          object = parse_object(list_item)
-          list_results << RDF::Statement.new(first_bnode, RDF.first, object)
-          rest_bnode = node
-          list_results << RDF::Statement.new(first_bnode, RDF.rest, rest_bnode)
-          first_bnode = rest_bnode
-        end
-        if last
-          object = parse_object(last)
-          list_results << RDF::Statement.new(first_bnode, RDF.first, object)
-          list_results << RDF::Statement.new(first_bnode, RDF.rest, RDF.nil)
-        end
+      list.each do |list_item|
+        # Set first to the result of the Object Converstion algorithm passing item.
+        object = parse_object(list_item)
+        yield RDF::Statement.new(first_bnode, RDF.first, object)
+        rest_bnode = node
+        yield RDF::Statement.new(first_bnode, RDF.rest, rest_bnode)
+        first_bnode = rest_bnode
+      end
+      if last
+        object = parse_object(last)
+        yield RDF::Statement.new(first_bnode, RDF.first, object)
+        yield RDF::Statement.new(first_bnode, RDF.rest, RDF.nil)
       end
       result
     end
