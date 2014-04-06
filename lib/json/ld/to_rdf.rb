@@ -101,10 +101,10 @@ module JSON::LD
     #
     # @param [Array] list
     #   The Array to serialize as a list
-    # @param [Array<RDF::Statement>] list_results
-    #   Statements for each item in the list
     # @yield statement
     # @yieldparam [RDF::Resource] statement
+    # @return [Array<RDF::Statement>]
+    #   Statements for each item in the list
     def parse_list(list)
       debug('parse_list') {"list: #{list.inspect}"}
 
