@@ -116,7 +116,7 @@ opts.each do |opt, arg|
   when '--dbg'          then parser_options[:debug] = ::JSON::LD::debug = true
   when '--compact'      then options[:compact] = true
   when '--context'      then options[:context] = arg
-  when '--execute'      then input = arg
+  when '--evaluate'     then input = arg
   when '--expand'       then options[:expand] = true
   when '--format'       then options[:output_format] = arg.to_sym
   when '--flatten'      then options[:flatten] = arg

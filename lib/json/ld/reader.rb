@@ -30,6 +30,9 @@ module JSON::LD
       super do
         @options[:base] ||= base_uri.to_s if base_uri
         begin
+          # Trim non-JSON stuff in script.
+          input = input.read if input.respond_to?(:read)
+          input = input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, '') 
           @doc = JSON.load(input)
         rescue JSON::ParserError => e
           raise RDF::ReaderError, "Failed to parse input document: #{e.message}" if validate?

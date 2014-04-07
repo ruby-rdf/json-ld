@@ -274,7 +274,7 @@ module JSON::LD
               raise
             rescue Exception => e
               # Speical case for schema.org, until they get their act together
-              if context.to_s == 'http://schema.org/'
+              if context.to_s.start_with?('http://schema.org')
                 RDF::Util::File.open_file("http://json-ld.org/contexts/schema.org.jsonld") do |f|
                   context = JSON.parse(f.read)['@context']
                   if @options[:processingMode] == "json-ld-1.0"

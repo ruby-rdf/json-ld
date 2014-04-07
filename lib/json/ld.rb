@@ -3,7 +3,7 @@ require 'rdf' # @see http://rubygems.org/gems/rdf
 
 module JSON
   ##
-  # **`JSON::LD`** is a JSON-LD plugin for RDF.rb.
+  # **`JSON::LD`** is a JSON-LD extension for RDF.rb.
   #
   # @example Requiring the `JSON::LD` module
   #   require 'json/ld'

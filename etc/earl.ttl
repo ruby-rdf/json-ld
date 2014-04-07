@@ -11,7 +11,7 @@
    doap:blog <http://greggkellogg.net/>;
    doap:bug-database <http://github.com/ruby-rdf/json-ld/issues>;
    doap:created "2011-05-07"^^xsd:date;
-   doap:description "RDF.rb plugin for parsing/serializing JSON-LD data."@en;
+   doap:description "RDF.rb extension for parsing/serializing JSON-LD data."@en;
    doap:developer <http://greggkellogg.net/foaf#me>;
    doap:documenter <http://greggkellogg.net/foaf#me>;
    doap:homepage <http://github.com/ruby-rdf/json-ld/>;
