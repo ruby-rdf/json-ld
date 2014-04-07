@@ -26,52 +26,87 @@ describe JSON::LD::Reader do
   end
 
   context :interface do
-    subject { %q({
-      "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-       "@id": "_:bnode1",
-       "@type": "foaf:Person",
-       "foaf:homepage": "http://example.com/bob/",
-       "foaf:name": "Bob"
-     }) }
+    {
+      plain: %q({
+        "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+         "@id": "_:bnode1",
+         "@type": "foaf:Person",
+         "foaf:homepage": "http://example.com/bob/",
+         "foaf:name": "Bob"
+       }),
+       leading_comment: %q(
+         // A comment before content
+         {
+           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@id": "_:bnode1",
+            "@type": "foaf:Person",
+            "foaf:homepage": "http://example.com/bob/",
+            "foaf:name": "Bob"
+          }
+         ),
+       script: %q(<script type="application/ld+json">
+         {
+           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@id": "_:bnode1",
+            "@type": "foaf:Person",
+            "foaf:homepage": "http://example.com/bob/",
+            "foaf:name": "Bob"
+          }
+         </script>),
+       script_comments: %q(<script type="application/ld+json">
+         // A comment before content
+         {
+           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+            "@id": "_:bnode1",
+            "@type": "foaf:Person",
+            "foaf:homepage": "http://example.com/bob/",
+            "foaf:name": "Bob"
+          }
+         </script>),
+    }.each do |variant, src|
+      context variant do
+        subject {src}
 
-    describe "#initialize" do
-      it "yields reader given string" do
-        inner = double("inner")
-        inner.should_receive(:called).with(JSON::LD::Reader)
-        JSON::LD::Reader.new(subject) do |reader|
-          inner.called(reader.class)
+        describe "#initialize" do
+          it "yields reader given string" do
+            inner = double("inner")
+            inner.should_receive(:called).with(JSON::LD::Reader)
+            JSON::LD::Reader.new(subject) do |reader|
+              inner.called(reader.class)
+            end
+          end
+
+          it "yields reader given IO" do
+            inner = double("inner")
+            inner.should_receive(:called).with(JSON::LD::Reader)
+            JSON::LD::Reader.new(StringIO.new(subject)) do |reader|
+              inner.called(reader.class)
+            end
+          end
+
+          it "returns reader" do
+            JSON::LD::Reader.new(subject).should be_a(JSON::LD::Reader)
+          end
         end
-      end
 
-      it "yields reader given IO" do
-        inner = double("inner")
-        inner.should_receive(:called).with(JSON::LD::Reader)
-        JSON::LD::Reader.new(StringIO.new(subject)) do |reader|
-          inner.called(reader.class)
+        describe "#each_statement" do
+          it "yields statements" do
+            inner = double("inner")
+            inner.should_receive(:called).with(RDF::Statement).exactly(3)
+            JSON::LD::Reader.new(subject).each_statement do |statement|
+              inner.called(statement.class)
+            end
+          end
         end
-      end
 
-      it "returns reader" do
-        JSON::LD::Reader.new(subject).should be_a(JSON::LD::Reader)
-      end
-    end
-
-    describe "#each_statement" do
-      it "yields statements" do
-        inner = double("inner")
-        inner.should_receive(:called).with(RDF::Statement).exactly(3)
-        JSON::LD::Reader.new(subject).each_statement do |statement|
-          inner.called(statement.class)
-        end
-      end
-    end
-
-    describe "#each_triple" do
-      it "yields statements" do
-        inner = double("inner")
-        inner.should_receive(:called).exactly(3)
-        JSON::LD::Reader.new(subject).each_triple do |subject, predicate, object|
-          inner.called(subject.class, predicate.class, object.class)
+        describe "#each_triple" do
+          it "yields statements" do
+            inner = double("inner")
+            inner.should_receive(:called).exactly(3)
+            JSON::LD::Reader.new(subject).each_triple do |subject, predicate, object|
+              inner.called(subject.class, predicate.class, object.class)
+            end
+          end
         end
       end
     end
