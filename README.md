@@ -216,6 +216,8 @@ Install with `gem install json-ld`
 
 `RDF::GRAPH#dump` can also take a `:context` option to use a separately defined context
 
+As JSON-LD may come from many different sources, included as an embedded script tag within an HTML document, the RDF Reader will strip input before the leading `{` or `[` and after the trailing `}` or `]`.
+
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
