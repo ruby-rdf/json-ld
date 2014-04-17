@@ -5,7 +5,6 @@ begin
   require 'linkeddata'
 rescue LoadError
 end
-require 'ruby-prof'
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'

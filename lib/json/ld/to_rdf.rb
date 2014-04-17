@@ -84,6 +84,7 @@ module JSON::LD
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
         end
+        datatype = RDF::URI(datatype) if datatype && !datatype.is_a?(RDF::URI)
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
         language = item.fetch('@language', nil)
