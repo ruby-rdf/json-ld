@@ -12,7 +12,7 @@ end
 
 group :debug do
   gem "wirble"
-  gem "debugger", :platforms => [:mri_19, :mri_20]
+  gem "byebug", :platforms => :mri_20
 end
 
 platforms :rbx do

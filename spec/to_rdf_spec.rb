@@ -637,6 +637,17 @@ describe JSON::LD::API do
             <http://example.com/#you> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
           )
         ],
+        "XMLLiteral" => [
+          %q({
+            "http://rdfs.org/sioc/ns#content": {
+              "@value": "foo",
+              "@type": "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral"
+            }
+          }),
+          %q(
+            [<http://rdfs.org/sioc/ns#content> "foo"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral>] .
+          )
+        ]
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
