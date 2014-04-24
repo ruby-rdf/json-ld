@@ -58,10 +58,13 @@ module JSON::LD
     ##
     # @private
     # @see   RDF::Reader#each_triple
-    def each_triple
-      JSON::LD::API.toRdf(@doc, @options) do |statement|
-        yield *statement.to_triple
+    def each_triple(&block)
+      if block_given?
+        JSON::LD::API.toRdf(@doc, @options) do |statement|
+          yield *statement.to_triple
+        end
       end
+      enum_for(:each_triple)
     end
   end
 end

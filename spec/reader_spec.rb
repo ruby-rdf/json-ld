@@ -4,6 +4,15 @@ require 'spec_helper'
 require 'rdf/spec/reader'
 
 describe JSON::LD::Reader do
+  let!(:doap) {File.expand_path("../../etc/doap.jsonld", __FILE__)}
+  let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
+  let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
+
+  before(:each) do
+    @reader_input = File.read(doap)
+    @reader = JSON::LD::Reader.new(@reader_input)
+    @reader_count = doap_count
+  end
   before :each do
     @reader = JSON::LD::Reader.new(StringIO.new(""))
   end
