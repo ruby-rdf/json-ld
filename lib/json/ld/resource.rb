@@ -2,60 +2,59 @@ module JSON::LD
   # Simple Ruby reflector class to provide native
   # access to JSON-LD objects
   class Resource
-    # @!attribute [r] attributes
+    include RDF::Enumerable
+
     # @return [Hash<String => Object] Object representation of resource
     attr_reader :attributes
 
-    # @!attribute [r] id
     # @return [String] ID of this resource
     attr_reader :id
 
-    # @!attribute [r] context
     # @return [JSON::LD::Context] Context associated with this resource
     attr_reader :context
 
+    ##
     # Is this resource clean (i.e., saved to mongo?)
     #
     # @return [Boolean]
     def clean?; @clean; end
 
+    ##
     # Is this resource dirty (i.e., not yet saved to mongo?)
     #
     # @return [Boolean]
     def dirty?; !clean?; end
-    
+
+    ##
     # Has this resource been reconciled against a mongo ID?
     #
     # @return [Boolean]
     def reconciled?; @reconciled; end
 
+    ##
     # Has this resource been resolved so that
     # all references are to other Resources?
     #
     # @return [Boolean]
     def resolved?; @resolved; end
 
+    ##
     # Anonymous resources have BNode ids or no schema:url
     #
     # @return [Boolean]
     def anonymous?; @anon; end
 
+    ##
     # Is this a stub resource, which has not yet been
     # synched or created within the DB?
     def stub?; !!@stub; end
 
+    ##
     # Is this a new resource, which has not yet been
     # synched or created within the DB?
     def new?; !!@new; end
 
-    # Manage contexts used by resources.
-    #
-    # @param [String] ctx
-    # @return [JSON::LD::Context]
-    def self.set_context(ctx)
-      (@@contexts ||= {})[ctx] = JSON::LD::Context.new.parse(ctx)
-    end
-
+    ##
     # A new resource from the parsed graph
     # @param [Hash{String => Object}] node_definition
     # @param [Hash{Symbol => Object}] options
@@ -76,8 +75,7 @@ module JSON::LD
     #   This is a stand-in for another resource that has
     #   not yet been retrieved (or created) from Mongo
     def initialize(node_definition, options = {})
-      @context_name = options[:context]
-      @context = self.class.set_context(@context_name)
+      @context = options[:context]
       @clean = options.fetch(:clean, false)
       @new = options.fetch(:new, true)
       @reconciled = options.fetch(:reconciled, !@new)
@@ -91,12 +89,14 @@ module JSON::LD
       @anon = @id.nil? || @id.to_s[0,2] == '_:'
     end
 
+    ##
     # Return a hash of this object, suitable for use by for ETag
     # @return [Fixnum]
     def hash
       self.deresolve.hash
     end
 
+    ##
     # Reverse resolution of resource attributes.
     # Just returns `attributes` if
     # resource is unresolved. Otherwise, replaces `Resource`
@@ -134,6 +134,7 @@ module JSON::LD
       compacted.delete_if {|k, v| k == '@context'}
     end
 
+    ##
     # Serialize to JSON-LD, minus `@context` using
     # a deresolved version of the attributes
     #
@@ -143,6 +144,13 @@ module JSON::LD
       deresolve.to_json(options)
     end
 
+    ##
+    # Enumerate over statements associated with this resource
+    def each(&block)
+      JSON::LD::API.toRdf(attributes, expandContext: context, &block)
+    end
+
+    ##
     # Update node references using the provided map.
     # This replaces node references with Resources,
     # either stub or instantiated.
@@ -186,29 +194,7 @@ module JSON::LD
       self
     end
 
-    # Merge resources
-    # FIXME: If unreconciled or unresolved resources are merged
-    # against reconciled/resolved resources, they will appear
-    # to not match, even if they are really the same thing.
-    #
-    # @param [Resource] resource
-    # @return [Resource] self
-    def merge(resource)
-      if attributes.neq?(resource.attributes)
-        resource.attributes.each do |p, v|
-          next if p == 'id'
-          if v.nil? or (v.is_a?(Array) and v.empty?)
-            attributes.delete(p)
-          else
-            attributes[p] = v
-          end
-        end
-        @resolved = @clean = false
-      end
-      self
-    end
-
-    #
+    ##
     # Override this method to implement save using
     # an appropriate storage mechanism.
     #
@@ -218,12 +204,14 @@ module JSON::LD
     #
     # @return [Boolean] true or false if resource not saved
     def save
-      raise NotImplemented
+      raise NotImplementedError
     end
 
+    ##
     # Access individual fields, from subject definition
     def property(prop_name); @attributes.fetch(prop_name, nil); end
 
+    ##
     # Access individual fields, from subject definition
     def method_missing(method, *args)
       property(method.to_s)
