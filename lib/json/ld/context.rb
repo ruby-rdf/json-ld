@@ -295,6 +295,7 @@ module JSON::LD
             debug("parse") {"=> provided_context: #{context.inspect}"}
           when Hash
             # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
+            context = context.dup # keep from modifying a hash passed as a param
             {
               '@base' => :base=,
               '@language' => :default_language=,
