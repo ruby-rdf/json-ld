@@ -268,7 +268,7 @@ To get a local working copy of the development repository, do:
 * Don't use hard tabs, and don't leave trailing whitespace on any line.
 * Do document every method you add using [YARD][] annotations. Read the
   [tutorial][YARD-GS] or just look at the existing code for examples.
-* Don't touch the `.gemspec`, `VERSION` or `AUTHORS` files. If you need to
+* Don't touch the `json-ld.gemspec`, `VERSION` or `AUTHORS` files. If you need to
   change them, do so on your private branch only.
 * Do feel free to add yourself to the `CREDITS` file and the corresponding
   list in the the `README`. Alphabetical order applies.
