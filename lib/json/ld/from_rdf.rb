@@ -62,7 +62,7 @@ module JSON::LD
         next unless nil_var = graph_object[RDF.nil.to_s]
 
         # For each item usage in the usages member of nil, perform the following steps:
-        nil_var[:usages].each do |usage|
+        nil_var.fetch(:usages, []).each do |usage|
           node, property, head = usage[:node], usage[:property], usage[:value]
           list, list_nodes = [], []
 
