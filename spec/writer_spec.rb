@@ -20,7 +20,7 @@ describe JSON::LD::Writer do
       {:content_type   => 'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        RDF::Reader.for(arg).should == JSON::LD::Reader
+        expect(RDF::Reader.for(arg)).to eql JSON::LD::Reader
       end
     end
   end
@@ -28,7 +28,7 @@ describe JSON::LD::Writer do
   context "simple tests" do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      serialize(input).should produce([{
+      expect(serialize(input)).to produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
       }], @debug)
@@ -36,8 +36,7 @@ describe JSON::LD::Writer do
 
     it "should use qname URIs with standard prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
-      serialize(input, :standard_prefixes => true).
-      should produce({
+      expect(serialize(input, :standard_prefixes => true)).to produce({
         '@context' => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
         },
@@ -53,12 +52,11 @@ describe JSON::LD::Writer do
         <https://senet.org/gm> <https://senet.org/ns#unofficialTitle> "Rhythm Tengoku"@en .
         <https://senet.org/gm> <https://senet.org/ns#urlkey> "rhythm-tengoku" .
       )
-      serialize(input, :prefixes => {
+      expect(serialize(input, :prefixes => {
         :dc    => "http://purl.org/dc/terms/",
         :frbr  => "http://vocab.org/frbr/core#",
         :senet => "https://senet.org/ns#",
-      }).
-      should produce({
+      })).to produce({
         '@context' => {
           "dc" => "http://purl.org/dc/terms/",
           "frbr" => "http://vocab.org/frbr/core#",
@@ -75,8 +73,8 @@ describe JSON::LD::Writer do
     it "should use CURIEs with empty prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
       begin
-        serialize(input, :prefixes => { "" => RDF::FOAF}).
-        should produce({
+        expect(serialize(input, :prefixes => { "" => RDF::FOAF})).
+        to produce({
           "@context" => {
             "" => "http://xmlns.com/foaf/0.1/"
           },
@@ -92,8 +90,8 @@ describe JSON::LD::Writer do
     
     it "should not use terms if no suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
-      serialize(input, :standard_prefixes => true).
-      should_not produce({
+      expect(serialize(input, :standard_prefixes => true)).
+      not_to produce({
         "@context" => {"foaf" => "http://xmlns.com/foaf/0.1/"},
         '@id'   => "foaf",
         "foaf"   => {"@id" => "foaf"}
@@ -107,10 +105,10 @@ describe JSON::LD::Writer do
         db:Michael_Jackson dbo:artistOf <http://dbpedia.org/resource/%28I_Can%27t_Make_It%29_Another_Day> .
       )
 
-      serialize(input, :prefixes => {
+      expect(serialize(input, :prefixes => {
           "db" => RDF::URI("http://dbpedia.org/resource/"),
-          "dbo" => RDF::URI("http://dbpedia.org/ontology/")}).
-      should produce({
+          "dbo" => RDF::URI("http://dbpedia.org/ontology/")})).
+      to produce({
         "@context" => {
           "db"    => "http://dbpedia.org/resource/",
           "dbo"   => "http://dbpedia.org/ontology/"
@@ -120,6 +118,12 @@ describe JSON::LD::Writer do
       }, @debug)
     end
 
+    it "should not use provided node identifiers if :unique_bnodes set" do
+      input = %(_:a <http://example.com/foo> _:b \.)
+      result = serialize(input, unique_bnodes: true, context: {})
+      expect(result.to_json).to match(%r(_:g\w+))
+    end
+
     it "serializes multiple subjects" do
       input = %q(
         @prefix : <http://www.w3.org/2006/03/test-description#> .
@@ -127,8 +131,8 @@ describe JSON::LD::Writer do
         <http://example.com/test-cases/0001> a :TestCase .
         <http://example.com/test-cases/0002> a :TestCase .
       )
-      serialize(input, :prefixes => {"" => "http://www.w3.org/2006/03/test-description#"}).
-      should produce({
+      expect(serialize(input, :prefixes => {"" => "http://www.w3.org/2006/03/test-description#"})).
+      to produce({
         '@context'     => {
           "" => "http://www.w3.org/2006/03/test-description#",
           "dc" => RDF::DC.to_s 
@@ -154,12 +158,12 @@ describe JSON::LD::Writer do
            owl:onClass <http://data.wikia.com/terms#Element>;
            owl:onProperty <http://data.wikia.com/terms#characterIn> .
       )
-      serialize(input, :rename_bnodes => false, :prefixes => {
+      expect(serialize(input, :rename_bnodes => false, :prefixes => {
         :owl  => "http://www.w3.org/2002/07/owl#",
         :rdfs => "http://www.w3.org/2000/01/rdf-schema#",
         :xsd  => "http://www.w3.org/2001/XMLSchema#"
-      }).
-      should produce({
+      })).
+      to produce({
         '@context'     => {
           "owl"  => "http://www.w3.org/2002/07/owl#",
           "rdf"  => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",

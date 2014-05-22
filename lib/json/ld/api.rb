@@ -72,6 +72,8 @@ module JSON::LD
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
@@ -79,7 +81,7 @@ module JSON::LD
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
       options[:rename_bnodes] ||= true
-      @namer = options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new
+      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
