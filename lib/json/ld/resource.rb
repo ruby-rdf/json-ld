@@ -167,7 +167,7 @@ module JSON::LD
         when Array
           obj.map {|o| update_obj(o, reference_map)}
         when Hash
-          if obj.node_ref?
+          if node_reference?(obj)
             reference_map[obj['id']] ||= Resource.new(obj,
               :context => @context_name,
               :clean => false,

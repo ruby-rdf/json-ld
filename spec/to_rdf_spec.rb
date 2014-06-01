@@ -25,6 +25,13 @@ describe JSON::LD::API do
           }),
           %q([ <http://example.com/foo> "bar"^^xsd:string] .)
         ],
+        "@id with _:a and reference" => [
+          %q({
+            "@id": "_:a",
+            "http://example.com/foo": {"@id": "_:a"}
+          }),
+          %q(_:a <http://example.com/foo> _:a .)
+        ],
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
@@ -56,21 +63,21 @@ describe JSON::LD::API do
               "@id": "",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/> a <#{RDF::RDFS.Resource}> .)
           ],
           "relative" => [
             %({
               "@id": "a/b",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/a/b> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/a/b> a <#{RDF::RDFS.Resource}> .)
           ],
           "hash" => [
             %({
               "@id": "#a",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/#a> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/#a> a <#{RDF::RDFS.Resource}> .)
           ],
         }.each do |title, (js, ttl)|
           it title do
@@ -660,7 +667,7 @@ describe JSON::LD::API do
   def parse(input, options = {})
     @debug = []
     graph = options[:graph] || RDF::Graph.new
-    options = {:debug => @debug, :validate => true, :canonicalize => false}.merge(options)
+    options = {debug: @debug, validate: true, canonicalize: false}.merge(options)
     JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
     graph
   end

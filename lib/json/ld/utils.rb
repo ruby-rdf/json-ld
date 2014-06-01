@@ -163,6 +163,23 @@ module JSON::LD
     end
   end
 
+  class BlankNodeUniqer < BlankNodeMapper
+    ##
+    # Use the uniquely generated bnodes, rather than a sequence
+    # @param [String] old ("")
+    # @return [String]
+    def get_sym(old = "")
+      old = old.to_s.sub(/_:/, '')
+      if old && self.has_key?(old)
+        self[old]
+      elsif !old.empty?
+        self[old] = RDF::Node.new.to_unique_base[2..-1]
+      else
+        RDF::Node.new.to_unique_base[2..-1]
+      end
+    end
+  end
+
   class BlankNodeNamer < BlankNodeMapper
     # @param [String] prefix
     def initialize(prefix)

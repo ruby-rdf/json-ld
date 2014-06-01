@@ -85,6 +85,8 @@ module JSON::LD
     #   Add standard prefixes to @prefixes, if necessary.
     # @option options [IO, Array, Hash, String, Context]     :context     ({})
     #   context to use when serializing. Constructed context for native serialization.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer
     # @yieldreturn [void]
@@ -160,7 +162,12 @@ module JSON::LD
         end if @options[:prefixes]
         ctx
       end
-      
+
+      # Rename BNodes to uniquify them, if necessary
+      if options[:unique_bnodes]
+        result = API.flatten(result, context, @options)
+      end
+
       # Perform compaction, if we have a context
       if context
         debug("writer") { "compact result"}
