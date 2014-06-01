@@ -30,7 +30,7 @@ describe JSON::LD::API do
             "@id": "_:a",
             "http://example.com/foo": {"@id": "_:a"}
           }),
-          %q(_:a <http://example.com/foo> _:a] .)
+          %q(_:a <http://example.com/foo> _:a .)
         ],
       }.each do |title, (js, ttl)|
         it title do
@@ -63,21 +63,21 @@ describe JSON::LD::API do
               "@id": "",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/> a <#{RDF::RDFS.Resource}> .)
           ],
           "relative" => [
             %({
               "@id": "a/b",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/a/b> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/a/b> a <#{RDF::RDFS.Resource}> .)
           ],
           "hash" => [
             %({
               "@id": "#a",
               "@type": "#{RDF::RDFS.Resource}"
             }),
-            %(<http://example.org/#a> a <#{RDF::RDFS.Resource}>)
+            %(<http://example.org/#a> a <#{RDF::RDFS.Resource}> .)
           ],
         }.each do |title, (js, ttl)|
           it title do
