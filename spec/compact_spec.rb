@@ -180,7 +180,7 @@ describe JSON::LD::API do
     }.each_pair do |title, params|
       it title do
         jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-        jld.should produce(params[:output], @debug)
+        expect(jld).to produce(params[:output], @debug)
       end
     end
 
@@ -243,7 +243,7 @@ describe JSON::LD::API do
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          expect(jld).to produce(params[:output], @debug)
         end
       end
     end
@@ -306,7 +306,7 @@ describe JSON::LD::API do
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
           jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
-          jld.should produce(output, @debug)
+          expect(jld).to produce(output, @debug)
         end
       end
     end
@@ -353,7 +353,7 @@ describe JSON::LD::API do
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
           jld = JSON::LD::API.compact(input, ctx, :debug => @debug)
-          jld.should produce(output, @debug)
+          expect(jld).to produce(output, @debug)
         end
       end
     end
@@ -373,7 +373,7 @@ describe JSON::LD::API do
           "foo" => "bar"
         }
         jld = JSON::LD::API.compact(input, ctx, :debug => @debug, :validate => true)
-        jld.should produce(expected, @debug)
+        expect(jld).to produce(expected, @debug)
       end
     end
 
@@ -389,9 +389,9 @@ describe JSON::LD::API do
           "@context" => "http://example.com/context",
           "b" => "c"
         }
-        JSON::LD::API.stub(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         jld = JSON::LD::API.compact(input, "http://example.com/context", :debug => @debug, :validate => true)
-        jld.should produce(expected, @debug)
+        expect(jld).to produce(expected, @debug)
       end
     end
 
@@ -420,7 +420,7 @@ describe JSON::LD::API do
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          expect(jld).to produce(params[:output], @debug)
         end
       end
     end
@@ -457,7 +457,7 @@ describe JSON::LD::API do
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          expect(jld).to produce(params[:output], @debug)
         end
       end
     end
@@ -481,7 +481,7 @@ describe JSON::LD::API do
       }.each_pair do |title, params|
         it title do
           jld = JSON::LD::API.compact(params[:input], params[:context], :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          expect(jld).to produce(params[:output], @debug)
         end
       end
     end
@@ -503,7 +503,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          lambda {JSON::LD::API.compact(params[:input], {})}.should raise_error(params[:exception])
+          expect {JSON::LD::API.compact(params[:input], {})}.to raise_error(params[:exception])
         end
       end
     end

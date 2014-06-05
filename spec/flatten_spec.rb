@@ -215,7 +215,7 @@ describe JSON::LD::API do
       it title do
         @debug = []
         jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(:debug => @debug)) 
-        jld.should produce(params[:output], @debug)
+        expect(jld).to produce(params[:output], @debug)
       end
     end
   end

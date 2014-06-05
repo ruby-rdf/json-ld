@@ -29,7 +29,7 @@ describe JSON::LD::Reader do
       {:content_type   => 'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        RDF::Reader.for(arg).should == JSON::LD::Reader
+        expect(RDF::Reader.for(arg)).to eq JSON::LD::Reader
       end
     end
   end
@@ -79,7 +79,7 @@ describe JSON::LD::Reader do
         describe "#initialize" do
           it "yields reader given string" do
             inner = double("inner")
-            inner.should_receive(:called).with(JSON::LD::Reader)
+            expect(inner).to receive(:called).with(JSON::LD::Reader)
             JSON::LD::Reader.new(subject) do |reader|
               inner.called(reader.class)
             end
@@ -87,21 +87,21 @@ describe JSON::LD::Reader do
 
           it "yields reader given IO" do
             inner = double("inner")
-            inner.should_receive(:called).with(JSON::LD::Reader)
+            expect(inner).to receive(:called).with(JSON::LD::Reader)
             JSON::LD::Reader.new(StringIO.new(subject)) do |reader|
               inner.called(reader.class)
             end
           end
 
           it "returns reader" do
-            JSON::LD::Reader.new(subject).should be_a(JSON::LD::Reader)
+            expect(JSON::LD::Reader.new(subject)).to be_a(JSON::LD::Reader)
           end
         end
 
         describe "#each_statement" do
           it "yields statements" do
             inner = double("inner")
-            inner.should_receive(:called).with(RDF::Statement).exactly(3)
+            expect(inner).to receive(:called).with(RDF::Statement).exactly(3)
             JSON::LD::Reader.new(subject).each_statement do |statement|
               inner.called(statement.class)
             end
@@ -111,7 +111,7 @@ describe JSON::LD::Reader do
         describe "#each_triple" do
           it "yields statements" do
             inner = double("inner")
-            inner.should_receive(:called).exactly(3)
+            expect(inner).to receive(:called).exactly(3)
             JSON::LD::Reader.new(subject).each_triple do |subject, predicate, object|
               inner.called(subject.class, predicate.class, object.class)
             end

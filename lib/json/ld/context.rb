@@ -520,7 +520,7 @@ module JSON::LD
     ## FIXME: this should go away
     # Retrieve term mappings
     #
-    # @return [Array<String>]
+    # @return [Array<RDF::URI>]
     # @deprecated
     def mappings
       term_definitions.inject({}) do |memo, (t,td)|

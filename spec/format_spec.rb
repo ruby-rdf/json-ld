@@ -20,7 +20,7 @@ describe JSON::LD::Format do
       {:content_type   => 'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        RDF::Format.for(arg).should == @format_class
+        expect(RDF::Format.for(arg)).to eq @format_class
       end
     end
 
@@ -31,17 +31,17 @@ describe JSON::LD::Format do
       :type     => %({\n"@type": {),
     }.each do |sym, str|
       it "detects #{sym}" do
-        @format_class.for {str}.should == @format_class
+        expect(@format_class.for {str}).to eq @format_class
       end
     end
 
     it "should discover 'jsonld'" do
-      RDF::Format.for(:jsonld).reader.should == JSON::LD::Reader
+      expect(RDF::Format.for(:jsonld).reader).to eq JSON::LD::Reader
     end
   end
 
   describe "#to_sym" do
-    specify {@format_class.to_sym.should == :jsonld}
+    specify {expect(@format_class.to_sym).to eq :jsonld}
   end
 
   describe ".detect" do
@@ -49,7 +49,7 @@ describe JSON::LD::Format do
       :jsonld => '{"@context" => "foo"}',
     }.each do |sym, str|
       it "detects #{sym}" do
-        @format_class.detect(str).should be_true
+        expect(@format_class.detect(str)).to be_truthy
       end
     end
 
@@ -64,7 +64,7 @@ describe JSON::LD::Format do
       :turtle           => "@prefix foo: <bar> .\n foo:a foo:b <c> .",
     }.each do |sym, str|
       it "does not detect #{sym}" do
-        @format_class.detect(str).should be_false
+        expect(@format_class.detect(str)).to be_falsey
       end
     end
   end
