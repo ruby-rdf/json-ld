@@ -27,6 +27,14 @@ module JSON::LD
       # @return [Boolean] Reverse Property
       attr_accessor :reverse_property
 
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean] simple
+      attr_accessor :simple
+
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean] simple
+      def simple?; simple; end
+
       # Create a new Term Mapping with an ID
       # @param [String] term
       # @param [String] id
@@ -129,6 +137,8 @@ module JSON::LD
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
@@ -365,6 +375,7 @@ module JSON::LD
 
       # Initialize value to a the value associated with the key term in local context.
       value = local_context.fetch(term, false)
+      simple_term = value.is_a?(String)
       value = {'@id' => value} if value.is_a?(String)
 
       case value
@@ -377,6 +388,7 @@ module JSON::LD
       when Hash
         debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new(term)
+        definition.simple = simple_term
 
         if value.has_key?('@type')
           type = value['@type']
@@ -540,7 +552,6 @@ module JSON::LD
       term_definitions[term] ? term_definitions[term].id : nil
     end
 
-    ## FIXME: this should go away
     # Set term mapping
     #
     # @param [#to_s] term
@@ -552,6 +563,7 @@ module JSON::LD
       debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
       term_definitions[term] = TermDefinition.new(term, value)
+      term_definitions[term].simple = true
 
       term_sym = term.empty? ? "" : term.to_sym
       iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
@@ -839,6 +851,10 @@ module JSON::LD
         term_definitions.each do |term, td|
           next if term.include?(":")
           next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
+
+          # Also skip term if it was not a simple term and the :simple_compact_iris flag is true
+          next if @options[:simple_compact_iris] && !td.simple?
+
           suffix = iri[td.id.length..-1]
           ciri = "#{term}:#{suffix}"
           candidates << ciri unless value && term_definitions.has_key?(ciri)

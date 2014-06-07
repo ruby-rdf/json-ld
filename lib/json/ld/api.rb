@@ -74,6 +74,8 @@ module JSON::LD
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)

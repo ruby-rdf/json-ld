@@ -664,14 +664,16 @@ describe JSON::LD::Context do
   describe "#compact_iri" do
     subject {
       c = context.parse({
-        '@base' => 'http://base/',
-        "xsd"   => "http://www.w3.org/2001/XMLSchema#",
-        'ex'    => 'http://example.org/',
-        ''      => 'http://empty/',
-        '_'     => 'http://underscore/',
-        'rex'   => {'@reverse' => "ex"},
-        'lex'   => {'@id' => 'ex', '@language' => 'en'},
-        'tex'   => {'@id' => 'ex', '@type' => 'xsd:string'}
+        '@base'   => 'http://base/',
+        "xsd"     => "http://www.w3.org/2001/XMLSchema#",
+        'ex'      => 'http://example.org/',
+        ''        => 'http://empty/',
+        '_'       => 'http://underscore/',
+        'rex'     => {'@reverse' => "ex"},
+        'lex'     => {'@id' => 'ex', '@language' => 'en'},
+        'tex'     => {'@id' => 'ex', '@type' => 'xsd:string'},
+        'exp'     => {'@id' => 'ex:pert'},
+        'experts' => {'@id' => 'ex:perts'}
       })
       @debug.clear
       c
@@ -685,7 +687,8 @@ describe JSON::LD::Context do
       "empty"         => [":suffix",             "http://empty/suffix"],
       "unmapped"      => ["foo",                 "foo"],
       "bnode"         => ["_:a",                 RDF::Node("a")],
-      "relative"      => ["foo/bar",             "http://base/foo/bar"]
+      "relative"      => ["foo/bar",             "http://base/foo/bar"],
+      "odd CURIE"     => ["exp:s",               "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         expect(subject.compact_iri(input)).to produce(result, @debug)
@@ -700,7 +703,8 @@ describe JSON::LD::Context do
         "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
-        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"]
+        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
+        "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
@@ -718,7 +722,8 @@ describe JSON::LD::Context do
         "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
-        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"]
+        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
+        "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
@@ -805,6 +810,46 @@ describe JSON::LD::Context do
                   to produce(prop, @debug)
               end
             end
+          end
+        end
+      end
+    end
+
+    context "with :simple_compact_iris" do
+      before(:each) { subject.instance_variable_get(:@options)[:simple_compact_iris] = true}
+
+      {
+        "nil" => [nil, nil],
+        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
+        "keyword"       => ["@type",               "@type"],
+        "empty"         => [":suffix",             "http://empty/suffix"],
+        "unmapped"      => ["foo",                 "foo"],
+        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "relative"      => ["foo/bar",             "http://base/foo/bar"],
+        "odd CURIE"     => ["exp:s",               "http://example.org/perts"],
+        "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
+      }.each do |title, (result, input)|
+        it title do
+          expect(subject.compact_iri(input)).to produce(result, @debug)
+        end
+      end
+
+      context "and @vocab" do
+        before(:each) { subject.vocab = "http://example.org/"}
+
+        {
+          "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+          "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
+          "keyword"       => ["@type",               "@type"],
+          "empty"         => [":suffix",             "http://empty/suffix"],
+          "unmapped"      => ["foo",                 "foo"],
+          "bnode"         => ["_:a",                 RDF::Node("a")],
+          "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
+          "odd CURIE"     => ["experts",             "http://example.org/perts"]
+        }.each do |title, (result, input)|
+          it title do
+            expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
           end
         end
       end
