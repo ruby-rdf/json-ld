@@ -447,7 +447,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "foaf" => RDF::FOAF.to_uri.to_s,
         "foaf:knows" => {
-          "@id" => RDF::FOAF.knows.to_s,
           "@container" => "@list"
         }
       }).
@@ -481,7 +480,6 @@ describe JSON::LD::Context do
         "foaf" => RDF::FOAF.to_uri.to_s,
         "id" => "@id",
         "foaf:homepage" => {
-          "@id" => RDF::FOAF.homepage.to_s,
           "@type" => "@id"
         }
       }).
@@ -550,7 +548,7 @@ describe JSON::LD::Context do
       serialize).to produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
-          "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
+          "term" => {"@type" => "datatype"}
         }
       }, @debug)
     end

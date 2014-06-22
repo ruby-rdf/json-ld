@@ -43,25 +43,35 @@ module JSON::LD
         @id = id.to_s if id
       end
 
-      # Output Hash or String definition for this definition
+      ##
+      # Output Hash or String definition for this definition considering @language and @vocab
+      #
       # @param [Context] context
       # @return [String, Hash{String => Array[String], String}]
       def to_context_definition(context)
+        cid = if context.vocab && id.start_with?(context.vocab)
+          # Nothing to return unless it's the same as the vocab
+          id == context.vocab ? context.vocab : id.to_s[context.vocab.length..-1]
+        else
+          # Find a term to act as a prefix
+          iri, prefix = context.iri_to_term.detect {|i,p| id.to_s.start_with?(i.to_s)}
+          iri && iri != id ? "#{prefix}:#{id.to_s[iri.length..-1]}" : id
+        end
+
         if language_mapping.nil? &&
            container_mapping.nil? &&
            type_mapping.nil? &&
            reverse_property.nil?
-           cid = context.compact_iri(id)
-           cid == term ? id : cid
+
+           cid unless cid == term && context.vocab
         else
           defn = {}
-          cid = context.compact_iri(id)
           defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
           if type_mapping
             defn['@type'] = if KEYWORDS.include?(type_mapping)
               type_mapping
             else
-              context.compact_iri(type_mapping, :vocab => true)
+              context.compact_iri(type_mapping, vocab: true)
             end
           end
           defn['@container'] = container_mapping if container_mapping
@@ -139,6 +149,10 @@ module JSON::LD
     #   See `RDF::Reader#initialize`
     # @option options [Boolean]  :simple_compact_iris   (false)
     #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [String, #to_s] :vocab
+    #   Initial value for @vocab
+    # @option options [String, #to_s] :language
+    #   Initial value for @langauge
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
@@ -161,8 +175,14 @@ module JSON::LD
 
       # Load any defined prefixes
       (options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_term[v.to_s] = k unless k.nil?
+        next if k.nil?
+        @iri_to_term[v.to_s] = k
+        @term_definitions[k.to_s] = TermDefinition.new(k, v.to_s)
+        @term_definitions[k.to_s].simple = true
       end
+
+      self.vocab = options[:vocab] if options[:vocab]
+      self.default_language = options[:language] if options[:language]
 
       #debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
       
@@ -325,7 +345,6 @@ module JSON::LD
       result
     end
 
-
     ##
     # Create Term Definition
     #
@@ -455,6 +474,8 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         end
 
+        @iri_to_term[definition.id] = term if simple_term && definition.id
+
         if value.has_key?('@container')
           container = value['@container']
           raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
@@ -504,8 +525,9 @@ module JSON::LD
           ctx['@vocab'] = vocab.to_s if vocab
 
           # Term Definitions
-          term_definitions.dup.each do |term, definition|
-            ctx[term] = definition.to_context_definition(self)
+          term_definitions.keys.sort.each do |term|
+            defn = term_definitions[term].to_context_definition(self)
+            ctx[term] = defn if defn
           end
 
           debug("") {"start_doc: context=#{ctx.inspect}"}
@@ -517,6 +539,81 @@ module JSON::LD
         r['@context'] = use_context unless use_context.nil? || use_context.empty?
         r
       end
+    end
+
+    ##
+    # Build a context from an RDF::Vocabulary definition.
+    #
+    # @example building from an external vocabulary definition
+    #
+    #     g = RDF::Graph.load("http://schema.org/docs/schema_org_rdfa.html")
+    #
+    #     context = JSON::LD::Context.new.from_vocabulary(g,
+    #           vocab: "http://schema.org/",
+    #           prefixes: {schema: "http://schema.org/"},
+    #           language: "en")
+    #
+    # @param [RDF::Queryable] graph
+    #
+    # @return [self]
+    def from_vocabulary(graph)
+      statements = {}
+      ranges = {}
+
+      # Add term definitions for each class and property not in schema:, and
+      # for those properties having an object range
+      graph.each do |statement|
+        (statements[statement.subject] ||= []) << statement
+
+        # Keep track of predicate ranges
+        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate) 
+          (ranges[statement.subject] ||= []) << statement.object
+        end
+      end
+
+      # Add term definitions for each class and property not in vocab, and
+      # for those properties having an object range
+      statements.each do |subject, values|
+        types = values.select {|v| v.predicate == RDF.type}.map(&:object)
+        is_property = types.any? {|t| t.to_s.include?("Property")}
+        
+        term = subject.to_s.split(/[\/\#]/).last
+
+        if !is_property
+          # Ignore if there's a default voabulary and this is not a property
+          next if vocab && subject.to_s.start_with?(vocab)
+
+          # otherwise, create a term definition
+          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+        else
+          prop_ranges = ranges.fetch(subject, [])
+          # If any range is empty or member of range includes rdfs:Literal or schema:Text
+          next if vocab && prop_ranges.empty? ||
+                           prop_ranges.include?(RDF::SCHEMA.Text) ||
+                           prop_ranges.include?(RDF::RDFS.Literal)
+          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+
+          # Set context typing based on first element in range
+          case r = prop_ranges.first
+          when RDF::XSD.string
+            if self.default_language
+              td.language_mapping = false
+            end
+          when RDF::XSD.boolean, RDF::SCHEMA.Boolean, RDF::XSD.date, RDF::SCHEMA.Date,
+            RDF::XSD.dateTime, RDF::SCHEMA.DateTime, RDF::XSD.time, RDF::SCHEMA.Time,
+            RDF::XSD.duration, RDF::SCHEMA.Duration, RDF::XSD.decimal, RDF::SCHEMA.Number,
+            RDF::XSD.float, RDF::SCHEMA.Float, RDF::XSD.integer, RDF::SCHEMA.Integer,
+            RDF::XSD.anyURI
+            td.type_mapping = r
+            td.simple = false
+          else
+            # It's an object range (includes schema:URL)
+            td.type_mapping = '@id'
+          end
+        end
+      end
+
+      self
     end
 
     ## FIXME: this should go away
@@ -547,8 +644,7 @@ module JSON::LD
     # @param [#to_s] term
     # @param [RDF::URI, String, nil] value
     #
-    # @return [RDF::URI, String]
-    # @deprecated
+    # @return [TermDefinition]
     def set_mapping(term, value)
       debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
@@ -559,6 +655,7 @@ module JSON::LD
       iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
       @options[:prefixes][term_sym] = value if @options.has_key?(:prefixes)
       iri_to_term[value.to_s] = term
+      term_definitions[term]
     end
 
     ## FIXME: this should go away
