@@ -62,7 +62,24 @@ end
 
 # Load vocabulary
 graph = RDF::Graph.load(ARGV[0])
-context = JSON::LD::Context.new(options).from_vocabulary(graph)
+
+base_context = {
+  "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
+  "rdfs:domain" => {"@type" => "@vocab"},
+  "rdfs:range" => {"@type" => "@vocab"},
+  "rdfs:subClassOf" => {"@type" => "@vocab"},
+  "rdfs:subPropertyOf" => {"@type" => "@vocab"},
+  "owl" => "http://www.w3.org/2002/07/owl#",
+  "owl:equivalentClass" => {"@type" => "@vocab"},
+  "owl:equivalentProperty" => {"@type" => "@vocab"},
+  "owl:oneOf" => {"@container" => "@list", "@type" => "@vocab"},
+  "owl:imports" => {"@type" => "@id"},
+  "owl:versionInfo" => {"@type" => "xsd:string", "@language" => nil},
+  "owl:inverseOf" => {"@type" => "@vocab"},
+}
+context = JSON::LD::Context.new(options).
+  parse(base_context).
+  from_vocabulary(graph)
 
 # Simply serialize with the generated context
 if options[:include_body]
