@@ -37,7 +37,7 @@ task :schema_context do
     script/gen_context http://schema.org/docs/schema_org_rdfa.html \
       --vocab http://schema.org/ \
       --prefix 'schema http://schema.org/' \
-      --body \
+      --body --hier \
       --o etc/schema.org.jsonld
   )
 end

@@ -18,10 +18,10 @@ options = {
   prefixes: {},
   simple_compact_iris: true
 }
-input = nil
 
 OPT_ARGS = [
   ["--body",          GetoptLong::NO_ARGUMENT,      "Include the vocabulary definition in the body of the document"],
+  ["--hierarchical",  GetoptLong::NO_ARGUMENT,      "Create a hierachy using 'children' as reverse of rdfs:subClassOf"],
   ["--language",      GetoptLong::REQUIRED_ARGUMENT,"Default language for vocabulary"],
   ["--output", "-o",  GetoptLong::REQUIRED_ARGUMENT,"Output to the specified file path"],
   ["--prefix",        GetoptLong::REQUIRED_ARGUMENT,"space-separated prefix uri combination"],
@@ -51,6 +51,7 @@ opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 opts.each do |opt, arg|
   case opt
   when '--body'         then options[:include_body] = true
+  when '--hierarchical' then options[:hier] = true
   when '--language'     then options[:language] = arg
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--quiet'        then options[:quiet] = true
@@ -64,11 +65,12 @@ end
 graph = RDF::Graph.load(ARGV[0])
 
 base_context = {
+  "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
   "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
-  "rdfs:domain" => {"@type" => "@vocab"},
-  "rdfs:range" => {"@type" => "@vocab"},
-  "rdfs:subClassOf" => {"@type" => "@vocab"},
-  "rdfs:subPropertyOf" => {"@type" => "@vocab"},
+  "rdfs:domain" => {"@type" => "@id"},
+  "rdfs:range" => {"@type" => "@id"},
+  "rdfs:subClassOf" => {"@type" => "@id"},
+  "rdfs:subPropertyOf" => {"@type" => "@id"},
   "owl" => "http://www.w3.org/2002/07/owl#",
   "owl:equivalentClass" => {"@type" => "@vocab"},
   "owl:equivalentProperty" => {"@type" => "@vocab"},
@@ -77,12 +79,63 @@ base_context = {
   "owl:versionInfo" => {"@type" => "xsd:string", "@language" => nil},
   "owl:inverseOf" => {"@type" => "@vocab"},
 }
+
 context = JSON::LD::Context.new(options).
   parse(base_context).
   from_vocabulary(graph)
 
 # Simply serialize with the generated context
-if options[:include_body]
+if options[:hier]
+  STDERR.puts "Hierarchical implies adding body" unless options[:include_body]
+
+  class_map = {}
+  property_map = {}
+  json = JSON::LD::API.fromRDF(graph) do |expanded|
+    JSON::LD::API.compact(expanded, context) do |compacted|
+      compacted['@graph'].each do |obj|
+        #next if type_exclusion.include?(obj['name'])
+        if obj['@type'].include?("rdfs:Class")
+          class_map[obj['@id']] = obj
+        elsif obj['@type'].include?("rdf:Property")
+          property_map[obj['@id']] = obj
+        end
+      end
+    end
+  end
+
+  thing = class_map['schema:Thing']
+  datatype = class_map['schema:DataType']
+
+  # Build class hierarchy
+  class_map.each do |id, obj|
+    [obj['rdfs:subClassOf']].flatten.compact.each do |super_class|
+      so = class_map[super_class]
+      #next if so.nil?
+      raise "super class not found: #{super_class}" if so.nil?
+      (so['children'] ||= []) << obj
+    end
+  end
+
+  # Add properties to classes
+  property_map.each do |id, obj|
+    [obj['domainIncludes']].flatten.compact.each do |domain|
+      dom = class_map[domain]
+      #next if dom.nil?
+      raise "domain not found: #{domain}" if dom.nil?
+      (dom['properties'] ||= []) << obj
+    end
+  end
+
+  result = {
+    "@context" => [context.serialize['@context'], {
+      "children" => {"@reverse" => "rdfs:subClassOf"},
+      "properties" => {"@reverse" => "schema:domainIncludes"}
+      }],
+    "@graph" => [thing, datatype]
+  }
+
+  options[:output].puts(result.to_json(JSON::LD::JSON_STATE))
+elsif options[:include_body]
   JSON::LD::Writer.new(options[:output], context: context, standard_prefixes: true) {|w| w << graph}
 else
   options[:output].puts(context.serialize.to_json(JSON::LD::JSON_STATE))
@@ -104,7 +157,7 @@ end
 #
 #thing = object_map['schema:Thing']
 #
-## Build type heirarchy
+## Build type hierarchy
 #object_map.each do |id, obj|
 #  [obj['rdfs:subClassOf']].flatten.compact.each do |super_class|
 #    so = object_map[super_class]
