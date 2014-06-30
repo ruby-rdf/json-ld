@@ -304,7 +304,7 @@ module JSON::LD
               raise
             rescue Exception => e
               debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
+              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
