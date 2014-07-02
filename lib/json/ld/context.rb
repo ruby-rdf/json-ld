@@ -84,6 +84,7 @@ module JSON::LD
       def inspect
         v = %w([TD)
         v << "id=#{@id}"
+        v << "term=#{@term}"
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
@@ -602,8 +603,7 @@ module JSON::LD
           when RDF::XSD.boolean, RDF::SCHEMA.Boolean, RDF::XSD.date, RDF::SCHEMA.Date,
             RDF::XSD.dateTime, RDF::SCHEMA.DateTime, RDF::XSD.time, RDF::SCHEMA.Time,
             RDF::XSD.duration, RDF::SCHEMA.Duration, RDF::XSD.decimal, RDF::SCHEMA.Number,
-            RDF::XSD.float, RDF::SCHEMA.Float, RDF::XSD.integer, RDF::SCHEMA.Integer,
-            RDF::XSD.anyURI
+            RDF::XSD.float, RDF::SCHEMA.Float, RDF::XSD.integer, RDF::SCHEMA.Integer
             td.type_mapping = r
             td.simple = false
           else
@@ -614,29 +614,6 @@ module JSON::LD
       end
 
       self
-    end
-
-    ## FIXME: this should go away
-    # Retrieve term mappings
-    #
-    # @return [Array<RDF::URI>]
-    # @deprecated
-    def mappings
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td ? td.id : nil
-        memo
-      end
-    end
-
-    ## FIXME: this should go away
-    # Retrieve term mapping
-    #
-    # @param [String, #to_s] term
-    #
-    # @return [RDF::URI, String]
-    # @deprecated
-    def mapping(term)
-      term_definitions[term] ? term_definitions[term].id : nil
     end
 
     # Set term mapping
@@ -658,83 +635,57 @@ module JSON::LD
       term_definitions[term]
     end
 
-    ## FIXME: this should go away
-    # Reverse term mapping, typically used for finding aliases for keys.
-    #
-    # Returns either the original value, or a mapping for this value.
-    #
-    # @example
-    #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
-    #
-    # @param [RDF::URI, String] value
-    # @return [String]
-    # @deprecated
-    def alias(value)
-      iri_to_term.fetch(value, value)
-    end
-
-    ##
-    # Retrieve term coercion
-    #
-    # @param [String] property in unexpanded form
-    #
-    # @return [RDF::URI, '@id']
-    def coerce(property)
-      # Map property, if it's not an RDF::Value
-      # @type is always is an IRI
-      return '@id' if [RDF.type, '@type'].include?(property)
-      term_definitions[property] && term_definitions[property].type_mapping
-    end
-    protected :coerce
-
     ##
     # Retrieve container mapping, add it if `value` is provided
     #
-    # @param [String] property in unexpanded form
+    # @param [Term, #to_s] term in unexpanded form
     # @return [String]
-    def container(property)
-      return '@set' if property == '@graph'
-      return property if KEYWORDS.include?(property)
-      term_definitions[property] && term_definitions[property].container_mapping
-    end
-
-    ## FIXME: this should go away
-    # Retrieve language mappings
-    #
-    # @return [Array<String>]
-    # @deprecated
-    def languages
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.language_mapping
-        memo
-      end
+    def container(term)
+      return '@set' if term == '@graph'
+      return term if KEYWORDS.include?(term)
+      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      term && term.container_mapping
     end
 
     ##
-    # Retrieve the language associated with a property, or the default language otherwise
+    # Retrieve the language associated with a term, or the default language otherwise
+    # @param [Term, #to_s] term in unexpanded form
     # @return [String]
-    def language(property)
-      lang = term_definitions[property] && term_definitions[property].language_mapping
+    def language(term)
+      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      lang = term && term.language_mapping
       lang.nil? ? @default_language : lang
     end
 
     ##
     # Is this a reverse term
+    # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
-    def reverse?(property)
-      term_definitions[property] && term_definitions[property].reverse_property
+    def reverse?(term)
+      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      term && term.reverse_property
     end
 
     ##
-    # Determine if `term` is a suitable term.
-    # Term may be any valid JSON string.
+    # Given a term or IRI, find a reverse term definition matching that term. If the term is already reversed, find a non-reversed version.
     #
-    # @param [String] term
-    # @return [Boolean]
-    def term_valid?(term)
-      term.is_a?(String)
+    # @param [Term, #to_s] term
+    # @return [Term] related term definition
+    def reverse_term(term)
+      # Direct lookup of term
+      term = term_definitions[term.to_s] if term_definitions.has_key?(term.to_s) && !term.is_a?(TermDefinition)
+
+      # Lookup term, assuming term is an IRI
+      unless term.is_a?(TermDefinition)
+        td = term_definitions.values.detect {|t| t.id == term.to_s}
+
+        # Otherwise create a temporary term definition
+        term = td || TermDefinition.new(term.to_s, expand_iri(term, vocab:true))
+      end
+
+      # Now, return a term, which reverses this term
+      term_definitions.values.detect {|t| t.id == term.id && t.reverse_property != term.reverse_property}
     end
-    protected :term_valid?
 
     ##
     # Expand an IRI. Relative IRIs are expanded against any document base.
@@ -1155,7 +1106,45 @@ module JSON::LD
       ec
     end
 
-    private
+  protected
+
+    ##
+    # Retrieve term coercion
+    #
+    # @param [String] property in unexpanded form
+    #
+    # @return [RDF::URI, '@id']
+    def coerce(property)
+      # Map property, if it's not an RDF::Value
+      # @type is always is an IRI
+      return '@id' if [RDF.type, '@type'].include?(property)
+      term_definitions[property] && term_definitions[property].type_mapping
+    end
+
+    ##
+    # Determine if `term` is a suitable term.
+    # Term may be any valid JSON string.
+    #
+    # @param [String] term
+    # @return [Boolean]
+    def term_valid?(term)
+      term.is_a?(String)
+    end
+
+    # Reverse term mapping, typically used for finding aliases for keys.
+    #
+    # Returns either the original value, or a mapping for this value.
+    #
+    # @example
+    #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
+    #
+    # @param [RDF::URI, String] value
+    # @return [String]
+    def alias(value)
+      iri_to_term.fetch(value, value)
+    end
+
+  private
 
     def uri(value)
       case value.to_s
@@ -1287,6 +1276,39 @@ module JSON::LD
         return rel.empty? ? "./" : rel
       end
       iri
+    end
+
+    ## Used for testing
+    # Retrieve term mappings
+    #
+    # @return [Array<RDF::URI>]
+    def mappings
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td ? td.id : nil
+        memo
+      end
+    end
+
+    ## Used for testing
+    # Retrieve term mapping
+    #
+    # @param [String, #to_s] term
+    #
+    # @return [RDF::URI, String]
+    def mapping(term)
+      term_definitions[term] ? term_definitions[term].id : nil
+    end
+
+    ## Used for testing
+    # Retrieve language mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def languages
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.language_mapping
+        memo
+      end
     end
   end
 end

@@ -56,7 +56,7 @@ describe JSON::LD::Context do
       it "creates mappings" do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
-        expect(ec.mappings).to produce({
+        expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
@@ -73,7 +73,7 @@ describe JSON::LD::Context do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1").and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
-        expect(ec.mappings).to produce({
+        expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
@@ -92,7 +92,7 @@ describe JSON::LD::Context do
 
       it "merges definitions from each context" do
         ec = subject.parse(@ctx)
-        expect(ec.mappings).to produce({
+        expect(ec.send(:mappings)).to produce({
           "foo" => "http://example.com/foo",
           "bar" => "http://example.com/foo"
         }, @debug)
@@ -115,7 +115,7 @@ describe JSON::LD::Context do
       it "maps term with IRI value" do
         expect(subject.parse({
           "foo" => "http://example.com/"
-        }).mappings).to produce({
+        }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, @debug)
       end
@@ -123,7 +123,7 @@ describe JSON::LD::Context do
       it "maps term with @id" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/"}
-        }).mappings).to produce({
+        }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, @debug)
       end
@@ -163,7 +163,7 @@ describe JSON::LD::Context do
       it "associates language mapping with predicate" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@language" => "en"}
-        }).languages).to produce({
+        }).send(:languages)).to produce({
           "foo" => "en"
         }, @debug)
       end
@@ -173,7 +173,7 @@ describe JSON::LD::Context do
           "foo" => "bar",
           "bar" => "baz",
           "baz" => "http://example.com/"
-        }).mappings).to produce({
+        }).send(:mappings)).to produce({
           "foo" => "http://example.com/",
           "bar" => "http://example.com/",
           "baz" => "http://example.com/"
@@ -184,7 +184,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => "bar",
           "@vocab" => "http://example.com/"
-        }).mappings).to produce({
+        }).send(:mappings)).to produce({
           "foo" => "http://example.com/bar"
         }, @debug)
       end
@@ -218,21 +218,21 @@ describe JSON::LD::Context do
               "@vocab" => "http://schema.org/",
               "term" => nil
             }
-          ]).mappings).to produce({"term" => nil}, @debug)
+          ]).send(:mappings)).to produce({"term" => nil}, @debug)
         end
 
         it "loads initial context" do
           init_ec = JSON::LD::Context.new
           nil_ec = subject.parse(nil)
           expect(nil_ec.default_language).to eq init_ec.default_language
-          expect(nil_ec.languages).to eq init_ec.languages
-          expect(nil_ec.mappings).to eq init_ec.mappings
+          expect(nil_ec.send(:languages)).to eq init_ec.send(:languages)
+          expect(nil_ec.send(:mappings)).to eq init_ec.send(:mappings)
           expect(nil_ec.coercions).to eq init_ec.coercions
           expect(nil_ec.containers).to eq init_ec.containers
         end
         
         it "removes a term definition" do
-          expect(subject.parse({"name" => nil}).mapping("name")).to be_nil
+          expect(subject.parse({"name" => nil}).send(:mapping, "name")).to be_nil
         end
       end
     end
@@ -1077,7 +1077,7 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "compact_value" do
+  describe "#compact_value" do
     let(:ctx) do
       c = context.parse({
         "dc"         => RDF::DC.to_uri.to_s,
@@ -1166,6 +1166,99 @@ describe JSON::LD::Context do
           expect(subject.compact_value("foo", expanded)).to produce(compacted, @debug)
         end
       end
+    end
+  end
+
+  describe "#from_vocabulary" do
+    it "must be described"
+  end
+
+  describe "#container" do
+    subject {
+      ctx = context.parse({
+        "ex" => "http://example.org/",
+        "list" => {"@id" => "ex:list", "@container" => "@list"},
+        "set" => {"@id" => "ex:set", "@container" => "@set"},
+        "ndx" => {"@id" => "ex:ndx", "@container" => "@index"},
+      })
+      @debug.clear
+      ctx
+    }
+    it "uses TermDefinition" do
+      expect(subject.container(subject.term_definitions['ex'])).to be_nil
+      expect(subject.container(subject.term_definitions['list'])).to eq '@list'
+      expect(subject.container(subject.term_definitions['set'])).to eq '@set'
+      expect(subject.container(subject.term_definitions['ndx'])).to eq '@index'
+    end
+
+    it "uses string" do
+      expect(subject.container('ex')).to be_nil
+      expect(subject.container('list')).to eq '@list'
+      expect(subject.container('set')).to eq '@set'
+      expect(subject.container('ndx')).to eq '@index'
+    end
+  end
+
+  describe "#language" do
+    subject {
+      ctx = context.parse({
+        "ex" => "http://example.org/",
+        "nil" => {"@id" => "ex:nil", "@language" => nil},
+        "en" => {"@id" => "ex:en", "@language" => "en"},
+      })
+      @debug.clear
+      ctx
+    }
+    it "uses TermDefinition" do
+      expect(subject.language(subject.term_definitions['ex'])).to be_falsey
+      expect(subject.language(subject.term_definitions['nil'])).to be_falsey
+      expect(subject.language(subject.term_definitions['en'])).to eq 'en'
+    end
+
+    it "uses string" do
+      expect(subject.language('ex')).to be_falsey
+      expect(subject.language('nil')).to be_falsey
+      expect(subject.language('en')).to eq 'en'
+    end
+  end
+
+  describe "#reverse?" do
+    subject {
+      ctx = context.parse({
+        "ex" => "http://example.org/",
+        "reverse" => {"@reverse" => "ex:reverse"},
+      })
+      @debug.clear
+      ctx
+    }
+    it "uses TermDefinition" do
+      expect(subject.reverse?(subject.term_definitions['ex'])).to be_falsey
+      expect(subject.reverse?(subject.term_definitions['reverse'])).to be_truthy
+    end
+
+    it "uses string" do
+      expect(subject.reverse?('ex')).to be_falsey
+      expect(subject.reverse?('reverse')).to be_truthy
+    end
+  end
+
+  describe "#reverse_term" do
+    subject {
+      ctx = context.parse({
+        "ex" => "http://example.org/",
+        "reverse" => {"@reverse" => "ex"},
+      })
+      @debug.clear
+      ctx
+    }
+    it "uses TermDefinition" do
+      expect(subject.reverse_term(subject.term_definitions['ex'])).to eql subject.term_definitions['reverse']
+      expect(subject.reverse_term(subject.term_definitions['reverse'])).to eql subject.term_definitions['ex']
+    end
+
+    it "uses string" do
+      expect(subject.reverse_term('ex')).to eql subject.term_definitions['reverse']
+      expect(subject.reverse_term('reverse')).to eql subject.term_definitions['ex']
     end
   end
 end
