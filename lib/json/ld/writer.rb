@@ -85,6 +85,8 @@ module JSON::LD
     #   Add standard prefixes to @prefixes, if necessary.
     # @option options [IO, Array, Hash, String, Context]     :context     ({})
     #   context to use when serializing. Constructed context for native serialization.
+    # @option options [IO, Array, Hash, String, Context]     :frame     ({})
+    #   frame to use when serializing.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
     # @yield  [writer] `self`
@@ -168,8 +170,13 @@ module JSON::LD
         result = API.flatten(result, context, @options)
       end
 
-      # Perform compaction, if we have a context
-      if context
+      frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
+      if frame ||= @options[:frame]
+        # Perform framing, if given a frame
+        debug("writer") { "frame result"}
+        result = API.frame(result, frame, @options)
+      elsif context
+        # Perform compaction, if we have a context
         debug("writer") { "compact result"}
         result = API.compact(result, context,  @options)
       end
