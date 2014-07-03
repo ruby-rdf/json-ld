@@ -339,7 +339,7 @@ module JSON::LD
             end
           else
             # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-            raise JsonLdError::InvalidLocalContext
+            raise JsonLdError::InvalidLocalContext, context.inspect
           end
         end
       end
@@ -369,15 +369,15 @@ module JSON::LD
       when nil
         defined[term] = false
       else
-        raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found for #{term.inspect}"
+        raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found: #{term.inspect}"
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
-        raise JsonLdError::KeywordRedefinition, "term #{term.inspect} must not be a keyword" if
+        raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
-        raise JsonLdError::InvalidTermDefinition, "term #{term.inspect} is invalid"
+        raise JsonLdError::InvalidTermDefinition, "term is invalid: #{term.inspect}"
       end
 
       # Remove any existing term definition for term in active context.
@@ -410,13 +410,13 @@ module JSON::LD
             begin
               expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
             rescue JsonLdError::InvalidIRIMapping
-              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type' to #{type.inspect}"
+              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect}"
             end
           else
             :error
           end
           unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
-            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}"
+            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect}"
           end
           debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
@@ -425,7 +425,7 @@ module JSON::LD
         if value.has_key?('@reverse')
           raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
             value.keys.any? {|k| %w(@id).include?(k)}
-          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect}" unless
             value['@reverse'].is_a?(String)
 
           # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
@@ -446,7 +446,7 @@ module JSON::LD
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
-          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect}" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
             :vocab => true,
@@ -470,7 +470,7 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab" unless vocab
+          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term}" unless vocab
           definition.id = vocab + term
           debug("") {"=> #{definition.id}"}
         end
