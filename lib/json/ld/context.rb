@@ -564,6 +564,7 @@ module JSON::LD
       # Add term definitions for each class and property not in schema:, and
       # for those properties having an object range
       graph.each do |statement|
+        next if statement.subject.node?
         (statements[statement.subject] ||= []) << statement
 
         # Keep track of predicate ranges
@@ -636,6 +637,15 @@ module JSON::LD
     end
 
     ##
+    # Find a term definition
+    #
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [Term]
+    def find_definition(term)
+      term.is_a?(TermDefinition) ? term : term_definitions[term.to_s]
+    end
+
+    ##
     # Retrieve container mapping, add it if `value` is provided
     #
     # @param [Term, #to_s] term in unexpanded form
@@ -643,7 +653,7 @@ module JSON::LD
     def container(term)
       return '@set' if term == '@graph'
       return term if KEYWORDS.include?(term)
-      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      term = find_definition(term)
       term && term.container_mapping
     end
 
@@ -652,7 +662,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [String]
     def language(term)
-      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      term = find_definition(term)
       lang = term && term.language_mapping
       lang.nil? ? @default_language : lang
     end
@@ -662,7 +672,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
     def reverse?(term)
-      term = term_definitions[term.to_s] unless term.is_a?(TermDefinition)
+      term = find_definition(term)
       term && term.reverse_property
     end
 

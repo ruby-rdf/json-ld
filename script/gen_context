@@ -22,6 +22,7 @@ options = {
 OPT_ARGS = [
   ["--body",          GetoptLong::NO_ARGUMENT,      "Include the vocabulary definition in the body of the document"],
   ["--hierarchical",  GetoptLong::NO_ARGUMENT,      "Create a hierachy using 'children' as reverse of rdfs:subClassOf"],
+  ["--initial",       GetoptLong::REQUIRED_ARGUMENT,"Initial context to load, overrides default"],
   ["--language",      GetoptLong::REQUIRED_ARGUMENT,"Default language for vocabulary"],
   ["--output", "-o",  GetoptLong::REQUIRED_ARGUMENT,"Output to the specified file path"],
   ["--prefix",        GetoptLong::REQUIRED_ARGUMENT,"space-separated prefix uri combination"],
@@ -45,12 +46,28 @@ def usage
   exit(1)
 end
 
+base_context = ::JSON.parse %({
+  "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "rdfs:domain": {"@type": "@id"},
+  "rdfs:range": {"@type": "@id"},
+  "rdfs:subClassOf": {"@type": "@id"},
+  "rdfs:subPropertyOf": {"@type": "@id"},
+  "owl": "http://www.w3.org/2002/07/owl#",
+  "owl:equivalentClass": {"@type": "@vocab"},
+  "owl:equivalentProperty": {"@type": "@vocab"},
+  "owl:oneOf": {"@container": "@list", "@type": "@vocab"},
+  "owl:imports": {"@type": "@id"},
+  "owl:versionInfo": {"@type": "xsd:string", "@language": null},
+  "owl:inverseOf": {"@type": "@vocab"}
+})
 
 opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 
 opts.each do |opt, arg|
   case opt
   when '--body'         then options[:include_body] = true
+  when '--initial'      then base_context = ::JSON.parse(File.read(arg))
   when '--hierarchical' then options[:hier] = true
   when '--language'     then options[:language] = arg
   when '--output'       then options[:output] = File.open(arg, "w")
@@ -63,22 +80,6 @@ end
 
 # Load vocabulary
 graph = RDF::Graph.load(ARGV[0])
-
-base_context = {
-  "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-  "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
-  "rdfs:domain" => {"@type" => "@id"},
-  "rdfs:range" => {"@type" => "@id"},
-  "rdfs:subClassOf" => {"@type" => "@id"},
-  "rdfs:subPropertyOf" => {"@type" => "@id"},
-  "owl" => "http://www.w3.org/2002/07/owl#",
-  "owl:equivalentClass" => {"@type" => "@vocab"},
-  "owl:equivalentProperty" => {"@type" => "@vocab"},
-  "owl:oneOf" => {"@container" => "@list", "@type" => "@vocab"},
-  "owl:imports" => {"@type" => "@id"},
-  "owl:versionInfo" => {"@type" => "xsd:string", "@language" => nil},
-  "owl:inverseOf" => {"@type" => "@vocab"},
-}
 
 context = JSON::LD::Context.new(options).
   parse(base_context).
