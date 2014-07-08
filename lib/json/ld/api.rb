@@ -1,4 +1,4 @@
-require 'open-uri'
+require 'openssl'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/flatten'
