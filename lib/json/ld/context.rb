@@ -8,7 +8,7 @@ module JSON::LD
 
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
     class TermDefinition
-      # @return [String] IRI map
+      # @return [RDF::URI] IRI map
       attr_accessor :id
 
       # @return [String] term name
@@ -63,10 +63,10 @@ module JSON::LD
            type_mapping.nil? &&
            reverse_property.nil?
 
-           cid unless cid == term && context.vocab
+           cid.to_s unless cid == term && context.vocab
         else
           defn = {}
-          defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
+          defn[reverse_property ? '@reverse' : '@id'] = cid.to_s unless cid == term && !reverse_property
           if type_mapping
             defn['@type'] = if KEYWORDS.include?(type_mapping)
               type_mapping
@@ -126,7 +126,7 @@ module JSON::LD
     #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @return [String]
+    # @return [RDF::URI]
     attr_reader :vocab
 
     # @return [Hash{Symbol => Object}] Global options used in generating IRIs

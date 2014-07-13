@@ -10,13 +10,15 @@ module JSON::LD
     # @param [Hash{String => Hash}] nodes
     #   Map of flattened nodes
     # @param [Hash{String => Object}] frame
-    # @param [Hash{String => Object}] parent
+    # @param [Hash{Symbol => Object}] options ({})
+    # @option options [Hash{String => Object}] :parent
     #   Parent node or top-level array
-    # @param [String] property
+    # @option options [String] :property
     #   Property referencing this frame, or null for array.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, nodes, frame, parent, property)
+    def frame(state, nodes, frame, options = {})
       depth do
+        parent, property = options[:parent], options[:property]
         debug("frame") {"state: #{state.inspect}"}
         debug("frame") {"nodes: #{nodes.keys.inspect}"}
         debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
@@ -48,9 +50,7 @@ module JSON::LD
         
           # If embedOn is true, and id is in map of embeds from state
           if embed && (existing = state[:embeds].fetch(id, nil))
-            # only overwrite an existing embed if it has already been added to its
-            # parent -- otherwise its parent is somewhere up the tree from this
-            # embed and the embed would occur twice once the tree is added
+            # only overwrite an existing embed if it has already been added to its parent -- otherwise its parent is somewhere up the tree from this embed and the embed would occur twice once the tree is added
             embed = false
           
             embed = if existing[:parent].is_a?(Array)
@@ -114,7 +114,7 @@ module JSON::LD
                       debug("frame") {"list item of #{prop} recurse for #{itemid.inspect}"}
 
                       # If listitem is a node reference process listitem recursively using this algorithm passing a new map of nodes that contains the @id of listitem as the key and the node reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
-                      frame(state, {itemid => @node_map[itemid]}, frame[prop].first, list, '@list')
+                      frame(state, {itemid => @node_map[itemid]}, frame[prop].first, parent: list, property: '@list')
                     else
                       # Otherwise, append a copy of listitem to @list in list.
                       debug("frame") {"list item of #{prop} non-node ref #{listitem.inspect}"}
@@ -128,7 +128,7 @@ module JSON::LD
                   debug("frame") {"value property #{prop} recurse for #{itemid.inspect}"}
                   
                   # passing a new map as nodes that contains the @id of item as the key and the node reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
-                  frame(state, {itemid => @node_map[itemid]}, frame[prop].first, output, prop)
+                  frame(state, {itemid => @node_map[itemid]}, frame[prop].first, parent: output, property: prop)
                 else
                   # Otherwise, append a copy of item to active property in output.
                   debug("frame") {"value property #{prop} non-node ref #{item.inspect}"}

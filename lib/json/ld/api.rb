@@ -330,7 +330,7 @@ module JSON::LD
         debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @node_map, (expanded_frame.first || {}), result, nil)
+        frame(framing_state, @node_map, (expanded_frame.first || {}), parent: result)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame
