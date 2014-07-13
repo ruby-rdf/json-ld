@@ -410,22 +410,22 @@ module JSON::LD
             begin
               expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
             rescue JsonLdError::InvalidIRIMapping
-              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect}"
+              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect} on term #{term.inspect}"
             end
           else
             :error
           end
           unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
-            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect}"
+            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
 
         if value.has_key?('@reverse')
-          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
+          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
             value.keys.any? {|k| %w(@id).include?(k)}
-          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect}" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
             value['@reverse'].is_a?(String)
 
           # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
@@ -434,26 +434,26 @@ module JSON::LD
                                       :documentRelative => true,
                                       :local_context => local_context,
                                       :defined => defined)
-          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id}" unless
+          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
-          if (container = value['@container'])
+          if (container = value.fetch('@container', false))
             raise JsonLdError::InvalidReverseProperty,
-                  "unknown mapping for '@container' to #{container.inspect}" unless
+                  "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
                    ['@set', '@index', nil].include?(container)
             definition.container_mapping = container
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
-          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect}" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
             :vocab => true,
             :documentRelative => true,
             :local_context => local_context,
             :defined => defined)
-          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context" if
+          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
@@ -470,7 +470,7 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term}" unless vocab
+          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
           definition.id = vocab + term
           debug("") {"=> #{definition.id}"}
         end
@@ -479,14 +479,14 @@ module JSON::LD
 
         if value.has_key?('@container')
           container = value['@container']
-          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
+          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless %w(@list @set @language @index).include?(container)
           debug("") {"container_mapping: #{container.inspect}"}
           definition.container_mapping = container
         end
 
         if value.has_key?('@language')
           language = value['@language']
-          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}}" unless language.nil? || (language || "").is_a?(String)
+          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
           language = language.downcase if language.is_a?(String)
           debug("") {"language_mapping: #{language.inspect}"}
           definition.language_mapping = language || false
@@ -495,7 +495,7 @@ module JSON::LD
         term_definitions[term] = definition
         defined[term] = true
       else
-        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class}"
+        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class} on term #{term.inspect}"
       end
     end
 
