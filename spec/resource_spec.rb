@@ -40,25 +40,25 @@ describe JSON::LD::Resource do
   end
 
   describe "#hash" do
-    specify {subject.hash.should be_a(Fixnum)}
+    specify {expect(subject.hash).to be_a(Fixnum)}
       
     it "returns the hash of the attributes" do
-      subject.hash.should == subject.deresolve.hash
+      expect(subject.hash).to eq subject.deresolve.hash
     end
   end
 
   describe "#to_json" do
     it "has JSON" do
-      subject.to_json.should be_a(String)
-      JSON.parse(subject.to_json).should be_a(Hash)
+      expect(subject.to_json).to be_a(String)
+      expect(JSON.parse(subject.to_json)).to be_a(Hash)
     end
     it "has same ID" do
-      JSON.parse(subject.to_json)['@id'].should == subject.id
+      expect(JSON.parse(subject.to_json)['@id']).to eq subject.id
     end
   end
 
   describe "#each" do
-    specify {expect {|b| subject.each(&b)}.to yield_with_args(RDF::Statement)}
+    specify {expect {|b| subject.each(&b)}.to yield_with_args(subject.statements.first)}
   end
 
   describe RDF::Enumerable do

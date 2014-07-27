@@ -20,7 +20,7 @@ describe JSON::LD::Writer do
       {:content_type   => 'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        expect(RDF::Reader.for(arg)).to eql JSON::LD::Reader
+        expect(RDF::Reader.for(arg)).to eq JSON::LD::Reader
       end
     end
   end

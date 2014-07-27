@@ -35,7 +35,7 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
     @actual.isomorphic_with?(@expected)
   end
   
-  failure_message_for_should do |actual|
+  failure_message do |actual|
     info = @info.respond_to?(:information) ? @info.information : @info.inspect
     if @expected.is_a?(RDF::Enumerable) && @actual.size != @expected.size
       "Graph entry count differs:\nexpected: #{@expected.size}\nactual:   #{@actual.size}"
@@ -55,10 +55,10 @@ end
 
 RSpec::Matchers.define :produce do |expected, info|
   match do |actual|
-    actual.should == expected
+    expect(actual).to eq expected
   end
   
-  failure_message_for_should do |actual|
+  failure_message do |actual|
     "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE)}\n" +
     "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE)}\n" +
     #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE)}\n" : "") +

@@ -1,4 +1,4 @@
-require 'open-uri'
+require 'openssl'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/flatten'
@@ -74,6 +74,8 @@ module JSON::LD
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
@@ -328,7 +330,7 @@ module JSON::LD
         debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
 
         result = []
-        frame(framing_state, @node_map, (expanded_frame.first || {}), result, nil)
+        frame(framing_state, @node_map, (expanded_frame.first || {}), parent: result)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
         
         # Initalize context from frame
@@ -468,7 +470,11 @@ module JSON::LD
       when /^http/
         parsed_url = ::URI.parse(url.to_s)
         until remote_document do
-          Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
+          Net::HTTP::start(parsed_url.host, parsed_url.port,
+                          open_timeout: 60 * 1000,
+                          use_ssl: parsed_url.scheme == 'https',
+                          verify_mode: OpenSSL::SSL::VERIFY_NONE
+                          ) do |http|
             request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
             http.request(request) do |response|
               case response

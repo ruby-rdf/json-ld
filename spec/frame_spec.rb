@@ -504,11 +504,64 @@ describe JSON::LD::API do
         @debug = []
         begin
           jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
-          jld.should produce(params[:output], @debug)
+          expect(jld).to produce(params[:output], @debug)
         rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +
             "#{@debug.join("\n")}\n" +
             "Backtrace:\n#{e.backtrace.join("\n")}")
+        end
+      end
+    end
+
+    describe "@reverse", skip:true do
+      {
+        "embed matched frames with @reverse" => {
+          :frame => {
+            "@context" => {"ex" => "http://example.org/"},
+            "@type" => "ex:Type1",
+            "@reverse" => {
+              "ex:includes" => {}
+            }
+          },
+          :input => [
+            {
+              "@context" => {"ex" => "http://example.org/"},
+              "@id" => "ex:Sub1",
+              "@type" => "ex:Type1"
+            },
+            {
+              "@context" => {"ex" => "http://example.org/"},
+              "@id" => "ex:Sub2",
+              "@type" => "ex:Type2",
+              "ex:includes" => {"@id" => "ex:Sub1"}
+            },
+          ],
+          :output =>{
+            "@context" => {"ex" => "http://example.org/"},
+            "@graph" => [{
+              "@id" => "ex:Sub1",
+              "@type" => "ex:Type1",
+              "@reverse" => {
+                "ex:includes" => {
+                  "@id" => "ex:Sub2",
+                  "@type" => "ex:Type2",
+                  "ex:includes" => {"@id" => "ex:Sub1"}
+                }
+              }
+            }]
+          }
+        },
+      }.each do |title, params|
+        it title do
+          @debug = []
+          begin
+            jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
+            expect(jld).to produce(params[:output], @debug)
+          rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
+            fail("#{e.class}: #{e.message}\n" +
+              "#{@debug.join("\n")}\n" +
+              "Backtrace:\n#{e.backtrace.join("\n")}")
+          end
         end
       end
     end

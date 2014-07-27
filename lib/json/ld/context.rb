@@ -8,7 +8,7 @@ module JSON::LD
 
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
     class TermDefinition
-      # @return [String] IRI map
+      # @return [RDF::URI] IRI map
       attr_accessor :id
 
       # @return [String] term name
@@ -27,6 +27,14 @@ module JSON::LD
       # @return [Boolean] Reverse Property
       attr_accessor :reverse_property
 
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean] simple
+      attr_accessor :simple
+
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean] simple
+      def simple?; simple; end
+
       # Create a new Term Mapping with an ID
       # @param [String] term
       # @param [String] id
@@ -35,25 +43,35 @@ module JSON::LD
         @id = id.to_s if id
       end
 
-      # Output Hash or String definition for this definition
+      ##
+      # Output Hash or String definition for this definition considering @language and @vocab
+      #
       # @param [Context] context
       # @return [String, Hash{String => Array[String], String}]
       def to_context_definition(context)
+        cid = if context.vocab && id.start_with?(context.vocab)
+          # Nothing to return unless it's the same as the vocab
+          id == context.vocab ? context.vocab : id.to_s[context.vocab.length..-1]
+        else
+          # Find a term to act as a prefix
+          iri, prefix = context.iri_to_term.detect {|i,p| id.to_s.start_with?(i.to_s)}
+          iri && iri != id ? "#{prefix}:#{id.to_s[iri.length..-1]}" : id
+        end
+
         if language_mapping.nil? &&
            container_mapping.nil? &&
            type_mapping.nil? &&
            reverse_property.nil?
-           cid = context.compact_iri(id)
-           cid == term ? id : cid
+
+           cid.to_s unless cid == term && context.vocab
         else
           defn = {}
-          cid = context.compact_iri(id)
-          defn[reverse_property ? '@reverse' : '@id'] = cid unless cid == term && !reverse_property
+          defn[reverse_property ? '@reverse' : '@id'] = cid.to_s unless cid == term && !reverse_property
           if type_mapping
             defn['@type'] = if KEYWORDS.include?(type_mapping)
               type_mapping
             else
-              context.compact_iri(type_mapping, :vocab => true)
+              context.compact_iri(type_mapping, vocab: true)
             end
           end
           defn['@container'] = container_mapping if container_mapping
@@ -66,6 +84,7 @@ module JSON::LD
       def inspect
         v = %w([TD)
         v << "id=#{@id}"
+        v << "term=#{@term}"
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
@@ -107,7 +126,7 @@ module JSON::LD
     #
     # Sets the default vocabulary used for expanding terms which
     # aren't otherwise absolute IRIs
-    # @return [String]
+    # @return [RDF::URI]
     attr_reader :vocab
 
     # @return [Hash{Symbol => Object}] Global options used in generating IRIs
@@ -129,6 +148,12 @@ module JSON::LD
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [String, #to_s] :vocab
+    #   Initial value for @vocab
+    # @option options [String, #to_s] :language
+    #   Initial value for @langauge
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
@@ -151,8 +176,14 @@ module JSON::LD
 
       # Load any defined prefixes
       (options[:prefixes] || {}).each_pair do |k, v|
-        @iri_to_term[v.to_s] = k unless k.nil?
+        next if k.nil?
+        @iri_to_term[v.to_s] = k
+        @term_definitions[k.to_s] = TermDefinition.new(k, v.to_s)
+        @term_definitions[k.to_s].simple = true
       end
+
+      self.vocab = options[:vocab] if options[:vocab]
+      self.default_language = options[:language] if options[:language]
 
       #debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
       
@@ -273,18 +304,8 @@ module JSON::LD
             rescue JsonLdError
               raise
             rescue Exception => e
-              # Speical case for schema.org, until they get their act together
-              if context.to_s.start_with?('http://schema.org')
-                RDF::Util::File.open_file("http://json-ld.org/contexts/schema.org.jsonld") do |f|
-                  context = JSON.parse(f.read)['@context']
-                  if @options[:processingMode] == "json-ld-1.0"
-                    context_no_base.provided_context = context.dup
-                  end
-                end
-              else
-                debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-                raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace if @options[:validate]
-              end
+              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
@@ -318,13 +339,12 @@ module JSON::LD
             end
           else
             # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-            raise JsonLdError::InvalidLocalContext
+            raise JsonLdError::InvalidLocalContext, context.inspect
           end
         end
       end
       result
     end
-
 
     ##
     # Create Term Definition
@@ -349,15 +369,15 @@ module JSON::LD
       when nil
         defined[term] = false
       else
-        raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found for #{term.inspect}"
+        raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found: #{term.inspect}"
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
-        raise JsonLdError::KeywordRedefinition, "term #{term.inspect} must not be a keyword" if
+        raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
-        raise JsonLdError::InvalidTermDefinition, "term #{term.inspect} is invalid"
+        raise JsonLdError::InvalidTermDefinition, "term is invalid: #{term.inspect}"
       end
 
       # Remove any existing term definition for term in active context.
@@ -365,6 +385,7 @@ module JSON::LD
 
       # Initialize value to a the value associated with the key term in local context.
       value = local_context.fetch(term, false)
+      simple_term = value.is_a?(String)
       value = {'@id' => value} if value.is_a?(String)
 
       case value
@@ -377,6 +398,7 @@ module JSON::LD
       when Hash
         debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new(term)
+        definition.simple = simple_term
 
         if value.has_key?('@type')
           type = value['@type']
@@ -388,22 +410,22 @@ module JSON::LD
             begin
               expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
             rescue JsonLdError::InvalidIRIMapping
-              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type' to #{type.inspect}"
+              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect} on term #{term.inspect}"
             end
           else
             :error
           end
           unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
-            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type' to #{type.inspect}"
+            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
 
         if value.has_key?('@reverse')
-          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect}" if
+          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
             value.keys.any? {|k| %w(@id).include?(k)}
-          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
             value['@reverse'].is_a?(String)
 
           # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
@@ -412,26 +434,26 @@ module JSON::LD
                                       :documentRelative => true,
                                       :local_context => local_context,
                                       :defined => defined)
-          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id}" unless
+          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
-          if (container = value['@container'])
+          if (container = value.fetch('@container', false))
             raise JsonLdError::InvalidReverseProperty,
-                  "unknown mapping for '@container' to #{container.inspect}" unless
+                  "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
                    ['@set', '@index', nil].include?(container)
             definition.container_mapping = container
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
-          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string" unless
+          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
             :vocab => true,
             :documentRelative => true,
             :local_context => local_context,
             :defined => defined)
-          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context" if
+          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
@@ -448,21 +470,23 @@ module JSON::LD
           debug("") {"=> #{definition.id}"}
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab" unless vocab
+          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
           definition.id = vocab + term
           debug("") {"=> #{definition.id}"}
         end
 
+        @iri_to_term[definition.id] = term if simple_term && definition.id
+
         if value.has_key?('@container')
           container = value['@container']
-          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect}" unless %w(@list @set @language @index).include?(container)
+          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless %w(@list @set @language @index).include?(container)
           debug("") {"container_mapping: #{container.inspect}"}
           definition.container_mapping = container
         end
 
         if value.has_key?('@language')
           language = value['@language']
-          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}}" unless language.nil? || (language || "").is_a?(String)
+          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
           language = language.downcase if language.is_a?(String)
           debug("") {"language_mapping: #{language.inspect}"}
           definition.language_mapping = language || false
@@ -471,7 +495,7 @@ module JSON::LD
         term_definitions[term] = definition
         defined[term] = true
       else
-        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class}"
+        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class} on term #{term.inspect}"
       end
     end
 
@@ -502,8 +526,9 @@ module JSON::LD
           ctx['@vocab'] = vocab.to_s if vocab
 
           # Term Definitions
-          term_definitions.dup.each do |term, definition|
-            ctx[term] = definition.to_context_definition(self)
+          term_definitions.keys.sort.each do |term|
+            defn = term_definitions[term].to_context_definition(self)
+            ctx[term] = defn if defn
           end
 
           debug("") {"start_doc: context=#{ctx.inspect}"}
@@ -517,125 +542,160 @@ module JSON::LD
       end
     end
 
-    ## FIXME: this should go away
-    # Retrieve term mappings
+    ##
+    # Build a context from an RDF::Vocabulary definition.
     #
-    # @return [Array<String>]
-    # @deprecated
-    def mappings
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td ? td.id : nil
-        memo
+    # @example building from an external vocabulary definition
+    #
+    #     g = RDF::Graph.load("http://schema.org/docs/schema_org_rdfa.html")
+    #
+    #     context = JSON::LD::Context.new.from_vocabulary(g,
+    #           vocab: "http://schema.org/",
+    #           prefixes: {schema: "http://schema.org/"},
+    #           language: "en")
+    #
+    # @param [RDF::Queryable] graph
+    #
+    # @return [self]
+    def from_vocabulary(graph)
+      statements = {}
+      ranges = {}
+
+      # Add term definitions for each class and property not in schema:, and
+      # for those properties having an object range
+      graph.each do |statement|
+        next if statement.subject.node?
+        (statements[statement.subject] ||= []) << statement
+
+        # Keep track of predicate ranges
+        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate) 
+          (ranges[statement.subject] ||= []) << statement.object
+        end
       end
+
+      # Add term definitions for each class and property not in vocab, and
+      # for those properties having an object range
+      statements.each do |subject, values|
+        types = values.select {|v| v.predicate == RDF.type}.map(&:object)
+        is_property = types.any? {|t| t.to_s.include?("Property")}
+        
+        term = subject.to_s.split(/[\/\#]/).last
+
+        if !is_property
+          # Ignore if there's a default voabulary and this is not a property
+          next if vocab && subject.to_s.start_with?(vocab)
+
+          # otherwise, create a term definition
+          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+        else
+          prop_ranges = ranges.fetch(subject, [])
+          # If any range is empty or member of range includes rdfs:Literal or schema:Text
+          next if vocab && prop_ranges.empty? ||
+                           prop_ranges.include?(RDF::SCHEMA.Text) ||
+                           prop_ranges.include?(RDF::RDFS.Literal)
+          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+
+          # Set context typing based on first element in range
+          case r = prop_ranges.first
+          when RDF::XSD.string
+            if self.default_language
+              td.language_mapping = false
+            end
+          when RDF::XSD.boolean, RDF::SCHEMA.Boolean, RDF::XSD.date, RDF::SCHEMA.Date,
+            RDF::XSD.dateTime, RDF::SCHEMA.DateTime, RDF::XSD.time, RDF::SCHEMA.Time,
+            RDF::XSD.duration, RDF::SCHEMA.Duration, RDF::XSD.decimal, RDF::SCHEMA.Number,
+            RDF::XSD.float, RDF::SCHEMA.Float, RDF::XSD.integer, RDF::SCHEMA.Integer
+            td.type_mapping = r
+            td.simple = false
+          else
+            # It's an object range (includes schema:URL)
+            td.type_mapping = '@id'
+          end
+        end
+      end
+
+      self
     end
 
-    ## FIXME: this should go away
-    # Retrieve term mapping
-    #
-    # @param [String, #to_s] term
-    #
-    # @return [RDF::URI, String]
-    # @deprecated
-    def mapping(term)
-      term_definitions[term] ? term_definitions[term].id : nil
-    end
-
-    ## FIXME: this should go away
     # Set term mapping
     #
     # @param [#to_s] term
     # @param [RDF::URI, String, nil] value
     #
-    # @return [RDF::URI, String]
-    # @deprecated
+    # @return [TermDefinition]
     def set_mapping(term, value)
       debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
       term_definitions[term] = TermDefinition.new(term, value)
+      term_definitions[term].simple = true
 
       term_sym = term.empty? ? "" : term.to_sym
       iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
       @options[:prefixes][term_sym] = value if @options.has_key?(:prefixes)
       iri_to_term[value.to_s] = term
-    end
-
-    ## FIXME: this should go away
-    # Reverse term mapping, typically used for finding aliases for keys.
-    #
-    # Returns either the original value, or a mapping for this value.
-    #
-    # @example
-    #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
-    #
-    # @param [RDF::URI, String] value
-    # @return [String]
-    # @deprecated
-    def alias(value)
-      iri_to_term.fetch(value, value)
+      term_definitions[term]
     end
 
     ##
-    # Retrieve term coercion
+    # Find a term definition
     #
-    # @param [String] property in unexpanded form
-    #
-    # @return [RDF::URI, '@id']
-    def coerce(property)
-      # Map property, if it's not an RDF::Value
-      # @type is always is an IRI
-      return '@id' if [RDF.type, '@type'].include?(property)
-      term_definitions[property] && term_definitions[property].type_mapping
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [Term]
+    def find_definition(term)
+      term.is_a?(TermDefinition) ? term : term_definitions[term.to_s]
     end
-    protected :coerce
 
     ##
     # Retrieve container mapping, add it if `value` is provided
     #
-    # @param [String] property in unexpanded form
+    # @param [Term, #to_s] term in unexpanded form
     # @return [String]
-    def container(property)
-      return '@set' if property == '@graph'
-      return property if KEYWORDS.include?(property)
-      term_definitions[property] && term_definitions[property].container_mapping
-    end
-
-    ## FIXME: this should go away
-    # Retrieve language mappings
-    #
-    # @return [Array<String>]
-    # @deprecated
-    def languages
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.language_mapping
-        memo
-      end
+    def container(term)
+      return '@set' if term == '@graph'
+      return term if KEYWORDS.include?(term)
+      term = find_definition(term)
+      term && term.container_mapping
     end
 
     ##
-    # Retrieve the language associated with a property, or the default language otherwise
+    # Retrieve the language associated with a term, or the default language otherwise
+    # @param [Term, #to_s] term in unexpanded form
     # @return [String]
-    def language(property)
-      lang = term_definitions[property] && term_definitions[property].language_mapping
+    def language(term)
+      term = find_definition(term)
+      lang = term && term.language_mapping
       lang.nil? ? @default_language : lang
     end
 
     ##
     # Is this a reverse term
+    # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
-    def reverse?(property)
-      term_definitions[property] && term_definitions[property].reverse_property
+    def reverse?(term)
+      term = find_definition(term)
+      term && term.reverse_property
     end
 
     ##
-    # Determine if `term` is a suitable term.
-    # Term may be any valid JSON string.
+    # Given a term or IRI, find a reverse term definition matching that term. If the term is already reversed, find a non-reversed version.
     #
-    # @param [String] term
-    # @return [Boolean]
-    def term_valid?(term)
-      term.is_a?(String)
+    # @param [Term, #to_s] term
+    # @return [Term] related term definition
+    def reverse_term(term)
+      # Direct lookup of term
+      term = term_definitions[term.to_s] if term_definitions.has_key?(term.to_s) && !term.is_a?(TermDefinition)
+
+      # Lookup term, assuming term is an IRI
+      unless term.is_a?(TermDefinition)
+        td = term_definitions.values.detect {|t| t.id == term.to_s}
+
+        # Otherwise create a temporary term definition
+        term = td || TermDefinition.new(term.to_s, expand_iri(term, vocab:true))
+      end
+
+      # Now, return a term, which reverses this term
+      term_definitions.values.detect {|t| t.id == term.id && t.reverse_property != term.reverse_property}
     end
-    protected :term_valid?
 
     ##
     # Expand an IRI. Relative IRIs are expanded against any document base.
@@ -839,6 +899,10 @@ module JSON::LD
         term_definitions.each do |term, td|
           next if term.include?(":")
           next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
+
+          # Also skip term if it was not a simple term and the :simple_compact_iris flag is true
+          next if @options[:simple_compact_iris] && !td.simple?
+
           suffix = iri[td.id.length..-1]
           ciri = "#{term}:#{suffix}"
           candidates << ciri unless value && term_definitions.has_key?(ciri)
@@ -1052,7 +1116,45 @@ module JSON::LD
       ec
     end
 
-    private
+  protected
+
+    ##
+    # Retrieve term coercion
+    #
+    # @param [String] property in unexpanded form
+    #
+    # @return [RDF::URI, '@id']
+    def coerce(property)
+      # Map property, if it's not an RDF::Value
+      # @type is always is an IRI
+      return '@id' if [RDF.type, '@type'].include?(property)
+      term_definitions[property] && term_definitions[property].type_mapping
+    end
+
+    ##
+    # Determine if `term` is a suitable term.
+    # Term may be any valid JSON string.
+    #
+    # @param [String] term
+    # @return [Boolean]
+    def term_valid?(term)
+      term.is_a?(String)
+    end
+
+    # Reverse term mapping, typically used for finding aliases for keys.
+    #
+    # Returns either the original value, or a mapping for this value.
+    #
+    # @example
+    #   {"@context": {"id": "@id"}, "@id": "foo"} => {"id": "foo"}
+    #
+    # @param [RDF::URI, String] value
+    # @return [String]
+    def alias(value)
+      iri_to_term.fetch(value, value)
+    end
+
+  private
 
     def uri(value)
       case value.to_s
@@ -1184,6 +1286,39 @@ module JSON::LD
         return rel.empty? ? "./" : rel
       end
       iri
+    end
+
+    ## Used for testing
+    # Retrieve term mappings
+    #
+    # @return [Array<RDF::URI>]
+    def mappings
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td ? td.id : nil
+        memo
+      end
+    end
+
+    ## Used for testing
+    # Retrieve term mapping
+    #
+    # @param [String, #to_s] term
+    #
+    # @return [RDF::URI, String]
+    def mapping(term)
+      term_definitions[term] ? term_definitions[term].id : nil
+    end
+
+    ## Used for testing
+    # Retrieve language mappings
+    #
+    # @return [Array<String>]
+    # @deprecated
+    def languages
+      term_definitions.inject({}) do |memo, (t,td)|
+        memo[t] = td.language_mapping
+        memo
+      end
     end
   end
 end

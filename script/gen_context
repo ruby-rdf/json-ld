@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+# Generate a context for schema.org from the RDFS definition.
+# Include the RDFS definition recursed
+require 'rubygems'
+require "bundler/setup"
+$:.unshift(File.expand_path("../../lib", __FILE__))
+begin
+  require 'linkeddata'
+rescue LoadError
+end
+require 'json/ld'
+require 'getoptlong'
+require 'rdf/rdfa'
+require 'json/ld'
+
+options = {
+  output: STDOUT,
+  prefixes: {},
+  simple_compact_iris: true
+}
+
+OPT_ARGS = [
+  ["--body",          GetoptLong::NO_ARGUMENT,      "Include the vocabulary definition in the body of the document"],
+  ["--hierarchical",  GetoptLong::NO_ARGUMENT,      "Create a hierachy using 'children' as reverse of rdfs:subClassOf"],
+  ["--initial",       GetoptLong::REQUIRED_ARGUMENT,"Initial context to load, overrides default"],
+  ["--language",      GetoptLong::REQUIRED_ARGUMENT,"Default language for vocabulary"],
+  ["--output", "-o",  GetoptLong::REQUIRED_ARGUMENT,"Output to the specified file path"],
+  ["--prefix",        GetoptLong::REQUIRED_ARGUMENT,"space-separated prefix uri combination"],
+  ["--quiet",         GetoptLong::NO_ARGUMENT,      "Supress most output other than progress indicators"],
+  ["--verbose",       GetoptLong::NO_ARGUMENT,      "Detail on execution"],
+  ["--vocab",         GetoptLong::REQUIRED_ARGUMENT,"Set context @vocab to specified URI"],
+  ["--help", "-?",    GetoptLong::NO_ARGUMENT,      "This message"]
+]
+def usage
+  STDERR.puts %{Usage: #{$0} [options] URL ...}
+  width = OPT_ARGS.map do |o|
+    l = o.first.length
+    l += o[1].length + 2 if o[1].is_a?(String)
+    l
+  end.max
+  OPT_ARGS.each do |o|
+    s = "  %-*s  " % [width, (o[1].is_a?(String) ? "#{o[0,2].join(', ')}" : o[0])]
+    s += o.last
+    STDERR.puts s
+  end
+  exit(1)
+end
+
+base_context = ::JSON.parse %({
+  "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "rdfs:domain": {"@type": "@id"},
+  "rdfs:range": {"@type": "@id"},
+  "rdfs:subClassOf": {"@type": "@id"},
+  "rdfs:subPropertyOf": {"@type": "@id"},
+  "owl": "http://www.w3.org/2002/07/owl#",
+  "owl:equivalentClass": {"@type": "@vocab"},
+  "owl:equivalentProperty": {"@type": "@vocab"},
+  "owl:oneOf": {"@container": "@list", "@type": "@vocab"},
+  "owl:imports": {"@type": "@id"},
+  "owl:versionInfo": {"@type": "xsd:string", "@language": null},
+  "owl:inverseOf": {"@type": "@vocab"}
+})
+
+opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
+
+opts.each do |opt, arg|
+  case opt
+  when '--body'         then options[:include_body] = true
+  when '--initial'      then base_context = ::JSON.parse(File.read(arg))
+  when '--hierarchical' then options[:hier] = true
+  when '--language'     then options[:language] = arg
+  when '--output'       then options[:output] = File.open(arg, "w")
+  when '--quiet'        then options[:quiet] = true
+  when '--prefix'       then pfx,uri = arg.split(' '); options[:prefixes][pfx.to_sym] = uri
+  when '--vocab'        then options[:vocab] = arg
+  when '--help'         then usage
+  end
+end
+
+# Load vocabulary
+graph = RDF::Graph.load(ARGV[0])
+
+context = JSON::LD::Context.new(options).
+  parse(base_context).
+  from_vocabulary(graph)
+
+# Simply serialize with the generated context
+if options[:hier]
+  STDERR.puts "Hierarchical implies adding body" unless options[:include_body]
+
+  class_map = {}
+  property_map = {}
+  json = JSON::LD::API.fromRDF(graph) do |expanded|
+    JSON::LD::API.compact(expanded, context) do |compacted|
+      compacted['@graph'].each do |obj|
+        #next if type_exclusion.include?(obj['name'])
+        if obj['@type'].include?("rdfs:Class")
+          class_map[obj['@id']] = obj
+        elsif obj['@type'].include?("rdf:Property")
+          property_map[obj['@id']] = obj
+        end
+      end
+    end
+  end
+
+  thing = class_map['schema:Thing']
+  datatype = class_map['schema:DataType']
+
+  # Build class hierarchy
+  class_map.each do |id, obj|
+    [obj['rdfs:subClassOf']].flatten.compact.each do |super_class|
+      so = class_map[super_class]
+      #next if so.nil?
+      raise "super class not found: #{super_class}" if so.nil?
+      (so['children'] ||= []) << obj
+    end
+  end
+
+  # Add properties to classes
+  property_map.each do |id, obj|
+    [obj['domainIncludes']].flatten.compact.each do |domain|
+      dom = class_map[domain]
+      #next if dom.nil?
+      raise "domain not found: #{domain}" if dom.nil?
+      (dom['properties'] ||= []) << obj
+    end
+  end
+
+  result = {
+    "@context" => [context.serialize['@context'], {
+      "children" => {"@reverse" => "rdfs:subClassOf"},
+      "properties" => {"@reverse" => "schema:domainIncludes"}
+      }],
+    "@graph" => [thing, datatype]
+  }
+
+  options[:output].puts(result.to_json(JSON::LD::JSON_STATE))
+elsif options[:include_body]
+  JSON::LD::Writer.new(options[:output], context: context, standard_prefixes: true) {|w| w << graph}
+else
+  options[:output].puts(context.serialize.to_json(JSON::LD::JSON_STATE))
+end
+
+#object_map = {}
+#
+## Extract IDs
+#RDF::Repository.load("http://schema.org/docs/schema_org_rdfa.html") do |repo|
+#  JSON::LD::API.fromRDF(repo) do |expanded|
+#    JSON::LD::API.compact(expanded, context) do |compacted|
+#      compacted['@graph'].each do |obj|
+#        next if type_exclusion.include?(obj['name'])
+#        object_map[obj['@id']] = obj if obj['@type'] == "rdfs:Class"
+#      end
+#    end
+#  end
+#end
+#
+#thing = object_map['schema:Thing']
+#
+## Build type hierarchy
+#object_map.each do |id, obj|
+#  [obj['rdfs:subClassOf']].flatten.compact.each do |super_class|
+#    so = object_map[super_class]
+#    next if so.nil?
+#    raise "super class not found: #{super_class}" if so.nil?
+#    (so['children'] ||= []) << obj
+#  end
+#end
+#
+#context = context.merge({"children" => {"@reverse" => "rdfs:subClassOf"}})
+#context = {"@context" => context}
+#puts context.merge(thing).to_json(JSON::LD::JSON_STATE)

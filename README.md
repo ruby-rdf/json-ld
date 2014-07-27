@@ -9,6 +9,8 @@
 
 JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces.
 
+JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the `script/gen_context` script.
+
 Install with `gem install json-ld`
 
 ## Examples

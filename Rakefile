@@ -31,6 +31,17 @@ RSpec::Core::RakeTask.new("doc:spec") do |spec|
   spec.rspec_opts = ["--format", "html", "-o", "doc/spec.html"]
 end
 
+desc "Generate schema.org context"
+task :schema_context do
+  %x(
+    script/gen_context http://schema.org/docs/schema_org_rdfa.html \
+      --vocab http://schema.org/ \
+      --prefix 'schema http://schema.org/' \
+      --body --hier \
+      --o etc/schema.org.jsonld
+  )
+end
+
 # Presentation building
 namespace :presentation do
   desc "Clean presentation files"

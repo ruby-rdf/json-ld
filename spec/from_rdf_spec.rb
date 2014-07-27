@@ -8,7 +8,7 @@ describe JSON::LD::API do
     context "simple tests" do
       it "One subject IRI object" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
-        serialize(input).should produce([
+        expect(serialize(input)).to produce([
         {
           '@id'         => "http://a/b",
           "http://a/c"  => [{"@id" => "http://a/d"}]
@@ -18,8 +18,8 @@ describe JSON::LD::API do
 
       it "should generate object list" do
         input = %(@prefix : <http://example.com/> . :b :c :d, :e .)
-        serialize(input).
-        should produce([{
+        expect(serialize(input)).
+        to produce([{
           '@id'                         => "http://example.com/b",
           "http://example.com/c" => [
             {"@id" => "http://example.com/d"},
@@ -31,8 +31,8 @@ describe JSON::LD::API do
     
       it "should generate property list" do
         input = %(@prefix : <http://example.com/> . :b :c :d; :e :f .)
-        serialize(input).
-        should produce([{
+        expect(serialize(input)).
+        to produce([{
           '@id'   => "http://example.com/b",
           "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
           "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
@@ -47,8 +47,8 @@ describe JSON::LD::API do
           <test-cases/0001> a :TestCase .
           <test-cases/0002> a :TestCase .
         )
-        serialize(input).
-        should produce([
+        expect(serialize(input)).
+        to produce([
           {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
           {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
         ], @debug)
@@ -59,7 +59,7 @@ describe JSON::LD::API do
       context "coercion" do
         it "typed literal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
-          serialize(input).should produce([
+          expect(serialize(input)).to produce([
             {
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
@@ -69,7 +69,7 @@ describe JSON::LD::API do
 
         it "integer" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-          serialize(input, :useNativeTypes => true).should produce([{
+          expect(serialize(input, :useNativeTypes => true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1}]
           }], @debug)
@@ -77,7 +77,7 @@ describe JSON::LD::API do
 
         it "integer (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-          serialize(input, :useNativeTypes => false).should produce([{
+          expect(serialize(input, :useNativeTypes => false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
           }], @debug)
@@ -85,7 +85,7 @@ describe JSON::LD::API do
 
         it "boolean" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-          serialize(input, :useNativeTypes => true).should produce([{
+          expect(serialize(input, :useNativeTypes => true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => true}]
           }], @debug)
@@ -93,7 +93,7 @@ describe JSON::LD::API do
 
         it "boolean (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-          serialize(input, :useNativeTypes => false).should produce([{
+          expect(serialize(input, :useNativeTypes => false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
           }], @debug)
@@ -101,7 +101,7 @@ describe JSON::LD::API do
 
         it "decmal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
-          serialize(input, :useNativeTypes => true).should produce([{
+          expect(serialize(input, :useNativeTypes => true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
           }], @debug)
@@ -109,7 +109,7 @@ describe JSON::LD::API do
 
         it "double" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-          serialize(input, :useNativeTypes => true).should produce([{
+          expect(serialize(input, :useNativeTypes => true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1.0E0}]
           }], @debug)
@@ -117,7 +117,7 @@ describe JSON::LD::API do
 
         it "double (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-          serialize(input, :useNativeTypes => false).should produce([{
+          expect(serialize(input, :useNativeTypes => false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
           }], @debug)
@@ -139,7 +139,7 @@ describe JSON::LD::API do
               @prefix ex: <http://example.com/> .
               ex:a ex:b "#{v}"^^xsd:#{t} .
             )
-            serialize(input, :useNativeTypes => false).should produce([{
+            expect(serialize(input, :useNativeTypes => false)).to produce([{
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
             }], @debug)
@@ -149,7 +149,7 @@ describe JSON::LD::API do
 
       it "encodes language literal" do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"@en-us .)
-        serialize(input).should produce([{
+        expect(serialize(input)).to produce([{
           '@id'   => "http://example.com/a",
           "http://example.com/b"    => [{"@value" => "foo", "@language" => "en-us"}]
         }], @debug)
@@ -159,7 +159,7 @@ describe JSON::LD::API do
     context "anons" do
       it "should generate bare anon" do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
-        serialize(input).should produce([
+        expect(serialize(input)).to produce([
         {
           "@id" => "_:a",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
@@ -169,7 +169,7 @@ describe JSON::LD::API do
     
       it "should generate anon as object" do
         input = %(@prefix : <http://example.com/> . :a :b _:a . _:a :c :d .)
-        serialize(input).should produce([
+        expect(serialize(input)).to produce([
           {
             "@id" => "_:a",
             "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
@@ -181,66 +181,101 @@ describe JSON::LD::API do
         ], @debug)
       end
     end
-  
+
     context "lists" do
-      it "should generate literal list" do
-        input = %(
-          @prefix : <http://example.com/> .
-          @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-          :a :b ("apple" "banana")  .
-        )
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{
-            "@list" => [
-              {"@value" => "apple"},
-              {"@value" => "banana"}
-            ]
-          }]
-        }], @debug)
-      end
-    
-      it "should generate iri list" do
-        input = %(@prefix : <http://example.com/> . :a :b (:c) .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{
-            "@list" => [
-              {"@id" => "http://example.com/c"}
-            ]
-          }]
-        }], @debug)
-      end
-    
-      it "should generate empty list" do
-        input = %(@prefix : <http://example.com/> . :a :b () .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{"@list" => []}]
-        }], @debug)
-      end
-    
-      it "should generate single element list" do
-        input = %(@prefix : <http://example.com/> . :a :b ( "apple" ) .)
-        serialize(input).should produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
-        }], @debug)
-      end
-    
-      it "should generate single element list without @type" do
-        input = %(
-        @prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .)
-        serialize(input).should produce([
-          {
-            '@id'   => "_:a",
-            "http://example.com/b"  => [{"@value" => "foo"}]
-          },
-          {
+      {
+        "literal list" => [
+          %q(
+            @prefix : <http://example.com/> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            :a :b ("apple" "banana")  .
+          ),
+          [{
             '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
+            "http://example.com/b"  => [{
+              "@list" => [
+                {"@value" => "apple"},
+                {"@value" => "banana"}
+              ]
+            }]
+          }]
+        ],
+        "iri list" => [
+          %q(@prefix : <http://example.com/> . :a :b (:c) .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{
+              "@list" => [
+                {"@id" => "http://example.com/c"}
+              ]
+            }]
+          }]
+        ],
+        "empty list" => [
+          %q(@prefix : <http://example.com/> . :a :b () .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{"@list" => []}]
+          }]
+        ],
+        "single element list" => [
+          %q(@prefix : <http://example.com/> . :a :b ( "apple" ) .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
+          }]
+        ],
+        "single element list without @type" => [
+          %q(@prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .),
+          [
+            {
+              '@id'   => "_:a",
+              "http://example.com/b"  => [{"@value" => "foo"}]
+            },
+            {
+              '@id'   => "http://example.com/a",
+              "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
+            },
+          ]
+        ],
+        "multiple graphs with shared BNode" => [
+          %q(
+            <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-A" <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:z1 <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-B" <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://www.example.com/G> .
+            <http://www.example.com/x> <http://www.example.com/p> _:z1 <http://www.example.com/G1> .
+          ),
+          [{
+            "@id" => "http://www.example.com/G",
+            "@graph" => [{
+              "@id" => "_:z0",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-A"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@id" => "_:z1"}]
+            }, {
+              "@id" => "_:z1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-B"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@list" => []}]
+            }, {
+              "@id" => "http://www.example.com/z",
+              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+            }]
           },
-        ], @debug)
+          {
+            "@id" => "http://www.example.com/G1",
+            "@graph" => [{
+              "@id" => "http://www.example.com/x",
+              "http://www.example.com/p" => [{"@id" => "_:z1"}]
+            }]
+          }],
+          RDF::NQuads::Reader
+        ],
+      }.each do |name, (input, output, reader)|
+        it name do
+          r = serialize(input, :reader => reader)
+          expect(r).to produce(output, @debug)
+        end
       end
     end
     
@@ -333,7 +368,7 @@ describe JSON::LD::API do
       }.each_pair do |name, properties|
         it name do
           r = serialize(properties[:input], :reader => RDF::NQuads::Reader)
-          r.should produce(properties[:output], @debug)
+          expect(r).to produce(properties[:output], @debug)
         end
       end
     end
@@ -356,14 +391,14 @@ describe JSON::LD::API do
         ],
       }.each do |t, (input, output)|
         it "#{t}" do
-          serialize(input).should produce(output, @debug)
+          expect(serialize(input)).to produce(output, @debug)
         end
       end
     end
   end
 
   def parse(input, options = {})
-    reader = options[:reader] || RDF::Turtle::Reader
+    reader = options[:reader] || RDF::TriG::Reader
     RDF::Repository.new << reader.new(input, options)
   end
 
