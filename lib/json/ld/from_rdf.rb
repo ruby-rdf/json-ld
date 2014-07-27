@@ -13,6 +13,7 @@ module JSON::LD
     def from_statements(input)
       default_graph = {}
       graph_map = {'@default' => default_graph}
+      node_usages_map = {}
 
       value = nil
       ec = Context.new
@@ -51,9 +52,12 @@ module JSON::LD
         if statement.object.resource?
           # Append a new JSON object consisting of three members, node, property, and value to the usages array. The node member is set to a reference to node, property to predicate, and value to a reference to value.
           merge_value(node_map[statement.object.to_s], :usages, {
-            :node => node,
-            :property => statement.predicate.to_s,
-            :value => value})
+            node:     node,
+            property: statement.predicate.to_s,
+            value:    value
+          })
+
+          (node_usages_map[statement.object.to_s] ||= []) << node['@id']
         end
       end
 
@@ -69,6 +73,7 @@ module JSON::LD
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
           debug("list element?") {node.to_json(JSON_STATE)}
           while property == RDF.rest.to_s &&
+              node_usages_map[node['@id']].uniq.length == 1 &&
               blank_node?(node) &&
               node.keys.none? {|k| !["@id", '@type', :usages, RDF.first.to_s, RDF.rest.to_s].include?(k)} &&
               Array(node[:usages]).length == 1 &&

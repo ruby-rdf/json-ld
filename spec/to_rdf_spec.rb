@@ -306,8 +306,7 @@ describe JSON::LD::API do
 
     context "lists" do
       {
-        "Empty" =>
-        [
+        "Empty" => [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@id": "http://greggkellogg.net/foaf#me",
@@ -317,8 +316,7 @@ describe JSON::LD::API do
             <http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/knows> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-        "single value" =>
-        [
+        "single value" => [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@id": "http://greggkellogg.net/foaf#me",
@@ -330,8 +328,7 @@ describe JSON::LD::API do
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-        "single value (with coercion)" =>
-        [
+        "single value (with coercion)" => [
           %q({
             "@context": {
               "foaf": "http://xmlns.com/foaf/0.1/",
@@ -346,8 +343,7 @@ describe JSON::LD::API do
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
-        "multiple values" =>
-        [
+        "multiple values" => [
           %q({
             "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
             "@id": "http://greggkellogg.net/foaf#me",

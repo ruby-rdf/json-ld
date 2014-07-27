@@ -62,7 +62,7 @@ rescue
 end
 
 parser_options = {
-  :base     => "",
+  :base     => nil,
   :progress => false,
   :validate => false,
   :strict   => false,

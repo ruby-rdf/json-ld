@@ -181,66 +181,101 @@ describe JSON::LD::API do
         ], @debug)
       end
     end
-  
+
     context "lists" do
-      it "should generate literal list" do
-        input = %(
-          @prefix : <http://example.com/> .
-          @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-          :a :b ("apple" "banana")  .
-        )
-        expect(serialize(input)).to produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{
-            "@list" => [
-              {"@value" => "apple"},
-              {"@value" => "banana"}
-            ]
-          }]
-        }], @debug)
-      end
-    
-      it "should generate iri list" do
-        input = %(@prefix : <http://example.com/> . :a :b (:c) .)
-        expect(serialize(input)).to produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{
-            "@list" => [
-              {"@id" => "http://example.com/c"}
-            ]
-          }]
-        }], @debug)
-      end
-    
-      it "should generate empty list" do
-        input = %(@prefix : <http://example.com/> . :a :b () .)
-        expect(serialize(input)).to produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{"@list" => []}]
-        }], @debug)
-      end
-    
-      it "should generate single element list" do
-        input = %(@prefix : <http://example.com/> . :a :b ( "apple" ) .)
-        expect(serialize(input)).to produce([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
-        }], @debug)
-      end
-    
-      it "should generate single element list without @type" do
-        input = %(
-        @prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .)
-        expect(serialize(input)).to produce([
-          {
-            '@id'   => "_:a",
-            "http://example.com/b"  => [{"@value" => "foo"}]
-          },
-          {
+      {
+        "literal list" => [
+          %q(
+            @prefix : <http://example.com/> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            :a :b ("apple" "banana")  .
+          ),
+          [{
             '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
+            "http://example.com/b"  => [{
+              "@list" => [
+                {"@value" => "apple"},
+                {"@value" => "banana"}
+              ]
+            }]
+          }]
+        ],
+        "iri list" => [
+          %q(@prefix : <http://example.com/> . :a :b (:c) .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{
+              "@list" => [
+                {"@id" => "http://example.com/c"}
+              ]
+            }]
+          }]
+        ],
+        "empty list" => [
+          %q(@prefix : <http://example.com/> . :a :b () .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{"@list" => []}]
+          }]
+        ],
+        "single element list" => [
+          %q(@prefix : <http://example.com/> . :a :b ( "apple" ) .),
+          [{
+            '@id'   => "http://example.com/a",
+            "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
+          }]
+        ],
+        "single element list without @type" => [
+          %q(@prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .),
+          [
+            {
+              '@id'   => "_:a",
+              "http://example.com/b"  => [{"@value" => "foo"}]
+            },
+            {
+              '@id'   => "http://example.com/a",
+              "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
+            },
+          ]
+        ],
+        "multiple graphs with shared BNode" => [
+          %q(
+            <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-A" <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:z1 <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-B" <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://www.example.com/G> .
+            <http://www.example.com/x> <http://www.example.com/p> _:z1 <http://www.example.com/G1> .
+          ),
+          [{
+            "@id" => "http://www.example.com/G",
+            "@graph" => [{
+              "@id" => "_:z0",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-A"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@id" => "_:z1"}]
+            }, {
+              "@id" => "_:z1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-B"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@list" => []}]
+            }, {
+              "@id" => "http://www.example.com/z",
+              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+            }]
           },
-        ], @debug)
+          {
+            "@id" => "http://www.example.com/G1",
+            "@graph" => [{
+              "@id" => "http://www.example.com/x",
+              "http://www.example.com/p" => [{"@id" => "_:z1"}]
+            }]
+          }],
+          RDF::NQuads::Reader
+        ],
+      }.each do |name, (input, output, reader)|
+        it name do
+          r = serialize(input, :reader => reader)
+          expect(r).to produce(output, @debug)
+        end
       end
     end
     
@@ -363,7 +398,7 @@ describe JSON::LD::API do
   end
 
   def parse(input, options = {})
-    reader = options[:reader] || RDF::Turtle::Reader
+    reader = options[:reader] || RDF::TriG::Reader
     RDF::Repository.new << reader.new(input, options)
   end
 
