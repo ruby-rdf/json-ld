@@ -136,7 +136,7 @@ if ARGV.empty?
   run(StringIO.new(s), options)
 else
   ARGV.each do |file|
-    run(Kernel.open(file), options)
+    run(file, options)
   end
 end
 puts
