@@ -47,11 +47,11 @@ def run(input, options)
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
   else
-    r = reader_class.new(input, options[:parser_options])
-    g = RDF::Repository.new << r
+    options = options.merge(:expandContext => options.delete(:context)) if options.has_key?(:context)
+    g = JSON::LD::API.toRdf(input, options)
     secs = Time.new - start
     num = g.count
-    parser_options = options[:parser_options].merge(:prefixes => r.prefixes, :standard_prefixes => true)
+    parser_options = options[:parser_options].merge(:standard_prefixes => true)
     options[:output].puts g.dump(options[:output_format], parser_options)
     STDERR.puts "\nParsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second." unless options[:quiet]
   end
