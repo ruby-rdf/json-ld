@@ -263,7 +263,7 @@ module Fixtures
 
                 remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
 
-                unless content_type.start_with?("application/ld+json")
+                unless content_type.to_s.start_with?("application/ld+json")
                   links = response["link"].to_s.
                     split(",").
                     map(&:strip).
