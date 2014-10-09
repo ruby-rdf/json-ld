@@ -7,11 +7,11 @@ gem 'rdf-spec',         :git => "git://github.com/ruby-rdf/rdf-spec.git", :branc
 group :development do
   gem 'rdf-turtle',     :git => "git://github.com/ruby-rdf/rdf-turtle.git", :branch => "develop"
   gem 'rdf-trig',       :git => "git://github.com/ruby-rdf/rdf-trig.git", :branch => "develop"
-  gem "linkeddata"
 end
 
 group :debug do
   gem "wirble"
+  gem "linkeddata"
   gem "byebug", :platforms => [:mri_20, :mri_21]
 end
 
