@@ -493,7 +493,7 @@ module JSON::LD
                 remote_document = RemoteDocument.new(parsed_url.to_s, response.body)
 
                 # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-                unless content_type.start_with?("application/ld+json")
+                unless content_type.to_s.start_with?("application/ld+json")
                   links = response["link"].to_s.
                     split(",").
                     map(&:strip).

@@ -80,6 +80,20 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, @debug)
       end
+
+      context "remote with local mappings" do
+        let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
+        it "retrieves and parses a remote context document" do
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          ec = subject.parse(ctx)
+        end
+
+        it "does not use passed context as provided_context" do
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          ec = subject.parse(ctx)
+          expect(ec.provided_context).to produce(ctx, @debug)
+        end
+      end
     end
 
     context "Array" do
@@ -557,7 +571,7 @@ describe JSON::LD::Context do
       {
         "extra key" => {
           :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
-          :result => {"@context" => {"foo" => "http://example.com/foo"}}
+          :result => {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
         }
       }.each do |title, params|
         it title do

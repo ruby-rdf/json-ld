@@ -64,6 +64,10 @@ module Fixtures
         end
 
         define_method("#{m}_loc".to_sym) {property(m) && "#{SUITE}tests/#{property(m)}"}
+
+        define_method("#{m}_json".to_sym) do
+          JSON.parse(self.send(m)) if property(m)
+        end
       end
 
       def testType
@@ -100,7 +104,7 @@ module Fixtures
             when "jld:ExpandTest"
               JSON::LD::API.expand(input_loc, options.merge(:debug => debug))
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_loc, options.merge(:debug => debug))
+              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(:debug => debug))
             when "jld:FlattenTest"
               JSON::LD::API.flatten(input_loc, context_loc, options.merge(:debug => debug))
             when "jld:FrameTest"
@@ -148,7 +152,7 @@ module Fixtures
                 when "jld:ExpandTest"
                   JSON::LD::API.expand(t.input_loc, options.merge(:debug => debug))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_loc, options.merge(:debug => debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(:debug => debug))
                 when "jld:FlattenTest"
                   JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(:debug => debug))
                 when "jld:FrameTest"
@@ -263,7 +267,7 @@ module Fixtures
 
                 remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
 
-                unless content_type.start_with?("application/ld+json")
+                unless content_type.to_s.start_with?("application/ld+json")
                   links = response["link"].to_s.
                     split(",").
                     map(&:strip).
