@@ -190,6 +190,14 @@ module JSON::LD
       yield(self) if block_given?
     end
 
+    ##
+    # Initial context, without mappings, vocab or default language
+    #
+    # @return [Boolean]
+    def empty?
+      @term_definitions.empty? && self.vocab.nil? && self.default_language.nil?
+    end
+
     # @param [String] value must be an absolute IRI
     def base=(value)
       if value
@@ -247,6 +255,8 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
       result = self.dup
+      result.provided_context = local_context if self.empty?
+
       local_context = [local_context] unless local_context.is_a?(Array)
 
       local_context.each do |context|
@@ -265,7 +275,7 @@ module JSON::LD
               ctx = JSON.load(context)
               raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
               result = parse(ctx["@context"] ? ctx["@context"].dup : {})
-              result.provided_context = ctx["@context"]
+              result.provided_context = ctx["@context"] if [context] == local_context
               result
             rescue JSON::ParserError => e
               debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
@@ -283,9 +293,6 @@ module JSON::LD
 
             context_no_base = self.dup
             context_no_base.base = nil
-            unless @options[:processingMode] == "json-ld-1.0"
-              context_no_base.provided_context = context.to_s
-            end
             context_no_base.context_base = context.to_s
 
             begin
@@ -310,7 +317,7 @@ module JSON::LD
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts.dup)
-            context.provided_context = context_no_base.provided_context
+            context.provided_context = result.provided_context
             context.base ||= result.base
             result = context
             debug("parse") {"=> provided_context: #{context.inspect}"}
