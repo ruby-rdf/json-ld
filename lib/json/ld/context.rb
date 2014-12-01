@@ -1,4 +1,3 @@
-require 'open-uri'
 require 'json'
 require 'bigdecimal'
 

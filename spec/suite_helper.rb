@@ -1,5 +1,4 @@
 require 'json/ld'
-require 'open-uri'
 require 'support/extensions'
 
 module Fixtures
@@ -229,8 +228,7 @@ module Fixtures
     # @yield remote_document
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
-    def documentLoader(url, options = {})
-      require 'net/http' unless defined?(Net::HTTP)
+    def documentLoader(url, options = {}, &block)
       remote_document = nil
       options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
 
@@ -247,66 +245,9 @@ module Fixtures
         end
       end
 
-      case url.to_s
-      when /^http/
-        parsed_url = ::URI.parse(url.to_s)
-        until remote_document do
-          Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
-            request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
-            http.request(request) do |response|
-              case response
-              when Net::HTTPSuccess
-                # found object
-                content_type, ct_param = response.content_type.to_s.downcase.split(";")
-                if content_type && options[:validate]
-                  main, sub = content_type.split("/")
-                  raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-                    main != 'application' ||
-                    sub !~ /^(.*\+)?json$/
-                end
-
-                remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
-
-                unless content_type.to_s.start_with?("application/ld+json")
-                  links = response["link"].to_s.
-                    split(",").
-                    map(&:strip).
-                    select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
-                  case links.length
-                  when 0  then #nothing to do
-                  when 1
-                    remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
-                  else
-                    raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
-                      "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
-                  end
-                end
-                return block_given? ? yield(remote_document) : remote_document
-              when Net::HTTPRedirection
-                # Follow redirection
-                parsed_url = ::URI.parse(response["Location"])
-              else
-                raise JSON::LD::JsonLdError::LoadingDocumentFailed,
-                  "<#{parsed_url}>: #{response.msg}(#{response.code})"
-              end
-            end
-          end
-        end
-      else
-        # Use regular open
-        RDF::Util::File.open_file(url, options) do |f|
-          remote_document = JSON::LD::API::RemoteDocument.new(url, f.read)
-          content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
-          if content_type && options[:validate]
-            main, sub = content_type.split("/")
-            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-              main != 'application' ||
-              sub !~ /^(.*\+)?json$/
-          end
-
-          return block_given? ? yield(remote_document) : remote_document
-        end
-      end
+      # don't cache for these specs
+      options = options.merge(use_net_http: true) if url.to_s =~ /remote-doc/
+      JSON::LD::API.documentLoader(url, options, &block)
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
       raise unless options[:safe]
       "don't raise error"
