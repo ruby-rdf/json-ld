@@ -295,7 +295,12 @@ module JSON::LD
             context_no_base.context_base = context.to_s
 
             begin
-              @options[:documentLoader].call(context.to_s) do |remote_doc|
+              context_opts = @options.dup
+              if context_opts.has_key?(:header)
+                context_opts[:header] = context_opts[:header].dup
+                context_opts[:header].delete('Cache-Control') # Allow context to be cached
+              end
+              @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 jo = case remote_doc.document
                 when String then JSON.parse(remote_doc.document)

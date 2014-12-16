@@ -43,18 +43,18 @@ describe JSON::LD::Context do
     context "remote" do
 
       it "retrieves and parses a remote context document" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.provided_context).to produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_raise(IOError)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
         expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -70,8 +70,8 @@ describe JSON::LD::Context do
       
       it "parses a referenced context at a relative URI" do
         rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1").and_yield(rd1)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -84,12 +84,12 @@ describe JSON::LD::Context do
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
         it "retrieves and parses a remote context document" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
         end
 
         it "does not use passed context as provided_context" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
           expect(ec.provided_context).to produce(ctx, @debug)
         end
@@ -297,7 +297,7 @@ describe JSON::LD::Context do
 
   describe "#serialize" do
     it "context document" do
-      expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+      expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
       expect(ec.serialize).to produce({
         "@context" => "http://example.com/context"
