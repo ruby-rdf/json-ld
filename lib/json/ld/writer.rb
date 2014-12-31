@@ -1,3 +1,4 @@
+require 'json/ld/streaming_writer'
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.

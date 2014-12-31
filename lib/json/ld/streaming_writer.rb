@@ -36,7 +36,7 @@ module JSON::LD
         lit["@language"] = statement.object.language.to_s if statement.object.has_language?
         node[pred] = [lit]
       end
-      @output.write (@skip_comma ? '  ' : ', ') + result.to_json
+      @output.puts (@skip_comma ? '  ' : ', ') + result.to_json
       @skip_comma = false
       self
     end

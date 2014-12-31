@@ -29,7 +29,6 @@ module JSON
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'
-    autoload :StreamingWriter,    'json/ld/streaming_writer'
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
     
