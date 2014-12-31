@@ -27,12 +27,12 @@ describe JSON::LD::StreamingWriter do
         <https://senet.org/gm> <https://senet.org/ns#unofficialTitle> "Rhythm Tengoku"@en .
         <https://senet.org/gm> <https://senet.org/ns#urlkey> "rhythm-tengoku" .
       )
-      expect(serialize(input)).to eql [
-        {"@id"=>"https://senet.org/gm", "@type"=>"http://vocab.org/frbr/core#Work"},
-        {"@id"=>"https://senet.org/gm", "http://purl.org/dc/terms/title"=>[{"@value"=>"Rhythm Paradise", "@language"=>"en"}]},
-        {"@id"=>"https://senet.org/gm", "https://senet.org/ns#unofficialTitle"=>[{"@value"=>"Rhythm Tengoku", "@language"=>"en"}]},
-        {"@id"=>"https://senet.org/gm", "https://senet.org/ns#urlkey"=>[{"@value"=>"rhythm-tengoku"}]}
-      ]
+      expect(serialize(input)).to eql JSON.parse(%{[
+        {"@id": "https://senet.org/gm", "@type": "http://vocab.org/frbr/core#Work"},
+        {"@id": "https://senet.org/gm", "http://purl.org/dc/terms/title": [{"@value": "Rhythm Paradise", "@language": "en"}]},
+        {"@id": "https://senet.org/gm", "https://senet.org/ns#unofficialTitle": [{"@value": "Rhythm Tengoku", "@language": "en"}]},
+        {"@id": "https://senet.org/gm", "https://senet.org/ns#urlkey": [{"@value": "rhythm-tengoku"}]}
+      ]})
     end
 
     it "serializes multiple subjects" do
@@ -42,10 +42,10 @@ describe JSON::LD::StreamingWriter do
         <http://example.com/test-cases/0001> a :TestCase .
         <http://example.com/test-cases/0002> a :TestCase .
       )
-      expect(serialize(input)).to eql [
-        {"@id"=>"http://example.com/test-cases/0001", "@type"=>"http://www.w3.org/2006/03/test-description#TestCase"},
-        {"@id"=>"http://example.com/test-cases/0002", "@type"=>"http://www.w3.org/2006/03/test-description#TestCase"}
-      ]
+      expect(serialize(input)).to eql JSON.parse(%{[
+        {"@id": "http://example.com/test-cases/0001", "@type": "http://www.w3.org/2006/03/test-description#TestCase"},
+        {"@id": "http://example.com/test-cases/0002", "@type": "http://www.w3.org/2006/03/test-description#TestCase"}
+      ]})
     end
   end
 
@@ -53,35 +53,35 @@ describe JSON::LD::StreamingWriter do
     {
       "default" => [
         %q({<a> <b> <c> .}),
-        [{"@id"=>"a", "b"=>[{"@id"=>"c"}]}]
+        %q([{"@id": "a", "b": [{"@id": "c"}]}])
       ],
       "named" => [
         %q(<C> {<a> <b> <c> .}),
-        [{"@id" => "C", "@graph" => [{"@id"=>"a", "b"=>[{"@id"=>"c"}]}]}]
+        %q([{"@id" :  "C", "@graph" :  [{"@id": "a", "b": [{"@id": "c"}]}]}])
       ],
       "combo" => [
         %q(
           <a> <b> <c> .
           <C> {<A> <b> <c> .}
         ),
-        [
-          {"@id"=>"a", "b"=>[{"@id"=>"c"}]},
-          {"@id"=>"C", "@graph"=>[{"@id"=>"A", "b"=>[{"@id"=>"c"}]}]}
-        ]
+        %q([
+          {"@id": "a", "b": [{"@id": "c"}]},
+          {"@id": "C", "@graph": [{"@id": "A", "b": [{"@id": "c"}]}]}
+        ])
       ],
       "combo with duplicated statement" => [
         %q(
           <a> <b> <c> .
           <C> {<a> <b> <c> \.?}
         ),
-        [
-          {"@id"=>"a", "b"=>[{"@id"=>"c"}]},
-          {"@id"=>"C", "@graph"=>[{"@id"=>"a", "b"=>[{"@id"=>"c"}]}]}
-        ]
+        %q([
+          {"@id": "a", "b": [{"@id": "c"}]},
+          {"@id": "C", "@graph": [{"@id": "a", "b": [{"@id": "c"}]}]}
+        ])
       ],
     }.each_pair do |title, (input, matches)|
       it title do
-        expect(serialize(input)).to eql matches
+        expect(serialize(input)).to eql JSON.parse(matches)
       end
     end
   end
