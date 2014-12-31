@@ -13,6 +13,12 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 Install with `gem install json-ld`
 
+### JSON-LD Streaming Profile
+This gem implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
+
+* Each statement written as a separate node in expanded/flattened form.
+* RDF Lists are written as separate nodes using `rdf:first` and `rdf:rest` properties.
+
 ## Examples
 
     require 'rubygems'

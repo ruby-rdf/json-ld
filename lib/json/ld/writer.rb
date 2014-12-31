@@ -51,6 +51,7 @@ module JSON::LD
   # @see http://json-ld.org/spec/ED/20110507/#the-normalization-algorithm
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Writer < RDF::Writer
+    include StreamingWriter
     include Utils
     format Format
 
@@ -89,6 +90,8 @@ module JSON::LD
     #   frame to use when serializing.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    # @option options [Boolean] :stream (false)
+    #   Do not attempt to optimize graph presentation, suitable for streaming large graphs.
     # @yield  [writer] `self`
     # @yieldparam  [RDF::Writer] writer
     # @yieldreturn [void]
@@ -124,7 +127,13 @@ module JSON::LD
     # @param  [RDF::Statement] statement
     # @return [void]
     def write_statement(statement)
-      @repo.insert(statement)
+      case
+      when @options[:stream]
+        stream_statement(statement)
+      else
+        # Add to repo and output in epilogue
+        @repo.insert(statement)
+      end
     end
 
     ##
@@ -136,7 +145,19 @@ module JSON::LD
     # @raise  [NotImplementedError] unless implemented in subclass
     # @abstract
     def write_triple(subject, predicate, object)
-      @repo.insert(Statement.new(subject, predicate, object))
+      write_statement(Statement.new(subject, predicate, object))
+    end
+
+    ##
+    # Necessary for streaming
+    # @return [void] `self`
+    def write_prologue
+      case
+      when @options[:stream]
+        stream_prologue
+      else
+        super
+      end
     end
 
     ##
@@ -148,6 +169,7 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
+      return stream_epilogue if @options[:stream]
       @debug = @options[:debug]
 
       debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}

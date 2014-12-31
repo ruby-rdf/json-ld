@@ -25,10 +25,11 @@ module JSON
     require 'json/ld/format'
     require 'json/ld/utils'
     autoload :API,                'json/ld/api'
-    autoload :Context,  'json/ld/context'
+    autoload :Context,            'json/ld/context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'
+    autoload :StreamingWriter,    'json/ld/streaming_writer'
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
     
