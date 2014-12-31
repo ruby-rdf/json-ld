@@ -88,6 +88,13 @@ module JSON::LD
       when Array, Hash then input.dup
       when IO, StringIO
         @options = {:base => input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+
+        # if input impelements #links, attempt to get a contextUrl from that link
+        content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
+        context_link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context)) if input.respond_to?(:links)
+        context_url = context_link.href if context_link
+        context = context ? [context, context_url].compact : context_url
+
         JSON.parse(input.read)
       when String
         remote_doc = @options[:documentLoader].call(input, @options)

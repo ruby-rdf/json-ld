@@ -5,6 +5,59 @@ require 'spec_helper'
 describe JSON::LD::API do
   before(:each) { @debug = []}
 
+  describe "#initialize" do
+    context "with string input" do
+      let(:context) do
+        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
+          "@context": {
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "name": "http://xmlns.com/foaf/0.1/name",
+            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
+          }
+        }))
+      end
+      let(:remote_doc) do
+        JSON::LD::API::RemoteDocument.new("http://example.com/foo", %q({
+          "@id": "",
+          "name": "foo"
+        }), "http://example.com/context")
+      end
+
+      it "loads document with loader and loads context" do
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/foo", anything).and_return(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
+        JSON::LD::API.new("http://example.com/foo", nil)
+      end
+    end
+
+    context "with RDF::Util::File::RemoteDoc input" do
+      let(:context) do
+        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
+          "@context": {
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "name": "http://xmlns.com/foaf/0.1/name",
+            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
+          }
+        }))
+      end
+      let(:remote_doc) do
+        RDF::Util::File::RemoteDocument.new(%q({"@id": "", "name": "foo"}),
+          headers: {
+            content_type: 'application/json',
+            link: %(<http://example.com/context>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json")
+          }
+        )
+      end
+
+      it "processes document and retrieves linked context" do
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
+        JSON::LD::API.new(remote_doc, nil)
+      end
+    end
+  end
+
   context "Test Files" do
     Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
       test = File.basename(filename).sub(/-input\..*$/, '')
