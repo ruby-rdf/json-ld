@@ -295,6 +295,26 @@ describe JSON::LD::Context do
     end
   end
 
+  describe "#merge" do
+    it "creates a new context with components of each" do
+      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      cm = context.merge(c2)
+      expect(cm).not_to equal context
+      expect(cm).not_to equal c2
+      expect(cm.term_definitions).to eq c2.term_definitions
+    end
+  end
+
+  describe "#merge!" do
+    it "updates context with components from new" do
+      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      cm = context.merge!(c2)
+      expect(cm).to equal context
+      expect(cm).not_to equal c2
+      expect(cm.term_definitions).to eq c2.term_definitions
+    end
+  end
+
   describe "#serialize" do
     it "context document" do
       expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)

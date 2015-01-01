@@ -106,7 +106,6 @@ module JSON::LD
     attr_accessor :context_base
 
     # Term definitions
-    # @!attribute [r] term_definitions
     # @return [Hash{String => TermDefinition}]
     attr_reader :term_definitions
 
@@ -117,7 +116,6 @@ module JSON::LD
     #
     #
     # This adds a language to plain strings that aren't otherwise coerced
-    # @!attribute [rw] default_language
     # @return [String]
     attr_reader :default_language
     
@@ -134,7 +132,6 @@ module JSON::LD
     # @return [Context] A context provided to us that we can use without re-serializing XXX
     attr_accessor :provided_context
 
-    # @!attribute [r] namer
     # @return [BlankNodeNamer]
     attr_accessor :namer
 
@@ -355,6 +352,33 @@ module JSON::LD
         end
       end
       result
+    end
+
+    ##
+    # Merge in a context, creating a new context with updates from `context`
+    #
+    # @param [Context] context
+    # @return [Context]
+    def merge(context)
+      c = self.dup.merge!(context)
+      c.instance_variable_set(:@term_definitions, context.term_definitions.dup)
+      c
+    end
+
+    ##
+    # Update context with definitions from `context`
+    #
+    # @param [Context] context
+    # @return [self]
+    def merge!(context)
+      # FIXME: if new context removes the default language, this won't do anything
+      default_language = context.default_language if context.default_language
+      vocab = context.vocab if context.vocab
+      base = context.base if context.base
+
+      # Merge in Term Definitions
+      term_definitions.merge!(context.term_definitions)
+      self
     end
 
     ##
