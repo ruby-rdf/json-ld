@@ -84,6 +84,10 @@ module JSON::LD
       @options[:documentLoader] ||= self.class.method(:documentLoader)
       options[:rename_bnodes] ||= true
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+
+      # For context via Link header
+      context_ref = nil
+
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
@@ -91,16 +95,17 @@ module JSON::LD
 
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
-        context_link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context)) if input.respond_to?(:links)
-        context_url = context_link.href if context_link
-        context = context ? [context, context_url].compact : context_url
+        context_ref = if content_type.start_with?('application/json') && input.respond_to?(:links)
+          link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context))
+          link.href if link
+        end
 
         JSON.parse(input.read)
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
         @options = {:base => remote_doc.documentUrl}.merge(@options)
-        context = context ? [context, remote_doc.contextUrl].compact : remote_doc.contextUrl
+        context_ref = remote_doc.contextUrl
 
         case remote_doc.document
         when String then JSON.parse(remote_doc.document)
@@ -111,6 +116,10 @@ module JSON::LD
       # Update calling context :base option, if not defined
       options[:base] ||= @options[:base] if @options[:base]
       @context = Context.new(@options)
+
+      # If not provided, first use context from document, or from a Link header
+      context ||= @value['@context'] if @value.is_a?(Hash)
+      context ||= context_ref
       @context = @context.parse(context) if context
       
       if block_given?
