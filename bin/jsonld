@@ -79,7 +79,7 @@ parser_options = {
 options = {
   parser_options: parser_options,
   output:         STDOUT,
-  output_format:  :turtle,
+  output_format:  :jsonld,
   input_format:   :jsonld,
 }
 input = nil
@@ -117,7 +117,6 @@ def usage
   exit(1)
 end
 
-
 opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 
 opts.each do |opt, arg|
@@ -139,6 +138,12 @@ opts.each do |opt, arg|
   when '--verbose'      then $verbose = true
   when '--help'         then usage
   end
+end
+
+if !(options.keys & [:expand, :compact, :flatten, :frame]).empty? &&
+   (parser_options[:stream] || options[:output_format] != :jsonld)
+   STDERR.puts "Incompatible options"
+   exit(1)
 end
 
 if ARGV.empty?
