@@ -115,11 +115,10 @@ module JSON::LD
 
       # Update calling context :base option, if not defined
       options[:base] ||= @options[:base] if @options[:base]
-      @context = Context.new(@options)
 
       # If not provided, first use context from document, or from a Link header
-      context ||= @value['@context'] if @value.is_a?(Hash)
-      context ||= context_ref
+      context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
+      @context = Context.new(@options)
       @context = @context.parse(context) if context
       
       if block_given?
