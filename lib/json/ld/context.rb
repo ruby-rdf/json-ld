@@ -372,9 +372,9 @@ module JSON::LD
     # @return [self]
     def merge!(context)
       # FIXME: if new context removes the default language, this won't do anything
-      default_language = context.default_language if context.default_language
-      vocab = context.vocab if context.vocab
-      base = context.base if context.base
+      self.default_language = context.default_language if context.default_language
+      self.vocab = context.vocab if context.vocab
+      self.base = context.base if context.base
 
       # Merge in Term Definitions
       term_definitions.merge!(context.term_definitions)
