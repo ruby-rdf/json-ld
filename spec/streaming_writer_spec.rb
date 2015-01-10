@@ -72,7 +72,7 @@ describe JSON::LD::StreamingWriter do
       "combo with duplicated statement" => [
         %q(
           <a> <b> <c> .
-          <C> {<a> <b> <c> \.?}
+          <C> {<a> <b> <c> .}
         ),
         %q([
           {"@id": "a", "b": [{"@id": "c"}]},
