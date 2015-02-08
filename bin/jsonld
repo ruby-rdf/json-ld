@@ -140,6 +140,9 @@ opts.each do |opt, arg|
   end
 end
 
+# Hack
+options[:parser_options][:context] = options[:context] if parser_options[:stream]
+
 if !(options.keys & [:expand, :compact, :flatten, :frame]).empty? &&
    (parser_options[:stream] || options[:output_format] != :jsonld)
    STDERR.puts "Incompatible options"

@@ -14,7 +14,9 @@ describe JSON::LD::StreamingWriter do
   context "simple tests" do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      expect(serialize(input)).to produce([{
+      obj = serialize(input)
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
+      expect(obj).to produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
       }], @debug)
@@ -27,12 +29,15 @@ describe JSON::LD::StreamingWriter do
         <https://senet.org/gm> <https://senet.org/ns#unofficialTitle> "Rhythm Tengoku"@en .
         <https://senet.org/gm> <https://senet.org/ns#urlkey> "rhythm-tengoku" .
       )
-      expect(serialize(input)).to eql JSON.parse(%{[
-        {"@id": "https://senet.org/gm", "@type": "http://vocab.org/frbr/core#Work"},
-        {"@id": "https://senet.org/gm", "http://purl.org/dc/terms/title": [{"@value": "Rhythm Paradise", "@language": "en"}]},
-        {"@id": "https://senet.org/gm", "https://senet.org/ns#unofficialTitle": [{"@value": "Rhythm Tengoku", "@language": "en"}]},
-        {"@id": "https://senet.org/gm", "https://senet.org/ns#urlkey": [{"@value": "rhythm-tengoku"}]}
-      ]})
+      obj = serialize(input)
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
+      expect(obj).to eql JSON.parse(%{[{
+        "@id": "https://senet.org/gm",
+        "@type": ["http://vocab.org/frbr/core#Work"],
+        "http://purl.org/dc/terms/title": [{"@value": "Rhythm Paradise", "@language": "en"}],
+        "https://senet.org/ns#unofficialTitle": [{"@value": "Rhythm Tengoku", "@language": "en"}],
+        "https://senet.org/ns#urlkey": [{"@value": "rhythm-tengoku"}]
+      }]})
     end
 
     it "serializes multiple subjects" do
@@ -42,9 +47,11 @@ describe JSON::LD::StreamingWriter do
         <http://example.com/test-cases/0001> a :TestCase .
         <http://example.com/test-cases/0002> a :TestCase .
       )
-      expect(serialize(input)).to eql JSON.parse(%{[
-        {"@id": "http://example.com/test-cases/0001", "@type": "http://www.w3.org/2006/03/test-description#TestCase"},
-        {"@id": "http://example.com/test-cases/0002", "@type": "http://www.w3.org/2006/03/test-description#TestCase"}
+      obj = serialize(input)
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
+      expect(obj).to eql JSON.parse(%{[
+        {"@id": "http://example.com/test-cases/0001", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]},
+        {"@id": "http://example.com/test-cases/0002", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]}
       ]})
     end
   end
@@ -80,14 +87,19 @@ describe JSON::LD::StreamingWriter do
         ])
       ],
     }.each_pair do |title, (input, matches)|
-      it title do
-        expect(serialize(input)).to eql JSON.parse(matches)
+      context title do
+        subject {serialize(input)}
+        it "matches expected json" do
+          expect(subject).to produce(JSON.parse(matches), @debug)
+        end
       end
     end
   end
 
   def parse(input, options = {})
-    RDF::Repository.new << RDF::TriG::Reader.new(input, options)
+    format = options.fetch(:format, :trig)
+    reader = RDF::Reader.for(format)
+    RDF::Repository.new << reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps

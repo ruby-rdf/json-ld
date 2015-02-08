@@ -9,35 +9,61 @@ module JSON::LD
     # Write out array start, and note not to prepend node-separating ','
     # @return [void] `self`
     def stream_prologue
-      @skip_comma = true
-      @output.puts "["
+
+      # If we were provided a context, or prefixes, use them to compact the output
+      @context = case @options[:context]
+      when nil then nil
+      when Context then @options[:context]
+      else Context.new.parse(@options[:context])
+      end
+
+      if context
+        @output.puts %({"@context": #{context.serialize['@context'].to_json}, "@graph": [)
+      else
+        @output.puts "["
+      end
       self
     end
 
     ##
-    # Write out a statement, retaining current
-    # `subject` and `predicate` to create more compact output
+    # Write a statement, creating a current node definition, if necessary.
+    #
+    # Once a new/first statement is seen, terminate the current node definition and compact if provided a context.
+    #
+    # Also expects all statements in the same context to be contained in a block including all subjects in a block (except for list elements)
+    #
+    # Note that if list elements are not received in order using the same subject and property, this may cause a bad serialization.
+    #
     # @return [void] `self`
     def stream_statement(statement)
-      result = node = {}
-      if statement.has_context?
-        result = {"@id" => statement.context.to_s, "@graph" => [node]}
+      debug("ss") {"state: #{@state.inspect}, stmt: #{statement}"}
+      if @current_graph != statement.context
+        end_graph
+        start_graph(statement.context)
       end
-      node["@id"] = statement.subject.to_s
-      pred = statement.predicate.to_s
+
+      # If we're writing a list
+      @current_node_def ||= {'@id' => statement.subject.to_s}
+
+      if statement.subject.to_s != @current_node_def['@id']
+        end_node
+        @current_node_def = {'@id' => statement.subject.to_s}
+      end
 
       if statement.predicate == RDF.type
-        node["@type"] = statement.object.to_s
-      elsif statement.object.resource?
-        node[pred] = [{"@id" => statement.object.to_s}]
+        (@current_node_def['@type'] ||= []) << statement.object.to_s
       else
-        lit = {"@value" => statement.object.to_s}
-        lit["@type"] = statement.object.datatype.to_s if statement.object.has_datatype?
-        lit["@language"] = statement.object.language.to_s if statement.object.has_language?
-        node[pred] = [lit]
+        pd = (@current_node_def[statement.predicate.to_s] ||= [])
+
+        pd << if statement.object.resource?
+          {'@id' => statement.object.to_s}
+        else
+          lit = {"@value" => statement.object.to_s}
+          lit["@type"] = statement.object.datatype.to_s if statement.object.has_datatype?
+          lit["@language"] = statement.object.language.to_s if statement.object.has_language?
+          lit
+        end
       end
-      @output.puts (@skip_comma ? '  ' : ', ') + result.to_json
-      @skip_comma = false
       self
     end
 
@@ -45,8 +71,52 @@ module JSON::LD
     # Complete open statements
     # @return [void] `self`
     def stream_epilogue
-      @output.puts ']'
+      debug("epilogue") {"state: #{@state.inspect}"}
+      end_graph
+      if context
+        @output.puts "\n]}"
+      else
+        @output.puts "\n]"
+      end
       self
+    end
+
+    private
+    
+    def start_graph(resource)
+      debug("start_graph") {"state: #{@state.inspect}, resource: #{resource}"}
+      if resource
+        @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
+        @output.puts %({"@id": "#{resource}", "@graph": [)
+        @state = :in_graph
+      end
+      @current_graph = resource
+    end
+
+    def end_graph
+      debug("end_graph") {"state: #{@state.inspect}, ctx: #{@current_graph}"}
+      end_node
+      if @current_graph
+        @output.write %(]})
+        @state = :wrote_graph
+      end
+    end
+
+    def end_node
+      debug("end_node") {"state: #{@state.inspect}, node: #{@current_node_def.to_json}"}
+      @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
+      if @current_node_def
+        node_def = if context
+          compacted = JSON::LD::API.compact(@current_node_def, context)
+          compacted.delete('@context')
+          compacted
+        else
+          @current_node_def
+        end
+        @output.write node_def.to_json
+        @state = :wrote_node
+        @current_node_def = nil
+      end
     end
   end
 end
