@@ -8,22 +8,22 @@ def normalize(graph)
   case graph
   when RDF::Enumerable then graph
   when IO, StringIO
-    RDF::Graph.new.load(graph, :base => @info.about)
+    RDF::Graph.new.load(graph, base: @info.about)
   else
     # Figure out which parser to use
     g = RDF::Repository.new
     reader_class = detect_format(graph)
-    reader_class.new(graph, :base => @info.about).each {|s| g << s}
+    reader_class.new(graph, base: @info.about).each {|s| g << s}
     g
   end
 end
 
 RSpec::Matchers.define :be_equivalent_graph do |expected, info|
   match do |actual|
-    @info = if info.respond_to?(:about)
+    @info = if info.respond_to?(:input)
       info
     elsif info.is_a?(Hash)
-      identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
+      identifier = info[:identifier] || info[:about]
       trace = info[:trace]
       trace = trace.join("\n") if trace.is_a?(Array)
       Info.new(identifier, info[:information] || "", trace, info[:inputDocument])

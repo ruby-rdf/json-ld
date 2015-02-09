@@ -17,6 +17,7 @@ module JSON::LD
       else Context.new.parse(@options[:context])
       end
 
+      debug("prologue") {"context: #{context.inspect}"}
       if context
         @output.puts %({"@context": #{context.serialize['@context'].to_json}, "@graph": [)
       else
@@ -107,7 +108,7 @@ module JSON::LD
       @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
       if @current_node_def
         node_def = if context
-          compacted = JSON::LD::API.compact(@current_node_def, context)
+          compacted = JSON::LD::API.compact(@current_node_def, context, rename_bnodes: false)
           compacted.delete('@context')
           compacted
         else

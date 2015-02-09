@@ -85,10 +85,10 @@ module Fixtures
 
       # Execute the test
       def run(rspec_example = nil)
-        debug = ["test: #{inspect}", "source: #{input}"]
-        debug << "context: #{context}" if context_loc
-        debug << "options: #{options.inspect}" unless options.empty?
-        debug << "frame: #{frame}" if frame_loc
+        @debug = ["test: #{inspect}", "source: #{input}"]
+        @debug << "context: #{context}" if context_loc
+        @debug << "options: #{options.inspect}" unless options.empty?
+        @debug << "frame: #{frame}" if frame_loc
 
         options = if self.options[:useDocumentLoader]
           self.options.merge(:documentLoader => Fixtures::SuiteTest.method(:documentLoader))
@@ -101,19 +101,19 @@ module Fixtures
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input_loc, options.merge(:debug => debug))
+              JSON::LD::API.expand(input_loc, options.merge(debug: @debug))
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(:debug => debug))
+              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(debug: @debug))
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input_loc, context_loc, options.merge(:debug => debug))
+              JSON::LD::API.flatten(input_loc, context_loc, options.merge(debug: @debug))
             when "jld:FrameTest"
-              JSON::LD::API.frame(input_loc, frame_loc, options.merge(:debug => debug))
+              JSON::LD::API.frame(input_loc, frame_loc, options.merge(debug: @debug))
             when "jld:FromRDFTest"
               repo = RDF::Repository.load(input_loc, :format => :nquads)
-              debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-              JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
+              @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              JSON::LD::API.fromRdf(repo, options.merge(debug: @debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRdf(input_loc, options.merge(:debug => debug)).map do |statement|
+              JSON::LD::API.toRdf(input_loc, options.merge(debug: @debug)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -123,12 +123,12 @@ module Fixtures
               if testType == "jld:ToRDFTest"
                 expected = expect
                 rspec_example.instance_eval {
-                  expect(result.sort.join("")).to produce(expected, debug)
+                  expect(result.sort.join("")).to produce(expected, @debug)
                 }
               else
                 expected = JSON.load(expect)
                 rspec_example.instance_eval {
-                  expect(result).to produce(expected, debug)
+                  expect(result).to produce(expected, @debug)
                 }
               end
             else
@@ -142,26 +142,26 @@ module Fixtures
             fail("Invalid Frame: #{e.message}")
           end
         else
-          debug << "expected: #{property('expect')}" if property('expect')
+          @debug << "expected: #{property('expect')}" if property('expect')
           t = self
           rspec_example.instance_eval do
             if t.evaluationTest?
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input_loc, options.merge(:debug => debug))
+                  JSON::LD::API.expand(t.input_loc, options.merge(debug: @debug))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(:debug => debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(debug: @debug))
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(:debug => debug))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(debug: @debug))
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(:debug => debug))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(debug: @debug))
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
+                  @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  JSON::LD::API.fromRdf(repo, options.merge(debug: @debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(debug: @debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else

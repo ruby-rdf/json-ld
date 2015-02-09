@@ -187,9 +187,32 @@ describe JSON::LD::Writer do
       }, @debug)
     end
   end
-  
+
+  context "Writes fromRdf tests to isomorphic graph", skip: ENV['CI'] do
+    require 'suite_helper'
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/fromRdf-manifest.jsonld")
+    describe m.name do
+      m.entries.each do |t|
+        next unless t.positiveTest? && !t.property('input').include?('0016')
+        t.debug = ["test: #{t.inspect}", "source: #{t.input}"]
+        specify "#{t.property('input')}: #{t.name}" do
+          repo = RDF::Repository.load(t.input_loc, :format => :nquads)
+          jsonld = JSON::LD::Writer.buffer(debug: t.debug) do |writer|
+            writer << repo
+          end
+
+          # And then, re-generate jsonld as RDF
+          
+          expect(parse(jsonld, format: :jsonld)).to be_equivalent_graph(repo, t)
+        end
+      end
+    end
+  end
+
   def parse(input, options = {})
-    RDF::Graph.new << RDF::Turtle::Reader.new(input, options)
+    format = options.fetch(:format, :trig)
+    reader = RDF::Reader.for(format)
+    RDF::Repository.new << reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps

@@ -103,6 +103,7 @@ module JSON::LD
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
         @repo = RDF::Repository.new
+        @debug = @options[:debug]
 
         if block_given?
           case block.arity
@@ -171,7 +172,6 @@ module JSON::LD
     # @see    #write_triple
     def write_epilogue
       return stream_epilogue if @options[:stream]
-      @debug = @options[:debug]
 
       debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
       result = API.fromRdf(@repo, @options)
