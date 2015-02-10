@@ -11,7 +11,7 @@ module JSON::LD
   #   RDF::Writer.for(:jsonld)         #=> JSON::LD::Writer
   #   RDF::Writer.for("etc/test.json")
   #   RDF::Writer.for(:file_name      => "etc/test.json")
-  #   RDF::Writer.for(:file_extension => "json")
+  #   RDF::Writer.for(file_extension: "json")
   #   RDF::Writer.for(:content_type   => "application/turtle")
   #
   # @example Serializing RDF graph into an JSON-LD file
@@ -37,9 +37,9 @@ module JSON::LD
   #
   # @example Creating @@context prefix definitions in output
   #   JSON::LD::Writer.buffer(
-  #     :prefixes => {
+  #     prefixes: {
   #       nil => "http://example.com/ns#",
-  #       :foaf => "http://xmlns.com/foaf/0.1/"}
+  #       foaf: "http://xmlns.com/foaf/0.1/"}
   #   ) do |writer|
   #     graph.each_statement do |statement|
   #       writer << statement

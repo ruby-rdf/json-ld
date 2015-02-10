@@ -71,24 +71,24 @@ describe JSON::LD::API do
       
       context test do
         it "expands" do
-          options = {:debug => @debug}
+          options = {debug: @debug}
           options[:expandContext] = File.open(context) if context
           jld = JSON::LD::API.expand(File.open(filename), options)
           expect(jld).to produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
         it "compacts" do
-          jld = JSON::LD::API.compact(File.open(filename), File.open(context), :debug => @debug)
+          jld = JSON::LD::API.compact(File.open(filename), File.open(context), debug: @debug)
           expect(jld).to produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "frame" do
-          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), :debug => @debug)
+          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), debug: @debug)
           expect(jld).to produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
         it "toRdf" do
-          expect(RDF::Repository.load(filename, :debug => @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), :trace => @debug)
+          expect(RDF::Repository.load(filename, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
         end if File.exist?(ttl)
       end
     end

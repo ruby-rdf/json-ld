@@ -128,7 +128,7 @@ module JSON::LD
       end
 
       compacted = nil
-      JSON::LD::API.expand(node_definition, :expandContext => @context) do |expanded|
+      JSON::LD::API.expand(node_definition, expandContext: @context) do |expanded|
         compacted = JSON::LD::API.compact(expanded, @context)
       end
       compacted.delete_if {|k, v| k == '@context'}
@@ -169,9 +169,9 @@ module JSON::LD
         when Hash
           if node_reference?(obj)
             reference_map[obj['id']] ||= Resource.new(obj,
-              :context => @context_name,
-              :clean => false,
-              :stub => true
+              context: @context_name,
+              clean: false,
+              stub: true
               )
           else
             obj.keys.each do |k|

@@ -8,11 +8,11 @@ describe JSON::LD::API do
   describe ".frame" do
     {
       "frame with @type matches subject with @type" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@type" => "ex:Type1"
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -24,7 +24,7 @@ describe JSON::LD::API do
             "@type" => "ex:Type2"
           },
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -33,11 +33,11 @@ describe JSON::LD::API do
         }
       },
       "implicitly includes unframed properties" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@type" => "ex:Type1"
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -46,7 +46,7 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -57,12 +57,12 @@ describe JSON::LD::API do
         }
       },
       "explicitly excludes unframed properties" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@explicit" => true,
           "@type" => "ex:Type1"
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -71,7 +71,7 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -80,12 +80,12 @@ describe JSON::LD::API do
         }
       },
       "explicitly includes unframed properties" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@explicit" => false,
           "@type" => "ex:Type1"
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -94,7 +94,7 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -105,12 +105,12 @@ describe JSON::LD::API do
         }
       },
       "frame without @type matches only subjects containing listed properties (duck typing)" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "ex:prop1" => {},
           "ex:prop2" => {}
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -128,7 +128,7 @@ describe JSON::LD::API do
             "ex:prop2" => "Property 2"
           },
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub3",
@@ -138,14 +138,14 @@ describe JSON::LD::API do
         }
       },
       "embed matched frames" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@type" => "ex:Type1",
           "ex:includes" => {
             "@type" => "ex:Type2"
           }
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -159,7 +159,7 @@ describe JSON::LD::API do
             "ex:includes" => {"@id" => "ex:Sub1"}
           },
         ],
-        :output =>{
+        output:{
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -173,11 +173,11 @@ describe JSON::LD::API do
         }
       },
       "multiple matches" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@type" => "ex:Type1"
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -189,7 +189,7 @@ describe JSON::LD::API do
             "@type" => "ex:Type1"
           },
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [
               {
@@ -204,12 +204,12 @@ describe JSON::LD::API do
           }
       },
       "non-existent framed properties create null property" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "@type" => "ex:Type1",
           "ex:null" => []
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -218,7 +218,7 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -230,12 +230,12 @@ describe JSON::LD::API do
         }
       },
       "non-existent framed properties create default property" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
           "@type" => "ex:Type1",
           "ex:null" => [{"@default" => "foo"}]
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -244,7 +244,7 @@ describe JSON::LD::API do
             "ex:prop2" => {"@id" => "ex:Obj1"}
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/", "ex:null" => {"@container" => "@set"}},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -256,11 +256,11 @@ describe JSON::LD::API do
         }
       },
       "mixed content" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "ex:mixed" => {"@embed" => false}
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -270,7 +270,7 @@ describe JSON::LD::API do
             ]
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -282,11 +282,11 @@ describe JSON::LD::API do
         }
       },
       "no embedding" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "ex:embed" => {"@embed" => false}
         },
-        :input => [
+        input: [
           {
             "@context" => {"ex" => "http://example.org/"},
             "@id" => "ex:Sub1",
@@ -296,7 +296,7 @@ describe JSON::LD::API do
             }
           }
         ],
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -305,11 +305,11 @@ describe JSON::LD::API do
         }
       },
       "mixed list" => {
-        :frame => {
+        frame: {
           "@context" => {"ex" => "http://example.org/"},
           "ex:mixedlist" => {}
         },
-        :input => {
+        input: {
           "@context" => {"ex" => "http://example.org/"},
           "@id" => "ex:Sub1",
           "@type" => "ex:Type1",
@@ -321,7 +321,7 @@ describe JSON::LD::API do
             "literal1"
           ]}
         },
-        :output => {
+        output: {
           "@context" => {"ex" => "http://example.org/"},
           "@graph" => [{
             "@id" => "ex:Sub1",
@@ -337,7 +337,7 @@ describe JSON::LD::API do
         }
       },
       "presentation example" => {
-        :frame => {
+        frame: {
           "@context" => {
             "primaryTopic" => {"@id" => "http://xmlns.com/foaf/0.1/primaryTopic","@type" => "@id"},
             "sameAs" => {"@id" => "http://www.w3.org/2002/07/owl#sameAs","@type" => "@id"},
@@ -347,7 +347,7 @@ describe JSON::LD::API do
             "sameAs" => {}
           }
         },
-        :input => [
+        input: [
           {
             "@id" => "http://en.wikipedia.org/wiki/Linked_Data",
             "http://xmlns.com/foaf/0.1/primaryTopic" => [{"@id" => "http://dbpedia.org/resource/Linked_Data"}]
@@ -366,7 +366,7 @@ describe JSON::LD::API do
             "http://www.w3.org/2002/07/owl#sameAs" => [{"@id" => "http://dbpedia.org/resource/Linked_Data"}]
           }
         ],
-        :output => {
+        output: {
           "@context" => {
             "primaryTopic" => {
               "@id" => "http://xmlns.com/foaf/0.1/primaryTopic",
@@ -390,7 +390,7 @@ describe JSON::LD::API do
         }
       },
       "microdata manifest" => {
-        :frame => {
+        frame: {
           "@context" => {
             "xsd" => "http://www.w3.org/2001/XMLSchema#",
             "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
@@ -413,7 +413,7 @@ describe JSON::LD::API do
             }
           }]
         },
-        :input => {
+        input: {
           "@context" => {
             "md" => "http://www.w3.org/ns/md#",
             "mf" => "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
@@ -449,7 +449,7 @@ describe JSON::LD::API do
             }
           ]
         },
-        :output => {
+        output: {
           "@context" => {
             "xsd" => "http://www.w3.org/2001/XMLSchema#",
             "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
@@ -503,7 +503,7 @@ describe JSON::LD::API do
       it title do
         @debug = []
         begin
-          jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
+          jld = JSON::LD::API.frame(params[:input], params[:frame], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +
@@ -516,14 +516,14 @@ describe JSON::LD::API do
     describe "@reverse", skip:true do
       {
         "embed matched frames with @reverse" => {
-          :frame => {
+          frame: {
             "@context" => {"ex" => "http://example.org/"},
             "@type" => "ex:Type1",
             "@reverse" => {
               "ex:includes" => {}
             }
           },
-          :input => [
+          input: [
             {
               "@context" => {"ex" => "http://example.org/"},
               "@id" => "ex:Sub1",
@@ -536,7 +536,7 @@ describe JSON::LD::API do
               "ex:includes" => {"@id" => "ex:Sub1"}
             },
           ],
-          :output =>{
+          output:{
             "@context" => {"ex" => "http://example.org/"},
             "@graph" => [{
               "@id" => "ex:Sub1",
@@ -555,7 +555,7 @@ describe JSON::LD::API do
         it title do
           @debug = []
           begin
-            jld = JSON::LD::API.frame(params[:input], params[:frame], :debug => @debug)
+            jld = JSON::LD::API.frame(params[:input], params[:frame], debug: @debug)
             expect(jld).to produce(params[:output], @debug)
           rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
             fail("#{e.class}: #{e.message}\n" +

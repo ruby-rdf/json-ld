@@ -8,66 +8,66 @@ describe JSON::LD::API do
   describe ".expand" do
     {
       "empty doc" => {
-        :input => {},
-        :output => []
+        input: {},
+        output: []
       },
       "@list coercion" => {
-        :input => {
+        input: {
           "@context" => {
             "foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}
           },
           "foo" => [{"@value" => "bar"}]
         },
-        :output => [{
+        output: [{
           "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
         }]
       },
       "native values in list" => {
-        :input => {
+        input: {
           "http://example.com/foo" => {"@list" => [1, 2]}
         },
-        :output => [{
+        output: [{
           "http://example.com/foo" => [{"@list" => [{"@value" => 1}, {"@value" => 2}]}]
         }]
       },
       "@graph" => {
-        :input => {
+        input: {
           "@context" => {"ex" => "http://example.com/"},
           "@graph" => [
             {"ex:foo"  => {"@value" => "foo"}},
             {"ex:bar" => {"@value" => "bar"}}
           ]
         },
-        :output => [
+        output: [
           {"http://example.com/foo" => [{"@value" => "foo"}]},
           {"http://example.com/bar" => [{"@value" => "bar"}]}
         ]
       },
       "@type with CURIE" => {
-        :input => {
+        input: {
           "@context" => {"ex" => "http://example.com/"},
           "@type" => "ex:type"
         },
-        :output => [
+        output: [
           {"@type" => ["http://example.com/type"]}
         ]
       },
       "@type with CURIE and muliple values" => {
-        :input => {
+        input: {
           "@context" => {"ex" => "http://example.com/"},
           "@type" => ["ex:type1", "ex:type2"]
         },
-        :output => [
+        output: [
           {"@type" => ["http://example.com/type1", "http://example.com/type2"]}
         ]
       },
       "@value with false" => {
-        :input => {"http://example.com/ex" => {"@value" => false}},
-        :output => [{"http://example.com/ex" => [{"@value" => false}]}]
+        input: {"http://example.com/ex" => {"@value" => false}},
+        output: [{"http://example.com/ex" => [{"@value" => false}]}]
       }
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+        jld = JSON::LD::API.expand(params[:input], debug: @debug)
         expect(jld).to produce(params[:output], @debug)
       end
     end
@@ -75,46 +75,46 @@ describe JSON::LD::API do
     context "with relative IRIs" do
       {
         "base" => {
-          :input => {
+          input: {
             "@id" => "",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => [{
+          output: [{
             "@id" => "http://example.org/",
             "@type" => ["#{RDF::RDFS.Resource}"]
           }]
         },
         "relative" => {
-          :input => {
+          input: {
             "@id" => "a/b",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => [{
+          output: [{
             "@id" => "http://example.org/a/b",
             "@type" => ["#{RDF::RDFS.Resource}"]
           }]
         },
         "hash" => {
-          :input => {
+          input: {
             "@id" => "#a",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => [{
+          output: [{
             "@id" => "http://example.org/#a",
             "@type" => ["#{RDF::RDFS.Resource}"]
           }]
         },
         "unmapped @id" => {
-          :input => {
+          input: {
             "http://example.com/foo" => {"@id" => "bar"}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@id" => "http://example.org/bar"}]
           }]
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :base => "http://example.org/", :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], base: "http://example.org/", debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -123,57 +123,57 @@ describe JSON::LD::API do
     context "keyword aliasing" do
       {
         "@id" => {
-          :input => {
+          input: {
             "@context" => {"id" => "@id"},
             "id" => "",
             "@type" => "#{RDF::RDFS.Resource}"
           },
-          :output => [{
+          output: [{
             "@id" => "",
             "@type" =>[ "#{RDF::RDFS.Resource}"]
           }]
         },
         "@type" => {
-          :input => {
+          input: {
             "@context" => {"type" => "@type"},
             "type" => RDF::RDFS.Resource.to_s,
             "http://example.com/foo" => {"@value" => "bar", "type" => "http://example.com/baz"}
           },
-          :output => [{
+          output: [{
             "@type" => [RDF::RDFS.Resource.to_s],
             "http://example.com/foo" => [{"@value" => "bar", "@type" => "http://example.com/baz"}]
           }]
         },
         "@language" => {
-          :input => {
+          input: {
             "@context" => {"language" => "@language"},
             "http://example.com/foo" => {"@value" => "bar", "language" => "baz"}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@value" => "bar", "@language" => "baz"}]
           }]
         },
         "@value" => {
-          :input => {
+          input: {
             "@context" => {"literal" => "@value"},
             "http://example.com/foo" => {"literal" => "bar"}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@value" => "bar"}]
           }]
         },
         "@list" => {
-          :input => {
+          input: {
             "@context" => {"list" => "@list"},
             "http://example.com/foo" => {"list" => ["bar"]}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
           }]
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -182,53 +182,53 @@ describe JSON::LD::API do
     context "native types" do
       {
         "true" => {
-          :input => {
+          input: {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:bool" => true
           },
-          :output => [{
+          output: [{
             "http://example.org/vocab#bool" => [{"@value" => true}]
           }]
         },
         "false" => {
-          :input => {
+          input: {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:bool" => false
           },
-          :output => [{
+          output: [{
             "http://example.org/vocab#bool" => [{"@value" => false}]
           }]
         },
         "double" => {
-          :input => {
+          input: {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:double" => 1.23
           },
-          :output => [{
+          output: [{
             "http://example.org/vocab#double" => [{"@value" => 1.23}]
           }]
         },
         "double-zero" => {
-          :input => {
+          input: {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:double-zero" => 0.0e0
           },
-          :output => [{
+          output: [{
             "http://example.org/vocab#double-zero" => [{"@value" => 0.0e0}]
           }]
         },
         "integer" => {
-          :input => {
+          input: {
             "@context" => {"e" => "http://example.org/vocab#"},
             "e:integer" => 123
           },
-          :output => [{
+          output: [{
             "http://example.org/vocab#integer" => [{"@value" => 123}]
           }]
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -237,26 +237,26 @@ describe JSON::LD::API do
     context "coerced typed values" do
       {
         "boolean" => {
-          :input => {
+          input: {
             "@context" => {"foo" => {"@id" => "http://example.org/foo", "@type" => RDF::XSD.boolean.to_s}},
             "foo" => "true"
           },
-          :output => [{
+          output: [{
             "http://example.org/foo" => [{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]
           }]
         },
         "date" => {
-          :input => {
+          input: {
             "@context" => {"foo" => {"@id" => "http://example.org/foo", "@type" => RDF::XSD.date.to_s}},
             "foo" => "2011-03-26"
           },
-          :output => [{
+          output: [{
             "http://example.org/foo" => [{"@value" => "2011-03-26", "@type" => RDF::XSD.date.to_s}]
           }]
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -265,42 +265,42 @@ describe JSON::LD::API do
     context "null" do
       {
         "value" => {
-          :input => {"http://example.com/foo" => nil},
-          :output => []
+          input: {"http://example.com/foo" => nil},
+          output: []
         },
         "@value" => {
-          :input => {"http://example.com/foo" => {"@value" => nil}},
-          :output => []
+          input: {"http://example.com/foo" => {"@value" => nil}},
+          output: []
         },
         "@value and non-null @type" => {
-          :input => {"http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}},
-          :output => []
+          input: {"http://example.com/foo" => {"@value" => nil, "@type" => "http://type"}},
+          output: []
         },
         "@value and non-null @language" => {
-          :input => {"http://example.com/foo" => {"@value" => nil, "@language" => "en"}},
-          :output => []
+          input: {"http://example.com/foo" => {"@value" => nil, "@language" => "en"}},
+          output: []
         },
         "array with null elements" => {
-          :input => {
+          input: {
             "http://example.com/foo" => [nil]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => []
           }]
         },
         "@set with null @value" => {
-          :input => {
+          input: {
             "http://example.com/foo" => [
               {"@value" => nil, "@type" => "http://example.org/Type"}
             ]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => []
           }]
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -309,7 +309,7 @@ describe JSON::LD::API do
     context "default language" do
       {
         "value with coerced null language" => {
-          :input => {
+          input: {
             "@context" => {
               "@language" => "en",
               "ex" => "http://example.org/vocab#",
@@ -319,7 +319,7 @@ describe JSON::LD::API do
             "ex:german" => "german",
             "ex:nolang" => "no language"
           },
-          :output => [
+          output: [
             {
               "http://example.org/vocab#german" => [{"@value" => "german", "@language" => "de"}],
               "http://example.org/vocab#nolang" => [{"@value" => "no language"}]
@@ -328,7 +328,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -337,25 +337,25 @@ describe JSON::LD::API do
     context "default vocabulary" do
       {
         "property" => {
-          :input => {
+          input: {
             "@context" => {"@vocab" => "http://example.com/"},
             "verb" => {"@value" => "foo"}
           },
-          :output => [{
+          output: [{
             "http://example.com/verb" => [{"@value" => "foo"}]
           }]
         },
         "datatype" => {
-          :input => {
+          input: {
             "@context" => {"@vocab" => "http://example.com/"},
             "http://example.org/verb" => {"@value" => "foo", "@type" => "string"}
           },
-          :output => [
+          output: [
             "http://example.org/verb" => [{"@value" => "foo", "@type" => "http://example.com/string"}]
           ]
         },
         "expand-0028" => {
-          :input => {
+          input: {
             "@context" => {
               "@vocab" => "http://example.org/vocab#",
               "date" => { "@type" => "dateTime" }
@@ -368,7 +368,7 @@ describe JSON::LD::API do
               "expandedDate" => { "@value" => "2012-08-01T00:00:00Z", "@type" => "dateTime" }
             }
           },
-          :output => [
+          output: [
             {
               "@id" => "http://foo/bar/example1",
               "@type" => ["http://example.org/vocab#test"],
@@ -395,8 +395,8 @@ describe JSON::LD::API do
       }.each do |title, params|
         it title do
           jld = JSON::LD::API.expand(params[:input],
-            :base => "http://foo/bar/",
-            :debug => @debug)
+            base: "http://foo/bar/",
+            debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -405,35 +405,35 @@ describe JSON::LD::API do
     context "unmapped properties" do
       {
         "unmapped key" => {
-          :input => {
+          input: {
             "foo" => "bar"
           },
-          :output => []
+          output: []
         },
         "unmapped @type as datatype" => {
-          :input => {
+          input: {
             "http://example.com/foo" => {"@value" => "bar", "@type" => "baz"}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@value" => "bar", "@type" => "http://example/baz"}]
           }]
         },
         "unknown keyword" => {
-          :input => {
+          input: {
             "@foo" => "bar"
           },
-          :output => []
+          output: []
         },
         "value" => {
-          :input => {
+          input: {
             "@context" => {"ex" => {"@id" => "http://example.org/idrange", "@type" => "@id"}},
             "@id" => "http://example.org/Subj",
             "idrange" => "unmapped"
           },
-          :output => []
+          output: []
         },
         "context reset" => {
-          :input => {
+          input: {
             "@context" => {"ex" => "http://example.org/", "prop" => "ex:prop"},
             "@id" => "http://example.org/id1",
             "prop" => "prop",
@@ -443,7 +443,7 @@ describe JSON::LD::API do
               "prop" => "prop"
             }
           },
-          :output => [{
+          output: [{
             "@id" => "http://example.org/id1",
             "http://example.org/prop" => [{"@value" => "prop"}],
             "http://example.org/chain" => [{"@id" => "http://example.org/id2"}]
@@ -451,7 +451,7 @@ describe JSON::LD::API do
         ]}
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug, :base => 'http://example/')
+          jld = JSON::LD::API.expand(params[:input], debug: @debug, base: 'http://example/')
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -460,52 +460,52 @@ describe JSON::LD::API do
     context "lists" do
       {
         "empty" => {
-          :input => {"http://example.com/foo" => {"@list" => []}},
-          :output => [{"http://example.com/foo" => [{"@list" => []}]}]
+          input: {"http://example.com/foo" => {"@list" => []}},
+          output: [{"http://example.com/foo" => [{"@list" => []}]}]
         },
         "coerced empty" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@list"}},
             "http://example.com/foo" => []
           },
-          :output => [{"http://example.com/foo" => [{"@list" => []}]}]
+          output: [{"http://example.com/foo" => [{"@list" => []}]}]
         },
         "coerced single element" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@list"}},
             "http://example.com/foo" => [ "foo" ]
           },
-          :output => [{"http://example.com/foo" => [{"@list" => [{"@value" => "foo"}]}]}]
+          output: [{"http://example.com/foo" => [{"@list" => [{"@value" => "foo"}]}]}]
         },
         "coerced multiple elements" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@list"}},
             "http://example.com/foo" => [ "foo", "bar" ]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@list" => [ {"@value" => "foo"}, {"@value" => "bar"} ]}]
           }]
         },
         "explicit list with coerced @id values" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@type" => "@id"}},
             "http://example.com/foo" => {"@list" => ["http://foo", "http://bar"]}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@list" => [{"@id" => "http://foo"}, {"@id" => "http://bar"}]}]
           }]
         },
         "explicit list with coerced datatype values" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@type" => RDF::XSD.date.to_s}},
             "http://example.com/foo" => {"@list" => ["2012-04-12"]}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [{"@list" => [{"@value" => "2012-04-12", "@type" => RDF::XSD.date.to_s}]}]
           }]
         },
         "expand-0004" => {
-          :input => ::JSON.parse(%({
+          input: ::JSON.parse(%({
             "@context": {
               "mylist1": {"@id": "http://example.com/mylist1", "@container": "@list"},
               "mylist2": {"@id": "http://example.com/mylist2", "@container": "@list"},
@@ -514,7 +514,7 @@ describe JSON::LD::API do
             },
             "http://example.org/property": { "@list": "one item" }
           })),
-          :output => ::JSON.parse(%([
+          output: ::JSON.parse(%([
             {
               "http://example.org/property": [
                 {
@@ -530,7 +530,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -539,51 +539,51 @@ describe JSON::LD::API do
     context "sets" do
       {
         "empty" => {
-          :input => {
+          input: {
             "http://example.com/foo" => {"@set" => []}
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => []
           }]
         },
         "coerced empty" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
             "http://example.com/foo" => []
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => []
           }]
         },
         "coerced single element" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
             "http://example.com/foo" => [ "foo" ]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [ {"@value" => "foo"} ]
           }]
         },
         "coerced multiple elements" => {
-          :input => {
+          input: {
             "@context" => {"http://example.com/foo" => {"@container" => "@set"}},
             "http://example.com/foo" => [ "foo", "bar" ]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => [ {"@value" => "foo"}, {"@value" => "bar"} ]
           }]
         },
         "array containing set" => {
-          :input => {
+          input: {
             "http://example.com/foo" => [{"@set" => []}]
           },
-          :output => [{
+          output: [{
             "http://example.com/foo" => []
           }]
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -592,7 +592,7 @@ describe JSON::LD::API do
     context "language maps" do
       {
         "simple map" => {
-          :input => {
+          input: {
             "@context" => {
               "vocab" => "http://example.com/vocab/",
               "label" => {
@@ -606,7 +606,7 @@ describe JSON::LD::API do
               "de" => [ "Die Königin", "Ihre Majestät" ]
             }
           },
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/queen",
               "http://example.com/vocab/label" => [
@@ -618,7 +618,7 @@ describe JSON::LD::API do
           ]
         },
         "expand-0035" => {
-          :input => {
+          input: {
             "@context" => {
               "@vocab" => "http://example.com/vocab/",
               "@language" => "it",
@@ -636,7 +636,7 @@ describe JSON::LD::API do
               { "@value" => "The king", "@language" => "en" }
             ]
           },
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/queen",
               "http://example.com/vocab/label" => [
@@ -651,7 +651,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -660,7 +660,7 @@ describe JSON::LD::API do
     context "@reverse" do
       {
         "expand-0037" => {
-          :input => ::JSON.parse(%({
+          input: ::JSON.parse(%({
             "@context": {
               "name": "http://xmlns.com/foaf/0.1/name"
             },
@@ -673,7 +673,7 @@ describe JSON::LD::API do
               }
             }
           })),
-          :output => ::JSON.parse(%([
+          output: ::JSON.parse(%([
             {
               "@id": "http://example.com/people/markus",
               "@reverse": {
@@ -697,7 +697,7 @@ describe JSON::LD::API do
           ]))
         },
         "expand-0043" => {
-          :input => ::JSON.parse(%({
+          input: ::JSON.parse(%({
             "@context": {
               "name": "http://xmlns.com/foaf/0.1/name",
               "isKnownBy": { "@reverse": "http://xmlns.com/foaf/0.1/knows" }
@@ -717,7 +717,7 @@ describe JSON::LD::API do
               ]
             }
           })),
-          :output => ::JSON.parse(%([
+          output: ::JSON.parse(%([
             {
               "@id": "http://example.com/people/markus",
               "http://xmlns.com/foaf/0.1/knows": [
@@ -748,7 +748,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -757,7 +757,7 @@ describe JSON::LD::API do
     context "@index" do
       {
         "string annotation" => {
-          :input => {
+          input: {
             "@context" => {
               "container" => {
                 "@id" => "http://example.com/container",
@@ -770,7 +770,7 @@ describe JSON::LD::API do
               "de" => [ "Die Königin", "Ihre Majestät" ]
             }
           },
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/annotationsTest",
               "http://example.com/container" => [
@@ -783,7 +783,7 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], :debug => @debug)
+          jld = JSON::LD::API.expand(params[:input], debug: @debug)
           expect(jld).to produce(params[:output], @debug)
         end
       end
@@ -792,51 +792,51 @@ describe JSON::LD::API do
     context "exceptions" do
       {
         "non-null @value and null @type" => {
-          :input => {"http://example.com/foo" => {"@value" => "foo", "@type" => nil}},
-          :exception => JSON::LD::JsonLdError::InvalidTypeValue
+          input: {"http://example.com/foo" => {"@value" => "foo", "@type" => nil}},
+          exception: JSON::LD::JsonLdError::InvalidTypeValue
         },
         "non-null @value and null @language" => {
-          :input => {"http://example.com/foo" => {"@value" => "foo", "@language" => nil}},
-          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
+          input: {"http://example.com/foo" => {"@value" => "foo", "@language" => nil}},
+          exception: JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "value with null language" => {
-          :input => {
+          input: {
             "@context" => {"@language" => "en"},
             "http://example.org/nolang" => {"@value" => "no language", "@language" => nil}
           },
-          :exception => JSON::LD::JsonLdError::InvalidLanguageTaggedString
+          exception: JSON::LD::JsonLdError::InvalidLanguageTaggedString
         },
         "@list containing @list" => {
-          :input => {
+          input: {
             "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}
           },
-          :exception => JSON::LD::JsonLdError::ListOfLists
+          exception: JSON::LD::JsonLdError::ListOfLists
         },
         "@list containing @list (with coercion)" => {
-          :input => {
+          input: {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [{"@list" => ["baz"]}]
           },
-          :exception => JSON::LD::JsonLdError::ListOfLists
+          exception: JSON::LD::JsonLdError::ListOfLists
         },
         "coerced @list containing an array" => {
-          :input => {
+          input: {
             "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
             "foo" => [["baz"]]
           },
-          :exception => JSON::LD::JsonLdError::ListOfLists
+          exception: JSON::LD::JsonLdError::ListOfLists
         },
         "@reverse object with an @id property" => {
-          :input => JSON.parse(%({
+          input: JSON.parse(%({
             "@id": "http://example/foo",
             "@reverse": {
               "@id": "http://example/bar"
             }
           })),
-          :exception => JSON::LD::JsonLdError::InvalidReversePropertyMap,
+          exception: JSON::LD::JsonLdError::InvalidReversePropertyMap,
         },
         "colliding keywords" => {
-          :input => JSON.parse(%({
+          input: JSON.parse(%({
             "@context": {
               "id": "@id",
               "ID": "@id"
@@ -844,11 +844,11 @@ describe JSON::LD::API do
             "id": "http://example/foo",
             "ID": "http://example/bar"
           })),
-          :exception => JSON::LD::JsonLdError::CollidingKeywords,
+          exception: JSON::LD::JsonLdError::CollidingKeywords,
         }
       }.each do |title, params|
         it title do
-          #JSON::LD::API.expand(params[:input], :debug => @debug).should produce([], @debug)
+          #JSON::LD::API.expand(params[:input], debug: @debug).should produce([], @debug)
           expect {JSON::LD::API.expand(params[:input])}.to raise_error(params[:exception])
         end
       end

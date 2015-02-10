@@ -171,7 +171,7 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
     graph = RDF::Graph.new << JSON::LD::API.toRdf(input)
 
     require 'rdf/turtle'
-    graph.dump(:ttl, :prefixes => {:foaf => "http://xmlns.com/foaf/0.1/"})
+    graph.dump(:ttl, prefixes: {foaf: "http://xmlns.com/foaf/0.1/"})
     @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
     <http://example.org/people#joebob> a foaf:Person;
@@ -219,8 +219,8 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
 
-    graph = RDF::Graph.load("etc/doap.jsonld", :format => :jsonld)
-    graph.dump(:jsonld, :standard_prefixes => true)
+    graph = RDF::Graph.load("etc/doap.jsonld", format: :jsonld)
+    graph.dump(:jsonld, standard_prefixes: true)
 
 `RDF::GRAPH#dump` can also take a `:context` option to use a separately defined context
 

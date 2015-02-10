@@ -107,7 +107,7 @@ describe JSON::LD::StreamingWriter do
             next unless t.positiveTest? && !t.property('input').include?('0016')
             t.debug = ["test: #{t.inspect}", "source: #{t.input}"]
             specify "#{t.property('input')}: #{t.name}" do
-              repo = RDF::Repository.load(t.input_loc, :format => :nquads)
+              repo = RDF::Repository.load(t.input_loc, format: :nquads)
               jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, debug: t.debug) do |writer|
                 writer << repo
               end
@@ -132,7 +132,7 @@ describe JSON::LD::StreamingWriter do
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug = [] << g.dump(:ttl)
-    result = JSON::LD::Writer.buffer(options.merge(:debug => @debug, stream: true)) do |writer|
+    result = JSON::LD::Writer.buffer(options.merge(debug: @debug, stream: true)) do |writer|
       writer << g
     end
     puts result if $verbose

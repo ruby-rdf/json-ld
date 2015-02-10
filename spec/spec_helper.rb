@@ -17,11 +17,11 @@ require 'rack/cache'
 require 'matchers'
 
 JSON_STATE = JSON::State.new(
-  :indent       => "  ",
-  :space        => " ",
-  :space_before => "",
-  :object_nl    => "\n",
-  :array_nl     => "\n"
+  indent:       "  ",
+  space:        " ",
+  space_before: "",
+  object_nl:    "\n",
+  array_nl:     "\n"
 )
 
 # Create and maintain a cache of downloaded URIs
@@ -34,10 +34,10 @@ RestClient.enable Rack::Cache,
   entitystore: "file:" + ::File.expand_path("../uri-cache/body", __FILE__)
 
 ::RSpec.configure do |c|
-  c.filter_run :focus => true
+  c.filter_run focus: true
   c.run_all_when_everything_filtered = true
   c.exclusion_filter = {
-    :ruby => lambda { |version| !(RUBY_VERSION.to_s =~ /^#{version.to_s}/) },
+    ruby: lambda { |version| !(RUBY_VERSION.to_s =~ /^#{version.to_s}/) },
   }
   c.include(RDF::Spec::Matchers)
 end

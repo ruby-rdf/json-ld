@@ -26,7 +26,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      :headers => {"Accept" => "application/ld+json, application/json"}
+      headers: {"Accept" => "application/ld+json, application/json"}
     }
 
     # Current input
@@ -79,11 +79,10 @@ module JSON::LD
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
-      @options = {:compactArrays => true}.merge(options)
+      @options = {compactArrays: true, rename_bnodes: true}.merge(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
-      options[:rename_bnodes] ||= true
-      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
       context_ref = nil
@@ -91,7 +90,7 @@ module JSON::LD
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
-        @options = {:base => input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
 
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
@@ -104,7 +103,7 @@ module JSON::LD
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        @options = {:base => remote_doc.documentUrl}.merge(@options)
+        @options = {base: remote_doc.documentUrl}.merge(@options)
         context_ref = remote_doc.contextUrl
 
         case remote_doc.document
@@ -198,7 +197,7 @@ module JSON::LD
         # xxx) Add the given context to the output
         ctx = self.context.serialize
         if result.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', :vocab => true, :quiet => true)
+          kwgraph = self.context.compact_iri('@graph', vocab: true, quiet: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
         result = ctx.merge(result) unless ctx.empty?
@@ -257,7 +256,7 @@ module JSON::LD
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = depth {compact(flattened, nil)}
           compacted = [compacted] unless compacted.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', :quiet => true)
+          kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
         end
       end
@@ -299,10 +298,10 @@ module JSON::LD
     def self.frame(input, frame, options = {})
       result = nil
       framing_state = {
-        :embed       => true,
-        :explicit    => false,
-        :omitDefault => false,
-        :embeds      => nil,
+        embed:       true,
+        explicit:    false,
+        omitDefault: false,
+        embeds:      nil,
       }
       framing_state[:embed] = options[:embed] if options.has_key?(:embed)
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
@@ -355,7 +354,7 @@ module JSON::LD
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output
-        kwgraph = context.compact_iri('@graph', :quiet => true)
+        kwgraph = context.compact_iri('@graph', quiet: true)
         result = context.serialize.merge({kwgraph => compacted})
         debug(".frame") {"after compact: #{result.to_json(JSON_STATE)}"}
         result = cleanup_preserve(result)
@@ -389,7 +388,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options.merge(:ordered => false))
+      expanded_input = API.expand(input, options.merge(ordered: false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -454,7 +453,7 @@ module JSON::LD
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
     def self.fromRdf(input, options = {}, &block)
-      options = {:useNativeTypes => false}.merge(options)
+      options = {useNativeTypes: false}.merge(options)
       result = nil
 
       API.new(nil, nil, options) do |api|

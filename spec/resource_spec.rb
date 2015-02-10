@@ -18,7 +18,7 @@ describe JSON::LD::Resource do
     end
 
     describe "compacted with context" do
-      subject {JSON::LD::Resource.new({'@id' => '_:foo', "http://schema.org/name" => "foo"}, :compact => true, :context => {"@vocab" => "http://schema.org/"})}
+      subject {JSON::LD::Resource.new({'@id' => '_:foo', "http://schema.org/name" => "foo"}, compact: true, context: {"@vocab" => "http://schema.org/"})}
       specify {expect(subject).not_to be_nil}
       specify {expect(subject).to be_a(JSON::LD::Resource)}
       specify {expect(subject).not_to be_clean}

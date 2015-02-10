@@ -14,10 +14,10 @@ describe JSON::LD::Format do
     formats = [
       :jsonld,
       "etc/doap.jsonld",
-      {:file_name      => 'etc/doap.jsonld'},
-      {:file_extension => 'jsonld'},
-      {:content_type   => 'application/ld+json'},
-      {:content_type   => 'application/x-ld+json'},
+      {file_name:      'etc/doap.jsonld'},
+      {file_extension: 'jsonld'},
+      {content_type:   'application/ld+json'},
+      {content_type:   'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
         expect(RDF::Format.for(arg)).to eq @format_class
@@ -25,10 +25,10 @@ describe JSON::LD::Format do
     end
 
     {
-      :jsonld   => '{"@context" => "foo"}',
-      :context  => %({\n"@context": {),
-      :id       => %({\n"@id": {),
-      :type     => %({\n"@type": {),
+      jsonld:   '{"@context" => "foo"}',
+      context:  %({\n"@context": {),
+      id:       %({\n"@id": {),
+      type:     %({\n"@type": {),
     }.each do |sym, str|
       it "detects #{sym}" do
         expect(@format_class.for {str}).to eq @format_class
@@ -46,7 +46,7 @@ describe JSON::LD::Format do
 
   describe ".detect" do
     {
-      :jsonld => '{"@context" => "foo"}',
+      jsonld: '{"@context" => "foo"}',
     }.each do |sym, str|
       it "detects #{sym}" do
         expect(@format_class.detect(str)).to be_truthy
@@ -54,14 +54,14 @@ describe JSON::LD::Format do
     end
 
     {
-      :n3             => "@prefix foo: <bar> .\nfoo:bar = {<a> <b> <c>} .",
-      :nquads => "<a> <b> <c> <d> . ",
-      :rdfxml => '<rdf:RDF about="foo"></rdf:RDF>',
-      :rdfa   => '<div about="foo"></div>',
-      :microdata => '<div itemref="bar"></div>',
-      :ntriples         => "<a> <b> <c> .",
-      :multi_line       => '<a>\n  <b>\n  "literal"\n .',
-      :turtle           => "@prefix foo: <bar> .\n foo:a foo:b <c> .",
+      n3:         "@prefix foo: <bar> .\nfoo:bar = {<a> <b> <c>} .",
+      nquads:     "<a> <b> <c> <d> . ",
+      rdfxml:     '<rdf:RDF about="foo"></rdf:RDF>',
+      rdfa:       '<div about="foo"></div>',
+      microdata:  '<div itemref="bar"></div>',
+      ntriples:   "<a> <b> <c> .",
+      multi_line: '<a>\n  <b>\n  "literal"\n .',
+      turtle:     "@prefix foo: <bar> .\n foo:a foo:b <c> .",
     }.each do |sym, str|
       it "does not detect #{sym}" do
         expect(@format_class.detect(str)).to be_falsey

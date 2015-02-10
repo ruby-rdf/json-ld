@@ -43,7 +43,7 @@ module Fixtures
 
       def options
         @options ||= begin
-          opts = {:documentLoader => Fixtures::SuiteTest.method(:documentLoader)}
+          opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
           {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
@@ -56,7 +56,7 @@ module Fixtures
         define_method(m.to_sym) do
           return nil unless property(m)
           res = nil
-          Fixtures::SuiteTest.documentLoader("#{SUITE}tests/#{property(m)}", :safe => true) do |remote_doc|
+          Fixtures::SuiteTest.documentLoader("#{SUITE}tests/#{property(m)}", safe: true) do |remote_doc|
             res = remote_doc.document
           end
           res
@@ -91,7 +91,7 @@ module Fixtures
         @debug << "frame: #{frame}" if frame_loc
 
         options = if self.options[:useDocumentLoader]
-          self.options.merge(:documentLoader => Fixtures::SuiteTest.method(:documentLoader))
+          self.options.merge(documentLoader: Fixtures::SuiteTest.method(:documentLoader))
         else
           self.options.dup
         end
@@ -109,7 +109,7 @@ module Fixtures
             when "jld:FrameTest"
               JSON::LD::API.frame(input_loc, frame_loc, options.merge(debug: @debug))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input_loc, :format => :nquads)
+              repo = RDF::Repository.load(input_loc, format: :nquads)
               @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, options.merge(debug: @debug))
             when "jld:ToRDFTest"

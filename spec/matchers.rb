@@ -45,8 +45,8 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
       "Graph differs"
     end +
     "\n#{info + "\n" unless info.empty?}" +
-    "Unsorted Expected:\n#{@expected.dump(:nquads, :standard_prefixes => true)}" +
-    "Unsorted Results:\n#{@actual.dump(:nquads, :standard_prefixes => true)}" +
+    "Unsorted Expected:\n#{@expected.dump(:nquads, standard_prefixes: true)}" +
+    "Unsorted Results:\n#{@actual.dump(:nquads, standard_prefixes: true)}" +
     (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
     (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
     (@info.trace ? "\nDebug:\n#{@info.trace}" : "")

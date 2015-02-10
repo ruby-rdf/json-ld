@@ -77,7 +77,7 @@ module JSON::LD
           datatype ||= RDF::XSD.boolean.to_s
         when Float, Fixnum
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
-          lit = RDF::Literal.new(value, :canonicalize => true)
+          lit = RDF::Literal.new(value, canonicalize: true)
           value = lit.to_s
           datatype ||= lit.datatype
         else
@@ -88,7 +88,7 @@ module JSON::LD
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
         language = item.fetch('@language', nil)
-        RDF::Literal.new(value, :datatype => datatype, :language => language)
+        RDF::Literal.new(value, datatype: datatype, language: language)
       else
         # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
         raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)

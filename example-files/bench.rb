@@ -5,7 +5,7 @@ require 'json/ld'
 require 'getoptlong'
 
 def run(options)
-  parser_options = options[:parser_options].merge(:standard_prefixes => true)
+  parser_options = options[:parser_options].merge(standard_prefixes: true)
   statement = RDF::Statement(RDF::URI("http://example/a"), RDF::URI("http://example/b"), RDF::Literal("c"))
   start = Time.new
   num = 100_000

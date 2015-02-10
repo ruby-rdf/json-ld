@@ -23,10 +23,10 @@ describe JSON::LD::Reader do
     formats = [
       :jsonld,
       "etc/doap.jsonld",
-      {:file_name      => 'etc/doap.jsonld'},
-      {:file_extension => 'jsonld'},
-      {:content_type   => 'application/ld+json'},
-      {:content_type   => 'application/x-ld+json'},
+      {file_name:      'etc/doap.jsonld'},
+      {file_extension: 'jsonld'},
+      {content_type:   'application/ld+json'},
+      {content_type:   'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
         expect(RDF::Reader.for(arg)).to eq JSON::LD::Reader

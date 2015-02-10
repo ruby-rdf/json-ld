@@ -443,7 +443,7 @@ module JSON::LD
             type
           when String
             begin
-              expand_iri(type, :vocab => true, :documentRelative => false, :local_context => local_context, :defined => defined)
+              expand_iri(type, vocab: true, documentRelative: false, local_context: local_context, defined: defined)
             rescue JsonLdError::InvalidIRIMapping
               raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect} on term #{term.inspect}"
             end
@@ -465,10 +465,10 @@ module JSON::LD
 
           # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
           definition.id =  expand_iri(value['@reverse'],
-                                      :vocab => true,
-                                      :documentRelative => true,
-                                      :local_context => local_context,
-                                      :defined => defined)
+                                      vocab: true,
+                                      documentRelative: true,
+                                      local_context: local_context,
+                                      defined: defined)
           raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
@@ -484,10 +484,10 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
             value['@id'].is_a?(String)
           definition.id = expand_iri(value['@id'],
-            :vocab => true,
-            :documentRelative => true,
-            :local_context => local_context,
-            :defined => defined)
+            vocab: true,
+            documentRelative: true,
+            local_context: local_context,
+            defined: defined)
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
         elsif term.include?(':')
@@ -905,7 +905,7 @@ module JSON::LD
           preferred_values = []
           preferred_values << '@reverse' if tl_value == '@reverse'
           if %w(@id @reverse).include?(tl_value) && value.is_a?(Hash) && value.has_key?('@id')
-            t_iri = compact_iri(value['@id'], :vocab => true, :document_relative => true)
+            t_iri = compact_iri(value['@id'], vocab: true, document_relative: true)
             if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
               preferred_values.concat(%w(@vocab @id @none))
             else
@@ -993,20 +993,20 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {:useNativeTypes => false}.merge(options)
+      options = {useNativeTypes: false}.merge(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
         # If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
         if (td = term_definitions.fetch(property, TermDefinition.new(property))) && td.type_mapping == '@id'
           debug("") {"as relative IRI: #{value.inspect}"}
-          return {'@id' => expand_iri(value, :documentRelative => true).to_s}
+          return {'@id' => expand_iri(value, documentRelative: true).to_s}
         end
 
         # If active property has a type mapping in active context that is @vocab, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
         if td.type_mapping == '@vocab'
           debug("") {"as vocab IRI: #{value.inspect}"}
-          return {'@id' => expand_iri(value, :vocab => true, :documentRelative => true).to_s}
+          return {'@id' => expand_iri(value, vocab: true, documentRelative: true).to_s}
         end
 
         value = RDF::Literal(value) if
@@ -1091,12 +1091,12 @@ module JSON::LD
         when coerce(property) == '@vocab' && value.has_key?('@id') && num_members == 1
           # Compact an @id coercion
           debug("") {" (@id & coerce & vocab)"}
-          compact_iri(value['@id'], :vocab => true)
+          compact_iri(value['@id'], vocab: true)
         when value.has_key?('@id')
           debug("") {" (@id)"}
           # return value as is
           value
-        when value['@type'] && expand_iri(value['@type'], :vocab => true) == coerce(property)
+        when value['@type'] && expand_iri(value['@type'], vocab: true) == coerce(property)
           # Compact common datatype
           debug("") {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
