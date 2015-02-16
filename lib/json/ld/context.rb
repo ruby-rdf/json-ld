@@ -202,7 +202,7 @@ module JSON::LD
         @base.canonicalize!
         @base.fragment = nil
         @base.query = nil
-        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute?
+        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
         @base
       else
         @base = nil
@@ -227,7 +227,7 @@ module JSON::LD
         value
       when String
         v = as_resource(value)
-        raise JsonLdError::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative?
+        raise JsonLdError::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative? && @options[:validate]
         v
       when nil
         nil
