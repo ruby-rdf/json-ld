@@ -21,8 +21,8 @@ module JSON::LD
         parent, property = options[:parent], options[:property]
         debug("frame") {"state: #{state.inspect}"}
         debug("frame") {"nodes: #{nodes.keys.inspect}"}
-        debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-        debug("frame") {"parent: #{parent.to_json(JSON_STATE)}"}
+        debug("frame") {"frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug("frame") {"parent: #{parent.to_json(JSON_STATE) rescue 'malformed json'}"}
         debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)

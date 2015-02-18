@@ -18,7 +18,7 @@ module JSON::LD
       active_graph.each do |id, node|
         # Initialize subject as the IRI or BNode representation of id
         subject = as_resource(id)
-        debug("graph_to_rdf")  {"subject: #{subject.to_ntriples} (id: #{id})"}
+        debug("graph_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'} (id: #{id})"}
 
         # For each property-values in node
         node.each do |property, values|
@@ -27,7 +27,7 @@ module JSON::LD
             # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
             values.each do |value|
               object = as_resource(value)
-              debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
+              debug("graph_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
               yield RDF::Statement.new(subject, RDF.type, object)
             end
           when /^@/
@@ -36,7 +36,7 @@ module JSON::LD
             # Otherwise, property is an IRI or Blank Node identifier
             # Initialize predicate from  property as an IRI or Blank node
             predicate = as_resource(property)
-            debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
+            debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
 
             # For each item in values
             values.each do |item|
@@ -50,7 +50,7 @@ module JSON::LD
               else
                 # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
                 object = parse_object(item)
-                debug("graph_to_rdf")  {"object: #{object.to_ntriples}"}
+                debug("graph_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # Append a triple composed of subject, prediate, and literal to results.
                 yield RDF::Statement.new(subject, predicate, object)
               end

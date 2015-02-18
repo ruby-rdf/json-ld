@@ -59,9 +59,9 @@ RSpec::Matchers.define :produce do |expected, info|
   end
   
   failure_message do |actual|
-    "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE)}\n" +
-    "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE)}\n" +
-    #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE)}\n" : "") +
+    "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE) rescue 'malformed json'}\n" +
+    "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE) rescue 'malformed json'}\n" +
+    #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE) rescue 'malformed json'}\n" : "") +
     "Processing results:\n#{info.join("\n")}"
   end
 end

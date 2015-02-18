@@ -191,7 +191,7 @@ module JSON::LD
       expanded = API.expand(input, options)
 
       API.new(expanded, context, options) do
-        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
+        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value, nil)
 
         # xxx) Add the given context to the output
@@ -233,7 +233,7 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, context, options) do
-        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         node_map = {'@default' => {}}
@@ -329,9 +329,9 @@ module JSON::LD
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         #debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE)}"}
-        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
-        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         all_nodes = {}
@@ -341,11 +341,11 @@ module JSON::LD
         end
         @options[:debug] = old_dbg
         @node_map = all_nodes['@default']
-        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
+        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         result = []
         frame(framing_state, @node_map, (expanded_frame.first || {}), parent: result)
-        debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
+        debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         
         # Initalize context from frame
         @context = depth {@context.parse(frame['@context'])}
@@ -356,7 +356,7 @@ module JSON::LD
         # Add the given context to the output
         kwgraph = context.compact_iri('@graph', quiet: true)
         result = context.serialize.merge({kwgraph => compacted})
-        debug(".frame") {"after compact: #{result.to_json(JSON_STATE)}"}
+        debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = cleanup_preserve(result)
       end
 
@@ -393,12 +393,12 @@ module JSON::LD
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Generate _nodeMap_
         node_map = {'@default' => {}}
         generate_node_map(expanded_input, node_map)
-        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Start generating statements
         node_map.each do |graph_name, graph|
