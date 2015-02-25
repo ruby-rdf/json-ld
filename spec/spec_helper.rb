@@ -12,27 +12,32 @@ require 'rdf/trig'
 require 'rdf/spec'
 require 'rdf/spec/matchers'
 require 'yaml'
-require 'open-uri/cached'
+require 'restclient/components'
+require 'rack/cache'
 require 'matchers'
 
 JSON_STATE = JSON::State.new(
-  :indent       => "  ",
-  :space        => " ",
-  :space_before => "",
-  :object_nl    => "\n",
-  :array_nl     => "\n"
+  indent:       "  ",
+  space:        " ",
+  space_before: "",
+  object_nl:    "\n",
+  array_nl:     "\n"
 )
 
 # Create and maintain a cache of downloaded URIs
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)
-OpenURI::Cache.class_eval { @cache_path = URI_CACHE }
+# Cache client requests
+RestClient.enable Rack::Cache,
+  verbose:      false, 
+  metastore:   "file:" + ::File.expand_path("../uri-cache/meta", __FILE__),
+  entitystore: "file:" + ::File.expand_path("../uri-cache/body", __FILE__)
 
 ::RSpec.configure do |c|
-  c.filter_run :focus => true
+  c.filter_run focus: true
   c.run_all_when_everything_filtered = true
   c.exclusion_filter = {
-    :ruby => lambda { |version| !(RUBY_VERSION.to_s =~ /^#{version.to_s}/) },
+    ruby: lambda { |version| !(RUBY_VERSION.to_s =~ /^#{version.to_s}/) },
   }
   c.include(RDF::Spec::Matchers)
 end

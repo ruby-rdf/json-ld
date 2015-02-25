@@ -16,7 +16,7 @@ module RDF
       @properties.delete(subject.to_s) if recalc
       @properties[subject.to_s] ||= begin
         hash = Hash.new
-        self.query(:subject => subject) do |statement|
+        self.query(subject: subject) do |statement|
           pred = statement.predicate.to_s
 
           hash[pred] ||= []
@@ -28,7 +28,7 @@ module RDF
 
     # Get type(s) of subject, returns a list of symbols
     def type_of(subject)
-      query(:subject => subject, :predicate => RDF.type).map {|st| st.object}
+      query(subject: subject, predicate: RDF.type).map {|st| st.object}
     end
   end
   

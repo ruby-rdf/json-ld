@@ -25,7 +25,7 @@ module JSON
     require 'json/ld/format'
     require 'json/ld/utils'
     autoload :API,                'json/ld/api'
-    autoload :Context,  'json/ld/context'
+    autoload :Context,            'json/ld/context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'
@@ -77,11 +77,11 @@ module JSON
     NATIVE_DATATYPES = [RDF::XSD.integer.to_s, RDF::XSD.boolean.to_s, RDF::XSD.double.to_s]
 
     JSON_STATE = JSON::State.new(
-      :indent       => "  ",
-      :space        => " ",
-      :space_before => "",
-      :object_nl    => "\n",
-      :array_nl     => "\n"
+      indent:       "  ",
+      space:        " ",
+      space_before: "",
+      object_nl:    "\n",
+      array_nl:     "\n"
     )
 
     def self.debug?; @debug; end

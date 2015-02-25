@@ -1,5 +1,3 @@
-require 'open-uri'
-
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.

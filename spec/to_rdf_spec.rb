@@ -35,7 +35,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -52,7 +52,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
       
@@ -82,7 +82,7 @@ describe JSON::LD::API do
         }.each do |title, (js, ttl)|
           it title do
             ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-            expect(parse(js, :base => "http://example.org/")).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+            expect(parse(js, base: "http://example.org/")).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
           end
         end
       end
@@ -111,7 +111,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -145,7 +145,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -194,7 +194,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -216,7 +216,7 @@ describe JSON::LD::API do
       }.each_pair do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -238,7 +238,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -277,7 +277,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -299,7 +299,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -360,7 +360,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end
@@ -483,7 +483,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :base => "http://example/", :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, base: "http://example/", trace: @debug, inputDocument: js)
         end
       end
       
@@ -536,7 +536,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+              expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
             end
           end
         end
@@ -572,7 +572,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+              expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
             end
           end
         end
@@ -583,12 +583,12 @@ describe JSON::LD::API do
       subject {%q({"@id": "http://example/subj", "_:foo": "bar"})}
 
       it "outputs statements with blank node predicates if :produceGeneralizedRdf is true" do
-        graph = parse(subject, :produceGeneralizedRdf => true)
+        graph = parse(subject, produceGeneralizedRdf: true)
         expect(graph.count).to eq 1
       end
 
       it "rejects statements with blank node predicates if :produceGeneralizedRdf is false" do
-        graph = parse(subject, :produceGeneralizedRdf => false)
+        graph = parse(subject, produceGeneralizedRdf: false)
         expect(graph.count).to eq 0
       end
     end
@@ -654,7 +654,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, :trace => @debug, :inputDocument => js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
         end
       end
     end

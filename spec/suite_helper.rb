@@ -1,5 +1,4 @@
 require 'json/ld'
-require 'open-uri'
 require 'support/extensions'
 
 module Fixtures
@@ -44,7 +43,7 @@ module Fixtures
 
       def options
         @options ||= begin
-          opts = {:documentLoader => Fixtures::SuiteTest.method(:documentLoader)}
+          opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
           {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
@@ -57,7 +56,7 @@ module Fixtures
         define_method(m.to_sym) do
           return nil unless property(m)
           res = nil
-          Fixtures::SuiteTest.documentLoader("#{SUITE}tests/#{property(m)}", :safe => true) do |remote_doc|
+          Fixtures::SuiteTest.documentLoader("#{SUITE}tests/#{property(m)}", safe: true) do |remote_doc|
             res = remote_doc.document
           end
           res
@@ -86,13 +85,13 @@ module Fixtures
 
       # Execute the test
       def run(rspec_example = nil)
-        debug = ["test: #{inspect}", "source: #{input}"]
-        debug << "context: #{context}" if context_loc
-        debug << "options: #{options.inspect}" unless options.empty?
-        debug << "frame: #{frame}" if frame_loc
+        @debug = ["test: #{inspect}", "source: #{input}"]
+        @debug << "context: #{context}" if context_loc
+        @debug << "options: #{options.inspect}" unless options.empty?
+        @debug << "frame: #{frame}" if frame_loc
 
         options = if self.options[:useDocumentLoader]
-          self.options.merge(:documentLoader => Fixtures::SuiteTest.method(:documentLoader))
+          self.options.merge(documentLoader: Fixtures::SuiteTest.method(:documentLoader))
         else
           self.options.dup
         end
@@ -102,19 +101,19 @@ module Fixtures
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input_loc, options.merge(:debug => debug))
+              JSON::LD::API.expand(input_loc, options.merge(debug: @debug))
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(:debug => debug))
+              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(debug: @debug))
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input_loc, context_loc, options.merge(:debug => debug))
+              JSON::LD::API.flatten(input_loc, context_loc, options.merge(debug: @debug))
             when "jld:FrameTest"
-              JSON::LD::API.frame(input_loc, frame_loc, options.merge(:debug => debug))
+              JSON::LD::API.frame(input_loc, frame_loc, options.merge(debug: @debug))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input_loc, :format => :nquads)
-              debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-              JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
+              repo = RDF::Repository.load(input_loc, format: :nquads)
+              @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              JSON::LD::API.fromRdf(repo, options.merge(debug: @debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRdf(input_loc, options.merge(:debug => debug)).map do |statement|
+              JSON::LD::API.toRdf(input_loc, options.merge(debug: @debug)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -124,12 +123,12 @@ module Fixtures
               if testType == "jld:ToRDFTest"
                 expected = expect
                 rspec_example.instance_eval {
-                  expect(result.sort.join("")).to produce(expected, debug)
+                  expect(result.sort.join("")).to produce(expected, @debug)
                 }
               else
                 expected = JSON.load(expect)
                 rspec_example.instance_eval {
-                  expect(result).to produce(expected, debug)
+                  expect(result).to produce(expected, @debug)
                 }
               end
             else
@@ -143,26 +142,26 @@ module Fixtures
             fail("Invalid Frame: #{e.message}")
           end
         else
-          debug << "expected: #{property('expect')}" if property('expect')
+          @debug << "expected: #{property('expect')}" if property('expect')
           t = self
           rspec_example.instance_eval do
             if t.evaluationTest?
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input_loc, options.merge(:debug => debug))
+                  JSON::LD::API.expand(t.input_loc, options.merge(debug: @debug))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(:debug => debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(debug: @debug))
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(:debug => debug))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(debug: @debug))
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(:debug => debug))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(debug: @debug))
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRdf(repo, options.merge(:debug => debug))
+                  @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  JSON::LD::API.fromRdf(repo, options.merge(debug: @debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(:debug => debug)).map do |statement|
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(debug: @debug)).map do |statement|
                     t.to_quad(statement)
                   end
                 else
@@ -229,8 +228,7 @@ module Fixtures
     # @yield remote_document
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
-    def documentLoader(url, options = {})
-      require 'net/http' unless defined?(Net::HTTP)
+    def documentLoader(url, options = {}, &block)
       remote_document = nil
       options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
 
@@ -247,66 +245,9 @@ module Fixtures
         end
       end
 
-      case url.to_s
-      when /^http/
-        parsed_url = ::URI.parse(url.to_s)
-        until remote_document do
-          Net::HTTP::start(parsed_url.host, parsed_url.port) do |http|
-            request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
-            http.request(request) do |response|
-              case response
-              when Net::HTTPSuccess
-                # found object
-                content_type, ct_param = response.content_type.to_s.downcase.split(";")
-                if content_type && options[:validate]
-                  main, sub = content_type.split("/")
-                  raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-                    main != 'application' ||
-                    sub !~ /^(.*\+)?json$/
-                end
-
-                remote_document = JSON::LD::API::RemoteDocument.new(parsed_url.to_s, response.body)
-
-                unless content_type.to_s.start_with?("application/ld+json")
-                  links = response["link"].to_s.
-                    split(",").
-                    map(&:strip).
-                    select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
-                  case links.length
-                  when 0  then #nothing to do
-                  when 1
-                    remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
-                  else
-                    raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
-                      "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
-                  end
-                end
-                return block_given? ? yield(remote_document) : remote_document
-              when Net::HTTPRedirection
-                # Follow redirection
-                parsed_url = ::URI.parse(response["Location"])
-              else
-                raise JSON::LD::JsonLdError::LoadingDocumentFailed,
-                  "<#{parsed_url}>: #{response.msg}(#{response.code})"
-              end
-            end
-          end
-        end
-      else
-        # Use regular open
-        RDF::Util::File.open_file(url, options) do |f|
-          remote_document = JSON::LD::API::RemoteDocument.new(url, f.read)
-          content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
-          if content_type && options[:validate]
-            main, sub = content_type.split("/")
-            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-              main != 'application' ||
-              sub !~ /^(.*\+)?json$/
-          end
-
-          return block_given? ? yield(remote_document) : remote_document
-        end
-      end
+      # don't cache for these specs
+      options = options.merge(use_net_http: true) if url.to_s =~ /remote-doc/
+      JSON::LD::API.documentLoader(url, options, &block)
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
       raise unless options[:safe]
       "don't raise error"

@@ -36,7 +36,7 @@ module JSON::LD
         return nil if element.has_key?('@null')
 
         if element.keys.any? {|k| %w(@id @value).include?(k)}
-          result = context.compact_value(property, element, :depth => @depth)
+          result = context.compact_value(property, element, depth: @depth)
           unless result.is_a?(Hash)
             debug("") {"=> scalar result: #{result.inspect}"}
             return result
@@ -52,11 +52,11 @@ module JSON::LD
 
           if %w(@id @type).include?(expanded_property)
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
-              depth {context.compact_iri(expanded_type, :vocab => (expanded_property == '@type'), :depth => @depth)}
+              depth {context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), depth: @depth)}
             end
             compacted_value = compacted_value.first if compacted_value.length == 1
 
-            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
+            al = context.compact_iri(expanded_property, vocab: true, quiet: true)
             debug(expanded_property) {"result[#{al}] = #{compacted_value.inspect}"}
             result[al] = compacted_value
             next
@@ -76,7 +76,7 @@ module JSON::LD
             end
 
             unless compacted_value.empty?
-              al = context.compact_iri('@reverse', :quiet => true)
+              al = context.compact_iri('@reverse', quiet: true)
               debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
             end
@@ -90,7 +90,7 @@ module JSON::LD
 
           # Otherwise, if expanded property is @index, @value, or @language:
           if %w(@index @value @language).include?(expanded_property)
-            al = context.compact_iri(expanded_property, :vocab => true, :quiet => true)
+            al = context.compact_iri(expanded_property, vocab: true, quiet: true)
             debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value
             next
@@ -99,10 +99,10 @@ module JSON::LD
           if expanded_value == []
             item_active_property = depth do
               context.compact_iri(expanded_property,
-                                  :value => expanded_value,
-                                  :vocab => true,
-                                  :reverse => inside_reverse,
-                                  :depth => @depth)
+                                  value: expanded_value,
+                                  vocab: true,
+                                  reverse: inside_reverse,
+                                  depth: @depth)
             end
 
             iap = result[item_active_property] ||= []
@@ -113,10 +113,10 @@ module JSON::LD
           expanded_value.each do |expanded_item|
             item_active_property = depth do
               context.compact_iri(expanded_property,
-                                  :value => expanded_item,
-                                  :vocab => true,
-                                  :reverse => inside_reverse,
-                                  :depth => @depth)
+                                  value: expanded_item,
+                                  vocab: true,
+                                  reverse: inside_reverse,
+                                  depth: @depth)
             end
             container = context.container(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
@@ -126,10 +126,10 @@ module JSON::LD
             if list?(expanded_item)
               compacted_item = [compacted_item] unless compacted_item.is_a?(Array)
               unless container == '@list'
-                al = context.compact_iri('@list', :vocab => true, :quiet => true)
+                al = context.compact_iri('@list', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
-                  key = context.compact_iri('@index', :vocab => true, :quiet => true)
+                  key = context.compact_iri('@index', vocab: true, quiet: true)
                   compacted_item[key] = expanded_item['@index']
                 end
               else

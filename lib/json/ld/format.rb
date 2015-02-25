@@ -9,21 +9,21 @@ module JSON::LD
   #     RDF::Format.for("etc/foaf.ld")
   #     RDF::Format.for(:file_name      => "etc/foaf.json")
   #     RDF::Format.for(:file_name      => "etc/foaf.ld")
-  #     RDF::Format.for(:file_extension => "json")
-  #     RDF::Format.for(:file_extension => "ld")
+  #     RDF::Format.for(file_extension: "json")
+  #     RDF::Format.for(file_extension: "ld")
   #     RDF::Format.for(:content_type   => "application/json")
   #
   # @example Obtaining serialization format MIME types
   #     RDF::Format.content_types      #=> {"application/json" => [JSON::LD::Format]}
   #
   # @example Obtaining serialization format file extension mappings
-  #     RDF::Format.file_extensions    #=> {:json => "application/json"}
+  #     RDF::Format.file_extensions    #=> {json: "application/json"}
   #
   # @see http://www.w3.org/TR/rdf-testcases/#ntriples
   class Format < RDF::Format
     content_type     'application/ld+json',
-                     :extension => :jsonld,
-                     :alias => 'application/x-ld+json'
+                     extension: :jsonld,
+                     alias: 'application/x-ld+json'
     content_encoding 'utf-8'
 
     reader { JSON::LD::Reader }

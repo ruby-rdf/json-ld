@@ -21,8 +21,8 @@ module JSON::LD
         parent, property = options[:parent], options[:property]
         debug("frame") {"state: #{state.inspect}"}
         debug("frame") {"nodes: #{nodes.keys.inspect}"}
-        debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-        debug("frame") {"parent: #{parent.to_json(JSON_STATE)}"}
+        debug("frame") {"frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug("frame") {"parent: #{parent.to_json(JSON_STATE) rescue 'malformed json'}"}
         debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)
@@ -41,12 +41,12 @@ module JSON::LD
         matches.keys.kw_sort.each do |id|
           element = matches[id]
           # If the active property is null, set the map of embeds in state to an empty map
-          state = state.merge(:embeds => {}) if property.nil?
+          state = state.merge(embeds: {}) if property.nil?
 
           output = {'@id' => id}
         
           # prepare embed meta info
-          embedded_node = {:parent => parent, :property => property}
+          embedded_node = {parent: parent, property: property}
         
           # If embedOn is true, and id is in map of embeds from state
           if embed && (existing = state[:embeds].fetch(id, nil))
@@ -340,7 +340,7 @@ module JSON::LD
           unless state[:embeds].has_key?(sid)
             debug("frame") {"embed element #{sid.inspect}"}
             # Embed full element, if it isn't already embedded
-            embed = {:parent => output, :property => property}
+            embed = {parent: output, property: property}
             state[:embeds][sid] = embed
           
             # Recurse into element

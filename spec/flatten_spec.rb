@@ -8,13 +8,13 @@ describe JSON::LD::API do
   describe ".flatten" do
     {
       "single object" => {
-        :input => {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
-        :output => [
+        input: {"@id" => "http://example.com", "@type" => RDF::RDFS.Resource.to_s},
+        output: [
           {"@id" => "http://example.com", "@type" => [RDF::RDFS.Resource.to_s]}
         ]
       },
       "embedded object" => {
-        :input => {
+        input: {
           "@context" => {
             "foaf" => RDF::FOAF.to_s
           },
@@ -25,7 +25,7 @@ describe JSON::LD::API do
             "@type" => ["foaf:Person"]
           }]
         },
-        :output => [
+        output: [
           {
             "@id" => "http://greggkellogg.net/foaf",
             "@type" => [RDF::FOAF.PersonalProfileDocument.to_s],
@@ -38,7 +38,7 @@ describe JSON::LD::API do
         ]
       },
       "embedded anon" => {
-        :input => {
+        input: {
           "@context" => {
             "foaf" => RDF::FOAF.to_s
           },
@@ -48,7 +48,7 @@ describe JSON::LD::API do
             "@type" => "foaf:Person"
           }
         },
-        :output => [
+        output: [
           {
             "@id" => "_:b0",
             "@type" => [RDF::FOAF.Person.to_s]
@@ -61,7 +61,7 @@ describe JSON::LD::API do
         ]
       },
       "reverse properties" => {
-        :input => ::JSON.parse(%([
+        input: ::JSON.parse(%([
           {
             "@id": "http://example.com/people/markus",
             "@reverse": {
@@ -77,7 +77,7 @@ describe JSON::LD::API do
             "http://xmlns.com/foaf/0.1/name": [ { "@value": "Markus Lanthaler" } ]
           }
         ])),
-        :output => ::JSON.parse(%([
+        output: ::JSON.parse(%([
           {
             "@id": "http://example.com/people/dave",
             "http://xmlns.com/foaf/0.1/knows": [
@@ -105,7 +105,7 @@ describe JSON::LD::API do
         ]))
       },
       "Simple named graph (Wikidata)" => {
-        :input => ::JSON.parse(%q({
+        input: ::JSON.parse(%q({
           "@context": {
             "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
             "ex": "http://example.org/",
@@ -135,7 +135,7 @@ describe JSON::LD::API do
             }
           ]
         })),
-        :output => ::JSON.parse(%q([{
+        output: ::JSON.parse(%q([{
           "@id": "http://example.org/ParisFact1",
           "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
           "http://example.org/hasReference": [
@@ -158,7 +158,7 @@ describe JSON::LD::API do
           }])),
       },
       "Test Manifest (shortened)" => {
-        :input => ::JSON.parse(%q{
+        input: ::JSON.parse(%q{
           {
             "@id": "",
             "http://example/sequence": {"@list": [
@@ -170,7 +170,7 @@ describe JSON::LD::API do
             ]}
           }
         }),
-        :output => ::JSON.parse(%q{
+        output: ::JSON.parse(%q{
           [{
             "@id": "",
             "http://example/sequence": [{"@list": [{"@id": "#t0001"}]}]
@@ -180,10 +180,10 @@ describe JSON::LD::API do
             "http://example/name": [{"@value": "Keywords cannot be aliased to other keywords"}]
           }]
         }),
-        :options => {}
+        options: {}
       },
       "@reverse bnode issue (0045)" => {
-        :input => ::JSON.parse(%q{
+        input: ::JSON.parse(%q{
           {
             "@context": {
               "foo": "http://example.org/foo",
@@ -193,7 +193,7 @@ describe JSON::LD::API do
             "bar": [ "http://example.org/origin", "_:b0" ]
           }
         }),
-        :output => ::JSON.parse(%q{
+        output: ::JSON.parse(%q{
           [
             {
               "@id": "_:b0",
@@ -209,12 +209,12 @@ describe JSON::LD::API do
             }
           ]
         }),
-        :options => {}
+        options: {}
       }
     }.each do |title, params|
       it title do
         @debug = []
-        jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(:debug => @debug)) 
+        jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(debug: @debug)) 
         expect(jld).to produce(params[:output], @debug)
       end
     end

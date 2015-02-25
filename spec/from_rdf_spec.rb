@@ -69,7 +69,7 @@ describe JSON::LD::API do
 
         it "integer" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-          expect(serialize(input, :useNativeTypes => true)).to produce([{
+          expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1}]
           }], @debug)
@@ -77,7 +77,7 @@ describe JSON::LD::API do
 
         it "integer (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
-          expect(serialize(input, :useNativeTypes => false)).to produce([{
+          expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
           }], @debug)
@@ -85,7 +85,7 @@ describe JSON::LD::API do
 
         it "boolean" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-          expect(serialize(input, :useNativeTypes => true)).to produce([{
+          expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => true}]
           }], @debug)
@@ -93,7 +93,7 @@ describe JSON::LD::API do
 
         it "boolean (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
-          expect(serialize(input, :useNativeTypes => false)).to produce([{
+          expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
           }], @debug)
@@ -101,7 +101,7 @@ describe JSON::LD::API do
 
         it "decmal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
-          expect(serialize(input, :useNativeTypes => true)).to produce([{
+          expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
           }], @debug)
@@ -109,7 +109,7 @@ describe JSON::LD::API do
 
         it "double" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-          expect(serialize(input, :useNativeTypes => true)).to produce([{
+          expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1.0E0}]
           }], @debug)
@@ -117,7 +117,7 @@ describe JSON::LD::API do
 
         it "double (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
-          expect(serialize(input, :useNativeTypes => false)).to produce([{
+          expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
           }], @debug)
@@ -126,12 +126,12 @@ describe JSON::LD::API do
 
       context "datatyped (non-native)" do
         {
-          :integer            => 1,
-          :unsignedInteger    => 1,
-          :nonNegativeInteger => 1,
-          :float              => 1,
-          :nonPositiveInteger => -1,
-          :negativeInteger    => -1,
+          integer:            1,
+          unsignedInteger:    1,
+          nonNegativeInteger: 1,
+          float:              1,
+          nonPositiveInteger: -1,
+          negativeInteger:    -1,
         }.each do |t, v|
           it "#{t}" do
             input = %(
@@ -139,7 +139,7 @@ describe JSON::LD::API do
               @prefix ex: <http://example.com/> .
               ex:a ex:b "#{v}"^^xsd:#{t} .
             )
-            expect(serialize(input, :useNativeTypes => false)).to produce([{
+            expect(serialize(input, useNativeTypes: false)).to produce([{
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
             }], @debug)
@@ -273,7 +273,7 @@ describe JSON::LD::API do
         ],
       }.each do |name, (input, output, reader)|
         it name do
-          r = serialize(input, :reader => reader)
+          r = serialize(input, reader: reader)
           expect(r).to produce(output, @debug)
         end
       end
@@ -282,10 +282,10 @@ describe JSON::LD::API do
     context "quads" do
       {
         "simple named graph" => {
-          :input => %(
+          input: %(
             <http://example.com/a> <http://example.com/b> <http://example.com/c> <http://example.com/U> .
           ),
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/U",
               "@graph" => [{
@@ -296,11 +296,11 @@ describe JSON::LD::API do
           ]
         },
         "with properties" => {
-          :input => %(
+          input: %(
             <http://example.com/a> <http://example.com/b> <http://example.com/c> <http://example.com/U> .
             <http://example.com/U> <http://example.com/d> <http://example.com/e> .
           ),
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/U",
               "@graph" => [{
@@ -312,7 +312,7 @@ describe JSON::LD::API do
           ]
         },
         "with lists" => {
-          :input => %(
+          input: %(
             <http://example.com/a> <http://example.com/b> _:a <http://example.com/U> .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/c> <http://example.com/U> .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/U> .
@@ -320,7 +320,7 @@ describe JSON::LD::API do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/e> .
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           ),
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/U",
               "@graph" => [{
@@ -332,7 +332,7 @@ describe JSON::LD::API do
           ]
         },
         "Two Graphs with same subject and lists" => {
-          :input => %(
+          input: %(
             <http://example.com/a> <http://example.com/b> _:a <http://example.com/U> .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/c> <http://example.com/U> .
             _:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/U> .
@@ -340,7 +340,7 @@ describe JSON::LD::API do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.com/e> <http://example.com/V> .
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://example.com/V> .
           ),
-          :output => [
+          output: [
             {
               "@id" => "http://example.com/U",
               "@graph" => [
@@ -367,7 +367,7 @@ describe JSON::LD::API do
         },
       }.each_pair do |name, properties|
         it name do
-          r = serialize(properties[:input], :reader => RDF::NQuads::Reader)
+          r = serialize(properties[:input], reader: RDF::NQuads::Reader)
           expect(r).to produce(properties[:output], @debug)
         end
       end
@@ -409,6 +409,6 @@ describe JSON::LD::API do
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     @debug << g.dump(:trig)
     statements = g.each_statement.to_a
-    JSON::LD::API.fromRdf(statements, options.merge(:debug => @debug))
+    JSON::LD::API.fromRdf(statements, options.merge(debug: @debug))
   end
 end

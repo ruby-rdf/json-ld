@@ -15,7 +15,7 @@ module JSON::LD
     #   Ensure output objects have keys ordered properly
     # @return [Array, Hash]
     def expand(input, active_property, context, options = {})
-      options = {:ordered => true}.merge(options)
+      options = {ordered: true}.merge(options)
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -49,7 +49,7 @@ module JSON::LD
           keys.each do |key|
             # For each key and value in element, ordered lexicographically by key:
             value = input[key]
-            expanded_property = context.expand_iri(key, :vocab => true, :depth => @depth)
+            expanded_property = context.expand_iri(key, vocab: true, depth: @depth)
 
             # If expanded property is null or it neither contains a colon (:) nor it is a keyword, drop key by continuing to the next key.
             next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
@@ -78,7 +78,7 @@ module JSON::LD
                       "value of @id must be a string: #{value.inspect}" unless value.is_a?(String)
 
                 # Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
-                context.expand_iri(value, :documentRelative => true, :depth => @depth).to_s
+                context.expand_iri(value, documentRelative: true, depth: @depth).to_s
               when '@type'
                 # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
                 debug("@type") {"value: #{value.inspect}"}
@@ -88,11 +88,11 @@ module JSON::LD
                     value.map do |v|
                       raise JsonLdError::InvalidTypeValue,
                             "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
-                      context.expand_iri(v, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
+                      context.expand_iri(v, vocab: true, documentRelative: true, quiet: true, depth: @depth).to_s
                     end
                   end
                 when String
-                  context.expand_iri(value, :vocab => true, :documentRelative => true, :quiet => true, :depth => @depth).to_s
+                  context.expand_iri(value, vocab: true, documentRelative: true, quiet: true, depth: @depth).to_s
                 when Hash
                   # For framing
                   raise JsonLdError::InvalidTypeValue,
@@ -298,7 +298,7 @@ module JSON::LD
               raise JsonLdError::InvalidLanguageTaggedValue,
                     "when @language is used, @value must be a string: #{@value.inspect}"
             elsif !output_object.fetch('@type', "").is_a?(String) ||
-                  !context.expand_iri(output_object.fetch('@type', ""), :vocab => true, :depth => @depth).is_a?(RDF::URI)
+                  !context.expand_iri(output_object.fetch('@type', ""), vocab: true, depth: @depth).is_a?(RDF::URI)
               # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
               raise JsonLdError::InvalidTypedValue,
                     "value of @type must be an IRI: #{output_object['@type'].inspect}"
@@ -338,7 +338,7 @@ module JSON::LD
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
         return nil if input.nil? || active_property.nil? || active_property == '@graph'
-        context.expand_value(active_property, input, :depth => @depth)
+        context.expand_value(active_property, input, depth: @depth)
       end
 
       debug {" => #{result.inspect}"}

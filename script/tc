@@ -118,8 +118,8 @@ def run_tc(man, tc, options)
 end
 
 options = {
-  :output => STDOUT,
-  :results => {}
+  output: STDOUT,
+  results: {}
 }
 
 opts = GetoptLong.new(

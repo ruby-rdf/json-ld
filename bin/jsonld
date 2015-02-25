@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-$:.unshift(File.expand_path("../../lib", __FILE__))
 begin
   require 'linkeddata'
 rescue LoadError
 end
+$:.unshift(File.expand_path("../../lib", __FILE__))
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
@@ -17,42 +17,49 @@ def run(input, options)
   options[:format] = :jsonld if options[:compact] || options[:frame]
 
   # If input format is not JSON-LD, transform input to JSON-LD first
-  if options[:format] == :jsonld && options[:input_format] != :jsonld
-    r = reader_class.new(input, options[:parser_options])
-    g = RDF::Repository.new << r
-    input = JSON::LD::API.fromRdf(g)
+  reader = if options[:input_format] != :jsonld
+    reader_class.new(input, options[:parser_options])
   end
 
   prefixes = {}
   start = Time.new
   if options[:expand]
-    options = options.merge(:expandContext => options.delete(:context)) if options.has_key?(:context)
+    options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+    input = JSON::LD::API.fromRdf(reader) if reader
     output = JSON::LD::API.expand(input, options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Expanded in #{secs} seconds." unless options[:quiet]
   elsif options[:compact]
+    input = JSON::LD::API.fromRdf(reader) if reader
     output = JSON::LD::API.compact(input, options[:context], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Compacted in #{secs} seconds." unless options[:quiet]
   elsif options[:flatten]
+    input = JSON::LD::API.fromRdf(reader) if reader
     output = JSON::LD::API.flatten(input, options[:context], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Flattened in #{secs} seconds." unless options[:quiet]
   elsif options[:frame]
+    input = JSON::LD::API.fromRdf(reader) if reader
     output = JSON::LD::API.frame(input, options[:frame], options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
   else
-    options = options.merge(:expandContext => options.delete(:context)) if options.has_key?(:context)
-    g = JSON::LD::API.toRdf(input, options)
+    options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+    parser_options = options[:parser_options].merge(standard_prefixes: true)
+    reader ||= JSON::LD::Reader.new(input, parser_options)
+    num = 0
+    RDF::Writer.for(options[:output_format]).new(options[:output], parser_options) do |w|
+      reader.each do |statement|
+        num += 1
+        w << statement
+      end
+    end
     secs = Time.new - start
-    num = g.count
-    parser_options = options[:parser_options].merge(:standard_prefixes => true)
-    options[:output].puts g.dump(options[:output_format], parser_options)
     STDERR.puts "\nParsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second." unless options[:quiet]
   end
 rescue
@@ -62,17 +69,18 @@ rescue
 end
 
 parser_options = {
-  :base     => nil,
-  :progress => false,
-  :validate => false,
-  :strict   => false,
+  base:     nil,
+  progress: false,
+  validate: false,
+  stream:   false,
+  strict:   false,
 }
 
 options = {
-  :parser_options => parser_options,
-  :output        => STDOUT,
-  :output_format => :turtle,
-  :input_format  => :jsonld,
+  parser_options: parser_options,
+  output:         STDOUT,
+  output_format:  :jsonld,
+  input_format:   :jsonld,
 }
 input = nil
 
@@ -89,8 +97,9 @@ OPT_ARGS = [
   ["--output", "-o",  GetoptLong::REQUIRED_ARGUMENT,"Output to the specified file path"],
   ["--parse-only",    GetoptLong::NO_ARGUMENT,      "Parse the document for well-formedness only"],
   ["--quiet",         GetoptLong::NO_ARGUMENT,      "Supress most output other than progress indicators"],
+  ["--stream",        GetoptLong::NO_ARGUMENT,      "Use Streaming reader/writer"],
   ["--uri",           GetoptLong::REQUIRED_ARGUMENT,"URI to be used as the document base"],
-  ["--verbose",       GetoptLong::NO_ARGUMENT,      "Detail on execution"],
+  ["--validate",      GetoptLong::NO_ARGUMENT,      "Validate while processing"],
   ["--help", "-?",    GetoptLong::NO_ARGUMENT,      "This message"]
 ]
 def usage
@@ -108,7 +117,6 @@ def usage
   exit(1)
 end
 
-
 opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 
 opts.each do |opt, arg|
@@ -125,10 +133,20 @@ opts.each do |opt, arg|
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--quiet'        then options[:quiet] = true
+  when '--stream'       then parser_options[:stream] = true
   when '--uri'          then parser_options[:base] = arg
-  when '--verbose'      then $verbose = true
+  when '--validate'     then parser_options[:validate] = true
   when '--help'         then usage
   end
+end
+
+# Hack
+options[:parser_options][:context] = options[:context] if parser_options[:stream]
+
+if !(options.keys & [:expand, :compact, :flatten, :frame]).empty? &&
+   (parser_options[:stream] || options[:output_format] != :jsonld)
+   STDERR.puts "Incompatible options"
+   exit(1)
 end
 
 if ARGV.empty?
@@ -136,7 +154,8 @@ if ARGV.empty?
   run(StringIO.new(s), options)
 else
   ARGV.each do |file|
-    run(file, options)
+    # Call with opened files
+    RDF::Util::File.open_file(file, options) {|f| run(f, options)}
   end
 end
 puts

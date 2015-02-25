@@ -8,22 +8,22 @@ def normalize(graph)
   case graph
   when RDF::Enumerable then graph
   when IO, StringIO
-    RDF::Graph.new.load(graph, :base => @info.about)
+    RDF::Graph.new.load(graph, base: @info.about)
   else
     # Figure out which parser to use
     g = RDF::Repository.new
     reader_class = detect_format(graph)
-    reader_class.new(graph, :base => @info.about).each {|s| g << s}
+    reader_class.new(graph, base: @info.about).each {|s| g << s}
     g
   end
 end
 
 RSpec::Matchers.define :be_equivalent_graph do |expected, info|
   match do |actual|
-    @info = if info.respond_to?(:about)
+    @info = if info.respond_to?(:input)
       info
     elsif info.is_a?(Hash)
-      identifier = info[:identifier] || expected.is_a?(RDF::Graph) ? expected.context : info[:about]
+      identifier = info[:identifier] || info[:about]
       trace = info[:trace]
       trace = trace.join("\n") if trace.is_a?(Array)
       Info.new(identifier, info[:information] || "", trace, info[:inputDocument])
@@ -45,8 +45,8 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
       "Graph differs"
     end +
     "\n#{info + "\n" unless info.empty?}" +
-    "Unsorted Expected:\n#{@expected.dump(:nquads, :standard_prefixes => true)}" +
-    "Unsorted Results:\n#{@actual.dump(:nquads, :standard_prefixes => true)}" +
+    "Unsorted Expected:\n#{@expected.dump(:nquads, standard_prefixes: true)}" +
+    "Unsorted Results:\n#{@actual.dump(:nquads, standard_prefixes: true)}" +
     (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
     (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
     (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
@@ -59,9 +59,9 @@ RSpec::Matchers.define :produce do |expected, info|
   end
   
   failure_message do |actual|
-    "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE)}\n" +
-    "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE)}\n" +
-    #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE)}\n" : "") +
+    "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE) rescue 'malformed json'}\n" +
+    "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE) rescue 'malformed json'}\n" +
+    #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE) rescue 'malformed json'}\n" : "") +
     "Processing results:\n#{info.join("\n")}"
   end
 end

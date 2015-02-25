@@ -18,7 +18,7 @@ module JSON::LD
       active_graph.each do |id, node|
         # Initialize subject as the IRI or BNode representation of id
         subject = as_resource(id)
-        debug("graph_to_rdf")  {"subject: #{subject.to_ntriples} (id: #{id})"}
+        debug("graph_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'} (id: #{id})"}
 
         # For each property-values in node
         node.each do |property, values|
@@ -27,7 +27,7 @@ module JSON::LD
             # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
             values.each do |value|
               object = as_resource(value)
-              debug("graph_to_rdf")  {"type: #{object.to_ntriples}"}
+              debug("graph_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
               yield RDF::Statement.new(subject, RDF.type, object)
             end
           when /^@/
@@ -36,7 +36,7 @@ module JSON::LD
             # Otherwise, property is an IRI or Blank Node identifier
             # Initialize predicate from  property as an IRI or Blank node
             predicate = as_resource(property)
-            debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples}"}
+            debug("graph_to_rdf")  {"predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
 
             # For each item in values
             values.each do |item|
@@ -50,7 +50,7 @@ module JSON::LD
               else
                 # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
                 object = parse_object(item)
-                debug("graph_to_rdf")  {"object: #{object.to_ntriples}"}
+                debug("graph_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # Append a triple composed of subject, prediate, and literal to results.
                 yield RDF::Statement.new(subject, predicate, object)
               end
@@ -77,7 +77,7 @@ module JSON::LD
           datatype ||= RDF::XSD.boolean.to_s
         when Float, Fixnum
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
-          lit = RDF::Literal.new(value, :canonicalize => true)
+          lit = RDF::Literal.new(value, canonicalize: true)
           value = lit.to_s
           datatype ||= lit.datatype
         else
@@ -88,7 +88,7 @@ module JSON::LD
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
         language = item.fetch('@language', nil)
-        RDF::Literal.new(value, :datatype => datatype, :language => language)
+        RDF::Literal.new(value, datatype: datatype, language: language)
       else
         # Otherwise, value must be a node definition containing only @id whos value is an IRI or Blank Node identifier
         raise "Expected node reference, got #{item.inspect}" unless item.keys == %w(@id)

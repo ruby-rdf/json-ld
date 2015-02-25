@@ -13,6 +13,12 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 Install with `gem install json-ld`
 
+### JSON-LD Streaming Profile
+This gem implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
+
+* Each statement written as a separate node in expanded/flattened form.
+* RDF Lists are written as separate nodes using `rdf:first` and `rdf:rest` properties.
+
 ## Examples
 
     require 'rubygems'
@@ -165,7 +171,7 @@ Install with `gem install json-ld`
     graph = RDF::Graph.new << JSON::LD::API.toRdf(input)
 
     require 'rdf/turtle'
-    graph.dump(:ttl, :prefixes => {:foaf => "http://xmlns.com/foaf/0.1/"})
+    graph.dump(:ttl, prefixes: {foaf: "http://xmlns.com/foaf/0.1/"})
     @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
     <http://example.org/people#joebob> a foaf:Person;
@@ -213,8 +219,8 @@ Install with `gem install json-ld`
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
 
-    graph = RDF::Graph.load("etc/doap.jsonld", :format => :jsonld)
-    graph.dump(:jsonld, :standard_prefixes => true)
+    graph = RDF::Graph.load("etc/doap.jsonld", format: :jsonld)
+    graph.dump(:jsonld, standard_prefixes: true)
 
 `RDF::GRAPH#dump` can also take a `:context` option to use a separately defined context
 

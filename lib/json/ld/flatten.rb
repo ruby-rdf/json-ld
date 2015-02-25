@@ -167,7 +167,7 @@ module JSON::LD
           end
         end
 
-        debug("node_map") {node_map.to_json(JSON_STATE)}
+        debug("node_map") {node_map.to_json(JSON_STATE) rescue 'malformed json'}
       end
     end
   end

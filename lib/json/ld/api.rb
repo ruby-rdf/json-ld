@@ -26,7 +26,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      :headers => {"Accept" => "application/ld+json, application/json"}
+      headers: {"Accept" => "application/ld+json, application/json"}
     }
 
     # Current input
@@ -79,21 +79,32 @@ module JSON::LD
     # @yield [api]
     # @yieldparam [API]
     def initialize(input, context, options = {}, &block)
-      @options = {:compactArrays => true}.merge(options)
+      @options = {compactArrays: true, rename_bnodes: true}.merge(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
-      options[:rename_bnodes] ||= true
-      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+
+      # For context via Link header
+      context_ref = nil
+
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
-        @options = {:base => input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+
+        # if input impelements #links, attempt to get a contextUrl from that link
+        content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
+        context_ref = if content_type.start_with?('application/json') && input.respond_to?(:links)
+          link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context))
+          link.href if link
+        end
+
         JSON.parse(input.read)
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        @options = {:base => remote_doc.documentUrl}.merge(@options)
-        context = context ? [context, remote_doc.contextUrl].compact : remote_doc.contextUrl
+        @options = {base: remote_doc.documentUrl}.merge(@options)
+        context_ref = remote_doc.contextUrl
 
         case remote_doc.document
         when String then JSON.parse(remote_doc.document)
@@ -103,6 +114,9 @@ module JSON::LD
 
       # Update calling context :base option, if not defined
       options[:base] ||= @options[:base] if @options[:base]
+
+      # If not provided, first use context from document, or from a Link header
+      context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
       @context = Context.new(@options)
       @context = @context.parse(context) if context
       
@@ -177,13 +191,13 @@ module JSON::LD
       expanded = API.expand(input, options)
 
       API.new(expanded, context, options) do
-        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE)}"}
+        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value, nil)
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize
         if result.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', :vocab => true, :quiet => true)
+          kwgraph = self.context.compact_iri('@graph', vocab: true, quiet: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
         result = ctx.merge(result) unless ctx.empty?
@@ -219,7 +233,7 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, context, options) do
-        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         node_map = {'@default' => {}}
@@ -242,7 +256,7 @@ module JSON::LD
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = depth {compact(flattened, nil)}
           compacted = [compacted] unless compacted.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', :quiet => true)
+          kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
         end
       end
@@ -284,10 +298,10 @@ module JSON::LD
     def self.frame(input, frame, options = {})
       result = nil
       framing_state = {
-        :embed       => true,
-        :explicit    => false,
-        :omitDefault => false,
-        :embeds      => nil,
+        embed:       true,
+        explicit:    false,
+        omitDefault: false,
+        embeds:      nil,
       }
       framing_state[:embed] = options[:embed] if options.has_key?(:embed)
       framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
@@ -315,9 +329,9 @@ module JSON::LD
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         #debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE)}"}
-        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE)}"}
-        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE)}"}
+        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         all_nodes = {}
@@ -327,11 +341,11 @@ module JSON::LD
         end
         @options[:debug] = old_dbg
         @node_map = all_nodes['@default']
-        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE)}"}
+        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         result = []
         frame(framing_state, @node_map, (expanded_frame.first || {}), parent: result)
-        debug(".frame") {"after frame: #{result.to_json(JSON_STATE)}"}
+        debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         
         # Initalize context from frame
         @context = depth {@context.parse(frame['@context'])}
@@ -340,9 +354,9 @@ module JSON::LD
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output
-        kwgraph = context.compact_iri('@graph', :quiet => true)
+        kwgraph = context.compact_iri('@graph', quiet: true)
         result = context.serialize.merge({kwgraph => compacted})
-        debug(".frame") {"after compact: #{result.to_json(JSON_STATE)}"}
+        debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = cleanup_preserve(result)
       end
 
@@ -374,17 +388,17 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options.merge(:ordered => false))
+      expanded_input = API.expand(input, options.merge(ordered: false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Generate _nodeMap_
         node_map = {'@default' => {}}
         generate_node_map(expanded_input, node_map)
-        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE)}"}
+        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Start generating statements
         node_map.each do |graph_name, graph|
@@ -439,7 +453,7 @@ module JSON::LD
     # @return [Array<Hash>]
     #   The JSON-LD document in expanded form
     def self.fromRdf(input, options = {}, &block)
-      options = {:useNativeTypes => false}.merge(options)
+      options = {useNativeTypes: false}.merge(options)
       result = nil
 
       API.new(nil, nil, options) do |api|
@@ -461,78 +475,39 @@ module JSON::LD
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
     def self.documentLoader(url, options = {})
-      require 'net/http' unless defined?(Net::HTTP)
-      remote_document = nil
-      options[:headers] ||= OPEN_OPTS[:headers]
-
-      url = url.to_s[5..-1] if url.to_s.start_with?("file:")
-      case url.to_s
-      when /^http/
-        parsed_url = ::URI.parse(url.to_s)
-        until remote_document do
-          Net::HTTP::start(parsed_url.host, parsed_url.port,
-                          open_timeout: 60 * 1000,
-                          use_ssl: parsed_url.scheme == 'https',
-                          verify_mode: OpenSSL::SSL::VERIFY_NONE
-                          ) do |http|
-            request = Net::HTTP::Get.new(parsed_url.request_uri, options[:headers])
-            http.request(request) do |response|
-              case response
-              when Net::HTTPSuccess
-                # found object
-                content_type, ct_param = response.content_type.to_s.downcase.split(";")
-
-                # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
-                if content_type && options[:validate]
-                  main, sub = content_type.split("/")
-                  raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-                    main != 'application' ||
-                    sub !~ /^(.*\+)?json$/
-                end
-
-                remote_document = RemoteDocument.new(parsed_url.to_s, response.body)
-
-                # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-                unless content_type.to_s.start_with?("application/ld+json")
-                  links = response["link"].to_s.
-                    split(",").
-                    map(&:strip).
-                    select {|h| h =~ %r{rel=\"http://www.w3.org/ns/json-ld#context\"}}
-                  case links.length
-                  when 0  then #nothing to do
-                  when 1
-                    remote_document.contextUrl = links.first.match(/<([^>]*)>/) && $1
-                  else
-                    raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
-                      "expected at most 1 Link header with rel=jsonld:context, got #{links.length}"
-                  end
-                end
-
-                return block_given? ? yield(remote_document) : remote_document
-              when Net::HTTPRedirection
-                # Follow redirection
-                parsed_url = ::URI.parse(response["Location"])
-              else
-                raise JSON::LD::JsonLdError::LoadingDocumentFailed, "<#{parsed_url}>: #{response.msg}(#{response.code})"
-              end
-            end
-          end
+      options = OPEN_OPTS.merge(options)
+      RDF::Util::File.open_file(url, options) do |remote_doc|
+        content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
+        # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
+        if content_type && options[:validate]
+          main, sub = content_type.split("/")
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
+            main != 'application' ||
+            sub !~ /^(.*\+)?json$/
         end
-      else
-        # Use regular open
-        RDF::Util::File.open_file(url, options) do |f|
-          remote_document = RemoteDocument.new(url, f.read)
-          content_type, ct_param = f.content_type.to_s.downcase.split(";") if f.respond_to?(:content_type)
-          if content_type && options[:validate]
-            main, sub = content_type.split("/")
-            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "content_type: #{content_type}" if
-              main != 'application' ||
-              sub !~ /^(.*\+)?json$/
-          end
 
-          return block_given? ? yield(remote_document) : remote_document
+        # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
+        contextUrl = unless content_type.nil? || content_type.start_with?("application/ld+json")
+          # Get context link(s)
+          # Note, we can't simply use #find_link, as we need to detect multiple
+          links = remote_doc.links.links.select do |link|
+            link.attr_pairs.include?(%w(rel http://www.w3.org/ns/json-ld#context))
+          end
+          raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+            "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1
+          Array(links.first).first
+        end
+
+        doc_uri = remote_doc.base_uri rescue url
+        doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl)
+        if block_given?
+          yield(doc)
+        else
+          doc
         end
       end
+    rescue IOError => e
+      raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
     end
 
     # Add class method aliases for backwards compatibility

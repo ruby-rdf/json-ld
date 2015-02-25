@@ -1,6 +1,6 @@
 require 'rubygems'
 
-task :default => [ :spec ]
+task default: [ :spec ]
 
 namespace :gem do
   desc "Build the json-ld-#{File.read('VERSION').chomp}.gem file"
@@ -50,7 +50,7 @@ namespace :presentation do
   end
 
   desc "Build presentation files"
-  task :build => %w(
+  task build: %w(
     presentation/dbpedia/expanded.jsonld
     presentation/dbpedia/compacted.jsonld
     presentation/dbpedia/framed.jsonld
@@ -95,5 +95,5 @@ namespace :doc do
   YARD::Rake::YardocTask.new
 end
 
-task :default => :spec
-task :specs => :spec
+task default: :spec
+task specs: :spec

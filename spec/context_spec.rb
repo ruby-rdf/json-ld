@@ -26,7 +26,7 @@ describe JSON::LD::Context do
   before(:each) {
     @debug = []
   }
-  let(:context) {JSON::LD::Context.new(:debug => @debug, :validate => true)}
+  let(:context) {JSON::LD::Context.new(debug: @debug, validate: true)}
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
@@ -43,18 +43,18 @@ describe JSON::LD::Context do
     context "remote" do
 
       it "retrieves and parses a remote context document" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.provided_context).to produce("http://example.com/context", @debug)
       end
 
       it "fails given a missing remote @context" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_raise(IOError)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
         expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -70,8 +70,8 @@ describe JSON::LD::Context do
       
       it "parses a referenced context at a relative URI" do
         rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1").and_yield(rd1)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
@@ -84,12 +84,12 @@ describe JSON::LD::Context do
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
         it "retrieves and parses a remote context document" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
         end
 
         it "does not use passed context as provided_context" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
           expect(ec.provided_context).to produce(ctx, @debug)
         end
@@ -295,9 +295,29 @@ describe JSON::LD::Context do
     end
   end
 
+  describe "#merge" do
+    it "creates a new context with components of each" do
+      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      cm = context.merge(c2)
+      expect(cm).not_to equal context
+      expect(cm).not_to equal c2
+      expect(cm.term_definitions).to eq c2.term_definitions
+    end
+  end
+
+  describe "#merge!" do
+    it "updates context with components from new" do
+      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      cm = context.merge!(c2)
+      expect(cm).to equal context
+      expect(cm).not_to equal c2
+      expect(cm.term_definitions).to eq c2.term_definitions
+    end
+  end
+
   describe "#serialize" do
     it "context document" do
-      expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context").and_yield(remote_doc)
+      expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
       expect(ec.serialize).to produce({
         "@context" => "http://example.com/context"
@@ -570,8 +590,8 @@ describe JSON::LD::Context do
     context "extra keys or values" do
       {
         "extra key" => {
-          :input => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
-          :result => {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
+          input: {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
+          result: {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
         }
       }.each do |title, params|
         it title do
@@ -602,7 +622,7 @@ describe JSON::LD::Context do
       %w(id type).each do |kw|
         it "expands #{kw} to @#{kw}" do
           subject.set_mapping(kw, "@#{kw}")
-          expect(subject.expand_iri(kw, :vocab => true)).to produce("@#{kw}", @debug)
+          expect(subject.expand_iri(kw, vocab: true)).to produce("@#{kw}", @debug)
         end
       end
     end
@@ -645,7 +665,7 @@ describe JSON::LD::Context do
           "_" =>             ["_",                   RDF::URI("http://base/_")],
         }.each do |title, (input, result)|
           it title do
-            expect(subject.expand_iri(input, :documentRelative => true)).to produce(result, @debug)
+            expect(subject.expand_iri(input, documentRelative: true)).to produce(result, @debug)
           end
         end
       end
@@ -666,7 +686,7 @@ describe JSON::LD::Context do
           "_" =>             ["_",                   RDF::URI("http://underscore/")],
         }.each do |title, (input, result)|
           it title do
-            expect(subject.expand_iri(input, :vocab => true)).to produce(result, @debug)
+            expect(subject.expand_iri(input, vocab: true)).to produce(result, @debug)
           end
         end
       end
@@ -719,7 +739,7 @@ describe JSON::LD::Context do
         "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
+          expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
         end
       end
     end
@@ -738,14 +758,14 @@ describe JSON::LD::Context do
         "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
+          expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
         end
       end
 
       it "does not use @vocab if it would collide with a term" do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
-        expect(subject.compact_iri("http://example.org/name", :position => :predicate)).
+        expect(subject.compact_iri("http://example.org/name", position: :predicate)).
           to produce("lex:name", @debug)
       end
     end
@@ -789,7 +809,7 @@ describe JSON::LD::Context do
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              expect(ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", :value => value, :vocab => true)).
+              expect(ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", value: value, vocab: true)).
                 to produce(prop, @debug)
             end
           end
@@ -818,7 +838,7 @@ describe JSON::LD::Context do
           context "uses #{prop}" do
             values.each do |value|
               it "for #{{"@list" => value}.inspect}" do
-                expect(ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", :value => {"@list" => value}, :vocab => true)).
+                expect(ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", value: {"@list" => value}, vocab: true)).
                   to produce(prop, @debug)
               end
             end
@@ -861,7 +881,7 @@ describe JSON::LD::Context do
           "odd CURIE"     => ["experts",             "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
-            expect(subject.compact_iri(input, :vocab => true)).to produce(result, @debug)
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
           end
         end
       end
@@ -966,7 +986,7 @@ describe JSON::LD::Context do
       }.each do |term, value|
         [value].flatten.each do |v|
           it "Uses #{term} for #{v}" do
-            expect(ctx.compact_iri("http://example.com/term", :value => JSON.parse(v), :vocab => true)).
+            expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v), vocab: true)).
               to produce(term, @debug)
           end
         end
@@ -981,7 +1001,7 @@ describe JSON::LD::Context do
         })
       end
       it "Compact @id that is a property IRI when @container is @list" do
-        expect(ctx.compact_iri("http://example.org/ns#property", :position => :subject)).
+        expect(ctx.compact_iri("http://example.org/ns#property", position: :subject)).
           to produce("ex:property", @debug)
       end
     end
@@ -991,7 +1011,7 @@ describe JSON::LD::Context do
         subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
       end
       it "Does not use @list with @index" do
-        expect(ctx.compact_iri("http://example.com/property", :value => {
+        expect(ctx.compact_iri("http://example.com/property", value: {
           "@list" => ["one item"],
           "@index" => "an annotation"
         })).to produce("http://example.com/property", @debug)
