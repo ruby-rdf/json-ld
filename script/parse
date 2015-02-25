@@ -109,7 +109,7 @@ opts = GetoptLong.new(
   ["--parse-only", GetoptLong::NO_ARGUMENT],
   ["--quiet", GetoptLong::NO_ARGUMENT],
   ["--uri", GetoptLong::REQUIRED_ARGUMENT],
-  ["--verbose", GetoptLong::NO_ARGUMENT]
+  ["--validate", GetoptLong::NO_ARGUMENT]
 )
 opts.each do |opt, arg|
   case opt
@@ -127,7 +127,7 @@ opts.each do |opt, arg|
   when '--profile'      then options[:profile] = true
   when '--quiet'        then options[:quiet] = true
   when '--uri'          then parser_options[:base] = arg
-  when '--verbose'      then $verbose = true
+  when '--validate'     then parser_options[:validate] = true
   end
 end
 

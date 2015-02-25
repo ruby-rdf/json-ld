@@ -99,7 +99,7 @@ OPT_ARGS = [
   ["--quiet",         GetoptLong::NO_ARGUMENT,      "Supress most output other than progress indicators"],
   ["--stream",        GetoptLong::NO_ARGUMENT,      "Use Streaming reader/writer"],
   ["--uri",           GetoptLong::REQUIRED_ARGUMENT,"URI to be used as the document base"],
-  ["--verbose",       GetoptLong::NO_ARGUMENT,      "Detail on execution"],
+  ["--validate",      GetoptLong::NO_ARGUMENT,      "Validate while processing"],
   ["--help", "-?",    GetoptLong::NO_ARGUMENT,      "This message"]
 ]
 def usage
@@ -135,7 +135,7 @@ opts.each do |opt, arg|
   when '--quiet'        then options[:quiet] = true
   when '--stream'       then parser_options[:stream] = true
   when '--uri'          then parser_options[:base] = arg
-  when '--verbose'      then $verbose = true
+  when '--validate'     then parser_options[:validate] = true
   when '--help'         then usage
   end
 end
