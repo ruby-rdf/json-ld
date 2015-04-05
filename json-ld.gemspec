@@ -30,7 +30,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'rdf',             '~> 1.1', '>= 1.1.7'
   gem.add_development_dependency 'yard' ,           '~> 0.8'
   gem.add_development_dependency "rack-cache",      '~> 1.2'
-  gem.add_development_dependency "rest-client",     '~> 1.7'
+  gem.add_development_dependency "rest-client",     '~> 1.7', '< 1.8'
   gem.add_development_dependency "rest-client-components", '~> 1.3'
   gem.add_development_dependency 'rspec',           '~> 3.0'
   gem.add_development_dependency 'rspec-its',       '~> 1.0'
