@@ -45,7 +45,7 @@ end
 # Heuristically detect the input stream
 def detect_format(stream)
   # Got to look into the file to see
-  if stream.is_a?(IO) || stream.is_a?(StringIO)
+  if stream.respond_to?(:rewind) && stream.respond_to?(:read)
     stream.rewind
     string = stream.read(1000)
     stream.rewind
