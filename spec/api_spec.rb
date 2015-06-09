@@ -58,7 +58,7 @@ describe JSON::LD::API do
     end
   end
 
-  context "when validating" do
+  context "when validating", pending: ("JRuby support for jsonlint" if RUBY_ENGINE == "jruby") do
     it "detects invalid JSON" do
       expect {described_class.new(StringIO.new(%({"a": "b", "a": "c"})), nil, validate: true)}.to raise_error(JSON::LD::JsonLdError::LoadingDocumentFailed)
     end

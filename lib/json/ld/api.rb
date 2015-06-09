@@ -5,7 +5,11 @@ require 'json/ld/flatten'
 require 'json/ld/frame'
 require 'json/ld/to_rdf'
 require 'json/ld/from_rdf'
-require 'jsonlint'
+
+begin
+  require 'jsonlint'
+rescue LoadError
+end
 
 module JSON::LD
   ##
@@ -526,6 +530,7 @@ module JSON::LD
 
     private
     def validate_input(input)
+      return unless defined?(JsonLint)
       jsonlint = JsonLint::Linter.new
       unless jsonlint.respond_to?(:check_stream)
         warn "Skipping jsonlint, use latest version from GiHub until 0.1.1 released"

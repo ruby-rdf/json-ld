@@ -29,7 +29,7 @@ describe JSON::LD::Reader do
     end
   end
 
-  context "when validating" do
+  context "when validating", pending: ("JRuby support for jsonlint" if RUBY_ENGINE == "jruby") do
     it "detects invalid JSON" do
       expect do |b|
         described_class.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true).each_statement(&b)

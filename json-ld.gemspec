@@ -27,8 +27,8 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 1.9.2'
   gem.requirements          = []
-  gem.add_development_dependency 'jsonlint',        '~> 0.1.0'
-  gem.add_development_dependency 'rdf',             '~> 1.1', '>= 1.1.7'
+  gem.add_runtime_dependency     'rdf',             '~> 1.1', '>= 1.1.7'
+  gem.add_development_dependency 'jsonlint',        '~> 0.1.0' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency "rack-cache",      '~> 1.2'
   gem.add_development_dependency "rest-client",     '~> 1.8'
   gem.add_development_dependency "rest-client-components", '~> 1.4'
