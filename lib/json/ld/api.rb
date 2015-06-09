@@ -5,6 +5,7 @@ require 'json/ld/flatten'
 require 'json/ld/frame'
 require 'json/ld/to_rdf'
 require 'json/ld/from_rdf'
+require 'jsonlint'
 
 module JSON::LD
   ##
@@ -76,8 +77,10 @@ module JSON::LD
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
     # @option options [Boolean]  :simple_compact_iris   (false)
     #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @yield [api]
     # @yieldparam [API]
+    # @raise [JsonLdError]
     def initialize(input, context, options = {}, &block)
       @options = {compactArrays: true, rename_bnodes: true}.merge(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
@@ -99,6 +102,8 @@ module JSON::LD
           link.href if link
         end
 
+        validate_input(input) if options[:validate]
+
         JSON.parse(input.read)
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
@@ -107,8 +112,11 @@ module JSON::LD
         context_ref = remote_doc.contextUrl
 
         case remote_doc.document
-        when String then JSON.parse(remote_doc.document)
-        else remote_doc.document
+        when String
+          validate_input(remote_doc.document) if options[:validate]
+          JSON.parse(remote_doc.document)
+        else
+          remote_doc.document
         end
       end
 
@@ -514,6 +522,20 @@ module JSON::LD
     class << self
       alias :toRDF :toRdf
       alias :fromRDF :fromRdf
+    end
+
+    private
+    def validate_input(input)
+      jsonlint = JsonLint::Linter.new
+      unless jsonlint.respond_to?(:check_stream)
+        warn "Skipping jsonlint, use latest version from GiHub until 0.1.1 released"
+        return
+      end
+      input = StringIO.new(input) unless input.respond_to?(:read)
+      unless jsonlint.check_stream(input)
+        raise JsonLdError::LoadingDocumentFailed, jsonlint.errors[''].join("\n")
+      end
+      input.rewind
     end
 
     ##

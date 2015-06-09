@@ -4,11 +4,9 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::Writer do
-  before :each do
-    @writer = JSON::LD::Writer.new(StringIO.new(""))
+  it_behaves_like 'an RDF::Writer' do
+    let(:writer) {JSON::LD::Writer.new(StringIO.new(""))}
   end
-
-  include RDF_Writer
 
   describe ".for" do
     formats = [
@@ -196,6 +194,7 @@ describe JSON::LD::Writer do
         next unless t.positiveTest? && !t.property('input').include?('0016')
         t.debug = ["test: #{t.inspect}", "source: #{t.input}"]
         specify "#{t.property('input')}: #{t.name}" do
+          pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
           repo = RDF::Repository.load(t.input_loc, format: :nquads)
           jsonld = JSON::LD::Writer.buffer(debug: t.debug) do |writer|
             writer << repo

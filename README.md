@@ -301,3 +301,4 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [JSON-LD API]:      http://www.w3.org/TR/json-ld-api/ "JSON-LD 1.0 Processing Algorithms and API"
 [JSON-LD Framing]:  http://json-ld.org/spec/latest/json-ld-framing/ "JSON-LD Framing 1.0"
 [Promises]:         http://dom.spec.whatwg.org/#promises
+[jsonlint]:         https://rubygems.org/gems/jsonlint

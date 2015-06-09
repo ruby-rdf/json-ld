@@ -29,12 +29,14 @@ module JSON::LD
         @options[:base] ||= base_uri.to_s if base_uri
         begin
           # Trim non-JSON stuff in script.
-          input = input.read if input.respond_to?(:read)
-          input = input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, '') 
-          @doc = JSON.load(input)
+          @doc = if input.respond_to?(:read)
+            input
+          else
+            StringIO.new(input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, ''))
+          end
         rescue JSON::ParserError => e
           raise RDF::ReaderError, "Failed to parse input document: #{e.message}" if validate?
-          @doc = JSON.parse("{}")
+          @doc = StringIO.new("{}")
         end
 
         if block_given?
@@ -51,6 +53,8 @@ module JSON::LD
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
       JSON::LD::API.toRdf(@doc, @options, &block)
+    rescue ::JSON::LD::JsonLdError => e
+      raise RDF::ReaderError, e.message
     end
 
     ##

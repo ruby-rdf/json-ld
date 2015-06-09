@@ -25,9 +25,9 @@ describe JSON::LD::API do
       end
 
       it "loads document with loader and loads context" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/foo", anything).and_return(remote_doc)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
-        JSON::LD::API.new("http://example.com/foo", nil)
+        expect(described_class).to receive(:documentLoader).with("http://example.com/foo", anything).and_return(remote_doc)
+        expect(described_class).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
+        described_class.new("http://example.com/foo", nil)
       end
     end
 
@@ -52,9 +52,15 @@ describe JSON::LD::API do
       end
 
       it "processes document and retrieves linked context" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
-        JSON::LD::API.new(remote_doc, nil)
+        expect(described_class).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
+        described_class.new(remote_doc, nil)
       end
+    end
+  end
+
+  context "when validating" do
+    it "detects invalid JSON" do
+      expect {described_class.new(StringIO.new(%({"a": "b", "a": "c"})), nil, validate: true)}.to raise_error(JSON::LD::JsonLdError::LoadingDocumentFailed)
     end
   end
 
@@ -66,24 +72,23 @@ describe JSON::LD::API do
       compacted = filename.sub(/-input\..*$/, '-compacted.json')
       context = filename.sub(/-input\..*$/, '-context.json')
       expanded = filename.sub(/-input\..*$/, '-expanded.json')
-      automatic = filename.sub(/-input\..*$/, '-automatic.json')
       ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
       context test do
         it "expands" do
           options = {debug: @debug}
           options[:expandContext] = File.open(context) if context
-          jld = JSON::LD::API.expand(File.open(filename), options)
+          jld = described_class.expand(File.open(filename), options)
           expect(jld).to produce(JSON.load(File.open(expanded)), @debug)
         end if File.exist?(expanded)
         
         it "compacts" do
-          jld = JSON::LD::API.compact(File.open(filename), File.open(context), debug: @debug)
+          jld = described_class.compact(File.open(filename), File.open(context), debug: @debug)
           expect(jld).to produce(JSON.load(File.open(compacted)), @debug)
         end if File.exist?(compacted) && File.exist?(context)
         
         it "frame" do
-          jld = JSON::LD::API.frame(File.open(filename), File.open(frame), debug: @debug)
+          jld = described_class.frame(File.open(filename), File.open(frame), debug: @debug)
           expect(jld).to produce(JSON.load(File.open(framed)), @debug)
         end if File.exist?(framed) && File.exist?(frame)
 
