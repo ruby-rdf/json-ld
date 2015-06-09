@@ -6,12 +6,6 @@ module JSON::LD
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Reader < RDF::Reader
     format Format
-    
-    ##
-    # Override normal symbol generation
-    def self.to_sym
-      :jsonld
-    end
 
     ##
     # Initializes the RDF/JSON reader instance.

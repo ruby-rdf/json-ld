@@ -65,12 +65,6 @@ module JSON::LD
     attr_reader :context
 
     ##
-    # Override normal symbol generation
-    def self.to_sym
-      :jsonld
-    end
-
-    ##
     # Initializes the RDF-LD writer instance.
     #
     # @param  [IO, File] output
