@@ -10,6 +10,12 @@ group :development do
   gem 'rdf-trig',       git: "git://github.com/ruby-rdf/rdf-trig.git", branch: "develop"
 end
 
+group :development, :test do
+  gem 'simplecov', require: false
+  gem 'coveralls', require: false
+  gem 'psych', :platforms => [:mri, :rbx]
+end
+
 group :debug do
   gem "wirble"
   gem "linkeddata"

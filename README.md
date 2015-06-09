@@ -4,6 +4,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
 [![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
+[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/r/ruby-rdf/json-ld)
 
 ## Features
 

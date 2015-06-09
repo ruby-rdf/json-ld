@@ -5,7 +5,6 @@ require "bundler/setup"
 require 'rspec'
 require 'rdf'
 require 'rdf/isomorphic'
-require 'json/ld'
 require 'rdf/nquads'
 require 'rdf/turtle'
 require 'rdf/trig'
@@ -15,6 +14,17 @@ require 'yaml'
 require 'restclient/components'
 require 'rack/cache'
 require 'matchers'
+require 'simplecov'
+require 'coveralls'
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+]
+SimpleCov.start do
+  add_filter "/spec/"
+end
+
+require 'json/ld'
 
 JSON_STATE = JSON::State.new(
   indent:       "  ",
