@@ -10,6 +10,7 @@ rvm:
   - 2.2
   - jruby
 cache: bundler
+sudo: false
 matrix:
   allow_failures:
     - rvm: 2.2

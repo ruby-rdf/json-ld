@@ -154,8 +154,9 @@ module JSON::LD
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
     #   The expanded JSON-LD document
-    # @return [Array<Hash>]
-    #   The expanded JSON-LD document
+    # @yieldreturn [Object] returned object
+    # @return [Object, Array<Hash>]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
     def self.expand(input, options = {})
       result = nil
@@ -169,8 +170,7 @@ module JSON::LD
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
-      yield result if block_given?
-      result
+      block_given? ? yield(result) : result
     end
 
     ##
@@ -191,8 +191,9 @@ module JSON::LD
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
-    # @return [Hash]
-    #   The compacted JSON-LD document
+    # @yieldreturn [Object] returned object
+    # @return [Object, Hash]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
     def self.compact(input, context, options = {})
@@ -214,8 +215,7 @@ module JSON::LD
         end
         result = ctx.merge(result) unless ctx.empty?
       end
-      yield result if block_given?
-      result
+      block_given? ? yield(result) : result
     end
 
     ##
@@ -233,8 +233,9 @@ module JSON::LD
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
-    # @return [Array<Hash>]
-    #   The framed JSON-LD document
+    # @yieldreturn [Object] returned object
+    # @return [Object, Hash]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
     # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.flatten(input, context, options = {})
@@ -273,8 +274,7 @@ module JSON::LD
         end
       end
 
-      yield flattened if block_given?
-      flattened
+      block_given? ? yield(flattened) : flattened
     end
 
     ##
@@ -303,8 +303,9 @@ module JSON::LD
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
-    # @return [Array<Hash>]
-    #   The framed JSON-LD document
+    # @yieldreturn [Object] returned object
+    # @return [Object, Hash]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.frame(input, frame, options = {})
@@ -372,8 +373,7 @@ module JSON::LD
         result = cleanup_preserve(result)
       end
 
-      yield result if block_given?
-      result
+      block_given? ? yield(result) : result
     end
 
     ##
@@ -389,6 +389,7 @@ module JSON::LD
     # @raise [JsonLdError]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
+    # @return [RDF::Enumerable] set of statements, unless a block is given.
     def self.toRdf(input, options = {}, &block)
       unless block_given?
         results = []
@@ -448,7 +449,6 @@ module JSON::LD
           end
         end
       end
-      results
     end
     
     ##
@@ -462,8 +462,9 @@ module JSON::LD
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
-    # @return [Array<Hash>]
-    #   The JSON-LD document in expanded form
+    # @yieldreturn [Object] returned object
+    # @return [Object, Hash]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     def self.fromRdf(input, options = {}, &block)
       options = {useNativeTypes: false}.merge(options)
       result = nil
@@ -472,8 +473,7 @@ module JSON::LD
         result = api.from_statements(input)
       end
 
-      yield result if block_given?
-      result
+      block_given? ? yield(result) : result
     end
 
     ##
@@ -482,9 +482,11 @@ module JSON::LD
     # @param [Hash<Symbol => Object>] options
     # @option options [Boolean] :validate
     #   Allow only appropriate content types
-    # @return [RemoteDocument] retrieved remote document and context information unless block given
     # @yield remote_document
     # @yieldparam [RemoteDocument] remote_document
+    # @yieldreturn [Object] returned object
+    # @return [Object, RemoteDocument]
+    #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.documentLoader(url, options = {})
       options = OPEN_OPTS.merge(options)
@@ -512,11 +514,7 @@ module JSON::LD
 
         doc_uri = remote_doc.base_uri rescue url
         doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl)
-        if block_given?
-          yield(doc)
-        else
-          doc
-        end
+        block_given? ? yield(doc) : doc
       end
     rescue IOError => e
       raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
