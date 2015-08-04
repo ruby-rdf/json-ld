@@ -188,6 +188,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Other options passed to {JSON::LD::API.expand}
+    # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
@@ -201,7 +202,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = API.expand(input, options)
+      expanded = options[:expanded] ? input : API.expand(input, options)
 
       API.new(expanded, context, options) do
         debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -230,6 +231,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Other options passed to {JSON::LD::API.expand}
+    # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -242,19 +244,19 @@ module JSON::LD
       flattened = []
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Initialize input using frame as context
       API.new(expanded_input, context, options) do
         debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
-        node_map = {'@default' => {}}
-        self.generate_node_map(value, node_map)
+        graphs = {'@default' => {}}
+        self.create_node_map(value, graphs)
 
-        default_graph = node_map['@default']
-        node_map.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
-          graph = node_map[graph_name]
+        default_graph = graphs['@default']
+        graphs.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
+          graph = graphs[graph_name]
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []
           graph.keys.kw_sort.each do |id|
@@ -291,15 +293,17 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Other options passed to {JSON::LD::API.expand}
-    # @option options [Boolean] :embed (true)
+    # @option options ['@last', '@always', '@never', '@link'] :embed ('@link')
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output,
     #   they must be explicitly declared in the framing context.
+    # @option options [Boolean] :requireAll (true)
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD
     #   input should be omitted from the output.
+    # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -310,16 +314,22 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.frame(input, frame, options = {})
       result = nil
+      options = {
+        base:           input.is_a?(String) ? input : '',
+        compactArrays:  true,
+        embed:          '@last',
+        explicit:       false,
+        requireAll:     true,
+        omitDefault:    false,
+        documentLoader: method(:documentLoader)
+      }.merge(options)
+
       framing_state = {
-        embed:       true,
-        explicit:    false,
-        omitDefault: false,
-        embeds:      nil,
+        options:      options,
+        graphs:       {'@default' => {}, '@merged' => {}},
+        subjectStack: [],
+        link:         {},
       }
-      framing_state[:embed] = options[:embed] if options.has_key?(:embed)
-      framing_state[:explicit] = options[:explicit] if options.has_key?(:explicit)
-      framing_state[:omitDefault] = options[:omitDefault] if options.has_key?(:omitDefault)
-      options[:documentLoader] ||= method(:documentLoader)
 
       # de-reference frame to create the framing object
       frame = case frame
@@ -334,7 +344,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Expand frame to simplify processing
       expanded_frame = API.expand(frame, options)
@@ -342,22 +352,17 @@ module JSON::LD
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         #debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"raw frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
         debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
-        debug(".frame") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        all_nodes = {}
         old_dbg, @options[:debug] = @options[:debug], nil
-        depth do
-          generate_node_map(value, all_nodes)
-        end
+        create_node_map(value, framing_state[:graphs], '@merged')
         @options[:debug] = old_dbg
-        @node_map = all_nodes['@default']
-        debug(".frame") {"node_map: #{@node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
+        framing_state[:subjects] = framing_state[:graphs]['@merged']
+        debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
 
         result = []
-        frame(framing_state, @node_map, (expanded_frame.first || {}), parent: result)
+        frame(framing_state, framing_state[:subjects], (expanded_frame.first || {}), parent: result)
         debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         
         # Initalize context from frame
@@ -386,6 +391,7 @@ module JSON::LD
     #   Options passed to {JSON::LD::API.expand}
     # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
+    # @option options [Boolean] :expanded Input is already expanded
     # @raise [JsonLdError]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
@@ -401,7 +407,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = API.expand(input, options.merge(ordered: false))
+      expanded_input = options[:expanded] ? input : API.expand(input, options.merge(ordered: false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -409,12 +415,12 @@ module JSON::LD
         debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Generate _nodeMap_
-        node_map = {'@default' => {}}
-        generate_node_map(expanded_input, node_map)
-        debug(".toRdf") {"node map: #{node_map.to_json(JSON_STATE) rescue 'malformed json'}"}
+        graphs = {'@default' => {}}
+        create_node_map(expanded_input, graphs)
+        debug(".toRdf") {"node map: #{graphs.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Start generating statements
-        node_map.each do |graph_name, graph|
+        graphs.each do |graph_name, graph|
           context = as_resource(graph_name) unless graph_name == '@default'
           debug(".toRdf") {"context: #{context ? context.to_ntriples : 'null'}"}
           # Drop results for graphs which are named with relative IRIs

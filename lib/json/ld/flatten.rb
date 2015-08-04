@@ -5,169 +5,123 @@ module JSON::LD
     ##
     # This algorithm creates a JSON object node map holding an indexed representation of the graphs and nodes represented in the passed expanded document. All nodes that are not uniquely identified by an IRI get assigned a (new) blank node identifier. The resulting node map will have a member for every graph in the document whose value is another object with a member for every node represented in the document. The default graph is stored under the @default member, all other graphs are stored under their graph name.
     #
-    # @param [Array, Hash] element
-    #   Expanded element
-    # @param [Hash{String => Hash}] node_map
+    # @param [Array, Hash] input
+    #   Expanded JSON-LD input
+    # @param [Hash] graphs A map of graph name to subjects
+    # @param [Hash{String => Hash}] graphs
     #   map of nodes
-    # @param [String] active_graph
+    # @param [String] graph
     #   The name of the currently active graph that the processor should use when processing.
-    # @param [String] active_subject
-    #   The currently active subject that the processor should use when processing.
-    # @param [String] active_property
-    #   The currently active property or keyword that the processor should use when processing.
+    # @param [JSON::LD::BlankNodeNamer] namer
+    #   The UniqueNamer for assigning blank node names
+    # @param [String] name
+    #   The name assigned to the current input if it is a bnode
     # @param [Array] list
-    #   List for saving list elements
-    def generate_node_map(element,
-                          node_map,
-                          active_graph    = '@default',
-                          active_subject  = nil,
-                          active_property = nil,
-                          list            = nil)
+    #   List to append to, nil for none
+    def create_node_map(input,
+                        graphs,
+                        graph = '@default',
+                        namer = BlankNodeNamer.new('b'),
+                        name  = nil,
+                        list  = nil)
       depth do
-        debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}"}
-        debug("  =>") {"active_subject: #{active_subject.inspect}, active_property: #{active_property.inspect}, list: #{list.inspect}"}
-        if element.is_a?(Array)
-          # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
-          element.map {|o|
-            generate_node_map(o,
-                              node_map,
-                              active_graph,
-                              active_subject,
-                              active_property,
-                              list)
-          }
-        else
-          # Otherwise element is a JSON object. Reference the JSON object which is the value of the active graph member of node map using the variable graph. If the active subject is null, set node to null otherwise reference the active subject member of graph using the variable node.
-          # Spec FIXME: initializing it to an empty JSON object, if necessary
-          raise "Expected element to be a hash, was #{element.class}" unless element.is_a?(Hash)
-          graph = node_map[active_graph] ||= {}
-          node = graph[active_subject] if active_subject
-
-          # If element has an @type member, perform for each item the following steps:
-          if element.has_key?('@type')
-            types = Array(element['@type']).map do |item|
-              # If item is a blank node identifier, replace it with a newly generated blank node identifier passing item for identifier.
-              blank_node?(item) ? namer.get_name(item) : item
-            end
-
-            element['@type'] = element['@type'].is_a?(Array) ? types : types.first
-          end
-
-          # If element has an @value member, perform the following steps:
-          if value?(element)
-            unless list
-              # If no list has been passed, merge element into the active property member of the active subject in graph.
-              merge_value(node, active_property, element)
-            else
-              # Otherwise, append element to the @list member of list.
-              merge_value(list, '@list', element)
-            end
-          elsif list?(element)
-            # Otherwise, if element has an @list member, perform the following steps:
-            # Initialize a new JSON object result having a single member @list whose value is initialized to an empty array.
-            result = {'@list' => []}
-
-            # Recursively call this algorithm passing the value of element's @list member as new element and result as list.
-            generate_node_map(element['@list'],
-                              node_map,
-                              active_graph,
-                              active_subject,
-                              active_property,
-                              result)
-
-            # Append result to the the value of the active property member of node.
-            debug("node_map") {"@list: #{result.inspect}"}
-            merge_value(node, active_property, result)
+        debug("node_map") {"graph: #{graph}, input: #{input.inspect}, name: #{name}"}
+        case input
+        when Array
+          # If input is an array, process each entry in input recursively by passing item for input, node map, active graph, active subject, active property, and list.
+          input.map {|o| create_node_map(o, graphs, graph, namer, nil,list)}
+        when Hash
+          type = input['@type']
+          if value?(input)
+            # Rename blanknode @type
+            input['@type'] = namer.get_name(type) if type && blank_node?(type)
+            list << input if list
           else
-            # Otherwise element is a node object, perform the following steps:
+            # Input is a node definition
 
-            # If element has an @id member, set id to its value and remove the member from element. If id is a blank node identifier, replace it with a newly generated blank node identifier passing id for identifier.
-            # Otherwise, set id to the result of the Generate Blank Node Identifier algorithm passing null for identifier.
-            id = element.delete('@id')
-            id = namer.get_name(id) if blank_node?(id)
-            debug("node_map") {"id: #{id.inspect}"}
+            # spec requires @type to be named first, so assign names early
+            Array(type).each {|t| namer.get_name(t) if blank_node?(t)}
 
-            # If graph does not contain a member id, create one and initialize it to a JSON object consisting of a single member @id whose value is set to id.
-            graph[id] ||= {'@id' => id}
+            # get name for subject
+            if name.nil?
+              name ||= input['@id']
+              name = namer.get_name(name) if blank_node?(name)
+            end
 
-            # If active property is not null, perform the following steps:
-            if node?(active_subject) || node_reference?(active_subject)
-              debug("node_map") {"active_subject is an object, merge into #{id}"}
-              merge_value(graph[id], active_property, active_subject)
-            elsif active_property
-              # Create a new JSON object reference consisting of a single member @id whose value is id.
-              reference = {'@id' => id}
+            # add subject reference to list
+            list << {'@id' => name} if list
 
-              # If list is null:
-              unless list
-                merge_value(node, active_property, reference)
+            # create new subject or merge into existing one
+            subject = (graphs[graph] ||= {})[name] ||= {'@id' => name}
+
+            input.keys.kw_sort.each do |property|
+              objects = input[property]
+              case property
+              when '@id'
+                # Skip
+              when '@reverse'
+                # handle reverse properties
+                referenced_node, reverse_map = {'@id' => name}, objects
+                reverse_map.each do |reverse_property, items|
+                  items.each do |item|
+                    item_name = item['@id']
+                    item_name = namer.get_name(item_name) if blank_node?(item_name)
+                    create_node_map(item, graphs, graph, namer, item_name)
+                    add_value(graphs[graph][item_name],
+                              reverse_property,
+                              referenced_node,
+                              property_is_array: true,
+                              allow_duplicate: false)
+                  end
+                end
+              when '@graph'
+                graphs[name] ||= {}
+                g = graph == '@merged' ? graph : name
+                create_node_map(objects, graphs, g, namer)
+              when /^@(?!type)/
+                # copy non-@type keywords
+                if property == '@index' && subject['@index']
+                  raise JsonLdError::ConflictingIndexes,
+                        "Element already has index #{subject['@index']} dfferent from #{input['@index']}" if
+                        subject['@index'] != input['@index']
+                  subject['@index'] = input.delete('@index')
+                end
+                subject[property] = objects
               else
-                merge_value(list, '@list', reference)
-              end
-            end
+                # if property is a bnode, assign it a new id
+                property = namer.get_name(property) if blank_node?(property)
 
-            # Reference the value of the id member of graph using the variable node.
-            node = graph[id]
+                add_value(subject, property, [], property_is_array: true) if objects.empty?
 
-            # If element has an @type key, append each item of its associated array to the array associated with the @type key of node unless it is already in that array. Finally remove the @type member from element.
-            if element.has_key?('@type')
-              Array(element.delete('@type')).each do |t|
-                merge_value(node, '@type', t)
-              end
-            end
+                objects.each do |o|
+                  o = namer.get_name(o) if property == '@type' && blank_node?(o)
 
-            # If element has an @index member, set the @index member of node to its value. If node has already an @index member with a different value, a conflicting indexes error has been detected and processing is aborted. Otherwise, continue by removing the @index member from element.
-            if element.has_key?('@index')
-              raise JsonLdError::ConflictingIndexes,
-                    "Element already has index #{node['@index']} dfferent from #{element['@index']}" if
-                    node['@index'] && node['@index'] != element['@index']
-              node['@index'] = element.delete('@index')
-            end
+                  case
+                  when node?(o) || node_reference?(o)
+                    id = o['@id']
+                    id = namer.get_name(id) if blank_node?(id)
 
-            # If element has an @reverse member:
-            if element.has_key?('@reverse')
-              element.delete('@reverse').each do |property, values|
-                values.each do |value|
-                  debug("node_map") {"@reverse(#{id}): #{value.inspect}"}
-                  # Recursively invoke this algorithm passing value for element, node map, and active graph.
-                  generate_node_map(value,
-                                    node_map,
-                                    active_graph,
-                                    {'@id' => id},
-                                    property)
+                    # add reference and recurse
+                    add_value(subject, property, {'@id' => id}, property_is_array: true, allow_duplicate: false)
+                    create_node_map(o, graphs, graph, namer, id)
+                  when list?(o)
+                    olist = []
+                    create_node_map(o['@list'], graphs, graph, namer, name, olist)
+                    o = {'@list' => olist}
+                    add_value(subject, property, o, property_is_array: true, allow_duplicate: true)
+                  else
+                    # handle @value
+                    create_node_map(o, graphs, graph, namer, name)
+                    add_value(subject, property, o, property_is_array: true, allow_duplicate: false)
+                  end
                 end
               end
             end
-
-            # If element has an @graph member, recursively invoke this algorithm passing the value of the @graph member for element, node map, and id for active graph before removing the @graph member from element.
-            if element.has_key?('@graph')
-              generate_node_map(element.delete('@graph'),
-                                node_map,
-                                id)
-            end
-
-            # Finally, for each key-value pair property-value in element ordered by property perform the following steps:
-            # Note: Not ordering doesn't seem to affect results and is more performant
-            element.keys.each do |property|
-              value = element[property]
-
-              # If property is a blank node identifier, replace it with a newly generated blank node identifier passing property for identifier.
-              property = namer.get_name(property) if blank_node?(property)
-
-              # If node does not have a property member, create one and initialize its value to an empty array.
-              node[property] ||= []
-
-              # Recursively invoke this algorithm passing value as new element, id as new active subject, and property as new active property.
-              generate_node_map(value,
-                                node_map,
-                                active_graph,
-                                id,
-                                property)
-            end
           end
+        else
+          # add non-object to list
+          list << input if list
         end
-
-        debug("node_map") {node_map.to_json(JSON_STATE) rescue 'malformed json'}
       end
     end
   end
