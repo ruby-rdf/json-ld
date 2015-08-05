@@ -7,7 +7,7 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Hash{String => Hash}] subjects
+    # @param [Array<String>] subjects
     #   The subjects to filter
     # @param [Hash{String => Object}] frame
     # @param [Hash{Symbol => Object}] options ({})
@@ -19,24 +19,20 @@ module JSON::LD
     def frame(state, subjects, frame, options = {})
       depth do
         parent, property = options[:parent], options[:property]
-        debug("frame") {"frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
-        debug("frame") {"parent: #{parent.to_json(JSON_STATE) rescue 'malformed json'}"}
-        debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)
         frame = frame.first if frame.is_a?(Array)
 
         # Get values for embedOn and explicitOn
         flags = {
-          embed: get_frame_flag(state, frame, 'embed'),
-          explicit: get_frame_flag(state, frame, 'explicit'),
-          require_all: get_frame_flag(state, frame, 'requireAll'),
+          embed: get_frame_flag(frame, options, :embed),
+          explicit: get_frame_flag(frame, options, :explicit),
+          requireAll: get_frame_flag(frame, options, :requireAll),
         }
 
         # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
         # This gives us a hash of objects indexed by @id
         matches = filter_subjects(state, subjects, frame, flags)
-        debug("frame") {"matches: #{matches.keys.inspect}"}
 
         # For each id and node from the set of matched subjects ordered by id
         matches.keys.kw_sort.each do |id|
@@ -66,8 +62,7 @@ module JSON::LD
           # reference; note that a circular reference won't occur when the
           # embed flag is `@link` as the above check will short-circuit
           # before reaching this point
-          if flags[:embed] == '@never' ||
-             creates_circular_reference(subject, state[:subjectStack])
+          if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
             add_frame_output(parent, property, output)
             next
           end
@@ -109,16 +104,17 @@ module JSON::LD
                 src = o['@list']
                 src.each do |oo|
                   if node_reference?(oo)
-                    subframe = frame[prop] ? frame[prop].first['@list'] : create_implicit_frame(flags)
-                    frame(state, [oo['@id']], subframe, list, '@list')
+                    subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
+                    subframe ||= create_implicit_frame(flags)
+                    frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
                   else
                     add_frame_output(list, '@list', oo.dup)
                   end
                 end
               when node_reference?(o)
                 # recurse into subject reference
-                subframe = frame[prop] ? frame[prop]: create_implicit_frame(flags)
-                frame(state, [o['@id']], subframe, output, prop)
+                subframe = frame[prop] || create_implicit_frame(flags)
+                frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
               else
                 # include other values automatically
                 add_frame_output(output, prop, o.dup)
@@ -131,8 +127,8 @@ module JSON::LD
             # if omit default is off, then include default values for
             # properties that appear in the next frame but are not in
             # the matching subject
-            n = frame[prop].first
-            omit_default_on = get_frame_flag(n, options, 'omitDefault')
+            n = frame[prop].first || {}
+            omit_default_on = get_frame_flag(n, options, :omitDefault)
             if !omit_default_on && !output[prop]
               preserve = n.fetch('@default', '@null').dup
               preserve = [preserve] unless preserve.is_a?(Array)
@@ -156,7 +152,6 @@ module JSON::LD
     # @return [Array, Hash]
     def cleanup_preserve(input)
       depth do
-        #debug("cleanup preserve") {input.inspect}
         result = case input
         when Array
           # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
@@ -183,7 +178,6 @@ module JSON::LD
         else
           input
         end
-        #debug(" => ") {result.inspect}
         result
       end
     end
@@ -193,14 +187,16 @@ module JSON::LD
     ##
     # Returns a map of all of the subjects that match a parsed frame.
     #
-    # @param state the current framing state.
-    # @param subjects the set of subjects to filter.
-    # @param frame the parsed frame.
-    # @param flags the frame flags.
+    # @param [Hash{Symbol => Object}] state
+    #   Current framing state
+    # @param [Hash{String => Hash}] subjects
+    #   The subjects to filter
+    # @param [Hash{String => Object}] frame
+    # @param [Hash{Symbol => String}] flags the frame flags.
     #
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame, flags)
-      subjects.keys.inject({}) do |memo, id|
+      subjects.inject({}) do |memo, id|
         subject = state[:subjects][id]
         memo[id] = subject if filter_subject(subject, frame, flags)
         memo
@@ -229,23 +225,23 @@ module JSON::LD
       subject_types = subject.fetch('@type', [])
       raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless subject_types.is_a?(Array)
 
-      # check @type (object value means 'any' type, fall through to
-      # ducktyping)
-      if (types.length != 1 || !types.first.is_a?(Hash))
+      # check @type (object value means 'any' type, fall through to ducktyping)
+      if !types.empty? &&
+         !(types.length == 1 && types.first.is_a?(Hash))
         # If frame has an @type, use it for selecting appropriate nodes.
         return types.any? {|t| subject_types.include?(t)}
       else
         # Duck typing, for nodes not having a type, but having @id
-        wildcard = true
-        matches_some = false
+        wildcard, matches_some = true, false
 
         frame.each do |k, v|
           case k
           when '@id'
-            wildcard = true
             return false if v.is_a?(String) && subject['@id'] != v
-          when '@type' then wildcard = true
-          when /^@/ then next
+            wildcard, matches_some = true, true
+          when '@type'
+            wildcard, matches_some = true, true
+          when /^@/
           else
             wildcard = false
 
@@ -253,13 +249,14 @@ module JSON::LD
             if subject.has_key?(k)
               return false if v == []
               matches_some = true
+              next
             end
-          end
 
-          # all properties must match to be a duck unless a @default is
-          # specified
-          has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.has_key?('@default')
-          return false if flags[:requireAll] && !has_default
+            # all properties must match to be a duck unless a @default is
+            # specified
+            has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.first.has_key?('@default')
+            return false if flags[:requireAll] && !has_default
+          end
         end
 
         # return true if wildcard or subject matches some properties
@@ -273,10 +270,38 @@ module JSON::LD
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
     end
 
-    # Return value of @name in frame, or default from state if it doesn't exist
-    def get_frame_flag(state, frame, name)
-      value = frame.fetch("@#{name}", [state[name.to_sym]]).first
-      !!(value?(value) ? value['@value'] : value)
+    # Checks the current subject stack to see if embedding the given subject
+    # would cause a circular reference.
+    # 
+    # @param subject_to_embed the subject to embed.
+    # @param subject_stack the current stack of subjects.
+    # 
+    # @return true if a circular reference would be created, false if not.
+    def creates_circular_reference(subject_to_embed, subject_stack)
+      subject_stack[0..-2].any? do |subject|
+        subject['@id'] == subject_to_embed['@id']
+      end
+    end
+
+    # Gets the frame flag value for the given flag name.
+    # 
+    # @param frame the frame.
+    # @param options the framing options.
+    # @param name the flag name.
+    # 
+    # @return the flag value.
+    def get_frame_flag(frame, options, name)
+      rval = frame.fetch("@#{name}", [options[name]]).first
+      rval = rval.values.first if value?(rval)
+      if name == :embed
+        rval = case rval
+        when true then '@last'
+        when false then '@never'
+        when '@always', '@never', '@link' then rval
+        else '@last'
+        end
+      end
+      rval
     end
 
     ##
@@ -285,7 +310,6 @@ module JSON::LD
     # @param state the current framing state.
     # @param id the @id of the embed to remove.
     def remove_embed(state, id)
-      debug("frame") {"remove embed #{id.inspect}"}
       # get existing embed
       embeds = state[:uniqueEmbeds];
       embed = embeds[id];
@@ -337,7 +361,7 @@ module JSON::LD
     # @param parent the parent to add to.
     # @param property the parent property, null for an array parent.
     # @param output the output to add.
-    def add_frame_output(state, parent, property, output)
+    def add_frame_output(parent, property, output)
       if parent.is_a?(Hash)
         parent[property] ||= []
         parent[property] << output
@@ -354,7 +378,7 @@ module JSON::LD
     # @param [Hash] flags: the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
-      [flags.inject({}) {|memo, key| memo['@' + key] = [flags[key]]; memo}]
+      [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]
     end
   end
 end

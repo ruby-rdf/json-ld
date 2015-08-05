@@ -294,7 +294,7 @@ module JSON::LD
     # @return [String]
     def get_sym(old = "")
       old = old.to_s.sub(/_:/, '')
-      if old && self.has_key?(old)
+      if !old.empty? && self.has_key?(old)
         self[old]
       elsif !old.empty?
         @num += 1
