@@ -252,7 +252,7 @@ module JSON::LD
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         graphs = {'@default' => {}}
-        create_node_map(value, graphs, '@default', namer)
+        create_node_map(value, graphs)
 
         default_graph = graphs['@default']
         graphs.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
@@ -355,7 +355,7 @@ module JSON::LD
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         old_dbg, @options[:debug] = @options[:debug], nil
-        create_node_map(value, framing_state[:graphs], '@merged', namer)
+        create_node_map(value, framing_state[:graphs], '@merged')
         @options[:debug] = old_dbg
         framing_state[:subjects] = framing_state[:graphs]['@merged']
         debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -415,7 +415,7 @@ module JSON::LD
 
         # Generate _nodeMap_
         graphs = {'@default' => {}}
-        create_node_map(expanded_input, graphs, '@default', namer)
+        create_node_map(expanded_input, graphs)
         debug(".toRdf") {"node map: #{graphs.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Start generating statements

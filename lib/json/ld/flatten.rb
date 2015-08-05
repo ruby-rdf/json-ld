@@ -12,8 +12,6 @@ module JSON::LD
     #   map of nodes
     # @param [String] graph
     #   The name of the currently active graph that the processor should use when processing.
-    # @param [JSON::LD::BlankNodeNamer] namer
-    #   The UniqueNamer for assigning blank node names
     # @param [String] name
     #   The name assigned to the current input if it is a bnode
     # @param [Array] list
@@ -21,7 +19,6 @@ module JSON::LD
     def create_node_map(input,
                         graphs,
                         graph = '@default',
-                        namer = BlankNodeNamer.new('b'),
                         name  = nil,
                         list  = nil)
       depth do
@@ -29,7 +26,7 @@ module JSON::LD
         case input
         when Array
           # If input is an array, process each entry in input recursively by passing item for input, node map, active graph, active subject, active property, and list.
-          input.map {|o| create_node_map(o, graphs, graph, namer, nil,list)}
+          input.map {|o| create_node_map(o, graphs, graph, nil, list)}
         when Hash
           type = input['@type']
           if value?(input)
@@ -66,7 +63,7 @@ module JSON::LD
                   items.each do |item|
                     item_name = item['@id']
                     item_name = namer.get_name(item_name) if blank_node?(item_name)
-                    create_node_map(item, graphs, graph, namer, item_name)
+                    create_node_map(item, graphs, graph, item_name)
                     add_value(graphs[graph][item_name],
                               reverse_property,
                               referenced_node,
@@ -77,7 +74,7 @@ module JSON::LD
               when '@graph'
                 graphs[name] ||= {}
                 g = graph == '@merged' ? graph : name
-                create_node_map(objects, graphs, g, namer)
+                create_node_map(objects, graphs, g)
               when /^@(?!type)/
                 # copy non-@type keywords
                 if property == '@index' && subject['@index']
@@ -103,15 +100,15 @@ module JSON::LD
 
                     # add reference and recurse
                     add_value(subject, property, {'@id' => id}, property_is_array: true, allow_duplicate: false)
-                    create_node_map(o, graphs, graph, namer, id)
+                    create_node_map(o, graphs, graph, id)
                   when list?(o)
                     olist = []
-                    create_node_map(o['@list'], graphs, graph, namer, name, olist)
+                    create_node_map(o['@list'], graphs, graph, name, olist)
                     o = {'@list' => olist}
                     add_value(subject, property, o, property_is_array: true, allow_duplicate: true)
                   else
                     # handle @value
-                    create_node_map(o, graphs, graph, namer, name)
+                    create_node_map(o, graphs, graph, name)
                     add_value(subject, property, o, property_is_array: true, allow_duplicate: false)
                   end
                 end
