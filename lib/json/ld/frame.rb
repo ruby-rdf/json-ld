@@ -357,7 +357,6 @@ module JSON::LD
     ##
     # Adds framing output to the given parent.
     #
-    # @param state the current framing state.
     # @param parent the parent to add to.
     # @param property the parent property, null for an array parent.
     # @param output the output to add.
@@ -375,7 +374,7 @@ module JSON::LD
     # a wildcard child frame will be created that uses the same flags that
     # the parent frame used.
     #
-    # @param [Hash] flags: the current framing flags.
+    # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
       [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]

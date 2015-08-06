@@ -8,8 +8,6 @@ module JSON::LD
     # @param [Array, Hash] input
     #   Expanded JSON-LD input
     # @param [Hash] graphs A map of graph name to subjects
-    # @param [Hash{String => Hash}] graphs
-    #   map of nodes
     # @param [String] graph
     #   The name of the currently active graph that the processor should use when processing.
     # @param [String] name

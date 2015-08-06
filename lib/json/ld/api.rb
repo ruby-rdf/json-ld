@@ -234,11 +234,10 @@ module JSON::LD
     # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
-    #   The framed JSON-LD document
+    #   The flattened JSON-LD document
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
-    # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.flatten(input, context, options = {})
       flattened = []
@@ -246,7 +245,7 @@ module JSON::LD
       # Expand input to simplify processing
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
-      # Initialize input using frame as context
+      # Initialize input using
       API.new(expanded_input, context, options) do
         debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
