@@ -109,16 +109,6 @@ module JSON::LD
     end
 
     ##
-    # Write whole graph
-    #
-    # @param  [Graph] graph
-    # @return [void]
-    def write_graph(graph)
-      debug {"Add graph #{graph.inspect}"}
-      @repo = graph
-    end
-
-    ##
     # Adds a statement to be serialized
     # @param  [RDF::Statement] statement
     # @return [void]
