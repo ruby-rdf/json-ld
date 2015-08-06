@@ -10,7 +10,7 @@ module JSON::LD
     def node?(value)
       value.is_a?(Hash) &&
         (value.keys & %w(@value @list @set)).empty? &&
-        !(value.keys - ['@id']).empty?
+        (value.length > 1 || !value.has_key?('@id'))
     end
 
     ##
@@ -78,6 +78,100 @@ module JSON::LD
       end
     end
 
+    ##
+    # Compares two JSON-LD values for equality. Two JSON-LD values will be
+    # considered equal if:
+    # 
+    # 1. They are both primitives of the same type and value.
+    # 2. They are both @values with the same @value, @type, @language,
+    #   and @index, OR
+    # 3. They both have @ids that are the same.
+    # 
+    # @param [Object] v1 the first value.
+    # @param [Object] v2 the second value.
+    # 
+    # @return [Boolean] v1 and v2 are considered equal
+    def compare_values(v1, v2)
+      case
+      when node?(v1) && node?(v2) then v1['@id'] && v1['@id'] == v2['@id']
+      when value?(v1) && value?(v2)
+        v1['@value'] == v2['@value'] &&
+        v1['@type'] == v2['@type'] &&
+        v1['@language'] == v2['@language'] &&
+        v1['@index'] == v2['@index']
+      else
+        v1 == v2
+      end
+    end
+
+    # Adds a value to a subject. If the value is an array, all values in the
+    # array will be added.
+    # 
+    # @param [Hash] subject the hash to add the value to.
+    # @param [String] property the property that relates the value to the subject.
+    # @param [Object] value the value to add.
+    # @param [Hash{Symbol => Object}] options
+    # @option options [Boolean] :property_is_array
+    #   true if the property is always (false)
+    #   an array, false if not.
+    # @option options [Boolean] :allow_duplicate (true)
+    #   true to allow duplicates, false not to (uses
+    #     a simple shallow comparison of subject ID or value).
+    def add_value(subject, property, value, options = {})
+      options = {property_is_array: false, allow_duplicate: true}.merge(options)
+
+      if value.is_a?(Array)
+        subject[property] = [] if value.empty? && options[:property_is_array]
+        value.each {|v| add_value(subject, property, v, options)}
+      elsif subject[property]
+        # check if subject already has value if duplicates not allowed
+        _has_value = !options[:allow_duplicate] && has_value(subject, property, value)
+
+        # make property an array if value not present or always an array
+        if !subject[property].is_a?(Array) && (!_has_value || options[:property_is_array])
+          subject[property] = [subject[property]]
+        end
+        subject[property] << value unless _has_value
+      else
+        subject[property] = options[:property_is_array] ? [value] : value
+      end
+    end
+
+    # Returns True if the given subject has the given property.
+    # 
+    # @param subject the subject to check.
+    # @param property the property to look for.
+    # 
+    # @return [Boolean] true if the subject has the given property, false if not.
+    def has_property(subject, property)
+      return false unless value = subject[property]
+      !value.is_a?(Array) || !value.empty?
+    end
+
+    # Determines if the given value is a property of the given subject.
+    # 
+    # @param [Hash] subject the subject to check.
+    # @param [String] property the property to check.
+    # @param [Object] value the value to check.
+    # 
+    # @return [Boolean] true if the value exists, false if not.
+    def has_value(subject, property, value)
+      if has_property(subject, property)
+        val = subject[property]
+        is_list = list?(val)
+        if val.is_a?(Array) || is_list
+          val = val['@list'] if is_list
+          val.any? {|v| compare_values(value, v)}
+        elsif !val.is_a?(Array)
+          compare_values(value, val)
+        else
+          false
+        end
+      else
+        false
+      end
+    end
+
     private
 
     # Merge the last value into an array based for the specified key if hash is not null and value is not already in that array
@@ -125,8 +219,14 @@ module JSON::LD
       list = args
       list << yield if block_given?
       message = " " * depth * 2 + (list.empty? ? "" : list.join(": "))
-      puts message if JSON::LD::debug?
-      @options[:debug] << message if @options[:debug].is_a?(Array)
+      case @options[:debug]
+      when Array
+        @options[:debug] << message
+      when TrueClass
+        $stderr.puts message
+      else
+        $stderr.puts message if JSON::LD::debug?
+      end
     end
 
     # Increase depth around a method invocation
@@ -194,7 +294,7 @@ module JSON::LD
     # @return [String]
     def get_sym(old = "")
       old = old.to_s.sub(/_:/, '')
-      if old && self.has_key?(old)
+      if !old.empty? && self.has_key?(old)
         self[old]
       elsif !old.empty?
         @num += 1

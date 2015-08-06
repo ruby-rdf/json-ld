@@ -39,7 +39,9 @@ module JSON::LD
     # @param [String] sample Beginning several bytes (~ 1K) of input.
     # @return [Boolean]
     def self.detect(sample)
-      !!sample.match(/\{\s*"@(id|context|type)"/m)
+      !!sample.match(/\{\s*"@(id|context|type)"/m) &&
+        # Exclude CSVW metadata
+        !sample.include?("http://www.w3.org/ns/csvw")
     end
     
     ##

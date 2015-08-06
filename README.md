@@ -4,12 +4,15 @@
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
 [![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
+[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/r/ruby-rdf/json-ld)
 
 ## Features
 
 JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces.
 
 JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the `script/gen_context` script.
+
+If the [jsonlint][] gem is installed, it will be used when validating an input document.
 
 Install with `gem install json-ld`
 
@@ -301,3 +304,4 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [JSON-LD API]:      http://www.w3.org/TR/json-ld-api/ "JSON-LD 1.0 Processing Algorithms and API"
 [JSON-LD Framing]:  http://json-ld.org/spec/latest/json-ld-framing/ "JSON-LD Framing 1.0"
 [Promises]:         http://dom.spec.whatwg.org/#promises
+[jsonlint]:         https://rubygems.org/gems/jsonlint

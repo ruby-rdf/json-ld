@@ -182,7 +182,7 @@ module JSON::LD
 
                 # Continue with the next key from element
                 next
-              when '@explicit', '@default', '@embed', '@embedChildren', '@omitDefault'
+              when '@explicit', '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
                 # Framing keywords
                 depth { [expand(value, expanded_property, context, options)].flatten }
               else

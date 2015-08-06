@@ -155,7 +155,7 @@ module JSON::LD
     # @return [Context]
     def initialize(options = {})
       if options[:base]
-        @base = @doc_base = RDF::URI(options[:base])
+        @base = @doc_base = RDF::URI(options[:base]).dup
         @doc_base.canonicalize!
         @doc_base.fragment = nil
         @doc_base.query = nil
@@ -198,7 +198,7 @@ module JSON::LD
     def base=(value)
       if value
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
-        @base = RDF::URI(value)
+        @base = RDF::URI(value).dup
         @base.canonicalize!
         @base.fragment = nil
         @base.query = nil

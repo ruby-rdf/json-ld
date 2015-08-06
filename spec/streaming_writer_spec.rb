@@ -5,11 +5,9 @@ require 'rdf/spec/writer'
 require 'json/ld/streaming_writer'
 
 describe JSON::LD::StreamingWriter do
-  before :each do
-    @writer = JSON::LD::Writer.new(StringIO.new(""), stream: true)
+  it_behaves_like 'an RDF::Writer' do
+    let(:writer) {JSON::LD::Writer.new(StringIO.new(""), stream: true)}
   end
-
-  include RDF_Writer
 
   context "simple tests" do
     it "should use full URIs without base" do

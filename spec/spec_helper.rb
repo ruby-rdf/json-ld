@@ -5,7 +5,6 @@ require "bundler/setup"
 require 'rspec'
 require 'rdf'
 require 'rdf/isomorphic'
-require 'json/ld'
 require 'rdf/nquads'
 require 'rdf/turtle'
 require 'rdf/trig'
@@ -15,6 +14,17 @@ require 'yaml'
 require 'restclient/components'
 require 'rack/cache'
 require 'matchers'
+require 'simplecov'
+require 'coveralls'
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+]
+SimpleCov.start do
+  add_filter "/spec/"
+end
+
+require 'json/ld'
 
 JSON_STATE = JSON::State.new(
   indent:       "  ",
@@ -36,16 +46,13 @@ RestClient.enable Rack::Cache,
 ::RSpec.configure do |c|
   c.filter_run focus: true
   c.run_all_when_everything_filtered = true
-  c.exclusion_filter = {
-    ruby: lambda { |version| !(RUBY_VERSION.to_s =~ /^#{version.to_s}/) },
-  }
   c.include(RDF::Spec::Matchers)
 end
 
 # Heuristically detect the input stream
 def detect_format(stream)
   # Got to look into the file to see
-  if stream.is_a?(IO) || stream.is_a?(StringIO)
+  if stream.respond_to?(:rewind) && stream.respond_to?(:read)
     stream.rewind
     string = stream.read(1000)
     stream.rewind

@@ -65,12 +65,6 @@ module JSON::LD
     attr_reader :context
 
     ##
-    # Override normal symbol generation
-    def self.to_sym
-      :jsonld
-    end
-
-    ##
     # Initializes the RDF-LD writer instance.
     #
     # @param  [IO, File] output
@@ -112,16 +106,6 @@ module JSON::LD
           end
         end
       end
-    end
-
-    ##
-    # Write whole graph
-    #
-    # @param  [Graph] graph
-    # @return [void]
-    def write_graph(graph)
-      debug {"Add graph #{graph.inspect}"}
-      @repo = graph
     end
 
     ##

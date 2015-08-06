@@ -8,16 +8,11 @@ describe JSON::LD::Reader do
   let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
   let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
 
-  before(:each) do
-    @reader_input = File.read(doap)
-    @reader = JSON::LD::Reader.new(@reader_input)
-    @reader_count = doap_count
+  it_behaves_like 'an RDF::Reader' do
+    let(:reader_input) {File.read(doap)}
+    let(:reader) {JSON::LD::Reader.new(reader_input)}
+    let(:reader_count) {doap_count}
   end
-  before :each do
-    @reader = JSON::LD::Reader.new(StringIO.new(""))
-  end
-
-  include RDF_Reader
 
   describe ".for" do
     formats = [
@@ -31,6 +26,14 @@ describe JSON::LD::Reader do
       it "discovers with #{arg.inspect}" do
         expect(RDF::Reader.for(arg)).to eq JSON::LD::Reader
       end
+    end
+  end
+
+  context "when validating", pending: ("JRuby support for jsonlint" if RUBY_ENGINE == "jruby") do
+    it "detects invalid JSON" do
+      expect do |b|
+        described_class.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true).each_statement(&b)
+      end.to raise_error(RDF::ReaderError)
     end
   end
 

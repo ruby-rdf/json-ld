@@ -4,11 +4,9 @@ require 'spec_helper'
 require 'rdf/spec/format'
 
 describe JSON::LD::Format do
-  before :each do
-    @format_class = JSON::LD::Format
+  it_behaves_like 'an RDF::Format' do
+    let(:format_class) {JSON::LD::Format}
   end
-
-  include RDF_Format
 
   describe ".for" do
     formats = [
@@ -20,7 +18,7 @@ describe JSON::LD::Format do
       {content_type:   'application/x-ld+json'},
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        expect(RDF::Format.for(arg)).to eq @format_class
+        expect(RDF::Format.for(arg)).to eq described_class
       end
     end
 
@@ -31,7 +29,7 @@ describe JSON::LD::Format do
       type:     %({\n"@type": {),
     }.each do |sym, str|
       it "detects #{sym}" do
-        expect(@format_class.for {str}).to eq @format_class
+        expect(described_class.for {str}).to eq described_class
       end
     end
 
@@ -41,7 +39,7 @@ describe JSON::LD::Format do
   end
 
   describe "#to_sym" do
-    specify {expect(@format_class.to_sym).to eq :jsonld}
+    specify {expect(described_class.to_sym).to eq :jsonld}
   end
 
   describe ".detect" do
@@ -49,7 +47,7 @@ describe JSON::LD::Format do
       jsonld: '{"@context" => "foo"}',
     }.each do |sym, str|
       it "detects #{sym}" do
-        expect(@format_class.detect(str)).to be_truthy
+        expect(described_class.detect(str)).to be_truthy
       end
     end
 
@@ -64,7 +62,7 @@ describe JSON::LD::Format do
       turtle:     "@prefix foo: <bar> .\n foo:a foo:b <c> .",
     }.each do |sym, str|
       it "does not detect #{sym}" do
-        expect(@format_class.detect(str)).to be_falsey
+        expect(described_class.detect(str)).to be_falsey
       end
     end
   end

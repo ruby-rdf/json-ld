@@ -7,158 +7,140 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Hash{String => Hash}] nodes
-    #   Map of flattened nodes
+    # @param [Array<String>] subjects
+    #   The subjects to filter
     # @param [Hash{String => Object}] frame
     # @param [Hash{Symbol => Object}] options ({})
-    # @option options [Hash{String => Object}] :parent
-    #   Parent node or top-level array
-    # @option options [String] :property
-    #   Property referencing this frame, or null for array.
+    # @option options [Hash{String => Object}] :parent (nil)
+    #   Parent subject or top-level array
+    # @option options [String] :property (nil)
+    #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, nodes, frame, options = {})
+    def frame(state, subjects, frame, options = {})
       depth do
         parent, property = options[:parent], options[:property]
-        debug("frame") {"state: #{state.inspect}"}
-        debug("frame") {"nodes: #{nodes.keys.inspect}"}
-        debug("frame") {"frame: #{frame.to_json(JSON_STATE) rescue 'malformed json'}"}
-        debug("frame") {"parent: #{parent.to_json(JSON_STATE) rescue 'malformed json'}"}
-        debug("frame") {"property: #{property.inspect}"}
         # Validate the frame
         validate_frame(state, frame)
-
-        # Create a set of matched nodes by filtering nodes by checking the map of flattened nodes against frame
-        # This gives us a hash of objects indexed by @id
-        matches = filter_nodes(state, nodes, frame)
-        debug("frame") {"matches: #{matches.keys.inspect}"}
+        frame = frame.first if frame.is_a?(Array)
 
         # Get values for embedOn and explicitOn
-        embed = get_frame_flag(state, frame, 'embed');
-        explicit = get_frame_flag(state, frame, 'explicit');
-        debug("frame") {"embed: #{embed.inspect}, explicit: #{explicit.inspect}"}
-      
-        # For each id and node from the set of matched nodes ordered by id
+        flags = {
+          embed: get_frame_flag(frame, options, :embed),
+          explicit: get_frame_flag(frame, options, :explicit),
+          requireAll: get_frame_flag(frame, options, :requireAll),
+        }
+
+        # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
+        # This gives us a hash of objects indexed by @id
+        matches = filter_subjects(state, subjects, frame, flags)
+
+        # For each id and node from the set of matched subjects ordered by id
         matches.keys.kw_sort.each do |id|
-          element = matches[id]
-          # If the active property is null, set the map of embeds in state to an empty map
-          state = state.merge(embeds: {}) if property.nil?
+          subject = matches[id]
+
+          if flags[:embed] == '@link' && state[:link].has_key?(id)
+            # TODO: may want to also match an existing linked subject
+            # against the current frame ... so different frames could
+            # produce different subjects that are only shared in-memory
+            # when the frames are the same
+
+            # add existing linked subject
+            add_frame_output(parent, property, state[:link][id])
+            next
+          end
+
+          # Note: In order to treat each top-level match as a
+          # compartmentalized result, clear the unique embedded subjects map
+          # when the property is None, which only occurs at the top-level.
+          state = state.merge(uniqueEmbeds: {}) if property.nil?
 
           output = {'@id' => id}
-        
-          # prepare embed meta info
-          embedded_node = {parent: parent, property: property}
-        
-          # If embedOn is true, and id is in map of embeds from state
-          if embed && (existing = state[:embeds].fetch(id, nil))
-            # only overwrite an existing embed if it has already been added to its parent -- otherwise its parent is somewhere up the tree from this embed and the embed would occur twice once the tree is added
-            embed = false
-          
-            embed = if existing[:parent].is_a?(Array)
-              # If existing has a parent which is an array containing a JSON object with @id equal to id, element has already been embedded and can be overwritten, so set embedOn to true
-              existing[:parent].detect {|p| p['@id'] == id}
-            else
-              # Otherwise, existing has a parent which is a node definition. Set embedOn to true if any of the items in parent property is a node definition or node reference for id because the embed can be overwritten
-              existing[:parent].fetch(existing[:property], []).any? do |v|
-                v.is_a?(Hash) && v.fetch('@id', nil) == id
-              end
-            end
-            debug("frame") {"embed now: #{embed.inspect}"}
+          state[:link][id] = output
 
-            # If embedOn is true, existing is already embedded but can be overwritten
-            remove_embed(state, id) if embed
+          # if embed is @never or if a circular reference would be created
+          # by an embed, the subject cannot be embedded, just add the
+          # reference; note that a circular reference won't occur when the
+          # embed flag is `@link` as the above check will short-circuit
+          # before reaching this point
+          if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
+            add_frame_output(parent, property, output)
+            next
           end
 
-          unless embed
-            # not embedding, add output without any other properties
-            add_frame_output(state, parent, property, output)
-          else
-            # Add embed to map of embeds for id
-            state[:embeds][id] = embedded_node
-            debug("frame") {"add embedded_node: #{embedded_node.inspect}"}
-        
-            # Process each property and value in the matched node as follows
-            element.keys.kw_sort.each do |prop|
-              value = element[prop]
-              if prop[0,1] == '@'
-                # If property is a keyword, add property and a copy of value to output and continue with the next property from node
-                output[prop] = value.dup
-                next
-              end
+          # if only the last match should be embedded
+          if flags[:embed] == '@last'
+            # remove any existing embed
+            remove_embed(state, id) if state[:uniqueEmbeds].include?(id)
+            state[:uniqueEmbeds][id] = {
+              parent: parent,
+              property: property
+            }
+          end
 
-              # If property is not in frame:
-              unless frame.has_key?(prop)
-                debug("frame") {"non-framed property #{prop}"}
-                # If explicitOn is false, Embed values from node in output using node as element and property as active property
-                embed_values(state, element, prop, output) unless explicit
-                
-                # Continue to next property
-                next
-              end
-          
-              # Process each item from value as follows
-              value.each do |item|
-                debug("frame") {"value property #{prop.inspect} == #{item.inspect}"}
-                
-                # FIXME: If item is a JSON object with the key @list
-                if list?(item)
-                  # create a JSON object named list with the key @list and the value of an empty array
-                  list = {'@list' => []}
-                  
-                  # Append list to property in output
-                  add_frame_output(state, output, prop, list)
-                  
-                  # Process each listitem in the @list array as follows
-                  item['@list'].each do |listitem|
-                    if node_reference?(listitem)
-                      itemid = listitem['@id']
-                      debug("frame") {"list item of #{prop} recurse for #{itemid.inspect}"}
+          # push matching subject onto stack to enable circular embed checks
+          state[:subjectStack] << subject
 
-                      # If listitem is a node reference process listitem recursively using this algorithm passing a new map of nodes that contains the @id of listitem as the key and the node reference as the value. Pass the first value from frame for property as frame, list as parent, and @list as active property.
-                      frame(state, {itemid => @node_map[itemid]}, frame[prop].first, parent: list, property: '@list')
-                    else
-                      # Otherwise, append a copy of listitem to @list in list.
-                      debug("frame") {"list item of #{prop} non-node ref #{listitem.inspect}"}
-                      add_frame_output(state, list, '@list', listitem)
-                    end
+          # iterate over subject properties in order
+          subject.keys.kw_sort.each do |prop|
+            objects = subject[prop]
+
+            # copy keywords to output
+            if prop.start_with?('@')
+              output[prop] = objects.dup
+              next
+            end
+
+            # explicit is on and property isn't in frame, skip processing
+            next if flags[:explicit] && !frame.has_key?(prop)
+
+            # add objects
+            objects.each do |o|
+              case
+              when list?(o)
+                # add empty list
+                list = {'@list' => []}
+                add_frame_output(output, prop, list)
+
+                src = o['@list']
+                src.each do |oo|
+                  if node_reference?(oo)
+                    subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
+                    subframe ||= create_implicit_frame(flags)
+                    frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
+                  else
+                    add_frame_output(list, '@list', oo.dup)
                   end
-                elsif node_reference?(item)
-                  # If item is a node reference process item recursively
-                  # Recurse into sub-objects
-                  itemid = item['@id']
-                  debug("frame") {"value property #{prop} recurse for #{itemid.inspect}"}
-                  
-                  # passing a new map as nodes that contains the @id of item as the key and the node reference as the value. Pass the first value from frame for property as frame, output as parent, and property as active property
-                  frame(state, {itemid => @node_map[itemid]}, frame[prop].first, parent: output, property: prop)
-                else
-                  # Otherwise, append a copy of item to active property in output.
-                  debug("frame") {"value property #{prop} non-node ref #{item.inspect}"}
-                  add_frame_output(state, output, prop, item)
                 end
+              when node_reference?(o)
+                # recurse into subject reference
+                subframe = frame[prop] || create_implicit_frame(flags)
+                frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
+              else
+                # include other values automatically
+                add_frame_output(output, prop, o.dup)
               end
             end
-
-            # Process each property and value in frame in lexographical order, where property is not a keyword, as follows:
-            frame.keys.kw_sort.each do |prop|
-              next if prop[0,1] == '@' || output.has_key?(prop)
-              property_frame = frame[prop]
-              debug("frame") {"frame prop: #{prop.inspect}. property_frame: #{property_frame.inspect}"}
-
-              # Set property frame to the first item in value or a newly created JSON object if value is empty.
-              property_frame = property_frame.first || {}
-
-              # Skip to the next property in frame if property is in output or if property frame contains @omitDefault which is true or if it does not contain @omitDefault but the value of omit default flag true.
-              next if output.has_key?(prop) || get_frame_flag(state, property_frame, 'omitDefault')
-
-              # Set the value of property in output to a new JSON object with a property @preserve and a value that is a copy of the value of @default in frame if it exists, or the string @null otherwise
-              default = property_frame.fetch('@default', '@null').dup
-              default = [default] unless default.is_a?(Array)
-              output[prop] = [{"@preserve" => default.compact}]
-              debug("=>") {"add default #{output[prop].inspect}"}
-            end
-          
-            # Add output to parent
-            add_frame_output(state, parent, property, output)
           end
+
+          # handle defaults in order
+          frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
+            # if omit default is off, then include default values for
+            # properties that appear in the next frame but are not in
+            # the matching subject
+            n = frame[prop].first || {}
+            omit_default_on = get_frame_flag(n, options, :omitDefault)
+            if !omit_default_on && !output[prop]
+              preserve = n.fetch('@default', '@null').dup
+              preserve = [preserve] unless preserve.is_a?(Array)
+              output[prop] = [{'@preserve' => preserve}]
+            end
+          end
+
+          # add output to parent
+          add_frame_output(parent, property, output)
+
+          # pop matching subject from circular ref-checking stack
+          state[:subjectStack].pop()
         end
       end
     end
@@ -170,10 +152,9 @@ module JSON::LD
     # @return [Array, Hash]
     def cleanup_preserve(input)
       depth do
-        #debug("cleanup preserve") {input.inspect}
         result = case input
         when Array
-          # If, after replacement, an array contains only the value null remove the value, leaving an empty array. 
+          # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
           input.map {|o| cleanup_preserve(o)}.compact
         when Hash
           output = Hash.new(input.size)
@@ -183,7 +164,7 @@ module JSON::LD
               output = cleanup_preserve(value)
             else
               v = cleanup_preserve(value)
-              
+
               # Because we may have added a null value to an array, we need to clean that up, if we possible
               v = v.first if v.is_a?(Array) && v.length == 1 &&
                 context.expand_iri(key) != "@graph" && context.container(key).nil?
@@ -197,23 +178,29 @@ module JSON::LD
         else
           input
         end
-        #debug(" => ") {result.inspect}
         result
       end
     end
 
     private
-    
+
     ##
-    # Returns a map of all of the nodes that match a parsed frame.
-    # 
-    # @param state the current framing state.
-    # @param nodes the set of nodes to filter.
-    # @param frame the parsed frame.
-    # 
-    # @return all of the matched nodes.
-    def filter_nodes(state, nodes, frame)
-      nodes.dup.keep_if {|id, element| element && filter_node(state, element, frame)}
+    # Returns a map of all of the subjects that match a parsed frame.
+    #
+    # @param [Hash{Symbol => Object}] state
+    #   Current framing state
+    # @param [Hash{String => Hash}] subjects
+    #   The subjects to filter
+    # @param [Hash{String => Object}] frame
+    # @param [Hash{Symbol => String}] flags the frame flags.
+    #
+    # @return all of the matched subjects.
+    def filter_subjects(state, subjects, frame, flags)
+      subjects.inject({}) do |memo, id|
+        subject = state[:subjects][id]
+        memo[id] = subject if filter_subject(subject, frame, flags)
+        memo
+      end
     end
 
     ##
@@ -226,42 +213,95 @@ module JSON::LD
     #
     # Otherwise, does duck typing, where the node must have all of the properties
     # defined in the frame.
-    # 
-    # @param [Hash{Symbol => Object}] state the current frame state.
-    # @param [Hash{String => Object}] node the node to check.
+    #
+    # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
-    # 
-    # @return true if the node matches, false if not.
-    def filter_node(state, node, frame)
-      debug("frame") {"filter node: #{node.inspect}"}
-      if types = frame.fetch('@type', nil)
-        node_types = node.fetch('@type', [])
-        raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
-        raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless node_types.is_a?(Array)
-        # If frame has an @type, use it for selecting appropriate nodes.
-        debug("frame") {"filter node: #{node_types.inspect} has any of #{types.inspect}"}
+    # @param [Hash{Symbol => Object}] flags the frame flags.
+    #
+    # @return [Boolean] true if the node matches, false if not.
+    def filter_subject(subject, frame, flags)
+      types = frame.fetch('@type', [])
+      raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
+      subject_types = subject.fetch('@type', [])
+      raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless subject_types.is_a?(Array)
 
-        # Check for type wild-card, or intersection
-        types == [{}] ? !node_types.empty? : node_types.any? {|t| types.include?(t)}
+      # check @type (object value means 'any' type, fall through to ducktyping)
+      if !types.empty? &&
+         !(types.length == 1 && types.first.is_a?(Hash))
+        # If frame has an @type, use it for selecting appropriate nodes.
+        return types.any? {|t| subject_types.include?(t)}
       else
         # Duck typing, for nodes not having a type, but having @id
-        
-        # Subject matches if it has all the properties in the frame
-        frame_keys = frame.keys.reject {|k| k[0,1] == '@'}
-        node_keys = node.keys.reject {|k| k[0,1] == '@'}
-        (frame_keys & node_keys) == frame_keys
+        wildcard, matches_some = true, false
+
+        frame.each do |k, v|
+          case k
+          when '@id'
+            return false if v.is_a?(String) && subject['@id'] != v
+            wildcard, matches_some = true, true
+          when '@type'
+            wildcard, matches_some = true, true
+          when /^@/
+          else
+            wildcard = false
+
+            # v == [] means do not match if property is present
+            if subject.has_key?(k)
+              return false if v == []
+              matches_some = true
+              next
+            end
+
+            # all properties must match to be a duck unless a @default is
+            # specified
+            has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.first.has_key?('@default')
+            return false if flags[:requireAll] && !has_default
+          end
+        end
+
+        # return true if wildcard or subject matches some properties
+        wildcard || matches_some
       end
     end
 
     def validate_frame(state, frame)
       raise InvalidFrame::Syntax,
-            "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless frame.is_a?(Hash)
+            "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
+        frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
     end
-    
-    # Return value of @name in frame, or default from state if it doesn't exist
-    def get_frame_flag(state, frame, name)
-      value = frame.fetch("@#{name}", [state[name.to_sym]]).first
-      !!(value?(value) ? value['@value'] : value)
+
+    # Checks the current subject stack to see if embedding the given subject
+    # would cause a circular reference.
+    # 
+    # @param subject_to_embed the subject to embed.
+    # @param subject_stack the current stack of subjects.
+    # 
+    # @return true if a circular reference would be created, false if not.
+    def creates_circular_reference(subject_to_embed, subject_stack)
+      subject_stack[0..-2].any? do |subject|
+        subject['@id'] == subject_to_embed['@id']
+      end
+    end
+
+    # Gets the frame flag value for the given flag name.
+    # 
+    # @param frame the frame.
+    # @param options the framing options.
+    # @param name the flag name.
+    # 
+    # @return the flag value.
+    def get_frame_flag(frame, options, name)
+      rval = frame.fetch("@#{name}", [options[name]]).first
+      rval = rval.values.first if value?(rval)
+      if name == :embed
+        rval = case rval
+        when true then '@last'
+        when false then '@never'
+        when '@always', '@never', '@link' then rval
+        else '@last'
+        end
+      end
+      rval
     end
 
     ##
@@ -270,29 +310,32 @@ module JSON::LD
     # @param state the current framing state.
     # @param id the @id of the embed to remove.
     def remove_embed(state, id)
-      debug("frame") {"remove embed #{id.inspect}"}
       # get existing embed
-      embeds = state[:embeds];
+      embeds = state[:uniqueEmbeds];
       embed = embeds[id];
-      parent = embed[:parent];
       property = embed[:property];
 
       # create reference to replace embed
-      node = {}
-      node['@id'] = id
-      ref = {'@id' => id}
-      
-      # remove existing embed
-      if node?(parent)
+      subject = {'@id' => id}
+
+      if embed[:parent].is_a?(Array)
+        # replace subject with reference
+        embed[:parent].map! do |parent|
+          compare_values(parent, subject) ? subject : parent
+        end
+      else
+        parent = embed[:parent]
         # replace node with reference
-        parent[property].map! do |v|
-          v.is_a?(Hash) && v.fetch('@id', nil) == id ? ref : v
+        if parent[property].is_a?(Array)
+          parent[property].reject! {|v| compare_values(v, subject)}
+          parent[property] << subject
+        elsif compare_values(parent[property], subject)
+          parent[property] = subject
         end
       end
 
       # recursively remove dependent dangling embeds
       def remove_dependents(id, embeds)
-        debug("frame") {"remove dependents for #{id}"}
 
         depth do
           # get embed keys as a separate array to enable deleting keys in map
@@ -301,70 +344,40 @@ module JSON::LD
             next unless p.is_a?(Hash)
             pid = p.fetch('@id', nil)
             if pid == id
-              debug("frame") {"remove #{id_dep} from embeds"}
               embeds.delete(id_dep)
               remove_dependents(id_dep, embeds)
             end
           end
         end
       end
-      
+
       remove_dependents(id, embeds)
     end
 
     ##
     # Adds framing output to the given parent.
     #
-    # @param state the current framing state.
     # @param parent the parent to add to.
     # @param property the parent property, null for an array parent.
     # @param output the output to add.
-    def add_frame_output(state, parent, property, output)
+    def add_frame_output(parent, property, output)
       if parent.is_a?(Hash)
-        debug("frame") { "add for property #{property.inspect}: #{output.inspect}"}
         parent[property] ||= []
         parent[property] << output
       else
-        debug("frame") { "add top-level: #{output.inspect}"}
         parent << output
       end
     end
-    
-    ##
-    # Embeds values for the given element and property into output.
-    def embed_values(state, element, property, output)
-      element[property].each do |o|
-        # Get element @id, if this is an object
-        sid = o['@id'] if node_reference?(o)
-        if sid
-          unless state[:embeds].has_key?(sid)
-            debug("frame") {"embed element #{sid.inspect}"}
-            # Embed full element, if it isn't already embedded
-            embed = {parent: output, property: property}
-            state[:embeds][sid] = embed
-          
-            # Recurse into element
-            s = @node_map.fetch(sid, {'@id' => sid})
-            o = {}
-            s.each do |prop, value|
-              if prop[0,1] == '@'
-                # Copy keywords
-                o[prop] = s[prop].dup
-              else
-                depth do
-                  debug("frame") {"embed property #{prop.inspect} value #{value.inspect}"}
-                  embed_values(state, s, prop, o)
-                end
-              end
-            end
-          else
-            debug("frame") {"don't embed element #{sid.inspect}"}
-          end
-        else
-          debug("frame") {"embed property #{property.inspect}, value #{o.inspect}"}
-        end
-        add_frame_output(state, output, property, o.dup)
-      end
+
+    # Creates an implicit frame when recursing through subject matches. If
+    # a frame doesn't have an explicit frame for a particular property, then
+    # a wildcard child frame will be created that uses the same flags that
+    # the parent frame used.
+    #
+    # @param [Hash] flags the current framing flags.
+    # @return [Array<Hash>] the implicit frame.
+    def create_implicit_frame(flags)
+      [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]
     end
   end
 end
