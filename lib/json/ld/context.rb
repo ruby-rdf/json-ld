@@ -297,7 +297,7 @@ module JSON::LD
               @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 jo = case remote_doc.document
-                when String then JSON.parse(remote_doc.document)
+                when String then MultiJson.load(remote_doc.document)
                 else remote_doc.document
                 end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
@@ -306,6 +306,9 @@ module JSON::LD
                   context_no_base.provided_context = context.dup
                 end
               end
+            rescue JsonLdError::LoadingDocumentFailed => e
+              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
             rescue JsonLdError
               raise
             rescue Exception => e

@@ -65,36 +65,40 @@ describe JSON::LD::API do
   end
 
   context "Test Files" do
-    Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
-      test = File.basename(filename).sub(/-input\..*$/, '')
-      frame = filename.sub(/-input\..*$/, '-frame.json')
-      framed = filename.sub(/-input\..*$/, '-framed.json')
-      compacted = filename.sub(/-input\..*$/, '-compacted.json')
-      context = filename.sub(/-input\..*$/, '-context.json')
-      expanded = filename.sub(/-input\..*$/, '-expanded.json')
-      ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
+    %w(oj json_gem ok_json yajl).map(&:to_sym).each do |adapter|
+      context "with MultiJson adapter #{adapter.inspect}" do
+        Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
+          test = File.basename(filename).sub(/-input\..*$/, '')
+          frame = filename.sub(/-input\..*$/, '-frame.json')
+          framed = filename.sub(/-input\..*$/, '-framed.json')
+          compacted = filename.sub(/-input\..*$/, '-compacted.json')
+          context = filename.sub(/-input\..*$/, '-context.json')
+          expanded = filename.sub(/-input\..*$/, '-expanded.json')
+          ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
-      context test do
-        it "expands" do
-          options = {debug: @debug}
-          options[:expandContext] = File.open(context) if context
-          jld = described_class.expand(File.open(filename), options)
-          expect(jld).to produce(JSON.load(File.open(expanded)), @debug)
-        end if File.exist?(expanded)
+          context test do
+            it "expands" do
+              options = {debug: @debug, adapter: adapter}
+              options[:expandContext] = File.open(context) if context
+              jld = described_class.expand(File.open(filename), options)
+              expect(jld).to produce(JSON.load(File.open(expanded)), @debug)
+            end if File.exist?(expanded)
         
-        it "compacts" do
-          jld = described_class.compact(File.open(filename), File.open(context), debug: @debug)
-          expect(jld).to produce(JSON.load(File.open(compacted)), @debug)
-        end if File.exist?(compacted) && File.exist?(context)
+            it "compacts" do
+              jld = described_class.compact(File.open(filename), File.open(context), adapter: adapter, debug: @debug)
+              expect(jld).to produce(JSON.load(File.open(compacted)), @debug)
+            end if File.exist?(compacted) && File.exist?(context)
         
-        it "frame" do
-          jld = described_class.frame(File.open(filename), File.open(frame), debug: @debug)
-          expect(jld).to produce(JSON.load(File.open(framed)), @debug)
-        end if File.exist?(framed) && File.exist?(frame)
+            it "frame" do
+              jld = described_class.frame(File.open(filename), File.open(frame), adapter: adapter, debug: @debug)
+              expect(jld).to produce(JSON.load(File.open(framed)), @debug)
+            end if File.exist?(framed) && File.exist?(frame)
 
-        it "toRdf" do
-          expect(RDF::Repository.load(filename, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
-        end if File.exist?(ttl)
+            it "toRdf" do
+              expect(RDF::Repository.load(filename, adapter: adapter, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
+            end if File.exist?(ttl)
+          end
+        end
       end
     end
   end
