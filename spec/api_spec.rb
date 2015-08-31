@@ -76,7 +76,7 @@ describe JSON::LD::API do
           expanded = filename.sub(/-input\..*$/, '-expanded.json')
           ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
-          context test do
+          context test, skip: ("Not supported in JRuby" if RUBY_ENGINE == "jruby" && %w(oj yajl).include?(adapter.to_s)) do
             it "expands" do
               options = {debug: @debug, adapter: adapter}
               options[:expandContext] = File.open(context) if context

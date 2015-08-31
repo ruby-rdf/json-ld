@@ -16,6 +16,9 @@ If the [jsonlint][] gem is installed, it will be used when validating an input d
 
 Install with `gem install json-ld`
 
+### MultiJson parser
+The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
+
 ### JSON-LD Streaming Profile
 This gem implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
 
