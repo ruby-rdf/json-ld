@@ -198,7 +198,7 @@ module JSON::LD
     def base=(value)
       if value
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
-        @base = RDF::URI(value).dup
+        @base = @base ? @base.join(value) : RDF::URI(value).dup
         @base.canonicalize!
         @base.fragment = nil
         @base.query = nil
