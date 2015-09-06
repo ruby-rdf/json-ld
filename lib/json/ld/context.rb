@@ -156,9 +156,7 @@ module JSON::LD
     def initialize(options = {})
       if options[:base]
         @base = @doc_base = RDF::URI(options[:base]).dup
-        @doc_base.canonicalize!
-        @doc_base.fragment = nil
-        @doc_base.query = nil
+        @doc_base.canonicalize! if options[:canonicalize]
       end
       options[:documentLoader] ||= JSON::LD::API.method(:documentLoader)
       @term_definitions = {}
@@ -199,9 +197,7 @@ module JSON::LD
       if value
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
         @base = @base ? @base.join(value) : RDF::URI(value).dup
-        @base.canonicalize!
-        @base.fragment = nil
-        @base.query = nil
+        @base.canonicalize! if @options[:canonicalize]
         raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
         @base
       else
@@ -800,7 +796,8 @@ module JSON::LD
           vocab + value
         elsif options[:documentRelative] && base = options.fetch(:base, self.base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-          RDF::URI(base).join(value)
+          value = RDF::URI(value)
+          value.absolute? ? value : RDF::URI(base).join(value)
         elsif local_context && RDF::URI(value).relative?
           # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
           raise JSON::LD::JsonLdError::InvalidIRIMapping, "not an absolute IRI: #{value}"
