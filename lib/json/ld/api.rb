@@ -81,6 +81,7 @@ module JSON::LD
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
     # @option options [Boolean]  :simple_compact_iris   (false)
     #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
     # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @yield [api]
     # @yieldparam [API]
@@ -108,7 +109,7 @@ module JSON::LD
 
         validate_input(input) if options[:validate]
 
-        JSON.parse(input.read)
+        MultiJson.load(input.read, options)
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
@@ -118,7 +119,7 @@ module JSON::LD
         case remote_doc.document
         when String
           validate_input(remote_doc.document) if options[:validate]
-          JSON.parse(remote_doc.document)
+          MultiJson.load(remote_doc.document, options)
         else
           remote_doc.document
         end
@@ -332,11 +333,11 @@ module JSON::LD
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
-      when IO, StringIO then JSON.parse(frame.read)
+      when IO, StringIO then MultiJson.load(frame.read)
       when String
         remote_doc = options[:documentLoader].call(frame)
         case remote_doc.document
-        when String then JSON.parse(remote_doc.document)
+        when String then MultiJson.load(remote_doc.document)
         else remote_doc.document
         end
       end

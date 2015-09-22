@@ -16,6 +16,9 @@ If the [jsonlint][] gem is installed, it will be used when validating an input d
 
 Install with `gem install json-ld`
 
+### MultiJson parser
+The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
+
 ### JSON-LD Streaming Profile
 This gem implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
 
@@ -218,6 +221,24 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
           "http://xmlns.com/foaf/0.1/name": [{"@value": "Manu Sporny"}]
         }
       ]
+
+## Use a custom Document Loader
+In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time.
+
+All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
+
+    def load_document_local(url, options={}, &block)
+      if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
+        remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
+        return block_given? ? yield(remote_document) : remote_document
+      else
+        JSON::LD::API.documentLoader(url, options, &block)
+      end
+    end
+
+Then, when performing something like expansion:
+
+    JSON::LD::API.expand(input, documentLoader: load_document_local)
 
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:

@@ -1,5 +1,6 @@
 $:.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 require 'rdf' # @see http://rubygems.org/gems/rdf
+require 'multi_json'
 
 module JSON
   ##

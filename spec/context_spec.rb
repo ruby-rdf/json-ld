@@ -603,6 +603,28 @@ describe JSON::LD::Context do
 
   end
 
+  describe "#base=" do
+    subject {
+      context.parse({
+        '@base' => 'http://base/',
+        '@vocab' => 'http://vocab/',
+        'ex' => 'http://example.org/',
+        '' => 'http://empty/',
+        '_' => 'http://underscore/'
+      })
+    }
+
+    it "sets new base uri given an absolute uri" do
+      subject.base = "http://example.org/"
+      expect(subject.base).to eql RDF::URI("http://example.org/")
+    end
+
+    it "sets relative URI" do
+      subject.base = "foo/bar"
+      expect(subject.base).to eql RDF::URI("http://base/foo/bar")
+    end
+  end
+
   describe "#expand_iri" do
     subject {
       context.parse({
