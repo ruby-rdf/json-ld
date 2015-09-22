@@ -222,6 +222,24 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
         }
       ]
 
+## Use a custom Document Loader
+In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time.
+
+All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
+
+    def load_document_local(url, options={}, &block)
+      if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
+        remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
+        return block_given? ? yield(remote_document) : remote_document
+      else
+        JSON::LD::API.documentLoader(url, options, &block)
+      end
+    end
+
+Then, when performing something like expansion:
+
+    JSON::LD::API.expand(input, documentLoader: load_document_local)
+
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
 
