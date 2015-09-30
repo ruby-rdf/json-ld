@@ -118,7 +118,7 @@ module JSON::LD
     #   true to allow duplicates, false not to (uses
     #     a simple shallow comparison of subject ID or value).
     def add_value(subject, property, value, options = {})
-      options = {property_is_array: false, allow_duplicate: true}.merge(options)
+      options = {property_is_array: false, allow_duplicate: true}.merge!(options)
 
       if value.is_a?(Array)
         subject[property] = [] if value.empty? && options[:property_is_array]

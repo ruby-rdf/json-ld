@@ -990,7 +990,7 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {useNativeTypes: false}.merge(options)
+      options = {useNativeTypes: false}.merge!(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 

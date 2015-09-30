@@ -87,7 +87,7 @@ module JSON::LD
     # @yieldparam [API]
     # @raise [JsonLdError]
     def initialize(input, context, options = {}, &block)
-      @options = {compactArrays: true, rename_bnodes: true}.merge(options)
+      @options = {compactArrays: true, rename_bnodes: true}.merge!(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
@@ -98,7 +98,7 @@ module JSON::LD
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
-        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
+        @options = {base: input.base_uri}.merge!(@options) if input.respond_to?(:base_uri)
 
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
@@ -113,7 +113,7 @@ module JSON::LD
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        @options = {base: remote_doc.documentUrl}.merge(@options)
+        @options = {base: remote_doc.documentUrl}.merge!(@options)
         context_ref = remote_doc.contextUrl
 
         case remote_doc.document
@@ -322,7 +322,7 @@ module JSON::LD
         requireAll:     true,
         omitDefault:    false,
         documentLoader: method(:documentLoader)
-      }.merge(options)
+      }.merge!(options)
 
       framing_state = {
         graphs:       {'@default' => {}, '@merged' => {}},
@@ -471,7 +471,7 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     def self.fromRdf(input, options = {}, &block)
-      options = {useNativeTypes: false}.merge(options)
+      options = {useNativeTypes: false}.merge!(options)
       result = nil
 
       API.new(nil, nil, options) do |api|
