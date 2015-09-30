@@ -9,7 +9,7 @@ module JSON::LD
     # @return [Boolean]
     def node?(value)
       value.is_a?(Hash) &&
-        (value.keys & %w(@value @list @set)).empty? &&
+        !(value.has_key?('@value') || value.has_key?('@list') || value.has_key?('@set')) &&
         (value.length > 1 || !value.has_key?('@id'))
     end
 
@@ -118,7 +118,7 @@ module JSON::LD
     #   true to allow duplicates, false not to (uses
     #     a simple shallow comparison of subject ID or value).
     def add_value(subject, property, value, options = {})
-      options = {property_is_array: false, allow_duplicate: true}.merge(options)
+      options = {property_is_array: false, allow_duplicate: true}.merge!(options)
 
       if value.is_a?(Array)
         subject[property] = [] if value.empty? && options[:property_is_array]
@@ -211,14 +211,13 @@ module JSON::LD
     # Add debug event to debug array, if specified
     #
     #   param [String] message
-    #   yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    #   yieldreturn [String] appended to message, to allow for lazy-evaluation of message
     def debug(*args)
-      options = args.last.is_a?(Hash) ? args.pop : {}
       return unless ::JSON::LD.debug? || @options[:debug]
-      depth = options[:depth] || @depth || 0
+      depth = @depth || 0
       list = args
       list << yield if block_given?
-      message = " " * depth * 2 + (list.empty? ? "" : list.join(": "))
+      message = " " * depth * 2 + list.join(": ")
       case @options[:debug]
       when Array
         @options[:debug] << message

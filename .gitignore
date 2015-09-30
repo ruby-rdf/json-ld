@@ -6,4 +6,5 @@
 /spec.pdf
 /pkg/
 /.rbx/
+/.bundle/
 Gemfile.lock

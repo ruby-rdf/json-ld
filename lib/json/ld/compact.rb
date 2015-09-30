@@ -46,7 +46,7 @@ module JSON::LD
         inside_reverse = property == '@reverse'
         result = {}
 
-        element.keys.each do |expanded_property|
+        element.each_key do |expanded_property|
           expanded_value = element[expanded_property]
           debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 

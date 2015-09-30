@@ -337,7 +337,7 @@ module JSON::LD
             defined = {}
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
             depth do
-              context.keys.each do |key|
+              context.each_key do |key|
                 result.create_term_definition(context, key, defined)
               end
             end
@@ -990,7 +990,7 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
-      options = {useNativeTypes: false}.merge(options)
+      options = {useNativeTypes: false}.merge!(options)
       depth(options) do
         debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
