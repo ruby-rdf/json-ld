@@ -174,7 +174,7 @@ module JSON::LD
               stub: true
               )
           else
-            obj.keys.each do |k|
+            obj.each_key do |k|
               obj[k] = update_obj(obj[k], reference_map)
             end
             obj
