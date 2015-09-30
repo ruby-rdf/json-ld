@@ -9,7 +9,7 @@ module JSON::LD
     # @return [Boolean]
     def node?(value)
       value.is_a?(Hash) &&
-        (value.keys & %w(@value @list @set)).empty? &&
+        !(value.has_key?('@value') || value.has_key?('@list') || value.has_key?('@set')) &&
         (value.length > 1 || !value.has_key?('@id'))
     end
 
