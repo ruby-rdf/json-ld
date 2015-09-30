@@ -211,14 +211,13 @@ module JSON::LD
     # Add debug event to debug array, if specified
     #
     #   param [String] message
-    #   yieldreturn [String] appended to message, to allow for lazy-evaulation of message
+    #   yieldreturn [String] appended to message, to allow for lazy-evaluation of message
     def debug(*args)
-      options = args.last.is_a?(Hash) ? args.pop : {}
       return unless ::JSON::LD.debug? || @options[:debug]
-      depth = options[:depth] || @depth || 0
+      depth = @depth || 0
       list = args
       list << yield if block_given?
-      message = " " * depth * 2 + (list.empty? ? "" : list.join(": "))
+      message = " " * depth * 2 + list.join(": ")
       case @options[:debug]
       when Array
         @options[:debug] << message
