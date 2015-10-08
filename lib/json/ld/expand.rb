@@ -15,7 +15,7 @@ module JSON::LD
     #   Ensure output objects have keys ordered properly
     # @return [Array, Hash]
     def expand(input, active_property, context, options = {})
-      options = {ordered: true}.merge(options)
+      options = {ordered: true}.merge!(options)
       debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
