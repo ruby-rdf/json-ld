@@ -364,49 +364,49 @@ describe JSON::LD::Context do
     it "@type with dependent prefixes in a single context" do
       expect(subject.parse({
         'xsd' => "http://www.w3.org/2001/XMLSchema#",
-        'homepage' => {'@id' => RDF::FOAF.homepage.to_s, '@type' => '@id'}
+        'homepage' => {'@id' => RDF::Vocab::FOAF.homepage.to_s, '@type' => '@id'}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri.to_s,
-          "homepage" => {"@id" => RDF::FOAF.homepage.to_s, "@type" => "@id"}
+          "homepage" => {"@id" => RDF::Vocab::FOAF.homepage.to_s, "@type" => "@id"}
         }
       }, @debug)
     end
 
     it "@list with @id definition in a single context" do
       expect(subject.parse({
-        'knows' => {'@id' => RDF::FOAF.knows.to_s, '@container' => '@list'}
+        'knows' => {'@id' => RDF::Vocab::FOAF.knows.to_s, '@container' => '@list'}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
 
     it "@set with @id definition in a single context" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@set"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
         }
       }, @debug)
     end
 
     it "@language with @id definition in a single context" do
       expect(subject.parse({
-        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "en"}
+        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "en"}
+          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
         }
       }, @debug)
     end
@@ -414,13 +414,13 @@ describe JSON::LD::Context do
     it "@language with @id definition in a single context and equivalent default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => 'en'}
+        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => 'en'}
+          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
         }
       }, @debug)
     end
@@ -428,13 +428,13 @@ describe JSON::LD::Context do
     it "@language with @id definition in a single context and different default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "de"}
+        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => "de"}
+          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
         }
       }, @debug)
     end
@@ -442,44 +442,44 @@ describe JSON::LD::Context do
     it "null @language with @id definition in a single context and default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => nil}
+        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::FOAF.name.to_s, "@language" => nil}
+          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
         }
       }, @debug)
     end
 
     it "prefix with @type and @list" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
         }
       }, @debug)
     end
 
     it "prefix with @type and @set" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
         }
       }, @debug)
     end
 
     it "CURIE with @type" do
       expect(subject.parse({
-        "foaf" => RDF::FOAF.to_uri.to_s,
+        "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "foaf:knows" => {
           "@container" => "@list"
         }
@@ -487,7 +487,7 @@ describe JSON::LD::Context do
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "foaf" => RDF::FOAF.to_uri.to_s,
+          "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "foaf:knows" => {
             "@container" => "@list"
           }
@@ -498,20 +498,20 @@ describe JSON::LD::Context do
     it "does not use aliased @id in key position" do
       expect(subject.parse({
         "id" => "@id",
-        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "id" => "@id",
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
 
     it "does not use aliased @id in value position" do
       expect(subject.parse({
-        "foaf" => RDF::FOAF.to_uri.to_s,
+        "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "id" => "@id",
         "foaf:homepage" => {
           "@type" => "@id"
@@ -520,7 +520,7 @@ describe JSON::LD::Context do
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "foaf" => RDF::FOAF.to_uri.to_s,
+          "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "id" => "@id",
           "foaf:homepage" => {
             "@type" => "@id"
@@ -531,14 +531,14 @@ describe JSON::LD::Context do
 
     it "does not use aliased @type" do
       expect(subject.parse({
-        "foaf" => RDF::FOAF.to_uri.to_s,
+        "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "type" => "@type",
         "foaf:homepage" => {"@type" => "@id"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
-          "foaf" => RDF::FOAF.to_uri.to_s,
+          "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "type" => "@type",
           "foaf:homepage" => {"@type" => "@id"}
         }
@@ -548,13 +548,13 @@ describe JSON::LD::Context do
     it "does not use aliased @container" do
       expect(subject.parse({
         "container" => "@container",
-        "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
       }).
       send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "container" => "@container",
-          "knows" => {"@id" => RDF::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
       }, @debug)
     end
@@ -1044,9 +1044,9 @@ describe JSON::LD::Context do
   describe "#expand_value" do
     subject {
       ctx = context.parse({
-        "dc" => RDF::DC.to_uri.to_s,
+        "dc" => RDF::Vocab::DC.to_uri.to_s,
         "ex" => "http://example.org/",
-        "foaf" => RDF::FOAF.to_uri.to_s,
+        "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "xsd" => "http://www.w3.org/2001/XMLSchema#",
         "foaf:age" => {"@type" => "xsd:integer"},
         "foaf:knows" => {"@type" => "@id"},
@@ -1136,9 +1136,9 @@ describe JSON::LD::Context do
   describe "#compact_value" do
     let(:ctx) do
       c = context.parse({
-        "dc"         => RDF::DC.to_uri.to_s,
+        "dc"         => RDF::Vocab::DC.to_uri.to_s,
         "ex"         => "http://example.org/",
-        "foaf"       => RDF::FOAF.to_uri.to_s,
+        "foaf"       => RDF::Vocab::FOAF.to_uri.to_s,
         "xsd"        => RDF::XSD.to_s,
         "langmap"    => {"@id" => "http://example.com/langmap", "@container" => "@language"},
         "list"       => {"@id" => "http://example.org/list", "@container" => "@list"},
@@ -1158,7 +1158,7 @@ describe JSON::LD::Context do
       "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
-      "no IRI (CURIE)" => ["foo", {"@id" => RDF::FOAF.Person.to_s},       {"@id" => RDF::FOAF.Person.to_s}],
+      "no IRI (CURIE)" => ["foo", {"@id" => RDF::Vocab::FOAF.Person.to_s},       {"@id" => RDF::Vocab::FOAF.Person.to_s}],
       "no boolean" =>     ["foo", {"@value" => "true", "@type" => RDF::XSD.boolean.to_s},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "no integer" =>     ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],

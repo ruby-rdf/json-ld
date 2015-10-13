@@ -8,6 +8,7 @@ gem 'jsonlint',         git: "git://github.com/dougbarth/jsonlint.git", platform
 group :development do
   gem 'rdf-turtle',     git: "git://github.com/ruby-rdf/rdf-turtle.git", branch: "develop"
   gem 'rdf-trig',       git: "git://github.com/ruby-rdf/rdf-trig.git", branch: "develop"
+  gem 'rdf-vocab',      git: "git://github.com/ruby-rdf/rdf-vocab.git", branch: "develop"
   gem 'fasterer'
 end
 

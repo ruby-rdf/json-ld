@@ -38,9 +38,9 @@ module JSON::LD
     # @return [void] `self`
     def stream_statement(statement)
       debug("ss") {"state: #{@state.inspect}, stmt: #{statement}"}
-      if @current_graph != statement.context
+      if @current_graph != statement.graph_name
         end_graph
-        start_graph(statement.context)
+        start_graph(statement.graph_name)
       end
 
       # If we're writing a list
