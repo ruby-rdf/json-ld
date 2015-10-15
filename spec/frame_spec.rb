@@ -566,4 +566,24 @@ describe JSON::LD::API do
       end
     end
   end
+
+  context "problem cases" do
+    it "pr #20" do
+      expanded = [
+        {
+          "@id"=>"_:gregg",
+          "@type"=>"http://xmlns.com/foaf/0.1/Person",
+          "http://xmlns.com/foaf/0.1/name" => "Gregg Kellogg"
+        }, {
+          "@id"=>"http://manu.sporny.org/#me",
+          "@type"=> "http://xmlns.com/foaf/0.1/Person",
+          "http://xmlns.com/foaf/0.1/knows"=> {"@id"=>"_:gregg"},
+          "http://xmlns.com/foaf/0.1/name"=>"Manu Sporny"
+        }
+      ]
+      framed = JSON::LD::API.frame(expanded, {})
+      data = framed["@graph"].first
+      expect(data["mising_value"]).to be_nil
+    end
+  end
 end
