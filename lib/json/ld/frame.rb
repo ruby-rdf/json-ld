@@ -157,7 +157,7 @@ module JSON::LD
           # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
           input.map {|o| cleanup_preserve(o)}.compact
         when Hash
-          output = Hash.new(input.size)
+          output = Hash.new
           input.each do |key, value|
             if key == '@preserve'
               # replace all key-value pairs where the key is @preserve with the value from the key-pair
