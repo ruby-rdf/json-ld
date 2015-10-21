@@ -196,7 +196,9 @@ module JSON::LD
     def base=(value)
       if value
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
-        @base = @base ? @base.join(value) : RDF::URI(value).dup
+        value = RDF::URI(value).dup
+        value = @base.join(value) if @base && value.relative?
+        @base = value
         @base.canonicalize! if @options[:canonicalize]
         raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
         @base

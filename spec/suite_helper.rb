@@ -179,7 +179,7 @@ module Fixtures
       def to_quad(thing)
         case thing
         when RDF::URI
-          thing.canonicalize.to_ntriples
+          thing.to_ntriples
         when RDF::Node
           escaped(thing)
         when RDF::Literal::Double
