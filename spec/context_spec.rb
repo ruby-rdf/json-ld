@@ -65,7 +65,7 @@ describe JSON::LD::Context do
       end
       
       it "notes non-existing @context" do
-        expect {subject.parse(StringIO.new("{}"))}.to raise_error
+        expect {subject.parse(StringIO.new("{}"))}.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
       end
       
       it "parses a referenced context at a relative URI" do
@@ -262,7 +262,7 @@ describe JSON::LD::Context do
         "@type as object" => {"foo" => {"@type" => {}}},
         "@type as array" => {"foo" => {"@type" => []}},
         "@type as @list" => {"foo" => {"@type" => "@list"}},
-        "@type as @list" => {"foo" => {"@type" => "@set"}},
+        "@type as @set" => {"foo" => {"@type" => "@set"}},
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
@@ -881,7 +881,6 @@ describe JSON::LD::Context do
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
         "relative"      => ["foo/bar",             "http://base/foo/bar"],
-        "odd CURIE"     => ["exp:s",               "http://example.org/perts"],
         "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
