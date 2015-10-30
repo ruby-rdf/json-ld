@@ -71,7 +71,7 @@ describe JSON::LD::Writer do
     it "should use CURIEs with empty prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
       begin
-        expect(serialize(input, prefixes: { "" => RDF::FOAF})).
+        expect(serialize(input, prefixes: { "" => RDF::Vocab::FOAF})).
         to produce({
           "@context" => {
             "" => "http://xmlns.com/foaf/0.1/"
@@ -133,7 +133,7 @@ describe JSON::LD::Writer do
       to produce({
         '@context'     => {
           "" => "http://www.w3.org/2006/03/test-description#",
-          "dc" => RDF::DC.to_s 
+          "dc" => RDF::Vocab::DC.to_s 
         },
         '@graph'     => [
           {'@id'  => "http://example.com/test-cases/0001", '@type' => ":TestCase"},

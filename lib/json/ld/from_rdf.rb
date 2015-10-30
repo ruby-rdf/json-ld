@@ -24,7 +24,7 @@ module JSON::LD
       input.each do |statement|
         debug("statement") { statement.to_nquads.chomp}
 
-        name = statement.context ? ec.expand_iri(statement.context).to_s : '@default'
+        name = statement.graph_name ? ec.expand_iri(statement.graph_name).to_s : '@default'
         
         # Create a graph entry as needed
         node_map = graph_map[name] ||= {}

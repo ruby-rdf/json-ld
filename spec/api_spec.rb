@@ -95,7 +95,7 @@ describe JSON::LD::API do
             end if File.exist?(framed) && File.exist?(frame)
 
             it "toRdf" do
-              expect(RDF::Repository.load(filename, adapter: adapter, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
+              expect(RDF::Repository.load(filename, format: :jsonld, adapter: adapter, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
             end if File.exist?(ttl)
           end
         end

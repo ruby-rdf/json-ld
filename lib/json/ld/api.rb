@@ -421,7 +421,7 @@ module JSON::LD
         # Start generating statements
         graphs.each do |graph_name, graph|
           context = as_resource(graph_name) unless graph_name == '@default'
-          debug(".toRdf") {"context: #{context ? context.to_ntriples : 'null'}"}
+          debug(".toRdf") {"graph_name: #{context ? context.to_ntriples : 'null'}"}
           # Drop results for graphs which are named with relative IRIs
           if graph_name.is_a?(RDF::URI) && !graph_name.absolute
             debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
@@ -445,7 +445,7 @@ module JSON::LD
               next
             end
 
-            statement.context = context if context
+            statement.graph_name = context if context
             if block_given?
               yield statement
             else

@@ -16,7 +16,7 @@ describe JSON::LD::API do
       "embedded object" => {
         input: {
           "@context" => {
-            "foaf" => RDF::FOAF.to_s
+            "foaf" => RDF::Vocab::FOAF.to_s
           },
           "@id" => "http://greggkellogg.net/foaf",
           "@type" => ["foaf:PersonalProfileDocument"],
@@ -28,19 +28,19 @@ describe JSON::LD::API do
         output: [
           {
             "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfileDocument.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
+            "@type" => [RDF::Vocab::FOAF.PersonalProfileDocument.to_s],
+            RDF::Vocab::FOAF.primaryTopic.to_s => [{"@id" => "http://greggkellogg.net/foaf#me"}]
           },
           {
             "@id" => "http://greggkellogg.net/foaf#me",
-            "@type" => [RDF::FOAF.Person.to_s]
+            "@type" => [RDF::Vocab::FOAF.Person.to_s]
           }
         ]
       },
       "embedded anon" => {
         input: {
           "@context" => {
-            "foaf" => RDF::FOAF.to_s
+            "foaf" => RDF::Vocab::FOAF.to_s
           },
           "@id" => "http://greggkellogg.net/foaf",
           "@type" => "foaf:PersonalProfileDocument",
@@ -51,12 +51,12 @@ describe JSON::LD::API do
         output: [
           {
             "@id" => "_:b0",
-            "@type" => [RDF::FOAF.Person.to_s]
+            "@type" => [RDF::Vocab::FOAF.Person.to_s]
           },
           {
             "@id" => "http://greggkellogg.net/foaf",
-            "@type" => [RDF::FOAF.PersonalProfileDocument.to_s],
-            RDF::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
+            "@type" => [RDF::Vocab::FOAF.PersonalProfileDocument.to_s],
+            RDF::Vocab::FOAF.primaryTopic.to_s => [{"@id" => "_:b0"}]
           }
         ]
       },
