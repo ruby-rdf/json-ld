@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  let(:logger) {spec_logger}
 
   describe ".expand" do
     {
@@ -67,8 +67,8 @@ describe JSON::LD::API do
       }
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.expand(params[:input], debug: @debug)
-        expect(jld).to produce(params[:output], @debug)
+        jld = JSON::LD::API.expand(params[:input], logger: logger)
+        expect(jld).to produce(params[:output], logger)
       end
     end
 
@@ -114,8 +114,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], base: "http://example.org/", debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], base: "http://example.org/", logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -173,8 +173,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -228,8 +228,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -256,8 +256,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -300,8 +300,8 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -328,8 +328,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -396,8 +396,8 @@ describe JSON::LD::API do
         it title do
           jld = JSON::LD::API.expand(params[:input],
             base: "http://foo/bar/",
-            debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+            logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -451,8 +451,8 @@ describe JSON::LD::API do
         ]}
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug, base: 'http://example/')
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger, base: 'http://example/')
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -530,8 +530,8 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -583,8 +583,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -651,8 +651,8 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -748,8 +748,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -783,8 +783,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.expand(params[:input], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.expand(params[:input], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -848,7 +848,7 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it title do
-          #JSON::LD::API.expand(params[:input], debug: @debug).should produce([], @debug)
+          #JSON::LD::API.expand(params[:input], logger: logger).should produce([], logger)
           expect {JSON::LD::API.expand(params[:input])}.to raise_error(params[:exception])
         end
       end

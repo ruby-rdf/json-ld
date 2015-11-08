@@ -2,7 +2,7 @@ require 'rdf/isomorphic'
 require 'rspec/matchers'
 require 'json'
 
-Info = Struct.new(:about, :information, :trace, :inputDocument, :outputDocument, :expectedResults)
+Info = Struct.new(:about, :information, :logger, :inputDocument, :outputDocument, :expectedResults)
 
 def normalize(graph)
   case graph
@@ -24,9 +24,10 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
       info
     elsif info.is_a?(Hash)
       identifier = info[:identifier] || info[:about]
-      trace = info[:trace]
-      trace = trace.join("\n") if trace.is_a?(Array)
-      Info.new(identifier, info[:information] || "", trace, info[:inputDocument])
+      logger = info[:logger] || info[:debug] || info[:trace]
+      Info.new(identifier, info[:information] || "", logger, info[:inputDocument])
+    elsif info.is_a?(Logger)
+      Info.new('', '', info)
     else
       Info.new(expected.is_a?(RDF::Graph) ? expected.context : info, info.to_s)
     end
@@ -36,6 +37,10 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
   end
   
   failure_message do |actual|
+    trace = case @info.logger
+    when Logger then @info.logger.to_s
+    when Array then @info.logger.join("\n")
+    end
     info = @info.respond_to?(:information) ? @info.information : @info.inspect
     if @expected.is_a?(RDF::Enumerable) && @actual.size != @expected.size
       "Graph entry count differs:\nexpected: #{@expected.size}\nactual:   #{@actual.size}"
@@ -49,19 +54,21 @@ RSpec::Matchers.define :be_equivalent_graph do |expected, info|
     "Unsorted Results:\n#{@actual.dump(:nquads, standard_prefixes: true)}" +
     (@info.inputDocument ? "Input file: #{@info.inputDocument}\n" : "") +
     (@info.outputDocument ? "Output file: #{@info.outputDocument}\n" : "") +
-    (@info.trace ? "\nDebug:\n#{@info.trace}" : "")
+    (trace ? "\nDebug:\n#{trace}" : "")
   end  
 end
 
-RSpec::Matchers.define :produce do |expected, info|
+RSpec::Matchers.define :produce do |expected, logger|
   match do |actual|
     expect(actual).to eq expected
   end
   
   failure_message do |actual|
+    logger = logger.join("\n") if logger.is_a?(Array)
+
     "Expected: #{expected.is_a?(String) ? expected : expected.to_json(JSON_STATE) rescue 'malformed json'}\n" +
     "Actual  : #{actual.is_a?(String) ? actual : actual.to_json(JSON_STATE) rescue 'malformed json'}\n" +
     #(expected.is_a?(Hash) && actual.is_a?(Hash) ? "Diff: #{expected.diff(actual).to_json(JSON_STATE) rescue 'malformed json'}\n" : "") +
-    "Processing results:\n#{info.join("\n")}"
+    "Debug:\n#{logger}"
   end
 end

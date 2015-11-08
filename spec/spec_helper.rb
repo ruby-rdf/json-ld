@@ -50,6 +50,21 @@ RestClient.enable Rack::Cache,
   c.include(RDF::Spec::Matchers)
 end
 
+def spec_logger
+  logger = Logger.new(StringIO.new)
+  def logger.clear
+    @logdev.instance_variable_set(:@dev, StringIO.new)
+  end
+  def logger.to_s
+    dev = @logdev.instance_variable_get(:@dev)
+    dev.rewind
+    dev.read
+  end
+  logger.level = Logger::DEBUG
+  logger.formatter = lambda {|severity, datetime, progname, msg| "#{msg}\n"}
+  logger
+end
+
 # Heuristically detect the input stream
 def detect_format(stream)
   # Got to look into the file to see

@@ -90,6 +90,7 @@ module JSON::LD
       @options = {compactArrays: true, rename_bnodes: true}.merge!(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
+      @options[:debug] ||= @options[:logger] if @options[:logger]
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header

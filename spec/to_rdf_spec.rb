@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) {@debug = []}
+  let(:logger) {spec_logger}
 
   context ".toRdf" do
     it "should implement RDF::Enumerable" do
@@ -35,7 +35,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -52,7 +52,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
       
@@ -82,7 +82,7 @@ describe JSON::LD::API do
         }.each do |title, (js, ttl)|
           it title do
             ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-            expect(parse(js, base: "http://example.org/")).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+            expect(parse(js, base: "http://example.org/")).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
           end
         end
       end
@@ -111,7 +111,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -145,7 +145,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -194,7 +194,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -216,7 +216,7 @@ describe JSON::LD::API do
       }.each_pair do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -238,7 +238,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -277,7 +277,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -299,7 +299,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -360,7 +360,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end
@@ -483,7 +483,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, base: "http://example/", trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, base: "http://example/", trace: logger, inputDocument: js)
         end
       end
       
@@ -536,7 +536,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+              expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
             end
           end
         end
@@ -572,7 +572,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+              expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
             end
           end
         end
@@ -654,16 +654,15 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: @debug, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
         end
       end
     end
   end
 
   def parse(input, options = {})
-    @debug = []
     graph = options[:graph] || RDF::Graph.new
-    options = {debug: @debug, validate: true, canonicalize: false}.merge(options)
+    options = {logger: logger, validate: true, canonicalize: false}.merge(options)
     JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
     graph
   end

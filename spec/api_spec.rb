@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  let(:logger) {spec_logger}
 
   describe "#initialize" do
     context "with string input" do
@@ -78,24 +78,24 @@ describe JSON::LD::API do
       
           context test, skip: ("Not supported in JRuby" if RUBY_ENGINE == "jruby" && %w(oj yajl).include?(adapter.to_s)) do
             it "expands" do
-              options = {debug: @debug, adapter: adapter}
+              options = {logger: logger, adapter: adapter}
               options[:expandContext] = File.open(context) if context
               jld = described_class.expand(File.open(filename), options)
-              expect(jld).to produce(JSON.load(File.open(expanded)), @debug)
+              expect(jld).to produce(JSON.load(File.open(expanded)), logger)
             end if File.exist?(expanded)
         
             it "compacts" do
-              jld = described_class.compact(File.open(filename), File.open(context), adapter: adapter, debug: @debug)
-              expect(jld).to produce(JSON.load(File.open(compacted)), @debug)
+              jld = described_class.compact(File.open(filename), File.open(context), adapter: adapter, logger: logger)
+              expect(jld).to produce(JSON.load(File.open(compacted)), logger)
             end if File.exist?(compacted) && File.exist?(context)
         
             it "frame" do
-              jld = described_class.frame(File.open(filename), File.open(frame), adapter: adapter, debug: @debug)
-              expect(jld).to produce(JSON.load(File.open(framed)), @debug)
+              jld = described_class.frame(File.open(filename), File.open(frame), adapter: adapter, logger: logger)
+              expect(jld).to produce(JSON.load(File.open(framed)), logger)
             end if File.exist?(framed) && File.exist?(frame)
 
             it "toRdf" do
-              expect(RDF::Repository.load(filename, format: :jsonld, adapter: adapter, debug: @debug)).to be_equivalent_graph(RDF::Repository.load(ttl), trace: @debug)
+              expect(RDF::Repository.load(filename, format: :jsonld, adapter: adapter, logger: logger)).to be_equivalent_graph(RDF::Repository.load(ttl), logger: logger)
             end if File.exist?(ttl)
           end
         end

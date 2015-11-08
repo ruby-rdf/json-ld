@@ -219,6 +219,8 @@ module JSON::LD
       list << yield if block_given?
       message = " " * depth * 2 + list.join(": ")
       case @options[:debug]
+      when Logger
+        @options[:debug].debug message
       when Array
         @options[:debug] << message
       when TrueClass

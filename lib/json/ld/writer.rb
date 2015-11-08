@@ -97,7 +97,6 @@ module JSON::LD
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
         @repo = RDF::Repository.new
-        @debug = @options[:debug]
 
         if block_given?
           case block.arity
