@@ -10,14 +10,18 @@ group :development do
   gem 'rdf-trig',       git: "git://github.com/ruby-rdf/rdf-trig.git", branch: "develop"
   gem 'rdf-vocab',      git: "git://github.com/ruby-rdf/rdf-vocab.git", branch: "develop"
   gem 'fasterer'
-  gem "wirble"
-  gem "linkeddata"
-  gem "byebug", platforms: [:mri_20, :mri_21]
 end
 
 group :development, :test do
   gem 'simplecov',  require: false, platform: :mri_21 # Travis doesn't understand 22 yet.
   gem 'coveralls',  require: false, platform: :mri_21 # Travis doesn't understand 22 yet.
+  gem 'psych', :platforms => [:mri, :rbx]
+end
+
+group :debug do
+  gem "wirble"
+  gem "linkeddata"
+  gem "byebug", platforms: [:mri_20, :mri_21]
 end
 
 platforms :rbx do
