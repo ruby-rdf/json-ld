@@ -54,6 +54,7 @@ module JSON::LD
   class Writer < RDF::Writer
     include StreamingWriter
     include Utils
+    include RDF::Util::Logger
     format Format
 
     # @!attribute [r] graph
@@ -156,7 +157,7 @@ module JSON::LD
     def write_epilogue
       return stream_epilogue if @options[:stream]
 
-      debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
+      log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
       result = API.fromRdf(@repo, @options)
 
       # If we were provided a context, or prefixes, use them to compact the output
@@ -179,11 +180,11 @@ module JSON::LD
       frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
       if frame ||= @options[:frame]
         # Perform framing, if given a frame
-        debug("writer") { "frame result"}
+        log_debug("writer") { "frame result"}
         result = API.frame(result, frame, @options)
       elsif context
         # Perform compaction, if we have a context
-        debug("writer") { "compact result"}
+        log_debug("writer") { "compact result"}
         result = API.compact(result, context,  @options)
       end
 

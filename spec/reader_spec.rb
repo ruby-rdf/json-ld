@@ -7,7 +7,7 @@ describe JSON::LD::Reader do
   let!(:doap) {File.expand_path("../../etc/doap.jsonld", __FILE__)}
   let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
   let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
-  let(:logger) {spec_logger}
+  let(:logger) {RDF::Spec.logger}
 
   it_behaves_like 'an RDF::Reader' do
     let(:reader_input) {File.read(doap)}

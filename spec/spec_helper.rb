@@ -14,15 +14,17 @@ require 'rdf/spec/matchers'
 require 'yaml'
 require 'restclient/components'
 require 'rack/cache'
-require 'matchers'
-require 'simplecov'
-require 'coveralls'
-SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-  SimpleCov::Formatter::HTMLFormatter,
-  Coveralls::SimpleCov::Formatter
-]
-SimpleCov.start do
-  add_filter "/spec/"
+begin
+  require 'simplecov'
+  require 'coveralls'
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+    SimpleCov::Formatter::HTMLFormatter,
+    Coveralls::SimpleCov::Formatter
+  ]
+  SimpleCov.start do
+    add_filter "/spec/"
+  end
+rescue LoadError
 end
 
 require 'json/ld'
@@ -48,21 +50,6 @@ RestClient.enable Rack::Cache,
   c.filter_run focus: true
   c.run_all_when_everything_filtered = true
   c.include(RDF::Spec::Matchers)
-end
-
-def spec_logger
-  logger = Logger.new(StringIO.new)
-  def logger.clear
-    @logdev.instance_variable_set(:@dev, StringIO.new)
-  end
-  def logger.to_s
-    dev = @logdev.instance_variable_get(:@dev)
-    dev.rewind
-    dev.read
-  end
-  logger.level = Logger::DEBUG
-  logger.formatter = lambda {|severity, datetime, progname, msg| "#{msg}\n"}
-  logger
 end
 
 # Heuristically detect the input stream

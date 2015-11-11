@@ -5,7 +5,7 @@ require 'rdf/spec/writer'
 require 'json/ld/streaming_writer'
 
 describe JSON::LD::StreamingWriter do
-  let(:logger) {spec_logger}
+  let(:logger) {RDF::Spec.logger}
 
   it_behaves_like 'an RDF::Writer' do
     let(:writer) {JSON::LD::Writer.new(StringIO.new(""), stream: true)}
@@ -105,7 +105,7 @@ describe JSON::LD::StreamingWriter do
         describe m.name do
           m.entries.each do |t|
             next unless t.positiveTest? && !t.property('input').include?('0016')
-            t.logger = spec_logger
+            t.logger = RDF::Spec.logger
             t.logger.info "test: #{t.inspect}"
             t.logger.info "source: #{t.input}"
             specify "#{t.property('input')}: #{t.name}" do
@@ -133,7 +133,7 @@ describe JSON::LD::StreamingWriter do
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    logger = spec_logger
+    logger = RDF::Spec.logger
     logger.info(g.dump(:ttl))
     result = JSON::LD::Writer.buffer(options.merge(logger: logger, stream: true)) do |writer|
       writer << g

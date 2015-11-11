@@ -4,6 +4,7 @@ require 'bigdecimal'
 module JSON::LD
   class Context
     include Utils
+    include RDF::Util::Logger
 
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
     class TermDefinition
@@ -179,7 +180,7 @@ module JSON::LD
       self.vocab = options[:vocab] if options[:vocab]
       self.default_language = options[:language] if options[:language]
 
-      #debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
+      #log_debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
       
       yield(self) if block_given?
     end
@@ -254,16 +255,16 @@ module JSON::LD
       local_context = [local_context] unless local_context.is_a?(Array)
 
       local_context.each do |context|
-        depth do
+        log_depth do
           case context
           when nil
             # 3.1 If niil, set to a new empty context
             result = Context.new(options)
           when Context
-             debug("parse") {"context: #{context.inspect}"}
+             log_debug("parse") {"context: #{context.inspect}"}
              result = context.dup
           when IO, StringIO
-            debug("parse") {"io: #{context}"}
+            log_debug("parse") {"io: #{context}"}
             # Load context document, if it is a string
             begin
               ctx = JSON.load(context)
@@ -272,12 +273,12 @@ module JSON::LD
               result.provided_context = ctx["@context"] if [context] == local_context
               result
             rescue JSON::ParserError => e
-              debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
+              log_debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
               raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
               self.dup
             end
           when String, RDF::URI
-            debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
+            log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
             # Load context document, if it is a string
             # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
             context = RDF::URI(result.context_base || result.base).join(context)
@@ -305,12 +306,12 @@ module JSON::LD
                 end
               end
             rescue JsonLdError::LoadingDocumentFailed => e
-              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
               raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
             rescue JsonLdError
               raise
             rescue Exception => e
-              debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
               raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
             end
 
@@ -319,7 +320,7 @@ module JSON::LD
             context.provided_context = result.provided_context
             context.base ||= result.base
             result = context
-            debug("parse") {"=> provided_context: #{context.inspect}"}
+            log_debug("parse") {"=> provided_context: #{context.inspect}"}
           when Hash
             # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
             context = context.dup # keep from modifying a hash passed as a param
@@ -331,14 +332,14 @@ module JSON::LD
               v = context.fetch(key, false)
               unless v == false
                 context.delete(key)
-                debug("parse") {"Set #{key} to #{v.inspect}"}
+                log_debug("parse") {"Set #{key} to #{v.inspect}"}
                 result.send(setter, v)
               end
             end
 
             defined = {}
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
-            depth do
+            log_depth do
               context.each_key do |key|
                 result.create_term_definition(context, key, defined)
               end
@@ -394,7 +395,7 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
     def create_term_definition(local_context, term, defined)
       # Expand a string value, unless it matches a keyword
-      debug("create_term_definition") {"term = #{term.inspect}"}
+      log_debug("create_term_definition") {"term = #{term.inspect}"}
 
       # If defined contains the key term, then the associated value must be true, indicating that the term definition has already been created, so return. Otherwise, a cyclical term definition has been detected, which is an error.
       case defined[term]
@@ -424,12 +425,12 @@ module JSON::LD
       case value
       when nil, {'@id' => nil}
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
-        debug("") {"=> nil"}
+        log_debug("") {"=> nil"}
         term_definitions[term] = TermDefinition.new(term)
         defined[term] = true
         return
       when Hash
-        debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
+        log_debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
@@ -451,7 +452,7 @@ module JSON::LD
           unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
-          debug("") {"type_mapping: #{type.inspect}"}
+          log_debug("") {"type_mapping: #{type.inspect}"}
           definition.type_mapping = type
         end
 
@@ -491,7 +492,7 @@ module JSON::LD
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':')
-          depth {create_term_definition(local_context, prefix, defined)} if local_context.has_key?(prefix)
+          log_depth {create_term_definition(local_context, prefix, defined)} if local_context.has_key?(prefix)
 
           definition.id = if td = term_definitions[prefix]
             # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
@@ -500,12 +501,12 @@ module JSON::LD
             # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
             term
           end
-          debug("") {"=> #{definition.id}"}
+          log_debug("") {"=> #{definition.id}"}
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
           raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
           definition.id = vocab + term
-          debug("") {"=> #{definition.id}"}
+          log_debug("") {"=> #{definition.id}"}
         end
 
         @iri_to_term[definition.id] = term if simple_term && definition.id
@@ -513,7 +514,7 @@ module JSON::LD
         if value.has_key?('@container')
           container = value['@container']
           raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless %w(@list @set @language @index).include?(container)
-          debug("") {"container_mapping: #{container.inspect}"}
+          log_debug("") {"container_mapping: #{container.inspect}"}
           definition.container_mapping = container
         end
 
@@ -521,7 +522,7 @@ module JSON::LD
           language = value['@language']
           raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
           language = language.downcase if language.is_a?(String)
-          debug("") {"language_mapping: #{language.inspect}"}
+          log_debug("") {"language_mapping: #{language.inspect}"}
           definition.language_mapping = language || false
         end
 
@@ -541,18 +542,18 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options ({})
     # @return [Hash]
     def serialize(options = {})
-      depth(options) do
+      log_depth(options) do
         # FIXME: not setting provided_context now
         use_context = case provided_context
         when String, RDF::URI
-          debug "serlialize: reuse context: #{provided_context.inspect}"
+          log_debug "serlialize: reuse context: #{provided_context.inspect}"
           provided_context.to_s
         when Hash, Array
-          debug "serlialize: reuse context: #{provided_context.inspect}"
+          log_debug "serlialize: reuse context: #{provided_context.inspect}"
           provided_context
         else
-          debug("serlialize: generate context")
-          debug("") {"=> context: #{inspect}"}
+          log_debug("serlialize: generate context")
+          log_debug("") {"=> context: #{inspect}"}
           ctx = {}
           ctx['@base'] = base.to_s if base && base != doc_base
           ctx['@language'] = default_language.to_s if default_language
@@ -564,7 +565,7 @@ module JSON::LD
             ctx[term] = defn if defn
           end
 
-          debug("") {"start_doc: context=#{ctx.inspect}"}
+          log_debug("") {"start_doc: context=#{ctx.inspect}"}
           ctx
         end
 
@@ -657,7 +658,7 @@ module JSON::LD
     #
     # @return [TermDefinition]
     def set_mapping(term, value)
-      debug("") {"map #{term.inspect} to #{value.inspect}"}
+      log_debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
       term_definitions[term] = TermDefinition.new(term, value)
       term_definitions[term].simple = true
@@ -750,26 +751,26 @@ module JSON::LD
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
-      depth(options) do
-        debug("expand_iri") {"value: #{value.inspect}"} unless options[:quiet]
+      log_depth(options) do
+        log_debug("expand_iri") {"value: #{value.inspect}"} unless options[:quiet]
         local_context = options[:local_context]
         defined = options.fetch(:defined, {})
 
         # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
         if local_context && local_context.has_key?(value) && !defined[value]
-          depth {create_term_definition(local_context, value, defined)}
+          log_depth {create_term_definition(local_context, value, defined)}
         end
 
         # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
         if options[:vocab] && (v_td = term_definitions[value])
-          debug("") {"match with #{v_td.id}"} unless options[:quiet]
+          log_debug("") {"match with #{v_td.id}"} unless options[:quiet]
           return v_td.id
         end
 
         # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
         if value.include?(':')
           prefix, suffix = value.split(':', 2)
-          debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
+          log_debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
 
           # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
           return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
@@ -788,10 +789,10 @@ module JSON::LD
             RDF::URI(value)
           end
 
-          debug("") {"=> #{result.inspect}"} unless options[:quiet]
+          log_debug("") {"=> #{result.inspect}"} unless options[:quiet]
           return result
         end
-        debug("") {"=> #{result.inspect}"} unless options[:quiet]
+        log_debug("") {"=> #{result.inspect}"} unless options[:quiet]
 
         result = if options[:vocab] && vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
@@ -806,7 +807,7 @@ module JSON::LD
         else
           RDF::URI(value)
         end
-        debug("") {"=> #{result}"} unless options[:quiet]
+        log_debug("") {"=> #{result}"} unless options[:quiet]
         result
       end
     end
@@ -828,13 +829,13 @@ module JSON::LD
     def compact_iri(iri, options = {})
       return if iri.nil?
       iri = iri.to_s
-      debug("compact_iri(#{iri.inspect}", options) {options.inspect} unless options[:quiet]
-      depth(options) do
+      log_debug("compact_iri(#{iri.inspect}", options) {options.inspect} unless options[:quiet]
+      log_depth(options) do
 
         value = options.fetch(:value, nil)
 
         if options[:vocab] && inverse_context.has_key?(iri)
-          debug("") {"vocab and key in inverse context"} unless options[:quiet]
+          log_debug("") {"vocab and key in inverse context"} unless options[:quiet]
           default_language = self.default_language || @none
           containers = []
           tl, tl_value = "@language", "@null"
@@ -843,7 +844,7 @@ module JSON::LD
             tl, tl_value = "@type", "@reverse"
             containers << '@set'
           elsif list?(value)
-            debug("") {"list(#{value.inspect})"} unless options[:quiet]
+            log_debug("") {"list(#{value.inspect})"} unless options[:quiet]
             # if value is a list object, then set type/language and type/language value to the most specific values that work for all items in the list as follows:
             containers << "@list" unless index?(value)
             list = value['@list']
@@ -864,25 +865,25 @@ module JSON::LD
               end
               common_language ||= item_language
               if item_language != common_language && value?(item)
-                debug("") {"-- #{item_language} conflicts with #{common_language}, use @none"} unless options[:quiet]
+                log_debug("") {"-- #{item_language} conflicts with #{common_language}, use @none"} unless options[:quiet]
                 common_language = '@none'
               end
               common_type ||= item_type
               if item_type != common_type
                 common_type = '@none'
-                debug("") {"#{item_type} conflicts with #{common_type}, use @none"} unless options[:quiet]
+                log_debug("") {"#{item_type} conflicts with #{common_type}, use @none"} unless options[:quiet]
               end
             end
 
             common_language ||= '@none'
             common_type ||= '@none'
-            debug("") {"common type: #{common_type}, common language: #{common_language}"} unless options[:quiet]
+            log_debug("") {"common type: #{common_type}, common language: #{common_language}"} unless options[:quiet]
             if common_type != '@none'
               tl, tl_value = '@type', common_type
             else
               tl_value = common_language
             end
-            debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
+            log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
           else
             if value?(value)
               if value.has_key?('@language') && !index?(value)
@@ -896,7 +897,7 @@ module JSON::LD
               tl, tl_value = '@type', '@id'
             end
             containers << '@set'
-            debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
+            log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
           end
 
           containers << '@none'
@@ -913,9 +914,9 @@ module JSON::LD
           else
             preferred_values.concat([tl_value, '@none'])
           end
-          debug("") {"preferred_values: #{preferred_values.inspect}"} unless options[:quiet]
+          log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless options[:quiet]
           if p_term = select_term(iri, containers, tl, preferred_values)
-            debug("") {"=> term: #{p_term.inspect}"} unless options[:quiet]
+            log_debug("") {"=> term: #{p_term.inspect}"} unless options[:quiet]
             return p_term
           end
         end
@@ -923,7 +924,7 @@ module JSON::LD
         # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
         if options[:vocab] && vocab && iri.start_with?(vocab) && iri.length > vocab.length
           suffix = iri[vocab.length..-1]
-          debug("") {"=> vocab suffix: #{suffix.inspect}"} unless options[:quiet]
+          log_debug("") {"=> vocab suffix: #{suffix.inspect}"} unless options[:quiet]
           return suffix unless term_definitions.has_key?(suffix)
         end
 
@@ -943,7 +944,7 @@ module JSON::LD
         end
 
         if !candidates.empty?
-          debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
+          log_debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
           return candidates.term_sort.first
         end
 
@@ -959,7 +960,7 @@ module JSON::LD
             end
 
           if !candidates.empty?
-            debug("") {"=> standard prefies: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
+            log_debug("") {"=> standard prefies: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
             return candidates.term_sort.first
           end
         end
@@ -967,10 +968,10 @@ module JSON::LD
         if !options[:vocab]
           # transform iri to a relative IRI using the document's base IRI
           iri = remove_base(iri)
-          debug("") {"=> relative iri: #{iri.inspect}"} unless options[:quiet]
+          log_debug("") {"=> relative iri: #{iri.inspect}"} unless options[:quiet]
           return iri
         else
-          debug("") {"=> absolute iri: #{iri.inspect}"} unless options[:quiet]
+          log_debug("") {"=> absolute iri: #{iri.inspect}"} unless options[:quiet]
           return iri
         end
       end
@@ -993,18 +994,18 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
     def expand_value(property, value, options = {})
       options = {useNativeTypes: false}.merge!(options)
-      depth(options) do
-        debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
+      log_depth(options) do
+        log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
         # If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
         if (td = term_definitions.fetch(property, TermDefinition.new(property))) && td.type_mapping == '@id'
-          debug("") {"as relative IRI: #{value.inspect}"}
+          log_debug("") {"as relative IRI: #{value.inspect}"}
           return {'@id' => expand_iri(value, documentRelative: true).to_s}
         end
 
         # If active property has a type mapping in active context that is @vocab, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
         if td.type_mapping == '@vocab'
-          debug("") {"as vocab IRI: #{value.inspect}"}
+          log_debug("") {"as vocab IRI: #{value.inspect}"}
           return {'@id' => expand_iri(value, vocab: true, documentRelative: true).to_s}
         end
 
@@ -1015,10 +1016,10 @@ module JSON::LD
 
         result = case value
         when RDF::URI, RDF::Node
-          debug("URI | BNode") { value.to_s }
+          log_debug("URI | BNode") { value.to_s }
           {'@id' => value.to_s}
         when RDF::Literal
-          debug("Literal") {"datatype: #{value.datatype.inspect}"}
+          log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
           res = {}
           if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
@@ -1051,7 +1052,7 @@ module JSON::LD
           res
         end
 
-        debug("") {"=> #{result.inspect}"}
+        log_debug("") {"=> #{result.inspect}"}
         result
       end
     end
@@ -1071,53 +1072,53 @@ module JSON::LD
     # FIXME: revisit the specification version of this.
     def compact_value(property, value, options = {})
 
-      depth(options) do
-        debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
+      log_depth(options) do
+        log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
         num_members = value.keys.length
 
         num_members -= 1 if index?(value) && container(property) == '@index'
         if num_members > 2
-          debug("") {"can't compact value with # members > 2"}
+          log_debug("") {"can't compact value with # members > 2"}
           return value
         end
 
         result = case
         when coerce(property) == '@id' && value.has_key?('@id') && num_members == 1
           # Compact an @id coercion
-          debug("") {" (@id & coerce)"}
+          log_debug("") {" (@id & coerce)"}
           compact_iri(value['@id'])
         when coerce(property) == '@vocab' && value.has_key?('@id') && num_members == 1
           # Compact an @id coercion
-          debug("") {" (@id & coerce & vocab)"}
+          log_debug("") {" (@id & coerce & vocab)"}
           compact_iri(value['@id'], vocab: true)
         when value.has_key?('@id')
-          debug("") {" (@id)"}
+          log_debug("") {" (@id)"}
           # return value as is
           value
         when value['@type'] && expand_iri(value['@type'], vocab: true) == coerce(property)
           # Compact common datatype
-          debug("") {" (@type & coerce) == #{coerce(property)}"}
+          log_debug("") {" (@type & coerce) == #{coerce(property)}"}
           value['@value']
         when value['@language'] && (value['@language'] == language(property))
           # Compact language
-          debug("") {" (@language) == #{language(property).inspect}"}
+          log_debug("") {" (@language) == #{language(property).inspect}"}
           value['@value']
         when num_members == 1 && !value['@value'].is_a?(String)
-          debug("") {" (native)"}
+          log_debug("") {" (native)"}
           value['@value']
         when num_members == 1 && default_language.nil? || language(property) == false
-          debug("") {" (!@language)"}
+          log_debug("") {" (!@language)"}
           value['@value']
         else
           # Otherwise, use original value
-          debug("") {" (no change)"}
+          log_debug("") {" (no change)"}
           value
         end
         
         # If the result is an object, tranform keys using any term keyword aliases
         if result.is_a?(Hash) && result.keys.any? {|k| self.alias(k) != k}
-          debug("") {" (map to key aliases)"}
+          log_debug("") {" (map to key aliases)"}
           new_element = {}
           result.each do |k, v|
             new_element[self.alias(k)] = v
@@ -1125,7 +1126,7 @@ module JSON::LD
           result = new_element
         end
 
-        debug("") {"=> #{result.inspect}"}
+        log_debug("") {"=> #{result.inspect}"}
         result
       end
     end
@@ -1194,7 +1195,7 @@ module JSON::LD
       case value.to_s
       when /^_:(.*)$/
         # Map BlankNodes if a namer is given
-        debug "uri(bnode)#{value}: #{$1}"
+        log_debug "uri(bnode)#{value}: #{$1}"
         bnode(namer.get_sym($1))
       else
         value = RDF::URI.new(value)
@@ -1273,26 +1274,26 @@ module JSON::LD
     #   for the type mapping or language mapping
     # @return [String]
     def select_term(iri, containers, type_language, preferred_values)
-      depth do
-        debug("select_term") {
+      log_depth do
+        log_debug("select_term") {
           "iri: #{iri.inspect}, " +
           "containers: #{containers.inspect}, " +
           "type_language: #{type_language.inspect}, " +
           "preferred_values: #{preferred_values.inspect}"
         }
         container_map = inverse_context[iri]
-        debug("  ") {"container_map: #{container_map.inspect}"}
+        log_debug("  ") {"container_map: #{container_map.inspect}"}
         containers.each do |container|
           next unless container_map.has_key?(container)
           tl_map = container_map[container]
           value_map = tl_map[type_language]
           preferred_values.each do |item|
             next unless value_map.has_key?(item)
-            debug("=>") {value_map[item].inspect}
+            log_debug("=>") {value_map[item].inspect}
             return value_map[item]
           end
         end
-        debug("=>") {"nil"}
+        log_debug("=>") {"nil"}
         nil
       end
     end

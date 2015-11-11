@@ -28,6 +28,7 @@ module JSON::LD
     include Flatten
     include FromRDF
     include Frame
+    include RDF::Util::Logger
 
     # Options used for open_file
     OPEN_OPTS = {
@@ -90,7 +91,6 @@ module JSON::LD
       @options = {compactArrays: true, rename_bnodes: true}.merge!(options)
       @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
-      @options[:debug] ||= @options[:logger] if @options[:logger]
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
@@ -207,7 +207,7 @@ module JSON::LD
       expanded = options[:expanded] ? input : API.expand(input, options)
 
       API.new(expanded, context, options) do
-        debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value, nil)
 
         # xxx) Add the given context to the output
@@ -249,7 +249,7 @@ module JSON::LD
 
       # Initialize input using
       API.new(expanded_input, context, options) do
-        debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         graphs = {'@default' => {}}
@@ -270,7 +270,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = depth {compact(flattened, nil)}
+          compacted = log_depth {compact(flattened, nil)}
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
@@ -351,30 +351,30 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
-        #debug(".frame") {"context from frame: #{context.inspect}"}
-        debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        #log_debug(".frame") {"context from frame: #{context.inspect}"}
+        log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        old_dbg, @options[:debug] = @options[:debug], nil
+        old_logger, @options[:logger] = @options[:logger], []
         create_node_map(value, framing_state[:graphs], '@merged')
-        @options[:debug] = old_dbg
+        @options[:logger] = old_logger
         framing_state[:subjects] = framing_state[:graphs]['@merged']
-        debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
 
         result = []
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))
-        debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         
         # Initalize context from frame
-        @context = depth {@context.parse(frame['@context'])}
+        @context = log_depth {@context.parse(frame['@context'])}
         # Compact result
-        compacted = depth {compact(result, nil)}
+        compacted = log_depth {compact(result, nil)}
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output
         kwgraph = context.compact_iri('@graph', quiet: true)
         result = context.serialize.merge({kwgraph => compacted})
-        debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = cleanup_preserve(result)
       end
 
@@ -412,20 +412,20 @@ module JSON::LD
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Generate _nodeMap_
         graphs = {'@default' => {}}
         create_node_map(expanded_input, graphs)
-        debug(".toRdf") {"node map: #{graphs.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".toRdf") {"node map: #{graphs.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Start generating statements
         graphs.each do |graph_name, graph|
           context = as_resource(graph_name) unless graph_name == '@default'
-          debug(".toRdf") {"graph_name: #{context ? context.to_ntriples : 'null'}"}
+          log_debug(".toRdf") {"graph_name: #{context ? context.to_ntriples : 'null'}"}
           # Drop results for graphs which are named with relative IRIs
           if graph_name.is_a?(RDF::URI) && !graph_name.absolute
-            debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
+            log_debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
             next
           end
           graph_to_rdf(graph) do |statement|
@@ -442,7 +442,7 @@ module JSON::LD
               end
             end
             if relative
-              debug(".toRdf") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
+              log_debug(".toRdf") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
               next
             end
 

@@ -2,6 +2,7 @@
 require 'rubygems'
 $:.unshift(File.expand_path("../../lib", __FILE__))
 require "bundler/setup"
+require 'logger'
 require 'json/ld'
 require 'linkeddata'
 require 'rdf/isomorphic'
@@ -77,6 +78,9 @@ def run_tc(man, tc, options)
     result = result ? 'failed' : 'passed' unless tc.positiveTest?
     options[:results][result] ||= 0
     options[:results][result] += 1
+  rescue Interrupt
+    $stderr.puts "(interrupt)"
+    exit 1
   rescue Exception => e
     result = if tc.positiveTest?
       STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
@@ -117,6 +121,10 @@ def run_tc(man, tc, options)
   puts "#{"test result:" unless options[:quiet]} #{result}"
 end
 
+logger = Logger.new(STDERR)
+logger.level = Logger::WARN
+logger.formatter = lambda {|severity, datetime, progname, msg| "#{severity}: #{msg}\n"}
+
 options = {
   output: STDOUT,
   results: {}
@@ -149,10 +157,14 @@ end
 opts.each do |opt, arg|
   case opt
   when '--help'             then help(options)
-  when '--dbg'              then ::JSON::LD::debug = true
-  when '--earl'             then options[:quiet] = options[:earl] = true
+  when '--dbg'              then logger.level = Logger::DEBUG
+  when '--earl'
+    options[:quiet] = options[:earl] = true
+    logger.level = Logger::FATAL
   when '--output'           then options[:output] = File.open(arg, "w")
-  when '--quiet'            then options[:quiet] = true
+  when '--quiet'
+    options[:quiet] = true
+    logger.level = Logger::FATAL
   when '--validate'         then options[:validate] = true
   when '--verbose'          then options[:verbose] = true
   end

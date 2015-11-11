@@ -82,7 +82,7 @@ module Fixtures
 
       # Execute the test
       def run(rspec_example = nil)
-        logger = @logger = spec_logger
+        logger = @logger = RDF::Spec.logger
         logger.info "test: #{inspect}"
         logger.info "source: #{input}"
         logger.info "context: #{context}" if context_loc

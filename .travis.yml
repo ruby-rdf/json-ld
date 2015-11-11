@@ -1,5 +1,5 @@
 language: ruby
-bundler_args: --without debug
+bundler_args: --without development
 script: "bundle exec rspec spec"
 env:
   - CI=true

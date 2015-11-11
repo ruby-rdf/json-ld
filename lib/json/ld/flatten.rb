@@ -19,8 +19,8 @@ module JSON::LD
                         graph = '@default',
                         name  = nil,
                         list  = nil)
-      depth do
-        debug("node_map") {"graph: #{graph}, input: #{input.inspect}, name: #{name}"}
+      log_depth do
+        log_debug("node_map") {"graph: #{graph}, input: #{input.inspect}, name: #{name}"}
         case input
         when Array
           # If input is an array, process each entry in input recursively by passing item for input, node map, active graph, active subject, active property, and list.

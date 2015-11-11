@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do
-  let(:logger) {spec_logger}
+  let(:logger) {RDF::Spec.logger}
 
   describe ".fromRdf" do
     context "simple tests" do

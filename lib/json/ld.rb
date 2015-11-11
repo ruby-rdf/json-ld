@@ -85,9 +85,6 @@ module JSON
       array_nl:     "\n"
     )
 
-    def self.debug?; @debug; end
-    def self.debug=(value); @debug = value; end
-    
     class JsonLdError < Exception
       def to_s
         "#{self.class.instance_variable_get :@code}: #{super}"

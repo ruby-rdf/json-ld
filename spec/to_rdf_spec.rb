@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  let(:logger) {spec_logger}
+  let(:logger) {RDF::Spec.logger}
 
   context ".toRdf" do
     it "should implement RDF::Enumerable" do
@@ -483,7 +483,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, base: "http://example/", trace: logger, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, base: "http://example/", logger: logger, inputDocument: js)
         end
       end
       
@@ -536,7 +536,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
+              expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
             end
           end
         end
@@ -572,7 +572,7 @@ describe JSON::LD::API do
           }.each do |title, (js, ttl)|
             it title do
               ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-              expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
+              expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
             end
           end
         end
@@ -654,7 +654,7 @@ describe JSON::LD::API do
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
-          expect(parse(js)).to be_equivalent_graph(ttl, trace: logger, inputDocument: js)
+          expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
     end

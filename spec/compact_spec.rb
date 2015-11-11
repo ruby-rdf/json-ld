@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  let(:logger) {spec_logger}
+  let(:logger) {RDF::Spec.logger}
 
   describe ".compact" do
     {
