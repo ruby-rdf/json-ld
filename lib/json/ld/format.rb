@@ -1,25 +1,23 @@
 module JSON::LD
   ##
-  # RDFa format specification.
+  # JSON-LD format specification.
   #
-  # @example Obtaining an Notation3 format class
-  #     RDF::Format.for(:json)            #=> JSON::LD::Format
-  #     RDF::Format.for(:ld)              #=> JSON::LD::Format
-  #     RDF::Format.for("etc/foaf.json")
-  #     RDF::Format.for("etc/foaf.ld")
-  #     RDF::Format.for(:file_name      => "etc/foaf.json")
-  #     RDF::Format.for(:file_name      => "etc/foaf.ld")
-  #     RDF::Format.for(file_extension: "json")
-  #     RDF::Format.for(file_extension: "ld")
-  #     RDF::Format.for(:content_type   => "application/json")
+  # @example Obtaining an JSON-LD format class
+  #     RDF::Format.for(:jsonld)           #=> JSON::LD::Format
+  #     RDF::Format.for("etc/foaf.jsonld")
+  #     RDF::Format.for(:file_name         => "etc/foaf.jsonld")
+  #     RDF::Format.for(file_extension: "jsonld")
+  #     RDF::Format.for(:content_type   => "application/ld+json")
   #
   # @example Obtaining serialization format MIME types
-  #     RDF::Format.content_types      #=> {"application/json" => [JSON::LD::Format]}
+  #     RDF::Format.content_types      #=> {"application/ld+json" => [JSON::LD::Format],
+  #                                         "application/x-ld+json" => [JSON::LD::Format]}
   #
   # @example Obtaining serialization format file extension mappings
-  #     RDF::Format.file_extensions    #=> {json: "application/json"}
+  #     RDF::Format.file_extensions    #=> {:jsonld => [JSON::LD::Format] }
   #
-  # @see http://www.w3.org/TR/rdf-testcases/#ntriples
+  # @see http://www.w3.org/TR/json-ld/
+  # @see http://json-ld.org/test-suite/
   class Format < RDF::Format
     content_type     'application/ld+json',
                      extension: :jsonld,
