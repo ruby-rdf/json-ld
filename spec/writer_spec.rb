@@ -6,6 +6,8 @@ require 'rdf/spec/writer'
 describe JSON::LD::Writer do
   let(:logger) {RDF::Spec.logger}
 
+  after(:each) {|example| puts logger.to_s if example.exception}
+
   it_behaves_like 'an RDF::Writer' do
     let(:writer) {JSON::LD::Writer.new(StringIO.new(""))}
   end

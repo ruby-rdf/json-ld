@@ -9,6 +9,8 @@ describe JSON::LD::Reader do
   let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
   let(:logger) {RDF::Spec.logger}
 
+  after(:each) {|example| puts logger.to_s if example.exception}
+
   it_behaves_like 'an RDF::Reader' do
     let(:reader_input) {File.read(doap)}
     let(:reader) {JSON::LD::Reader.new(reader_input)}

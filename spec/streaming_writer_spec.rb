@@ -7,6 +7,8 @@ require 'json/ld/streaming_writer'
 describe JSON::LD::StreamingWriter do
   let(:logger) {RDF::Spec.logger}
 
+  after(:each) {|example| puts logger.to_s if example.exception}
+
   it_behaves_like 'an RDF::Writer' do
     let(:writer) {JSON::LD::Writer.new(StringIO.new(""), stream: true)}
   end
