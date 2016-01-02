@@ -21,7 +21,7 @@ end
 group :debug do
   gem "wirble"
   gem "linkeddata"
-  gem "byebug", platforms: [:mri_20, :mri_21]
+  gem "byebug", platforms: :mri
 end
 
 platforms :rbx do

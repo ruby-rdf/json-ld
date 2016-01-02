@@ -28,7 +28,7 @@ module JSON::LD
             values.each do |value|
               object = as_resource(value)
               log_debug("graph_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
-              yield RDF::Statement.new(subject, RDF.type, object)
+              yield RDF::Statement(subject, RDF.type, object)
             end
           when /^@/
             # Otherwise, if @type is any other keyword, skip to the next property-values pair
@@ -46,13 +46,13 @@ module JSON::LD
                 object = parse_list(item['@list']) {|stmt| yield stmt}
 
                 # Append a triple composed of subject, prediate, and object to results and add all triples from list_results to results.
-                yield RDF::Statement.new(subject, predicate, object)
+                yield RDF::Statement(subject, predicate, object)
               else
                 # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
                 object = parse_object(item)
                 log_debug("graph_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # Append a triple composed of subject, prediate, and literal to results.
-                yield RDF::Statement.new(subject, predicate, object)
+                yield RDF::Statement(subject, predicate, object)
               end
             end
           end
@@ -115,15 +115,15 @@ module JSON::LD
       list.each do |list_item|
         # Set first to the result of the Object Converstion algorithm passing item.
         object = parse_object(list_item)
-        yield RDF::Statement.new(first_bnode, RDF.first, object)
+        yield RDF::Statement(first_bnode, RDF.first, object)
         rest_bnode = node
-        yield RDF::Statement.new(first_bnode, RDF.rest, rest_bnode)
+        yield RDF::Statement(first_bnode, RDF.rest, rest_bnode)
         first_bnode = rest_bnode
       end
       if last
         object = parse_object(last)
-        yield RDF::Statement.new(first_bnode, RDF.first, object)
-        yield RDF::Statement.new(first_bnode, RDF.rest, RDF.nil)
+        yield RDF::Statement(first_bnode, RDF.first, object)
+        yield RDF::Statement(first_bnode, RDF.rest, RDF.nil)
       end
       result
     end
