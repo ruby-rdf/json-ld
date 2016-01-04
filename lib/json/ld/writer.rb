@@ -66,6 +66,39 @@ module JSON::LD
     attr_reader :context
 
     ##
+    # JSON-LD Writer options
+    # @see http://www.rubydoc.info/github/ruby-rdf/rdf/RDF/Writer#options-class_method
+    def self.options
+      super + [
+        RDF::CLI::Option.new(
+          symbol: :compactArrays,
+          datatype: TrueClass,
+          on: ["--compact-arrays"],
+          description: "Replaces arrays with just one element with that element during compaction.") {true},
+        RDF::CLI::Option.new(
+          symbol: :context,
+          datatype: RDF::URI,
+          on: ["--context CONTEXT"],
+          description: "Context to use when serializing. Constructed context for native serialization.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :frame,
+          datatype: RDF::URI,
+          on: ["--frame FRAME"],
+          description: "Frame to use when serializing.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :stream,
+          datatype: TrueClass,
+          on: ["--stream"],
+          description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {true},
+        RDF::CLI::Option.new(
+          symbol: :useRdfType,
+          datatype: TrueClass,
+          on: ["--use-rdf-type"],
+          description: "Treat `rdf:type` like a normal property instead of using `@type`.") {true},
+      ]
+    end
+
+    ##
     # Initializes the RDF-LD writer instance.
     #
     # @param  [IO, File] output

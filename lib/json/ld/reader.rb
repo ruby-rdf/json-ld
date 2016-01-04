@@ -8,6 +8,19 @@ module JSON::LD
     format Format
 
     ##
+    # JSON-LD Reader options
+    # @see http://www.rubydoc.info/github/ruby-rdf/rdf/RDF/Reader#options-class_method
+    def self.options
+      super + [
+        RDF::CLI::Option.new(
+          symbol: :compactArrays,
+          datatype: TrueClass,
+          on: ["--compact-arrays"],
+          description: "Replaces arrays with just one element with that element during compaction.") {true},
+      ]
+    end
+
+    ##
     # Initializes the RDF/JSON reader instance.
     #
     # @param  [IO, File, String]       input
