@@ -66,4 +66,47 @@ describe JSON::LD::Format do
       end
     end
   end
+
+  describe ".cli_commands" do
+    require 'rdf/cli'
+    let(:ttl) {File.expand_path("../test-files/test-1-rdf.ttl", __FILE__)}
+    let(:json) {File.expand_path("../test-files/test-1-input.json", __FILE__)}
+    let(:context) {File.expand_path("../test-files/test-1-context.json", __FILE__)}
+
+    describe "#expand" do
+      it "expands RDF" do
+        expect {RDF::CLI.exec_command("expand", [ttl], format: :ttl)}.to write.to(:output)
+      end
+      it "expands JSON" do
+        expect {RDF::CLI.exec_command("expand", [json], format: :jsonld)}.to write.to(:output)
+      end
+    end
+
+    describe "#compact" do
+      it "compacts RDF" do
+        expect {RDF::CLI.exec_command("compact", [ttl], context: context, format: :ttl)}.to write.to(:output)
+      end
+      it "compacts JSON" do
+        expect {RDF::CLI.exec_command("compact", [json], context: context, format: :jsonld)}.to write.to(:output)
+      end
+    end
+
+    describe "#flatten" do
+      it "flattens RDF" do
+        expect {RDF::CLI.exec_command("flatten", [ttl], context: context, format: :ttl)}.to write.to(:output)
+      end
+      it "flattens JSON" do
+        expect {RDF::CLI.exec_command("flatten", [json], context: context, format: :jsonld)}.to write.to(:output)
+      end
+    end
+
+    describe "#frame" do
+      it "frames RDF" do
+        expect {RDF::CLI.exec_command("frame", [ttl], frame: context, format: :ttl)}.to write.to(:output)
+      end
+      it "frames JSON" do
+        expect {RDF::CLI.exec_command("frame", [json], frame: context, format: :jsonld)}.to write.to(:output)
+      end
+    end
+  end
 end
