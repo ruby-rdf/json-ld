@@ -401,7 +401,7 @@ describe JSON::LD::API do
 
   def parse(input, options = {})
     reader = options[:reader] || RDF::TriG::Reader
-    RDF::Repository.new << reader.new(input, options)
+    reader.new(input, options, &:each_statement).to_a.extend(RDF::Enumerable)
   end
 
   # Serialize ntstr to a string and compare against regexps

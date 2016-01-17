@@ -108,7 +108,10 @@ module Fixtures
             when "jld:FrameTest"
               JSON::LD::API.frame(input_loc, frame_loc, options.merge(logger: logger))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input_loc, format: :nquads)
+              # Use an array, to preserve input order
+              repo = RDF::NQuads::Reader.open(input_loc) do |reader|
+                reader.each_statement.to_a
+              end.extend(RDF::Enumerable)
               logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
             when "jld:ToRDFTest"

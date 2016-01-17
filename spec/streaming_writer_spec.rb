@@ -51,7 +51,7 @@ describe JSON::LD::StreamingWriter do
       )
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
-      expect(obj).to eql JSON.parse(%{[
+      expect(obj).to contain_exactly *JSON.parse(%{[
         {"@id": "http://example.com/test-cases/0001", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]},
         {"@id": "http://example.com/test-cases/0002", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]}
       ]})
@@ -92,7 +92,7 @@ describe JSON::LD::StreamingWriter do
       context title do
         subject {serialize(input)}
         it "matches expected json" do
-          expect(subject).to produce(JSON.parse(matches), logger)
+          expect(subject).to contain_exactly *JSON.parse(matches)
         end
       end
     end
