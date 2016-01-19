@@ -142,31 +142,14 @@ module JSON::LD
     end
 
     ##
-    # Adds a statement to be serialized
-    # @param  [RDF::Statement] statement
-    # @return [void]
-    def write_statement(statement)
-      if statement.incomplete?
-        log_error "Statement #{statement.inspect} is incomplete"
-      elsif validate? && statement.invalid?
-        log_error "Statement #{statement.inspect} is invalid"
-      elsif @options[:stream]
-        stream_statement(statement)
-      else
-        @repo.insert(statement)
-      end
-    end
-
-    ##
     # Addes a triple to be serialized
     # @param  [RDF::Resource] subject
     # @param  [RDF::URI]      predicate
     # @param  [RDF::Value]    object
     # @return [void]
-    # @raise  [NotImplementedError] unless implemented in subclass
     # @abstract
     def write_triple(subject, predicate, object)
-      write_statement(Statement.new(subject, predicate, object))
+      write_quad(subject, predicate, object, nil)
     end
 
     ##
@@ -177,7 +160,12 @@ module JSON::LD
     # @param  [RDF::Term]     object
     # @return [void]
     def write_quad(subject, predicate, object, graph_name)
-      write_statement(Statement.new(subject, predicate, object, graph_name: graph_name))
+      statement = RDF::Statement.new(subject, predicate, object, graph_name: graph_name)
+      if @options[:stream]
+        stream_statement(statement)
+      else
+        @repo.insert(statement)
+      end
     end
 
     ##
