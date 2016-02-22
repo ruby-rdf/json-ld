@@ -7,6 +7,9 @@ describe JSON::LD::Reader do
   let!(:doap) {File.expand_path("../../etc/doap.jsonld", __FILE__)}
   let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
   let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
+  let(:logger) {RDF::Spec.logger}
+
+  after(:each) {|example| puts logger.to_s if example.exception}
 
   it_behaves_like 'an RDF::Reader' do
     let(:reader_input) {File.read(doap)}
@@ -32,7 +35,7 @@ describe JSON::LD::Reader do
   context "when validating", pending: ("JRuby support for jsonlint" if RUBY_ENGINE == "jruby") do
     it "detects invalid JSON" do
       expect do |b|
-        described_class.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true).each_statement(&b)
+        described_class.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true, logger: false).each_statement(&b)
       end.to raise_error(RDF::ReaderError)
     end
   end

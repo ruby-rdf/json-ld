@@ -4,6 +4,10 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::Writer do
+  let(:logger) {RDF::Spec.logger}
+
+  after(:each) {|example| puts logger.to_s if example.exception}
+
   it_behaves_like 'an RDF::Writer' do
     let(:writer) {JSON::LD::Writer.new(StringIO.new(""))}
   end
@@ -29,7 +33,7 @@ describe JSON::LD::Writer do
       expect(serialize(input)).to produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
-      }], @debug)
+      }], logger)
     end
 
     it "should use qname URIs with standard prefix" do
@@ -40,7 +44,7 @@ describe JSON::LD::Writer do
         },
         '@id'     => "foaf:b",
         "foaf:c"  => {"@id" => "foaf:d"}
-      }, @debug)
+      }, logger)
     end
 
     it "should use qname URIs with parsed prefix" do
@@ -65,7 +69,7 @@ describe JSON::LD::Writer do
         "dc:title" => {"@value" => "Rhythm Paradise","@language" => "en"},
         "senet:unofficialTitle" => {"@value" => "Rhythm Tengoku","@language" => "en"},
         "senet:urlkey" => "rhythm-tengoku"
-      }, @debug)
+      }, logger)
     end
 
     it "should use CURIEs with empty prefix" do
@@ -78,10 +82,10 @@ describe JSON::LD::Writer do
           },
           '@id' => ":b",
           ":c"    => {"@id" => ":d"}
-        }, @debug)
+        }, logger)
       rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, TypeError => e
         fail("#{e.class}: #{e.message}\n" +
-          "#{@debug.join("\n")}\n" +
+          "#{logger}\n" +
           "Backtrace:\n#{e.backtrace.join("\n")}")
       end
     end
@@ -93,7 +97,7 @@ describe JSON::LD::Writer do
         "@context" => {"foaf" => "http://xmlns.com/foaf/0.1/"},
         '@id'   => "foaf",
         "foaf"   => {"@id" => "foaf"}
-      }, @debug)
+      }, logger)
     end
     
     it "should not use CURIE with illegal local part" do
@@ -113,7 +117,7 @@ describe JSON::LD::Writer do
         },
         '@id'   => "db:Michael_Jackson",
         "dbo:artistOf" => {"@id" => "db:%28I_Can%27t_Make_It%29_Another_Day"}
-      }, @debug)
+      }, logger)
     end
 
     it "should not use provided node identifiers if :unique_bnodes set" do
@@ -139,7 +143,7 @@ describe JSON::LD::Writer do
           {'@id'  => "http://example.com/test-cases/0001", '@type' => ":TestCase"},
           {'@id'  => "http://example.com/test-cases/0002", '@type' => ":TestCase"}
         ]
-      }, @debug)
+      }, logger)
     end
 
     it "serializes Wikia OWL example" do
@@ -182,7 +186,7 @@ describe JSON::LD::Writer do
             "rdfs:subClassOf" => {"@id" => "_:a"}
           }
         ]
-      }, @debug)
+      }, logger)
     end
   end
 
@@ -217,8 +221,8 @@ describe JSON::LD::Writer do
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    @debug = [] << g.dump(:ttl)
-    result = JSON::LD::Writer.buffer(options.merge(debug: @debug)) do |writer|
+    logger.info g.dump(:ttl)
+    result = JSON::LD::Writer.buffer(options.merge(logger: logger)) do |writer|
       writer << g
     end
     if $verbose

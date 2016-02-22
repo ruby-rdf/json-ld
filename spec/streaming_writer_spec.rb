@@ -5,6 +5,10 @@ require 'rdf/spec/writer'
 require 'json/ld/streaming_writer'
 
 describe JSON::LD::StreamingWriter do
+  let(:logger) {RDF::Spec.logger}
+
+  after(:each) {|example| puts logger.to_s if example.exception}
+
   it_behaves_like 'an RDF::Writer' do
     let(:writer) {JSON::LD::Writer.new(StringIO.new(""), stream: true)}
   end
@@ -13,11 +17,11 @@ describe JSON::LD::StreamingWriter do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       obj = serialize(input)
-      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
       expect(obj).to produce([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
-      }], @debug)
+      }], logger)
     end
 
     it "writes multiple kinds of statements" do
@@ -28,7 +32,7 @@ describe JSON::LD::StreamingWriter do
         <https://senet.org/gm> <https://senet.org/ns#urlkey> "rhythm-tengoku" .
       )
       obj = serialize(input)
-      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
       expect(obj).to eql JSON.parse(%{[{
         "@id": "https://senet.org/gm",
         "@type": ["http://vocab.org/frbr/core#Work"],
@@ -46,8 +50,8 @@ describe JSON::LD::StreamingWriter do
         <http://example.com/test-cases/0002> a :TestCase .
       )
       obj = serialize(input)
-      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse input)
-      expect(obj).to eql JSON.parse(%{[
+      expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
+      expect(obj).to contain_exactly *JSON.parse(%{[
         {"@id": "http://example.com/test-cases/0001", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]},
         {"@id": "http://example.com/test-cases/0002", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]}
       ]})
@@ -88,7 +92,7 @@ describe JSON::LD::StreamingWriter do
       context title do
         subject {serialize(input)}
         it "matches expected json" do
-          expect(subject).to produce(JSON.parse(matches), @debug)
+          expect(subject).to contain_exactly *JSON.parse(matches)
         end
       end
     end
@@ -103,13 +107,15 @@ describe JSON::LD::StreamingWriter do
         describe m.name do
           m.entries.each do |t|
             next unless t.positiveTest? && !t.property('input').include?('0016')
-            t.debug = ["test: #{t.inspect}", "source: #{t.input}"]
+            t.logger = RDF::Spec.logger
+            t.logger.info "test: #{t.inspect}"
+            t.logger.info "source: #{t.input}"
             specify "#{t.property('input')}: #{t.name}" do
               repo = RDF::Repository.load(t.input_loc, format: :nquads)
-              jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, debug: t.debug) do |writer|
+              jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger) do |writer|
                 writer << repo
               end
-              t.debug << "Generated: #{jsonld}"
+              t.logger.info "Generated: #{jsonld}"
 
               # And then, re-generate jsonld as RDF
               expect(parse(jsonld, format: :jsonld)).to be_equivalent_graph(repo, t)
@@ -129,8 +135,9 @@ describe JSON::LD::StreamingWriter do
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    @debug = [] << g.dump(:ttl)
-    result = JSON::LD::Writer.buffer(options.merge(debug: @debug, stream: true)) do |writer|
+    logger = RDF::Spec.logger
+    logger.info(g.dump(:ttl))
+    result = JSON::LD::Writer.buffer(options.merge(logger: logger, stream: true)) do |writer|
       writer << g
     end
     puts result if $verbose

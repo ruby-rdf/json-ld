@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  let(:logger) {RDF::Spec.logger}
 
   describe ".frame" do
     {
@@ -501,13 +501,12 @@ describe JSON::LD::API do
       }
     }.each do |title, params|
       it title do
-        @debug = []
         begin
-          jld = JSON::LD::API.frame(params[:input], params[:frame], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.frame(params[:input], params[:frame], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
           fail("#{e.class}: #{e.message}\n" +
-            "#{@debug.join("\n")}\n" +
+            "#{logger}\n" +
             "Backtrace:\n#{e.backtrace.join("\n")}")
         end
       end
@@ -553,13 +552,12 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          @debug = []
           begin
-            jld = JSON::LD::API.frame(params[:input], params[:frame], debug: @debug)
-            expect(jld).to produce(params[:output], @debug)
+            jld = JSON::LD::API.frame(params[:input], params[:frame], logger: logger)
+            expect(jld).to produce(params[:output], logger)
           rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
             fail("#{e.class}: #{e.message}\n" +
-              "#{@debug.join("\n")}\n" +
+              "#{logger}\n" +
               "Backtrace:\n#{e.backtrace.join("\n")}")
           end
         end

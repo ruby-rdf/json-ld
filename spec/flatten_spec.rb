@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  let(:logger) {RDF::Spec.logger}
 
   describe ".flatten" do
     {
@@ -213,9 +213,8 @@ describe JSON::LD::API do
       }
     }.each do |title, params|
       it title do
-        @debug = []
-        jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(debug: @debug)) 
-        expect(jld).to produce(params[:output], @debug)
+        jld = JSON::LD::API.flatten(params[:input], nil, (params[:options] || {}).merge(logger: logger)) 
+        expect(jld).to produce(params[:output], logger)
       end
     end
   end

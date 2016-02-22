@@ -54,6 +54,7 @@ module JSON::LD
   class Writer < RDF::Writer
     include StreamingWriter
     include Utils
+    include RDF::Util::Logger
     format Format
 
     # @!attribute [r] graph
@@ -63,6 +64,39 @@ module JSON::LD
     # @!attribute [r] context
     # @return [Context] context used to load and administer contexts
     attr_reader :context
+
+    ##
+    # JSON-LD Writer options
+    # @see http://www.rubydoc.info/github/ruby-rdf/rdf/RDF/Writer#options-class_method
+    def self.options
+      super + [
+        RDF::CLI::Option.new(
+          symbol: :compactArrays,
+          datatype: TrueClass,
+          on: ["--compact-arrays"],
+          description: "Replaces arrays with just one element with that element during compaction.") {true},
+        RDF::CLI::Option.new(
+          symbol: :context,
+          datatype: RDF::URI,
+          on: ["--context CONTEXT"],
+          description: "Context to use when serializing. Constructed context for native serialization.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :frame,
+          datatype: RDF::URI,
+          on: ["--frame FRAME"],
+          description: "Frame to use when serializing.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :stream,
+          datatype: TrueClass,
+          on: ["--stream"],
+          description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {true},
+        RDF::CLI::Option.new(
+          symbol: :useRdfType,
+          datatype: TrueClass,
+          on: ["--use-rdf-type"],
+          description: "Treat `rdf:type` like a normal property instead of using `@type`.") {true},
+      ]
+    end
 
     ##
     # Initializes the RDF-LD writer instance.
@@ -97,7 +131,6 @@ module JSON::LD
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
         @repo = RDF::Repository.new
-        @debug = @options[:debug]
 
         if block_given?
           case block.arity
@@ -109,41 +142,38 @@ module JSON::LD
     end
 
     ##
-    # Adds a statement to be serialized
-    # @param  [RDF::Statement] statement
-    # @return [void]
-    def write_statement(statement)
-      case
-      when @options[:stream]
-        stream_statement(statement)
-      else
-        # Add to repo and output in epilogue
-        @repo.insert(statement)
-      end
-    end
-
-    ##
     # Addes a triple to be serialized
     # @param  [RDF::Resource] subject
     # @param  [RDF::URI]      predicate
     # @param  [RDF::Value]    object
     # @return [void]
-    # @raise  [NotImplementedError] unless implemented in subclass
     # @abstract
     def write_triple(subject, predicate, object)
-      write_statement(Statement.new(subject, predicate, object))
+      write_quad(subject, predicate, object, nil)
+    end
+
+    ##
+    # Outputs the N-Quads representation of a statement.
+    #
+    # @param  [RDF::Resource] subject
+    # @param  [RDF::URI]      predicate
+    # @param  [RDF::Term]     object
+    # @return [void]
+    def write_quad(subject, predicate, object, graph_name)
+      statement = RDF::Statement.new(subject, predicate, object, graph_name: graph_name)
+      if @options[:stream]
+        stream_statement(statement)
+      else
+        @repo.insert(statement)
+      end
     end
 
     ##
     # Necessary for streaming
     # @return [void] `self`
     def write_prologue
-      case
-      when @options[:stream]
-        stream_prologue
-      else
-        super
-      end
+      stream_prologue if @options[:stream]
+      super
     end
 
     ##
@@ -155,40 +185,45 @@ module JSON::LD
     # @return [void]
     # @see    #write_triple
     def write_epilogue
-      return stream_epilogue if @options[:stream]
+      if @options[:stream]
+        stream_epilogue
+      else
 
-      debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-      result = API.fromRdf(@repo, @options)
+        log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
+        result = API.fromRdf(@repo, @options)
 
-      # If we were provided a context, or prefixes, use them to compact the output
-      context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
-      context ||= @options[:context]
-      context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
-        ctx = Context.new(@options)
-        ctx.language = @options[:language] if @options[:language]
-        @options[:prefixes].each do |prefix, iri|
-          ctx.set_mapping(prefix, iri) if prefix && iri
-        end if @options[:prefixes]
-        ctx
+        # If we were provided a context, or prefixes, use them to compact the output
+        context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
+        context ||= @options[:context]
+        context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
+          ctx = Context.new(@options)
+          ctx.language = @options[:language] if @options[:language]
+          @options[:prefixes].each do |prefix, iri|
+            ctx.set_mapping(prefix, iri) if prefix && iri
+          end if @options[:prefixes]
+          ctx
+        end
+
+        # Rename BNodes to uniquify them, if necessary
+        if options[:unique_bnodes]
+          result = API.flatten(result, context, @options)
+        end
+
+        frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
+        if frame ||= @options[:frame]
+          # Perform framing, if given a frame
+          log_debug("writer") { "frame result"}
+          result = API.frame(result, frame, @options)
+        elsif context
+          # Perform compaction, if we have a context
+          log_debug("writer") { "compact result"}
+          result = API.compact(result, context,  @options)
+        end
+
+        @output.write(result.to_json(JSON_STATE))
       end
 
-      # Rename BNodes to uniquify them, if necessary
-      if options[:unique_bnodes]
-        result = API.flatten(result, context, @options)
-      end
-
-      frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
-      if frame ||= @options[:frame]
-        # Perform framing, if given a frame
-        debug("writer") { "frame result"}
-        result = API.frame(result, frame, @options)
-      elsif context
-        # Perform compaction, if we have a context
-        debug("writer") { "compact result"}
-        result = API.compact(result, context,  @options)
-      end
-
-      @output.write(result.to_json(JSON_STATE))
+      super
     end
   end
 end

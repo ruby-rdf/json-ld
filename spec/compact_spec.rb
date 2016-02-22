@@ -3,7 +3,7 @@ $:.unshift "."
 require 'spec_helper'
 
 describe JSON::LD::API do
-  before(:each) { @debug = []}
+  let(:logger) {RDF::Spec.logger}
 
   describe ".compact" do
     {
@@ -179,8 +179,8 @@ describe JSON::LD::API do
       },
     }.each_pair do |title, params|
       it title do
-        jld = JSON::LD::API.compact(params[:input], params[:context], debug: @debug)
-        expect(jld).to produce(params[:output], @debug)
+        jld = JSON::LD::API.compact(params[:input], params[:context], logger: logger)
+        expect(jld).to produce(params[:output], logger)
       end
     end
 
@@ -242,8 +242,8 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -305,8 +305,8 @@ describe JSON::LD::API do
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
-          jld = JSON::LD::API.compact(input, ctx, debug: @debug)
-          expect(jld).to produce(output, @debug)
+          jld = JSON::LD::API.compact(input, ctx, logger: logger)
+          expect(jld).to produce(output, logger)
         end
       end
     end
@@ -352,8 +352,8 @@ describe JSON::LD::API do
           input = params[:input].is_a?(String) ? JSON.parse(params[:input]) : params[:input]
           ctx = params[:context].is_a?(String) ? JSON.parse(params[:context]) : params[:context]
           output = params[:output].is_a?(String) ? JSON.parse(params[:output]) : params[:output]
-          jld = JSON::LD::API.compact(input, ctx, debug: @debug)
-          expect(jld).to produce(output, @debug)
+          jld = JSON::LD::API.compact(input, ctx, logger: logger)
+          expect(jld).to produce(output, logger)
         end
       end
     end
@@ -372,8 +372,8 @@ describe JSON::LD::API do
           },
           "foo" => "bar"
         }
-        jld = JSON::LD::API.compact(input, ctx, debug: @debug, validate: true)
-        expect(jld).to produce(expected, @debug)
+        jld = JSON::LD::API.compact(input, ctx, logger: logger, validate: true)
+        expect(jld).to produce(expected, logger)
       end
     end
 
@@ -390,8 +390,8 @@ describe JSON::LD::API do
           "b" => "c"
         }
         allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", debug: @debug, validate: true)
-        expect(jld).to produce(expected, @debug)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", logger: logger, validate: true)
+        expect(jld).to produce(expected, logger)
       end
     end
 
@@ -419,8 +419,8 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -456,8 +456,8 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end
@@ -480,8 +480,8 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it title do
-          jld = JSON::LD::API.compact(params[:input], params[:context], debug: @debug)
-          expect(jld).to produce(params[:output], @debug)
+          jld = JSON::LD::API.compact(params[:input], params[:context], logger: logger)
+          expect(jld).to produce(params[:output], logger)
         end
       end
     end

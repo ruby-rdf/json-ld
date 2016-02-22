@@ -1,25 +1,23 @@
 module JSON::LD
   ##
-  # RDFa format specification.
+  # JSON-LD format specification.
   #
-  # @example Obtaining an Notation3 format class
-  #     RDF::Format.for(:json)            #=> JSON::LD::Format
-  #     RDF::Format.for(:ld)              #=> JSON::LD::Format
-  #     RDF::Format.for("etc/foaf.json")
-  #     RDF::Format.for("etc/foaf.ld")
-  #     RDF::Format.for(:file_name      => "etc/foaf.json")
-  #     RDF::Format.for(:file_name      => "etc/foaf.ld")
-  #     RDF::Format.for(file_extension: "json")
-  #     RDF::Format.for(file_extension: "ld")
-  #     RDF::Format.for(:content_type   => "application/json")
+  # @example Obtaining an JSON-LD format class
+  #     RDF::Format.for(:jsonld)           #=> JSON::LD::Format
+  #     RDF::Format.for("etc/foaf.jsonld")
+  #     RDF::Format.for(:file_name         => "etc/foaf.jsonld")
+  #     RDF::Format.for(file_extension: "jsonld")
+  #     RDF::Format.for(:content_type   => "application/ld+json")
   #
   # @example Obtaining serialization format MIME types
-  #     RDF::Format.content_types      #=> {"application/json" => [JSON::LD::Format]}
+  #     RDF::Format.content_types      #=> {"application/ld+json" => [JSON::LD::Format],
+  #                                         "application/x-ld+json" => [JSON::LD::Format]}
   #
   # @example Obtaining serialization format file extension mappings
-  #     RDF::Format.file_extensions    #=> {json: "application/json"}
+  #     RDF::Format.file_extensions    #=> {:jsonld => [JSON::LD::Format] }
   #
-  # @see http://www.w3.org/TR/rdf-testcases/#ntriples
+  # @see http://www.w3.org/TR/json-ld/
+  # @see http://json-ld.org/test-suite/
   class Format < RDF::Format
     content_type     'application/ld+json',
                      extension: :jsonld,
@@ -43,7 +41,132 @@ module JSON::LD
         # Exclude CSVW metadata
         !sample.include?("http://www.w3.org/ns/csvw")
     end
-    
+
+    ##
+    # Hash of CLI commands appropriate for this format
+    # @return [Hash{Symbol => Lambda(Array, Hash)}]
+    def self.cli_commands
+      {
+        expand: ->(files, options) do
+          out = options[:output] || $stdout
+          out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+          options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+          if options[:format] == :jsonld
+            if files.empty?
+              # If files are empty, either use options[:execute]
+              input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
+              input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
+              JSON::LD::API.expand(input, options) do |expanded|
+                out.puts expanded.to_json(JSON::LD::JSON_STATE)
+              end
+            else
+              files.each do |file|
+                JSON::LD::API.expand(file, options) do |expanded|
+                  out.puts expanded.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          else
+            # Turn RDF into JSON-LD first
+            RDF::CLI.parse(files, options) do |reader|
+              JSON::LD::API.fromRdf(reader) do |expanded|
+                out.puts expanded.to_json(JSON::LD::JSON_STATE)
+              end
+            end
+          end
+        end,
+        compact: ->(files, options) do
+          raise ArgumentError, "Compacting requires a context" unless options[:context]
+          out = options[:output] || $stdout
+          out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+          if options[:format] == :jsonld
+            if files.empty?
+              # If files are empty, either use options[:execute]
+              input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
+              input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
+              JSON::LD::API.compact(input, options[:context], options) do |compacted|
+                out.puts compacted.to_json(JSON::LD::JSON_STATE)
+              end
+            else
+              files.each do |file|
+                JSON::LD::API.compact(file, options[:context], options) do |compacted|
+                  out.puts compacted.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          else
+            # Turn RDF into JSON-LD first
+            RDF::CLI.parse(files, options) do |reader|
+              JSON::LD::API.fromRdf(reader) do |expanded|
+                JSON::LD::API.compact(expanded, options[:context], options) do |compacted|
+                  out.puts compacted.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          end
+        end,
+        flatten: ->(files, options) do
+          out = options[:output] || $stdout
+          out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+          if options[:format] == :jsonld
+            if files.empty?
+              # If files are empty, either use options[:execute]
+              input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
+              input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
+              JSON::LD::API.flatten(input, options[:context], options) do |flattened|
+                out.puts flattened.to_json(JSON::LD::JSON_STATE)
+              end
+            else
+              files.each do |file|
+                JSON::LD::API.flatten(file, options[:context], options) do |flattened|
+                  out.puts flattened.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          else
+            # Turn RDF into JSON-LD first
+            RDF::CLI.parse(files, options) do |reader|
+              JSON::LD::API.fromRdf(reader) do |expanded|
+                JSON::LD::API.flatten(expanded, options[:context], options) do |flattened|
+                  out.puts flattened.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          end
+        end,
+        frame: ->(files, options) do
+          raise ArgumentError, "Framing requires a frame" unless options[:frame]
+          out = options[:output] || $stdout
+          out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+          if options[:format] == :jsonld
+            if files.empty?
+              # If files are empty, either use options[:execute]
+              input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
+              input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
+              JSON::LD::API.frame(input, options[:frame], options) do |framed|
+                out.puts framed.to_json(JSON::LD::JSON_STATE)
+              end
+            else
+              files.each do |file|
+                JSON::LD::API.frame(file, options[:frame], options) do |framed|
+                  out.puts framed.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          else
+            # Turn RDF into JSON-LD first
+            RDF::CLI.parse(files, options) do |reader|
+              JSON::LD::API.fromRdf(reader) do |expanded|
+                JSON::LD::API.frame(expanded, options[:frame], options) do |framed|
+                  out.puts framed.to_json(JSON::LD::JSON_STATE)
+                end
+              end
+            end
+          end
+        end,
+      }
+    end
+
     ##
     # Override normal symbol generation
     def self.to_sym

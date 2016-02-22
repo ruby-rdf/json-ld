@@ -23,10 +23,8 @@ class JSON::LD::Context
 end
 
 describe JSON::LD::Context do
-  before(:each) {
-    @debug = []
-  }
-  let(:context) {JSON::LD::Context.new(debug: @debug, validate: true)}
+  let(:logger) {RDF::Spec.logger}
+  let(:context) {JSON::LD::Context.new(logger: logger, validate: true)}
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
@@ -45,7 +43,7 @@ describe JSON::LD::Context do
       it "retrieves and parses a remote context document" do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
-        expect(ec.provided_context).to produce("http://example.com/context", @debug)
+        expect(ec.provided_context).to produce("http://example.com/context", logger)
       end
 
       it "fails given a missing remote @context" do
@@ -61,7 +59,7 @@ describe JSON::LD::Context do
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
-        }, @debug)
+        }, logger)
       end
       
       it "notes non-existing @context" do
@@ -78,7 +76,7 @@ describe JSON::LD::Context do
           "name"     => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
-        }, @debug)
+        }, logger)
       end
 
       context "remote with local mappings" do
@@ -91,7 +89,7 @@ describe JSON::LD::Context do
         it "does not use passed context as provided_context" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
-          expect(ec.provided_context).to produce(ctx, @debug)
+          expect(ec.provided_context).to produce(ctx, logger)
         end
       end
     end
@@ -109,7 +107,7 @@ describe JSON::LD::Context do
         expect(ec.send(:mappings)).to produce({
           "foo" => "http://example.com/foo",
           "bar" => "http://example.com/foo"
-        }, @debug)
+        }, logger)
       end
     end
 
@@ -117,13 +115,13 @@ describe JSON::LD::Context do
       it "extracts @language" do
         expect(subject.parse({
           "@language" => "en"
-        }).default_language).to produce("en", @debug)
+        }).default_language).to produce("en", logger)
       end
 
       it "extracts @vocab" do
         expect(subject.parse({
           "@vocab" => "http://schema.org/"
-        }).vocab).to produce("http://schema.org/", @debug)
+        }).vocab).to produce("http://schema.org/", logger)
       end
 
       it "maps term with IRI value" do
@@ -131,7 +129,7 @@ describe JSON::LD::Context do
           "foo" => "http://example.com/"
         }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
-        }, @debug)
+        }, logger)
       end
 
       it "maps term with @id" do
@@ -139,7 +137,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/"}
         }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
-        }, @debug)
+        }, logger)
       end
 
       it "associates @list container mapping with predicate" do
@@ -147,7 +145,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers).to produce({
           "foo" => '@list'
-        }, @debug)
+        }, logger)
       end
 
       it "associates @set container mapping with predicate" do
@@ -155,7 +153,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
         }).containers).to produce({
           "foo" => '@set'
-        }, @debug)
+        }, logger)
       end
 
       it "associates @id container mapping with predicate" do
@@ -163,7 +161,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions).to produce({
           "foo" => "@id"
-        }, @debug)
+        }, logger)
       end
 
       it "associates type mapping with predicate" do
@@ -171,7 +169,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coercions).to produce({
           "foo" => RDF::XSD.string
-        }, @debug)
+        }, logger)
       end
 
       it "associates language mapping with predicate" do
@@ -179,7 +177,7 @@ describe JSON::LD::Context do
           "foo" => {"@id" => "http://example.com/", "@language" => "en"}
         }).send(:languages)).to produce({
           "foo" => "en"
-        }, @debug)
+        }, logger)
       end
 
       it "expands chains of term definition/use with string values" do
@@ -191,7 +189,7 @@ describe JSON::LD::Context do
           "foo" => "http://example.com/",
           "bar" => "http://example.com/",
           "baz" => "http://example.com/"
-        }, @debug)
+        }, logger)
       end
 
       it "expands terms using @vocab" do
@@ -200,7 +198,7 @@ describe JSON::LD::Context do
           "@vocab" => "http://example.com/"
         }).send(:mappings)).to produce({
           "foo" => "http://example.com/bar"
-        }, @debug)
+        }, logger)
       end
 
       context "with null" do
@@ -212,7 +210,7 @@ describe JSON::LD::Context do
             {
               "@language" => nil
             }
-          ]).default_language).to produce(nil, @debug)
+          ]).default_language).to produce(nil, logger)
         end
 
         it "removes @vocab if set to null" do
@@ -223,7 +221,7 @@ describe JSON::LD::Context do
             {
               "@vocab" => nil
             }
-          ]).vocab).to produce(nil, @debug)
+          ]).vocab).to produce(nil, logger)
         end
 
         it "removes term if set to null with @vocab" do
@@ -232,7 +230,7 @@ describe JSON::LD::Context do
               "@vocab" => "http://schema.org/",
               "term" => nil
             }
-          ]).send(:mappings)).to produce({"term" => nil}, @debug)
+          ]).send(:mappings)).to produce({"term" => nil}, logger)
         end
 
         it "loads initial context" do
@@ -272,7 +270,7 @@ describe JSON::LD::Context do
         it title do
           expect {
             ec = subject.parse(context)
-            expect(ec.serialize).to produce({}, @debug)
+            expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
       end
@@ -281,14 +279,14 @@ describe JSON::LD::Context do
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
-            expect(ec.serialize).to produce({}, @debug)
+            expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @id" do
           expect {
             ec = subject.parse({kw => {"@id" => "http://example.com/"}})
-            expect(ec.serialize).to produce({}, @debug)
+            expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
       end
@@ -321,7 +319,7 @@ describe JSON::LD::Context do
       ec = subject.parse("http://example.com/context")
       expect(ec.serialize).to produce({
         "@context" => "http://example.com/context"
-      }, @debug)
+      }, logger)
     end
 
     it "context hash" do
@@ -330,7 +328,7 @@ describe JSON::LD::Context do
       ec = subject.parse(ctx)
       expect(ec.serialize).to produce({
         "@context" => ctx
-      }, @debug)
+      }, logger)
     end
 
     it "@language" do
@@ -339,7 +337,7 @@ describe JSON::LD::Context do
         "@context" => {
           "@language" => "en"
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@vocab" do
@@ -348,7 +346,7 @@ describe JSON::LD::Context do
         "@context" => {
           "@vocab" => "http://example.com/"
         }
-      }, @debug)
+      }, logger)
     end
 
     it "term mappings" do
@@ -358,7 +356,7 @@ describe JSON::LD::Context do
         "@context" => {
           "foo" => "http://example.com/"
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@type with dependent prefixes in a single context" do
@@ -372,7 +370,7 @@ describe JSON::LD::Context do
           "xsd" => RDF::XSD.to_uri.to_s,
           "homepage" => {"@id" => RDF::Vocab::FOAF.homepage.to_s, "@type" => "@id"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@list with @id definition in a single context" do
@@ -384,7 +382,7 @@ describe JSON::LD::Context do
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@set with @id definition in a single context" do
@@ -396,7 +394,7 @@ describe JSON::LD::Context do
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@language with @id definition in a single context" do
@@ -408,7 +406,7 @@ describe JSON::LD::Context do
         "@context" => {
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@language with @id definition in a single context and equivalent default" do
@@ -422,7 +420,7 @@ describe JSON::LD::Context do
           "@language" => 'en',
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "@language with @id definition in a single context and different default" do
@@ -436,7 +434,7 @@ describe JSON::LD::Context do
           "@language" => 'en',
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "null @language with @id definition in a single context and default" do
@@ -450,7 +448,7 @@ describe JSON::LD::Context do
           "@language" => 'en',
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "prefix with @type and @list" do
@@ -462,7 +460,7 @@ describe JSON::LD::Context do
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "prefix with @type and @set" do
@@ -474,7 +472,7 @@ describe JSON::LD::Context do
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "CURIE with @type" do
@@ -492,7 +490,7 @@ describe JSON::LD::Context do
             "@container" => "@list"
           }
         }
-      }, @debug)
+      }, logger)
     end
 
     it "does not use aliased @id in key position" do
@@ -506,7 +504,7 @@ describe JSON::LD::Context do
           "id" => "@id",
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "does not use aliased @id in value position" do
@@ -526,7 +524,7 @@ describe JSON::LD::Context do
             "@type" => "@id"
           }
         }
-      }, @debug)
+      }, logger)
     end
 
     it "does not use aliased @type" do
@@ -542,7 +540,7 @@ describe JSON::LD::Context do
           "type" => "@type",
           "foaf:homepage" => {"@type" => "@id"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "does not use aliased @container" do
@@ -556,7 +554,7 @@ describe JSON::LD::Context do
           "container" => "@container",
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "compacts IRIs to CURIEs" do
@@ -570,7 +568,7 @@ describe JSON::LD::Context do
           "ex" => 'http://example.org/',
           "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
         }
-      }, @debug)
+      }, logger)
     end
 
     it "compacts IRIs using @vocab" do
@@ -584,7 +582,7 @@ describe JSON::LD::Context do
           "@vocab" => 'http://example.org/',
           "term" => {"@type" => "datatype"}
         }
-      }, @debug)
+      }, logger)
     end
 
     context "extra keys or values" do
@@ -596,7 +594,7 @@ describe JSON::LD::Context do
       }.each do |title, params|
         it title do
           ec = subject.parse(params[:input])
-          expect(ec.serialize).to produce(params[:result], @debug)
+          expect(ec.serialize).to produce(params[:result], logger)
         end
       end
     end
@@ -644,7 +642,7 @@ describe JSON::LD::Context do
       %w(id type).each do |kw|
         it "expands #{kw} to @#{kw}" do
           subject.set_mapping(kw, "@#{kw}")
-          expect(subject.expand_iri(kw, vocab: true)).to produce("@#{kw}", @debug)
+          expect(subject.expand_iri(kw, vocab: true)).to produce("@#{kw}", logger)
         end
       end
     end
@@ -666,7 +664,7 @@ describe JSON::LD::Context do
           "_" =>             ["_",                   RDF::URI("_")],
         }.each do |title, (input, result)|
           it title do
-            expect(subject.expand_iri(input)).to produce(result, @debug)
+            expect(subject.expand_iri(input)).to produce(result, logger)
           end
         end
       end
@@ -687,7 +685,7 @@ describe JSON::LD::Context do
           "_" =>             ["_",                   RDF::URI("http://base/_")],
         }.each do |title, (input, result)|
           it title do
-            expect(subject.expand_iri(input, documentRelative: true)).to produce(result, @debug)
+            expect(subject.expand_iri(input, documentRelative: true)).to produce(result, logger)
           end
         end
       end
@@ -708,7 +706,7 @@ describe JSON::LD::Context do
           "_" =>             ["_",                   RDF::URI("http://underscore/")],
         }.each do |title, (input, result)|
           it title do
-            expect(subject.expand_iri(input, vocab: true)).to produce(result, @debug)
+            expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
           end
         end
       end
@@ -729,7 +727,7 @@ describe JSON::LD::Context do
         'exp'     => {'@id' => 'ex:pert'},
         'experts' => {'@id' => 'ex:perts'}
       })
-      @debug.clear
+      logger.clear
       c
     }
 
@@ -745,7 +743,7 @@ describe JSON::LD::Context do
       "odd CURIE"     => ["exp:s",               "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
-        expect(subject.compact_iri(input)).to produce(result, @debug)
+        expect(subject.compact_iri(input)).to produce(result, logger)
       end
     end
 
@@ -761,7 +759,7 @@ describe JSON::LD::Context do
         "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
+          expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
         end
       end
     end
@@ -780,7 +778,7 @@ describe JSON::LD::Context do
         "odd CURIE"     => ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
+          expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
         end
       end
 
@@ -788,7 +786,7 @@ describe JSON::LD::Context do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
         expect(subject.compact_iri("http://example.org/name", position: :predicate)).
-          to produce("lex:name", @debug)
+          to produce("lex:name", logger)
       end
     end
 
@@ -819,7 +817,7 @@ describe JSON::LD::Context do
           "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
           "langmap" => {"@id" => "http://example.com/langmap", "@container" => "@language"},
         })
-        @debug.clear
+        logger.clear
         c
       end
 
@@ -832,7 +830,7 @@ describe JSON::LD::Context do
           values.each do |value|
             it "for #{value.inspect}" do
               expect(ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", value: value, vocab: true)).
-                to produce(prop, @debug)
+                to produce(prop, logger)
             end
           end
         end
@@ -861,7 +859,7 @@ describe JSON::LD::Context do
             values.each do |value|
               it "for #{{"@list" => value}.inspect}" do
                 expect(ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", value: {"@list" => value}, vocab: true)).
-                  to produce(prop, @debug)
+                  to produce(prop, logger)
               end
             end
           end
@@ -884,7 +882,7 @@ describe JSON::LD::Context do
         "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input)).to produce(result, @debug)
+          expect(subject.compact_iri(input)).to produce(result, logger)
         end
       end
 
@@ -902,7 +900,7 @@ describe JSON::LD::Context do
           "odd CURIE"     => ["experts",             "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
-            expect(subject.compact_iri(input, vocab: true)).to produce(result, @debug)
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
           end
         end
       end
@@ -1008,7 +1006,7 @@ describe JSON::LD::Context do
         [value].flatten.each do |v|
           it "Uses #{term} for #{v}" do
             expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v), vocab: true)).
-              to produce(term, @debug)
+              to produce(term, logger)
           end
         end
       end
@@ -1023,7 +1021,7 @@ describe JSON::LD::Context do
       end
       it "Compact @id that is a property IRI when @container is @list" do
         expect(ctx.compact_iri("http://example.org/ns#property", position: :subject)).
-          to produce("ex:property", @debug)
+          to produce("ex:property", logger)
       end
     end
 
@@ -1035,7 +1033,7 @@ describe JSON::LD::Context do
         expect(ctx.compact_iri("http://example.com/property", value: {
           "@list" => ["one item"],
           "@index" => "an annotation"
-        })).to produce("http://example.com/property", @debug)
+        })).to produce("http://example.com/property", logger)
       end
     end
   end
@@ -1054,13 +1052,13 @@ describe JSON::LD::Context do
         "ex:double" => {"@type" => "xsd:double"},
         "ex:boolean" => {"@type" => "xsd:boolean"},
       })
-      @debug.clear
+      logger.clear
       ctx
     }
 
     %w(boolean integer string dateTime date time).each do |dt|
       it "expands datatype xsd:#{dt}" do
-        expect(subject.expand_value("foo", RDF::XSD[dt])).to produce({"@id" => "http://www.w3.org/2001/XMLSchema##{dt}"}, @debug)
+        expect(subject.expand_value("foo", RDF::XSD[dt])).to produce({"@id" => "http://www.w3.org/2001/XMLSchema##{dt}"}, logger)
       end
     end
 
@@ -1089,7 +1087,7 @@ describe JSON::LD::Context do
       "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0), {"@value" => "1.0", "@type" => RDF::XSD.float}],
     }.each do |title, (key, compacted, expanded)|
       it title do
-        expect(subject.expand_value(key, compacted)).to produce(expanded, @debug)
+        expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
       end
     end
 
@@ -1104,7 +1102,7 @@ describe JSON::LD::Context do
         "native double" =>  ["foo",         1.1,                    {"@value" => 1.1}],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          expect(subject.expand_value(key, compacted)).to produce(expanded, @debug)
+          expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
         end
       end
     end
@@ -1126,7 +1124,7 @@ describe JSON::LD::Context do
         "string-integer"  => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
       }.each do |title, (key, compacted, expanded)|
         it title do
-          expect(subject.expand_value(key, compacted)).to produce(expanded, @debug)
+          expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
         end
       end
     end
@@ -1146,7 +1144,7 @@ describe JSON::LD::Context do
         "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
         "foaf:knows" => {"@type" => "@id"},
       })
-      @debug.clear
+      logger.clear
       c
     end
     subject {ctx}
@@ -1169,7 +1167,7 @@ describe JSON::LD::Context do
       "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
     }.each do |title, (key, compacted, expanded)|
       it title do
-        expect(subject.compact_value(key, expanded)).to produce(compacted, @debug)
+        expect(subject.compact_value(key, expanded)).to produce(compacted, logger)
       end
     end
 
@@ -1196,7 +1194,7 @@ describe JSON::LD::Context do
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.default_language = "en"
-          expect(subject.compact_value(key, expanded)).to produce(compacted, @debug)
+          expect(subject.compact_value(key, expanded)).to produce(compacted, logger)
         end
       end
     end
@@ -1218,7 +1216,7 @@ describe JSON::LD::Context do
         "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
       }.each do |title, (compacted, expanded)|
         it title do
-          expect(subject.compact_value("foo", expanded)).to produce(compacted, @debug)
+          expect(subject.compact_value("foo", expanded)).to produce(compacted, logger)
         end
       end
     end
@@ -1236,7 +1234,7 @@ describe JSON::LD::Context do
         "set" => {"@id" => "ex:set", "@container" => "@set"},
         "ndx" => {"@id" => "ex:ndx", "@container" => "@index"},
       })
-      @debug.clear
+      logger.clear
       ctx
     }
     it "uses TermDefinition" do
@@ -1261,7 +1259,7 @@ describe JSON::LD::Context do
         "nil" => {"@id" => "ex:nil", "@language" => nil},
         "en" => {"@id" => "ex:en", "@language" => "en"},
       })
-      @debug.clear
+      logger.clear
       ctx
     }
     it "uses TermDefinition" do
@@ -1283,7 +1281,7 @@ describe JSON::LD::Context do
         "ex" => "http://example.org/",
         "reverse" => {"@reverse" => "ex:reverse"},
       })
-      @debug.clear
+      logger.clear
       ctx
     }
     it "uses TermDefinition" do
@@ -1303,7 +1301,7 @@ describe JSON::LD::Context do
         "ex" => "http://example.org/",
         "reverse" => {"@reverse" => "ex"},
       })
-      @debug.clear
+      logger.clear
       ctx
     }
     it "uses TermDefinition" do

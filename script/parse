@@ -6,6 +6,7 @@ begin
   require 'linkeddata'
 rescue LoadError
 end
+require 'logger'
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
@@ -50,11 +51,6 @@ def run(input, options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Framed in #{secs} seconds."
-  elsif options[:frame]
-    output = JSON::LD::API.frame(input, options[:frame], options)
-    secs = Time.new - start
-    options[:output].puts output.to_json(JSON::LD::JSON_STATE)
-    puts "Framed in #{secs} seconds."
   else
     r = reader_class.new(input, options[:parser_options])
     if options[:output_format] == :none
@@ -77,12 +73,16 @@ rescue
   raise
 end
 
+logger = Logger.new(STDERR)
+logger.level = Logger::WARN
+logger.formatter = lambda {|severity, datetime, progname, msg| "#{severity}: #{msg}\n"}
+
 parser_options = {
   base:     nil,
   progress: false,
   profile:  false,
   validate: false,
-  strict:   false,
+  logger: logger,
 }
 
 options = {
@@ -113,7 +113,7 @@ opts = GetoptLong.new(
 )
 opts.each do |opt, arg|
   case opt
-  when '--dbg'          then parser_options[:debug] = ::JSON::LD::debug = true
+  when '--dbg'          then logger.level = Logger::DEBUG
   when '--compact'      then options[:compact] = true
   when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
@@ -125,7 +125,9 @@ opts.each do |opt, arg|
   when '--output'       then options[:output] = File.open(arg, "w")
   when '--parse-only'   then options[:parse_only] = true
   when '--profile'      then options[:profile] = true
-  when '--quiet'        then options[:quiet] = true
+  when '--quiet'
+    options[:quiet] = true
+    logger.level = Logger::FATAL
   when '--uri'          then parser_options[:base] = arg
   when '--validate'     then parser_options[:validate] = true
   end

@@ -17,7 +17,7 @@ module JSON::LD
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, options = {})
-      depth do
+      log_depth do
         parent, property = options[:parent], options[:property]
         # Validate the frame
         validate_frame(state, frame)
@@ -151,7 +151,7 @@ module JSON::LD
     # @param [Array, Hash] input
     # @return [Array, Hash]
     def cleanup_preserve(input)
-      depth do
+      log_depth do
         result = case input
         when Array
           # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
@@ -337,7 +337,7 @@ module JSON::LD
       # recursively remove dependent dangling embeds
       def remove_dependents(id, embeds)
 
-        depth do
+        log_depth do
           # get embed keys as a separate array to enable deleting keys in map
           embeds.each do |id_dep, e|
             p = e.fetch(:parent, {}) if e.is_a?(Hash)

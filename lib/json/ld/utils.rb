@@ -207,35 +207,6 @@ module JSON::LD
         end
       end
     end
-
-    # Add debug event to debug array, if specified
-    #
-    #   param [String] message
-    #   yieldreturn [String] appended to message, to allow for lazy-evaluation of message
-    def debug(*args)
-      return unless ::JSON::LD.debug? || @options[:debug]
-      depth = @depth || 0
-      list = args
-      list << yield if block_given?
-      message = " " * depth * 2 + list.join(": ")
-      case @options[:debug]
-      when Array
-        @options[:debug] << message
-      when TrueClass
-        $stderr.puts message
-      else
-        $stderr.puts message if JSON::LD::debug?
-      end
-    end
-
-    # Increase depth around a method invocation
-    def depth(options = {})
-      old_depth = @depth || 0
-      @depth = (options[:depth] || old_depth) + 1
-      yield
-    ensure
-      @depth = old_depth
-    end
   end
 
   ##

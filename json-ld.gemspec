@@ -25,9 +25,9 @@ Gem::Specification.new do |gem|
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
   gem.has_rdoc              = false
 
-  gem.required_ruby_version = '>= 1.9.2'
+  gem.required_ruby_version = '>= 2.0'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '~> 1.99'
+  gem.add_runtime_dependency     'rdf',             '>= 2.0.0.beta', '< 3'
   gem.add_runtime_dependency     'multi_json',      '~> 1.11'
   gem.add_development_dependency 'jsonlint',        '~> 0.1.0' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'oj',              '~> 2.12'  unless RUBY_ENGINE == "jruby"
@@ -35,12 +35,12 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rack-cache",      '~> 1.2'
   gem.add_development_dependency "rest-client",     '~> 1.8'
   gem.add_development_dependency "rest-client-components", '~> 1.4'
-  gem.add_development_dependency 'rdf-isomorphic',  '~> 1.1'
-  gem.add_development_dependency 'rdf-spec',        '~> 1.99'
-  gem.add_development_dependency 'rdf-trig',        '~> 1.99'
-  gem.add_development_dependency 'rdf-turtle',      '~> 1.99'
-  gem.add_development_dependency 'rdf-vocab',       '~> 0.8'
-  gem.add_development_dependency 'rdf-xsd',         '~> 1.1'
+  gem.add_development_dependency 'rdf-isomorphic',  '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rdf-spec',        '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rdf-trig',        '>= 1.99', '< 3'
+  gem.add_development_dependency 'rdf-turtle',      '>= 1.99', '< 3'
+  gem.add_development_dependency 'rdf-vocab',       '>= 0.8'
+  gem.add_development_dependency 'rdf-xsd',         '>= 1.99', '< 3'
   gem.add_development_dependency 'rspec',           '~> 3.2'
   gem.add_development_dependency 'rspec-its',       '~> 1.0'
   gem.add_development_dependency 'yard' ,           '~> 0.8'

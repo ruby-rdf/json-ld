@@ -4,11 +4,9 @@ require 'support/extensions'
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
-    #SUITE = RDF::URI("http://localhost/~gregg/json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
-        #puts "open: #{file}"
         Fixtures::SuiteTest.documentLoader(file) do |remote|
           json = JSON.parse(remote.document)
           if block_given?
@@ -34,7 +32,7 @@ module Fixtures
     end
 
     class Entry < JSON::LD::Resource
-      attr_accessor :debug
+      attr_accessor :logger
 
       # Base is expanded input file
       def base
@@ -81,14 +79,15 @@ module Fixtures
         property('@type').include?('jld:PositiveEvaluationTest')
       end
       
-      def trace; @debug.join("\n"); end
 
       # Execute the test
       def run(rspec_example = nil)
-        debug = @debug = ["test: #{inspect}", "source: #{input}"]
-        @debug << "context: #{context}" if context_loc
-        @debug << "options: #{options.inspect}" unless options.empty?
-        @debug << "frame: #{frame}" if frame_loc
+        logger = @logger = RDF::Spec.logger
+        logger.info "test: #{inspect}"
+        logger.info "source: #{input}"
+        logger.info "context: #{context}" if context_loc
+        logger.info "options: #{options.inspect}" unless options.empty?
+        logger.info "frame: #{frame}" if frame_loc
 
         options = if self.options[:useDocumentLoader]
           self.options.merge(documentLoader: Fixtures::SuiteTest.method(:documentLoader))
@@ -97,23 +96,26 @@ module Fixtures
         end
 
         if positiveTest?
-          @debug << "expected: #{expect rescue nil}" if expect_loc
+          logger.info "expected: #{expect rescue nil}" if expect_loc
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input_loc, options.merge(debug: debug))
+              JSON::LD::API.expand(input_loc, options.merge(logger: logger))
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(debug: debug))
+              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(logger: logger))
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input_loc, context_loc, options.merge(debug: debug))
+              JSON::LD::API.flatten(input_loc, context_loc, options.merge(logger: logger))
             when "jld:FrameTest"
-              JSON::LD::API.frame(input_loc, frame_loc, options.merge(debug: debug))
+              JSON::LD::API.frame(input_loc, frame_loc, options.merge(logger: logger))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input_loc, format: :nquads)
-              @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-              JSON::LD::API.fromRdf(repo, options.merge(debug: debug))
+              # Use an array, to preserve input order
+              repo = RDF::NQuads::Reader.open(input_loc) do |reader|
+                reader.each_statement.to_a
+              end.extend(RDF::Enumerable)
+              logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRdf(input_loc, options.merge(debug: debug)).map do |statement|
+              JSON::LD::API.toRdf(input_loc, options.merge(logger: logger)).map do |statement|
                 to_quad(statement)
               end
             else
@@ -123,12 +125,12 @@ module Fixtures
               if testType == "jld:ToRDFTest"
                 expected = expect
                 rspec_example.instance_eval {
-                  expect(result.sort.join("")).to produce(expected, debug)
+                  expect(result.sort.join("")).to produce(expected, logger)
                 }
               else
                 expected = JSON.load(expect)
                 rspec_example.instance_eval {
-                  expect(result).to produce(expected, debug)
+                  expect(result).to produce(expected, logger)
                 }
               end
             else
@@ -142,26 +144,26 @@ module Fixtures
             fail("Invalid Frame: #{e.message}")
           end
         else
-          debug << "expected: #{property('expect')}" if property('expect')
+          logger.info "expected: #{property('expect')}" if property('expect')
           t = self
           rspec_example.instance_eval do
             if t.evaluationTest?
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input_loc, options.merge(debug: debug))
+                  JSON::LD::API.expand(t.input_loc, options.merge(logger: logger))
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(debug: debug))
+                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(logger: logger))
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(debug: debug))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(logger: logger))
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(debug: debug))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(logger: logger))
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRdf(repo, options.merge(debug: debug))
+                  logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(debug: debug)).map do |statement|
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(logger: logger)).map do |statement|
                     t.to_quad(statement)
                   end
                 else

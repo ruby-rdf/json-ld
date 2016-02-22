@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do
+  let(:logger) {RDF::Spec.logger}
+
   describe ".fromRdf" do
     context "simple tests" do
       it "One subject IRI object" do
@@ -13,7 +15,7 @@ describe JSON::LD::API do
           '@id'         => "http://a/b",
           "http://a/c"  => [{"@id" => "http://a/d"}]
         }
-        ], @debug)
+        ], logger)
       end
 
       it "should generate object list" do
@@ -26,7 +28,7 @@ describe JSON::LD::API do
             {"@id" => "http://example.com/e"}
           ]
         }
-        ], @debug)
+        ], logger)
       end
     
       it "should generate property list" do
@@ -37,7 +39,7 @@ describe JSON::LD::API do
           "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
           "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
         }
-        ], @debug)
+        ], logger)
       end
     
       it "serializes multiple subjects" do
@@ -51,7 +53,7 @@ describe JSON::LD::API do
         to produce([
           {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
           {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
-        ], @debug)
+        ], logger)
       end
     end
   
@@ -64,7 +66,7 @@ describe JSON::LD::API do
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
             }
-          ], @debug)
+          ], logger)
         end
 
         it "integer" do
@@ -72,7 +74,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1}]
-          }], @debug)
+          }], logger)
         end
 
         it "integer (non-native)" do
@@ -80,7 +82,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
-          }], @debug)
+          }], logger)
         end
 
         it "boolean" do
@@ -88,7 +90,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => true}]
-          }], @debug)
+          }], logger)
         end
 
         it "boolean (non-native)" do
@@ -96,7 +98,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
-          }], @debug)
+          }], logger)
         end
 
         it "decmal" do
@@ -104,7 +106,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
-          }], @debug)
+          }], logger)
         end
 
         it "double" do
@@ -112,7 +114,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: true)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => 1.0E0}]
-          }], @debug)
+          }], logger)
         end
 
         it "double (non-native)" do
@@ -120,7 +122,7 @@ describe JSON::LD::API do
           expect(serialize(input, useNativeTypes: false)).to produce([{
             '@id'   => "http://example.com/a",
             "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
-          }], @debug)
+          }], logger)
         end
       end
 
@@ -142,7 +144,7 @@ describe JSON::LD::API do
             expect(serialize(input, useNativeTypes: false)).to produce([{
               '@id'   => "http://example.com/a",
               "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
-            }], @debug)
+            }], logger)
           end
         end
       end
@@ -152,7 +154,7 @@ describe JSON::LD::API do
         expect(serialize(input)).to produce([{
           '@id'   => "http://example.com/a",
           "http://example.com/b"    => [{"@value" => "foo", "@language" => "en-us"}]
-        }], @debug)
+        }], logger)
       end
     end
 
@@ -164,7 +166,7 @@ describe JSON::LD::API do
           "@id" => "_:a",
           "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
         }
-        ], @debug)
+        ], logger)
       end
     
       it "should generate anon as object" do
@@ -178,7 +180,7 @@ describe JSON::LD::API do
             "@id" => "http://example.com/a",
             "http://example.com/b"  => [{"@id" => "_:a"}]
           }
-        ], @debug)
+        ], logger)
       end
     end
 
@@ -274,7 +276,7 @@ describe JSON::LD::API do
       }.each do |name, (input, output, reader)|
         it name do
           r = serialize(input, reader: reader)
-          expect(r).to produce(output, @debug)
+          expect(r).to produce(output, logger)
         end
       end
     end
@@ -368,7 +370,7 @@ describe JSON::LD::API do
       }.each_pair do |name, properties|
         it name do
           r = serialize(properties[:input], reader: RDF::NQuads::Reader)
-          expect(r).to produce(properties[:output], @debug)
+          expect(r).to produce(properties[:output], logger)
         end
       end
     end
@@ -391,7 +393,7 @@ describe JSON::LD::API do
         ],
       }.each do |t, (input, output)|
         it "#{t}" do
-          expect(serialize(input)).to produce(output, @debug)
+          expect(serialize(input)).to produce(output, logger)
         end
       end
     end
@@ -399,16 +401,15 @@ describe JSON::LD::API do
 
   def parse(input, options = {})
     reader = options[:reader] || RDF::TriG::Reader
-    RDF::Repository.new << reader.new(input, options)
+    reader.new(input, options, &:each_statement).to_a.extend(RDF::Enumerable)
   end
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
-    @debug = []
-    @debug << ntstr if ntstr.is_a?(String)
+    logger.info ntstr if ntstr.is_a?(String)
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    @debug << g.dump(:trig)
+    logger.info g.dump(:trig)
     statements = g.each_statement.to_a
-    JSON::LD::API.fromRdf(statements, options.merge(debug: @debug))
+    JSON::LD::API.fromRdf(statements, options.merge(logger: logger))
   end
 end

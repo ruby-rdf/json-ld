@@ -8,6 +8,19 @@ module JSON::LD
     format Format
 
     ##
+    # JSON-LD Reader options
+    # @see http://www.rubydoc.info/github/ruby-rdf/rdf/RDF/Reader#options-class_method
+    def self.options
+      super + [
+        RDF::CLI::Option.new(
+          symbol: :compactArrays,
+          datatype: TrueClass,
+          on: ["--compact-arrays"],
+          description: "Replaces arrays with just one element with that element during compaction.") {true},
+      ]
+    end
+
+    ##
     # Initializes the RDF/JSON reader instance.
     #
     # @param  [IO, File, String]       input
@@ -28,9 +41,6 @@ module JSON::LD
           else
             StringIO.new(input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, ''))
           end
-        rescue JSON::ParserError => e
-          raise RDF::ReaderError, "Failed to parse input document: #{e.message}" if validate?
-          @doc = StringIO.new("{}")
         end
 
         if block_given?
@@ -47,8 +57,8 @@ module JSON::LD
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
       JSON::LD::API.toRdf(@doc, @options, &block)
-    rescue ::JSON::LD::JsonLdError => e
-      raise RDF::ReaderError, e.message
+    rescue ::JSON::ParserError, ::JSON::LD::JsonLdError => e
+      log_fatal("Failed to parse input document: #{e.message}", exception: RDF::ReaderError)
     end
 
     ##
