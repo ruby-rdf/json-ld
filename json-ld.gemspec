@@ -7,7 +7,7 @@ Gem::Specification.new do |gem|
 
   gem.name                  = "json-ld"
   gem.homepage              = "http://github.com/ruby-rdf/json-ld"
-  gem.license               = 'Public Domain' if gem.respond_to?(:license=)
+  gem.license               = 'Unlicense'
   gem.summary               = "JSON-LD reader/writer for Ruby."
   gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."
   gem.rubyforge_project     = 'json-ld'
@@ -37,11 +37,11 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rest-client-components", '~> 1.4'
   gem.add_development_dependency 'rdf-isomorphic',  '>= 2.0.0.beta', '< 3'
   gem.add_development_dependency 'rdf-spec',        '>= 2.0.0.beta', '< 3'
-  gem.add_development_dependency 'rdf-trig',        '>= 1.99', '< 3'
-  gem.add_development_dependency 'rdf-turtle',      '>= 1.99', '< 3'
-  gem.add_development_dependency 'rdf-vocab',       '>= 0.8'
-  gem.add_development_dependency 'rdf-xsd',         '>= 1.99', '< 3'
-  gem.add_development_dependency 'rspec',           '~> 3.2'
+  gem.add_development_dependency 'rdf-trig',        '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rdf-turtle',      '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rdf-vocab',       '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rdf-xsd',         '>= 2.0.0.beta', '< 3'
+  gem.add_development_dependency 'rspec',           '~> 3.4'
   gem.add_development_dependency 'rspec-its',       '~> 1.0'
   gem.add_development_dependency 'yard' ,           '~> 0.8'
 
