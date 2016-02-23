@@ -1,18 +1,18 @@
 source "https://rubygems.org"
 
 gemspec
-gem 'rdf',              git: "git://github.com/ruby-rdf/rdf.git",       branch: "develop"
-gem 'rdf-spec',         git: "git://github.com/ruby-rdf/rdf-spec.git",  branch: "develop"
-gem 'jsonlint',         git: "git://github.com/dougbarth/jsonlint.git", platforms: [:rbx, :mri]
+gem 'rdf',              github: "ruby-rdf/rdf",             branch: "develop"
+gem 'rdf-spec',         github: "ruby-rdf/rdf-spec",        branch: "develop"
+gem 'jsonlint',         github: "dougbarth/jsonlint",       platforms: [:rbx, :mri]
 
 group :development do
-  gem 'ebnf',           git: "git://github.com/gkellogg/ebnf.git",        branch: "develop"
-  gem 'sxp',            git: "git://github.com/gkellogg/sxp-ruby.git"
-  gem 'rdf-isomorphic', git: "git://github.com/ruby-rdf/rdf-isomorphic.git", branch: "develop"
-  gem 'rdf-turtle',     git: "git://github.com/ruby-rdf/rdf-turtle.git",  branch: "develop"
-  gem 'rdf-trig',       git: "git://github.com/ruby-rdf/rdf-trig.git",    branch: "develop"
-  gem 'rdf-vocab',      git: "git://github.com/ruby-rdf/rdf-vocab.git",   branch: "develop"
-  gem 'rdf-xsd',        git: "git://github.com/ruby-rdf/rdf-xsd.git",     branch: "develop"
+  gem 'ebnf',           github: "gkellogg/ebnf",            branch: "develop"
+  gem 'sxp',            github: "gkellogg/sxp-ruby",        branch: "develop"
+  gem 'rdf-isomorphic', github: "ruby-rdf/rdf-isomorphic",  branch: "develop"
+  gem 'rdf-turtle',     github: "ruby-rdf/rdf-turtle",      branch: "develop"
+  gem 'rdf-trig',       github: "ruby-rdf/rdf-trig",        branch: "develop"
+  gem 'rdf-vocab',      github: "ruby-rdf/rdf-vocab",       branch: "develop"
+  gem 'rdf-xsd',        github: "ruby-rdf/rdf-xsd",         branch: "develop"
   gem 'fasterer'
 end
 
