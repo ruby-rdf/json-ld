@@ -51,7 +51,7 @@ module JSON::LD
         when '@graph'
           # Values are nodes using our subject as the graph name
           values.each do |nd|
-            item_to_rdf(nd, subject, &block)
+            item_to_rdf(nd, graph_name: subject, &block)
           end
         when /^@/
           # Otherwise, if @type is any other keyword, skip to the next property-values pair
