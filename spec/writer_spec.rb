@@ -9,7 +9,7 @@ describe JSON::LD::Writer do
   after(:each) {|example| puts logger.to_s if example.exception}
 
   it_behaves_like 'an RDF::Writer' do
-    let(:writer) {JSON::LD::Writer.new(StringIO.new(""))}
+    let(:writer) {JSON::LD::Writer.new(StringIO.new, logger: logger)}
   end
 
   describe ".for" do
@@ -196,11 +196,14 @@ describe JSON::LD::Writer do
     describe m.name do
       m.entries.each do |t|
         next unless t.positiveTest? && !t.property('input').include?('0016')
-        t.debug = ["test: #{t.inspect}", "source: #{t.input}"]
         specify "#{t.property('input')}: #{t.name}" do
+          logger.info "test: #{t.inspect}"
+          logger.info "source: #{t.input}"
+          t.logger = logger
           pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
+          pending "graph comparison issue" if t.property('input').include?("fromRdf-0008")
           repo = RDF::Repository.load(t.input_loc, format: :nquads)
-          jsonld = JSON::LD::Writer.buffer(debug: t.debug) do |writer|
+          jsonld = JSON::LD::Writer.buffer(logger: t.logger) do |writer|
             writer << repo
           end
 
@@ -221,7 +224,7 @@ describe JSON::LD::Writer do
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, options = {})
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
-    logger.info g.dump(:ttl)
+    #logger.info g.dump(:ttl)
     result = JSON::LD::Writer.buffer(options.merge(logger: logger)) do |writer|
       writer << g
     end
