@@ -414,22 +414,11 @@ module JSON::LD
         #    This removes any existing context to allow the given context to be cleanly applied.
         log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
-        # Generate _nodeMap_
-        graphs = {'@default' => {}}
-        create_node_map(expanded_input, graphs)
-        log_debug(".toRdf") {"node map: #{graphs.to_json(JSON_STATE) rescue 'malformed json'}"}
-
-        # Start generating statements
-        graphs.each do |graph_name, graph|
-          context = as_resource(graph_name) unless graph_name == '@default'
-          log_debug(".toRdf") {"graph_name: #{context ? context.to_ntriples : 'null'}"}
-          # Drop results for graphs which are named with relative IRIs
-          if graph_name.is_a?(RDF::URI) && !graph_name.absolute
-            log_debug(".toRdf") {"drop relative graph_name: #{statement.to_ntriples}"}
-            next
-          end
-          graph_to_rdf(graph) do |statement|
+        # Recurse through input
+        expanded_input.each do |node|
+          item_to_rdf(node) do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRdf]
+
             # Drop results with relative IRIs
             relative = statement.to_a.any? do |r|
               case r
@@ -446,12 +435,7 @@ module JSON::LD
               next
             end
 
-            statement.graph_name = context if context
-            if block_given?
-              yield statement
-            else
-              results << statement
-            end
+            yield statement
           end
         end
       end
