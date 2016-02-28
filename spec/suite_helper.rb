@@ -115,17 +115,19 @@ module Fixtures
               logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRdf(input_loc, options.merge(logger: logger)).map do |statement|
-                to_quad(statement)
+              repo = RDF::Repository.new
+              JSON::LD::API.toRdf(input_loc, options.merge(logger: logger)) do |statement|
+                repo << statement
               end
+              repo
             else
               fail("Unknown test type: #{testType}")
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                expected = expect
+                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect)
                 rspec_example.instance_eval {
-                  expect(result.sort.join("")).to produce(expected, logger)
+                  expect(result).to be_equivalent_graph(expected, logger)
                 }
               else
                 expected = JSON.load(expect)
@@ -163,9 +165,7 @@ module Fixtures
                   logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(logger: logger)).map do |statement|
-                    t.to_quad(statement)
-                  end
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(logger: logger)) {}
                 else
                   success("Unknown test type: #{testType}")
                 end
