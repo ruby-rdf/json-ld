@@ -7,7 +7,7 @@ Gem::Specification.new do |gem|
 
   gem.name                  = "json-ld"
   gem.homepage              = "http://github.com/ruby-rdf/json-ld"
-  gem.license               = 'Public Domain' if gem.respond_to?(:license=)
+  gem.license               = 'Unlicense'
   gem.summary               = "JSON-LD reader/writer for Ruby."
   gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."
   gem.rubyforge_project     = 'json-ld'
@@ -25,7 +25,7 @@ Gem::Specification.new do |gem|
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
   gem.has_rdoc              = false
 
-  gem.required_ruby_version = '>= 1.9.2'
+  gem.required_ruby_version = '>= 2.0'
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '~> 1.99'
   gem.add_runtime_dependency     'multi_json',      '~> 1.11'
@@ -41,7 +41,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-turtle',      '~> 1.99'
   gem.add_development_dependency 'rdf-vocab',       '~> 0.8'
   gem.add_development_dependency 'rdf-xsd',         '~> 1.1'
-  gem.add_development_dependency 'rspec',           '~> 3.2'
+  gem.add_development_dependency 'rspec',           '~> 3.4'
   gem.add_development_dependency 'rspec-its',       '~> 1.0'
   gem.add_development_dependency 'yard' ,           '~> 0.8'
 
