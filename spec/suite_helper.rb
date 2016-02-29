@@ -4,11 +4,9 @@ require 'support/extensions'
 module Fixtures
   module SuiteTest
     SUITE = RDF::URI("http://json-ld.org/test-suite/")
-    #SUITE = RDF::URI("http://localhost/~gregg/json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
-        #puts "open: #{file}"
         Fixtures::SuiteTest.documentLoader(file) do |remote|
           json = JSON.parse(remote.document)
           if block_given?
@@ -109,21 +107,26 @@ module Fixtures
             when "jld:FrameTest"
               JSON::LD::API.frame(input_loc, frame_loc, options.merge(debug: debug))
             when "jld:FromRDFTest"
-              repo = RDF::Repository.load(input_loc, format: :nquads)
+              # Use an array, to preserve input order
+              repo = RDF::NQuads::Reader.open(input_loc) do |reader|
+                reader.each_statement.to_a
+              end.extend(RDF::Enumerable)
               @debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, options.merge(debug: debug))
             when "jld:ToRDFTest"
-              JSON::LD::API.toRdf(input_loc, options.merge(debug: debug)).map do |statement|
-                to_quad(statement)
+              repo = RDF::Repository.new
+              JSON::LD::API.toRdf(input_loc, options.merge(debug: debug)) do |statement|
+                repo << statement
               end
+              repo
             else
               fail("Unknown test type: #{testType}")
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                expected = expect
+                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect)
                 rspec_example.instance_eval {
-                  expect(result.sort.join("")).to produce(expected, debug)
+                  expect(result).to be_equivalent_graph(expected, debug)
                 }
               else
                 expected = JSON.load(expect)
@@ -161,9 +164,7 @@ module Fixtures
                   debug << "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, options.merge(debug: debug))
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(debug: debug)).map do |statement|
-                    t.to_quad(statement)
-                  end
+                  JSON::LD::API.toRdf(t.input_loc, options.merge(debug: debug)) {}
                 else
                   success("Unknown test type: #{testType}")
                 end
