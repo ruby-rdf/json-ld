@@ -132,7 +132,7 @@ module JSON::LD
       context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
       @context = Context.new(@options)
       @context = @context.parse(context) if context
-      
+
       if block_given?
         case block.arity
           when 0, -1 then instance_eval(&block)

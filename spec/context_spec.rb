@@ -111,6 +111,24 @@ describe JSON::LD::Context do
           "bar" => "http://example.com/foo"
         }, @debug)
       end
+
+      it "merges definitions from remote contexts" do
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        rd2 = JSON::LD::API::RemoteDocument.new("http://example.com/c2", %q({
+          "@context": {
+            "title": {"@id": "http://purl.org/dc/terms/title"}
+          }
+        }))
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c2", anything).and_yield(rd2)
+        ec = subject.parse(%w(http://example.com/context http://example.com/c2))
+        expect(ec.send(:mappings)).to produce({
+          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
+          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "homepage" => "http://xmlns.com/foaf/0.1/homepage",
+          "avatar"   => "http://xmlns.com/foaf/0.1/avatar",
+          "title"    => "http://purl.org/dc/terms/title"
+        }, @debug)
+      end
     end
 
     context "Hash" do
