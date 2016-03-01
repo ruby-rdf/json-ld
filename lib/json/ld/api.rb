@@ -79,7 +79,7 @@ module JSON::LD
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
-    #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
     # @option options [Boolean]  :simple_compact_iris   (false)
     #   When compacting IRIs, do not use terms with expanded term definitions
     # @option options [Symbol] :adapter used with MultiJson

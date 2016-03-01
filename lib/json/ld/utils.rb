@@ -70,7 +70,7 @@ module JSON::LD
     def as_resource(id, base = nil)
       @nodes ||= {} # Re-use BNodes
       if id[0,2] == '_:'
-        (@nodes[id] ||= RDF::Node.new(id[2..-1]))
+        (@nodes[id] ||= RDF::Node.new(namer.get_sym(id)))
       elsif base
         base.join(id)
       else
