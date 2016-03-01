@@ -1,0 +1,11 @@
+{
+  "@context": [
+    "http://bibdata.princeton.edu/dc/context.json",
+    "http://bibdata.princeton.edu/mrel/context.json"
+  ],
+  "@id": "http://bibdata.princeton.edu/bibliographic/4609321",
+  "title": {
+    "@value": "Biblia Latina",
+    "@language": "lat"
+    }
+  }

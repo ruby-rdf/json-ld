@@ -201,7 +201,6 @@ describe JSON::LD::Writer do
           logger.info "source: #{t.input}"
           t.logger = logger
           pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
-          pending "graph comparison issue" if t.property('input').include?("fromRdf-0008")
           repo = RDF::Repository.load(t.input_loc, format: :nquads)
           jsonld = JSON::LD::Writer.buffer(logger: t.logger) do |writer|
             writer << repo
