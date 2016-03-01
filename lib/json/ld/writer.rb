@@ -130,7 +130,6 @@ module JSON::LD
       options[:base_uri] ||= options[:base] if options.has_key?(:base)
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do
-        log_statistics.clear  # FIXME: shouldn't be necessary
         @repo = RDF::Repository.new
 
         if block_given?

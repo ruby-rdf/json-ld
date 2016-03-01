@@ -265,11 +265,11 @@ module JSON::LD
              result = context.dup
           when IO, StringIO
             log_debug("parse") {"io: #{context}"}
-            # Load context document, if it is a string
+            # Load context document, if it is an open file
             begin
               ctx = JSON.load(context)
               raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
-              result = parse(ctx["@context"] ? ctx["@context"].dup : {})
+              result = result.dup.parse(ctx["@context"] ? ctx["@context"].dup : {})
               result.provided_context = ctx["@context"] if [context] == local_context
               result
             rescue JSON::ParserError => e
@@ -286,7 +286,7 @@ module JSON::LD
             raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
             remote_contexts << context.to_s
 
-            context_no_base = self.dup
+            context_no_base = result.dup
             context_no_base.base = nil
             context_no_base.context_base = context.to_s
 
