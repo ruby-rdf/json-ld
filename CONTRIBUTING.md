@@ -6,7 +6,7 @@ Community contributions are essential for keeping Ruby RDF great. We want to kee
 
 This repository uses [Git Flow](https://github.com/nvie/gitflow) to mange development and release activity. All submissions _must_ be on a feature branch based on the _develop_ branch to ease staging and integration.
 
-* create or respond to an issue for on the [Github Repository](http://github.com/ruby-rdf/json-ld/issues)
+* create or respond to an issue on the [Github Repository](http://github.com/ruby-rdf/json-ld/issues)
 * Fork and clone the repo:
   `git clone git@github.com:your-username/json-ld.git`
 * Install bundle:
