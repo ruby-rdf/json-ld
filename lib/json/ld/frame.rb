@@ -49,19 +49,13 @@ module JSON::LD
             next
           end
 
-          # Note: In order to treat each top-level match as a
-          # compartmentalized result, clear the unique embedded subjects map
-          # when the property is None, which only occurs at the top-level.
+          # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
           state = state.merge(uniqueEmbeds: {}) if property.nil?
 
           output = {'@id' => id}
           state[:link][id] = output
 
-          # if embed is @never or if a circular reference would be created
-          # by an embed, the subject cannot be embedded, just add the
-          # reference; note that a circular reference won't occur when the
-          # embed flag is `@link` as the above check will short-circuit
-          # before reaching this point
+          # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
           if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
             add_frame_output(parent, property, output)
             next
@@ -124,15 +118,25 @@ module JSON::LD
 
           # handle defaults in order
           frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
-            # if omit default is off, then include default values for
-            # properties that appear in the next frame but are not in
-            # the matching subject
+            # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
             n = frame[prop].first || {}
             omit_default_on = get_frame_flag(n, options, :omitDefault)
             if !omit_default_on && !output[prop]
               preserve = n.fetch('@default', '@null').dup
               preserve = [preserve] unless preserve.is_a?(Array)
               output[prop] = [{'@preserve' => preserve}]
+            end
+          end
+
+          # If frame has @reverse, embed identified nodes having this subject as a value of the associated property.
+          frame.fetch('@reverse', {}).each do |reverse_prop, subframe|
+            state[:subjects].each do |r_id, node|
+              if Array(node[reverse_prop]).any? {|v| v['@id'] == id}
+                # Node has property referencing this subject
+                # recurse into  reference
+                (output['@reverse'] ||= {})[reverse_prop] ||= []
+                frame(state, [r_id], subframe, options.merge(parent: output['@reverse'][reverse_prop]))
+              end
             end
           end
 
@@ -206,13 +210,9 @@ module JSON::LD
     ##
     # Returns true if the given node matches the given frame.
     #
-    # Matches either based on explicit type inclusion where the node
-    # has any type listed in the frame. If the frame has empty types defined
-    # matches nodes not having a @type. If the frame has a type of {} defined
-    # matches nodes having any type defined.
+    # Matches either based on explicit type inclusion where the node has any type listed in the frame. If the frame has empty types defined matches nodes not having a @type. If the frame has a type of {} defined matches nodes having any type defined.
     #
-    # Otherwise, does duck typing, where the node must have all of the properties
-    # defined in the frame.
+    # Otherwise, does duck typing, where the node must have all of the properties defined in the frame.
     #
     # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
@@ -252,8 +252,7 @@ module JSON::LD
               next
             end
 
-            # all properties must match to be a duck unless a @default is
-            # specified
+            # all properties must match to be a duck unless a @default is specified
             has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.first.has_key?('@default')
             return false if flags[:requireAll] && !has_default
           end
@@ -270,8 +269,7 @@ module JSON::LD
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
     end
 
-    # Checks the current subject stack to see if embedding the given subject
-    # would cause a circular reference.
+    # Checks the current subject stack to see if embedding the given subject would cause a circular reference.
     # 
     # @param subject_to_embed the subject to embed.
     # @param subject_stack the current stack of subjects.
@@ -283,6 +281,7 @@ module JSON::LD
       end
     end
 
+    ##
     # Gets the frame flag value for the given flag name.
     # 
     # @param frame the frame.
@@ -369,10 +368,7 @@ module JSON::LD
       end
     end
 
-    # Creates an implicit frame when recursing through subject matches. If
-    # a frame doesn't have an explicit frame for a particular property, then
-    # a wildcard child frame will be created that uses the same flags that
-    # the parent frame used.
+    # Creates an implicit frame when recursing through subject matches. If a frame doesn't have an explicit frame for a particular property, then a wildcard child frame will be created that uses the same flags that the parent frame used.
     #
     # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.

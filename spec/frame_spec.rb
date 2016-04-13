@@ -512,7 +512,7 @@ describe JSON::LD::API do
       end
     end
 
-    describe "@reverse", skip:true do
+    describe "@reverse" do
       {
         "embed matched frames with @reverse" => {
           frame: {
@@ -546,6 +546,44 @@ describe JSON::LD::API do
                   "@type" => "ex:Type2",
                   "ex:includes" => {"@id" => "ex:Sub1"}
                 }
+              }
+            }]
+          }
+        },
+        "embed matched frames with reversed property" => {
+          frame: {
+            "@context" => {
+              "ex" => "http://example.org/",
+              "excludes" => {"@reverse" => "ex:includes"}
+            },
+            "@type" => "ex:Type1",
+            "excludes" => {}
+          },
+          input: [
+            {
+              "@context" => {"ex" => "http://example.org/"},
+              "@id" => "ex:Sub1",
+              "@type" => "ex:Type1"
+            },
+            {
+              "@context" => {"ex" => "http://example.org/"},
+              "@id" => "ex:Sub2",
+              "@type" => "ex:Type2",
+              "ex:includes" => {"@id" => "ex:Sub1"}
+            },
+          ],
+          output:{
+            "@context" => {
+              "ex" => "http://example.org/",
+              "excludes" => {"@reverse" => "ex:includes"}
+            },
+            "@graph" => [{
+              "@id" => "ex:Sub1",
+              "@type" => "ex:Type1",
+              "excludes" => {
+                "@id" => "ex:Sub2",
+                "@type" => "ex:Type2",
+                "ex:includes" => {"@id" => "ex:Sub1"}
               }
             }]
           }
