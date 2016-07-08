@@ -44,7 +44,7 @@ module JSON::LD
 
     ##
     # Hash of CLI commands appropriate for this format
-    # @return [Hash{Symbol => Lambda(Array, Hash)}]
+    # @return [Hash{Symbol => Hash}]
     def self.cli_commands
       {
         expand: {

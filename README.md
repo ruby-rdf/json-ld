@@ -274,7 +274,7 @@ Note, the API method signatures differed in versions before 1.0, in that they al
   * {JSON::LD::Writer}
 
 ## Dependencies
-* [Ruby](http://ruby-lang.org/) (>= 2.0)
+* [Ruby](http://ruby-lang.org/) (>= 2.2.2)
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 2.0)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5)
 
