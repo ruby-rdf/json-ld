@@ -238,16 +238,16 @@ module JSON::LD
           case k
           when '@id'
             return false if v.is_a?(String) && subject['@id'] != v
-            wildcard, matches_some = true, true
+            wildcard, matches_some = false, true
           when '@type'
-            wildcard, matches_some = true, true
+            wildcard, matches_some = false, false
           when /^@/
           else
             wildcard = false
 
             # v == [] means do not match if property is present
             if subject.has_key?(k)
-              return false if v == []
+              return false if v == [] && !subject[k].nil?
               matches_some = true
               next
             end

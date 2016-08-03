@@ -152,6 +152,8 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the expansion upon.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
+    # @option options [Boolean] :framing Internal use for framing
+    # @option options [Boolean] :keep_free_floating_nodes Internal use for framing
     # @raise [JsonLdError]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
@@ -163,7 +165,10 @@ module JSON::LD
     def self.expand(input, options = {})
       result = nil
       API.new(input, options[:expandContext], options) do |api|
-        result = api.expand(api.value, nil, api.context)
+        result = api.expand(api.value, nil, api.context,
+                            ordered: options.fetch(:ordered, true),
+                            framing: options.fetch(:framing, false),
+                            keep_free_floating_nodes: options.fetch(:keep_free_floating_nodes, false))
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
@@ -347,7 +352,7 @@ module JSON::LD
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options)
+      expanded_frame = API.expand(frame, options.merge(framing: true, keep_free_floating_nodes: true))
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do

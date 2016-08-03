@@ -621,5 +621,63 @@ describe JSON::LD::API do
       data = framed["@graph"].first
       expect(data["mising_value"]).to be_nil
     end
+
+    it "issue #28" do
+      input = JSON.parse %({
+        "@context": {
+          "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+        },
+        "@id": "http://www.myresource/uuid",
+        "http://www.myresource.com/ontology/1.0#talksAbout": [
+          {
+            "@id": "http://rdf.freebase.com/ns/m.018w8",
+            "rdfs:label": [
+              {
+                "@value": "Basketball",
+                "@language": "en"
+              }
+            ]
+          }
+        ]
+      })
+      frame = JSON.parse %({
+        "@context": {
+          "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+          "talksAbout": {
+            "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
+            "@type": "@id"
+          },
+          "label": {
+            "@id": "rdfs:label",
+            "@language": "en"
+          }
+        },
+        "@id": "http://www.myresource/uuid"
+      })
+      expected = JSON.parse %({
+        "@context": {
+          "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+          "talksAbout": {
+            "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
+            "@type": "@id"
+          },
+          "label": {
+            "@id": "rdfs:label",
+            "@language": "en"
+          }
+        },
+        "@graph": [
+          {
+            "@id": "http://www.myresource/uuid",
+            "talksAbout": {
+              "@id": "http://rdf.freebase.com/ns/m.018w8",
+              "label": "Basketball"
+            }
+          }
+        ]
+      })
+      framed = JSON::LD::API.frame(input, frame, logger: logger)
+      expect(framed).to produce(expected, logger)
+    end
   end
 end

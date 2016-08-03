@@ -10,12 +10,12 @@ module JSON::LD
     # @param [Array, Hash] input
     # @param [String] active_property
     # @param [Context] context
-    # @param [Hash{Symbol => Object}] options
-    # @option options [Boolean] :ordered (true)
+    # @param [Boolean] ordered (true)
     #   Ensure output objects have keys ordered properly
+    # @param [Boolean] framing (false)
+    # @param [Boolean] keep_free_floating_notes (false)
     # @return [Array, Hash]
-    def expand(input, active_property, context, options = {})
-      options = {ordered: true}.merge!(options)
+    def expand(input, active_property, context, ordered: true, framing: false, keep_free_floating_nodes: false)
       log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -24,7 +24,7 @@ module JSON::LD
           is_list = context.container(active_property) == '@list'
           value = input.map do |v|
             # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
-            v = expand(v, active_property, context, options)
+            v = expand(v, active_property, context, ordered: ordered)
 
             # If the active property is @list or its container mapping is set to @list, the expanded item must not be an array or a list object, otherwise a list of lists error has been detected and processing is aborted.
             raise JsonLdError::ListOfLists,
@@ -45,7 +45,7 @@ module JSON::LD
         log_depth do
           output_object = {}
           # Then, proceed and process each property and value in element as follows:
-          keys = options[:ordered] ? input.keys.kw_sort : input.keys
+          keys = ordered ? input.keys.kw_sort : input.keys
           keys.each do |key|
             # For each key and value in element, ordered lexicographically by key:
             value = input[key]
@@ -74,8 +74,15 @@ module JSON::LD
               expanded_value = case expanded_property
               when '@id'
                 # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
-                raise JsonLdError::InvalidIdValue,
-                      "value of @id must be a string: #{value.inspect}" unless value.is_a?(String)
+                case value
+                when String
+                when Hash
+                  raise JsonLdError::InvalidIdValue,
+                        "value of @id must be a string unless framing: #{value.inspect}" unless framing
+                else
+                  raise JsonLdError::InvalidIdValue,
+                        "value of @id must be a string or hash if framing: #{value.inspect}"
+                end
 
                 # Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
                 context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
@@ -104,7 +111,7 @@ module JSON::LD
                 end
               when '@graph'
                 # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
-                log_depth { expand(value, '@graph', context, options) }
+                log_depth { expand(value, '@graph', context, ordered: ordered) }
               when '@value'
                 # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
                 raise JsonLdError::InvalidValueObjectValue,
@@ -131,7 +138,7 @@ module JSON::LD
                 next if (active_property || '@graph') == '@graph'
 
                 # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
-                value = log_depth { expand(value, active_property, context, options) }
+                value = log_depth { expand(value, active_property, context, ordered: ordered) }
 
                 # Spec FIXME: need to be sure that result is an array
                 value = [value] unless value.is_a?(Array)
@@ -144,7 +151,7 @@ module JSON::LD
                 value
               when '@set'
                 # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
-                log_depth { expand(value, active_property, context, options) }
+                log_depth { expand(value, active_property, context, ordered: ordered) }
               when '@reverse'
                 # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
                 raise JsonLdError::InvalidReverseValue,
@@ -152,7 +159,7 @@ module JSON::LD
 
                 # Otherwise
                 # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
-                value = log_depth { expand(value, '@reverse', context, options) }
+                value = log_depth { expand(value, '@reverse', context, ordered: ordered) }
 
                 # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
                 if value.has_key?('@reverse')
@@ -184,7 +191,7 @@ module JSON::LD
                 next
               when '@explicit', '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
                 # Framing keywords
-                log_depth { [expand(value, expanded_property, context, options)].flatten }
+                log_depth { [expand(value, expanded_property, context, ordered: ordered)].flatten }
               else
                 # Skip unknown keyword
                 next
@@ -203,7 +210,7 @@ module JSON::LD
               ary = []
 
               # For each key-value pair language-language value in value, ordered lexicographically by language
-              keys = options[:ordered] ? value.keys.sort : value.keys
+              keys = ordered ? value.keys.sort : value.keys
               keys.each do |k|
                 [value[k]].flatten.each do |item|
                   # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
@@ -226,10 +233,10 @@ module JSON::LD
               ary = []
 
               # For each key-value in the object:
-              keys = options[:ordered] ? value.keys.sort : value.keys
+              keys = ordered ? value.keys.sort : value.keys
               keys.each do |k|
                 # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
-                index_value = log_depth { expand([value[k]].flatten, key, context, options) }
+                index_value = log_depth { expand([value[k]].flatten, key, context, ordered: ordered) }
                 index_value.each do |item|
                   item['@index'] ||= k
                   ary << item
@@ -238,7 +245,7 @@ module JSON::LD
               ary
             else
               # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
-              log_depth { expand(value, key, context, options) }
+              log_depth { expand(value, key, context, ordered: ordered) }
             end
 
             # If expanded value is null, ignore key by continuing to the next key from element.
@@ -323,13 +330,13 @@ module JSON::LD
           # If active property is null or @graph, drop free-floating values as follows:
           if (active_property || '@graph') == '@graph' &&
             (output_object.keys.any? {|k| %w(@value @list).include?(k)} ||
-             (output_object.keys - %w(@id)).empty?)
+             (output_object.keys - %w(@id)).empty? && !keep_free_floating_nodes)
             log_debug(" =>") { "empty top-level: " + output_object.inspect}
             return nil
           end
 
           # Re-order result keys if ordering
-          if options[:ordered]
+          if ordered
             output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
           else
             output_object
