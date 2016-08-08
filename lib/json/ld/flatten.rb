@@ -14,17 +14,13 @@ module JSON::LD
     #   The name assigned to the current input if it is a bnode
     # @param [Array] list
     #   List to append to, nil for none
-    def create_node_map(input,
-                        graphs,
-                        graph = '@default',
-                        name  = nil,
-                        list  = nil)
+    def create_node_map(input, graphs, graph: '@default', name: nil, list: nil)
       log_depth do
         log_debug("node_map") {"graph: #{graph}, input: #{input.inspect}, name: #{name}"}
         case input
         when Array
           # If input is an array, process each entry in input recursively by passing item for input, node map, active graph, active subject, active property, and list.
-          input.map {|o| create_node_map(o, graphs, graph, nil, list)}
+          input.map {|o| create_node_map(o, graphs, graph: graph, list: list)}
         when Hash
           type = input['@type']
           if value?(input)
@@ -61,7 +57,7 @@ module JSON::LD
                   items.each do |item|
                     item_name = item['@id']
                     item_name = namer.get_name(item_name) if blank_node?(item_name)
-                    create_node_map(item, graphs, graph, item_name)
+                    create_node_map(item, graphs, graph: graph, name: item_name)
                     add_value(graphs[graph][item_name],
                               reverse_property,
                               referenced_node,
@@ -72,7 +68,7 @@ module JSON::LD
               when '@graph'
                 graphs[name] ||= {}
                 g = graph == '@merged' ? graph : name
-                create_node_map(objects, graphs, g)
+                create_node_map(objects, graphs, graph: g)
               when /^@(?!type)/
                 # copy non-@type keywords
                 if property == '@index' && subject['@index']
@@ -98,15 +94,15 @@ module JSON::LD
 
                     # add reference and recurse
                     add_value(subject, property, {'@id' => id}, property_is_array: true, allow_duplicate: false)
-                    create_node_map(o, graphs, graph, id)
+                    create_node_map(o, graphs, graph: graph, name: id)
                   when list?(o)
                     olist = []
-                    create_node_map(o['@list'], graphs, graph, name, olist)
+                    create_node_map(o['@list'], graphs, graph: graph, name: name, list: olist)
                     o = {'@list' => olist}
                     add_value(subject, property, o, property_is_array: true, allow_duplicate: true)
                   else
                     # handle @value
-                    create_node_map(o, graphs, graph, name)
+                    create_node_map(o, graphs, graph: graph, name: name)
                     add_value(subject, property, o, property_is_array: true, allow_duplicate: false)
                   end
                 end

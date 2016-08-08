@@ -70,12 +70,6 @@ module JSON::LD
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
     # @option options [String] :processingMode ("json-ld-1.0")
     #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
-    # @option options [String] :produceGeneralizedRdf (false)
-    #   Unless the produce generalized RDF flag is set to true, RDF triples containing a blank node predicate are excluded from output.
-    # @option options [Boolean] :useNativeTypes (false)
-    #   If set to `true`, the JSON-LD processor will use native datatypes for expression xsd:integer, xsd:boolean, and xsd:double values, otherwise, it will use the expanded form.
-    # @option options [Boolean] :useRdfType (false)
-    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -141,6 +135,9 @@ module JSON::LD
         end
       end
     end
+
+    # This is used internally only
+    private :initialize
     
     ##
     # Expands the given input according to the steps in the Expansion Algorithm. The input must be copied, expanded and returned
@@ -152,8 +149,8 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the expansion upon.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
-    # @option options [Boolean] :framing Internal use for framing
-    # @option options [Boolean] :keep_free_floating_nodes Internal use for framing
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
     # @raise [JsonLdError]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
@@ -209,9 +206,9 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded = options[:expanded] ? input : API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options)
 
-      API.new(expanded, context, options) do
+      API.new(expanded_input, context, options) do
         log_debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value, nil)
 
@@ -299,7 +296,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
     #   Other options passed to {JSON::LD::API.expand}
-    # @option options ['@last', '@always', '@never', '@link'] :embed ('@link')
+    # @option options ['@last', '@always', '@never', '@link'] :embed ('@last')
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
@@ -361,7 +358,7 @@ module JSON::LD
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         old_logger, @options[:logger] = @options[:logger], []
-        create_node_map(value, framing_state[:graphs], '@merged')
+        create_node_map(value, framing_state[:graphs], graph: '@merged')
         @options[:logger] = old_logger
         framing_state[:subjects] = framing_state[:graphs]['@merged']
         log_debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -454,6 +451,8 @@ module JSON::LD
     # @param [Array<RDF::Statement>] input
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
+    # @option options [Boolean] :useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
@@ -461,11 +460,11 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     def self.fromRdf(input, options = {}, &block)
-      options = {useNativeTypes: false}.merge!(options)
+      useRdfType = options.fetch(:useRdfType, false)
       result = nil
 
       API.new(nil, nil, options) do |api|
-        result = api.from_statements(input)
+        result = api.from_statements(input, useRdfType: useRdfType)
       end
 
       block_given? ? yield(result) : result

@@ -737,24 +737,25 @@ module JSON::LD
     # @param [String] value
     #   A keyword, term, prefix:suffix or possibly relative IRI
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] documentRelative (false)
-    # @option options [Boolean] vocab (false)
-    # @option options [Hash] local_context
+    # @param [Boolean] documentRelative (false)
+    # @param [Boolean] vocab (false)
+    # @param [RDF::URI] base
+    # @param [Hash] local_context
     #   Used during Context Processing.
-    # @option options [Hash] defined
+    # @param [Hash] defined
     #   Used during Context Processing.
+    # @param [Boolean] quiet (false)
+    # @param [Hash] options ({})
     # @return [RDF::URI, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
-    def expand_iri(value, options = {})
+    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: {}, quiet: false, **options)
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
       log_depth(options) do
-        log_debug("expand_iri") {"value: #{value.inspect}"} unless options[:quiet]
-        local_context = options[:local_context]
-        defined = options.fetch(:defined, {})
+        log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
 
         # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
         if local_context && local_context.has_key?(value) && !defined[value]
@@ -762,15 +763,15 @@ module JSON::LD
         end
 
         # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
-        if options[:vocab] && (v_td = term_definitions[value])
-          log_debug("") {"match with #{v_td.id}"} unless options[:quiet]
+        if vocab && (v_td = term_definitions[value])
+          log_debug("") {"match with #{v_td.id}"} unless quiet
           return v_td.id
         end
 
         # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
         if value.include?(':')
           prefix, suffix = value.split(':', 2)
-          log_debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{vocab.inspect}"} unless options[:quiet]
+          log_debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{self.vocab.inspect}"} unless quiet
 
           # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
           return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
@@ -789,15 +790,15 @@ module JSON::LD
             RDF::URI(value)
           end
 
-          log_debug("") {"=> #{result.inspect}"} unless options[:quiet]
+          log_debug("") {"=> #{result.inspect}"} unless quiet
           return result
         end
-        log_debug("") {"=> #{result.inspect}"} unless options[:quiet]
+        log_debug("") {"=> #{result.inspect}"} unless quiet
 
-        result = if options[:vocab] && vocab
+        result = if vocab && self.vocab
           # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
-          vocab + value
-        elsif options[:documentRelative] && base = options.fetch(:base, self.base)
+          self.vocab + value
+        elsif documentRelative && (base ||= self.base)
           # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           value = RDF::URI(value)
           value.absolute? ? value : RDF::URI(base).join(value)
@@ -807,7 +808,7 @@ module JSON::LD
         else
           RDF::URI(value)
         end
-        log_debug("") {"=> #{result}"} unless options[:quiet]
+        log_debug("") {"=> #{result}"} unless quiet
         result
       end
     end
@@ -816,35 +817,34 @@ module JSON::LD
     # Compacts an absolute IRI to the shortest matching term or compact IRI
     #
     # @param [RDF::URI] iri
-    # @param  [Hash{Symbol => Object}] options ({})
-    # @option options [Object] :value
+    # @param [Object] value
     #   Value, used to select among various maps for the same IRI
-    # @option options [Boolean] :vocab
+    # @param [Boolean] :vocab
     #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
-    # @option options [Boolean] :reverse
+    # @param [Boolean] reverse
     #   specifies whether a reverse property is being compacted 
+    # @param [Boolean] quiet (false)
+    # @param  [Hash{Symbol => Object}] options ({})
     #
     # @return [String] compacted form of IRI
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-compaction
-    def compact_iri(iri, options = {})
+    def compact_iri(iri, value: nil, vocab: nil, reverse: false, quiet: false, **options)
       return if iri.nil?
       iri = iri.to_s
-      log_debug("compact_iri(#{iri.inspect}", options) {options.inspect} unless options[:quiet]
+      log_debug("compact_iri(#{iri.inspect}", options) {[value, vocab, reverse].inspect} unless quiet
       log_depth(options) do
 
-        value = options.fetch(:value, nil)
-
-        if options[:vocab] && inverse_context.has_key?(iri)
-          log_debug("") {"vocab and key in inverse context"} unless options[:quiet]
+        if vocab && inverse_context.has_key?(iri)
+          log_debug("") {"vocab and key in inverse context"} unless quiet
           default_language = self.default_language || @none
           containers = []
           tl, tl_value = "@language", "@null"
           containers << '@index' if index?(value)
-          if options[:reverse]
+          if reverse
             tl, tl_value = "@type", "@reverse"
             containers << '@set'
           elsif list?(value)
-            log_debug("") {"list(#{value.inspect})"} unless options[:quiet]
+            log_debug("") {"list(#{value.inspect})"} unless quiet
             # if value is a list object, then set type/language and type/language value to the most specific values that work for all items in the list as follows:
             containers << "@list" unless index?(value)
             list = value['@list']
@@ -865,25 +865,25 @@ module JSON::LD
               end
               common_language ||= item_language
               if item_language != common_language && value?(item)
-                log_debug("") {"-- #{item_language} conflicts with #{common_language}, use @none"} unless options[:quiet]
+                log_debug("") {"-- #{item_language} conflicts with #{common_language}, use @none"} unless quiet
                 common_language = '@none'
               end
               common_type ||= item_type
               if item_type != common_type
                 common_type = '@none'
-                log_debug("") {"#{item_type} conflicts with #{common_type}, use @none"} unless options[:quiet]
+                log_debug("") {"#{item_type} conflicts with #{common_type}, use @none"} unless quiet
               end
             end
 
             common_language ||= '@none'
             common_type ||= '@none'
-            log_debug("") {"common type: #{common_type}, common language: #{common_language}"} unless options[:quiet]
+            log_debug("") {"common type: #{common_type}, common language: #{common_language}"} unless quiet
             if common_type != '@none'
               tl, tl_value = '@type', common_type
             else
               tl_value = common_language
             end
-            log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
+            log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
           else
             if value?(value)
               if value.has_key?('@language') && !index?(value)
@@ -897,7 +897,7 @@ module JSON::LD
               tl, tl_value = '@type', '@id'
             end
             containers << '@set'
-            log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless options[:quiet]
+            log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
           end
 
           containers << '@none'
@@ -914,17 +914,17 @@ module JSON::LD
           else
             preferred_values.concat([tl_value, '@none'])
           end
-          log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless options[:quiet]
+          log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless quiet
           if p_term = select_term(iri, containers, tl, preferred_values)
-            log_debug("") {"=> term: #{p_term.inspect}"} unless options[:quiet]
+            log_debug("") {"=> term: #{p_term.inspect}"} unless quiet
             return p_term
           end
         end
 
         # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
-        if options[:vocab] && vocab && iri.start_with?(vocab) && iri.length > vocab.length
-          suffix = iri[vocab.length..-1]
-          log_debug("") {"=> vocab suffix: #{suffix.inspect}"} unless options[:quiet]
+        if vocab && self.vocab && iri.start_with?(self.vocab) && iri.length > self.vocab.length
+          suffix = iri[self.vocab.length..-1]
+          log_debug("") {"=> vocab suffix: #{suffix.inspect}"} unless quiet
           return suffix unless term_definitions.has_key?(suffix)
         end
 
@@ -944,7 +944,7 @@ module JSON::LD
         end
 
         if !candidates.empty?
-          log_debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
+          log_debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless quiet
           return candidates.term_sort.first
         end
 
@@ -960,18 +960,18 @@ module JSON::LD
             end
 
           if !candidates.empty?
-            log_debug("") {"=> standard prefies: #{candidates.term_sort.first.inspect}"} unless options[:quiet]
+            log_debug("") {"=> standard prefies: #{candidates.term_sort.first.inspect}"} unless quiet
             return candidates.term_sort.first
           end
         end
 
-        if !options[:vocab]
+        if !vocab
           # transform iri to a relative IRI using the document's base IRI
           iri = remove_base(iri)
-          log_debug("") {"=> relative iri: #{iri.inspect}"} unless options[:quiet]
+          log_debug("") {"=> relative iri: #{iri.inspect}"} unless quiet
           return iri
         else
-          log_debug("") {"=> absolute iri: #{iri.inspect}"} unless options[:quiet]
+          log_debug("") {"=> absolute iri: #{iri.inspect}"} unless quiet
           return iri
         end
       end
@@ -986,14 +986,13 @@ module JSON::LD
     #   Associated property used to find coercion rules
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
+    # @param [Boolean] useNativeTypes (false) use native representations
     # @param  [Hash{Symbol => Object}] options
-    # @option options [Boolean] :useNativeTypes (false) use native representations
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
-    def expand_value(property, value, options = {})
-      options = {useNativeTypes: false}.merge!(options)
+    def expand_value(property, value, useNativeTypes: false, **options)
       log_depth(options) do
         log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
@@ -1021,7 +1020,7 @@ module JSON::LD
         when RDF::Literal
           log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
           res = {}
-          if options[:useNativeTypes] && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+          if useNativeTypes && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
             res['@value'] = value.object
             res['@type'] = uri(coerce(property)) if coerce(property)
           else
