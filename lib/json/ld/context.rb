@@ -6,6 +6,18 @@ module JSON::LD
     include Utils
     include RDF::Util::Logger
 
+    ##
+    # Preloaded contexts.
+    # To avoid runtime context parsing and downloading, contexts may be pre-loaded by implementations.
+    # @return [Hash{Symbol => Context}]
+    PRELOADED = {}
+
+    class << self
+      def add_preloaded(url, context)
+        PRELOADED[url.to_sym] = context
+      end
+    end
+
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
     class TermDefinition
       # @return [RDF::URI] IRI map
@@ -279,9 +291,11 @@ module JSON::LD
             end
           when String, RDF::URI
             log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
-            # Load context document, if it is a string
+
             # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
             context = RDF::URI(result.context_base || result.base).join(context)
+            context_canon = RDF::URI(context).canonicalize
+            context_canon.scheme = 'http' if context_canon.scheme == 'https'
 
             raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
             remote_contexts << context.to_s
@@ -290,34 +304,42 @@ module JSON::LD
             context_no_base.base = nil
             context_no_base.context_base = context.to_s
 
-            begin
-              context_opts = @options.dup
-              context_opts.delete(:headers)
-              @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
-                # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                jo = case remote_doc.document
-                when String then MultiJson.load(remote_doc.document)
-                else remote_doc.document
-                end
-                raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
-                context = jo['@context']
-                if @options[:processingMode] == "json-ld-1.0"
-                  context_no_base.provided_context = context.dup
-                end
-              end
-            rescue JsonLdError::LoadingDocumentFailed => e
-              log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
-            rescue JsonLdError
-              raise
-            rescue Exception => e
-              log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
-            end
+            if PRELOADED[context_canon.to_s.to_sym]
+              # If we have a cached context, merge it into the current context (result) and use as the new context
+              log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
+              context = context_no_base.merge!(PRELOADED[context_canon.to_s.to_sym])
+            else
 
-            # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-            context = context_no_base.parse(context, remote_contexts.dup)
-            context.provided_context = result.provided_context
+              # Load context document, if it is a string
+              begin
+                context_opts = @options.dup
+                context_opts.delete(:headers)
+                @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
+                  # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
+                  jo = case remote_doc.document
+                  when String then MultiJson.load(remote_doc.document)
+                  else remote_doc.document
+                  end
+                  raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
+                  context = jo['@context']
+                  if @options[:processingMode] == "json-ld-1.0"
+                    context_no_base.provided_context = context.dup
+                  end
+                end
+              rescue JsonLdError::LoadingDocumentFailed => e
+                log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+                raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
+              rescue JsonLdError
+                raise
+              rescue Exception => e
+                log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+                raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}", e.backtrace
+              end
+
+              # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
+              context = context_no_base.parse(context, remote_contexts.dup)
+              context.provided_context = result.provided_context
+            end
             context.base ||= result.base
             result = context
             log_debug("parse") {"=> provided_context: #{context.inspect}"}
@@ -1314,9 +1336,9 @@ module JSON::LD
       b = base.to_s
       return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
 
-      @base_and_parents.each_with_index do |b, index|
-        next unless iri.start_with?(b)
-        rel = "../" * index + iri[b.length..-1]
+      @base_and_parents.each_with_index do |bb, index|
+        next unless iri.start_with?(bb)
+        rel = "../" * index + iri[bb.length..-1]
         return rel.empty? ? "./" : rel
       end
       iri

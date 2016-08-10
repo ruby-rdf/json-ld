@@ -92,6 +92,27 @@ describe JSON::LD::Context do
           expect(ec.provided_context).to produce(ctx, logger)
         end
       end
+
+      context "pre-loaded remote" do
+        let(:ctx) {"http://example.com/preloaded"}
+        before(:all) {
+          JSON::LD::Context.add_preloaded("http://example.com/preloaded",
+          JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+        )}
+        after(:all) {JSON::LD::Context::PRELOADED.clear}
+
+        it "does not load referenced context" do
+          expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
+          ec = subject.parse(ctx)
+        end
+
+        it "uses loaded context" do
+          ec = subject.parse(ctx)
+          expect(ec.send(:mappings)).to produce({
+            "foo"   => "http://example.com/"
+          }, logger)
+        end
+      end
     end
 
     context "Array" do
