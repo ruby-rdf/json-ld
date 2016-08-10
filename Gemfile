@@ -20,6 +20,7 @@ group :development, :test do
   gem 'simplecov',  require: false, platform: :mri
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
+  gem 'benchmark-ips'
 end
 
 group :debug do
