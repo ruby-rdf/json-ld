@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "bundler/setup"
 require 'json/ld'
+#require File.expand_path('../schema-context', __FILE__)
 require 'benchmark/ips'
 
 source = JSON.parse %({

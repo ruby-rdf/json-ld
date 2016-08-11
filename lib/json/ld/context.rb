@@ -13,8 +13,12 @@ module JSON::LD
     PRELOADED = {}
 
     class << self
+      ##
+      # Add preloaded context
+      # @param [String, RDF::URI] url
+      # @param [Context] context
       def add_preloaded(url, context)
-        PRELOADED[url.to_sym] = context
+        PRELOADED[url.to_s.freeze] = context
       end
     end
 
@@ -268,14 +272,14 @@ module JSON::LD
       @vocab = case value
       when /_:/
         value
-      when String
-        v = as_resource(value)
-        raise JsonLdError::InvalidVocabMapping, "@value must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative? && @options[:validate]
+      when String, RDF::URI
+        v = as_resource(value.to_s)
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative? && @options[:validate]
         v
       when nil
         nil
       else
-        raise JsonLdError::InvalidVocabMapping, "@value must be a string: #{value.inspect}"
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}"
       end
     end
 
@@ -336,10 +340,10 @@ module JSON::LD
             context_no_base.base = nil
             context_no_base.context_base = context.to_s
 
-            if PRELOADED[context_canon.to_s.to_sym]
+            if PRELOADED[context_canon.to_s]
               # If we have a cached context, merge it into the current context (result) and use as the new context
               log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
-              context = context_no_base.merge!(PRELOADED[context_canon.to_s.to_sym])
+              context = context_no_base.merge!(PRELOADED[context_canon.to_s])
             else
 
               # Load context document, if it is a string
@@ -1196,11 +1200,14 @@ module JSON::LD
       term_defs = term_definitions.map do |term, td|
         "    " + term.inspect + " => " + td.to_rb
       end
-      defn << "term_definitions: {\n#{term_defs.join(",\n")  }\n}" unless term_defs.empty?
-      %(require 'json/ld'
+      defn << "term_definitions: {\n#{term_defs.join(",\n")  }\n  }" unless term_defs.empty?
+      %(# -*- encoding: utf-8 -*-
+      # frozen_string_literal: true
+      # This file generated automatically from #{context_base}
+      require 'json/ld'
       class JSON::LD::Context
       ).gsub(/^      /, '') +
-      "  PRELOADED[#{RDF::URI(context_base).canonicalize.to_s.inspect}] = Context.new(" + defn.join(", ")  + ")\nend\n"
+      "  add_preloaded(#{RDF::URI(context_base).canonicalize.to_s.inspect}, Context.new(" + defn.join(", ")  + "))\nend\n"
     end
 
     def inspect

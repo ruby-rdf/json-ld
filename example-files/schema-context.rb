@@ -1,6 +1,9 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
+# This file generated automatically from http://schema.org
 require 'json/ld'
 class JSON::LD::Context
-  PRELOADED["http://schema.org/"] = JSON::LD::Context.new(vocab: "http://schema.org/", term_definitions: {
+  add_preloaded("http://schema.org/", new(vocab: "http://schema.org/", term_definitions: {
     "type" => TermDefinition.new("type", id: "@type", simple: true),
     "id" => TermDefinition.new("id", id: "@id", simple: true),
     "schema" => TermDefinition.new("schema", id: "http://schema.org/", simple: true),
@@ -2112,5 +2115,5 @@ class JSON::LD::Context
     "worstRating" => TermDefinition.new("worstRating", id: "http://schema.org/worstRating"),
     "yearlyRevenue" => TermDefinition.new("yearlyRevenue", id: "http://schema.org/yearlyRevenue"),
     "yearsInOperation" => TermDefinition.new("yearsInOperation", id: "http://schema.org/yearsInOperation")
-  })
+}))
 end
