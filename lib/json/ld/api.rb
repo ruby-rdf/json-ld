@@ -274,7 +274,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = log_depth {compact(flattened, nil)}
+          compacted = compact(flattened, nil)
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
@@ -355,7 +355,6 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
-        #log_debug(".frame") {"context from frame: #{context.inspect}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
@@ -363,16 +362,14 @@ module JSON::LD
         create_node_map(value, framing_state[:graphs], graph: '@merged')
         @options[:logger] = old_logger
         framing_state[:subjects] = framing_state[:graphs]['@merged']
-        log_debug(".frame") {"subjects: #{framing_state[:subjects].to_json(JSON_STATE) rescue 'malformed json'}"}
 
         result = []
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))
-        log_debug(".frame") {"after frame: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         
         # Initalize context from frame
-        @context = log_depth {@context.parse(frame['@context'])}
+        @context = @context.parse(frame['@context'])
         # Compact result
-        compacted = log_depth {compact(result, nil)}
+        compacted = compact(result, nil)
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output

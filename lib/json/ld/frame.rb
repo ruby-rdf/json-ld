@@ -19,135 +19,133 @@ module JSON::LD
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, options = {})
-      log_depth do
-        parent, property = options[:parent], options[:property]
-        # Validate the frame
-        validate_frame(state, frame)
-        frame = frame.first if frame.is_a?(Array)
+      parent, property = options[:parent], options[:property]
+      # Validate the frame
+      validate_frame(state, frame)
+      frame = frame.first if frame.is_a?(Array)
 
-        # Get values for embedOn and explicitOn
-        flags = {
-          embed: get_frame_flag(frame, options, :embed),
-          explicit: get_frame_flag(frame, options, :explicit),
-          requireAll: get_frame_flag(frame, options, :requireAll),
-        }
+      # Get values for embedOn and explicitOn
+      flags = {
+        embed: get_frame_flag(frame, options, :embed),
+        explicit: get_frame_flag(frame, options, :explicit),
+        requireAll: get_frame_flag(frame, options, :requireAll),
+      }
 
-        # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
-        # This gives us a hash of objects indexed by @id
-        matches = filter_subjects(state, subjects, frame, flags)
+      # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
+      # This gives us a hash of objects indexed by @id
+      matches = filter_subjects(state, subjects, frame, flags)
 
-        # For each id and node from the set of matched subjects ordered by id
-        matches.keys.kw_sort.each do |id|
-          subject = matches[id]
+      # For each id and node from the set of matched subjects ordered by id
+      matches.keys.kw_sort.each do |id|
+        subject = matches[id]
 
-          if flags[:embed] == '@link' && state[:link].has_key?(id)
-            # TODO: may want to also match an existing linked subject
-            # against the current frame ... so different frames could
-            # produce different subjects that are only shared in-memory
-            # when the frames are the same
+        if flags[:embed] == '@link' && state[:link].has_key?(id)
+          # TODO: may want to also match an existing linked subject
+          # against the current frame ... so different frames could
+          # produce different subjects that are only shared in-memory
+          # when the frames are the same
 
-            # add existing linked subject
-            add_frame_output(parent, property, state[:link][id])
-            next
-          end
-
-          # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
-          state = state.merge(uniqueEmbeds: {}) if property.nil?
-
-          output = {'@id' => id}
-          state[:link][id] = output
-
-          # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
-          if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
-            add_frame_output(parent, property, output)
-            next
-          end
-
-          # if only the last match should be embedded
-          if flags[:embed] == '@last'
-            # remove any existing embed
-            remove_embed(state, id) if state[:uniqueEmbeds].include?(id)
-            state[:uniqueEmbeds][id] = {
-              parent: parent,
-              property: property
-            }
-          end
-
-          # push matching subject onto stack to enable circular embed checks
-          state[:subjectStack] << subject
-
-          # iterate over subject properties in order
-          subject.keys.kw_sort.each do |prop|
-            objects = subject[prop]
-
-            # copy keywords to output
-            if prop.start_with?('@')
-              output[prop] = objects.dup
-              next
-            end
-
-            # explicit is on and property isn't in frame, skip processing
-            next if flags[:explicit] && !frame.has_key?(prop)
-
-            # add objects
-            objects.each do |o|
-              case
-              when list?(o)
-                # add empty list
-                list = {'@list' => []}
-                add_frame_output(output, prop, list)
-
-                src = o['@list']
-                src.each do |oo|
-                  if node_reference?(oo)
-                    subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
-                    subframe ||= create_implicit_frame(flags)
-                    frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
-                  else
-                    add_frame_output(list, '@list', oo.dup)
-                  end
-                end
-              when node_reference?(o)
-                # recurse into subject reference
-                subframe = frame[prop] || create_implicit_frame(flags)
-                frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
-              else
-                # include other values automatically
-                add_frame_output(output, prop, o.dup)
-              end
-            end
-          end
-
-          # handle defaults in order
-          frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
-            # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
-            n = frame[prop].first || {}
-            omit_default_on = get_frame_flag(n, options, :omitDefault)
-            if !omit_default_on && !output[prop]
-              preserve = n.fetch('@default', '@null').dup
-              preserve = [preserve] unless preserve.is_a?(Array)
-              output[prop] = [{'@preserve' => preserve}]
-            end
-          end
-
-          # If frame has @reverse, embed identified nodes having this subject as a value of the associated property.
-          frame.fetch('@reverse', {}).each do |reverse_prop, subframe|
-            state[:subjects].each do |r_id, node|
-              if Array(node[reverse_prop]).any? {|v| v['@id'] == id}
-                # Node has property referencing this subject
-                # recurse into  reference
-                (output['@reverse'] ||= {})[reverse_prop] ||= []
-                frame(state, [r_id], subframe, options.merge(parent: output['@reverse'][reverse_prop]))
-              end
-            end
-          end
-
-          # add output to parent
-          add_frame_output(parent, property, output)
-
-          # pop matching subject from circular ref-checking stack
-          state[:subjectStack].pop()
+          # add existing linked subject
+          add_frame_output(parent, property, state[:link][id])
+          next
         end
+
+        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
+        state = state.merge(uniqueEmbeds: {}) if property.nil?
+
+        output = {'@id' => id}
+        state[:link][id] = output
+
+        # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
+        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
+          add_frame_output(parent, property, output)
+          next
+        end
+
+        # if only the last match should be embedded
+        if flags[:embed] == '@last'
+          # remove any existing embed
+          remove_embed(state, id) if state[:uniqueEmbeds].include?(id)
+          state[:uniqueEmbeds][id] = {
+            parent: parent,
+            property: property
+          }
+        end
+
+        # push matching subject onto stack to enable circular embed checks
+        state[:subjectStack] << subject
+
+        # iterate over subject properties in order
+        subject.keys.kw_sort.each do |prop|
+          objects = subject[prop]
+
+          # copy keywords to output
+          if prop.start_with?('@')
+            output[prop] = objects.dup
+            next
+          end
+
+          # explicit is on and property isn't in frame, skip processing
+          next if flags[:explicit] && !frame.has_key?(prop)
+
+          # add objects
+          objects.each do |o|
+            case
+            when list?(o)
+              # add empty list
+              list = {'@list' => []}
+              add_frame_output(output, prop, list)
+
+              src = o['@list']
+              src.each do |oo|
+                if node_reference?(oo)
+                  subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
+                  subframe ||= create_implicit_frame(flags)
+                  frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
+                else
+                  add_frame_output(list, '@list', oo.dup)
+                end
+              end
+            when node_reference?(o)
+              # recurse into subject reference
+              subframe = frame[prop] || create_implicit_frame(flags)
+              frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
+            else
+              # include other values automatically
+              add_frame_output(output, prop, o.dup)
+            end
+          end
+        end
+
+        # handle defaults in order
+        frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
+          # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
+          n = frame[prop].first || {}
+          omit_default_on = get_frame_flag(n, options, :omitDefault)
+          if !omit_default_on && !output[prop]
+            preserve = n.fetch('@default', '@null').dup
+            preserve = [preserve] unless preserve.is_a?(Array)
+            output[prop] = [{'@preserve' => preserve}]
+          end
+        end
+
+        # If frame has @reverse, embed identified nodes having this subject as a value of the associated property.
+        frame.fetch('@reverse', {}).each do |reverse_prop, subframe|
+          state[:subjects].each do |r_id, node|
+            if Array(node[reverse_prop]).any? {|v| v['@id'] == id}
+              # Node has property referencing this subject
+              # recurse into  reference
+              (output['@reverse'] ||= {})[reverse_prop] ||= []
+              frame(state, [r_id], subframe, options.merge(parent: output['@reverse'][reverse_prop]))
+            end
+          end
+        end
+
+        # add output to parent
+        add_frame_output(parent, property, output)
+
+        # pop matching subject from circular ref-checking stack
+        state[:subjectStack].pop()
       end
     end
 
@@ -157,35 +155,33 @@ module JSON::LD
     # @param [Array, Hash] input
     # @return [Array, Hash]
     def cleanup_preserve(input)
-      log_depth do
-        result = case input
-        when Array
-          # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-          input.map {|o| cleanup_preserve(o)}.compact
-        when Hash
-          output = Hash.new
-          input.each do |key, value|
-            if key == '@preserve'
-              # replace all key-value pairs where the key is @preserve with the value from the key-pair
-              output = cleanup_preserve(value)
-            else
-              v = cleanup_preserve(value)
+      result = case input
+      when Array
+        # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
+        input.map {|o| cleanup_preserve(o)}.compact
+      when Hash
+        output = Hash.new
+        input.each do |key, value|
+          if key == '@preserve'
+            # replace all key-value pairs where the key is @preserve with the value from the key-pair
+            output = cleanup_preserve(value)
+          else
+            v = cleanup_preserve(value)
 
-              # Because we may have added a null value to an array, we need to clean that up, if we possible
-              v = v.first if v.is_a?(Array) && v.length == 1 &&
-                context.expand_iri(key) != "@graph" && context.container(key).nil?
-              output[key] = v
-            end
+            # Because we may have added a null value to an array, we need to clean that up, if we possible
+            v = v.first if v.is_a?(Array) && v.length == 1 &&
+              context.expand_iri(key) != "@graph" && context.container(key).nil?
+            output[key] = v
           end
-          output
-        when '@null'
-          # If the value from the key-pair is @null, replace the value with nul
-          nil
-        else
-          input
         end
-        result
+        output
+      when '@null'
+        # If the value from the key-pair is @null, replace the value with nul
+        nil
+      else
+        input
       end
+      result
     end
 
     private
@@ -337,17 +333,14 @@ module JSON::LD
 
       # recursively remove dependent dangling embeds
       def remove_dependents(id, embeds)
-
-        log_depth do
-          # get embed keys as a separate array to enable deleting keys in map
-          embeds.each do |id_dep, e|
-            p = e.fetch(:parent, {}) if e.is_a?(Hash)
-            next unless p.is_a?(Hash)
-            pid = p.fetch('@id', nil)
-            if pid == id
-              embeds.delete(id_dep)
-              remove_dependents(id_dep, embeds)
-            end
+        # get embed keys as a separate array to enable deleting keys in map
+        embeds.each do |id_dep, e|
+          p = e.fetch(:parent, {}) if e.is_a?(Hash)
+          next unless p.is_a?(Hash)
+          pid = p.fetch('@id', nil)
+          if pid == id
+            embeds.delete(id_dep)
+            remove_dependents(id_dep, embeds)
           end
         end
       end

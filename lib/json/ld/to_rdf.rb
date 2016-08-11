@@ -40,14 +40,14 @@ module JSON::LD
       end
 
       subject = item['@id'] ? as_resource(item['@id']) : node
-      log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
+      #log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
       item.each do |property, values|
         case property
         when '@type'
           # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
           values.each do |v|
             object = as_resource(v)
-            log_debug("item_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
+            #log_debug("item_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
             yield RDF::Statement(subject, RDF.type, object, graph_name: graph_name)
           end
         when '@graph'
@@ -59,11 +59,11 @@ module JSON::LD
           raise "Huh?" unless values.is_a?(Hash)
           values.each do |prop, vv|
             predicate = as_resource(prop)
-            log_debug("item_to_rdf")  {"@reverse predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
+            #log_debug("item_to_rdf")  {"@reverse predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
             # For each item in values
             vv.each do |v|
               if list?(v)
-                log_debug("item_to_rdf")  {"list: #{v.inspect}"}
+                #log_debug("item_to_rdf")  {"list: #{v.inspect}"}
                 # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
                 object = parse_list(v['@list'], graph_name: graph_name, &block)
 
@@ -72,7 +72,7 @@ module JSON::LD
               else
                 # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
                 object = item_to_rdf(v, graph_name: graph_name, &block)
-                log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
+                #log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # yield subject, prediate, and literal to results.
                 yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
               end
@@ -84,12 +84,12 @@ module JSON::LD
           # Otherwise, property is an IRI or Blank Node identifier
           # Initialize predicate from  property as an IRI or Blank node
           predicate = as_resource(property)
-          log_debug("item_to_rdf")  {"predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
+          #log_debug("item_to_rdf")  {"predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
 
           # For each item in values
           values.each do |v|
             if list?(v)
-              log_debug("item_to_rdf")  {"list: #{v.inspect}"}
+              #log_debug("item_to_rdf")  {"list: #{v.inspect}"}
               # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
               object = parse_list(v['@list'], graph_name: graph_name, &block)
 
@@ -98,7 +98,7 @@ module JSON::LD
             else
               # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
               object = item_to_rdf(v, graph_name: graph_name, &block)
-              log_debug("item_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
+              #log_debug("item_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
               # yield subject, prediate, and literal to results.
               yield RDF::Statement(subject, predicate, object, graph_name: graph_name)
             end
@@ -119,7 +119,7 @@ module JSON::LD
     # @return [Array<RDF::Statement>]
     #   Statements for each item in the list
     def parse_list(list, graph_name: nil, &block)
-      log_debug('parse_list') {"list: #{list.inspect}"}
+      #log_debug('parse_list') {"list: #{list.inspect}"}
 
       last = list.pop
       result = first_bnode = last ? node : RDF.nil
