@@ -14,11 +14,12 @@ module JSON::LD
 
     class << self
       ##
-      # Add preloaded context
+      # Add preloaded context. In the block form, the context is lazy evaulated on first use.
       # @param [String, RDF::URI] url
-      # @param [Context] context
-      def add_preloaded(url, context)
-        PRELOADED[url.to_s.freeze] = context
+      # @param [Context] context (nil)
+      # @yieldreturn [Context]
+      def add_preloaded(url, context = nil, &block)
+        PRELOADED[url.to_s.freeze] = context || block
       end
     end
 
@@ -343,6 +344,12 @@ module JSON::LD
             if PRELOADED[context_canon.to_s]
               # If we have a cached context, merge it into the current context (result) and use as the new context
               log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
+
+              # If this is a Proc, then replace the entry with the result of running the Proc
+              if PRELOADED[context_canon.to_s].respond_to?(:call)
+                log_debug("parse") {"=> (call)"}
+                PRELOADED[context_canon.to_s] = PRELOADED[context_canon.to_s].call
+              end
               context = context_no_base.merge!(PRELOADED[context_canon.to_s])
             else
 
@@ -1198,16 +1205,16 @@ module JSON::LD
       defn << "language: #{self.default_language.inspect}" if self.default_language
       defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
       term_defs = term_definitions.map do |term, td|
-        "    " + term.inspect + " => " + td.to_rb
+        "      " + term.inspect + " => " + td.to_rb
       end
-      defn << "term_definitions: {\n#{term_defs.join(",\n")  }\n  }" unless term_defs.empty?
+      defn << "term_definitions: {\n#{term_defs.join(",\n")    }\n    }" unless term_defs.empty?
       %(# -*- encoding: utf-8 -*-
       # frozen_string_literal: true
       # This file generated automatically from #{context_base}
       require 'json/ld'
       class JSON::LD::Context
       ).gsub(/^      /, '') +
-      "  add_preloaded(#{RDF::URI(context_base).canonicalize.to_s.inspect}, Context.new(" + defn.join(", ")  + "))\nend\n"
+      "  add_preloaded(#{RDF::URI(context_base).canonicalize.to_s.inspect}) do\n    new(" + defn.join(", ")  + ")\n  end\nend\n"
     end
 
     def inspect
