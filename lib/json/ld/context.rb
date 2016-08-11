@@ -29,7 +29,7 @@ module JSON::LD
       # @return [String] Type mapping
       attr_accessor :type_mapping
 
-      # @return [String] Container mapping
+      # @return ['@set', '@list'] Container mapping
       attr_accessor :container_mapping
 
       # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
@@ -50,9 +50,27 @@ module JSON::LD
       # Create a new Term Mapping with an ID
       # @param [String] term
       # @param [String] id
-      def initialize(term, id = nil)
-        @term = term
-        @id = id.to_s if id
+      # @param [String] type_mapping Type mapping
+      # @param ['@set', '@list'] container_mapping
+      # @param [String] language_mapping
+      #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
+      # @param [Boolean] reverse_property
+      # @param [Boolean] simple
+      #   This is a simple term definition, not an expanded term definition
+      def initialize(term,
+                    id: nil,
+                    type_mapping: nil,
+                    container_mapping: nil,
+                    language_mapping: nil,
+                    reverse_property: false,
+                    simple: false)
+        @term               = term
+        @id                 = id.to_s           if id
+        @type_mapping       = type_mapping.to_s if type_mapping
+        @container_mapping  = container_mapping if container_mapping
+        @language_mapping   = language_mapping  if language_mapping
+        @reverse_property   = reverse_property  if reverse_property
+        @simple             = simple            if simple
       end
 
       ##
@@ -91,6 +109,19 @@ module JSON::LD
           defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
           defn
         end
+      end
+
+      ##
+      # Turn this into a source for a new instantiation
+      # @return [String]
+      def to_rb
+        defn = [%(TermDefinition.new\(#{term.inspect})]
+        %w(id type_mapping container_mapping language_mapping reverse_property simple).each do |acc|
+          v = instance_variable_get("@#{acc}".to_sym)
+          v = v.to_s if v.is_a?(RDF::Term)
+          defn << "#{acc}: #{v.inspect}" if v
+        end
+        defn.join(', ') + ")"
       end
 
       def inspect
@@ -185,12 +216,13 @@ module JSON::LD
       (options[:prefixes] || {}).each_pair do |k, v|
         next if k.nil?
         @iri_to_term[v.to_s] = k
-        @term_definitions[k.to_s] = TermDefinition.new(k, v.to_s)
+        @term_definitions[k.to_s] = TermDefinition.new(k, id: v.to_s)
         @term_definitions[k.to_s].simple = true
       end
 
       self.vocab = options[:vocab] if options[:vocab]
       self.default_language = options[:language] if options[:language]
+      @term_definitions = options[:term_definitions] if options[:term_definitions]
 
       #log_debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
       
@@ -642,14 +674,14 @@ module JSON::LD
           next if vocab && subject.to_s.start_with?(vocab)
 
           # otherwise, create a term definition
-          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+          td = term_definitions[term] = TermDefinition.new(term, id: subject.to_s)
         else
           prop_ranges = ranges.fetch(subject, [])
           # If any range is empty or member of range includes rdfs:Literal or schema:Text
           next if vocab && prop_ranges.empty? ||
                            prop_ranges.include?(RDF::SCHEMA.Text) ||
                            prop_ranges.include?(RDF::RDFS.Literal)
-          td = term_definitions[term] = TermDefinition.new(term, subject.to_s)
+          td = term_definitions[term] = TermDefinition.new(term, id: subject.to_s)
 
           # Set context typing based on first element in range
           case r = prop_ranges.first
@@ -682,7 +714,7 @@ module JSON::LD
     def set_mapping(term, value)
       log_debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
-      term_definitions[term] = TermDefinition.new(term, value)
+      term_definitions[term] = TermDefinition.new(term, id: value)
       term_definitions[term].simple = true
 
       term_sym = term.empty? ? "" : term.to_sym
@@ -746,7 +778,7 @@ module JSON::LD
         td = term_definitions.values.detect {|t| t.id == term.to_s}
 
         # Otherwise create a temporary term definition
-        term = td || TermDefinition.new(term.to_s, expand_iri(term, vocab:true))
+        term = td || TermDefinition.new(term.to_s, id: expand_iri(term, vocab:true))
       end
 
       # Now, return a term, which reverses this term
@@ -1152,11 +1184,30 @@ module JSON::LD
       end
     end
 
+    ##
+    # Turn this into a source for a new instantiation
+    # @return [String]
+    def to_rb
+      defn = []
+
+      defn << "base: #{self.base.to_s.inspect}" if self.base
+      defn << "language: #{self.default_language.inspect}" if self.default_language
+      defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
+      term_defs = term_definitions.map do |term, td|
+        "    " + term.inspect + " => " + td.to_rb
+      end
+      defn << "term_definitions: {\n#{term_defs.join(",\n")  }\n}" unless term_defs.empty?
+      %(require 'json/ld'
+      class JSON::LD::Context
+      ).gsub(/^      /, '') +
+      "  PRELOADED[#{RDF::URI(context_base).canonicalize.to_s.inspect}] = Context.new(" + defn.join(", ")  + ")\nend\n"
+    end
+
     def inspect
       v = %w([Context)
       v << "base=#{base}" if base
       v << "vocab=#{vocab}" if vocab
-      v << "def_language=#{default_language}" if default_language
+      v << "default_language=#{default_language}" if default_language
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
       v.join(" ") + "]"
     end
