@@ -333,7 +333,7 @@ module JSON::LD
           # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           context = RDF::URI(result.context_base || result.base).join(context)
           context_canon = RDF::URI(context).canonicalize
-          context_canon.scheme = 'http' if context_canon.scheme == 'https'
+          context_canon.dup.scheme = 'http'.dup if context_canon.scheme == 'https'
 
           raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
           remote_contexts << context.to_s
