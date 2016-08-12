@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 module JSON::LD
   ##
   # Streaming writer interface.
@@ -17,7 +19,7 @@ module JSON::LD
       else Context.new.parse(@options[:context])
       end
 
-      log_debug("prologue") {"context: #{context.inspect}"}
+      #log_debug("prologue") {"context: #{context.inspect}"}
       if context
         @output.puts %({"@context": #{context.serialize['@context'].to_json}, "@graph": [)
       else
@@ -37,7 +39,7 @@ module JSON::LD
     #
     # @return [void] `self`
     def stream_statement(statement)
-      log_debug("ss") {"state: #{@state.inspect}, stmt: #{statement}"}
+      #log_debug("ss") {"state: #{@state.inspect}, stmt: #{statement}"}
       if @current_graph != statement.graph_name
         end_graph
         start_graph(statement.graph_name)
@@ -72,7 +74,7 @@ module JSON::LD
     # Complete open statements
     # @return [void] `self`
     def stream_epilogue
-      log_debug("epilogue") {"state: #{@state.inspect}"}
+      #log_debug("epilogue") {"state: #{@state.inspect}"}
       end_graph
       if context
         @output.puts "\n]}"
@@ -85,7 +87,7 @@ module JSON::LD
     private
     
     def start_graph(resource)
-      log_debug("start_graph") {"state: #{@state.inspect}, resource: #{resource}"}
+      #log_debug("start_graph") {"state: #{@state.inspect}, resource: #{resource}"}
       if resource
         @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
         @output.puts %({"@id": "#{resource}", "@graph": [)
@@ -95,7 +97,7 @@ module JSON::LD
     end
 
     def end_graph
-      log_debug("end_graph") {"state: #{@state.inspect}, ctx: #{@current_graph}"}
+      #log_debug("end_graph") {"state: #{@state.inspect}, ctx: #{@current_graph}"}
       end_node
       if @current_graph
         @output.write %(]})
@@ -104,7 +106,7 @@ module JSON::LD
     end
 
     def end_node
-      log_debug("end_node") {"state: #{@state.inspect}, node: #{@current_node_def.to_json}"}
+      #log_debug("end_node") {"state: #{@state.inspect}, node: #{@current_node_def.to_json}"}
       @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
       if @current_node_def
         node_def = if context

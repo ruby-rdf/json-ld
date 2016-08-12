@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 require 'rdf/nquads'
 
 module JSON::LD
@@ -9,8 +11,10 @@ module JSON::LD
     # Representation is in expanded form
     #
     # @param [Array<RDF::Statement>, RDF::Enumerable] input
+    # @param [Boolean] useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(input)
+    def from_statements(input, useRdfType: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       node_usages_map = {}
@@ -22,7 +26,7 @@ module JSON::LD
 
       # For each triple in input
       input.each do |statement|
-        log_debug("statement") { statement.to_nquads.chomp}
+        #log_debug("statement") { statement.to_nquads.chomp}
 
         name = statement.graph_name ? ec.expand_iri(statement.graph_name).to_s : '@default'
         
@@ -38,13 +42,13 @@ module JSON::LD
           statement.object.literal?
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
-        if statement.predicate == RDF.type && statement.object.resource? && !@options[:useRdfType]
+        if statement.predicate == RDF.type && statement.object.resource? && !useRdfType
           merge_value(node, '@type', statement.object.to_s)
           next
         end
 
         # Set value to the result of using the RDF to Object Conversion algorithm, passing object and use native types.
-        value = ec.expand_value(nil, statement.object, @options)
+        value = ec.expand_value(nil, statement.object, useNativeTypes: @options[:useNativeTypes], log_depth: @options[:log_depth])
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -71,7 +75,7 @@ module JSON::LD
           list, list_nodes = [], []
 
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
-          log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
+          #log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
           while property == RDF.rest.to_s &&
               node_usages_map[node['@id']].uniq.length == 1 &&
               blank_node?(node) &&
@@ -118,7 +122,7 @@ module JSON::LD
         node.delete(:usages)
         result << node unless node_reference?(node)
       end
-      log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
+      #log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
       result
     end
   end

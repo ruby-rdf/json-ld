@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 module RDF
   class Node
     # Odd case of appending to a BNode identifier

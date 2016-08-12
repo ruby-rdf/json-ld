@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.

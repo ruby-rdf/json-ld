@@ -92,6 +92,27 @@ describe JSON::LD::Context do
           expect(ec.provided_context).to produce(ctx, logger)
         end
       end
+
+      context "pre-loaded remote" do
+        let(:ctx) {"http://example.com/preloaded"}
+        before(:all) {
+          JSON::LD::Context.add_preloaded("http://example.com/preloaded",
+          JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+        )}
+        after(:all) {JSON::LD::Context::PRELOADED.clear}
+
+        it "does not load referenced context" do
+          expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
+          ec = subject.parse(ctx)
+        end
+
+        it "uses loaded context" do
+          ec = subject.parse(ctx)
+          expect(ec.send(:mappings)).to produce({
+            "foo"   => "http://example.com/"
+          }, logger)
+        end
+      end
     end
 
     context "Array" do
@@ -356,6 +377,7 @@ describe JSON::LD::Context do
           "@language" => "en"
         }
       }, logger)
+      expect(subject.to_rb).not_to be_empty
     end
 
     it "@vocab" do
@@ -365,16 +387,18 @@ describe JSON::LD::Context do
           "@vocab" => "http://example.com/"
         }
       }, logger)
+      expect(subject.to_rb).not_to be_empty
     end
 
     it "term mappings" do
-      expect(subject.
-        parse({'foo' => "http://example.com/"}).send(:clear_provided_context).
-        serialize).to produce({
+      c = subject.
+        parse({'foo' => "http://example.com/"}).send(:clear_provided_context)
+      expect(c.serialize).to produce({
         "@context" => {
           "foo" => "http://example.com/"
         }
       }, logger)
+      expect(c.to_rb).not_to be_empty
     end
 
     it "@type with dependent prefixes in a single context" do
@@ -1330,6 +1354,52 @@ describe JSON::LD::Context do
     it "uses string" do
       expect(subject.reverse_term('ex')).to eql subject.term_definitions['reverse']
       expect(subject.reverse_term('reverse')).to eql subject.term_definitions['ex']
+    end
+  end
+
+  describe JSON::LD::Context::TermDefinition do
+    context "with nothing" do
+      subject {described_class.new("term")}
+      its(:term) {is_expected.to eq "term"}
+      its(:id) {is_expected.to be_nil}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term"))}
+    end
+
+    context "with id" do
+      subject {described_class.new("term", id: "http://example.org/term")}
+      its(:term) {is_expected.to eq "term"}
+      its(:id) {is_expected.to eq "http://example.org/term"}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", id: "http://example.org/term"))}
+    end
+
+    context "with type_mapping" do
+      subject {described_class.new("term", type_mapping: "http://example.org/type")}
+      its(:type_mapping) {is_expected.to eq "http://example.org/type"}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", type_mapping: "http://example.org/type"))}
+    end
+
+    context "with container_mapping" do
+      subject {described_class.new("term", container_mapping: "@set")}
+      its(:container_mapping) {is_expected.to eq "@set"}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@set"))}
+    end
+
+    context "with language_mapping" do
+      subject {described_class.new("term", language_mapping: "en")}
+      its(:language_mapping) {is_expected.to eq "en"}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", language_mapping: "en"))}
+    end
+
+    context "with reverse_property" do
+      subject {described_class.new("term", reverse_property: true)}
+      its(:reverse_property) {is_expected.to be_truthy}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", reverse_property: true))}
+    end
+
+    context "with simple" do
+      subject {described_class.new("term", simple: true)}
+      its(:simple) {is_expected.to be_truthy}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", simple: true))}
     end
   end
 end

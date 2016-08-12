@@ -7,7 +7,7 @@ gem 'jsonlint',         github: "dougbarth/jsonlint",       platforms: [:rbx, :m
 
 group :development do
   gem 'ebnf',           github: "gkellogg/ebnf",            branch: "develop"
-  gem 'sxp',            github: "gkellogg/sxp-ruby",        branch: "develop"
+  gem 'sxp',            github: "dryruby/sxp.rb",           branch: "develop"
   gem 'rdf-isomorphic', github: "ruby-rdf/rdf-isomorphic",  branch: "develop"
   gem 'rdf-turtle',     github: "ruby-rdf/rdf-turtle",      branch: "develop"
   gem 'rdf-trig',       github: "ruby-rdf/rdf-trig",        branch: "develop"
@@ -20,6 +20,7 @@ group :development, :test do
   gem 'simplecov',  require: false, platform: :mri
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
+  gem 'benchmark-ips'
 end
 
 group :debug do
@@ -28,6 +29,10 @@ group :debug do
 end
 
 platforms :rbx do
-  gem 'rubysl', '~> 2.0'
+  gem 'rubysl',   '~> 2.0'
   gem 'rubinius', '~> 2.0'
+end
+
+platforms :jruby do
+  gem 'gson',     '~> 0.6'
 end

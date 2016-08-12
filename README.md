@@ -240,6 +240,17 @@ Then, when performing something like expansion:
 
     JSON::LD::API.expand(input, documentLoader: load_document_local)
 
+
+## Preloading contexts
+In many cases, for small documents, processing time can be dominated by loading and parsing remote contexts. In particular, a small schema.org example may need to download a large context and turn it into an internal representation, before the actual document can be expanded for processing. Using {JSON::LD::Context.add_preloaded}, an implementation can perform this loading up-front, and make it available to the processor.
+
+    ctx = JSON::LD::Context.new().parse('http://schema.org/')
+    JSON::LD::Context.add_preloaded('http://schema.org/', ctx)
+
+On lookup, URIs with an `https` prefix are normalized to `http`.
+
+A context may be serialized to Ruby to speed this process using `Context#to_rb`. When loaded, this generated file will add entries to the {JSON::LD::Context::PRELOADED}.
+
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
 
@@ -274,7 +285,7 @@ Note, the API method signatures differed in versions before 1.0, in that they al
   * {JSON::LD::Writer}
 
 ## Dependencies
-* [Ruby](http://ruby-lang.org/) (>= 2.0)
+* [Ruby](http://ruby-lang.org/) (>= 2.2.2)
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 2.0)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5)
 

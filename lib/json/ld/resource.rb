@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 module JSON::LD
   # Simple Ruby reflector class to provide native
   # access to JSON-LD objects
