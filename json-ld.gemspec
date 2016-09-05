@@ -28,9 +28,9 @@ Gem::Specification.new do |gem|
   gem.required_ruby_version = '>= 2.2.2'
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '~> 2.1'
-  gem.add_runtime_dependency     'multi_json',      '~> 1.11'
-  gem.add_development_dependency 'jsonlint',        '~> 0.1.0' unless RUBY_ENGINE == "jruby"
-  gem.add_development_dependency 'oj',              '~> 2.12'  unless RUBY_ENGINE == "jruby"
+  gem.add_runtime_dependency     'multi_json',      '~> 1.12'
+  gem.add_development_dependency 'jsonlint',        '~> 0.2' unless RUBY_ENGINE == "jruby"
+  gem.add_development_dependency 'oj',              '~> 2.17'  unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'yajl-ruby',       '~> 1.2' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency "rack-cache",      '~> 1.2'
   gem.add_development_dependency "rest-client",     '~> 1.8'
@@ -41,8 +41,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-turtle',      '~> 2.0'
   gem.add_development_dependency 'rdf-vocab',       '~> 2.0'
   gem.add_development_dependency 'rdf-xsd',         '~> 2.0'
-  gem.add_development_dependency 'rspec',           '~> 3.4'
-  gem.add_development_dependency 'rspec-its',       '~> 1.0'
+  gem.add_development_dependency 'rspec',           '~> 3.5'
+  gem.add_development_dependency 'rspec-its',       '~> 1.2'
   gem.add_development_dependency 'yard' ,           '~> 0.8'
 
   gem.post_install_message  = nil
