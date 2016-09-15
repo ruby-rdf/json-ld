@@ -219,9 +219,7 @@ module JSON::LD
     # @return [Boolean] true if the node matches, false if not.
     def filter_subject(subject, frame, flags)
       types = frame.fetch('@type', [])
-      raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
       subject_types = subject.fetch('@type', [])
-      raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless subject_types.is_a?(Array)
 
       # check @type (object value means 'any' type, fall through to ducktyping)
       if !types.empty? &&

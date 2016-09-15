@@ -166,8 +166,7 @@ module JSON::LD
       API.new(input, options[:expandContext], options) do |api|
         result = api.expand(api.value, nil, api.context,
                             ordered: options.fetch(:ordered, true),
-                            framing: options.fetch(:framing, false),
-                            keep_free_floating_nodes: options.fetch(:keep_free_floating_nodes, false))
+                            framing: options.fetch(:framing, false))
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
@@ -305,6 +304,9 @@ module JSON::LD
     #   a flag specifying that for properties to be included in the output,
     #   they must be explicitly declared in the framing context.
     # @option options [Boolean] :requireAll (true)
+    #   A flag specifying that all properties present in the input frame must
+    #   either have a default value or be present in the JSON-LD input for the
+    #   frame to match.
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD
     #   input should be omitted from the output.
@@ -351,16 +353,14 @@ module JSON::LD
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(framing: true, keep_free_floating_nodes: true))
+      expanded_frame = API.expand(frame, options.merge(framing: true))
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        old_logger, @options[:logger] = @options[:logger], []
         create_node_map(value, framing_state[:graphs], graph: '@merged')
-        @options[:logger] = old_logger
         framing_state[:subjects] = framing_state[:graphs]['@merged']
 
         result = []

@@ -17,7 +17,7 @@ module JSON::LD
     # @param [Boolean] framing (false)
     # @param [Boolean] keep_free_floating_notes (false)
     # @return [Array, Hash]
-    def expand(input, active_property, context, ordered: true, framing: false, keep_free_floating_nodes: false)
+    def expand(input, active_property, context, ordered: true, framing: false)
       #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
@@ -25,7 +25,7 @@ module JSON::LD
         is_list = context.container(active_property) == '@list'
         value = input.map do |v|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
-          v = expand(v, active_property, context, ordered: ordered)
+          v = expand(v, active_property, context, ordered: ordered, framing: framing)
 
           # If the active property is @list or its container mapping is set to @list, the expanded item must not be an array or a list object, otherwise a list of lists error has been detected and processing is aborted.
           raise JsonLdError::ListOfLists,
@@ -108,7 +108,7 @@ module JSON::LD
               end
             when '@graph'
               # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
-              expand(value, '@graph', context, ordered: ordered)
+              expand(value, '@graph', context, ordered: ordered, framing: framing)
             when '@value'
               # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
               raise JsonLdError::InvalidValueObjectValue,
@@ -135,7 +135,7 @@ module JSON::LD
               next if (active_property || '@graph') == '@graph'
 
               # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
-              value = expand(value, active_property, context, ordered: ordered)
+              value = expand(value, active_property, context, ordered: ordered, framing: framing)
 
               # Spec FIXME: need to be sure that result is an array
               value = [value] unless value.is_a?(Array)
@@ -148,7 +148,7 @@ module JSON::LD
               value
             when '@set'
               # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
-              expand(value, active_property, context, ordered: ordered)
+              expand(value, active_property, context, ordered: ordered, framing: framing)
             when '@reverse'
               # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
               raise JsonLdError::InvalidReverseValue,
@@ -156,7 +156,7 @@ module JSON::LD
 
               # Otherwise
               # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
-              value = expand(value, '@reverse', context, ordered: ordered)
+              value = expand(value, '@reverse', context, ordered: ordered, framing: framing)
 
               # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
               if value.has_key?('@reverse')
@@ -186,9 +186,10 @@ module JSON::LD
 
               # Continue with the next key from element
               next
-            when '@explicit', '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
+            when '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
+              next unless framing
               # Framing keywords
-              [expand(value, expanded_property, context, ordered: ordered)].flatten
+              [expand(value, expanded_property, context, ordered: ordered, framing: framing)].flatten
             else
               # Skip unknown keyword
               next
@@ -233,7 +234,7 @@ module JSON::LD
             keys = ordered ? value.keys.sort : value.keys
             keys.each do |k|
               # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
-              index_value = expand([value[k]].flatten, key, context, ordered: ordered)
+              index_value = expand([value[k]].flatten, key, context, ordered: ordered, framing: framing)
               index_value.each do |item|
                 item['@index'] ||= k
                 ary << item
@@ -242,7 +243,7 @@ module JSON::LD
             ary
           else
             # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
-            expand(value, key, context, ordered: ordered)
+            expand(value, key, context, ordered: ordered, framing: framing)
           end
 
           # If expanded value is null, ignore key by continuing to the next key from element.
@@ -327,7 +328,7 @@ module JSON::LD
         # If active property is null or @graph, drop free-floating values as follows:
         if (active_property || '@graph') == '@graph' &&
           (output_object.keys.any? {|k| %w(@value @list).include?(k)} ||
-           (output_object.keys - %w(@id)).empty? && !keep_free_floating_nodes)
+           (output_object.keys - %w(@id)).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil
         end
