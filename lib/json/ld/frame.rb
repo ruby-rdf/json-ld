@@ -39,6 +39,9 @@ module JSON::LD
       matches.keys.kw_sort.each do |id|
         subject = matches[id]
 
+        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
+        state = state.merge(uniqueEmbeds: {}) if property.nil?
+
         if flags[:embed] == '@link' && state[:link].has_key?(id)
           # TODO: may want to also match an existing linked subject
           # against the current frame ... so different frames could
@@ -49,9 +52,6 @@ module JSON::LD
           add_frame_output(parent, property, state[:link][id])
           next
         end
-
-        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
-        state = state.merge(uniqueEmbeds: {}) if property.nil?
 
         output = {'@id' => id}
         state[:link][id] = output
@@ -241,11 +241,12 @@ module JSON::LD
           else
             wildcard = false
 
-            # v == [] means do not match if property is present
             if subject.has_key?(k)
-              return false if v == [] && !subject[k].nil?
               matches_some = true
               next
+            elsif v == []
+              # v == [] means do not match if property is present
+              return false
             end
 
             # all properties must match to be a duck unless a @default is specified

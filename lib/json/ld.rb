@@ -47,7 +47,6 @@ module JSON
       @context
       @default
       @embed
-      @embedChildren
       @explicit
       @id
       @index
@@ -55,6 +54,7 @@ module JSON
       @language
       @list
       @omitDefault
+      @requireAll
       @reverse
       @set
       @type
