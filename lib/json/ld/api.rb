@@ -133,8 +133,7 @@ module JSON::LD
 
       # If not provided, first use context from document, or from a Link header
       context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
-      @context = Context.new(@options)
-      @context = @context.parse(context) if context
+      @context = Context.parse(context || {}, @options)
 
       if block_given?
         case block.arity

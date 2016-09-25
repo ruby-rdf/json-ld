@@ -16,7 +16,7 @@ module JSON::LD
       @context = case @options[:context]
       when nil then nil
       when Context then @options[:context]
-      else Context.new.parse(@options[:context])
+      else Context.parse(@options[:context])
       end
 
       #log_debug("prologue") {"context: #{context.inspect}"}

@@ -187,6 +187,18 @@ module JSON::LD
     attr_accessor :namer
 
     ##
+    # Create a new context by parsing a context.
+    #
+    # @see {#initialize}, {#parse}
+    # @param [String, #read, Array, Hash, Context] local_context
+    # @raise [JsonLdError]
+    #   on a remote context load error, syntax error, or a reference to a term which is not defined.
+    # @return [Context]
+    def self.parse(local_context, **options)
+      self.new(options).parse(local_context)
+    end
+
+    ##
     # Create new evaluation context
     # @param [Hash] options
     # @option options [String, #to_s] :base
@@ -298,6 +310,7 @@ module JSON::LD
     # @param [String, #read, Array, Hash, Context] local_context
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
+    # @return [Context]
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
       result = self.dup
@@ -393,7 +406,7 @@ module JSON::LD
           {
             '@base'     => :base=,
             '@language' => :default_language=,
-            '@vocab'    => :vocab=
+            '@vocab'    => :vocab=,
           }.each do |key, setter|
             v = context.fetch(key, false)
             unless v == false
