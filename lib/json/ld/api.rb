@@ -151,8 +151,21 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the expansion upon.
     # @param  [Hash{Symbol => Object}] options
     #   See options in {JSON::LD::API#initialize}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @raise [JsonLdError]
     # @yield jsonld
     # @yieldparam [Array<Hash>] jsonld
@@ -164,9 +177,7 @@ module JSON::LD
     def self.expand(input, options = {})
       result = nil
       API.new(input, options[:expandContext], options) do |api|
-        result = api.expand(api.value, nil, api.context,
-                            ordered: options.fetch(:ordered, true),
-                            framing: options.fetch(:framing, false))
+        result = api.expand(api.value, nil, api.context, options)
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
@@ -190,9 +201,27 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   The base context to use when compacting the input.
-    # @param  [Hash{Symbol => Object}] options
-    #   See options in {JSON::LD::API#initialize}
-    #   Other options passed to {JSON::LD::API.expand}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
@@ -233,9 +262,27 @@ module JSON::LD
     #   The JSON-LD object or array of JSON-LD objects to flatten or an IRI referencing the JSON-LD document to flatten.
     # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
-    # @param  [Hash{Symbol => Object}] options
-    #   See options in {JSON::LD::API#initialize}
-    #   Other options passed to {JSON::LD::API.expand}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
@@ -294,9 +341,27 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the framing on.
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
-    # @param  [Hash{Symbol => Object}] options
-    #   See options in {JSON::LD::API#initialize}
-    #   Other options passed to {JSON::LD::API.expand}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @option options ['@last', '@always', '@never', '@link'] :embed ('@last')
     #   a flag specifying that objects should be directly embedded in the output,
     #   instead of being referred to by their IRI.
@@ -353,7 +418,7 @@ module JSON::LD
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(framing: true))
+      expanded_frame = API.expand(frame, options.merge(framing: true, processingMode: "json-ld-1.1-expand-frame"))
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
@@ -387,9 +452,27 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
-    # @param [{Symbol,String => Object}] options
-    #   See options in {JSON::LD::API#initialize}
-    #   Options passed to {JSON::LD::API.expand}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
     # @option options [Boolean] :expanded Input is already expanded
@@ -448,8 +531,27 @@ module JSON::LD
     # The resulting `Array` is either returned or yielded, if a block is given.
     #
     # @param [Array<RDF::Statement>] input
-    # @param  [Hash{Symbol => Object}] options
-    #   See options in {JSON::LD::API#initialize}
+    # @option options [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    # @option options [Boolean] :compactArrays (true)
+    #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
+    #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean, String, RDF::URI] :flatten
+    #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :processingMode ("json-ld-1.0")
+    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [Boolean] :rename_bnodes (true)
+    #   Rename bnodes as part of expansion, or keep them the same.
+    # @option options [Boolean]  :unique_bnodes   (false)
+    #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
+    # @option options [Boolean]  :simple_compact_iris   (false)
+    #   When compacting IRIs, do not use terms with expanded term definitions
+    # @option options [Symbol] :adapter used with MultiJson
+    # @option options [Boolean] :validate Validate input, if a string or readable object.
     # @option options [Boolean] :useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @yield jsonld

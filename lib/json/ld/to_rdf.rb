@@ -8,7 +8,7 @@ module JSON::LD
     include Utils
 
     ##
-    # @param [Hash{String => Object}] node
+    # @param [Hash{String => Object}] item
     # @param [RDF::Resource] graph_name
     # @yield statement
     # @yieldparam [RDF::Statement] statement

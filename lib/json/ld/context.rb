@@ -797,16 +797,14 @@ module JSON::LD
     #
     # @param [String] value
     #   A keyword, term, prefix:suffix or possibly relative IRI
-    # @param  [Hash{Symbol => Object}] options
     # @param [Boolean] documentRelative (false)
     # @param [Boolean] vocab (false)
-    # @param [RDF::URI] base
     # @param [Hash] local_context
     #   Used during Context Processing.
     # @param [Hash] defined
     #   Used during Context Processing.
     # @param [Boolean] quiet (false)
-    # @param [Hash] options ({})
+    # @param  [Hash{Symbol => Object}] options
     # @return [RDF::URI, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
@@ -878,7 +876,7 @@ module JSON::LD
     # @param [RDF::URI] iri
     # @param [Object] value
     #   Value, used to select among various maps for the same IRI
-    # @param [Boolean] :vocab
+    # @param [Boolean] vocab
     #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     # @param [Boolean] reverse
     #   specifies whether a reverse property is being compacted 

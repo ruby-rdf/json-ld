@@ -15,9 +15,10 @@ module JSON::LD
     # @param [Boolean] ordered (true)
     #   Ensure output objects have keys ordered properly
     # @param [Boolean] framing (false)
-    # @param [Boolean] keep_free_floating_notes (false)
-    # @return [Array, Hash]
-    def expand(input, active_property, context, ordered: true, framing: false)
+    # @param [Hash{Symbol => Object}] options
+    #   See {JSON::LD::API.expand}
+    # @return [Array<Hash{String => Object}>]
+    def expand(input, active_property, context, ordered: true, framing: false, **options)
       #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       result = case input
       when Array
