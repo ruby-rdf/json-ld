@@ -18,7 +18,7 @@ module JSON::LD
     # @option options [String] :property (nil)
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, options = {})
+    def frame(state, subjects, frame, **options)
       parent, property = options[:parent], options[:property]
       # Validate the frame
       validate_frame(state, frame)

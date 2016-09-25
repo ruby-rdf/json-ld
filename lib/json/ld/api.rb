@@ -244,7 +244,7 @@ module JSON::LD
 
       API.new(expanded_input, context, options) do
         log_debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value, nil)
+        result = compact(value, options)
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize
@@ -324,7 +324,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = compact(flattened, nil)
+          compacted = compact(flattened, options)
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
@@ -438,7 +438,7 @@ module JSON::LD
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
         # Compact result
-        compacted = compact(result, nil)
+        compacted = compact(result, options)
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output

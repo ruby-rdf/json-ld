@@ -9,8 +9,10 @@ module JSON::LD
     #
     # @param [Array, Hash] element
     # @param [String] property (nil)
+    # @param [Hash{Symbol => Object}] options
+    #   See {JSON::LD::API.expand}
     # @return [Array, Hash]
-    def compact(element, property = nil)
+    def compact(element, property: nil, **options)
       #if property.nil?
       #  log_debug("compact") {"element: #{element.inspect}, ec: #{context.inspect}"}
       #else
@@ -19,7 +21,7 @@ module JSON::LD
       case element
       when Array
         #log_debug("") {"Array #{element.inspect}"}
-        result = element.map {|item| compact(item, property)}.compact
+        result = element.map {|item| compact(item, options.merge(property: property))}.compact
 
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
@@ -65,7 +67,7 @@ module JSON::LD
           end
 
           if expanded_property == '@reverse'
-            compacted_value = compact(expanded_value, '@reverse')
+            compacted_value = compact(expanded_value, options.merge(property: '@reverse'))
             #log_debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
@@ -121,7 +123,7 @@ module JSON::LD
 
             container = context.container(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
-            compacted_item = compact(value, item_active_property)
+            compacted_item = compact(value, options.merge(property: item_active_property))
             #log_debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
 
             if list?(expanded_item)
