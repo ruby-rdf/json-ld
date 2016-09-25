@@ -70,8 +70,10 @@ module JSON::LD
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
-    # @option options [String] :processingMode ("json-ld-1.0")
-    #   If set to "json-ld-1.0", the JSON-LD processor must produce exactly the same results as the algorithms defined in this specification. If set to another value, the JSON-LD processor is allowed to extend or modify the algorithms defined in this specification to enable application-specific optimizations. The definition of such optimizations is beyond the scope of this specification and thus not defined. Consequently, different implementations may implement different optimizations. Developers must not define modes beginning with json-ld as they are reserved for future versions of this specification.
+    # @option options [String] :processingMode ("json-ld-1.1")
+    #   Processing mode, json-ld-1.0 or json-ld-1.1. Also can have other values:
+    #
+    #   * expand-frame – special frame expansion mode.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -181,7 +183,7 @@ module JSON::LD
     def self.expand(input, options = {})
       result = nil
       API.new(input, options[:expandContext], options) do |api|
-        result = api.expand(api.value, nil, api.context, options)
+        result = api.expand(api.value, nil, api.context, ordered: options.fetch(:ordered, true))
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an
@@ -244,7 +246,7 @@ module JSON::LD
 
       API.new(expanded_input, context, options) do
         log_debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value, options)
+        result = compact(value)
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize
@@ -324,7 +326,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = compact(flattened, options)
+          compacted = compact(flattened)
           compacted = [compacted] unless compacted.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
@@ -438,7 +440,7 @@ module JSON::LD
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
         # Compact result
-        compacted = compact(result, options)
+        compacted = compact(result)
         compacted = [compacted] unless compacted.is_a?(Array)
 
         # Add the given context to the output

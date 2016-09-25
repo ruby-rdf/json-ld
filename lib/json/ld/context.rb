@@ -204,7 +204,7 @@ module JSON::LD
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
-    def initialize(options = {})
+    def initialize(**options)
       if options[:base]
         @base = @doc_base = RDF::URI(options[:base]).dup
         @doc_base.canonicalize! if options[:canonicalize]
@@ -391,7 +391,7 @@ module JSON::LD
           # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
           context = context.dup # keep from modifying a hash passed as a param
           {
-            '@base' => :base=,
+            '@base'     => :base=,
             '@language' => :default_language=,
             '@vocab'    => :vocab=
           }.each do |key, setter|
