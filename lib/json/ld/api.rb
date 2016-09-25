@@ -84,8 +84,12 @@ module JSON::LD
     # @yieldparam [API]
     # @raise [JsonLdError]
     def initialize(input, context, options = {}, &block)
-      @options = {compactArrays: true, rename_bnodes: true}.merge!(options)
-      @options[:validate] = true if @options[:processingMode] == "json-ld-1.0"
+      @options = {
+        compactArrays: true,
+        rename_bnodes: true,
+        processingMode: "json-ld-1.1"
+      }.merge(options)
+      @options[:validate] = @options[:processingMode] == "json-ld-1.0"
       @options[:documentLoader] ||= self.class.method(:documentLoader)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
@@ -418,7 +422,7 @@ module JSON::LD
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(framing: true, processingMode: "json-ld-1.1-expand-frame"))
+      expanded_frame = API.expand(frame, options.merge(processingMode: "json-ld-1.1-expand-frame"))
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options) do
