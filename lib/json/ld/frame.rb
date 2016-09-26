@@ -222,10 +222,12 @@ module JSON::LD
       subject_types = subject.fetch('@type', [])
 
       # check @type (object value means 'any' type, fall through to ducktyping)
-      if !types.empty? &&
-         !(types.length == 1 && types.first.is_a?(Hash))
-        # If frame has an @type, use it for selecting appropriate nodes.
+      if !types.empty? && types != [{}]
+        # A subject must match if node has a @type property including any IRI from the corresponding @type property in frame.
         return types.any? {|t| subject_types.include?(t)}
+      elsif types == [{}]
+        # Otherwise, a subject must match if node has a @type property and frame has a @type property containing only an empty dictionary.
+        return !subject_types.empty?
       else
         # Duck typing, for nodes not having a type, but having @id
         wildcard, matches_some = true, false
