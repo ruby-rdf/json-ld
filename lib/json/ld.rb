@@ -44,6 +44,7 @@ module JSON
     KEYWORDS = %w(
       @base
       @container
+      @content
       @context
       @default
       @embed
@@ -130,6 +131,8 @@ module JSON
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
       class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
       class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
+      class InvalidTermContent < JsonLdError; @code = "invalid term content"; end
+      class CyclicTermContent < JsonLdError; @code = "cyclic term content"; end
     end
     
     class InvalidFrame < Exception
