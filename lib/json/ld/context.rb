@@ -1204,7 +1204,7 @@ module JSON::LD
       defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
       term_defs = term_definitions.map do |term, td|
         "      " + term.inspect + " => " + td.to_rb
-      end
+      end.sort
       defn << "term_definitions: {\n#{term_defs.join(",\n")    }\n    }" unless term_defs.empty?
       %(# -*- encoding: utf-8 -*-
       # frozen_string_literal: true
