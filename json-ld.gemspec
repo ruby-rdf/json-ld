@@ -29,6 +29,7 @@ Gem::Specification.new do |gem|
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '~> 2.1'
   gem.add_runtime_dependency     'multi_json',      '~> 1.12'
+  gem.add_development_dependency 'linkeddata',      '~> 2.0'
   gem.add_development_dependency 'jsonlint',        '~> 0.2' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'oj',              '~> 2.17'  unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'yajl-ruby',       '~> 1.2' unless RUBY_ENGINE == "jruby"

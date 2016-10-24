@@ -152,9 +152,9 @@ module JSON::LD
           end
         },
         frame: {
-          description: "Flatten JSON-LD or parsed RDF",
+          description: "Frame JSON-LD or parsed RDF",
           parse: false,
-          help: "flatten --frame <frame-file>  files ...",
+          help: "frame --frame <frame-file>  files ...",
           lambda: ->(files, options) do
             raise ArgumentError, "Framing requires a frame" unless options[:frame]
             out = options[:output] || $stdout

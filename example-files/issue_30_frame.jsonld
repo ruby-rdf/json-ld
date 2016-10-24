@@ -1,0 +1,27 @@
+{
+  "@explicit": true,
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "schema": "http://schema.org/",
+    "label": "skos:prefLabel",
+    "id": "@id",
+    "source": {
+      "@id": "skos:inScheme",
+      "@type": "@id"
+    },
+    "agent": {
+      "@id": "foaf:focus",
+      "@type": "@id"
+    },
+    "website": {
+      "@id": "schema:url",
+      "@type": "@id"
+    }
+  },
+  "label": {},
+  "id": {},
+  "source": {},
+  "agent": {},
+  "website": {}
+}

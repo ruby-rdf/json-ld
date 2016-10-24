@@ -1,0 +1,25 @@
+[
+  {
+    "@id": "http://vocab.getty.edu/ulan/500115403",
+    "http://xmlns.com/foaf/0.1/focus": [
+      {
+        "@id": "http://vocab.getty.edu/ulan/500115403-agent"
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#prefLabel": [
+      {
+        "@value": "Couture, Thomas"
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#inScheme": [
+      {
+        "@id": "http://vocab.getty.edu/ulan/"
+      }
+    ],
+    "http://schema.org/url": [
+      {
+        "@id": "http://www.getty.edu/vow/ULANFullDisplay?find=&role=&nation=&subjectid=500115403"
+      }
+    ]
+  }
+]
