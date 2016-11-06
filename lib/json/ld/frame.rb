@@ -21,7 +21,7 @@ module JSON::LD
     def frame(state, subjects, frame, **options)
       parent, property = options[:parent], options[:property]
       # Validate the frame
-      validate_frame(state, frame)
+      validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
 
       # Get values for embedOn and explicitOn
@@ -200,7 +200,7 @@ module JSON::LD
     def filter_subjects(state, subjects, frame, flags)
       subjects.inject({}) do |memo, id|
         subject = state[:subjects][id]
-        memo[id] = subject if filter_subject(subject, frame, flags)
+        memo[id] = subject if filter_subject(subject, frame, state, flags)
         memo
       end
     end
@@ -214,55 +214,84 @@ module JSON::LD
     #
     # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
+    # @param [Hash{Symbol => Object}] state Current framing state
     # @param [Hash{Symbol => Object}] flags the frame flags.
     #
     # @return [Boolean] true if the node matches, false if not.
-    def filter_subject(subject, frame, flags)
+    def filter_subject(subject, frame, state, flags)
       types = frame.fetch('@type', [])
       subject_types = subject.fetch('@type', [])
+      ids = frame.fetch('@id', [])
+      subject_ids = subject.fetch('@id', [])
+      subject_ids = [subject_ids] unless subject_ids.is_a?(Array)
 
-      # check @type (object value means 'any' type, fall through to ducktyping)
-      if !types.empty? && types != [{}]
-        # A subject must match if node has a @type property including any IRI from the corresponding @type property in frame.
-        return types.any? {|t| subject_types.include?(t)}
-      elsif types == [{}]
-        # Otherwise, a subject must match if node has a @type property and frame has a @type property containing only an empty dictionary.
-        return !subject_types.empty?
-      else
-        # Duck typing, for nodes not having a type, but having @id
-        wildcard, matches_some = true, false
+      # Match on specific @id.
+      return !(ids & subject_ids).empty? if !ids.empty? && ids != [{}]
 
-        frame.each do |k, v|
-          case k
-          when '@id'
-            return false if v.is_a?(String) && subject['@id'] != v
-            wildcard, matches_some = false, true
-          when '@type'
-            wildcard, matches_some = false, false
-          when /^@/
-          else
-            wildcard = false
+      # Match on specific @type
+      return !(types & subject_types).empty? if !types.empty? && types != [{}]
 
-            if subject.has_key?(k)
-              matches_some = true
-              next
-            elsif v == []
-              # v == [] means do not match if property is present
-              return false
+      # Match on wildcard @type
+      return true if types == [{}] && !subject_types.empty?
+
+      # Don't Match on no @type
+      return false if frame['@type'] == [] && !subject_types.empty?
+
+      # Duck typing, for nodes not having a type, but having @id
+      wildcard, matches_some = true, false
+
+      frame.reject {|k| k.start_with?('@')}.each do |k, v|
+        is_empty = v.empty?
+        if v = v.first
+          validate_frame(v)
+          has_default = v.has_key?('@default')
+          # Exclude framing keywords
+          v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
+        end
+
+        node_values = subject.fetch(k, [])
+
+        # No longer a wildcard pattern if frame has any non-keyword properties
+        wildcard = false
+
+        # Skip, but allow match if node has no value for property, and frame has a default value
+        next if node_values.empty? && has_default
+
+        # If frame value is empty, don't match if subject has any value
+        return false if !node_values.empty? && is_empty
+
+        match_this = case v
+        when nil
+          # node does not match if values is not empty and the value of property in frame is match none.
+          return false unless node_values.empty?
+          true
+        when {}
+          # node matches if values is not empty and the value of property in frame is wildcard
+          !node_values.empty?
+        else
+          if value?(v)
+            # Match on any matching value
+            node_values.any? {|nv| value_match?(v, nv)}
+          elsif node?(v) || node_reference?(v)
+            node_values.any? do |nv|
+              node_match?(v, nv, state, flags)
             end
-
-            # all properties must match to be a duck unless a @default is specified
-            has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.first.has_key?('@default')
-            return false if flags[:requireAll] && !has_default
+          else
+            false # No matching on non-value or node values
           end
         end
 
-        # return true if wildcard or subject matches some properties
-        wildcard || matches_some
+        # All non-defaulted values must match if @requireAll is set
+        return false if !match_this && flags[:requireAll]
+
+        matches_some ||= match_this
       end
+
+      # return true if wildcard or subject matches some properties
+      wildcard || matches_some
     end
 
-    def validate_frame(state, frame)
+    def validate_frame(frame)
       raise InvalidFrame::Syntax,
             "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
@@ -370,6 +399,28 @@ module JSON::LD
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
       [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]
+    end
+
+  private
+    # Node matches if it is a node, and matches the pattern as a frame
+    def node_match?(pattern, value, state, flags)
+      return false unless value['@id']
+      node_object = state[:subjects][value['@id']]
+      node_object && filter_subject(node_object, pattern, state, flags)
+    end
+
+    # Value matches if it is a value, and matches the value pattern.
+    #
+    # * @values are the same, or `pattern[@value]` is a wildcard, and
+    # * @types are the same or `value[@type]` is not null and `pattern[@type]` is `{}`, or `value[@type]` is null and `pattern[@type]` is null or `[]`, and
+    # * @languages are the same or `value[@language]` is not null and `pattern[@language]` is `{}`, or `value[@language]` is null and `pattern[@language]` is null or `[]`.
+    def value_match?(pattern, value)
+      v1, t1, l1 = value['@value'], value['@type'], value['@language']
+      v2, t2, l2 = pattern['@value'], pattern['@type'], pattern['@language']
+      return false unless v1 == v2 || v1 && v2 == {}
+      return false unless t1 == t2 || t1 && t2 == {} || t1.nil? && (t2 || []) == []
+      return false unless l1 == l2 || l1 && l2 == {} || l1.nil? && (l2 || []) == []
+      true
     end
   end
 end

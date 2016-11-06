@@ -14,7 +14,6 @@ module JSON::LD
     # @param [Context] context
     # @param [Boolean] ordered (true)
     #   Ensure output objects have keys ordered properly
-    # @param [Boolean] framing (false)
     # @param [Hash{Symbol => Object}] options
     #   See {JSON::LD::API.expand}
     # @return [Array<Hash{String => Object}>]
@@ -75,18 +74,36 @@ module JSON::LD
             expanded_value = case expanded_property
             when '@id'
               # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
-              case value
+              e_id = case value
               when String
+                context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
+              when Array
+                raise JsonLdError::InvalidIdValue,
+                      "value of @id must be a string, array of string or hash if framing: #{value.inspect}" unless framing
+                context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
+                value.map do |v|
+                  raise JsonLdError::InvalidTypeValue,
+                        "@id value must be a string or array of strings for framing: #{v.inspect}" unless v.is_a?(String)
+                  context.expand_iri(v, documentRelative: true, quiet: true, log_depth: @options[:log_depth]).to_s
+                end
               when Hash
                 raise JsonLdError::InvalidIdValue,
                       "value of @id must be a string unless framing: #{value.inspect}" unless framing
+                raise JsonLdError::InvalidTypeValue,
+                      "value of @id must be a an empty object for framing: #{value.inspect}" unless
+                      value.empty? && framing
+                [{}]
               else
                 raise JsonLdError::InvalidIdValue,
                       "value of @id must be a string or hash if framing: #{value.inspect}"
               end
 
-              # Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
-              context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
+              # Use array form if framing
+              if framing && !e_id.is_a?(Array)
+                [e_id]
+              else
+                e_id
+              end
             when '@type'
               # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
               #log_debug("@type") {"value: #{value.inspect}"}
@@ -103,7 +120,8 @@ module JSON::LD
                 # For framing
                 raise JsonLdError::InvalidTypeValue,
                       "@type value must be a an empty object for framing: #{value.inspect}" unless
-                      value.empty?
+                      value.empty? && framing
+                [{}]
               else
                 raise JsonLdError::InvalidTypeValue,
                       "@type value must be a string or array of strings: #{value.inspect}"

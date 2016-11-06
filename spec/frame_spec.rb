@@ -7,7 +7,7 @@ describe JSON::LD::API do
 
   describe ".frame" do
     {
-      "A subject must match if node has a @type property including any IRI from the corresponding @type property in frame" => {
+      "exact @type match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": "ex:Type1"
@@ -31,7 +31,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must match if node has a @type any property and frame has a @type property containing only an empty JSON object" => {
+      "wildcard type match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": {}
@@ -58,7 +58,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must match if node and frame both have the same @id property" => {
+      "@id match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@id": "ex:Sub1"
@@ -82,7 +82,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must not match if node has a property where frame has an empty array for that same property" => {
+      "wildcard with empty property no-match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:p": [],
@@ -103,8 +103,8 @@ describe JSON::LD::API do
         output: %({
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
-            "@id": "ex:Sub2",
-            "ex:p": "foo",
+            "@id": "ex:Sub1",
+            "ex:p": null,
             "ex:q": "bar"
           }]
         })
