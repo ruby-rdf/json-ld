@@ -43,11 +43,6 @@ module JSON::LD
         state = state.merge(uniqueEmbeds: {}) if property.nil?
 
         if flags[:embed] == '@link' && state[:link].has_key?(id)
-          # TODO: may want to also match an existing linked subject
-          # against the current frame ... so different frames could
-          # produce different subjects that are only shared in-memory
-          # when the frames are the same
-
           # add existing linked subject
           add_frame_output(parent, property, state[:link][id])
           next
@@ -90,6 +85,8 @@ module JSON::LD
 
           # add objects
           objects.each do |o|
+            subframe = Array(frame[prop]).first || create_implicit_frame(flags)
+
             case
             when list?(o)
               # add empty list
@@ -99,8 +96,6 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
-                  subframe ||= create_implicit_frame(flags)
                   frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
                 else
                   add_frame_output(list, '@list', oo.dup)
@@ -108,10 +103,9 @@ module JSON::LD
               end
             when node_reference?(o)
               # recurse into subject reference
-              subframe = frame[prop] || create_implicit_frame(flags)
               frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
-            else
-              # include other values automatically
+            when value_match?(subframe, o)
+              # Include values if they match
               add_frame_output(output, prop, o.dup)
             end
           end
@@ -191,7 +185,7 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Hash{String => Hash}] subjects
+    # @param [Array<String>] subjects
     #   The subjects to filter
     # @param [Hash{String => Object}] frame
     # @param [Hash{Symbol => String}] flags the frame flags.
@@ -219,65 +213,77 @@ module JSON::LD
     #
     # @return [Boolean] true if the node matches, false if not.
     def filter_subject(subject, frame, state, flags)
-      types = frame.fetch('@type', [])
-      subject_types = subject.fetch('@type', [])
-      ids = frame.fetch('@id', [])
-      subject_ids = subject.fetch('@id', [])
-      subject_ids = [subject_ids] unless subject_ids.is_a?(Array)
-
-      # Match on specific @id.
-      return !(ids & subject_ids).empty? if !ids.empty? && ids != [{}]
-
-      # Match on specific @type
-      return !(types & subject_types).empty? if !types.empty? && types != [{}]
-
-      # Match on wildcard @type
-      return true if types == [{}] && !subject_types.empty?
-
-      # Don't Match on no @type
-      return false if frame['@type'] == [] && !subject_types.empty?
-
       # Duck typing, for nodes not having a type, but having @id
       wildcard, matches_some = true, false
 
-      frame.reject {|k| k.start_with?('@')}.each do |k, v|
-        is_empty = v.empty?
-        if v = v.first
-          validate_frame(v)
-          has_default = v.has_key?('@default')
-          # Exclude framing keywords
-          v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
-        end
-
+      frame.each do |k, v|
         node_values = subject.fetch(k, [])
 
-        # No longer a wildcard pattern if frame has any non-keyword properties
-        wildcard = false
+        case k
+        when '@id'
+          ids = v || []
 
-        # Skip, but allow match if node has no value for property, and frame has a default value
-        next if node_values.empty? && has_default
+          # Match on specific @id.
+          return ids.include?(subject['@id']) if !ids.empty? && ids != [{}]
+          match_this = true
+        when '@type'
+          # No longer a wildcard pattern
+          wildcard = false
 
-        # If frame value is empty, don't match if subject has any value
-        return false if !node_values.empty? && is_empty
-
-        match_this = case v
-        when nil
-          # node does not match if values is not empty and the value of property in frame is match none.
-          return false unless node_values.empty?
-          true
-        when {}
-          # node matches if values is not empty and the value of property in frame is wildcard
-          !node_values.empty?
-        else
-          if value?(v)
-            # Match on any matching value
-            node_values.any? {|nv| value_match?(v, nv)}
-          elsif node?(v) || node_reference?(v)
-            node_values.any? do |nv|
-              node_match?(v, nv, state, flags)
-            end
+          match_this = case v
+          when []
+            # Don't Match on no @type
+            return false if !node_values.empty?
+            true
+          when [{}]
+            # Match on wildcard @type
+            !node_values.empty?
           else
-            false # No matching on non-value or node values
+            # Match on specific @type
+            return !(v & node_values).empty?
+            false
+          end
+        when /@/
+          # Skip other keywords
+          next
+        else
+          is_empty = v.empty?
+          if v = v.first
+            validate_frame(v)
+            has_default = v.has_key?('@default')
+            # Exclude framing keywords
+            v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
+          end
+
+
+          # No longer a wildcard pattern if frame has any non-keyword properties
+          wildcard = false
+
+          # Skip, but allow match if node has no value for property, and frame has a default value
+          next if node_values.empty? && has_default
+
+          # If frame value is empty, don't match if subject has any value
+          return false if !node_values.empty? && is_empty
+
+          match_this = case v
+          when nil
+            # node does not match if values is not empty and the value of property in frame is match none.
+            return false unless node_values.empty?
+            true
+          when {}
+            # node matches if values is not empty and the value of property in frame is wildcard
+            !node_values.empty?
+          else
+            if value?(v)
+              # Match on any matching value
+              node_values.any? {|nv| value_match?(v, nv)}
+            elsif node?(v) || node_reference?(v)
+              node_values.any? do |nv|
+                node_match?(v, nv, state, flags)
+              end
+            else
+              false # No matching on non-value or node values
+            end
           end
         end
 
@@ -398,7 +404,7 @@ module JSON::LD
     # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
-      [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]
+      flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}
     end
 
   private
@@ -411,15 +417,17 @@ module JSON::LD
 
     # Value matches if it is a value, and matches the value pattern.
     #
+    # * `pattern` is empty
     # * @values are the same, or `pattern[@value]` is a wildcard, and
     # * @types are the same or `value[@type]` is not null and `pattern[@type]` is `{}`, or `value[@type]` is null and `pattern[@type]` is null or `[]`, and
     # * @languages are the same or `value[@language]` is not null and `pattern[@language]` is `{}`, or `value[@language]` is null and `pattern[@language]` is null or `[]`.
     def value_match?(pattern, value)
       v1, t1, l1 = value['@value'], value['@type'], value['@language']
-      v2, t2, l2 = pattern['@value'], pattern['@type'], pattern['@language']
-      return false unless v1 == v2 || v1 && v2 == {}
-      return false unless t1 == t2 || t1 && t2 == {} || t1.nil? && (t2 || []) == []
-      return false unless l1 == l2 || l1 && l2 == {} || l1.nil? && (l2 || []) == []
+      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
+      return true if (v2 + t2 + l2).empty?
+      return false unless v2.include?(v1) || v2 == [{}]
+      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []) == []
+      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []) == []
       true
     end
   end

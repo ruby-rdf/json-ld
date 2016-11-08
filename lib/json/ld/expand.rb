@@ -78,6 +78,7 @@ module JSON::LD
               when String
                 context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
               when Array
+                # Framing allows an array of IRIs, and always puts values in an array
                 raise JsonLdError::InvalidIdValue,
                       "value of @id must be a string, array of string or hash if framing: #{value.inspect}" unless framing
                 context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
@@ -131,18 +132,43 @@ module JSON::LD
               expand(value, '@graph', context, ordered: ordered)
             when '@value'
               # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
-              raise JsonLdError::InvalidValueObjectValue,
-                    "Value of #{expanded_property} must be a scalar or null: #{value.inspect}" if value.is_a?(Hash) || value.is_a?(Array)
-              if value.nil?
+              # If framing, always use array form, unless null
+              case value
+              when String, TrueClass, FalseClass, Numeric then (framing ? [value] : value)
+              when nil
                 output_object['@value'] = nil
                 next;
+              when Array
+                raise JsonLdError::InvalidValueObjectValue,
+                      "@value value may not be an array unless framing: #{value.inspect}" unless framing
+                value
+              when Hash
+                raise JsonLdError::InvalidValueObjectValue,
+                      "@value value must be a an empty object for framing: #{value.inspect}" unless
+                      value.empty? && framing
+                [value]
+              else
+                raise JsonLdError::InvalidValueObjectValue,
+                      "Value of #{expanded_property} must be a scalar or null: #{value.inspect}"
               end
-              value
             when '@language'
               # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
-              raise JsonLdError::InvalidLanguageTaggedString,
-                    "Value of #{expanded_property} must be a string: #{value.inspect}" unless value.is_a?(String)
-              value.downcase
+              # If framing, always use array form, unless null
+              case value
+              when String then (framing ? [value.downcase] : value.downcase)
+              when Array
+                raise JsonLdError::InvalidLanguageTaggedString,
+                      "@language value may not be an array unless framing: #{value.inspect}" unless framing
+                value.map(&:downcase)
+              when Hash
+                raise JsonLdError::InvalidLanguageTaggedString,
+                      "@language value must be a an empty object for framing: #{value.inspect}" unless
+                      value.empty? && framing
+                [value]
+              else
+                raise JsonLdError::InvalidLanguageTaggedString,
+                      "Value of #{expanded_property} must be a string: #{value.inspect}"
+              end
             when '@index'
               # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
               raise JsonLdError::InvalidIndexValue,
@@ -312,21 +338,22 @@ module JSON::LD
             "value object has unknown keys: #{output_object.inspect}"
           end
 
-          output_object.delete('@language') if output_object['@language'].to_s.empty?
-          output_object.delete('@type') if output_object['@type'].to_s.empty?
+          output_object.delete('@language') if Array(output_object['@language']).join('').to_s.empty?
+          output_object.delete('@type') if Array(output_object['@type']).join('').to_s.empty?
 
           # If the value of result's @value key is null, then set result to null.
-          return nil if output_object['@value'].nil?
+          return nil if Array(output_object['@value']).empty?
 
-          if !output_object['@value'].is_a?(String) && output_object.has_key?('@language')
+          if !Array(output_object['@value']).all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
-                  "when @language is used, @value must be a string: #{@value.inspect}"
-          elsif !output_object.fetch('@type', "").is_a?(String) ||
-                !context.expand_iri(output_object.fetch('@type', ""), vocab: true, log_depth: @options[:log_depth]).is_a?(RDF::URI)
+                  "when @language is used, @value must be a string: #{output_object.inspect}"
+          elsif !Array(output_object.fetch('@type', "")).all? {|t|
+                  t.is_a?(String) && context.expand_iri(t, vocab: true, log_depth: @options[:log_depth]).is_a?(RDF::URI) ||
+                  t.is_a?(Hash) && t.empty?}
             # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
             raise JsonLdError::InvalidTypedValue,
-                  "value of @type must be an IRI: #{output_object['@type'].inspect}"
+                  "value of @type must be an IRI: #{output_object.inspect}"
           end
         elsif !output_object.fetch('@type', []).is_a?(Array)
           # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.

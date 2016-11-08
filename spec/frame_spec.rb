@@ -31,7 +31,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "wildcard type match" => {
+      "wildcard @type match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": {}
@@ -58,7 +58,64 @@ describe JSON::LD::API do
           }]
         })
       },
-      "@id match" => {
+      "match none @type match" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@type": []
+        }),
+        input: %([
+          {
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1",
+            "ex:p": "Foo"
+          }, {
+            "@context": { "ex":"http://example.org/"},
+            "@id": "ex:Sub2",
+            "ex:p": "Bar"
+          }
+        ]),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub2",
+            "ex:p": "Bar"
+          }]
+        })
+      },
+      "multiple matches on @type" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@type": "ex:Type1"
+        }),
+        input: %([{
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "@type": "ex:Type1"
+        }, {
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub2",
+          "@type": "ex:Type1"
+        }, {
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub3",
+          "@type": ["ex:Type1", "ex:Type2"]
+        }]),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1"
+          }, {
+            "@id": "ex:Sub2",
+            "@type": "ex:Type1"
+          }, {
+            "@id": "ex:Sub3",
+            "@type": ["ex:Type1", "ex:Type2"]
+          }]
+        })
+      },
+      "single @id match" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@id": "ex:Sub1"
@@ -82,7 +139,38 @@ describe JSON::LD::API do
           }]
         })
       },
-      "wildcard with empty property no-match" => {
+      "multiple @id match" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": ["ex:Sub1", "ex:Sub2"]
+        }),
+        input: %([
+          {
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1"
+          }, {
+            "@context": { "ex":"http://example.org/"},
+            "@id": "ex:Sub2",
+            "@type": "ex:Type2"
+          }, {
+            "@context": { "ex":"http://example.org/"},
+            "@id": "ex:Sub3",
+            "@type": "ex:Type3"
+          }
+        ]),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1"
+          }, {
+            "@id": "ex:Sub2",
+            "@type": "ex:Type2"
+          }]
+        })
+      },
+      "wildcard and match none" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:p": [],
@@ -96,8 +184,8 @@ describe JSON::LD::API do
           }, {
             "@context": { "ex":"http://example.org/"},
             "@id": "ex:Sub2",
-            "ex:p": ["foo"],
-            "ex:q": ["bar"]
+            "ex:p": "foo",
+            "ex:q": "bar"
           }
         ]),
         output: %({
@@ -109,7 +197,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must match if requireAll is false and both node and frame contain common non-keyword properties of any value" => {
+      "match on any property if @requireAll is false" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": false,
@@ -140,7 +228,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must match if requireAll is true and frame contains a non-keyword key not present in node, where the value is a JSON object containing only the key @default with any value" => {
+      "match on defeaults if @requireAll is true and at least one property matches" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": true,
@@ -161,6 +249,10 @@ describe JSON::LD::API do
             "@id": "ex:Sub3",
             "ex:p": "foo",
             "ex:q": "bar"
+          }, {
+            "@context": { "ex":"http://example.org/"},
+            "@id": "ex:Sub4",
+            "ex:r": "baz"
           }
         ]),
         output: %({
@@ -180,7 +272,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "A subject must match if requireAll is true and all the non-keyword properties in frame exist in node, or the property missing in node has a property in frame which has a dictionary value containing only the key @default with any value" => {
+      "match with @requireAll with one default" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": true,
@@ -238,6 +330,29 @@ describe JSON::LD::API do
           }]
         })
       },
+      "explicitly includes unframed properties @explicit false" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@explicit": false,
+          "@type": "ex:Type1"
+        }),
+        input: %q({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "@type": "ex:Type1",
+          "ex:prop1": "Property 1",
+          "ex:prop2": {"@id": "ex:Obj1"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1",
+            "ex:prop1": "Property 1",
+            "ex:prop2": {"@id": "ex:Obj1"}
+          }]
+        })
+      },
       "explicitly excludes unframed properties (@explicit: true)" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
@@ -255,117 +370,6 @@ describe JSON::LD::API do
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
             "@id": "ex:Sub1",
-            "@type": "ex:Type1"
-          }]
-        })
-      },
-      "implicitly includes unframed properties (@explicit: false)" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@explicit": false,
-          "@type": "ex:Type1"
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "@type": "ex:Type1",
-          "ex:prop1": "Property 1",
-          "ex:prop2": {"@id": "ex:Obj1"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
-            "@id": "ex:Sub1",
-            "@type": "ex:Type1",
-            "ex:prop1": "Property 1",
-            "ex:prop2": {
-              "@id": "ex:Obj1"
-            }
-          }]
-        })
-      },
-      "A subject must match if requireAll is false and both node and frame contain common non-keyword properties of any value." => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "ex:prop1": {},
-          "ex:prop2": {}
-        }),
-        input: %([{
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:prop1": "Property 1"
-        }, {
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub2",
-          "ex:prop2": "Property 2"
-        }, {
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub3",
-          "ex:prop1": "Property 1",
-          "ex:prop2": "Property 2"
-        }]),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
-            "@id": "ex:Sub3",
-            "ex:prop1": "Property 1",
-            "ex:prop2": "Property 2"
-          }]
-        })
-      },
-      "embed matched frames" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@type": "ex:Type1",
-          "ex:includes": {"@type": "ex:Type2"}
-        }),
-        input: %([{
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "@type": "ex:Type1",
-          "ex:includes": {"@id": "ex:Sub2"}
-        }, {
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub2",
-          "@type": "ex:Type2",
-          "ex:includes": {"@id": "ex:Sub1"}
-        }]),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
-            "@id": "ex:Sub1",
-            "@type": "ex:Type1",
-            "ex:includes": {
-              "@id": "ex:Sub2",
-              "@type": "ex:Type2",
-              "ex:includes": {
-                "@id": "ex:Sub1"
-              }
-            }
-          }]
-        })
-      },
-      "multiple matches" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@type": "ex:Type1"
-        }),
-        input: %([{
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "@type": "ex:Type1"
-        }, {
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub2",
-          "@type": "ex:Type1"
-        }]),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
-            "@id": "ex:Sub1",
-            "@type": "ex:Type1"
-          }, {
-            "@id": "ex:Sub2",
             "@type": "ex:Type1"
           }]
         })
@@ -636,18 +640,7 @@ describe JSON::LD::API do
       }
     }.each do |title, params|
       it title do
-        begin
-          input, frame, output = params[:input], params[:frame], params[:output]
-          input = ::JSON.parse(input) if input.is_a?(String)
-          frame = ::JSON.parse(frame) if frame.is_a?(String)
-          output = ::JSON.parse(output) if output.is_a?(String)
-          jld = JSON::LD::API.frame(input, frame, logger: logger)
-          expect(jld).to produce(output, logger)
-        rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
-          fail("#{e.class}: #{e.message}\n" +
-            "#{logger}\n" +
-            "Backtrace:\n#{e.backtrace.join("\n")}")
-        end
+        do_frame(params)
       end
     end
 
@@ -738,6 +731,290 @@ describe JSON::LD::API do
         end
       end
     end
+
+    describe "node pattern" do
+      {
+        "matches a deep node pattern" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "ex:p": {
+              "ex:q": {}
+            }
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "@type": "ex:Type1",
+              "ex:p": {
+                "@id": "ex:Sub2",
+                "@type": "ex:Type2",
+                "ex:q": "foo"
+              }
+            }, {
+              "@id": "ex:Sub3",
+              "@type": "ex:Type1",
+              "ex:q": {
+                "@id": "ex:Sub4",
+                "@type": "ex:Type2",
+                "ex:r": "bar"
+              }
+            }]
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "@type": "ex:Type1",
+              "ex:p": {
+                "@id": "ex:Sub2",
+                "@type": "ex:Type2",
+                "ex:q": "foo"
+              }
+            }]
+          })
+        },
+      }.each do |title, params|
+        it title do
+          do_frame(params)
+        end
+      end
+    end
+  end
+
+  describe "value pattern" do
+    {
+      "matches exact values" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "matches wildcard @value" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": {"@value": {}},
+          "ex:q": {"@value": {}, "@type": "ex:q"},
+          "ex:r": {"@value": {}, "@language": "r"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "matches wildcard @type" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:q": {"@value": "Q", "@type": {}}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:q": {"@value": "Q", "@type": "ex:q"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:q": {"@value": "Q", "@type": "ex:q"}
+          }]
+        })
+      },
+      "matches wildcard @language" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:r": {"@value": "R", "@language": {}}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "match none @type" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": {"@value": {}, "@type": []},
+          "ex:q": {"@value": {}, "@type": "ex:q"},
+          "ex:r": {"@value": {}, "@language": "r"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "match none @language" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": {"@value": {}, "@language": []},
+          "ex:q": {"@value": {}, "@type": "ex:q"},
+          "ex:r": {"@value": {}, "@language": "r"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "matches some @value" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": {"@value": ["P", "Q", "R"]},
+          "ex:q": {"@value": ["P", "Q", "R"], "@type": "ex:q"},
+          "ex:r": {"@value": ["P", "Q", "R"], "@language": "r"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": "P",
+          "ex:q": {"@value": "Q", "@type": "ex:q"},
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "matches some @type" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:q": {"@value": "Q", "@type": ["ex:q", "ex:Q"]}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:q": {"@value": "Q", "@type": "ex:q"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:q": {"@value": "Q", "@type": "ex:q"}
+          }]
+        })
+      },
+      "matches some @language" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:r": {"@value": "R", "@language": ["p", "q", "r"]}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:r": {"@value": "R", "@language": "r"}
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+      "excludes non-matched values" => {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": {"@value": {}},
+          "ex:q": {"@value": {}, "@type": "ex:q"},
+          "ex:r": {"@value": {}, "@language": "R"}
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:p": ["P", {"@value": "P", "@type": "ex:p"}, {"@value": "P", "@language": "P"}],
+          "ex:q": ["Q", {"@value": "Q", "@type": "ex:q"}, {"@value": "Q", "@language": "Q"}],
+          "ex:r": ["R", {"@value": "R", "@type": "ex:r"}, {"@value": "R", "@language": "R"}]
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }]
+        })
+      },
+    }.each do |title, params|
+      it title do
+        do_frame(params)
+      end
+    end
   end
 
   context "problem cases" do
@@ -813,8 +1090,22 @@ describe JSON::LD::API do
           }
         ]
       })
-      framed = JSON::LD::API.frame(input, frame, logger: logger)
-      expect(framed).to produce(expected, logger)
+      do_frame(input: input, frame: frame, output: expected)
+    end
+  end
+
+  def do_frame(params)
+    begin
+      input, frame, output = params[:input], params[:frame], params[:output]
+      input = ::JSON.parse(input) if input.is_a?(String)
+      frame = ::JSON.parse(frame) if frame.is_a?(String)
+      output = ::JSON.parse(output) if output.is_a?(String)
+      jld = JSON::LD::API.frame(input, frame, logger: logger)
+      expect(jld).to produce(output, logger)
+    rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
+      fail("#{e.class}: #{e.message}\n" +
+        "#{logger}\n" +
+        "Backtrace:\n#{e.backtrace.join("\n")}")
     end
   end
 end
