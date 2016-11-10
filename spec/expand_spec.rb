@@ -43,6 +43,25 @@ describe JSON::LD::API do
           {"http://example.com/bar" => [{"@value" => "bar"}]}
         ]
       },
+      "@graph value (expands to array form)" => {
+        input: {
+          "@context" => {"ex" => "http://example.com/"},
+          "ex:p" => {
+            "@id" => "ex:Sub1",
+            "@graph" => {
+              "ex:q" => "foo"
+            }
+          }
+        },
+        output: [{
+          "http://example.com/p" => [{
+            "@id" => "http://example.com/Sub1",
+            "@graph" => [{
+              "http://example.com/q" => [{"@value" => "foo"}],
+            }]
+          }]
+        }]
+      },
       "@type with CURIE" => {
         input: {
           "@context" => {"ex" => "http://example.com/"},

@@ -307,12 +307,12 @@ module JSON::LD
         log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
-        graphs = {'@default' => {}}
-        create_node_map(value, graphs)
+        graph_maps = {'@default' => {}}
+        create_node_map(value, graph_maps)
 
-        default_graph = graphs['@default']
-        graphs.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
-          graph = graphs[graph_name]
+        default_graph = graph_maps['@default']
+        graph_maps.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
+          graph = graph_maps[graph_name]
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []
           graph.keys.kw_sort.each do |id|
@@ -402,7 +402,8 @@ module JSON::LD
       }.merge!(options)
 
       framing_state = {
-        graphs:       {'@default' => {}, '@merged' => {}},
+        graphMap:     {'@default' => {}},
+        graphStack:   [],
         subjectStack: [],
         link:         {},
       }
@@ -430,8 +431,18 @@ module JSON::LD
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        create_node_map(value, framing_state[:graphs], graph: '@merged')
-        framing_state[:subjects] = framing_state[:graphs]['@merged']
+        create_node_map(value, framing_state[:graphMap], graph: '@default')
+
+        # If Frame is {'@graph': {}] use only the default graph for matches
+        if frame.has_key?('@graph') && frame['@graph'].empty?
+          framing_state[:graph] = '@default'
+        else
+          framing_state[:graph] = '@merged'
+          framing_state[:link]['@merged'] = {}
+          framing_state[:graphMap]['@merged'] = merge_node_map_graphs(framing_state[:graphMap])
+        end
+
+        framing_state[:subjects] = framing_state[:graphMap][framing_state[:graph]]
 
         result = []
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))

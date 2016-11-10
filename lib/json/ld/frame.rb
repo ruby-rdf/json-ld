@@ -19,6 +19,11 @@ module JSON::LD
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, **options)
+      log_depth do
+      log_debug("frame") {"subjects: #{subjects.inspect}"}
+      log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
+      log_debug("frame") {"property: #{options[:property].inspect}"}
+
       parent, property = options[:parent], options[:property]
       # Validate the frame
       validate_frame(frame)
@@ -31,6 +36,9 @@ module JSON::LD
         requireAll: get_frame_flag(frame, options, :requireAll),
       }
 
+      # Get link for current graph
+      link = state[:link][state[:graph]] ||= {}
+
       # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
       # This gives us a hash of objects indexed by @id
       matches = filter_subjects(state, subjects, frame, flags)
@@ -40,19 +48,23 @@ module JSON::LD
         subject = matches[id]
 
         # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
-        state = state.merge(uniqueEmbeds: {}) if property.nil?
+        if property.nil?
+          state[:uniqueEmbeds] = {state[:graph] => {}}
+        else
+          state[:uniqueEmbeds][state[:graph]] ||= {}
+        end
 
-        if flags[:embed] == '@link' && state[:link].has_key?(id)
+        if flags[:embed] == '@link' && link.has_key?(id)
           # add existing linked subject
-          add_frame_output(parent, property, state[:link][id])
+          add_frame_output(parent, property, link[id])
           next
         end
 
         output = {'@id' => id}
-        state[:link][id] = output
+        link[id] = output
 
         # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
-        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
+        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
           add_frame_output(parent, property, output)
           next
         end
@@ -60,15 +72,40 @@ module JSON::LD
         # if only the last match should be embedded
         if flags[:embed] == '@last'
           # remove any existing embed
-          remove_embed(state, id) if state[:uniqueEmbeds].include?(id)
-          state[:uniqueEmbeds][id] = {
+          remove_embed(state, id) if state[:uniqueEmbeds][state[:graph]].include?(id)
+          state[:uniqueEmbeds][state[:graph]][id] = {
             parent: parent,
             property: property
           }
         end
 
         # push matching subject onto stack to enable circular embed checks
-        state[:subjectStack] << subject
+        state[:subjectStack] << {subject: subject, graph: state[:graph]}
+
+        # Subject is also the name of a graph
+        if state[:graphMap].has_key?(id)
+          # check frame's "@graph" to see what to do next
+          # 1. if it doesn't exist and state.graph === "@merged", don't recurse
+          # 2. if it doesn't exist and state.graph !== "@merged", recurse
+          # 3. if "@merged" then don't recurse
+          # 4. if "@default" then don't recurse
+          # 5. recurse
+          recurse, subframe = false, nil
+          if !frame.has_key?('@graph')
+            recurse, subframe = (state[:graph] != '@merged'), {}
+          else
+            subframe = frame['@graph'].first
+            recurse = !%w(@merged @default).include?(subframe)
+            subframe = {} unless subframe.is_a?(Hash)
+          end
+
+          if recurse
+            state[:graphStack].push(state[:graph])
+            state[:graph] = id
+            frame(state, state[:graphMap][id].keys, [subframe], options.merge(parent: output, property: '@graph'))
+            state[:graph] = state[:graphStack].pop
+          end
+        end
 
         # iterate over subject properties in order
         subject.keys.kw_sort.each do |prop|
@@ -141,6 +178,7 @@ module JSON::LD
         # pop matching subject from circular ref-checking stack
         state[:subjectStack].pop()
       end
+      end
     end
 
     ##
@@ -193,7 +231,7 @@ module JSON::LD
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame, flags)
       subjects.inject({}) do |memo, id|
-        subject = state[:subjects][id]
+        subject = state[:graphMap][state[:graph]][id]
         memo[id] = subject if filter_subject(subject, frame, state, flags)
         memo
       end
@@ -306,12 +344,13 @@ module JSON::LD
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.
     # 
     # @param subject_to_embed the subject to embed.
+    # @param graph the graph the subject to embed is in.
     # @param subject_stack the current stack of subjects.
     # 
     # @return true if a circular reference would be created, false if not.
-    def creates_circular_reference(subject_to_embed, subject_stack)
+    def creates_circular_reference(subject_to_embed, graph, subject_stack)
       subject_stack[0..-2].any? do |subject|
-        subject['@id'] == subject_to_embed['@id']
+        subject[:graph] == graph && subject[:subject]['@id'] == subject_to_embed['@id']
       end
     end
 
@@ -344,7 +383,7 @@ module JSON::LD
     # @param id the @id of the embed to remove.
     def remove_embed(state, id)
       # get existing embed
-      embeds = state[:uniqueEmbeds];
+      embeds = state[:uniqueEmbeds][state[:graph]];
       embed = embeds[id];
       property = embed[:property];
 

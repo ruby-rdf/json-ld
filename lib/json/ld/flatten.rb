@@ -68,8 +68,7 @@ module JSON::LD
               end
             when '@graph'
               graphs[name] ||= {}
-              g = graph == '@merged' ? graph : name
-              create_node_map(objects, graphs, graph: g)
+              create_node_map(objects, graphs, graph: name)
             when /^@(?!type)/
               # copy non-@type keywords
               if property == '@index' && subject['@index']
@@ -114,6 +113,36 @@ module JSON::LD
         # add non-object to list
         list << input if list
       end
+    end
+
+  private
+    ##
+    # Merge nodes from all graphs in the graph_map into a new node map
+    #
+    # @param [Hash{String => Hash}] graph_map
+    # @return [Hash]
+    def merge_node_map_graphs(graph_map)
+      merged = {}
+      graph_map.each do |name, node_map|
+        node_map.each do |id, node|
+          merged_node = (merged[id] ||= {'@id' => id})
+
+          # Iterate over node properties
+          node.each do |property, values|
+            if property.start_with?('@')
+              # Copy keywords
+              merged_node[property] = node[property].dup
+            else
+              # Merge objects
+              values.each do |value|
+                add_value(merged_node, property, value.dup, property_is_array: true)
+              end
+            end
+          end
+        end
+      end
+
+      merged
     end
   end
 end

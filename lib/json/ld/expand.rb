@@ -129,7 +129,8 @@ module JSON::LD
               end
             when '@graph'
               # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
-              expand(value, '@graph', context, ordered: ordered)
+              value = expand(value, '@graph', context, ordered: ordered)
+              value.is_a?(Array) ? value : [value]
             when '@value'
               # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
               # If framing, always use array form, unless null

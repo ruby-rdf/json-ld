@@ -780,239 +780,435 @@ describe JSON::LD::API do
         end
       end
     end
-  end
 
-  describe "value pattern" do
-    {
-      "matches exact values" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+    describe "value pattern" do
+      {
+        "matches exact values" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "matches wildcard @value" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": {"@value": {}},
-          "ex:q": {"@value": {}, "@type": "ex:q"},
-          "ex:r": {"@value": {}, "@language": "r"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "matches wildcard @type" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:q": {"@value": "Q", "@type": {}}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:q": {"@value": "Q", "@type": "ex:q"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "matches wildcard @value" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": {"@value": {}},
+            "ex:q": {"@value": {}, "@type": "ex:q"},
+            "ex:r": {"@value": {}, "@language": "r"}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": "P",
+            "ex:q": {"@value": "Q", "@type": "ex:q"},
+            "ex:r": {"@value": "R", "@language": "r"}
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "matches wildcard @type" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:q": {"@value": "Q", "@type": {}}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:q": {"@value": "Q", "@type": "ex:q"}
-          }]
-        })
-      },
-      "matches wildcard @language" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:r": {"@value": "R", "@language": {}}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:q": {"@value": "Q", "@type": "ex:q"}
+            }]
+          })
+        },
+        "matches wildcard @language" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:r": {"@value": "R", "@language": {}}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "match none @type" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": {"@value": {}, "@type": []},
-          "ex:q": {"@value": {}, "@type": "ex:q"},
-          "ex:r": {"@value": {}, "@language": "r"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "match none @type" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": {"@value": {}, "@type": []},
+            "ex:q": {"@value": {}, "@type": "ex:q"},
+            "ex:r": {"@value": {}, "@language": "r"}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "match none @language" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": {"@value": {}, "@language": []},
-          "ex:q": {"@value": {}, "@type": "ex:q"},
-          "ex:r": {"@value": {}, "@language": "r"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "match none @language" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": {"@value": {}, "@language": []},
+            "ex:q": {"@value": {}, "@type": "ex:q"},
+            "ex:r": {"@value": {}, "@language": "r"}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "matches some @value" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": {"@value": ["P", "Q", "R"]},
-          "ex:q": {"@value": ["P", "Q", "R"], "@type": "ex:q"},
-          "ex:r": {"@value": ["P", "Q", "R"], "@language": "r"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": "P",
-          "ex:q": {"@value": "Q", "@type": "ex:q"},
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "matches some @value" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": {"@value": ["P", "Q", "R"]},
+            "ex:q": {"@value": ["P", "Q", "R"], "@type": "ex:q"},
+            "ex:r": {"@value": ["P", "Q", "R"], "@language": "r"}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "matches some @type" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:q": {"@value": "Q", "@type": ["ex:q", "ex:Q"]}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:q": {"@value": "Q", "@type": "ex:q"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "matches some @type" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:q": {"@value": "Q", "@type": ["ex:q", "ex:Q"]}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:q": {"@value": "Q", "@type": "ex:q"}
-          }]
-        })
-      },
-      "matches some @language" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:r": {"@value": "R", "@language": ["p", "q", "r"]}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:r": {"@value": "R", "@language": "r"}
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:q": {"@value": "Q", "@type": "ex:q"}
+            }]
+          })
+        },
+        "matches some @language" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:r": {"@value": "R", "@language": ["p", "q", "r"]}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
             "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-      "excludes non-matched values" => {
-        frame: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": {"@value": {}},
-          "ex:q": {"@value": {}, "@type": "ex:q"},
-          "ex:r": {"@value": {}, "@language": "R"}
-        }),
-        input: %({
-          "@context": {"ex": "http://example.org/"},
-          "@id": "ex:Sub1",
-          "ex:p": ["P", {"@value": "P", "@type": "ex:p"}, {"@value": "P", "@language": "P"}],
-          "ex:q": ["Q", {"@value": "Q", "@type": "ex:q"}, {"@value": "Q", "@language": "Q"}],
-          "ex:r": ["R", {"@value": "R", "@type": "ex:r"}, {"@value": "R", "@language": "R"}]
-        }),
-        output: %({
-          "@context": {"ex": "http://example.org/"},
-          "@graph": [{
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+        "excludes non-matched values" => {
+          frame: %({
+            "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
-            "ex:p": "P",
-            "ex:q": {"@value": "Q", "@type": "ex:q"},
-            "ex:r": {"@value": "R", "@language": "r"}
-          }]
-        })
-      },
-    }.each do |title, params|
-      it title do
-        do_frame(params)
+            "ex:p": {"@value": {}},
+            "ex:q": {"@value": {}, "@type": "ex:q"},
+            "ex:r": {"@value": {}, "@language": "R"}
+          }),
+          input: %({
+            "@context": {"ex": "http://example.org/"},
+            "@id": "ex:Sub1",
+            "ex:p": ["P", {"@value": "P", "@type": "ex:p"}, {"@value": "P", "@language": "P"}],
+            "ex:q": ["Q", {"@value": "Q", "@type": "ex:q"}, {"@value": "Q", "@language": "Q"}],
+            "ex:r": ["R", {"@value": "R", "@type": "ex:r"}, {"@value": "R", "@language": "R"}]
+          }),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "@graph": [{
+              "@id": "ex:Sub1",
+              "ex:p": "P",
+              "ex:q": {"@value": "Q", "@type": "ex:q"},
+              "ex:r": {"@value": "R", "@language": "r"}
+            }]
+          })
+        },
+      }.each do |title, params|
+        it title do
+          do_frame(params)
+        end
+      end
+    end
+
+    describe "named graphs" do
+      {
+        #"Frame default graph only" => {
+        #  frame: %({
+        #    "@context": {"@vocab": "urn:"},
+        #    "@graph": {}
+        #  }),
+        #  input: %({
+        #    "@context": {"@vocab": "urn:"},
+        #    "@id": "urn:id-1",
+        #    "@type": "Class",
+        #    "term": "foo",
+        #    "ref": {
+        #      "@id": "urn:id-2",
+        #      "@graph": {
+        #        "@id": "urn:id-2",
+        #        "term": "bar"
+        #      }
+        #    }
+        #  }),
+        #  output: %({
+        #    "@context": {"@vocab": "urn:"},
+        #    "@graph": [
+        #      {
+        #        "@id": "urn:id-1",
+        #        "@type": "Class",
+        #        "ref": {"@id": "urn:id-2"},
+        #        "term": "foo"
+        #      }
+        #    ]
+        #  })
+        #},
+        "Merge graphs" => {
+          frame: %({
+            "@context": {"@vocab": "urn:"},
+            "@type": "Class"
+          }),
+          input: %({
+            "@context": {"@vocab": "urn:"},
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "preserve": {
+              "@graph": {
+                "@id": "urn:id-2",
+                "term": "data"
+              }
+            }
+          }),
+          output: %({
+            "@context": {"@vocab": "urn:"},
+            "@graph": [{
+              "@id": "urn:id-1",
+              "@type": "Class",
+              "preserve": {
+                "@id": "_:b0"
+              }
+            }]
+          })
+        },
+        "Preserve graphs" => {
+          frame: %({
+            "@context": {"@vocab": "urn:"},
+            "@type": "Class",
+            "@graph": {}
+          }),
+          input: %({
+            "@context": {"@vocab": "urn:"},
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "merge": {
+              "@graph": {
+                "@id": "urn:id-2",
+                "term": "data"
+              }
+            }
+          }),
+          output: %({
+            "@context": {"@vocab": "urn:"},
+            "@graph": [{
+              "@id": "urn:id-1",
+              "@type": "Class",
+              "merge": {
+                "@id": "_:b0",
+                "@graph": [{
+                  "@id": "urn:id-2",
+                  "term": "data"
+                }]
+              }
+            }]
+          })
+        },
+        "Merge one graph and preserve another" => {
+          frame: %({
+            "@context": {"@vocab": "urn:"},
+            "@type": "Class",
+            "preserve": {
+              "@graph": {}
+            }
+          }),
+          input: %({
+            "@context": {"@vocab": "urn:"},
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "merge": {
+              "@id": "urn:id-2",
+              "@graph": {
+                "@id": "urn:id-2",
+                "term": "foo"
+              }
+            },
+            "preserve": {
+              "@id": "urn:graph-1",
+              "@graph": {
+                "@id": "urn:id-3",
+                "term": "bar"
+              }
+            }
+          }),
+          output: %({
+            "@context": {"@vocab": "urn:"},
+            "@graph": [{
+              "@id": "urn:id-1",
+              "@type": "Class",
+              "merge": {
+                "@id": "urn:id-2",
+                "term": "foo"
+              },
+              "preserve": {
+                "@id": "urn:graph-1",
+                "@graph": [{
+                  "@id": "urn:id-3",
+                  "term": "bar"
+                }]
+              }
+            }]
+          })
+        },
+        "Merge one graph and deep preserve another" => {
+          frame: %({
+            "@context": {"@vocab": "urn:"},
+            "@type": "Class",
+            "preserve": {
+              "deep": {
+                "@graph": {}
+              }
+            }
+          }),
+          input: %({
+            "@context": {"@vocab": "urn:"},
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "merge": {
+              "@id": "urn:id-2",
+              "@graph": {
+                "@id": "urn:id-2",
+                "term": "foo"
+              }
+            },
+            "preserve": {
+              "deep": {
+                "@graph": {
+                  "@id": "urn:id-3",
+                  "term": "bar"
+                }
+              }
+            }
+          }),
+          output: %({
+            "@context": {"@vocab": "urn:"},
+            "@graph": [{
+              "@id": "urn:id-1",
+              "@type": "Class",
+              "merge": {
+                "@id": "urn:id-2",
+                "term": "foo"
+              },
+              "preserve": {
+                "@id": "_:b0",
+                "deep": {
+                  "@id": "_:b1",
+                  "@graph": [{
+                    "@id": "urn:id-3",
+                    "term": "bar"
+                  }]
+                }
+              }
+            }]
+          })
+        },
+      }.each do |title, params|
+        it title do
+          do_frame(params)
+        end
       end
     end
   end
