@@ -637,6 +637,67 @@ describe JSON::LD::API do
             }]
           }]
         })
+      },
+      "library" => {
+        frame: %({
+          "@context": {
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "ex": "http://example.org/vocab#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "ex:contains": { "@type": "@id" }
+          },
+          "@type": "ex:Library",
+          "ex:contains": {}
+        }),
+        input: %({
+          "@context": {
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "ex": "http://example.org/vocab#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "@id": "http://example.org/library",
+          "@type": "ex:Library",
+          "dc:name": "Library",
+          "ex:contains": {
+            "@id": "http://example.org/library/the-republic",
+            "@type": "ex:Book",
+            "dc:creator": "Plato",
+            "dc:title": "The Republic",
+            "ex:contains": {
+              "@id": "http://example.org/library/the-republic#introduction",
+              "@type": "ex:Chapter",
+              "dc:description": "An introductory chapter on The Republic.",
+              "dc:title": "The Introduction"
+            }
+          }
+        }),
+        output: %({
+          "@context": {
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "ex": "http://example.org/vocab#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "ex:contains": { "@type": "@id" }
+          },
+          "@graph": [
+            {
+              "@id": "http://example.org/library",
+              "@type": "ex:Library",
+              "dc:name": "Library",
+              "ex:contains": {
+                "@id": "http://example.org/library/the-republic",
+                "@type": "ex:Book",
+                "dc:creator": "Plato",
+                "dc:title": "The Republic",
+                "ex:contains": {
+                  "@id": "http://example.org/library/the-republic#introduction",
+                  "@type": "ex:Chapter",
+                  "dc:description": "An introductory chapter on The Republic.",
+                  "dc:title": "The Introduction"
+                }
+              }
+            }
+          ]
+        })
       }
     }.each do |title, params|
       it title do
@@ -1018,37 +1079,7 @@ describe JSON::LD::API do
 
     describe "named graphs" do
       {
-        #"Frame default graph only" => {
-        #  frame: %({
-        #    "@context": {"@vocab": "urn:"},
-        #    "@graph": {}
-        #  }),
-        #  input: %({
-        #    "@context": {"@vocab": "urn:"},
-        #    "@id": "urn:id-1",
-        #    "@type": "Class",
-        #    "term": "foo",
-        #    "ref": {
-        #      "@id": "urn:id-2",
-        #      "@graph": {
-        #        "@id": "urn:id-2",
-        #        "term": "bar"
-        #      }
-        #    }
-        #  }),
-        #  output: %({
-        #    "@context": {"@vocab": "urn:"},
-        #    "@graph": [
-        #      {
-        #        "@id": "urn:id-1",
-        #        "@type": "Class",
-        #        "ref": {"@id": "urn:id-2"},
-        #        "term": "foo"
-        #      }
-        #    ]
-        #  })
-        #},
-        "Merge graphs" => {
+        "Merge graphs if no outer @graph is used" => {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class"
@@ -1075,7 +1106,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "Preserve graphs" => {
+        "Preserve graphs if outer @graph is used" => {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class",
@@ -1085,7 +1116,8 @@ describe JSON::LD::API do
             "@context": {"@vocab": "urn:"},
             "@id": "urn:id-1",
             "@type": "Class",
-            "merge": {
+            "preserve": {
+              "@id": "urn:gr-1",
               "@graph": {
                 "@id": "urn:id-2",
                 "term": "data"
@@ -1097,8 +1129,8 @@ describe JSON::LD::API do
             "@graph": [{
               "@id": "urn:id-1",
               "@type": "Class",
-              "merge": {
-                "@id": "_:b0",
+              "preserve": {
+                "@id": "urn:gr-1",
                 "@graph": [{
                   "@id": "urn:id-2",
                   "term": "data"
@@ -1205,6 +1237,81 @@ describe JSON::LD::API do
             }]
           })
         },
+        "library" => {
+          frame: %({
+            "@context": {
+              "dc": "http://purl.org/dc/elements/1.1/",
+              "ex": "http://example.org/vocab#",
+              "xsd": "http://www.w3.org/2001/XMLSchema#",
+              "ex:contains": { "@type": "@id" }
+            },
+            "@type": "ex:Library",
+            "ex:contains": {
+              "@id": "http://example.org/graphs/books",
+              "@graph": {
+                "@type": "ex:Book"
+              }
+            }
+          }),
+          input: %({
+            "@context": {
+              "dc": "http://purl.org/dc/elements/1.1/",
+              "ex": "http://example.org/vocab#",
+              "xsd": "http://www.w3.org/2001/XMLSchema#",
+              "ex:contains": { "@type": "@id" }
+            },
+            "@id": "http://example.org/library",
+            "@type": "ex:Library",
+            "dc:name": "Library",
+            "ex:contains": {
+              "@id": "http://example.org/graphs/books",
+              "@graph": {
+                "@id": "http://example.org/library/the-republic",
+                "@type": "ex:Book",
+                "dc:creator": "Plato",
+                "dc:title": "The Republic",
+                "ex:contains": {
+                  "@id": "http://example.org/library/the-republic#introduction",
+                  "@type": "ex:Chapter",
+                  "dc:description": "An introductory chapter on The Republic.",
+                  "dc:title": "The Introduction"
+                }
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "dc": "http://purl.org/dc/elements/1.1/",
+              "ex": "http://example.org/vocab#",
+              "xsd": "http://www.w3.org/2001/XMLSchema#",
+              "ex:contains": { "@type": "@id" }
+            },
+            "@graph": [
+              {
+                "@id": "http://example.org/library",
+                "@type": "ex:Library",
+                "dc:name": "Library",
+                "ex:contains": {
+                  "@id": "http://example.org/graphs/books",
+                  "@graph": [
+                    {
+                      "@id": "http://example.org/library/the-republic",
+                      "@type": "ex:Book",
+                      "dc:creator": "Plato",
+                      "dc:title": "The Republic",
+                      "ex:contains": {
+                        "@id": "http://example.org/library/the-republic#introduction",
+                        "@type": "ex:Chapter",
+                        "dc:description": "An introductory chapter on The Republic.",
+                        "dc:title": "The Introduction"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          })
+        }
       }.each do |title, params|
         it title do
           do_frame(params)

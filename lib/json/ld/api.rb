@@ -433,10 +433,12 @@ module JSON::LD
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], graph: '@default')
 
-        # If Frame is {'@graph': {}] use only the default graph for matches
-        if frame.has_key?('@graph') && frame['@graph'].empty?
+        frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true, quiet: true)}
+        if frame_keys.include?('@graph')
+          # If frame contains @graph, it matches the default graph.
           framing_state[:graph] = '@default'
         else
+          # If frame does not contain @graph used the merged graph.
           framing_state[:graph] = '@merged'
           framing_state[:link]['@merged'] = {}
           framing_state[:graphMap]['@merged'] = merge_node_map_graphs(framing_state[:graphMap])
