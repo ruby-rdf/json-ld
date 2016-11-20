@@ -1106,7 +1106,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "Preserve graphs if outer @graph is used" => {
+        "Frame default graph if outer @graph is used" => {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class",
@@ -1239,71 +1239,54 @@ describe JSON::LD::API do
         },
         "library" => {
           frame: %({
-            "@context": {
-              "dc": "http://purl.org/dc/elements/1.1/",
-              "ex": "http://example.org/vocab#",
-              "xsd": "http://www.w3.org/2001/XMLSchema#",
-              "ex:contains": { "@type": "@id" }
-            },
-            "@type": "ex:Library",
-            "ex:contains": {
+            "@context": {"@vocab": "http://example.org/"},
+            "@type": "Library",
+            "contains": {
               "@id": "http://example.org/graphs/books",
-              "@graph": {
-                "@type": "ex:Book"
-              }
+              "@graph": {"@type": "Book"}
             }
           }),
           input: %({
-            "@context": {
-              "dc": "http://purl.org/dc/elements/1.1/",
-              "ex": "http://example.org/vocab#",
-              "xsd": "http://www.w3.org/2001/XMLSchema#",
-              "ex:contains": { "@type": "@id" }
-            },
+            "@context": {"@vocab": "http://example.org/"},
             "@id": "http://example.org/library",
-            "@type": "ex:Library",
-            "dc:name": "Library",
-            "ex:contains": {
+            "@type": "Library",
+            "name": "Library",
+            "contains": {
               "@id": "http://example.org/graphs/books",
               "@graph": {
                 "@id": "http://example.org/library/the-republic",
-                "@type": "ex:Book",
-                "dc:creator": "Plato",
-                "dc:title": "The Republic",
-                "ex:contains": {
+                "@type": "Book",
+                "creator": "Plato",
+                "title": "The Republic",
+                "contains": {
                   "@id": "http://example.org/library/the-republic#introduction",
-                  "@type": "ex:Chapter",
-                  "dc:description": "An introductory chapter on The Republic.",
-                  "dc:title": "The Introduction"
+                  "@type": "Chapter",
+                  "description": "An introductory chapter on The Republic.",
+                  "title": "The Introduction"
                 }
               }
             }
           }),
           output: %({
-            "@context": {
-              "dc": "http://purl.org/dc/elements/1.1/",
-              "ex": "http://example.org/vocab#",
-              "xsd": "http://www.w3.org/2001/XMLSchema#",
-              "ex:contains": { "@type": "@id" }
-            },
+            "@context": {"@vocab": "http://example.org/"},
             "@graph": [
               {
                 "@id": "http://example.org/library",
-                "@type": "ex:Library",
-                "dc:name": "Library",
-                "ex:contains": {
+                "@type": "Library",
+                "name": "Library",
+                "contains": {
                   "@id": "http://example.org/graphs/books",
                   "@graph": [
                     {
                       "@id": "http://example.org/library/the-republic",
-                      "@type": "ex:Book",
-                      "dc:creator": "Plato",
-                      "dc:title": "The Republic",
-                      "ex:contains": {
+                      "@type": "Book",
+                      "creator": "Plato",
+                      "title": "The Republic",
+                      "contains": {
                         "@id": "http://example.org/library/the-republic#introduction",
-                        "@type": "ex:Chapter",
-                        "dc:description": "An introductory chapter on The Republic.",
-                        "dc:title": "The Introduction"
+                        "@type": "Chapter",
+                        "description": "An introductory chapter on The Republic.",
+                        "title": "The Introduction"
                       }
                     }
                   ]

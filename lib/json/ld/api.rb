@@ -402,7 +402,7 @@ module JSON::LD
       }.merge!(options)
 
       framing_state = {
-        graphMap:     {'@default' => {}},
+        graphMap:     {},
         graphStack:   [],
         subjectStack: [],
         link:         {},
