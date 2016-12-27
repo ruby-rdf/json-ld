@@ -1,0 +1,269 @@
+{
+  "@context": {
+    "uuid": "http://www.domain.com/profile/client/resource/",
+    "pmcore": "http://www.domain.com/ontology/pmcore/1.0#",
+    "pmaudiovisual": "http://www.domain.com/ontology/pmaudiovisual/1.0#",
+    "pmadditionalsubjects": "http://www.domain.com/ontology/pmadditionalsubjects/",
+    "pmmodel": "http://www.domain.com/ontology/pmmodel/1.0#",
+    "kb": "http://www.domain.com/profile/client/kb/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "client": "http://www.domain.com/ontology/client/1.0#",
+    "freebase": "http://rdf.freebase.com/ns/",
+    "cents": "http://www.domain.com/profile/1000cents/resource/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "skos": "http://www.w3.org/2008/05/skos#"
+  },
+  "@graph": [
+    {
+      "@id": "kb:148F9D55-482A-4A96-B06F-16E05D44AA15",
+      "@type": [
+        "freebase:periodicals.newspaper_circulation_area",
+        "client:Thesaurus",
+        "pmmodel:PMObject",
+        "pmcore:Entity",
+        "freebase:location.dated_location",
+        "freebase:common.topic",
+        "pmcore:Place",
+        "freebase:location.citytown",
+        "pmcore:Accessible",
+        "freebase:location.location",
+        "freebase:sports.sports_team_location",
+        "freebase:base.type_ontology.abstract",
+        "http://dbpedia.org/ontology/Settlement",
+        "pmcore:PMCoreObject",
+        "freebase:film.film_location",
+        "freebase:location.statistical_region",
+        "http://dbpedia.org/ontology/Place",
+        "freebase:base.type_ontology.inanimate",
+        "freebase:base.type_ontology.agent",
+        "pmcore:Settlement",
+        "pmcore:Subject"
+      ],
+      "freebase:location.location.containedby": [
+        {
+          "@id": "kb:779C782A-7142-4906-9B06-067D24FA81B6",
+          "pmcore:hasInfoSource": [
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent",
+                "owl:NamedIndividual"
+              ]
+            },
+            {
+              "@id": "kb:client",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent"
+              ]
+            },
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase"
+            },
+            {
+              "@id": "kb:client"
+            }
+          ],
+          "pmcore:thumbnail": "http://freebase.cdn.perfect-memory.com/a442530dc40ea694c5fad7bc94f5a976d2e27dbb",
+          "rdfs:label": [
+            {
+              "@value": "Province de Liège",
+              "@language": "fr"
+            },
+            {
+              "@value": "Liège",
+              "@language": "en"
+            }
+          ]
+        },
+        {
+          "@id": "freebase:m.0154j",
+          "pmcore:hasInfoSource": [
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent",
+                "owl:NamedIndividual"
+              ]
+            },
+            {
+              "@id": "kb:client",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent"
+              ]
+            },
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase"
+            },
+            {
+              "@id": "kb:client"
+            }
+          ],
+          "pmcore:thumbnail": "http://freebase.cdn.perfect-memory.com/781ad959270d5a0d78599c6a5515c2997cf629a7",
+          "rdfs:label": [
+            {
+              "@value": "Belgique",
+              "@language": "fr"
+            },
+            {
+              "@value": "Belgium",
+              "@language": "en"
+            }
+          ]
+        },
+        {
+          "@id": "kb:0A786E68-1B16-405C-9EA3-B6221619E832",
+          "pmcore:hasInfoSource": [
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent",
+                "owl:NamedIndividual"
+              ]
+            },
+            {
+              "@id": "kb:client",
+              "@type": [
+                "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+                "http://purl.org/dc/terms/Agent",
+                "pmmodel:PMObject",
+                "pmcore:Entity",
+                "http://xmlns.com/foaf/0.1/Agent",
+                "pmcore:Accessible",
+                "pmcore:Agent",
+                "pmcore:Subject",
+                "pmcore:PMCoreObject",
+                "http://www.domain.com/ontology/pmrights/1.0#Agent"
+              ]
+            },
+            {
+              "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase"
+            },
+            {
+              "@id": "kb:client"
+            }
+          ],
+          "pmcore:thumbnail": "http://freebase.cdn.perfect-memory.com/781ad959270d5a0d78599c6a5515c2997cf629a7",
+          "rdfs:label": [
+            {
+              "@value": "Belgique",
+              "@language": "fr"
+            },
+            {
+              "@value": "Belgium",
+              "@language": "en"
+            }
+          ]
+        },
+        {
+          "@id": "freebase:m.013d56"
+        },
+        {
+          "@id": "freebase:m.0154j"
+        }
+      ],
+      "freebase:location.location.containedby.other": {
+        "@id": "freebase:m.0154j",
+        "pmcore:hasInfoSource": [
+          {
+            "@id": "http://www.domain.com/profile/pmcore/kb/Agent_Freebase",
+            "@type": [
+              "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+              "http://purl.org/dc/terms/Agent",
+              "pmmodel:PMObject",
+              "pmcore:Entity",
+              "http://xmlns.com/foaf/0.1/Agent",
+              "pmcore:Accessible",
+              "pmcore:Agent",
+              "pmcore:Subject",
+              "pmcore:PMCoreObject",
+              "http://www.domain.com/ontology/pmrights/1.0#Agent",
+              "owl:NamedIndividual"
+            ]
+          },
+          {
+            "@id": "kb:client",
+            "@type": [
+              "http://www.domain.com/ontology/pmrights/1.0#PMRightsObject",
+              "http://purl.org/dc/terms/Agent",
+              "pmmodel:PMObject",
+              "pmcore:Entity",
+              "http://xmlns.com/foaf/0.1/Agent",
+              "pmcore:Accessible",
+              "pmcore:Agent",
+              "pmcore:Subject",
+              "pmcore:PMCoreObject",
+              "http://www.domain.com/ontology/pmrights/1.0#Agent"
+            ]
+          }
+        ],
+        "pmcore:thumbnail": "http://freebase.cdn.perfect-memory.com/781ad959270d5a0d78599c6a5515c2997cf629a7",
+        "rdfs:label": [
+          {
+            "@value": "Belgique",
+            "@language": "fr"
+          },
+          {
+            "@value": "Belgium",
+            "@language": "en"
+          }
+        ]
+      },
+      "rdfs:label": [
+        {
+          "@value": "Liège",
+          "@language": "fr"
+        },
+        {
+          "@value": "Liège",
+          "@language": "en"
+        }
+      ]
+    }
+  ]
+}
