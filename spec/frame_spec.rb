@@ -508,6 +508,41 @@ describe JSON::LD::API do
           }]
         })
       },
+      "framed list" => {
+        frame: %({
+          "@context": {
+            "ex": "http://example.org/",
+            "list": {"@id": "ex:list", "@container": "@list"}
+          },
+          "list": [{"@type": "ex:Element"}]
+        }),
+        input: %({
+          "@context": {
+            "ex": "http://example.org/",
+            "list": {"@id": "ex:list", "@container": "@list"}
+          },
+          "@id": "ex:Sub1",
+          "@type": "ex:Type1",
+          "list": [
+            {"@id": "ex:Sub2", "@type": "ex:Element"},
+            "literal1"
+          ]
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.org/",
+            "list": {"@id": "ex:list", "@container": "@list"}
+          },
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "@type": "ex:Type1",
+            "list": [
+              {"@id": "ex:Sub2", "@type": "ex:Element"},
+              "literal1"
+            ]
+          }]
+        })
+      },
       "presentation example" => {
         frame: %({
           "@context": {

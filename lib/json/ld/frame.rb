@@ -126,6 +126,8 @@ module JSON::LD
 
             case
             when list?(o)
+              subframe = frame[prop].first['@list'] if Array(frame[prop]).first.is_a?(Hash)
+              subframe ||= create_implicit_frame(flags)
               # add empty list
               list = {'@list' => []}
               add_frame_output(output, prop, list)
@@ -318,6 +320,23 @@ module JSON::LD
             elsif node?(v) || node_reference?(v)
               node_values.any? do |nv|
                 node_match?(v, nv, state, flags)
+              end
+            elsif list?(v)
+              vv = v['@list'].first
+              node_values = list?(node_values.first) ?
+                node_values.first['@list'] :
+                false
+              if !node_values
+                false # Lists match Lists
+              elsif value?(vv)
+                # Match on any matching value
+                node_values.any? {|nv| value_match?(vv, nv)}
+              elsif node?(vv) || node_reference?(vv)
+                node_values.any? do |nv|
+                  node_match?(vv, nv, state, flags)
+                end
+              else
+                false
               end
             else
               false # No matching on non-value or node values
