@@ -187,6 +187,19 @@ module JSON::LD
     attr_accessor :namer
 
     ##
+    # Create a new context by parsing a context.
+    #
+    # @see #initialize
+    # @see #parse
+    # @param [String, #read, Array, Hash, Context] local_context
+    # @raise [JsonLdError]
+    #   on a remote context load error, syntax error, or a reference to a term which is not defined.
+    # @return [Context]
+    def self.parse(local_context, **options)
+      self.new(options).parse(local_context)
+    end
+
+    ##
     # Create new evaluation context
     # @param [Hash] options
     # @option options [String, #to_s] :base
@@ -204,7 +217,7 @@ module JSON::LD
     # @yield [ec]
     # @yieldparam [Context]
     # @return [Context]
-    def initialize(options = {})
+    def initialize(**options)
       if options[:base]
         @base = @doc_base = RDF::URI(options[:base]).dup
         @doc_base.canonicalize! if options[:canonicalize]
@@ -298,6 +311,7 @@ module JSON::LD
     # @param [String, #read, Array, Hash, Context] local_context
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
+    # @return [Context]
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts = [])
       result = self.dup
@@ -391,9 +405,9 @@ module JSON::LD
           # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
           context = context.dup # keep from modifying a hash passed as a param
           {
-            '@base' => :base=,
+            '@base'     => :base=,
             '@language' => :default_language=,
-            '@vocab'    => :vocab=
+            '@vocab'    => :vocab=,
           }.each do |key, setter|
             v = context.fetch(key, false)
             unless v == false
@@ -797,16 +811,14 @@ module JSON::LD
     #
     # @param [String] value
     #   A keyword, term, prefix:suffix or possibly relative IRI
-    # @param  [Hash{Symbol => Object}] options
     # @param [Boolean] documentRelative (false)
     # @param [Boolean] vocab (false)
-    # @param [RDF::URI] base
     # @param [Hash] local_context
     #   Used during Context Processing.
     # @param [Hash] defined
     #   Used during Context Processing.
     # @param [Boolean] quiet (false)
-    # @param [Hash] options ({})
+    # @param  [Hash{Symbol => Object}] options
     # @return [RDF::URI, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
@@ -878,7 +890,7 @@ module JSON::LD
     # @param [RDF::URI] iri
     # @param [Object] value
     #   Value, used to select among various maps for the same IRI
-    # @param [Boolean] :vocab
+    # @param [Boolean] vocab
     #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     # @param [Boolean] reverse
     #   specifies whether a reverse property is being compacted 
@@ -1193,7 +1205,7 @@ module JSON::LD
       defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
       term_defs = term_definitions.map do |term, td|
         "      " + term.inspect + " => " + td.to_rb
-      end
+      end.sort
       defn << "term_definitions: {\n#{term_defs.join(",\n")    }\n    }" unless term_defs.empty?
       %(# -*- encoding: utf-8 -*-
       # frozen_string_literal: true

@@ -24,6 +24,15 @@ module JSON::LD
     end
 
     ##
+    # Is value a node or a node reference reference?
+    # @param [Object] value
+    # @return [Boolean]
+    def node_or_ref?(value)
+      value.is_a?(Hash) &&
+        !(value.has_key?('@value') || value.has_key?('@list') || value.has_key?('@set'))
+    end
+
+    ##
     # Is value a blank node? Value is a blank node
     #
     # @param [Object] value
@@ -95,7 +104,7 @@ module JSON::LD
     # @return [Boolean] v1 and v2 are considered equal
     def compare_values(v1, v2)
       case
-      when node?(v1) && node?(v2) then v1['@id'] && v1['@id'] == v2['@id']
+      when node_or_ref?(v1) && node_or_ref?(v2) then v1['@id'] && v1['@id'] == v2['@id']
       when value?(v1) && value?(v2)
         v1['@value'] == v2['@value'] &&
         v1['@type'] == v2['@type'] &&

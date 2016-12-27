@@ -18,10 +18,15 @@ module JSON::LD
     # @option options [String] :property (nil)
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, options = {})
+    def frame(state, subjects, frame, **options)
+      log_depth do
+      log_debug("frame") {"subjects: #{subjects.inspect}"}
+      log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
+      log_debug("frame") {"property: #{options[:property].inspect}"}
+
       parent, property = options[:parent], options[:property]
       # Validate the frame
-      validate_frame(state, frame)
+      validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
 
       # Get values for embedOn and explicitOn
@@ -31,6 +36,9 @@ module JSON::LD
         requireAll: get_frame_flag(frame, options, :requireAll),
       }
 
+      # Get link for current graph
+      link = state[:link][state[:graph]] ||= {}
+
       # Create a set of matched subjects by filtering subjects by checking the map of flattened subjects against frame
       # This gives us a hash of objects indexed by @id
       matches = filter_subjects(state, subjects, frame, flags)
@@ -39,25 +47,24 @@ module JSON::LD
       matches.keys.kw_sort.each do |id|
         subject = matches[id]
 
-        if flags[:embed] == '@link' && state[:link].has_key?(id)
-          # TODO: may want to also match an existing linked subject
-          # against the current frame ... so different frames could
-          # produce different subjects that are only shared in-memory
-          # when the frames are the same
+        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
+        if property.nil?
+          state[:uniqueEmbeds] = {state[:graph] => {}}
+        else
+          state[:uniqueEmbeds][state[:graph]] ||= {}
+        end
 
+        if flags[:embed] == '@link' && link.has_key?(id)
           # add existing linked subject
-          add_frame_output(parent, property, state[:link][id])
+          add_frame_output(parent, property, link[id])
           next
         end
 
-        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
-        state = state.merge(uniqueEmbeds: {}) if property.nil?
-
         output = {'@id' => id}
-        state[:link][id] = output
+        link[id] = output
 
         # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
-        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:subjectStack])
+        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
           add_frame_output(parent, property, output)
           next
         end
@@ -65,15 +72,40 @@ module JSON::LD
         # if only the last match should be embedded
         if flags[:embed] == '@last'
           # remove any existing embed
-          remove_embed(state, id) if state[:uniqueEmbeds].include?(id)
-          state[:uniqueEmbeds][id] = {
+          remove_embed(state, id) if state[:uniqueEmbeds][state[:graph]].include?(id)
+          state[:uniqueEmbeds][state[:graph]][id] = {
             parent: parent,
             property: property
           }
         end
 
         # push matching subject onto stack to enable circular embed checks
-        state[:subjectStack] << subject
+        state[:subjectStack] << {subject: subject, graph: state[:graph]}
+
+        # Subject is also the name of a graph
+        if state[:graphMap].has_key?(id)
+          # check frame's "@graph" to see what to do next
+          # 1. if it doesn't exist and state.graph === "@merged", don't recurse
+          # 2. if it doesn't exist and state.graph !== "@merged", recurse
+          # 3. if "@merged" then don't recurse
+          # 4. if "@default" then don't recurse
+          # 5. recurse
+          recurse, subframe = false, nil
+          if !frame.has_key?('@graph')
+            recurse, subframe = (state[:graph] != '@merged'), {}
+          else
+            subframe = frame['@graph'].first
+            recurse = !%w(@merged @default).include?(subframe)
+            subframe = {} unless subframe.is_a?(Hash)
+          end
+
+          if recurse
+            state[:graphStack].push(state[:graph])
+            state[:graph] = id
+            frame(state, state[:graphMap][id].keys, [subframe], options.merge(parent: output, property: '@graph'))
+            state[:graph] = state[:graphStack].pop
+          end
+        end
 
         # iterate over subject properties in order
         subject.keys.kw_sort.each do |prop|
@@ -90,8 +122,12 @@ module JSON::LD
 
           # add objects
           objects.each do |o|
+            subframe = Array(frame[prop]).first || create_implicit_frame(flags)
+
             case
             when list?(o)
+              subframe = frame[prop].first['@list'] if Array(frame[prop]).first.is_a?(Hash)
+              subframe ||= create_implicit_frame(flags)
               # add empty list
               list = {'@list' => []}
               add_frame_output(output, prop, list)
@@ -99,8 +135,6 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  subframe = frame[prop].first['@list'] if frame[prop].is_a?(Array) && frame[prop].first.is_a?(Hash)
-                  subframe ||= create_implicit_frame(flags)
                   frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
                 else
                   add_frame_output(list, '@list', oo.dup)
@@ -108,10 +142,9 @@ module JSON::LD
               end
             when node_reference?(o)
               # recurse into subject reference
-              subframe = frame[prop] || create_implicit_frame(flags)
               frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
-            else
-              # include other values automatically
+            when value_match?(subframe, o)
+              # Include values if they match
               add_frame_output(output, prop, o.dup)
             end
           end
@@ -146,6 +179,7 @@ module JSON::LD
 
         # pop matching subject from circular ref-checking stack
         state[:subjectStack].pop()
+      end
       end
     end
 
@@ -191,7 +225,7 @@ module JSON::LD
     #
     # @param [Hash{Symbol => Object}] state
     #   Current framing state
-    # @param [Hash{String => Hash}] subjects
+    # @param [Array<String>] subjects
     #   The subjects to filter
     # @param [Hash{String => Object}] frame
     # @param [Hash{Symbol => String}] flags the frame flags.
@@ -199,8 +233,8 @@ module JSON::LD
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame, flags)
       subjects.inject({}) do |memo, id|
-        subject = state[:subjects][id]
-        memo[id] = subject if filter_subject(subject, frame, flags)
+        subject = state[:graphMap][state[:graph]][id]
+        memo[id] = subject if filter_subject(subject, frame, state, flags)
         memo
       end
     end
@@ -214,54 +248,113 @@ module JSON::LD
     #
     # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
+    # @param [Hash{Symbol => Object}] state Current framing state
     # @param [Hash{Symbol => Object}] flags the frame flags.
     #
     # @return [Boolean] true if the node matches, false if not.
-    def filter_subject(subject, frame, flags)
-      types = frame.fetch('@type', [])
-      raise InvalidFrame::Syntax, "frame @type must be an array: #{types.inspect}" unless types.is_a?(Array)
-      subject_types = subject.fetch('@type', [])
-      raise InvalidFrame::Syntax, "node @type must be an array: #{node_types.inspect}" unless subject_types.is_a?(Array)
+    def filter_subject(subject, frame, state, flags)
+      # Duck typing, for nodes not having a type, but having @id
+      wildcard, matches_some = true, false
 
-      # check @type (object value means 'any' type, fall through to ducktyping)
-      if !types.empty? &&
-         !(types.length == 1 && types.first.is_a?(Hash))
-        # If frame has an @type, use it for selecting appropriate nodes.
-        return types.any? {|t| subject_types.include?(t)}
-      else
-        # Duck typing, for nodes not having a type, but having @id
-        wildcard, matches_some = true, false
+      frame.each do |k, v|
+        node_values = subject.fetch(k, [])
 
-        frame.each do |k, v|
-          case k
-          when '@id'
-            return false if v.is_a?(String) && subject['@id'] != v
-            wildcard, matches_some = false, true
-          when '@type'
-            wildcard, matches_some = false, false
-          when /^@/
+        case k
+        when '@id'
+          ids = v || []
+
+          # Match on specific @id.
+          return ids.include?(subject['@id']) if !ids.empty? && ids != [{}]
+          match_this = true
+        when '@type'
+          # No longer a wildcard pattern
+          wildcard = false
+
+          match_this = case v
+          when []
+            # Don't Match on no @type
+            return false if !node_values.empty?
+            true
+          when [{}]
+            # Match on wildcard @type
+            !node_values.empty?
           else
-            wildcard = false
+            # Match on specific @type
+            return !(v & node_values).empty?
+            false
+          end
+        when /@/
+          # Skip other keywords
+          next
+        else
+          is_empty = v.empty?
+          if v = v.first
+            validate_frame(v)
+            has_default = v.has_key?('@default')
+            # Exclude framing keywords
+            v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
+          end
 
-            # v == [] means do not match if property is present
-            if subject.has_key?(k)
-              return false if v == [] && !subject[k].nil?
-              matches_some = true
-              next
+
+          # No longer a wildcard pattern if frame has any non-keyword properties
+          wildcard = false
+
+          # Skip, but allow match if node has no value for property, and frame has a default value
+          next if node_values.empty? && has_default
+
+          # If frame value is empty, don't match if subject has any value
+          return false if !node_values.empty? && is_empty
+
+          match_this = case v
+          when nil
+            # node does not match if values is not empty and the value of property in frame is match none.
+            return false unless node_values.empty?
+            true
+          when {}
+            # node matches if values is not empty and the value of property in frame is wildcard
+            !node_values.empty?
+          else
+            if value?(v)
+              # Match on any matching value
+              node_values.any? {|nv| value_match?(v, nv)}
+            elsif node?(v) || node_reference?(v)
+              node_values.any? do |nv|
+                node_match?(v, nv, state, flags)
+              end
+            elsif list?(v)
+              vv = v['@list'].first
+              node_values = list?(node_values.first) ?
+                node_values.first['@list'] :
+                false
+              if !node_values
+                false # Lists match Lists
+              elsif value?(vv)
+                # Match on any matching value
+                node_values.any? {|nv| value_match?(vv, nv)}
+              elsif node?(vv) || node_reference?(vv)
+                node_values.any? do |nv|
+                  node_match?(vv, nv, state, flags)
+                end
+              else
+                false
+              end
+            else
+              false # No matching on non-value or node values
             end
-
-            # all properties must match to be a duck unless a @default is specified
-            has_default = v.is_a?(Array) && v.length == 1 && v.first.is_a?(Hash) && v.first.has_key?('@default')
-            return false if flags[:requireAll] && !has_default
           end
         end
 
-        # return true if wildcard or subject matches some properties
-        wildcard || matches_some
+        # All non-defaulted values must match if @requireAll is set
+        return false if !match_this && flags[:requireAll]
+
+        matches_some ||= match_this
       end
+
+      # return true if wildcard or subject matches some properties
+      wildcard || matches_some
     end
 
-    def validate_frame(state, frame)
+    def validate_frame(frame)
       raise InvalidFrame::Syntax,
             "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
@@ -270,12 +363,13 @@ module JSON::LD
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.
     # 
     # @param subject_to_embed the subject to embed.
+    # @param graph the graph the subject to embed is in.
     # @param subject_stack the current stack of subjects.
     # 
     # @return true if a circular reference would be created, false if not.
-    def creates_circular_reference(subject_to_embed, subject_stack)
+    def creates_circular_reference(subject_to_embed, graph, subject_stack)
       subject_stack[0..-2].any? do |subject|
-        subject['@id'] == subject_to_embed['@id']
+        subject[:graph] == graph && subject[:subject]['@id'] == subject_to_embed['@id']
       end
     end
 
@@ -308,7 +402,7 @@ module JSON::LD
     # @param id the @id of the embed to remove.
     def remove_embed(state, id)
       # get existing embed
-      embeds = state[:uniqueEmbeds];
+      embeds = state[:uniqueEmbeds][state[:graph]];
       embed = embeds[id];
       property = embed[:property];
 
@@ -368,7 +462,31 @@ module JSON::LD
     # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
-      [flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}]
+      flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}
+    end
+
+  private
+    # Node matches if it is a node, and matches the pattern as a frame
+    def node_match?(pattern, value, state, flags)
+      return false unless value['@id']
+      node_object = state[:subjects][value['@id']]
+      node_object && filter_subject(node_object, pattern, state, flags)
+    end
+
+    # Value matches if it is a value, and matches the value pattern.
+    #
+    # * `pattern` is empty
+    # * @values are the same, or `pattern[@value]` is a wildcard, and
+    # * @types are the same or `value[@type]` is not null and `pattern[@type]` is `{}`, or `value[@type]` is null and `pattern[@type]` is null or `[]`, and
+    # * @languages are the same or `value[@language]` is not null and `pattern[@language]` is `{}`, or `value[@language]` is null and `pattern[@language]` is null or `[]`.
+    def value_match?(pattern, value)
+      v1, t1, l1 = value['@value'], value['@type'], value['@language']
+      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
+      return true if (v2 + t2 + l2).empty?
+      return false unless v2.include?(v1) || v2 == [{}]
+      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []) == []
+      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []) == []
+      true
     end
   end
 end

@@ -1,0 +1,92 @@
+<http://rdf.freebase.com/ns/m.03lzfx> <http://www.w3.org/2000/01/rdf-schema#label> "Bataille de Liège"@fr .
+<http://rdf.freebase.com/ns/m.03lzfx> <http://www.w3.org/2000/01/rdf-schema#label> "Battle of Liège"@en .
+<http://rdf.freebase.com/ns/m.03lzfx> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/50094f7a625e8caf4622e234889f066aaa1b250a" .
+<http://rdf.freebase.com/ns/m.03lzfx> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://www.domain.com/profile/client/kb/40350292-4496-4AC7-98BA-84F7A86FDD4E> <http://www.w3.org/2000/01/rdf-schema#label> "Justine Henin"@fr .
+<http://www.domain.com/profile/client/kb/40350292-4496-4AC7-98BA-84F7A86FDD4E> <http://www.w3.org/2000/01/rdf-schema#label> "Justine Henin"@en .
+<http://www.domain.com/profile/client/kb/40350292-4496-4AC7-98BA-84F7A86FDD4E> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/1ce82860884dfe5dab93e44d266d8f07854963f5" .
+<http://www.domain.com/profile/client/kb/40350292-4496-4AC7-98BA-84F7A86FDD4E> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://www.domain.com/profile/client/kb/40350292-4496-4AC7-98BA-84F7A86FDD4E> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.w3.org/2000/01/rdf-schema#label> "2011 Liège attack"@en .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.w3.org/2000/01/rdf-schema#label> "Nordine Amrani"@en .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.w3.org/2000/01/rdf-schema#label> "Nordine Amrani"@fr .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.w3.org/2000/01/rdf-schema#label> "Tuerie de Liège"@fr .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/9c8759b0d946a6c1f00a6219708b7dc8305e54e2" .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://rdf.freebase.com/ns/m.0hr5z7z> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://www.domain.com/profile/client/kb/1566189C-2FC1-4762-B628-1DC9812B170F> <http://www.w3.org/2000/01/rdf-schema#label> "Sclessin"@fr .
+<http://www.domain.com/profile/client/kb/1566189C-2FC1-4762-B628-1DC9812B170F> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Accessible> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Entity> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Agent> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/dc/terms/Agent> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Agent> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmrights/1.0#Agent> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmrights/1.0#PMRightsObject> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmmodel/1.0#PMObject> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Subject> .
+<http://www.domain.com/profile/client/kb/client> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#PMCoreObject> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Accessible> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Entity> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Agent> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/dc/terms/Agent> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Agent> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmrights/1.0#Agent> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmrights/1.0#PMRightsObject> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmmodel/1.0#PMObject> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Subject> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.domain.com/profile/pmcore/kb/Agent_Freebase> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#PMCoreObject> .
+<http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> <http://www.w3.org/2000/01/rdf-schema#label> "Belgium"@en .
+<http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> <http://www.w3.org/2000/01/rdf-schema#label> "Belgique"@fr .
+<http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/781ad959270d5a0d78599c6a5515c2997cf629a7" .
+<http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://rdf.freebase.com/ns/m.0krxss> <http://www.w3.org/2000/01/rdf-schema#label> "Didier Reynders"@en .
+<http://rdf.freebase.com/ns/m.0krxss> <http://www.w3.org/2000/01/rdf-schema#label> "Didier Reynders"@fr .
+<http://rdf.freebase.com/ns/m.0krxss> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/631b2349398635ca2e7385cad6c12f0ac3a83a26" .
+<http://rdf.freebase.com/ns/m.0krxss> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://rdf.freebase.com/ns/m.0krxss> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://www.domain.com/profile/client/kb/D8043EB6-D3DD-4963-9555-8EE0599C8F22> <http://www.w3.org/2000/01/rdf-schema#label> "Université de Liège"@fr .
+<http://www.domain.com/profile/client/kb/D8043EB6-D3DD-4963-9555-8EE0599C8F22> <http://www.w3.org/2000/01/rdf-schema#label> "University of Liège"@en .
+<http://www.domain.com/profile/client/kb/D8043EB6-D3DD-4963-9555-8EE0599C8F22> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/38fe923f650278a391c23decf211e3588c6ec2a8" .
+<http://www.domain.com/profile/client/kb/D8043EB6-D3DD-4963-9555-8EE0599C8F22> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://www.domain.com/profile/client/kb/D8043EB6-D3DD-4963-9555-8EE0599C8F22> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://rdf.freebase.com/ns/m.0154j> <http://www.w3.org/2000/01/rdf-schema#label> "Belgium"@en .
+<http://rdf.freebase.com/ns/m.0154j> <http://www.w3.org/2000/01/rdf-schema#label> "Belgique"@fr .
+<http://rdf.freebase.com/ns/m.0154j> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/781ad959270d5a0d78599c6a5515c2997cf629a7" .
+<http://rdf.freebase.com/ns/m.0154j> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://rdf.freebase.com/ns/m.0154j> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> <http://www.w3.org/2000/01/rdf-schema#label> "Province de Liège"@fr .
+<http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> <http://www.w3.org/2000/01/rdf-schema#label> "Liège"@en .
+<http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> <http://www.domain.com/ontology/pmcore/1.0#thumbnail> "http://freebase.cdn.perfect-memory.com/a442530dc40ea694c5fad7bc94f5a976d2e27dbb" .
+<http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/client/kb/client> .
+<http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> <http://www.domain.com/ontology/pmcore/1.0#hasInfoSource> <http://www.domain.com/profile/pmcore/kb/Agent_Freebase> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Place> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/client/1.0#Thesaurus> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Accessible> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Entity> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/location.location> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/base.type_ontology.inanimate> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/film.film_location> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/location.dated_location> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#PMCoreObject> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Settlement> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/periodicals.newspaper_circulation_area> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/base.type_ontology.abstract> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/sports.sports_team_location> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/location.citytown> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Subject> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Place> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/base.type_ontology.agent> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmcore/1.0#Settlement> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/location.statistical_region> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.domain.com/ontology/pmmodel/1.0#PMObject> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.freebase.com/ns/common.topic> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/2000/01/rdf-schema#label> "Liège"@fr .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://www.w3.org/2000/01/rdf-schema#label> "Liège"@en .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://rdf.freebase.com/ns/location.location.containedby> <http://www.domain.com/profile/client/kb/0A786E68-1B16-405C-9EA3-B6221619E832> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://rdf.freebase.com/ns/location.location.containedby> <http://rdf.freebase.com/ns/m.0154j> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://rdf.freebase.com/ns/location.location.containedby.other> <http://rdf.freebase.com/ns/m.0154j> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://rdf.freebase.com/ns/location.location.containedby> <http://www.domain.com/profile/client/kb/779C782A-7142-4906-9B06-067D24FA81B6> .
+<http://www.domain.com/profile/client/kb/148F9D55-482A-4A96-B06F-16E05D44AA15> <http://rdf.freebase.com/ns/location.location.containedby> <http://rdf.freebase.com/ns/m.013d56> .

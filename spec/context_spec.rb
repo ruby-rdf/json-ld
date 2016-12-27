@@ -37,6 +37,21 @@ describe JSON::LD::Context do
   end
   subject {context}
 
+  describe ".parse" do
+    let(:ctx) {[
+      {"foo" => "http://example.com/foo"},
+      {"bar" => "foo"}
+    ]}
+
+    it "merges definitions from each context" do
+      ec = described_class.parse(ctx)
+      expect(ec.send(:mappings)).to produce({
+        "foo" => "http://example.com/foo",
+        "bar" => "http://example.com/foo"
+      }, logger)
+    end
+  end
+
   describe "#parse" do
     context "remote" do
 
@@ -116,15 +131,13 @@ describe JSON::LD::Context do
     end
 
     context "Array" do
-      before(:all) do
-        @ctx = [
-          {"foo" => "http://example.com/foo"},
-          {"bar" => "foo"}
-        ]
-      end
+      let(:ctx) {[
+        {"foo" => "http://example.com/foo"},
+        {"bar" => "foo"}
+      ]}
 
       it "merges definitions from each context" do
-        ec = subject.parse(@ctx)
+        ec = subject.parse(ctx)
         expect(ec.send(:mappings)).to produce({
           "foo" => "http://example.com/foo",
           "bar" => "http://example.com/foo"

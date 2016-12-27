@@ -42,7 +42,7 @@ module Fixtures
       def options
         @options ||= begin
           opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          {'processingMode' => "json-ld-1.0"}.merge(property('option') || {}).each do |k, v|
+          {'processingMode' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
           opts
