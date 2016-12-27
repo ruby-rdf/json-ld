@@ -62,12 +62,12 @@ module JSON::LD
                 # If files are empty, either use options[:execute]
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
-                JSON::LD::API.expand(input, options) do |expanded|
+                JSON::LD::API.expand(input, options.merge(validate: false)) do |expanded|
                   out.puts expanded.to_json(JSON::LD::JSON_STATE)
                 end
               else
                 files.each do |file|
-                  JSON::LD::API.expand(file, options) do |expanded|
+                  JSON::LD::API.expand(file, options.merge(validate: false)) do |expanded|
                     out.puts expanded.to_json(JSON::LD::JSON_STATE)
                   end
                 end

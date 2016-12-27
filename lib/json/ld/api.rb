@@ -73,7 +73,7 @@ module JSON::LD
     # @option options [String] :processingMode ("json-ld-1.1")
     #   Processing mode, json-ld-1.0 or json-ld-1.1. Also can have other values:
     #
-    #   * expand-frame – special frame expansion mode.
+    #   * json-ld-1.1-expand-frame – special frame expansion mode.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -89,10 +89,11 @@ module JSON::LD
       @options = {
         compactArrays: true,
         rename_bnodes: true,
-        processingMode: "json-ld-1.1"
-      }.merge(options)
-      @options[:validate] = @options[:processingMode] == "json-ld-1.0"
-      @options[:documentLoader] ||= self.class.method(:documentLoader)
+        processingMode: "json-ld-1.1",
+        documentLoader: self.class.method(:documentLoader)
+      }
+      @options[:validate] = %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
+      @options = @options.merge(options)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
