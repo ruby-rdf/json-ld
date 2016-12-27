@@ -1,0 +1,23 @@
+{
+  "@context": "...",
+  "id": "person1",
+  "type": "IdentityProfile",
+  "credential": [{
+    "@graph": {
+      "id": "cred1",
+      "claim": {
+        "id": "person1",
+        "ageOver": 21
+      },
+      "signature": { ... }
+    }, {
+    "@graph": {    
+      "id": "cred2",
+      "claim": {
+        "id": "person1",
+        "passport": { ... },
+      },
+      "signature": { ... }
+    }
+  }]
+}

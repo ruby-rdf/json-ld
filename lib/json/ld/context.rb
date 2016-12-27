@@ -189,7 +189,8 @@ module JSON::LD
     ##
     # Create a new context by parsing a context.
     #
-    # @see {#initialize}, {#parse}
+    # @see #initialize
+    # @see #parse
     # @param [String, #read, Array, Hash, Context] local_context
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.

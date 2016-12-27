@@ -14,8 +14,6 @@ module JSON::LD
     # @param [Context] context
     # @param [Boolean] ordered (true)
     #   Ensure output objects have keys ordered properly
-    # @param [Hash{Symbol => Object}] options
-    #   See {JSON::LD::API.expand}
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context, ordered: true)
       framing = @options[:processingMode].include?("expand-frame")

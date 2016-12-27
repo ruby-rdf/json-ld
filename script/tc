@@ -31,10 +31,10 @@ def run_tc(man, tc, options)
 
   if options[:verbose]
     puts "\nTestCase: #{tc.inspect}"
-    puts "\nInput:\n" + tc.input.read 
-    puts "\nContext:\n" + tc.context.read if tc.context
-    puts "\nFrame:\n" + tc.frame.read if tc.frame
-    puts "\nExpected:\n" + tc.expect.read if tc.positiveTest?
+    puts "\nInput:\n" + tc.input
+    puts "\nContext:\n" + tc.context if tc.context
+    puts "\nFrame:\n" + tc.frame if tc.frame
+    puts "\nExpected:\n" + tc.expect if tc.positiveTest?
   end
 
   output = ""
