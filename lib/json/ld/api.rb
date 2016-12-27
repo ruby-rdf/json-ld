@@ -375,7 +375,6 @@ module JSON::LD
         framing_state[:subjects] = framing_state[:graphMap][framing_state[:graph]]
 
         result = []
-        require 'byebug'; byebug
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))
         
         # Initalize context from frame
