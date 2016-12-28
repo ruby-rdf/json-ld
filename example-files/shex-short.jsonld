@@ -1,0 +1,3855 @@
+[
+  {
+    "@id": "",
+    "http://www.w3.org/ns/earl#testSubjects": [
+      {
+        "@id": "https://www.npmjs.com/package/shex"
+      },
+      {
+        "@id": "http://rubygems.org/gems/shex"
+      }
+    ],
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest"
+          }
+        ]
+      }
+    ],
+    "http://usefulinc.com/ns/doap#name": [
+      {
+        "@value": "Shape Expressions Language"
+      }
+    ],
+    "http://purl.org/dc/terms/bibliographicCitation": [
+      {
+        "@value": "[[ShEx]]"
+      }
+    ],
+    "http://www.w3.org/ns/earl#assertions": [
+      {
+        "@id": "shex.js-earl.ttl"
+      },
+      {
+        "@id": "rdf.rb-earl.ttl"
+      }
+    ],
+    "@type": [
+      "http://usefulinc.com/ns/doap#Project",
+      "http://www.w3.org/ns/earl#Software"
+    ],
+    "http://www.w3.org/ns/earl#generatedBy": [
+      {
+        "@id": "http://rubygems.org/gems/earl-report"
+      }
+    ]
+  },
+  {
+    "@id": "http://greggkellogg.net/foaf#me",
+    "http://xmlns.com/foaf/0.1/name": [
+      {
+        "@value": "Gregg Kellogg"
+      }
+    ],
+    "http://xmlns.com/foaf/0.1/homepage": [
+      {
+        "@id": "http://greggkellogg.net/"
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Assertor",
+      "http://xmlns.com/foaf/0.1/Person"
+    ]
+  },
+  {
+    "@id": "http://rubygems.org/gems/earl-report",
+    "http://usefulinc.com/ns/doap#name": [
+      {
+        "@value": "earl-report"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#homepage": [
+      {
+        "@id": "https://github.com/gkellogg/earl-report"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#shortdesc": [
+      {
+        "@value": "Earl Report summary generator",
+        "@language": "en"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#developer": [
+      {
+        "@id": "http://greggkellogg.net/foaf#me"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#description": [
+      {
+        "@value": "EarlReport generates HTML+RDFa rollups of multiple EARL reports",
+        "@language": "en"
+      }
+    ],
+    "@type": [
+      "http://usefulinc.com/ns/doap#Project",
+      "http://www.w3.org/ns/earl#Software"
+    ],
+    "http://usefulinc.com/ns/doap#license": [
+      {
+        "@id": "http://unlicense.org"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#release": [
+      {
+        "@id": "https://github.com/gkellogg/earl-report/tree/0.4.3"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#programming-language": [
+      {
+        "@value": "Ruby"
+      }
+    ]
+  },
+  {
+    "@id": "http://rubygems.org/gems/shex",
+    "http://usefulinc.com/ns/doap#name": [
+      {
+        "@value": "ShEx"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#homepage": [
+      {
+        "@id": "http://ruby-rdf.github.com/shex"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#developer": [
+      {
+        "@id": "http://greggkellogg.net/foaf#me"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#description": [
+      {
+        "@value": "ShEx is an Shape Expression engine for the RDF.rb library suite.",
+        "@language": "en"
+      }
+    ],
+    "@type": [
+      "http://usefulinc.com/ns/doap#Project",
+      "http://www.w3.org/ns/earl#TestSubject",
+      "http://www.w3.org/ns/earl#Software"
+    ],
+    "http://usefulinc.com/ns/doap#programming-language": [
+      {
+        "@value": "Ruby"
+      }
+    ]
+  },
+  {
+    "@id": "http://www.w3.org/People/Eric/ericp-foaf#me",
+    "http://xmlns.com/foaf/0.1/name": [
+      {
+        "@value": "Eric Prud'hommeaux"
+      }
+    ],
+    "http://xmlns.com/foaf/0.1/homepage": [
+      {
+        "@id": "http://www.w3.org/People/Eric/"
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Assertor",
+      "http://xmlns.com/foaf/0.1/Person"
+    ]
+  },
+  {
+    "@id": "https://github.com/gkellogg/earl-report/tree/0.4.3",
+    "http://usefulinc.com/ns/doap#created": [
+      {
+        "@value": "2016-12-26",
+        "@type": "http://www.w3.org/2001/XMLSchema#date"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#name": [
+      {
+        "@value": "earl-report-0.4.3"
+      }
+    ],
+    "@type": [
+      "http://usefulinc.com/ns/doap#Version"
+    ],
+    "http://usefulinc.com/ns/doap#revision": [
+      {
+        "@value": "0.4.3"
+      }
+    ]
+  },
+  {
+    "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest",
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest#1MissingRef"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest#1focusMissingRefdot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest#1focusRefANDSelfdot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest#includeNonSimpleShape"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeStructure/manifest#includeShapeNotFound"
+          }
+        ]
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Report",
+      "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#Manifest"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#comment": [
+      {
+        "@value": "ShEx negative structure tests"
+      }
+    ]
+  },
+  {
+    "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest",
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1decimalMininclusiveroman-numeral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1dotAnnot_AIRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1dotUnlabeledCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1doubleMininclusiveroman-numeral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1floatMininclusiveroman-numeral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1integerMininclusiveroman-numeral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1inverseinversedot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1iriLength2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1iriMaxexclusive"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1iriMaxinclusive"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1iriMinexclusive"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1iriMininclusive"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1literalFractiondigitsxsd-integer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1literalLength2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1literalTotaldigitsxsd-integer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1negatedinversenegateddot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1negatednegateddot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1unknowndatatypeMaxInclusive"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1val1bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1val1iriMinusiri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1val1vcrefSTRING_LITERAL1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#1valA"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#DECIMAL-123.abc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#DOUBLE-123e"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#INTEGER-+-1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#INTEGER-123abc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#IRIREF-with-ECHAR"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#IRIREF-with-PN_LOCAL_ESC"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#IRIREF-with-SPACE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#IRIREF-with-bad-UCHAR.1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#IRIREF-with-bad-UCHAR.2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PNAME_NS-dot-at-end-declared"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PNAME_NS-dot-at-end-undeclared"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PNAME_NS-dot-at-start-declared"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PNAME_NS-dot-at-start-undeclared"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-PERCENT-end"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-PERCENT-mid"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-PERCENT-start"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-dash-start"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-unescaped-TILDE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#PN_LOCAL-with-UCHAR.1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL1-ending-QUOTATION_MARK"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-bad-ECHAR"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-bad-LANGTAG"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-bad-UCHAR1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-bad-UCHAR2-value"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-ending-APOSTROPHE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-illegal-UCHAR1-value"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL2-with-LANGTAG-and-datatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL_LONG1-ending-APOSTROPHE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL_LONG1-ending-APOSTROPHE4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL_LONG2-ending-APOSTROPHE3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL_LONG2-ending-QUOTATION_MARK4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#STRING_LITERAL_LONG2-unterminated"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#base-no-uri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#base-uri-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#bnodedot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#capitol-A"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#group-no-COMMA-separators"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#groupShapeConstr-trailing-OR"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#literal-0x123"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#open1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#open1dotcloseAnnot3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#open1dotcloseCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#open1dotclosecardOpt"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#openopen1dotOr1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#openopen1dotcloseCode1closeCode2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#predicate-ANON"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#predicate-BLANK_NODE_LABEL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#predicate-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#predicate-true"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#prefix-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#prefix-no-COLON"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#prefix-no-PNAME_NS"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#prefix-no-uri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#prefix-none"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#shapename-a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#shapename-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#shapename-true"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#tripleConsraint-no-valueClass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#tripleConsraint-with-datatype-and-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#tripleConsraint-with-datatype-and-valueSet"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#tripleConsraint-with-dot-and-datatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/negativeSyntax/manifest#tripleConsraint-with-two-cardinalities"
+          }
+        ]
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Report",
+      "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#Manifest"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#comment": [
+      {
+        "@value": "ShEx negative syntax tests"
+      }
+    ]
+  },
+  {
+    "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest",
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dot-base"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotLNex"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotNS2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotNS2Comment"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotLNexComment"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotLNdefault"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotNSdefault"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotLNex-HYPHEN_MINUS"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#bnode1dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1inversedot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1Adot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1nonliteral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1datatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1datatypelangString"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1card2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1card25"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1card2Star"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1cardOpt"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1cardPlus"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1cardStar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPlus"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRef1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefLNex1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefSpaceLNex1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefNS1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefSpaceNS1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1refbnode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1refbnode_with_leading_digit1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1refbnode_with_leading_underscore1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1refbnode_with_spanning_PN_CHARS1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1refbnode_with_spanning_PN_CHARS_BASE1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#3circularRef1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriRef1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodeRef1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotInline1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1IRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1INTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1DOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1DOUBLElowercase"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1LANGTAG"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1IRIREFDatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1true"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1false"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1datatypeLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalFractiondigits5"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalFractiondigits4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalTotaldigits5"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalTotaldigits6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalTotaldigits2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveINTEGERLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveINTEGERLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDECIMALLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDECIMALint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDECIMALintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDOUBLELeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDOUBLEint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusiveDOUBLEintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMininclusivexsd-integer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveINTEGERLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDECIMALLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDECIMALintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDOUBLELeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusiveDOUBLEintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMininclusivexsd-decimal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDECIMALLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDECIMALintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDOUBLELeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusiveDOUBLEintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMininclusivexsd-float"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveINTEGERLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDECIMALLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDECIMALintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDOUBLELeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusiveDOUBLEintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMininclusivexsd-double"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMinexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMinexclusiveDECIMALint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMinexclusiveDOUBLEint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMinexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMinexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMinexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMinexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMinexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMinexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMinexclusivexsd-float"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMinexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMinexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMinexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxinclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxinclusiveDECIMALint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxinclusiveDOUBLEint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxinclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxinclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxinclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxinclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxinclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxinclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxinclusivexsd-float"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxinclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxinclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxinclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxexclusiveDECIMALint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1integerMaxexclusiveDOUBLEint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxexclusivexsd-byte"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1decimalMaxexclusivexsd-decimal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1floatMaxexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveINTEGERLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDECIMALLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDECIMALint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDECIMALintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDOUBLE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDOUBLELeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDOUBLEint"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1doubleMaxexclusiveDOUBLEintLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1Length"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalLength19"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriRefLength1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodeLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1nonliteralLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMinlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriMinlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodeMinlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1nonliteralMinlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMaxlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriMaxlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodeMaxlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1nonliteralMaxlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPattern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPattern19"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalStartPattern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPatternEnd"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalStartPatternEnd"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPatternDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalCarrotPatternDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalPatternabEnd"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriPattern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1iriPatternbc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodePattern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1nonliteralPattern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1dotMinusiri3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1refvsMinusiri3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1dotMinusiriStem3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1iriStem"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1iriStemMinusiri3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1iriStemMinusiriStem3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2dotSemis"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open2dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open2dotsemisclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#3groupdot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3groupdotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotOne1dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotSemiOne1dotSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotOne1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotSemiOne1dotSemicloseSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2dotOne1dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2dotSemiOne1dotSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open2dotOne1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open2dotSemisOne1dotSemiclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#openopen2dotcloseOne1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#openopen2dotSemiscloseOne1dotSemiclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotopen1dotOne1dotcloseclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotopen1dotSemiOne1dotSemicloseSemicloseSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotOne2dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotOneopen2dotcloseclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#openopen1dotOne1dotclose1dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprRefIRIREF1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprRefbnode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefAND3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExpr1AND1AND1Ref3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprRefAND3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprAND3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotRefOR3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExpr1OR1OR1Ref3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprRefOR3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExprOR3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExpr1AND1OR1Ref3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vExpr1OR1AND1Ref3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3Onedotclosecard2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3Onedotclosecard23"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open4Onedotclosecard23"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3groupdotclosecard23"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1vShapeANDRef3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotClosed"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1IRIREFExtra1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val2IRIREFExtra1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val2IRIREFPlusExtra1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1IRIREFExtra1p2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1IRIREFExtra1One"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotExtra1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#3groupdotExtra3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#3groupdot3Extra"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#3groupdotExtra3NLex"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startRefIRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startRefbnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startInline"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startEqualSpaceInline"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startSpaceEqualInline"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2EachInclude1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2EachInclude1-after"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2OneInclude1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2OneInclude1-after"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotAnnotIRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotAnnotSTRING_LITERAL1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotAnnot3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1inversedotAnnot3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3groupdotcloseAnnot3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotNoCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1inversedotCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotCode3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotNoCode3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotCode3fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotCodeWithEscapes1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotShapeCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotShapeNoCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3groupdotcloseCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startNoCode1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode1fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode1startRef"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode1startReffail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#startCode3fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open3groupdotclosecard23Annot3Code2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#0focusIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#0focusBNODE"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusIRI_dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusBNODE_dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusnonLiteral-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusLength-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusMinLength-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusMaxLength-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusPattern-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusPatternB-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusIRILength_dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusBNODELength_dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusnonLiteralLength-dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#NOT1dotOR2dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#NOT1dotOR2dotX3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#NOT1dotOR2dotX3AND1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#shapeExtern"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#shapeExternRef"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#2dot"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#focusvsORdatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#focusvsANDIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#focusvsANDdatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#focusvs"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#focusdatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotPlusAnnotIRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotAnnotAIRIREF"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#FocusIRI2groupBnodeNested2groupIRIRef"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1bnodeRefORRefMinlength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotShapeAND1dot3X"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#openopen1dotSemiOne1dotSemiclose1dotSemicloseSemi"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotOne2dotclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotSemiOneopen2dotSemiscloseclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#open1dotSemiOne2dotsemisclose"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1dotSemiOne2dotSemis"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMaxinclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMaxexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMininclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1literalMinexclusiveINTEGER"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1val1DECIMAL"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1datatypeRef1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1card2blank"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#1focusnonLiteralLength-nonLiteralLength"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#_all"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/manifest#kitchenSink"
+          }
+        ]
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Report",
+      "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#Manifest"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#comment": [
+      {
+        "@value": "ShEx representation tests"
+      }
+    ]
+  },
+  {
+    "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest",
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0_empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0_other"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0_otherbnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_fail-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot-base_fail-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot-base_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot-base_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotSemi_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotLNex_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotNS2_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotNS2Comment_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotLNexComment_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotLNdefault_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotNSdefault_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotLNex-HYPHEN_MINUS_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_pass-others_lexicallyEarlier"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_pass-others_lexicallyLater"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#bnode1dot_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#bnode1dot_pass-others_lexicallyEarlier"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedot_fail-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedot_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedot_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedot_pass-over_lexicallyEarlier"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedot_pass-over_lexicallyLater"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1Adot_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iri_pass-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iri_fail-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iri_fail-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnode_fail-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnode_pass-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnode_fail-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literal_fail-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literal_fail-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literal_pass-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteral_pass-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusnonLiteralLength-nonLiteralLength_fail-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusnonLiteralLength-nonLiteralLength_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteral_pass-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteral_fail-literal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatype_missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatype_nonLiteral"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatype_langString"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatype_wrongDatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatype_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypelangString_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2_fail0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2_fail1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2_pass2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2_fail3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_fail0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_fail1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_pass2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_pass3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_pass4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_pass5"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card25_fail6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2Star_fail0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2Star_fail1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2Star_pass2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2Star_pass3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1card2Star_pass6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardOpt_pass0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardOpt_pass1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardOpt_fail2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardOpt_pass6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardPlus_fail0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardPlus_pass1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardPlus_pass2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardPlus_pass6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardStar_pass0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardStar_pass1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardStar_pass2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1cardStar_pass6"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPlus_Is1_Ip1_La,Io1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_referent,referrer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_referrer,referent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_missingReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_selfReference"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_missingSelfReference"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_overReferrer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_overReferrer,overReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRef1_overMatchesReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1refbnode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1refbnode1_fail-g1-arc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1refbnode1_fail-g2-arc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3circularRef1_pass-open"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3circularRef1_pass-closed"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRef1_pass-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRef1_fail-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeRef1_fail-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeRef1_pass-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeRef1_fail-datatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeRef1_fail-reflexiveRef"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_referrer,referent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_missingReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_selfReference"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_missingSelfReference"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_overReferrer"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_overReferrer,overReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotInline1_overMatchesReferent"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREF_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREF_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREF_v1v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1INTEGER_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1INTEGER_00"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DECIMAL_00"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DECIMAL_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DECIMAL_Lab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1INTEGER_Lab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DOUBLE_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DOUBLE_0_0e0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DOUBLElowercase_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DOUBLElowercase_fail-0E0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1DOUBLElowercase_0_0e0"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1LANGTAG_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1LANGTAG_Lab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1LANGTAG_LabLTen"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1LANGTAG_LabLTen-fr-jura"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1LANGTAG_LaLTen-fr"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFDatatype_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFDatatype_Lab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFDatatype_LabDTbloodType999"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFDatatype_LaDTbloodType"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1true_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1true_false"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1true_ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1false_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1false_true"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1false_ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeLength_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeLength_fail-wrongDatatype"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeLength_fail-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeLength_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1datatypeLength_fail-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-decimal-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-decimal-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-decimal-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-decimal-longLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-decimal-equalTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-decimal-longTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-decimal-longLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-integer-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_pass-xsd_integer-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-malformedxsd_decimal-1_23ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-malformedxsd_decimal-1_2345ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-malformedxsd_integer-1_2345"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalFractiondigits_fail-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-decimal-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-decimal-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-decimal-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-decimal-longLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-decimal-equalTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-decimal-longTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-decimal-longLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-xsd_integer-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-integer-longLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-integer-equalTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-integer-longTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-integer-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-integer-longLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-byte-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_pass-byte-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-byte-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-malformedxsd_decimal-1_23ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-malformedxsd_decimal-1_2345ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-malformedxsd_integer-1_2345"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-iri"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalTotaldigits_fail-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinexclusiveINTEGER_fail-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinexclusiveINTEGER_pass-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinexclusiveINTEGER_pass-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMininclusiveINTEGER_fail-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMininclusiveINTEGER_pass-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMininclusiveINTEGER_pass-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxexclusiveINTEGER_pass-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxexclusiveINTEGER_fail-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxexclusiveINTEGER_fail-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxinclusiveINTEGER_pass-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxinclusiveINTEGER_pass-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxinclusiveINTEGER_fail-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGER_fail-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGER_pass-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGER_pass-equalTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGER_pass-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_pass-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_pass-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_pass-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGERLead_pass-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGERLead_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGERLead_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGERLead_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGERLead_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMAL_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALLeadTrail_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALLeadTrail_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALLeadTrail_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALLeadTrail_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALint_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALint_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALint_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALintLeadTrail_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALintLeadTrail_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALintLeadTrail_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDECIMALintLeadTrail_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLE_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLELeadTrail_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLELeadTrail_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLELeadTrail_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLELeadTrail_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLEint_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLEintLeadTrail_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLEintLeadTrail_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLEintLeadTrail_pass-integer-equalLead"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveDOUBLEintLeadTrail_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-dateTime-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-string-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusiveINTEGER_fail-byte-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusivexsd-integer_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMininclusivexsd-integer_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveINTEGER_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveINTEGER_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveINTEGERLead_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveINTEGERLead_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALLeadTrail_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALLeadTrail_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALLeadTrail_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALLeadTrail_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALintLeadTrail_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMALintLeadTrail_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLE_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLE_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLE_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLELeadTrail_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLELeadTrail_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLELeadTrail_pass-decimal-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLELeadTrail_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLEintLeadTrail_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDOUBLEintLeadTrail_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusivexsd-decimal_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMininclusivexsd-decimal_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGERLead_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveINTEGERLead_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMAL_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMAL_pass-float-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALLeadTrail_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALLeadTrail_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALLeadTrail_pass-float-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALLeadTrail_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALintLeadTrail_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDECIMALintLeadTrail_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLE_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLE_pass-float-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLELeadTrail_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLELeadTrail_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLELeadTrail_pass-float-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLELeadTrail_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLEintLeadTrail_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusiveDOUBLEintLeadTrail_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusivexsd-float_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMininclusivexsd-float_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveINTEGERLead_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveINTEGERLead_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMAL_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMAL_pass-double-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALLeadTrail_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALLeadTrail_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALLeadTrail_pass-double-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALLeadTrail_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALintLeadTrail_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDECIMALintLeadTrail_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLE_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLE_pass-double-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLELeadTrail_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLELeadTrail_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLELeadTrail_pass-double-equalLeadTrail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLELeadTrail_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLEintLeadTrail_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusiveDOUBLEintLeadTrail_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusivexsd-double_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMininclusivexsd-double_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveINTEGER_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveINTEGER_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveINTEGER_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDECIMALint_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDECIMALint_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDECIMALint_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDOUBLEint_fail-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDOUBLEint_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMinexclusiveDOUBLEint_pass-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveINTEGER_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveINTEGER_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDECIMAL_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDECIMAL_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDECIMAL_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDOUBLE_fail-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDOUBLE_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDOUBLE_pass-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMinexclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveINTEGER_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveINTEGER_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDECIMAL_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDECIMAL_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDOUBLE_fail-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDOUBLE_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusiveDOUBLE_pass-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusivexsd-float_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMinexclusivexsd-float_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveINTEGER_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveINTEGER_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDECIMAL_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDECIMAL_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDOUBLE_fail-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDOUBLE_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDOUBLE_pass-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMinexclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveINTEGER_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveINTEGER_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveINTEGER_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDECIMALint_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDECIMALint_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDECIMALint_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDOUBLEint_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDOUBLEint_pass-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxinclusiveDOUBLEint_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveINTEGER_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveINTEGER_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDECIMAL_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDECIMAL_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDECIMAL_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDOUBLE_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDOUBLE_pass-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDOUBLE_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxinclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveINTEGER_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveINTEGER_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDECIMAL_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDECIMAL_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDECIMAL_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDOUBLE_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDOUBLE_pass-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusiveDOUBLE_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusivexsd-float_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxinclusivexsd-float_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveINTEGER_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveINTEGER_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDECIMAL_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDECIMAL_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDECIMAL_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDOUBLE_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDOUBLE_pass-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDOUBLE_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxinclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveINTEGER_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveINTEGER_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveINTEGER_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDECIMALint_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDECIMALint_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDECIMALint_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDOUBLEint_pass-integer-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDOUBLEint_fail-integer-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1integerMaxexclusiveDOUBLEint_fail-integer-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveINTEGER_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveINTEGER_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDECIMAL_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDECIMAL_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDECIMAL_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDOUBLE_pass-decimal-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDOUBLE_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDOUBLE_fail-decimal-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDECIMAL_fail-float-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusivexsd-byte_fail-byte-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1decimalMaxexclusivexsd-decimal_fail-decimal-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveINTEGER_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveINTEGER_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveDECIMAL_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveDECIMAL_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveDOUBLE_pass-float-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1floatMaxexclusiveDOUBLE_fail-float-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveINTEGER_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveINTEGER_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveINTEGER_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveINTEGERLead_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMAL_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMAL_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMAL_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMALLeadTrail_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMALint_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDECIMALintLeadTrail_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLE_pass-double-low"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLE_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLE_fail-double-high"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLELeadTrail_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLEint_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1doubleMaxexclusiveDOUBLEintLeadTrail_fail-double-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1Length_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1Length_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1Length_fail-lit-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalLength_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalLength_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalLength_fail-lit-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalLength_fail-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalLength_fail-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriLength_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriLength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriLength_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriLength_fail-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriLength_fail-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRefLength1_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRefLength1_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRefLength1_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRefLength1_fail-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriRefLength1_fail-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeLength_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeLength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeLength_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeLength_fail-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeLength_fail-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_fail-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralLength_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinlength_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinlength_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMinlength_pass-lit-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMinlength_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMinlength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMinlength_pass-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMinlength_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMinlength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMinlength_pass-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_pass-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMinlength_pass-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxlength_pass-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxlength_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalMaxlength_fail-lit-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMaxlength_pass-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMaxlength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriMaxlength_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMaxlength_pass-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMaxlength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodeMaxlength_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_pass-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_pass-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralMaxlength_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_pass-lit-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_fail-ab"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_fail-cd"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_pass-lit-into"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern19_fail-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_fail-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPatternEnd_fail-litEnd"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPatternDollar_pass-litDollar-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_pass-StartlitEnd-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalStartPatternEnd_CarrotbcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalCarrotPatternDollar_pass-bc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalCarrotPatternDollar_pass-CarrotbcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPatternabEnd_fail-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalStartPattern_pass-bc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalStartPattern_fail-CarrotbcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPatternEnd_pass-bc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPatternEnd_pass-CarrotbcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_pass-bcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalStarPatternEnd_pass-bc"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1literalPattern_pass-CarrotbcDollar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriPattern_pass-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriPattern_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriPattern_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriPattern_fail-lit-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1iriPattern_fail-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodePattern_pass-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodePattern_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodePattern_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodePattern_fail-lit-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1bnodePattern_fail-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_pass-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_pass-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_fail-lit-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_pass-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1nonliteralPattern_pass-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiri3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiri3_v1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiri3_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiri3_v3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1refvsMinusiri3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1refvsMinusiri3_v1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1refvsMinusiri3_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1refvsMinusiri3_v3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiriStem3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiriStem3_v1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiriStem3_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiriStem3_v3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1dotMinusiriStem3_v1a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStem_passv1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStem_passv1a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStem_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_passIv"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_passIv4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_v1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_v3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiri3_passIv1a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_passIv"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_passIv4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_v1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_v2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_v3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1iriStemMinusiriStem3_v1a"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotOne2dot_pass_p1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotOne2dot_pass_p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotOne2dot-oneOf_fail_p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotOne2dot-someOf_fail_p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open1dotOneopen2dotcloseclose_pass_p1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open1dotOneopen2dotcloseclose_pass_p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open1dotOneopen2dotcloseclose_fail_p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#openopen1dotOne1dotclose1dotclose_pass_p1p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#openopen1dotOne1dotclose1dotclose_pass_p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#openopen1dotOne1dotclose1dotclose_fail_p1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#openopen1dotOne1dotclose1dotclose_fail_p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#openopen1dotOne1dotclose1dotclose_fail_p1p2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefIRIREF1_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefIRIREF1_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefbnode1_fail-lit-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefbnode1_pass-lit-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotShapeAND1dot3X_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotShapeAND1dot3X_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefAND3_failAll"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefAND3_failShape2Shape3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefAND3_failShape1Shape3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefAND3_failShape1Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefAND3_passShape1Shape2Shape3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1AND1Ref3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1AND1Ref3_failvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1AND1Ref3_failvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1AND1Ref3_failvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefAND3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefAND3_failvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefAND3_failvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefAND3_failvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprAND3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprAND3_failvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprAND3_failvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprAND3_failvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_ReflexiveIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_ReflexiveShortIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_IntoReflexiveIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_IntoReflexiveBNode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_CyclicIRI_IRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_CyclicIRI_BNode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#refBNodeORrefIRI_CyclicIRI_ShortIRI"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefOR3_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefOR3_passShape1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefOR3_passShape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefOR3_passShape3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotRefOR3_passShape1Shape2Shape3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1OR1Ref3_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1OR1Ref3_passvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1OR1Ref3_passvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1OR1Ref3_passvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1OR1Ref3_passvc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefOR3_passvc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefOR3_passvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefOR3_passvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefOR3_passvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprRefOR3_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprOR3_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprOR3_passvc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprOR3_passvc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprOR3_passvc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExprOR3_passvc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_pass-vc1vc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_pass-vc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_pass-vc1vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_failvc1vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_failvc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1AND1OR1Ref3_failvc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_pass-vc1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_pass-vc1vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_pass-vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_failvc1vc2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_failvc1vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vExpr1OR1AND1Ref3_failvc1vc2vc3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_fail-p1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_pass-p1X2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_fail-p1X3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_fail-p1X4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_pass-p1p2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_pass-p1p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_pass-p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard2_fail-p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_fail-p1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p1X2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p1X3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_fail-p1X4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p1p2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p1p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3Onedotclosecard23_pass-p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open4Onedotclosecard23_fail-p1p2p3p4"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3groupdotclosecard23_pass-p1p2p3X3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1vShapeANDRef3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotClosed_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotClosed_fail_lower"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotClosed_fail_higher"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#FocusIRI2groupBnodeNested2groupIRIRef_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#FocusIRI2groupBnodeNested2groupIRIRef_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val2IRIREFExtra1_fail-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val2IRIREFPlusExtra1_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val2IRIREFExtra1_pass-iri-bnode"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1p2_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1p2_fail-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotOne2dotExtra-someOf_pass_p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1One_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1val1IRIREFExtra1One_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotExtra1_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotExtra1_fail-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdotExtra3_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdot3Extra_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdotExtra3NLex_pass-iri1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdotExtra3_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdot3Extra_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#3groupdotExtra3NLex_pass-iri2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startRefIRIREF_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startRefIRIREF_pass-others_lexicallyEarlier"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startRefIRIREF_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startRefbnode_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startRefbnode_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startInline_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startEqualSpaceInline_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startSpaceEqualInline_pass-noOthers"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startInline_fail-missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#2EachInclude1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#2EachInclude1-after_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#2OneInclude1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#2OneInclude1-after_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnotIRIREF_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnotIRIREF_missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotPlusAnnotIRIREF_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnotAIRIREF_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnotSTRING_LITERAL1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnot3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotAnnot3_missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedotAnnot3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedotAnnot3_missing"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotNoCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1inversedotCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotCode3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotNoCode3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotCode3fail_abort"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotCodeWithEscapes1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotShapeCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dotShapeNoCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3groupdotcloseCode1-p1p2p3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startNoCode1_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode1fail_abort"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode1startRef_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode1startReffail_abort"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode3_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#startCode3fail_abort"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#open3groupdotclosecard23Annot3Code2-p1p2p3X3"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusIRI_other"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusIRI_other_fail-bnodeFocusLabel"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusIRI_empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusIRI_empty_fail-bnodeFocusLabel"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusBNODE_empty_fail-iriFocusLabel"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusBNODE_empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusBNODE_other_fail-iriFocusLabel"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#0focusBNODE_other"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRI_dot_fail-bnodeFocusLabel"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRI_dot_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODE_dot_fail-iriFocusLabel-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODE_dot_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusnonLiteral-dot_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#focusdatatype_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#focusdatatype_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#focusvs_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#focusvs_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsANDdatatype_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsANDIRI_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsANDIRI_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsORdatatype_pass-val"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsORdatatype_fail-val"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsORdatatype_pass-dt"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusvsORdatatype_fail-dt"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusLength-dot_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_pass-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMinLength-dot_pass-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_pass-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_pass-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_pass-bnode-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusMaxLength-dot_fail-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPattern-dot_fail-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPattern-dot_fail-iri-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPattern-dot_pass-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPattern-dot_fail-iri-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPatternB-dot_fail-iri-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPatternB-dot_fail-bnode-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPatternB-dot_pass-bnode-match"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusPatternB-dot_pass-bnode-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRILength_dot_fail-bnodeFocusLabel-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRILength_dot_fail-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRILength_dot_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusIRILength_dot_fail-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODELength_dot_fail-iriFocusLabel-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODELength_dot_fail-short"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODELength_dot_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusBNODELength_dot_fail-long"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1focusnonLiteralLength-dot_pass-iri-equal"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dot_pass-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dot_pass-NoShape1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dot_pass-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dot_fail-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3_pass-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3_pass-NoShape1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3_pass-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3_fail-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3AND1_fail-empty"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3AND1_fail-NoShape1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3AND1_pass-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#NOT1dotOR2dotX3AND1_fail-Shape2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#shapeExtern_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#shapeExtern_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#shapeExternRef_pass"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#shapeExternRef_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#false-lead-excluding-value-shape"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#nPlus1"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#nPlus1-greedy_fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#nPlus1-greedy-rewrite"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#skipped"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#repeated-group"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#simple-group"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PstarT"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PstarT-greedy"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PTstar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PTstar-greedy-fail"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PTstar-greedy-rewrite"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#PstarTstar"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#P2T2"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#1dot_fail-empty-err"
+          },
+          {
+            "@id": "https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/manifest#2dot_fail-empty-err"
+          }
+        ]
+      }
+    ],
+    "@type": [
+      "http://www.w3.org/ns/earl#Report",
+      "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#Manifest"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#comment": [
+      {
+        "@value": "ShEx validation tests"
+      }
+    ]
+  },
+  {
+    "@id": "https://www.npmjs.com/package/shex",
+    "http://usefulinc.com/ns/doap#name": [
+      {
+        "@value": "ShEx"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#homepage": [
+      {
+        "@id": "https://github.com/shexSpec/shex.js"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#developer": [
+      {
+        "@id": "http://www.w3.org/People/Eric/ericp-foaf#me"
+      }
+    ],
+    "http://usefulinc.com/ns/doap#description": [
+      {
+        "@value": "ShEx.js is an Shape Expression engine for N3.js.",
+        "@language": "en"
+      }
+    ],
+    "@type": [
+      "http://usefulinc.com/ns/doap#Project",
+      "http://www.w3.org/ns/earl#TestSubject",
+      "http://www.w3.org/ns/earl#Software"
+    ],
+    "http://usefulinc.com/ns/doap#programming-language": [
+      {
+        "@value": "Ruby"
+      }
+    ]
+  }
+]

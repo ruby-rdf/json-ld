@@ -60,8 +60,7 @@ module JSON::LD
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
     # @option options [String, #to_s] :base
-    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
-    #   If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context. If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
     # @option options [Proc] :documentLoader
@@ -148,8 +147,7 @@ module JSON::LD
     private :initialize
     
     ##
-    # Expands the given input according to the steps in the Expansion Algorithm. The input must be copied, expanded and returned
-    # if there are no errors. If the expansion fails, an appropriate exception must be thrown.
+    # Expands the given input according to the steps in the Expansion Algorithm. The input must be copied, expanded and returned if there are no errors. If the expansion fails, an appropriate exception must be thrown.
     #
     # The resulting `Array` either returned or yielded
     #
@@ -171,8 +169,7 @@ module JSON::LD
         result = api.expand(api.value, nil, api.context, ordered: options.fetch(:ordered, true))
       end
 
-      # If, after the algorithm outlined above is run, the resulting element is an
-      # JSON object with just a @graph property, element is set to the value of @graph's value.
+      # If, after the algorithm outlined above is run, the resulting element is an JSON object with just a @graph property, element is set to the value of @graph's value.
       result = result['@graph'] if result.is_a?(Hash) && result.keys == %w(@graph)
 
       # Finally, if element is a JSON object, it is wrapped into an array.
@@ -181,8 +178,7 @@ module JSON::LD
     end
 
     ##
-    # Compacts the given input according to the steps in the Compaction Algorithm. The input must be copied, compacted and
-    # returned if there are no errors. If the compaction fails, an appropirate exception must be thrown.
+    # Compacts the given input according to the steps in the Compaction Algorithm. The input must be copied, compacted and returned if there are no errors. If the compaction fails, an appropirate exception must be thrown.
     #
     # If no context is provided, the input document is compacted using the top-level context of the document
     #
@@ -284,9 +280,7 @@ module JSON::LD
     end
 
     ##
-    # Frames the given input using the frame according to the steps in the Framing Algorithm. The input is used to build the
-    # framed output and is returned if there are no errors. If there are no matches for the frame, null must be returned.
-    # Exceptions must be thrown if there are errors.
+    # Frames the given input using the frame according to the steps in the Framing Algorithm. The input is used to build the framed output and is returned if there are no errors. If there are no matches for the frame, null must be returned. Exceptions must be thrown if there are errors.
     #
     # The resulting `Array` is either returned, or yielded if a block is given.
     #
@@ -296,18 +290,13 @@ module JSON::LD
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
     # @option options ['@last', '@always', '@never', '@link'] :embed ('@last')
-    #   a flag specifying that objects should be directly embedded in the output,
-    #   instead of being referred to by their IRI.
+    #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
-    #   a flag specifying that for properties to be included in the output,
-    #   they must be explicitly declared in the framing context.
+    #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.
     # @option options [Boolean] :requireAll (true)
-    #   A flag specifying that all properties present in the input frame must
-    #   either have a default value or be present in the JSON-LD input for the
-    #   frame to match.
+    #   A flag specifying that all properties present in the input frame must either have a default value or be present in the JSON-LD input for the frame to match.
     # @option options [Boolean] :omitDefault (false)
-    #   a flag specifying that properties that are missing from the JSON-LD
-    #   input should be omitted from the output.
+    #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
