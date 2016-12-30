@@ -23,7 +23,7 @@ module JSON::LD
           # If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
           value = value.to_s
           datatype ||= RDF::XSD.boolean.to_s
-        when Integer, Float, Fixnum
+        when Numeric
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
           lit = RDF::Literal.new(value, canonicalize: true)
           value = lit.to_s
