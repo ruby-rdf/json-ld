@@ -40,7 +40,7 @@ describe JSON::LD::Resource do
   end
 
   describe "#hash" do
-    specify {expect(subject.hash).to be_a(Fixnum)}
+    specify {expect(subject.hash).to be_a(Integer)}
       
     it "returns the hash of the attributes" do
       expect(subject.hash).to eq subject.deresolve.hash

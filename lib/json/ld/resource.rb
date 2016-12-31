@@ -93,7 +93,7 @@ module JSON::LD
 
     ##
     # Return a hash of this object, suitable for use by for ETag
-    # @return [Fixnum]
+    # @return [Integer]
     def hash
       self.deresolve.hash
     end

@@ -125,7 +125,7 @@ module Fixtures
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect)
+                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect, logger: [])
                 rspec_example.instance_eval {
                   expect(result).to be_equivalent_graph(expected, logger)
                 }

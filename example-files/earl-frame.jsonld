@@ -1,0 +1,155 @@
+{
+  "@context": {
+    "@vocab": "http://www.w3.org/ns/earl#",
+    "foaf:homepage": {
+      "@type": "@id"
+    },
+    "dc": "http://purl.org/dc/terms/",
+    "doap": "http://usefulinc.com/ns/doap#",
+    "earl": "http://www.w3.org/ns/earl#",
+    "mf": "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "assertedBy": {
+      "@type": "@id"
+    },
+    "assertions": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "bibRef": {
+      "@id": "dc:bibliographicCitation"
+    },
+    "created": {
+      "@id": "doap:created",
+      "@type": "xsd:date"
+    },
+    "description": {
+      "@id": "rdfs:comment",
+      "@language": "en"
+    },
+    "developer": {
+      "@id": "doap:developer",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "doapDesc": {
+      "@id": "doap:description",
+      "@language": "en"
+    },
+    "generatedBy": {
+      "@type": "@id"
+    },
+    "homepage": {
+      "@id": "doap:homepage",
+      "@type": "@id"
+    },
+    "language": {
+      "@id": "doap:programming-language"
+    },
+    "license": {
+      "@id": "doap:license",
+      "@type": "@id"
+    },
+    "mode": {
+      "@type": "@id"
+    },
+    "name": {
+      "@id": "doap:name"
+    },
+    "outcome": {
+      "@type": "@id"
+    },
+    "release": {
+      "@id": "doap:release",
+      "@type": "@id"
+    },
+    "revision": {
+      "@id": "doap:revision"
+    },
+    "shortdesc": {
+      "@id": "doap:shortdesc",
+      "@language": "en"
+    },
+    "subject": {
+      "@type": "@id"
+    },
+    "test": {
+      "@type": "@id"
+    },
+    "testAction": {
+      "@id": "mf:action",
+      "@type": "@id"
+    },
+    "testResult": {
+      "@id": "mf:result",
+      "@type": "@id"
+    },
+    "title": {
+      "@id": "mf:name"
+    },
+    "entries": {
+      "@id": "mf:entries",
+      "@type": "@id",
+      "@container": "@list"
+    },
+    "testSubjects": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "xsd": {
+      "@id": "http://www.w3.org/2001/XMLSchema#"
+    }
+  },
+  "@requireAll": true,
+  "@embed": "@always",
+  "assertions": {
+  },
+  "bibRef": {
+  },
+  "generatedBy": {
+    "@embed": "@always",
+    "developer": {
+      "@embed": "@always"
+    },
+    "release": {
+      "@embed": "@always"
+    }
+  },
+  "testSubjects": {
+    "@embed": "@always",
+    "@type": "earl:TestSubject",
+    "developer": {
+      "@embed": "@always"
+    },
+    "homepage": {
+      "@embed": "@never"
+    }
+  },
+  "entries": [
+    {
+      "@embed": "@always",
+      "@type": "mf:Manifest",
+      "entries": [
+        {
+          "@embed": "@always",
+          "@type": "earl:TestCase",
+          "assertions": {
+            "@embed": "@always",
+            "@type": "earl:Assertion",
+            "assertedBy": {
+              "@embed": "@never"
+            },
+            "result": {
+              "@embed": "@always",
+              "@type": "earl:TestResult"
+            },
+            "subject": {
+              "@embed": "@never"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

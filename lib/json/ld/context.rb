@@ -1283,10 +1283,10 @@ module JSON::LD
         #log_debug "uri(bnode)#{value}: #{$1}"
         bnode(namer.get_sym($1))
       else
-        value = RDF::URI.new(value)
+        value = RDF::URI(value)
         value.validate! if @options[:validate]
         value.canonicalize! if @options[:canonicalize]
-        value = RDF::URI.intern(value) if @options[:intern]
+        value = RDF::URI.intern(value, {}) if @options[:intern]
         value
       end
     end
