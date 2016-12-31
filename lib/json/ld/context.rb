@@ -1286,7 +1286,7 @@ module JSON::LD
         value = RDF::URI(value)
         value.validate! if @options[:validate]
         value.canonicalize! if @options[:canonicalize]
-        value = RDF::URI.intern(value) if @options[:intern]
+        value = RDF::URI.intern(value, {}) if @options[:intern]
         value
       end
     end
