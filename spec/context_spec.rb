@@ -24,7 +24,7 @@ end
 
 describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
-  let(:context) {JSON::LD::Context.new(logger: logger, validate: true)}
+  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1")}
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
@@ -192,7 +192,7 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates @list container mapping with predicate" do
+      it "associates @list container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers).to produce({
@@ -200,7 +200,7 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates @set container mapping with predicate" do
+      it "associates @set container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
         }).containers).to produce({
@@ -208,7 +208,7 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates @id container mapping with predicate" do
+      it "associates @id container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions).to produce({
@@ -216,7 +216,7 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates type mapping with predicate" do
+      it "associates type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
         }).coercions).to produce({
@@ -224,7 +224,7 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates language mapping with predicate" do
+      it "associates language mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@language" => "en"}
         }).send(:languages)).to produce({
@@ -316,6 +316,7 @@ describe JSON::LD::Context do
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
+        "@context which is invalid" => {"foo" => {"@context" => {"bar" => []}}},
         "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
         "@vocab as @id" => {"@vocab" => {"@id" => "http://example.com/"}},
       }.each do |title, context|
@@ -412,6 +413,20 @@ describe JSON::LD::Context do
         }
       }, logger)
       expect(c.to_rb).not_to be_empty
+    end
+
+    it "@context" do
+      expect(subject.parse({
+        "foo" => {"@id" => "http://example.com/", "@context" => {"bar" => "http://example.com/baz"}}
+      }).send(:clear_provided_context).
+      serialize).to produce({
+        "@context" => {
+          "foo" => {
+            "@id" => "http://example.com/",
+            "@context" => {"bar" => "http://example.com/baz"}
+          }
+        }
+      }, logger)
     end
 
     it "@type with dependent prefixes in a single context" do

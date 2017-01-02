@@ -246,7 +246,10 @@ module JSON::LD
             next
           end
 
-          expanded_value = if context.container(key) == '@language' && value.is_a?(Hash)
+          # Use a term-specific context, if defined
+          term_context = context.term_definitions[key].context if context.term_definitions[key]
+          active_context = term_context ? context.parse(term_context) : context
+          expanded_value = if active_context.container(key) == '@language' && value.is_a?(Hash)
             # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
             
             # Set multilingual array to an empty array.
@@ -269,7 +272,7 @@ module JSON::LD
             end
 
             ary
-          elsif context.container(key) == '@index' && value.is_a?(Hash)
+          elsif active_context.container(key) == '@index' && value.is_a?(Hash)
             # Otherwise, if key's container mapping in active context is @index and value is a JSON object then value is expanded from an index map as follows:
             
             # Set ary to an empty array.
@@ -279,7 +282,7 @@ module JSON::LD
             keys = ordered ? value.keys.sort : value.keys
             keys.each do |k|
               # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
-              index_value = expand([value[k]].flatten, key, context, ordered: ordered)
+              index_value = expand([value[k]].flatten, key, active_context, ordered: ordered)
               index_value.each do |item|
                 item['@index'] ||= k
                 ary << item
@@ -288,7 +291,7 @@ module JSON::LD
             ary
           else
             # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
-            expand(value, key, context, ordered: ordered)
+            expand(value, key, active_context, ordered: ordered)
           end
 
           # If expanded value is null, ignore key by continuing to the next key from element.
@@ -299,7 +302,7 @@ module JSON::LD
           #log_debug {" => #{expanded_value.inspect}"}
 
           # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
-          if context.container(key) == '@list' && !list?(expanded_value)
+          if active_context.container(key) == '@list' && !list?(expanded_value)
             #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
             expanded_value = {'@list' => [expanded_value].flatten}
           end

@@ -47,8 +47,12 @@ module JSON::LD
       attr_accessor :reverse_property
 
       # This is a simple term definition, not an expanded term definition
-      # @return [Boolean] simple
+      # @return [Boolean]
       attr_accessor :simple
+
+      # Term-specific context
+      # @return [Hash{String => Object}]
+      attr_accessor :context
 
       # This is a simple term definition, not an expanded term definition
       # @return [Boolean] simple
@@ -70,7 +74,8 @@ module JSON::LD
                     container_mapping: nil,
                     language_mapping: nil,
                     reverse_property: false,
-                    simple: false)
+                    simple: false,
+                    context: nil)
         @term               = term
         @id                 = id.to_s           if id
         @type_mapping       = type_mapping.to_s if type_mapping
@@ -78,6 +83,7 @@ module JSON::LD
         @language_mapping   = language_mapping  if language_mapping
         @reverse_property   = reverse_property  if reverse_property
         @simple             = simple            if simple
+        @context            = context           if context
       end
 
       ##
@@ -98,7 +104,8 @@ module JSON::LD
         if language_mapping.nil? &&
            container_mapping.nil? &&
            type_mapping.nil? &&
-           reverse_property.nil?
+           reverse_property.nil? &&
+           self.context.nil?
 
            cid.to_s unless cid == term && context.vocab
         else
@@ -114,16 +121,18 @@ module JSON::LD
           defn['@container'] = container_mapping if container_mapping
           # Language set as false to be output as null
           defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
+          defn['@context'] = self.context unless self.context.nil?
           defn
         end
       end
 
       ##
       # Turn this into a source for a new instantiation
+      # FIXME: context serialization
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id type_mapping container_mapping language_mapping reverse_property simple).each do |acc|
+        %w(id type_mapping container_mapping language_mapping reverse_property simple context).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           defn << "#{acc}: #{v.inspect}" if v
@@ -139,6 +148,7 @@ module JSON::LD
         v << "container=#{container_mapping}" if container_mapping
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
+        v << "has-context" unless context.nil?
         v.join(" ") + "]"
       end
     end
@@ -454,6 +464,7 @@ module JSON::LD
 
       # Merge in Term Definitions
       term_definitions.merge!(context.term_definitions)
+      @inverse_context = nil  # Re-build after term definitions set
       self
     end
 
@@ -595,6 +606,19 @@ module JSON::LD
           definition.container_mapping = container
         end
 
+        if value.has_key?('@context')
+          context = value['@context']
+          # Not supported in JSON-LD 1.0
+          raise JsonLdError::InvalidScopedContext, '@context not valid in term definition' if @options[:processingMode] < 'json-ld-1.1'
+
+          begin
+            self.parse(value['@context'])
+            definition.context = value['@context']
+          rescue JsonLdError => e
+            raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
+          end
+        end
+
         if value.has_key?('@language')
           language = value['@language']
           raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
@@ -608,6 +632,9 @@ module JSON::LD
       else
         raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class} on term #{term.inspect}"
       end
+    ensure
+      # Re-build after term definitions set
+      @inverse_context = nil
     end
 
     ##
@@ -764,6 +791,16 @@ module JSON::LD
       return term if KEYWORDS.include?(term)
       term = find_definition(term)
       term && term.container_mapping
+    end
+
+    ##
+    # Retrieve content of a term
+    #
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [Hash]
+    def content(term)
+      term = find_definition(term)
+      term && term.content
     end
 
     ##

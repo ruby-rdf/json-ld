@@ -207,7 +207,7 @@ module JSON::LD
       expanded_input = options[:expanded] ? input : API.expand(input, options)
 
       API.new(expanded_input, context, options) do
-        log_debug(".compact") {"expanded input: #{expanded.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
 
         # xxx) Add the given context to the output

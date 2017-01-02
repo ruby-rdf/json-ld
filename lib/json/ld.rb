@@ -130,6 +130,7 @@ module JSON
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
       class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
       class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
+      class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
     end
     
     class InvalidFrame < Exception

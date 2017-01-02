@@ -16,6 +16,12 @@ module JSON::LD
       #else
       #  log_debug("compact") {"property: #{property.inspect}"}
       #end
+
+      # If the term definition for active property itself contains a context, use that for compacting values.
+      input_context = self.context
+      td = self.context.term_definitions[property] if property
+      self.context = (td && td.context && self.context.parse(td.context)) || input_context
+
       case element
       when Array
         #log_debug("") {"Array #{element.inspect}"}
@@ -163,6 +169,9 @@ module JSON::LD
         #log_debug("compact") {element.class.to_s}
         element
       end
+
+    ensure
+      self.context = input_context
     end
   end
 end

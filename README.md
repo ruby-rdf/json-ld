@@ -261,6 +261,38 @@ A context may be serialized to Ruby to speed this process using `Context#to_rb`.
 
 As JSON-LD may come from many different sources, included as an embedded script tag within an HTML document, the RDF Reader will strip input before the leading `{` or `[` and after the trailing `}` or `]`.
 
+## Extensions from JSON-LD 1.0
+This implementation is being used as a test-bed for features planned for an upcoming JSON-LD 1.1 Community release.
+
+### Scoped Contexts
+A term definition can include `@context`, which is applied to values of that object. This is also used when compacting. Taken together, this allows framing to effectively include context definitions more deeply within the framed structure.
+
+    {
+      "@context": {
+        "ex": "http://example.com/",
+        "foo": {
+          "@id": "ex:foo",
+          "@type": "@vocab"
+          "@context": {
+            "Bar": "ex:Bar",
+            "Baz": "ex:Baz"
+          }
+        }
+      },
+      "foo": "Bar"
+    }
+
+### Framing Updates
+The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versions.
+
+* [More Specific Frame matching](https://github.com/json-ld/json-ld.org/issues/110) – Allows framing to extend to elements of value objects, and objects are matched through recursive frame matching. `{}` is used as a wildcard, and `[]` as matching nothing.
+* [Graph framing](https://github.com/json-ld/json-ld.org/issues/118) – previously, only the merged graph can be framed, this update allows arbitrary graphs to be framed.
+  * Use `@graph` in frame, matches the default graph, not the merged graph.
+  * Use `@graph` in property value, causes the apropriatly named graph to be used for filling in values.
+* [Reverse properties](https://github.com/json-ld/json-ld.org/issues/311) – `@reverse` (or a property defined with `@reverse`) can cause matching values to be included, allowing a matched object to include reverse references to any objects referencing it.
+* [@omitDefault behavior](https://github.com/json-ld/json-ld.org/issues/389) – In addition to `true` and `false`, `@omitDefault` can take `@last`, `@always`, `@never`, and `@link`.
+* [multiple `@id` matching](https://github.com/json-ld/json-ld.org/issues/424) – A frame can match based on one or more specific object `@id` values.
+
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
