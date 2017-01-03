@@ -95,42 +95,42 @@ module JSON
         self.class.instance_variable_get :@code
       end
 
-      class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
-      class ListOfLists < JsonLdError; @code = "list of lists"; end
-      class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
-      class ConflictingIndexes < JsonLdError; @code = "conflicting indexes"; end
-      class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
-      class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
-      class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
-      class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
-      class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
-      class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
-      class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
-      class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
-      class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
-      class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
-      class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
-      class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
-      class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
-      class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
-      class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
-      class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
-      class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
       class CollidingKeywords < JsonLdError; @code = "colliding keywords"; end
+      class CompactionToListOfLists < JsonLdError; @code = "compaction to list of lists"; end
+      class ConflictingIndexes < JsonLdError; @code = "conflicting indexes"; end
+      class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
+      class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
+      class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
+      class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
+      class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
+      class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
+      class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
+      class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
+      class InvalidLanguageMapValue < JsonLdError; @code = "invalid language map value"; end
+      class InvalidLanguageTaggedString < JsonLdError; @code = "invalid language-tagged string"; end
+      class InvalidLanguageTaggedValue < JsonLdError; @code = "invalid language-tagged value"; end
+      class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
+      class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
+      class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
+      class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
+      class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
+      class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
+      class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
+      class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
+      class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
+      class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
+      class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
       class InvalidTypeValue < JsonLdError; @code = "invalid type value"; end
       class InvalidValueObject < JsonLdError; @code = "invalid value object"; end
       class InvalidValueObjectValue < JsonLdError; @code = "invalid value object value"; end
-      class InvalidLanguageTaggedString < JsonLdError; @code = "invalid language-tagged string"; end
-      class InvalidLanguageTaggedValue < JsonLdError; @code = "invalid language-tagged value"; end
-      class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
-      class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
-      class InvalidLanguageMapValue < JsonLdError; @code = "invalid language map value"; end
-      class CompactionToListOfLists < JsonLdError; @code = "compaction to list of lists"; end
-      class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
-      class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
-      class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
-      class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
+      class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
+      class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
+      class ListOfLists < JsonLdError; @code = "list of lists"; end
+      class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
+      class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
+      class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
+      class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
     end
     
     class InvalidFrame < Exception

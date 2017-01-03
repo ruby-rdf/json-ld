@@ -522,6 +522,16 @@ module JSON::LD
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
+        expected_keys = case @options[:processingMode]
+        when "json-ld-1.0" then %w(@id @reverse @type @container @language)
+        else  %w(@id @reverse @type @container @language @context)
+        end
+
+        extra_keys = value.keys - expected_keys
+        if !extra_keys.empty? && @options[:validate]
+          raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
+        end
+
         if value.has_key?('@type')
           type = value['@type']
           # SPEC FIXME: @type may be nil
