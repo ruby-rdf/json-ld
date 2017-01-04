@@ -34,7 +34,7 @@ module JSON
     autoload :Resource,           'json/ld/resource'
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
-    
+
     # Initial context
     # @see http://json-ld.org/spec/latest/json-ld-api/#appendix-b
     INITIAL_CONTEXT = {
@@ -87,7 +87,7 @@ module JSON
       array_nl:     "\n"
     )
 
-    class JsonLdError < Exception
+    class JsonLdError < StandardError
       def to_s
         "#{self.class.instance_variable_get :@code}: #{super}"
       end
@@ -132,7 +132,7 @@ module JSON
       class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
       class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
     end
-    
+
     class InvalidFrame < Exception
       class MultipleEmbeds < InvalidFrame; end
       class Syntax < InvalidFrame; end
