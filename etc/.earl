@@ -1,0 +1,5 @@
+---
+:format: :json
+:manifest: manifests.nt
+:bibRef: ! '[[json-ld-api]]'
+:name: JSON-LD 1.1 Processing Algorithms and API

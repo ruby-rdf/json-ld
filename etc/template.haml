@@ -1,0 +1,195 @@
+-# This template is used for generating a rollup EARL report. It expects to be
+-# called with a single _tests_ local with the following structure
+- require 'cgi'
+- require 'digest'
+
+!!! 5
+%html{prefix: "earl: http://www.w3.org/ns/earl# doap: http://usefulinc.com/ns/doap# mf: http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#"}
+  - subjects = tests['testSubjects']
+  %head
+    %meta{"http-equiv" => "Content-Type", content: "text/html;charset=utf-8"}
+    %meta{name: "viewport", content: "width=device-width, initial-scale=1.0"}
+    %link{rel: "stylesheet", type: "text/css", href: "https://www.w3.org/StyleSheets/TR/base"}
+    %title
+      = tests['name']
+      Implementation Report
+    :css
+      span[property='dc:description'] { display: none; }
+      td.PASS { color: green; }
+      td.FAIL { color: red; }
+      table.report {
+        border-width: 1px;
+        border-spacing: 2px;
+        border-style: outset;
+        border-color: gray;
+        border-collapse: separate;
+        background-color: white;
+      }
+      table.report th {
+        border-width: 1px;
+        padding: 1px;
+        border-style: inset;
+        border-color: gray;
+        background-color: white;
+        -moz-border-radius: ;
+      }
+      table.report td {
+        border-width: 1px;
+        padding: 1px;
+        border-style: inset;
+        border-color: gray;
+        background-color: white;
+        -moz-border-radius: ;
+      }
+      tr.summary {font-weight: bold;}
+      td.passed-all {color: green;}
+      td.passed-most {color: darkorange;}
+      td.passed-some {color: red;}
+      td.passed-none {color: gray;}
+      em.rfc2119 { 
+        text-transform: lowercase;
+        font-variant:   small-caps;
+        font-style:     normal;
+        color:          #900;
+      }
+      a.testlink {
+        color: inherit;
+        text-decoration: none;
+      }
+      a.testlink:hover {
+        text-decoration: underline;
+      }
+  %body
+    - subject_refs = {}
+    - tests['entries'].each {|m| m['title'] ||= m['rdfs:label'] || m['description']}
+    %section{about: tests['@id'], typeof: Array(tests['@type']).join(" ")}
+      %h2
+        Ruby ShEx gem test results
+      %p
+        This document reports conformance for for
+        %a{property: "doap:name", href: "http://json-ld.org/spec/latest/json-ld-api/"}="JSON-LD 1.1 Processing Algorithms and API"
+      %dl
+        - subjects.each_with_index do |subject, index|
+          - subject_refs[subject['@id']] = "subj_#{index}"
+          %dt{id: subject_refs[subject['@id']]}
+            %a{href: subject['@id']}
+              %span{about: subject['@id'], property: "doap:name"}<= subject['name']
+          %dd{property: "earl:testSubjects", resource: subject['@id'], typeof: Array(subject['@type']).join(" ")}
+            %dl
+              - if subject['doapDesc']
+                %dt= "Description"
+                %dd{property: "doap:description", lang: 'en'}<
+                  ~ CGI.escapeHTML subject['doapDesc'].to_s
+              - if subject['language']
+                %dt= "Programming Language"
+                %dd{property: "doap:programming-language"}<
+                  ~ CGI.escapeHTML subject['language'].to_s
+              - if subject['homepage']
+                %dt= "Home Page"
+                %dd{property: "doap:homepage"}
+                  %a{href: subject['homepage']}
+                    ~ CGI.escapeHTML subject['homepage'].to_s
+              - if subject['developer']
+                %dt= "Developer"
+                %dd{rel: "doap:developer"}
+                  - subject['developer'].each do |dev|
+                    %div{resource: dev['@id'], typeof: Array(dev['@type']).join(" ")}
+                      - if dev.has_key?('@id')
+                        %a{href: dev['@id']}
+                          %span{property: "foaf:name"}<
+                            ~ CGI.escapeHTML dev['foaf:name'].to_s
+                      - else
+                        %span{property: "foaf:name"}<
+                          ~ CGI.escapeHTML dev['foaf:name'].to_s
+                      - if dev['foaf:homepage']
+                        %a{property: "foaf:homepage", href: dev['foaf:homepage']}
+                          ~ CGI.escapeHTML dev['foaf:homepage'].to_s
+              %dt
+                Test Suite Compliance
+              %dd
+                %table.report
+                  %tbody
+                    - tests['entries'].sort_by {|m| m['title'].to_s.downcase}.each do |manifest|
+                      - passed = manifest['entries'].select {|t| t['assertions'][index]['result']['outcome'] == 'earl:passed' }.length
+                      - total = manifest['entries'].length
+                      - pct = (passed * 100.0) / total
+                      - cls = (pct == 100.0 ? 'passed-all' : (pct >= 85.0) ? 'passed-most' : (pct == 0.0 ? 'passed-none' : 'passed-some'))
+                      %tr
+                        %td
+                          %a{href: "##{manifest['rdfs:comment']}"}
+                            ~ manifest['rdfs:comment']
+                        %td{class: cls}
+                          = pct == 0.0 ? "Untested" : "#{passed}/#{total} (#{'%.1f' % pct}%)"
+    %section
+      %h2
+        Individual Test Results
+      - tests['entries'].sort_by {|m| m['title'].to_s.downcase}.each do |manifest|
+        - test_cases = manifest['entries']
+        %section{id: manifest['rdfs:label'], typeof: manifest['@type'].join(" "), resource: manifest['@id']}
+          %h2{property: "rdfs:comment mf:name"}<=(manifest['rdfs:comment'])
+          - Array(manifest['description']).each do |desc|
+            %p{property: "rdfs:comment"}<
+              ~ CGI.escapeHTML desc.to_s
+          %table.report
+            - skip_subject = {}
+            - passed_tests = []
+            %tr
+              %th
+                Test
+              - subjects.each_with_index do |subject, index|
+                - subject_refs[subject['@id']] = "subj_#{index}"
+                -# If subject is untested for every test in this manifest, skip it
+                - skip_subject[subject['@id']] = manifest['entries'].all? {|t| t['assertions'][index]['result']['outcome'] == 'earl:untested'}
+                - unless skip_subject[subject['@id']]
+                  %th
+                    %a{href: '#' + subject_refs[subject['@id']]}<=subject['name']
+            - test_cases.each do |test|
+              - test['title'] ||= test['rdfs:label']
+              - test['title'] = Array(test['title']).first
+              %tr{rel: "mf:entries", typeof: test['@type'].join(" "), resource: test['@id'], inlist: true}
+                %td
+                  = "Test #{test['@id'].split("#").last}: #{CGI.escapeHTML test['title'].to_s}"
+                - test['assertions'].each_with_index do |assertion, ndx|
+                  - next if skip_subject[assertion['subject']]
+                  - pass_fail = assertion['result']['outcome'].split(':').last.upcase.sub(/(PASS|FAIL)ED$/, '\1')
+                  - passed_tests[ndx] = (passed_tests[ndx] || 0) + (pass_fail == 'PASS' ? 1 : 0)
+                  %td{class: pass_fail, property: "earl:assertions", typeof: assertion['@type']}
+                    - if assertion['assertedBy']
+                      %link{property: "earl:assertedBy", href: assertion['assertedBy']}
+                    %link{property: "earl:test", href: assertion['test']}
+                    %link{property: "earl:subject", href: assertion['subject']}
+                    - if assertion['mode']
+                      %link{property: 'earl:mode', href: assertion['mode']}
+                    %span{property: "earl:result", typeof: assertion['result']['@type']}
+                      %span{property: 'earl:outcome', resource: assertion['result']['outcome']}
+                        = pass_fail
+            %tr.summary
+              %td
+                = "Percentage passed out of #{manifest['entries'].length} Tests"
+              - passed_tests.compact.each do |r|
+                - pct = (r * 100.0) / manifest['entries'].length
+                %td{class: (pct == 100.0 ? 'passed-all' : (pct >= 95.0 ? 'passed-most' : 'passed-some'))}
+                  = "#{'%.1f' % pct}%"
+    %section#appendix{property: "earl:generatedBy", resource: tests['generatedBy']['@id'], typeof: tests['generatedBy']['@type']}
+      %h2
+        Report Generation Software
+      - doap = tests['generatedBy']
+      - rel = doap['release']
+      %p
+        This report generated by
+        %span{property: "doap:name"}<
+          %a{href: tests['generatedBy']['@id']}<
+            = doap['name']
+        %meta{property: "doap:shortdesc", content: doap['shortdesc'], lang: 'en'}
+        %meta{property: "doap:description", content: doap['doapDesc'], lang: 'en'}
+        version
+        %span{property: "doap:release", resource: rel['@id'], typeof: 'doap:Version'}
+          %span{property: "doap:revision"}<=rel['revision']
+          %meta{property: "doap:name", content: rel['name']}
+          %meta{property: "doap:created", content: rel['created'], datatype: "xsd:date"}
+        an
+        %a{property: "doap:license", href: doap['license']}<="Unlicensed"
+        %span{property: "doap:programming-language"}<="Ruby"
+        application. More information is available at
+        %a{property: "doap:homepage", href: doap['homepage']}<=doap['homepage']
+        = "."

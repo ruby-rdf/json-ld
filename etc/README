@@ -1,0 +1,11 @@
+This is a collection of individual EARL reports for
+test subjects claiming Turtle processor conformance.
+
+The consolodated report is saved to index.html generated
+using the earl-report Ruby gem. Run it as follows:
+
+gem install earl-report
+
+rm manifest.nt && (cd ..; rake manifest.nt)
+earl-report --format json -o earl.jsonld earl.ttl
+earl-report --json --format html --template template.haml -o earl.html earl.jsonld

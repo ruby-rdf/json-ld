@@ -14,6 +14,8 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 If the [jsonlint][] gem is installed, it will be used when validating an input document.
 
+[Implementation Report](file.earl.html)
+
 Install with `gem install json-ld`
 
 ### MultiJson parser

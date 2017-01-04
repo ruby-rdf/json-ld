@@ -20,17 +20,6 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.rspec_opts = %w(--options spec/spec.opts) if File.exists?('spec/spec.opts')
 end
 
-desc "Run specs through RCov"
-RSpec::Core::RakeTask.new("spec:rcov") do |spec|
-  spec.rcov = true
-  spec.rcov_opts =  %q[--exclude "spec"]
-end
-
-desc "Generate HTML report specs"
-RSpec::Core::RakeTask.new("doc:spec") do |spec|
-  spec.rspec_opts = ["--format", "html", "-o", "doc/spec.html"]
-end
-
 desc "Generate schema.org context"
 task :schema_context do
   %x(
@@ -40,6 +29,29 @@ task :schema_context do
       --body --hier \
       --o etc/schema.org.jsonld
   )
+end
+
+desc "Create concatenated test manifests"
+file "etc/manifests.nt" do
+  require 'rdf'
+  require 'json/ld'
+  require 'rdf/ntriples'
+  graph = RDF::Graph.new do |g|
+    %w( http://json-ld.org/test-suite/tests/compact-manifest.jsonld
+        http://json-ld.org/test-suite/tests/error-manifest.jsonld
+        http://json-ld.org/test-suite/tests/expand-manifest.jsonld
+        http://json-ld.org/test-suite/tests/flatten-manifest.jsonld
+        http://json-ld.org/test-suite/tests/frame-manifest.jsonld
+        http://json-ld.org/test-suite/tests/fromRdf-manifest.jsonld
+        http://json-ld.org/test-suite/tests/remote-doc-manifest.jsonld
+        http://json-ld.org/test-suite/tests/toRdf-manifest.jsonld
+    ).each do |man|
+      puts "load #{man}"
+      g.load(man, unique_bnodes: true)
+    end
+  end
+  puts "write"
+  RDF::NTriples::Writer.open("etc/manifests.nt", unique_bnodes: true, validate: false) {|w| w << graph}
 end
 
 # Presentation building

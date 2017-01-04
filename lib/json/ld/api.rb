@@ -450,6 +450,7 @@ module JSON::LD
     # @option options (see #initialize)
     # @option options [Boolean] :useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
+    # @option options [Boolean] :useNativeTypes (false) use native representations
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
@@ -458,10 +459,11 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     def self.fromRdf(input, options = {}, &block)
       useRdfType = options.fetch(:useRdfType, false)
+      useNativeTypes = options.fetch(:useNativeTypes, false)
       result = nil
 
       API.new(nil, nil, options) do |api|
-        result = api.from_statements(input, useRdfType: useRdfType)
+        result = api.from_statements(input, useRdfType: useRdfType, useNativeTypes: useNativeTypes)
       end
 
       block_given? ? yield(result) : result
