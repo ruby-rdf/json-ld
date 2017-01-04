@@ -663,8 +663,7 @@ describe JSON::LD::Context do
         }
       }.each do |title, params|
         it title do
-          ec = subject.parse(params[:input])
-          expect(ec.serialize).to produce(params[:result], logger)
+          expect {subject.parse(params[:input])}.to raise_error(JSON::LD::JsonLdError::InvalidTermDefinition)
         end
       end
     end
