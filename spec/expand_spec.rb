@@ -698,7 +698,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "@container @id" do
+    context "@container: @id" do
       {
         "Adds @id to object not having an @id" => {
           input: %({
@@ -741,7 +741,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "@container @type" do
+    context "@container: @type" do
       {
         "Adds @type to object not having an @type" => {
           input: %({
@@ -782,83 +782,6 @@ describe JSON::LD::API do
               {
                 "@type": ["http://example.org/foo", "http://example.org/bar"],
                 "http://example/label": [{"@value": "Object with @type <foo>"}]
-              }
-            ]
-          }])
-        },
-      }.each do |title, params|
-        it(title) {run_expand params}
-      end
-    end
-
-    context "@container IRI" do
-      {
-        "Adds property to object not having property" => {
-          input: %({
-            "@context": {
-              "@vocab": "http://example/",
-              "irimap": {"@container": "prop"},
-              "prop": {"@type": "@id"}
-            },
-            "irimap": {
-              "http://example.org/foo": {"label": "Object with prop <foo>"}
-            }
-          }),
-          output: %([{
-            "http://example/irimap": [
-              {
-                "http://example/label": [{"@value": "Object with prop <foo>"}],
-                "http://example/prop": [{"@id": "http://example.org/foo"}]
-              }
-            ]
-          }])
-        },
-        "Prepends property in object already having an property" => {
-          input: %({
-            "@context": {
-              "@vocab": "http://example/",
-              "irimap": {"@container": "prop"},
-              "prop": {"@type": "@id"}
-            },
-            "irimap": {
-              "http://example.org/foo": {"prop": "http://example.org/bar", "label": "Object with prop <foo>"},
-              "_:bar": {"prop": "_:foo", "label": "Object with prop _:bar"}
-            }
-          }),
-          output: %([{
-            "http://example/irimap": [
-              {
-                "http://example/label": [{"@value": "Object with prop _:bar"}],
-                "http://example/prop": [{"@id": "_:bar"}, {"@id": "_:foo"}]
-              },
-              {
-                "http://example/label": [{"@value": "Object with prop <foo>"}],
-                "http://example/prop": [{"@id": "http://example.org/foo"}, {"@id": "http://example.org/bar"}]
-              }
-            ]
-          }
-        ])
-        },
-        "Adds literal property" => {
-          input: %({
-            "@context": {
-              "@vocab": "http://example/",
-              "irimap": {"@container": "prop"}
-            },
-            "irimap": {
-              "foo": {"label": "Object with prop 'foo'"},
-              "bar": {"label": "Object with prop 'bar'"}
-            }
-          }),
-          output: %([{
-            "http://example/irimap": [
-              {
-                "http://example/label": [{"@value": "Object with prop 'bar'"}],
-                "http://example/prop": [{"@value": "bar"}]
-              },
-              {
-                "http://example/label": [{"@value": "Object with prop 'foo'"}],
-                "http://example/prop": [{"@value": "foo"}]
               }
             ]
           }])

@@ -36,7 +36,7 @@ module JSON::LD
       # @return [String] Type mapping
       attr_accessor :type_mapping
 
-      # @return [String] Container mapping
+      # @return ['@index', '@language', '@index', '@set', '@type', '@id'] Container mapping
       attr_accessor :container_mapping
 
       # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
@@ -62,7 +62,7 @@ module JSON::LD
       # @param [String] term
       # @param [String] id
       # @param [String] type_mapping Type mapping
-      # @param [String] container_mapping
+      # @param ['@index', '@language', '@index', '@set', '@type', '@id'] container_mapping
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
@@ -957,16 +957,10 @@ module JSON::LD
         containers = []
         tl, tl_value = "@language", "@null"
 
-        # If the value is a JSON Object, then for the keywords @index, @id, and @type along with the compacted version of all non-keyword properties of the object in order, if the value contains that property, append it to containers.
-        if value.is_a?(Hash)
-          %w(@index @id @type).each do |kw|
-            containers << kw if value.has_key?(kw)
-          end
-          containers.concat value.keys.
-            reject {|k| k.start_with?('@')}.
-            sort.
-            map {|k| compact_iri(k, vocab: true, quite: true)}
-        end
+        # If the value is a JSON Object, then for the keywords @index, @id, and @type, if the value contains that keyword, append it to containers.
+        %w(@index @id @type).each do |kw|
+          containers << kw if value.has_key?(kw)
+        end if value.is_a?(Hash)
 
         if reverse
           tl, tl_value = "@type", "@reverse"
@@ -1503,25 +1497,6 @@ module JSON::LD
       case container
       when '@set', '@list', '@language', '@index', '@type', '@id', nil
         # Okay
-      when /^@/
-        raise JsonLdError::InvalidContainerMapping,
-              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"
-      when String
-        expanded = expand_iri(container,
-          vocab: true,
-          documentRelative: false,
-          local_context: local_context,
-          defined: defined)
-        case expanded
-        when RDF::URI
-          raise JsonLdError::InvalidContainerMapping,
-                "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                expanded.absolute?
-        else
-          raise JsonLdError::InvalidContainerMapping,
-                "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                container.absolute?
-        end
       else
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"

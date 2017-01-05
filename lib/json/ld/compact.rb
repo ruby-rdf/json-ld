@@ -145,10 +145,32 @@ module JSON::LD
               end
             end
 
-            if %w(@language @index).include?(container)
+            if %w(@language @index @id @type).include?(container)
               map_object = result[item_active_property] ||= {}
-              compacted_item = compacted_item['@value'] if container == '@language' && value?(compacted_item)
-              map_key = expanded_item[container]
+              compacted_item = case container
+              when '@id'
+                id_prop = context.compact_iri('@id', vocab: true, quiet: true)
+                map_key = compacted_item[id_prop]
+                compacted_item.delete(id_prop)
+                compacted_item
+              when '@index'
+                index_prop = context.compact_iri('@index', vocab: true, quiet: true)
+                map_key = expanded_item[container]
+                #compacted_item.delete(index_prop)
+                compacted_item
+              when '@language'
+                map_key = expanded_item[container]
+                value?(expanded_item) ? expanded_item['@value'] : compacted_item
+              when '@type'
+                type_prop = context.compact_iri('@type', vocab: true, quiet: true)
+                map_key, types = Array(compacted_item[type_prop])
+                if Array(types).empty?
+                  compacted_item.delete(type_prop)
+                else
+                  compacted_item[type_prop] = types
+                end
+                compacted_item
+              end
               merge_compacted_value(map_object, map_key, compacted_item)
             else
               compacted_item = [compacted_item] if

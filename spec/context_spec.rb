@@ -1320,8 +1320,7 @@ describe JSON::LD::Context do
         "language" => {"@id" => "ex:language", "@container" => "@language"},
         "ndx"      => {"@id" => "ex:ndx", "@container" => "@index"},
         "id"       => {"@id" => "ex:id", "@container" => "@id"},
-        "type"     => {"@id" => "ex:type", "@container" => "@type"},
-        'uri'      => {"@id" => "ex:uri", "@container" => "ex:uri"}
+        "type"     => {"@id" => "ex:type", "@container" => "@type"}
       })
       logger.clear
       ctx
@@ -1335,7 +1334,6 @@ describe JSON::LD::Context do
         "ndx"      => "@index",
         "id"       => "@id",
         "type"     => "@type",
-        'uri'      => "ex:uri",
       }.each do |defn, container|
         expect(subject.container(subject.term_definitions[defn])).to eq container
       end
@@ -1350,7 +1348,6 @@ describe JSON::LD::Context do
         "ndx"      => "@index",
         "id"       => "@id",
         "type"     => "@type",
-        'uri'      => "ex:uri",
       }.each do |defn, container|
         expect(subject.container(defn)).to eq container
       end

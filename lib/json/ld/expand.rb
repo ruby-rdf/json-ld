@@ -273,7 +273,7 @@ module JSON::LD
             end
 
             ary
-          elsif container && !%w(@set @list @language).include?(container) && value.is_a?(Hash)
+          elsif %w(@index @id @type).include?(container) && value.is_a?(Hash)
             # Otherwise, if key's container mapping in active context is @index, @id, @type, an IRI or Blank Node and value is a JSON object then value is expanded from an index map as follows:
             
             # Set ary to an empty array.
@@ -289,16 +289,6 @@ module JSON::LD
                 when '@id', '@index' then item[container] ||= k
                   # If container is @type add the key-value pair (@type-[index]) to item, appending any existing values in item
                 when '@type'  then item[container] = [k].concat(Array(item[container]))
-                else
-                  #require 'byebug'; byebug
-                  # Otherwise container is an IRI or Blank Node
-                  # Expand index using the Value Expansion algorithm
-                  prop = active_context.expand_iri(container, vocab: true).to_s
-                  item_value = active_context.expand_value(container, k, log_depth: @options[:log_depth])
-                  # add the key-value pair (container-[{"@id": index}]) to item, appending any existing values in item
-                  values = item[prop]
-                  values = [values].compact unless values.is_a?(Array)
-                  item[prop] = [item_value].concat(values)
                 end
 
                 # Append item to expanded value.
