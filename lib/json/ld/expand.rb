@@ -249,7 +249,8 @@ module JSON::LD
           # Use a term-specific context, if defined
           term_context = context.term_definitions[key].context if context.term_definitions[key]
           active_context = term_context ? context.parse(term_context) : context
-          expanded_value = if active_context.container(key) == '@language' && value.is_a?(Hash)
+          container = active_context.container(key)
+          expanded_value = if container == '@language' && value.is_a?(Hash)
             # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
             
             # Set multilingual array to an empty array.
@@ -272,11 +273,11 @@ module JSON::LD
             end
 
             ary
-          elsif active_context.container(key) == '@index' && value.is_a?(Hash)
-            # Otherwise, if key's container mapping in active context is @index and value is a JSON object then value is expanded from an index map as follows:
+          elsif container && !%w(@set @list @language).include?(container) && value.is_a?(Hash)
+            # Otherwise, if key's container mapping in active context is @index, @id, @type, an IRI or Blank Node and value is a JSON object then value is expanded from an index map as follows:
             
             # Set ary to an empty array.
-            ary = []
+            container, ary = container.to_s, []
 
             # For each key-value in the object:
             keys = ordered ? value.keys.sort : value.keys
@@ -284,7 +285,23 @@ module JSON::LD
               # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
               index_value = expand([value[k]].flatten, key, active_context, ordered: ordered)
               index_value.each do |item|
-                item['@index'] ||= k
+                case container
+                when '@id', '@index' then item[container] ||= k
+                  # If container is @type add the key-value pair (@type-[index]) to item, appending any existing values in item
+                when '@type'  then item[container] = [k].concat(Array(item[container]))
+                else
+                  #require 'byebug'; byebug
+                  # Otherwise container is an IRI or Blank Node
+                  # Expand index using the Value Expansion algorithm
+                  prop = active_context.expand_iri(container, vocab: true).to_s
+                  item_value = active_context.expand_value(container, k, log_depth: @options[:log_depth])
+                  # add the key-value pair (container-[{"@id": index}]) to item, appending any existing values in item
+                  values = item[prop]
+                  values = [values].compact unless values.is_a?(Array)
+                  item[prop] = [item_value].concat(values)
+                end
+
+                # Append item to expanded value.
                 ary << item
               end
             end

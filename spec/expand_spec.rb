@@ -447,7 +447,39 @@ describe JSON::LD::API do
       end
     end
 
-    context "lists" do
+    context "@container: @index" do
+      {
+        "string annotation" => {
+          input: {
+            "@context" => {
+              "container" => {
+                "@id" => "http://example.com/container",
+                "@container" => "@index"
+              }
+            },
+            "@id" => "http://example.com/annotationsTest",
+            "container" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ]
+            }
+          },
+          output: [
+            {
+              "@id" => "http://example.com/annotationsTest",
+              "http://example.com/container" => [
+                {"@value" => "Die Königin", "@index" => "de"},
+                {"@value" => "Ihre Majestät", "@index" => "de"},
+                {"@value" => "The Queen", "@index" => "en"}
+              ]
+            }
+          ]
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
+    context "@container: @list" do
       {
         "empty" => {
           input: {"http://example.com/foo" => {"@list" => []}},
@@ -551,7 +583,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "sets" do
+    context "@container: @set" do
       {
         "empty" => {
           input: {
@@ -601,7 +633,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "language maps" do
+    context "@container: @language" do
       {
         "simple map" => {
           input: {
@@ -663,7 +695,177 @@ describe JSON::LD::API do
         }
       }.each do |title, params|
         it(title) {run_expand params}
-        end
+      end
+    end
+
+    context "@container @id" do
+      {
+        "Adds @id to object not having an @id" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "http://example.org/foo": {"label": "Object with @id <foo>"},
+              "_:bar": {"label": "Object with @id _:bar"}
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with @id _:bar"}], "@id": "_:bar"},
+              {"http://example/label": [{"@value": "Object with @id <foo>"}], "@id": "http://example.org/foo"}
+            ]
+          }])
+        },
+        "Retains @id in object already having an @id" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "http://example.org/foo": {"@id": "http://example.org/bar", "label": "Object with @id <foo>"},
+              "_:bar": {"@id": "_:foo", "label": "Object with @id _:bar"}
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"@id": "_:foo", "http://example/label": [{"@value": "Object with @id _:bar"}]},
+              {"@id": "http://example.org/bar", "http://example/label": [{"@value": "Object with @id <foo>"}]}
+            ]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
+    context "@container @type" do
+      {
+        "Adds @type to object not having an @type" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"label": "Object with @type <foo>"},
+              "_:bar": {"label": "Object with @type _:bar"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type _:bar"}], "@type": ["_:bar"]},
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/foo"]}
+            ]
+          }
+        ])
+        },
+        "Prepends @type in object already having an @type" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"@type": "http://example.org/bar", "label": "Object with @type <foo>"},
+              "_:bar": {"@type": "_:foo", "label": "Object with @type _:bar"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {
+                "@type": ["_:bar", "_:foo"],
+                "http://example/label": [{"@value": "Object with @type _:bar"}]
+              },
+              {
+                "@type": ["http://example.org/foo", "http://example.org/bar"],
+                "http://example/label": [{"@value": "Object with @type <foo>"}]
+              }
+            ]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
+    context "@container IRI" do
+      {
+        "Adds property to object not having property" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "irimap": {"@container": "prop"},
+              "prop": {"@type": "@id"}
+            },
+            "irimap": {
+              "http://example.org/foo": {"label": "Object with prop <foo>"}
+            }
+          }),
+          output: %([{
+            "http://example/irimap": [
+              {
+                "http://example/label": [{"@value": "Object with prop <foo>"}],
+                "http://example/prop": [{"@id": "http://example.org/foo"}]
+              }
+            ]
+          }])
+        },
+        "Prepends property in object already having an property" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "irimap": {"@container": "prop"},
+              "prop": {"@type": "@id"}
+            },
+            "irimap": {
+              "http://example.org/foo": {"prop": "http://example.org/bar", "label": "Object with prop <foo>"},
+              "_:bar": {"prop": "_:foo", "label": "Object with prop _:bar"}
+            }
+          }),
+          output: %([{
+            "http://example/irimap": [
+              {
+                "http://example/label": [{"@value": "Object with prop _:bar"}],
+                "http://example/prop": [{"@id": "_:bar"}, {"@id": "_:foo"}]
+              },
+              {
+                "http://example/label": [{"@value": "Object with prop <foo>"}],
+                "http://example/prop": [{"@id": "http://example.org/foo"}, {"@id": "http://example.org/bar"}]
+              }
+            ]
+          }
+        ])
+        },
+        "Adds literal property" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "irimap": {"@container": "prop"}
+            },
+            "irimap": {
+              "foo": {"label": "Object with prop 'foo'"},
+              "bar": {"label": "Object with prop 'bar'"}
+            }
+          }),
+          output: %([{
+            "http://example/irimap": [
+              {
+                "http://example/label": [{"@value": "Object with prop 'bar'"}],
+                "http://example/prop": [{"@value": "bar"}]
+              },
+              {
+                "http://example/label": [{"@value": "Object with prop 'foo'"}],
+                "http://example/prop": [{"@value": "foo"}]
+              }
+            ]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
     end
 
     context "scoped context" do
@@ -872,38 +1074,6 @@ describe JSON::LD::API do
             }
           }),
           exception: JSON::LD::JsonLdError::InvalidReversePropertyMap,
-        },
-      }.each do |title, params|
-        it(title) {run_expand params}
-      end
-    end
-
-    context "@index" do
-      {
-        "string annotation" => {
-          input: {
-            "@context" => {
-              "container" => {
-                "@id" => "http://example.com/container",
-                "@container" => "@index"
-              }
-            },
-            "@id" => "http://example.com/annotationsTest",
-            "container" => {
-              "en" => "The Queen",
-              "de" => [ "Die Königin", "Ihre Majestät" ]
-            }
-          },
-          output: [
-            {
-              "@id" => "http://example.com/annotationsTest",
-              "http://example.com/container" => [
-                {"@value" => "Die Königin", "@index" => "de"},
-                {"@value" => "Ihre Majestät", "@index" => "de"},
-                {"@value" => "The Queen", "@index" => "en"}
-              ]
-            }
-          ]
         },
       }.each do |title, params|
         it(title) {run_expand params}

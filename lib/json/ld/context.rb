@@ -36,7 +36,7 @@ module JSON::LD
       # @return [String] Type mapping
       attr_accessor :type_mapping
 
-      # @return ['@set', '@list'] Container mapping
+      # @return [String] Container mapping
       attr_accessor :container_mapping
 
       # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
@@ -62,7 +62,7 @@ module JSON::LD
       # @param [String] term
       # @param [String] id
       # @param [String] type_mapping Type mapping
-      # @param ['@set', '@list'] container_mapping
+      # @param [String] container_mapping
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
@@ -569,12 +569,14 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
-          # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, nor @index, nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
-          if (container = value.fetch('@container', false))
+          # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
+          if value.has_key?('@container')
+            container = value['@container']
+            # FIXME: Are URIS, @id, and @type reasonable for reverse mappings?
             raise JsonLdError::InvalidReverseProperty,
-                  "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                   ['@set', '@index', nil].include?(container)
-            definition.container_mapping = container
+                   "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
+                    %w(@language @list).include?(container)
+              definition.container_mapping = check_container(container, local_context, defined, term)
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
@@ -610,10 +612,8 @@ module JSON::LD
         @iri_to_term[definition.id] = term if simple_term && definition.id
 
         if value.has_key?('@container')
-          container = value['@container']
-          raise JsonLdError::InvalidContainerMapping, "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless %w(@list @set @language @index).include?(container)
-          #log_debug("") {"container_mapping: #{container.inspect}"}
-          definition.container_mapping = container
+          #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
+          definition.container_mapping = check_container(value['@container'], local_context, defined, term)
         end
 
         if value.has_key?('@context')
@@ -956,7 +956,18 @@ module JSON::LD
         default_language = self.default_language || @none
         containers = []
         tl, tl_value = "@language", "@null"
-        containers << '@index' if index?(value)
+
+        # If the value is a JSON Object, then for the keywords @index, @id, and @type along with the compacted version of all non-keyword properties of the object in order, if the value contains that property, append it to containers.
+        if value.is_a?(Hash)
+          %w(@index @id @type).each do |kw|
+            containers << kw if value.has_key?(kw)
+          end
+          containers.concat value.keys.
+            reject {|k| k.start_with?('@')}.
+            sort.
+            map {|k| compact_iri(k, vocab: true, quite: true)}
+        end
+
         if reverse
           tl, tl_value = "@type", "@reverse"
           containers << '@set'
@@ -1484,6 +1495,38 @@ module JSON::LD
         memo[t] = td.language_mapping
         memo
       end
+    end
+
+    # Ensure @container mapping is appropriate
+    # The result is the original container definition. For IRI containers, this is necessary to be able to determine the @type mapping for string values
+    def check_container(container, local_context, defined, term)
+      case container
+      when '@set', '@list', '@language', '@index', '@type', '@id', nil
+        # Okay
+      when /^@/
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"
+      when String
+        expanded = expand_iri(container,
+          vocab: true,
+          documentRelative: false,
+          local_context: local_context,
+          defined: defined)
+        case expanded
+        when RDF::URI
+          raise JsonLdError::InvalidContainerMapping,
+                "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
+                expanded.absolute?
+        else
+          raise JsonLdError::InvalidContainerMapping,
+                "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
+                container.absolute?
+        end
+      else
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"
+      end
+      container
     end
   end
 end
