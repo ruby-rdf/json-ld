@@ -94,7 +94,7 @@ def run_tc(man, tc, options)
   rescue Interrupt
     $stderr.puts "(interrupt)"
     exit 1
-  rescue Exception => e
+  rescue StandardError => e
     result = if tc.positiveTest?
       STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
       if options[:quiet]

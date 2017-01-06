@@ -131,11 +131,10 @@ module JSON
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
       class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
-    end
-
-    class InvalidFrame < Exception
-      class MultipleEmbeds < InvalidFrame; end
-      class Syntax < InvalidFrame; end
+      class InvalidFrame < JsonLdError
+        class MultipleEmbeds < InvalidFrame; end
+        class Syntax < InvalidFrame; end
+      end
     end
   end
 end
