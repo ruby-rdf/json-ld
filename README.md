@@ -284,6 +284,20 @@ A term definition can include `@context`, which is applied to values of that obj
       "foo": "Bar"
     }
 
+### @id and @type maps
+The value of `@container` in a term definition can include `@id` or `@type`, in addition to `@set`, `@list`, `@language`, and `@index`. This allows value indexing based on either the `@id` or `@type` of associated objects.
+
+    {
+      "@context": {
+        "@vocab": "http://example/",
+        "idmap": {"@container": "@id"}
+      },
+      "idmap": {
+        "http://example.org/foo": {"label": "Object with @id <foo>"},
+        "_:bar": {"label": "Object with @id _:bar"}
+      }
+    }
+
 ### Framing Updates
 The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versions.
 
