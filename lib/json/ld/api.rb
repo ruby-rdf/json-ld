@@ -309,7 +309,7 @@ module JSON::LD
     def self.frame(input, frame, options = {})
       result = nil
       options = {
-        base:           input.is_a?(String) ? input : '',
+        base:           (input if input.is_a?(String)),
         compactArrays:  true,
         embed:          '@last',
         explicit:       false,
