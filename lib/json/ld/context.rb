@@ -1495,8 +1495,12 @@ module JSON::LD
     # The result is the original container definition. For IRI containers, this is necessary to be able to determine the @type mapping for string values
     def check_container(container, local_context, defined, term)
       case container
-      when '@set', '@list', '@language', '@index', '@type', '@id', nil
+      when '@set', '@list', '@language', '@index', nil
         # Okay
+      when '@type', '@id', nil
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
+              @options[:processingMode] < 'json-ld-1.1'
       else
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"

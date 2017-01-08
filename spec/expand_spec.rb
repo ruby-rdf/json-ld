@@ -759,8 +759,7 @@ describe JSON::LD::API do
               {"http://example/label": [{"@value": "Object with @type _:bar"}], "@type": ["_:bar"]},
               {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/foo"]}
             ]
-          }
-        ])
+          }])
         },
         "Prepends @type in object already having an @type" => {
           input: %({
