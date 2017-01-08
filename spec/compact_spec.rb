@@ -406,7 +406,46 @@ describe JSON::LD::API do
       end
     end
 
-    context "language maps" do
+    context "@container: @index" do
+      {
+        "compact-0029" => {
+          input: %([{
+             "@id": "http://example.com/article",
+             "http://example.com/vocab/author": [{
+                "@id": "http://example.org/person/1",
+                "@index": "regular"
+             }, {
+                "@id": "http://example.org/guest/cd24f329aa",
+                "@index": "guest"
+             }]
+          }]),
+          context: %({
+            "author": {"@id": "http://example.com/vocab/author", "@container": "@index" }
+          }),
+          output: %({
+            "@context": {
+              "author": {
+                "@id": "http://example.com/vocab/author",
+                "@container": "@index"
+              }
+            },
+            "@id": "http://example.com/article",
+            "author": {
+              "regular": {
+                "@id": "http://example.org/person/1"
+              },
+              "guest": {
+                "@id": "http://example.org/guest/cd24f329aa"
+              }
+            }
+          })
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
+    context "@container: @language" do
       {
         "compact-0024" => {
           input: %([
@@ -432,6 +471,114 @@ describe JSON::LD::API do
             "label": {
               "en": "The Queen",
               "de": ["Die Königin", "Ihre Majestät"]
+            }
+          })
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
+    context "@container: @id" do
+      {
+        "Indexes to object not having an @id" => {
+          input: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with @id _:bar"}], "@id": "_:bar"},
+              {"http://example/label": [{"@value": "Object with @id <foo>"}], "@id": "http://example.org/foo"}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "idmap": {"@container": "@id"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "http://example.org/foo": {"label": "Object with @id <foo>"},
+              "_:bar": {"label": "Object with @id _:bar"}
+            }
+          }),
+        },
+        "Indexes to object already having an @id" => {
+          input: %([{
+            "http://example/idmap": [
+              {"@id": "_:foo", "http://example/label": [{"@value": "Object with @id _:bar"}]},
+              {"@id": "http://example.org/bar", "http://example/label": [{"@value": "Object with @id <foo>"}]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "idmap": {"@container": "@id"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "_:foo": {"label": "Object with @id _:bar"},
+              "http://example.org/bar": {"label": "Object with @id <foo>"}
+            }
+          }),
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
+    context "@container: @type" do
+      {
+        "Indexes to object not having an @type" => {
+          input: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type _:bar"}], "@type": ["_:bar"]},
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/foo"]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "typemap": {"@container": "@type"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"label": "Object with @type <foo>"},
+              "_:bar": {"label": "Object with @type _:bar"}
+            }
+          })
+        },
+        "Indexes to object already having an @type" => {
+          input: %([{
+            "http://example/typemap": [
+              {
+                "@type": ["_:bar", "_:foo"],
+                "http://example/label": [{"@value": "Object with @type _:bar"}]
+              },
+              {
+                "@type": ["http://example.org/foo", "http://example.org/bar"],
+                "http://example/label": [{"@value": "Object with @type <foo>"}]
+              }
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "typemap": {"@container": "@type"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"@type": "http://example.org/bar", "label": "Object with @type <foo>"},
+              "_:bar": {"@type": "_:foo", "label": "Object with @type _:bar"}
             }
           })
         },

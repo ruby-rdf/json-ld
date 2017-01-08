@@ -208,7 +208,23 @@ describe JSON::LD::Context do
         }, logger)
       end
 
+      it "associates @type container mapping with term" do
+        expect(subject.parse({
+          "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
+        }).containers).to produce({
+          "foo" => "@type"
+        }, logger)
+      end
+
       it "associates @id container mapping with term" do
+        expect(subject.parse({
+          "foo" => {"@id" => "http://example.com/", "@container" => "@id"}
+        }).containers).to produce({
+          "foo" => "@id"
+        }, logger)
+      end
+
+      it "associates @id type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
         }).coercions).to produce({
@@ -1298,26 +1314,43 @@ describe JSON::LD::Context do
   describe "#container" do
     subject {
       ctx = context.parse({
-        "ex" => "http://example.org/",
-        "list" => {"@id" => "ex:list", "@container" => "@list"},
-        "set" => {"@id" => "ex:set", "@container" => "@set"},
-        "ndx" => {"@id" => "ex:ndx", "@container" => "@index"},
+        "ex"       => "http://example.org/",
+        "list"     => {"@id" => "ex:list", "@container" => "@list"},
+        "set"      => {"@id" => "ex:set", "@container" => "@set"},
+        "language" => {"@id" => "ex:language", "@container" => "@language"},
+        "ndx"      => {"@id" => "ex:ndx", "@container" => "@index"},
+        "id"       => {"@id" => "ex:id", "@container" => "@id"},
+        "type"     => {"@id" => "ex:type", "@container" => "@type"}
       })
       logger.clear
       ctx
     }
     it "uses TermDefinition" do
-      expect(subject.container(subject.term_definitions['ex'])).to be_nil
-      expect(subject.container(subject.term_definitions['list'])).to eq '@list'
-      expect(subject.container(subject.term_definitions['set'])).to eq '@set'
-      expect(subject.container(subject.term_definitions['ndx'])).to eq '@index'
+      {
+        "ex"       => nil,
+        "list"     => "@list",
+        "set"      => "@set",
+        "language" => "@language",
+        "ndx"      => "@index",
+        "id"       => "@id",
+        "type"     => "@type",
+      }.each do |defn, container|
+        expect(subject.container(subject.term_definitions[defn])).to eq container
+      end
     end
 
     it "uses string" do
-      expect(subject.container('ex')).to be_nil
-      expect(subject.container('list')).to eq '@list'
-      expect(subject.container('set')).to eq '@set'
-      expect(subject.container('ndx')).to eq '@index'
+      {
+        "ex"       => nil,
+        "list"     => "@list",
+        "set"      => "@set",
+        "language" => "@language",
+        "ndx"      => "@index",
+        "id"       => "@id",
+        "type"     => "@type",
+      }.each do |defn, container|
+        expect(subject.container(defn)).to eq container
+      end
     end
   end
 
