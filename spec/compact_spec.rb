@@ -582,6 +582,34 @@ describe JSON::LD::API do
             }
           })
         },
+        "Indexes to object already having multiple @type values" => {
+          input: %([{
+            "http://example/typemap": [
+              {
+                "@type": ["_:bar", "_:foo", "_:baz"],
+                "http://example/label": [{"@value": "Object with @type _:bar"}]
+              },
+              {
+                "@type": ["http://example.org/foo", "http://example.org/bar", "http://example.org/baz"],
+                "http://example/label": [{"@value": "Object with @type <foo>"}]
+              }
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "typemap": {"@container": "@type"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"@type": ["http://example.org/bar", "http://example.org/baz"], "label": "Object with @type <foo>"},
+              "_:bar": {"@type": ["_:foo", "_:baz"], "label": "Object with @type _:bar"}
+            }
+          })
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end

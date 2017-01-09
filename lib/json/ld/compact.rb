@@ -163,11 +163,11 @@ module JSON::LD
                 value?(expanded_item) ? expanded_item['@value'] : compacted_item
               when '@type'
                 type_prop = context.compact_iri('@type', vocab: true, quiet: true)
-                map_key, types = Array(compacted_item[type_prop])
-                if Array(types).empty?
-                  compacted_item.delete(type_prop)
-                else
-                  compacted_item[type_prop] = types
+                map_key, *types = Array(compacted_item[type_prop])
+                case types.length
+                when 0 then compacted_item.delete(type_prop)
+                when 1 then compacted_item[type_prop] = types.first
+                else        compacted_item[type_prop] = types
                 end
                 compacted_item
               end
