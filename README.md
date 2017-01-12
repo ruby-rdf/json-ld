@@ -298,6 +298,61 @@ The value of `@container` in a term definition can include `@id` or `@type`, in 
       }
     }
 
+### Transparent Nesting
+Many JSON APIs separate properties from their entities using an intermediate object. For example, a set of possible labels may be grouped under a common property:
+
+    {
+      "@context": {
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "labels": "@nest",
+        "main_label": {"@id": "skos:prefLabel"},
+        "other_label": {"@id": "skos:altLabel"},
+        "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+      },
+      "@id":"http://example.org/myresource",
+      "homepage": "http://example.org",
+      "labels": {
+         "main_label": "This is the main label for my resource",
+         "other_label": "This is the other label"
+      }
+    }
+ 
+ In this case, the `labels` property is semantically meaningless. Defining it as equivalent to `@nest` causes it to be ignored when expanding, making it equivalent to the following:
+
+    {
+      "@context": {
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "labels": "@nest",
+        "main_label": {"@id": "skos:prefLabel"},
+        "other_label": {"@id": "skos:altLabel"},
+        "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+      },
+      "@id":"http://example.org/myresource",
+      "homepage": "http://example.org",
+      "main_label": "This is the main label for my resource",
+      "other_label": "This is the other label"
+    }
+ 
+ Similarly, properties may be marked with "@nest": "nest-term", to cause them to be nested. Note that the `@nest` keyword can also be aliased in the context.
+
+     {
+       "@context": {
+         "skos": "http://www.w3.org/2004/02/skos/core#",
+         "labels": "@nest",
+         "main_label": {"@id": "skos:prefLabel", "@nest": "labels"},
+         "other_label": {"@id": "skos:altLabel", "@nest": "labels"},
+         "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+       },
+       "@id":"http://example.org/myresource",
+       "homepage": "http://example.org",
+       "labels": {
+          "main_label": "This is the main label for my resource",
+          "other_label": "This is the other label"
+       }
+     }
+
+In this way, nesting survives round-tripping through expansion, and framed output can include nested properties.
+
 ### Framing Updates
 The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versions.
 

@@ -142,8 +142,6 @@ module Fixtures
             end
           rescue JSON::LD::JsonLdError => e
             fail("Processing error: #{e.message}")
-          rescue JSON::LD::InvalidFrame => e
-            fail("Invalid Frame: #{e.message}")
           end
         else
           logger.info "expected: #{property('expect')}" if property('expect')

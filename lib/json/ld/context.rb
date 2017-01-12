@@ -39,6 +39,9 @@ module JSON::LD
       # @return ['@index', '@language', '@index', '@set', '@type', '@id'] Container mapping
       attr_accessor :container_mapping
 
+      # @return [String] Term used for nest properties
+      attr_accessor :nest
+
       # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
       # @return [String] Language mapping
       attr_accessor :language_mapping
@@ -66,6 +69,7 @@ module JSON::LD
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
+      # @param [String] nest term used for nest properties
       # @param [Boolean] simple
       #   This is a simple term definition, not an expanded term definition
       def initialize(term,
@@ -74,6 +78,7 @@ module JSON::LD
                     container_mapping: nil,
                     language_mapping: nil,
                     reverse_property: false,
+                    nest: nil,
                     simple: false,
                     context: nil)
         @term               = term
@@ -82,6 +87,7 @@ module JSON::LD
         @container_mapping  = container_mapping if container_mapping
         @language_mapping   = language_mapping  if language_mapping
         @reverse_property   = reverse_property  if reverse_property
+        @nest               = nest              if nest
         @simple             = simple            if simple
         @context            = context           if context
       end
@@ -105,7 +111,8 @@ module JSON::LD
            container_mapping.nil? &&
            type_mapping.nil? &&
            reverse_property.nil? &&
-           self.context.nil?
+           self.context.nil? &&
+           nest.nil?
 
            cid.to_s unless cid == term && context.vocab
         else
@@ -122,6 +129,7 @@ module JSON::LD
           # Language set as false to be output as null
           defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
           defn['@context'] = self.context unless self.context.nil?
+          defn['@nest'] = selfnest unless self.nest.nil?
           defn
         end
       end
@@ -132,7 +140,7 @@ module JSON::LD
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id type_mapping container_mapping language_mapping reverse_property simple context).each do |acc|
+        %w(id type_mapping container_mapping language_mapping reverse_property nest simple context).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           defn << "#{acc}: #{v.inspect}" if v
@@ -148,6 +156,7 @@ module JSON::LD
         v << "container=#{container_mapping}" if container_mapping
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
+        v << "nest=#{nest.inspect}" unless nest.nil?
         v << "has-context" unless context.nil?
         v.join(" ") + "]"
       end
@@ -524,7 +533,7 @@ module JSON::LD
 
         expected_keys = case @options[:processingMode]
         when "json-ld-1.0" then %w(@id @reverse @type @container @language)
-        else  %w(@id @reverse @type @container @language @context)
+        else  %w(@id @reverse @type @container @language @context @nest)
         end
 
         extra_keys = value.keys - expected_keys
@@ -556,7 +565,7 @@ module JSON::LD
 
         if value.has_key?('@reverse')
           raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
-            value.keys.any? {|k| %w(@id).include?(k)}
+            value.keys.any? {|k| %w(@id @nest).include?(k)}
           raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
             value['@reverse'].is_a?(String)
 
@@ -635,6 +644,14 @@ module JSON::LD
           language = language.downcase if language.is_a?(String)
           #log_debug("") {"language_mapping: #{language.inspect}"}
           definition.language_mapping = language || false
+        end
+
+        if value.has_key?('@nest')
+          nest = value['@nest']
+          raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
+          raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
+          #log_debug("") {"nest: #{nest.inspect}"}
+          definition.nest = nest
         end
 
         term_definitions[term] = definition
@@ -811,6 +828,27 @@ module JSON::LD
     def content(term)
       term = find_definition(term)
       term && term.content
+    end
+
+    ##
+    # Retrieve nest of a term.
+    # value of nest must be @nest or a term that resolves to @nest
+    #
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [String] Nesting term
+    # @raise JsonLdError::InvalidNestValue if nesting term exists and is not a term resolving to `@nest` in the current context.
+    def nest(term)
+      term = find_definition(term)
+      if term
+        case term.nest
+        when '@nest', nil
+          term.nest
+        else
+          nest_term = find_definition(term.nest)
+          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
+          term.nest
+        end
+      end
     end
 
     ##

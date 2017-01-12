@@ -98,7 +98,7 @@ describe JSON::LD::Context do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-          ec = subject.parse(ctx)
+          subject.parse(ctx)
         end
 
         it "does not use passed context as provided_context" do
@@ -118,7 +118,7 @@ describe JSON::LD::Context do
 
         it "does not load referenced context" do
           expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
-          ec = subject.parse(ctx)
+          subject.parse(ctx)
         end
 
         it "uses loaded context" do
@@ -1394,6 +1394,44 @@ describe JSON::LD::Context do
     it "uses string" do
       expect(subject.reverse?('ex')).to be_falsey
       expect(subject.reverse?('reverse')).to be_truthy
+    end
+  end
+
+  describe "#nest" do
+    subject {
+      ctx = context.parse({
+        "ex"          => "http://example.org/",
+        "nest"        => {"@id" => "ex:nest", "@nest" => "@nest"},
+        "nest2"       => {"@id" => "ex:nest2", "@nest" => "nest-alias"},
+        "nest-alias"  => "@nest"
+      })
+      logger.clear
+      ctx
+    }
+
+    it "uses term" do
+      {
+        "ex"       => nil,
+        "nest"     => "@nest",
+        "nest2"      => "nest-alias",
+        "nest-alias"  => nil,
+      }.each do |defn, nest|
+        expect(subject.nest(defn)).to eq nest
+      end
+    end
+
+    context "detects error" do
+      it "does not allow a keyword other than @nest for the value of @nest" do
+        expect {
+          context.parse({"no-keyword-nest" => {"@id" => "http://example/f", "@nest" => "@id"}})
+        }.to raise_error JSON::LD::JsonLdError::InvalidNestValue
+      end
+
+      it "does not allow @nest with @reverse" do
+        expect {
+          context.parse({"no-reverse-nest" => {"@reverse" => "http://example/f", "@nest" => "@nest"}})
+        }.to raise_error JSON::LD::JsonLdError::InvalidReverseProperty
+      end
     end
   end
 

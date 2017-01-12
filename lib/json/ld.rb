@@ -53,6 +53,7 @@ module JSON
       @graph
       @language
       @list
+      @nest
       @omitDefault
       @requireAll
       @reverse
@@ -111,6 +112,7 @@ module JSON
       class InvalidLanguageTaggedString < JsonLdError; @code = "invalid language-tagged string"; end
       class InvalidLanguageTaggedValue < JsonLdError; @code = "invalid language-tagged value"; end
       class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
+      class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end

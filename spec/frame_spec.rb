@@ -819,7 +819,7 @@ describe JSON::LD::API do
             output = ::JSON.parse(output) if output.is_a?(String)
             jld = JSON::LD::API.frame(input, frame, logger: logger)
             expect(jld).to produce(output, logger)
-          rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
+          rescue JSON::LD::JsonLdError => e
             fail("#{e.class}: #{e.message}\n" +
               "#{logger}\n" +
               "Backtrace:\n#{e.backtrace.join("\n")}")
@@ -1423,7 +1423,7 @@ describe JSON::LD::API do
       output = ::JSON.parse(output) if output.is_a?(String)
       jld = JSON::LD::API.frame(input, frame, logger: logger)
       expect(jld).to produce(output, logger)
-    rescue JSON::LD::JsonLdError, JSON::LD::JsonLdError, JSON::LD::InvalidFrame => e
+    rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +
         "#{logger}\n" +
         "Backtrace:\n#{e.backtrace.join("\n")}")

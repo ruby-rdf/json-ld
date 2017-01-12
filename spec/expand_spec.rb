@@ -790,6 +790,332 @@ describe JSON::LD::API do
       end
     end
 
+    context "@nest" do
+      {
+        "Expands input using @nest" => {
+          input: %({
+            "@context": {"@vocab": "http://example.org/"},
+            "p1": "v1",
+            "@nest": {
+              "p2": "v2"
+            }
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [{"@value": "v2"}]
+          }])
+        },
+        "Expands input using aliased @nest" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": "@nest"
+            },
+            "p1": "v1",
+            "nest": {
+              "p2": "v2"
+            }
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [{"@value": "v2"}]
+          }])
+        },
+        "Appends nested values when property at base and nested" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": "@nest"
+            },
+            "p1": "v1",
+            "nest": {
+              "p2": "v3"
+            },
+            "p2": "v2"
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [
+              {"@value": "v2"},
+              {"@value": "v3"}
+            ]
+          }])
+        },
+        "Appends nested values from all @nest aliases in term order" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest1": "@nest",
+              "nest2": "@nest"
+            },
+            "p1": "v1",
+            "nest2": {
+              "p2": "v4"
+            },
+            "p2": "v2",
+            "nest1": {
+              "p2": "v3"
+            }
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [
+              {"@value": "v2"},
+              {"@value": "v3"},
+              {"@value": "v4"}
+            ]
+          }])
+        },
+        "Nested nested containers" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            },
+            "p1": "v1",
+            "@nest": {
+              "p2": "v3",
+              "@nest": {
+                "p2": "v4"
+              }
+            },
+            "p2": "v2"
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [
+              {"@value": "v2"},
+              {"@value": "v3"},
+              {"@value": "v4"}
+            ]
+          }])
+        },
+        "Arrays of nested values" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": "@nest"
+            },
+            "p1": "v1",
+            "nest": {
+              "p2": ["v4", "v5"]
+            },
+            "p2": ["v2", "v3"]
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [
+              {"@value": "v2"},
+              {"@value": "v3"},
+              {"@value": "v4"},
+              {"@value": "v5"}
+            ]
+          }])
+        },
+        "A nest of arrays" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": "@nest"
+            },
+            "p1": "v1",
+            "nest": [{
+              "p2": "v4"
+            }, {
+              "p2": "v5"
+            }],
+            "p2": ["v2", "v3"]
+          }),
+          output: %([{
+            "http://example.org/p1": [{"@value": "v1"}],
+            "http://example.org/p2": [
+              {"@value": "v2"},
+              {"@value": "v3"},
+              {"@value": "v4"},
+              {"@value": "v5"}
+            ]
+          }])
+        },
+        "@nest MUST NOT have a string value" => {
+          input: %({
+            "@context": {"@vocab": "http://example.org/"},
+            "@nest": "This should generate an error"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest MUST NOT have a boolen value" => {
+          input: %({
+            "@context": {"@vocab": "http://example.org/"},
+            "@nest": true
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest MUST NOT have a numeric value" => {
+          input: %({
+            "@context": {"@vocab": "http://example.org/"},
+            "@nest": 1
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest MUST NOT have a value object value" => {
+          input: %({
+            "@context": {"@vocab": "http://example.org/"},
+            "@nest": {"@value": "This should generate an error"}
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest in term definition MUST NOT be a non-@nest keyword" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": {"@nest": "@id"}
+            },
+            "nest": "This should generate an error"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest in term definition MUST NOT have a boolen value" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": {"@nest": true}
+            },
+            "nest": "This should generate an error"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "@nest in term definition MUST NOT have a numeric value" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "nest": {"@nest": 123}
+            },
+            "nest": "This should generate an error"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "Nested @container: @list" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "list": {"@container": "@list", "@nest": "nestedlist"},
+              "nestedlist": "@nest"
+            },
+            "nestedlist": {
+              "list": ["a", "b"]
+            }
+          }),
+          output: %([{
+            "http://example.org/list": [{"@list": [
+              {"@value": "a"},
+              {"@value": "b"}
+            ]}]
+          }])
+        },
+        "Nested @container: @index" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "index": {"@container": "@index", "@nest": "nestedindex"},
+              "nestedindex": "@nest"
+            },
+            "nestedindex": {
+              "index": {
+                "A": "a",
+                "B": "b"
+              }
+            }
+          }),
+          output: %([{
+            "http://example.org/index": [
+              {"@value": "a", "@index": "A"},
+              {"@value": "b", "@index": "B"}
+            ]
+          }])
+        },
+        "Nested @container: @language" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "container": {"@container": "@language", "@nest": "nestedlanguage"},
+              "nestedlanguage": "@nest"
+            },
+            "nestedlanguage": {
+              "container": {
+                "en": "The Queen",
+                "de": "Die Königin"
+              }
+            }
+          }),
+          output: %([{
+            "http://example.org/container": [
+              {"@value": "Die Königin", "@language": "de"},
+              {"@value": "The Queen", "@language": "en"}
+            ]
+          }])
+        },
+        "Nested @container: @type" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type", "@nest": "nestedtypemap"},
+              "nestedtypemap": "@nest"
+            },
+            "nestedtypemap": {
+              "typemap": {
+                "http://example.org/foo": {"label": "Object with @type <foo>"},
+                "_:bar": {"label": "Object with @type _:bar"}
+              }
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type _:bar"}], "@type": ["_:bar"]},
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/foo"]}
+            ]
+          }])
+        },
+        "Nested @container: @id" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id", "@nest": "nestedidmap"},
+              "nestedidmap": "@nest"
+            },
+            "nestedidmap": {
+              "idmap": {
+                "http://example.org/foo": {"label": "Object with @id <foo>"},
+                "_:bar": {"label": "Object with @id _:bar"}
+              }
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with @id _:bar"}], "@id": "_:bar"},
+              {"http://example/label": [{"@value": "Object with @id <foo>"}], "@id": "http://example.org/foo"}
+            ]
+          }])
+        },
+        "Nest term an invalid keyword" => {
+          input: %({
+            "@context": {
+              "term": {"@id": "http://example/term", "@nest": "@id"}
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidNestValue
+        },
+        "Nest in @reverse" => {
+          input: %({
+            "@context": {
+              "term": {"@reverse": "http://example/term", "@nest": "@nest"}
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidReverseProperty
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
     context "scoped context" do
       {
         "adding new term" => {
@@ -901,6 +1227,26 @@ describe JSON::LD::API do
 
     context "@reverse" do
       {
+        "@container: @reverse" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "rev": { "@reverse": "forward", "@type": "@id"}
+            },
+            "@id": "http://example/one",
+            "rev": "http://example/two"
+          }),
+          output: %([{
+            "@id": "http://example/one",
+            "@reverse": {
+              "http://example/forward": [
+                {
+                  "@id": "http://example/two"
+                }
+              ]
+            }
+          }])
+        },
         "expand-0037" => {
           input: %({
             "@context": {

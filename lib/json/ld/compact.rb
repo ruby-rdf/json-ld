@@ -52,7 +52,7 @@ module JSON::LD
         end
 
         inside_reverse = property == '@reverse'
-        result = {}
+        result, nest_result = {}, nil
 
         element.each_key do |expanded_property|
           expanded_value = element[expanded_property]
@@ -78,6 +78,7 @@ module JSON::LD
                 value = [value] if !value.is_a?(Array) &&
                   (context.container(prop) == '@set' || !@options[:compactArrays])
                 #log_debug("") {"merge #{prop} => #{value.inspect}"}
+
                 merge_compacted_value(result, prop, value)
                 compacted_value.delete(prop)
               end
@@ -112,8 +113,14 @@ module JSON::LD
                                   reverse: inside_reverse,
                                   log_depth: @options[:log_depth])
 
-            iap = result[item_active_property] ||= []
-            result[item_active_property] = [iap] unless iap.is_a?(Array)
+            if nest_prop = context.nest(item_active_property)
+              result[nest_prop] ||= {}
+              iap = result[result[nest_prop]] ||= []
+              result[nest_prop][item_active_property] = [iap] unless iap.is_a?(Array)
+            else
+              iap = result[item_active_property] ||= []
+              result[item_active_property] = [iap] unless iap.is_a?(Array)
+            end
           end
 
           # At this point, expanded value must be an array due to the Expansion algorithm.
@@ -124,6 +131,14 @@ module JSON::LD
                                   vocab: true,
                                   reverse: inside_reverse,
                                   log_depth: @options[:log_depth])
+
+
+            nest_result = if nest_prop = context.nest(item_active_property)
+              # FIXME??: It's possible that nest_prop will be used both for nesting, and for values of @nest
+              result[nest_prop] ||= {}
+            else
+              result
+            end
 
             container = context.container(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
@@ -141,12 +156,12 @@ module JSON::LD
                 end
               else
                 raise JsonLdError::CompactionToListOfLists,
-                      "key cannot have more than one list value" if result.has_key?(item_active_property)
+                      "key cannot have more than one list value" if nest_result.has_key?(item_active_property)
               end
             end
 
             if %w(@language @index @id @type).include?(container)
-              map_object = result[item_active_property] ||= {}
+              map_object = nest_result[item_active_property] ||= {}
               compacted_item = case container
               when '@id'
                 id_prop = context.compact_iri('@id', vocab: true, quiet: true)
@@ -154,9 +169,7 @@ module JSON::LD
                 compacted_item.delete(id_prop)
                 compacted_item
               when '@index'
-                index_prop = context.compact_iri('@index', vocab: true, quiet: true)
                 map_key = expanded_item[container]
-                #compacted_item.delete(index_prop)
                 compacted_item
               when '@language'
                 map_key = expanded_item[container]
@@ -179,7 +192,7 @@ module JSON::LD
                   %w(@set @list).include?(container) ||
                   %w(@list @graph).include?(expanded_property)
                 )
-              merge_compacted_value(result, item_active_property, compacted_item)
+              merge_compacted_value(nest_result, item_active_property, compacted_item)
             end
           end
         end
