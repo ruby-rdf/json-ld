@@ -47,9 +47,9 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
     JSON::LD::API.expand(input) =>
     
     [{
-        "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
-        "http://xmlns.com/foaf/0.1/homepage": ["http://manu.sporny.org/"],
-        "http://xmlns.com/foaf/0.1/avatar": ["http://twitter.com/account/profile_image/manusporny"]
+        "http://xmlns.com/foaf/0.1/name": [{"@value"=>"Manu Sporny"}],
+        "http://xmlns.com/foaf/0.1/homepage": [{"@value"=>"http://manu.sporny.org/"}], 
+        "http://xmlns.com/foaf/0.1/avatar": [{"@value": "http://twitter.com/account/profile_image/manusporny"}]
     }]
 
 ### Compact a Document
