@@ -20,7 +20,6 @@ group :development, :test do
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'
-  gem 'diff-lcs', github: 'koic/diff-lcs', branch: "integer_unification" # Until Fixnum issues solved
 end
 
 group :debug do
