@@ -1225,6 +1225,107 @@ describe JSON::LD::API do
       end
     end
 
+    context "scoped context on @type" do
+      {
+        "adding new term" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "a": {"@type": "Foo", "bar": "baz"}
+          }),
+          output: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example.org/bar": [{"@value": "baz"}]
+              }]
+            }
+          ])
+        },
+        "overriding a term" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"bar": {"@type": "@id"}}},
+              "bar": {"@type": "http://www.w3.org/2001/XMLSchema#string"}
+            },
+            "a": {"@type": "Foo", "bar": "http://example/baz"}
+          }),
+          output: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example/bar": [{"@id": "http://example/baz"}]
+              }]
+            }
+          ])
+        },
+        "alias of @type" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "type": "@type",
+              "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "a": {"type": "Foo", "bar": "baz"}
+          }),
+          output: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example.org/bar": [{"@value": "baz"}]
+              }]
+            }
+          ])
+        },
+        "deep @context affects nested nodes" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
+            },
+            "@type": "Foo",
+            "bar": {"baz": "buzz"}
+          }),
+          output: %([
+            {
+              "@type": ["http://example/Foo"],
+              "http://example/bar": [{
+                "http://example/baz": [{"@id": "http://example/buzz"}]
+              }]
+            }
+          ])
+        },
+        "scoped context layers on intemediate contexts" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "B": {"@context": {"c": "http://example.org/c"}}
+            },
+            "a": {
+              "@context": {"@vocab": "http://example.com/"},
+              "@type": "B",
+              "a": "A in example.com",
+              "c": "C in example.org"
+            },
+            "c": "C in example"
+          }),
+          output: %([{
+            "http://example/a": [{
+              "@type": ["http://example/B"],
+              "http://example.com/a": [{"@value": "A in example.com"}],
+              "http://example.org/c": [{"@value": "C in example.org"}]
+            }],
+            "http://example/c": [{"@value": "C in example"}]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
     context "@reverse" do
       {
         "@container: @reverse" => {

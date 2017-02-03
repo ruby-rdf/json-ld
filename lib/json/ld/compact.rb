@@ -54,7 +54,7 @@ module JSON::LD
         inside_reverse = property == '@reverse'
         result, nest_result = {}, nil
 
-        element.each_key do |expanded_property|
+        element.keys.sort.each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
@@ -62,6 +62,15 @@ module JSON::LD
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
               context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
             end
+
+            # If key is @type and any compacted value is a term having a local context, overlay that context.
+            if expanded_property == '@type'
+              compacted_value.each do |term|
+                term_context = self.context.term_definitions[term].context if context.term_definitions[term]
+                self.context = context.parse(term_context) if term_context
+              end
+            end
+
             compacted_value = compacted_value.first if compacted_value.length == 1
 
             al = context.compact_iri(expanded_property, vocab: true, quiet: true)

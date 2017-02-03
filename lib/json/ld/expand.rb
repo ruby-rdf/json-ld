@@ -44,6 +44,16 @@ module JSON::LD
         output_object = {}
         keys = ordered ? input.keys.kw_sort : input.keys
 
+        # See if keys mapping to @type have terms with a local context
+        input.keys.select do |key|
+          context.expand_iri(key, vocab: true) == '@type'
+        end.each do |key|
+          Array(input[key]).each do |term|
+            term_context = context.term_definitions[term].context if context.term_definitions[term]
+            context = term_context ? context.parse(term_context) : context
+          end
+        end
+
         # Process each key and value in element. Ignores @nesting content
         expand_object(input, active_property, context, output_object, ordered: ordered)
 

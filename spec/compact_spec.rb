@@ -1038,6 +1038,128 @@ describe JSON::LD::API do
       end
     end
 
+    context "scoped context on @type" do
+      {
+        "adding new term" => {
+          input: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example.org/bar": [{"@value": "baz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "Foo": {"@context": {"bar": "http://example.org/bar"}}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "a": {"@type": "Foo", "bar": "baz"}
+          })
+        },
+        "overriding a term" => {
+          input: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example/bar": [{"@id": "http://example/baz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "Foo": {"@context": {"bar": {"@type": "@id"}}},
+            "bar": {"@type": "http://www.w3.org/2001/XMLSchema#string"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"bar": {"@type": "@id"}}},
+              "bar": {"@type": "http://www.w3.org/2001/XMLSchema#string"}
+            },
+            "a": {"@type": "Foo", "bar": "http://example/baz"}
+          }),
+        },
+        "alias of @type" => {
+          input: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example.org/bar": [{"@value": "baz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "type": "@type",
+            "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "type": "@type",
+              "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "a": {"type": "Foo", "bar": "baz"}
+          }),
+        },
+        "deep @context affects nested nodes" => {
+          input: %([
+            {
+              "@type": ["http://example/Foo"],
+              "http://example/bar": [{
+                "http://example/baz": [{"@id": "http://example/buzz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
+            },
+            "@type": "Foo",
+            "bar": {"baz": "buzz"}
+          }),
+        },
+        "scoped context layers on intemediate contexts" => {
+          input: %([{
+            "http://example/a": [{
+              "@type": ["http://example/B"],
+              "http://example.com/a": [{"@value": "A in example.com"}],
+              "http://example.org/c": [{"@value": "C in example.org"}]
+            }],
+            "http://example/c": [{"@value": "C in example"}]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "B": {"@context": {"c": "http://example.org/c"}}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "B": {"@context": {"c": "http://example.org/c"}}
+            },
+            "a": {
+              "@type": "B",
+              "c": "C in example.org",
+              "http://example.com/a": "A in example.com"
+            },
+            "c": "C in example"
+          }),
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
     context "exceptions" do
       {
         "@list containing @list" => {
