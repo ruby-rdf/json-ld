@@ -377,8 +377,13 @@ module JSON::LD
           # For each key-value in the object:
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
+            # If container mapping in the active context is @type, and k is a term in the active context having a local context, use that context when expanding values
+            map_context = active_context.term_definitions[k].context if container == '@type' && active_context.term_definitions[k]
+            map_context = active_context.parse(map_context) if map_context
+            map_context ||= active_context
+            
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
-            index_value = expand([value[k]].flatten, key, active_context, ordered: ordered)
+            index_value = expand([value[k]].flatten, key, map_context, ordered: ordered)
             #require 'byebug'; byebug
             index_value.each do |item|
               case container

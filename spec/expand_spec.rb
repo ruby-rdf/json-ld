@@ -1371,6 +1371,23 @@ describe JSON::LD::API do
             "http://example/c": [{"@value": "C in example"}]
           }])
         },
+        "with @container: @type" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
+              "Type": {"@context": {"a": "http://example.org/a"}}
+            },
+            "typemap": {
+              "Type": {"a": "Object with @type <Type>"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example.org/a": [{"@value": "Object with @type <Type>"}], "@type": ["http://example/Type"]}
+            ]
+          }])
+        },
       }.each do |title, params|
         it(title) {run_expand params}
       end

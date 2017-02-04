@@ -1197,6 +1197,28 @@ describe JSON::LD::API do
             "c": "C in example"
           }),
         },
+        "with @container: @type" => {
+          input: %([{
+            "http://example/typemap": [
+              {"http://example.org/a": [{"@value": "Object with @type <Type>"}], "@type": ["http://example/Type"]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "typemap": {"@container": "@type"},
+            "Type": {"@context": {"a": "http://example.org/a"}}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
+              "Type": {"@context": {"a": "http://example.org/a"}}
+            },
+            "typemap": {
+              "Type": {"a": "Object with @type <Type>"}
+            }
+          })
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
