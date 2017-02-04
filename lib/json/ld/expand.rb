@@ -137,7 +137,7 @@ module JSON::LD
       keys.each do |key|
         # For each key and value in element, ordered lexicographically by key:
         value = input[key]
-        expanded_property = context.expand_iri(key, vocab: true, log_depth: @options[:log_depth])
+        expanded_property = context.expand_iri(key, vocab: true, quiet: true)
 
         # If expanded property is null or it neither contains a colon (:) nor it is a keyword, drop key by continuing to the next key.
         next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
@@ -164,16 +164,16 @@ module JSON::LD
             # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
             e_id = case value
             when String
-              context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
+              context.expand_iri(value, documentRelative: true, quiet: true).to_s
             when Array
               # Framing allows an array of IRIs, and always puts values in an array
               raise JsonLdError::InvalidIdValue,
                     "value of @id must be a string, array of string or hash if framing: #{value.inspect}" unless framing
-              context.expand_iri(value, documentRelative: true, log_depth: @options[:log_depth]).to_s
+              context.expand_iri(value, documentRelative: true, quiet: true).to_s
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
                       "@id value must be a string or array of strings for framing: #{v.inspect}" unless v.is_a?(String)
-                context.expand_iri(v, documentRelative: true, quiet: true, log_depth: @options[:log_depth]).to_s
+                context.expand_iri(v, documentRelative: true, quiet: true,).to_s
               end
             when Hash
               raise JsonLdError::InvalidIdValue,
@@ -201,10 +201,10 @@ module JSON::LD
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
                       "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
-                context.expand_iri(v, vocab: true, documentRelative: true, quiet: true, log_depth: @options[:log_depth]).to_s
+                context.expand_iri(v, vocab: true, documentRelative: true, quiet: true).to_s
               end
             when String
-              context.expand_iri(value, vocab: true, documentRelative: true, quiet: true, log_depth: @options[:log_depth]).to_s
+              context.expand_iri(value, vocab: true, documentRelative: true, quiet: true).to_s
             when Hash
               # For framing
               raise JsonLdError::InvalidTypeValue,
@@ -379,11 +379,18 @@ module JSON::LD
           keys.each do |k|
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, active_context, ordered: ordered)
+            #require 'byebug'; byebug
             index_value.each do |item|
               case container
-              when '@id', '@index' then item[container] ||= k
-                # If container is @type add the key-value pair (@type-[index]) to item, appending any existing values in item
-              when '@type'  then item[container] = [k].concat(Array(item[container]))
+              when '@index' then item[container] ||= k
+              when '@id'
+                # Expand k document relative
+                expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s
+                item[container] ||= expanded_k
+              when '@type'
+                # Expand k vocabulary relative
+                expanded_k = active_context.expand_iri(k, vocab: true, documentRelative: true, quiet: true).to_s
+                item[container] = [expanded_k].concat(Array(item[container]))
               end
 
               # Append item to expanded value.

@@ -549,6 +549,28 @@ describe JSON::LD::API do
             }
           }),
         },
+        "Indexes to object using compact IRI @id" => {
+          input: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with @id <foo>"}], "@id": "http://example.org/foo"}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "ex": "http://example.org/",
+            "idmap": {"@container": "@id"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "ex": "http://example.org/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "ex:foo": {"label": "Object with @id <foo>"}
+            }
+          })
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
@@ -631,6 +653,26 @@ describe JSON::LD::API do
             "typemap": {
               "http://example.org/foo": {"@type": ["http://example.org/bar", "http://example.org/baz"], "label": "Object with @type <foo>"},
               "_:bar": {"@type": ["_:foo", "_:baz"], "label": "Object with @type _:bar"}
+            }
+          })
+        },
+        "Indexes using compacted @type" => {
+          input: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example/Foo"]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "typemap": {"@container": "@type"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "Foo": {"label": "Object with @type <foo>"}
             }
           })
         },

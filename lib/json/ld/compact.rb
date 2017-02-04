@@ -175,6 +175,7 @@ module JSON::LD
               when '@id'
                 id_prop = context.compact_iri('@id', vocab: true, quiet: true)
                 map_key = compacted_item[id_prop]
+                map_key = context.compact_iri(map_key, quiet: true)
                 compacted_item.delete(id_prop)
                 compacted_item
               when '@index'
@@ -186,6 +187,7 @@ module JSON::LD
               when '@type'
                 type_prop = context.compact_iri('@type', vocab: true, quiet: true)
                 map_key, *types = Array(compacted_item[type_prop])
+                map_key = context.compact_iri(map_key, vocab: true, quiet: true)
                 case types.length
                 when 0 then compacted_item.delete(type_prop)
                 when 1 then compacted_item[type_prop] = types.first

@@ -736,6 +736,23 @@ describe JSON::LD::API do
             ]
           }])
         },
+        "Adds expanded @id to object" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "foo": {"label": "Object with @id <foo>"}
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with @id <foo>"}], "@id": "http://example.org/foo"}
+            ]
+          }]),
+          base: "http://example.org/"
+        },
       }.each do |title, params|
         it(title) {run_expand params}
       end
@@ -784,6 +801,39 @@ describe JSON::LD::API do
               }
             ]
           }])
+        },
+        "Adds vocabulary expanded @type to object" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "Foo": {"label": "Object with @type <foo>"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example/Foo"]}
+            ]
+          }])
+        },
+        "Adds document expanded @type to object" => {
+          input: %({
+            "@context": {
+              "typemap": {"@id": "http://example/typemap", "@container": "@type"},
+              "label": "http://example/label"
+            },
+            "typemap": {
+              "Foo": {"label": "Object with @type <foo>"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/Foo"]}
+            ]
+          }]),
+          base: "http://example.org/"
         },
       }.each do |title, params|
         it(title) {run_expand params}
