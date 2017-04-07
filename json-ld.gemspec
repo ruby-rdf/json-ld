@@ -33,9 +33,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'jsonlint',        '~> 0.2' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'oj',              '~> 2.17'  unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'yajl-ruby',       '~> 1.2' unless RUBY_ENGINE == "jruby"
-  gem.add_development_dependency "rack-cache",      '~> 1.2'
-  gem.add_development_dependency "rest-client",     '~> 1.8'
-  gem.add_development_dependency "rest-client-components", '~> 1.4'
   gem.add_development_dependency 'rdf-isomorphic',  '~> 2.0'
   gem.add_development_dependency 'rdf-spec',        '~> 2.2'
   gem.add_development_dependency 'rdf-trig',        '~> 2.0'
