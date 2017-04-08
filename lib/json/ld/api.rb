@@ -69,10 +69,12 @@ module JSON::LD
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
-    # @option options [String] :processingMode ("json-ld-1.1")
+    # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1. Also can have other values:
     #
     #   * json-ld-1.1-expand-frame – special frame expansion mode.
+    #
+    #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -88,10 +90,8 @@ module JSON::LD
       @options = {
         compactArrays: true,
         rename_bnodes: true,
-        processingMode: "json-ld-1.1",
         documentLoader: self.class.method(:documentLoader)
       }
-      @options[:validate] = %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
       @options = @options.merge(options)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
@@ -134,6 +134,10 @@ module JSON::LD
       # If not provided, first use context from document, or from a Link header
       context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
       @context = Context.parse(context || {}, @options)
+
+      # If not set explicitly, the context figures out the processing mode
+      @options[:processingMode] ||= @context.processingMode
+      @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
 
       if block_given?
         case block.arity

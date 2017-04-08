@@ -572,7 +572,7 @@ describe JSON::LD::API do
           })
         },
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -677,7 +677,7 @@ describe JSON::LD::API do
           })
         },
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -926,9 +926,9 @@ describe JSON::LD::API do
             "term": {"@id": "http://example/foo", "@nest": "unknown"}
           }),
           exception: JSON::LD::JsonLdError::InvalidNestValue
-        }
+        },
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1075,8 +1075,19 @@ describe JSON::LD::API do
             "c": "C in example"
           }),
         },
+        "Raises InvalidTermDefinition if processingMode is not specified" => {
+          input: %([{
+            "http://example/foo": [{"http://example.org/bar": [{"@value": "baz"}]}]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "foo": {"@context": {"bar": "http://example.org/bar"}}
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1219,8 +1230,24 @@ describe JSON::LD::API do
             }
           })
         },
+        "Raises InvalidTermDefinition if processingMode is not specified" => {
+          input: %([
+            {
+              "http://example/a": [{
+                "@type": ["http://example/Foo"],
+                "http://example.org/bar": [{"@value": "baz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "Foo": {"@context": {"bar": "http://example.org/bar"}}
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1248,15 +1275,15 @@ describe JSON::LD::API do
   end
 
   def run_compact(params)
-    input, output, context = params[:input], params[:output], params[:context]
+    input, output, context, processingMode = params[:input], params[:output], params[:context], params[:processingMode]
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.compact(input, context, logger: logger)}.to raise_error(params[:exception])
+      expect {JSON::LD::API.compact(input, context, logger: logger, processingMode: processingMode)}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.compact(input, context, logger: logger)
+      jld = JSON::LD::API.compact(input, context, logger: logger, processingMode: processingMode)
       expect(jld).to produce(output, logger)
     end
   end

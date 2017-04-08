@@ -205,6 +205,9 @@ module JSON::LD
     # @return [BlankNodeNamer]
     attr_accessor :namer
 
+    # @return [String]
+    attr_accessor :processingMode
+
     ##
     # Create a new context by parsing a context.
     #
@@ -242,6 +245,7 @@ module JSON::LD
         @doc_base.canonicalize! if options[:canonicalize]
       end
       options[:documentLoader] ||= JSON::LD::API.method(:documentLoader)
+      @processingMode ||= options[:processingMode]
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -302,6 +306,22 @@ module JSON::LD
       end
     end
 
+    # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
+    #   If processingMode has been set, and "json-ld-1.1" is not a prefix of processingMode , a "processing mode conflict" has been detecting, and processing is aborted.
+    # @param [Number] vaule must be a decimal number
+    def version=(value)
+      case value
+      when 1.1
+        if processingMode && !processingMode.start_with?("json-ld-1.1")
+          raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{processingMode}"
+        end
+        @processingMode ||= "json-ld-1.1"
+      else
+        raise JsonLdError::InvalidVersionValue, value
+      end
+    end
+
+    # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
     # @param [String] value must be an absolute IRI
     def vocab=(value)
       @vocab = case value
@@ -399,7 +419,7 @@ module JSON::LD
                 end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
-                if @options[:processingMode] == "json-ld-1.0"
+                if processingMode && processingMode <= "json-ld-1.1"
                   context_no_base.provided_context = context.dup
                 end
               end
@@ -421,11 +441,12 @@ module JSON::LD
           result = context
           #log_debug("parse") {"=> provided_context: #{context.inspect}"}
         when Hash
-          # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
           context = context.dup # keep from modifying a hash passed as a param
+
           {
             '@base'     => :base=,
             '@language' => :default_language=,
+            '@version'  => :version=,
             '@vocab'    => :vocab=,
           }.each do |key, setter|
             v = context.fetch(key, false)
@@ -435,6 +456,9 @@ module JSON::LD
               result.send(setter, v)
             end
           end
+
+          # If not set explicitly, set processingMode to "json-ld-1.0"
+          result.processingMode ||= "json-ld-1.0"
 
           defined = {}
         # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
@@ -504,7 +528,7 @@ module JSON::LD
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if KEYWORDS.include?(term) && !%w(@vocab @language).include?(term)
+      if KEYWORDS.include?(term) && !%w(@vocab @language @version).include?(term)
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
@@ -581,11 +605,10 @@ module JSON::LD
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
           if value.has_key?('@container')
             container = value['@container']
-            # FIXME: Are URIS, @id, and @type reasonable for reverse mappings?
             raise JsonLdError::InvalidReverseProperty,
-                   "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-                    %w(@language @list).include?(container)
-              definition.container_mapping = check_container(container, local_context, defined, term)
+                  "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
+                   ['@set', '@index'].include?(container)
+            definition.container_mapping = check_container(container, local_context, defined, term)
           end
           definition.reverse_property = true
         elsif value.has_key?('@id') && value['@id'] != term
@@ -626,9 +649,8 @@ module JSON::LD
         end
 
         if value.has_key?('@context')
-          context = value['@context']
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidScopedContext, '@context not valid in term definition' if @options[:processingMode] < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
 
           begin
             self.parse(value['@context'])
@@ -647,6 +669,12 @@ module JSON::LD
         end
 
         if value.has_key?('@nest')
+          # Not supported in JSON-LD 1.0
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+
+          # Not supported in JSON-LD 1.0
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+
           nest = value['@nest']
           raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
           raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
@@ -1310,6 +1338,7 @@ module JSON::LD
       v = %w([Context)
       v << "base=#{base}" if base
       v << "vocab=#{vocab}" if vocab
+      v << "processingMode=#{processingMode}" if processingMode
       v << "default_language=#{default_language}" if default_language
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
       v.join(" ") + "]"
@@ -1538,7 +1567,7 @@ module JSON::LD
       when '@type', '@id', nil
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-              @options[:processingMode] < 'json-ld-1.1'
+              processingMode < 'json-ld-1.1'
       else
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"

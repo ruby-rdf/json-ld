@@ -112,7 +112,7 @@ describe JSON::LD::Context do
         let(:ctx) {"http://example.com/preloaded"}
         before(:all) {
           JSON::LD::Context.add_preloaded("http://example.com/preloaded",
-          JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+          JSON::LD::Context.parse({'foo' => "http://example.com/"})
         )}
         after(:all) {JSON::LD::Context::PRELOADED.clear}
 
@@ -362,9 +362,50 @@ describe JSON::LD::Context do
     end
   end
 
+  describe "#processingMode" do
+    it "sets to json-ld-1.0 if not specified" do
+      [
+        %({}),
+        %([{}]),
+      ].each do |str|
+        ctx = JSON::LD::Context.parse(::JSON.parse(str))
+        expect(ctx.processingMode).to eql "json-ld-1.0"
+      end
+    end
+
+    it "sets to json-ld-1.1 if @version: 1.1" do
+      [
+        %({"@version": 1.1}),
+        %([{"@version": 1.1}]),
+      ].each do |str|
+        ctx = JSON::LD::Context.parse(::JSON.parse(str))
+        expect(ctx.processingMode).to eql "json-ld-1.1"
+      end
+    end
+
+    it "raises InvalidVersionValue if @version out of scope" do
+      [
+        "1.1",
+        "1.0",
+        1.0,
+        "foo"
+      ].each do |vers|
+        expect {JSON::LD::Context.parse({"@version" => vers})}.to raise_error(JSON::LD::JsonLdError::InvalidVersionValue)
+      end
+    end
+
+    it "raises ProcessingModeConflict if provided processing mode conflicts with context" do
+      expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0")}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+    end
+
+    it "raises ProcessingModeConflict nested context is different from starting context" do
+      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+    end
+  end
+
   describe "#merge" do
     it "creates a new context with components of each" do
-      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"})
       cm = context.merge(c2)
       expect(cm).not_to equal context
       expect(cm).not_to equal c2
@@ -374,7 +415,7 @@ describe JSON::LD::Context do
 
   describe "#merge!" do
     it "updates context with components from new" do
-      c2 = JSON::LD::Context.new().parse({'foo' => "http://example.com/"})
+      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"})
       cm = context.merge!(c2)
       expect(cm).to equal context
       expect(cm).not_to equal c2

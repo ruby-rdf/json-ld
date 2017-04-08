@@ -60,6 +60,7 @@ module JSON
       @set
       @type
       @value
+      @version
       @vocab
     ).freeze
 
@@ -105,6 +106,7 @@ module JSON
       class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
       class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
       class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
+      class InvalidVersionValue < JsonLdError; @code = "invalid @version value"; end
       class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
       class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
       class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
@@ -132,6 +134,7 @@ module JSON
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
+      class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end
       class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
       class InvalidFrame < JsonLdError
         class MultipleEmbeds < InvalidFrame; end

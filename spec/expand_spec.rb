@@ -753,8 +753,22 @@ describe JSON::LD::API do
           }]),
           base: "http://example.org/"
         },
+        "Raises InvalidContainerMapping if processingMode is not specified" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "http://example.org/foo": {"label": "Object with @id <foo>"},
+              "_:bar": {"label": "Object with @id _:bar"}
+            }
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidContainerMapping
+        },
       }.each do |title, params|
-        it(title) {run_expand params}
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -835,8 +849,22 @@ describe JSON::LD::API do
           }]),
           base: "http://example.org/"
         },
+        "Raises InvalidContainerMapping if processingMode is not specified" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "http://example.org/foo": {"label": "Object with @type <foo>"},
+              "_:bar": {"label": "Object with @type _:bar"}
+            }
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidContainerMapping
+        },
       }.each do |title, params|
-        it(title) {run_expand params}
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1161,8 +1189,22 @@ describe JSON::LD::API do
           }),
           exception: JSON::LD::JsonLdError::InvalidReverseProperty
         },
+        "Raises InvalidTermDefinition if processingMode is not specified" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "list": {"@container": "@list", "@nest": "nestedlist"},
+              "nestedlist": "@nest"
+            },
+            "nestedlist": {
+              "list": ["a", "b"]
+            }
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
       }.each do |title, params|
-        it(title) {run_expand params}
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1270,8 +1312,21 @@ describe JSON::LD::API do
             "http://example/c": [{"@value": "C in example"}]
           }])
         },
+        "Raises InvalidTermDefinition if processingMode is not specified" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "foo": {
+              "bar": "baz"
+            }
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
       }.each do |title, params|
-        it(title) {run_expand params}
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1388,8 +1443,19 @@ describe JSON::LD::API do
             ]
           }])
         },
+        "Raises InvalidTermDefinition if processingMode is not specified" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "Foo": {"@context": {"bar": "http://example.org/bar"}}
+            },
+            "a": {"@type": "Foo", "bar": "baz"}
+          }),
+          processingMode: nil,
+          exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
       }.each do |title, params|
-        it(title) {run_expand params}
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
     end
 
@@ -1551,14 +1617,14 @@ describe JSON::LD::API do
   end
 
   def run_expand(params)
-    input, output = params[:input], params[:output]
+    input, output, processingMode = params[:input], params[:output], params[:processingMode]
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.expand(input)}.to raise_error(params[:exception])
+      expect {JSON::LD::API.expand(input, processingMode: processingMode)}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.expand(input, base: params[:base], logger: logger)
+      jld = JSON::LD::API.expand(input, base: params[:base], logger: logger, processingMode: processingMode)
       expect(jld).to produce(output, logger)
     end
   end
