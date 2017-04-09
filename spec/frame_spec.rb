@@ -654,14 +654,11 @@ describe JSON::LD::API do
             "result": {"@id": "mf:result", "@type": "xsd:boolean"}
           },
           "@graph": [{
-            "@id": "_:b0",
             "@type": "mf:Manifest",
             "comment": "Positive processor tests",
             "entries": [{
-              "@id": "_:b1",
               "@type": "mf:ManifestEntry",
               "action": {
-                "@id": "_:b2",
                 "@type": "mq:QueryTest",
                 "data": "http://www.w3.org/TR/microdata-rdf/tests/0001.html",
                 "query": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
@@ -1135,9 +1132,7 @@ describe JSON::LD::API do
             "@graph": [{
               "@id": "urn:id-1",
               "@type": "Class",
-              "preserve": {
-                "@id": "_:b0"
-              }
+              "preserve": {}
             }]
           })
         },
@@ -1260,9 +1255,7 @@ describe JSON::LD::API do
                 "term": "foo"
               },
               "preserve": {
-                "@id": "_:b0",
                 "deep": {
-                  "@id": "_:b1",
                   "@graph": [{
                     "@id": "urn:id-3",
                     "term": "bar"
@@ -1338,23 +1331,96 @@ describe JSON::LD::API do
     end
   end
 
+  describe "pruneBlankNodeIdentifiers" do
+    it "preserves single-use bnode identifiers if option set to false" do
+      do_frame(
+        input: %({
+          "@context": {
+            "dc0": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@id": "http://example.com/asset",
+          "@type": "ps:Asset",
+          "dc:creator": {
+            "foaf:name": "John Doe"
+          }
+        }),
+        frame: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@id": "http://example.com/asset",
+          "@type": "ps:Asset",
+          "dc:creator": {}
+        }),
+        output: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@graph": [
+            {
+              "@id": "http://example.com/asset",
+              "@type": "ps:Asset",
+              "dc:creator": {
+                "@id": "_:b0",
+                "foaf:name": "John Doe"
+              }
+            }
+          ]
+        }),
+        prune: false
+      )
+    end
+  end
+
   context "problem cases" do
     it "pr #20" do
-      expanded = [
+      expanded = %([
         {
-          "@id"=>"_:gregg",
-          "@type"=>"http://xmlns.com/foaf/0.1/Person",
-          "http://xmlns.com/foaf/0.1/name" => "Gregg Kellogg"
+          "@id": "_:gregg",
+          "@type": "http://xmlns.com/foaf/0.1/Person",
+          "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
         }, {
-          "@id"=>"http://manu.sporny.org/#me",
-          "@type"=> "http://xmlns.com/foaf/0.1/Person",
-          "http://xmlns.com/foaf/0.1/knows"=> {"@id"=>"_:gregg"},
-          "http://xmlns.com/foaf/0.1/name"=>"Manu Sporny"
+          "@id": "http://manu.sporny.org/#me",
+          "@type": "http://xmlns.com/foaf/0.1/Person",
+          "http://xmlns.com/foaf/0.1/knows": {"@id": "_:gregg"},
+          "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
         }
-      ]
-      framed = JSON::LD::API.frame(expanded, {})
-      data = framed["@graph"].first
-      expect(data["mising_value"]).to be_nil
+      ])
+      expected = %({
+        "@graph": [
+          {
+            "@id": "_:b0",
+            "@type": "http://xmlns.com/foaf/0.1/Person",
+            "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
+          },
+          {
+            "@id": "http://manu.sporny.org/#me",
+            "@type": "http://xmlns.com/foaf/0.1/Person",
+            "http://xmlns.com/foaf/0.1/knows": {
+              "@id": "_:b0",
+              "@type": "http://xmlns.com/foaf/0.1/Person",
+              "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
+            },
+            "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
+          }
+        ]
+      })
+      do_frame(input: expanded, frame: {}, output: expected)
     end
 
     it "issue #28" do
@@ -1417,11 +1483,11 @@ describe JSON::LD::API do
 
   def do_frame(params)
     begin
-      input, frame, output = params[:input], params[:frame], params[:output]
+      input, frame, output, prune = params[:input], params[:frame], params[:output], params.fetch(:prune, true)
       input = ::JSON.parse(input) if input.is_a?(String)
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
-      jld = JSON::LD::API.frame(input, frame, logger: logger)
+      jld = JSON::LD::API.frame(input, frame, logger: logger, pruneBlankNodeIdentifiers: prune)
       expect(jld).to produce(output, logger)
     rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +

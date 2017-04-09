@@ -302,6 +302,7 @@ module JSON::LD
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
+    # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -313,13 +314,14 @@ module JSON::LD
     def self.frame(input, frame, options = {})
       result = nil
       options = {
-        base:           (input if input.is_a?(String)),
-        compactArrays:  true,
-        embed:          '@last',
-        explicit:       false,
-        requireAll:     true,
-        omitDefault:    false,
-        documentLoader: method(:documentLoader)
+        base:                       (input if input.is_a?(String)),
+        compactArrays:              true,
+        embed:                      '@last',
+        explicit:                   false,
+        requireAll:                 true,
+        omitDefault:                false,
+        pruneBlankNodeIdentifiers:  true,
+        documentLoader:             method(:documentLoader)
       }.merge!(options)
 
       framing_state = {
@@ -369,7 +371,12 @@ module JSON::LD
 
         result = []
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))
-        
+
+        # Count blank node identifiers used in the document, if pruning
+        bnodes_to_clear = if options[:pruneBlankNodeIdentifiers]
+          count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
+        end
+
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
         # Compact result
@@ -380,7 +387,7 @@ module JSON::LD
         kwgraph = context.compact_iri('@graph', quiet: true)
         result = context.serialize.merge({kwgraph => compacted})
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = cleanup_preserve(result)
+        result = cleanup_preserve(result, bnodes_to_clear || [])
       end
 
       block_given? ? yield(result) : result
