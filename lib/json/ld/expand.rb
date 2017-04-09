@@ -357,13 +357,13 @@ module JSON::LD
             [value[k]].flatten.each do |item|
               # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
               raise JsonLdError::InvalidLanguageMapValue,
-                    "Expected #{item.inspect} to be a string" unless item.is_a?(String)
+                    "Expected #{item.inspect} to be a string" unless item.nil? || item.is_a?(String)
 
               # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
               ary << {
                 '@value' => item,
                 '@language' => k.downcase
-              }
+              } if item
             end
           end
 
