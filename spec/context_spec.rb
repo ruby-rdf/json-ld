@@ -973,11 +973,11 @@ describe JSON::LD::Context do
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
             [{"@value" => "de", "@language" => "de"}, {"@value" => "jp", "@language" => "jp"}],
             [{"@value" => true}], [{"@value" => false}], 
-            [[{"@value" => 1}], [{"@value" => 1.1}], 
+            [{"@value" => 1}], [{"@value" => 1.1}],
           ],
           "listlang" => [[{"@value" => "en", "@language" => "en"}]],
           "listbool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
-          "listinteger" => [{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
+          "listinteger" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
           "listdouble" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
           "listdate" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
         }.each do |prop, values|
