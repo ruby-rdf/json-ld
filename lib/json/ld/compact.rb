@@ -16,6 +16,12 @@ module JSON::LD
       #else
       #  log_debug("compact") {"property: #{property.inspect}"}
       #end
+
+      # If the term definition for active property itself contains a context, use that for compacting values.
+      input_context = self.context
+      td = self.context.term_definitions[property] if property
+      self.context = (td && td.context && self.context.parse(td.context)) || input_context
+
       case element
       when Array
         #log_debug("") {"Array #{element.inspect}"}
@@ -46,9 +52,9 @@ module JSON::LD
         end
 
         inside_reverse = property == '@reverse'
-        result = {}
+        result, nest_result = {}, nil
 
-        element.each_key do |expanded_property|
+        element.keys.sort.each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
@@ -56,6 +62,15 @@ module JSON::LD
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
               context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
             end
+
+            # If key is @type and any compacted value is a term having a local context, overlay that context.
+            if expanded_property == '@type'
+              compacted_value.each do |term|
+                term_context = self.context.term_definitions[term].context if context.term_definitions[term]
+                self.context = context.parse(term_context) if term_context
+              end
+            end
+
             compacted_value = compacted_value.first if compacted_value.length == 1
 
             al = context.compact_iri(expanded_property, vocab: true, quiet: true)
@@ -72,6 +87,7 @@ module JSON::LD
                 value = [value] if !value.is_a?(Array) &&
                   (context.container(prop) == '@set' || !@options[:compactArrays])
                 #log_debug("") {"merge #{prop} => #{value.inspect}"}
+
                 merge_compacted_value(result, prop, value)
                 compacted_value.delete(prop)
               end
@@ -106,8 +122,14 @@ module JSON::LD
                                   reverse: inside_reverse,
                                   log_depth: @options[:log_depth])
 
-            iap = result[item_active_property] ||= []
-            result[item_active_property] = [iap] unless iap.is_a?(Array)
+            if nest_prop = context.nest(item_active_property)
+              result[nest_prop] ||= {}
+              iap = result[result[nest_prop]] ||= []
+              result[nest_prop][item_active_property] = [iap] unless iap.is_a?(Array)
+            else
+              iap = result[item_active_property] ||= []
+              result[item_active_property] = [iap] unless iap.is_a?(Array)
+            end
           end
 
           # At this point, expanded value must be an array due to the Expansion algorithm.
@@ -118,6 +140,14 @@ module JSON::LD
                                   vocab: true,
                                   reverse: inside_reverse,
                                   log_depth: @options[:log_depth])
+
+
+            nest_result = if nest_prop = context.nest(item_active_property)
+              # FIXME??: It's possible that nest_prop will be used both for nesting, and for values of @nest
+              result[nest_prop] ||= {}
+            else
+              result
+            end
 
             container = context.container(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
@@ -135,14 +165,36 @@ module JSON::LD
                 end
               else
                 raise JsonLdError::CompactionToListOfLists,
-                      "key cannot have more than one list value" if result.has_key?(item_active_property)
+                      "key cannot have more than one list value" if nest_result.has_key?(item_active_property)
               end
             end
 
-            if %w(@language @index).include?(container)
-              map_object = result[item_active_property] ||= {}
-              compacted_item = compacted_item['@value'] if container == '@language' && value?(compacted_item)
-              map_key = expanded_item[container]
+            if %w(@language @index @id @type).include?(container)
+              map_object = nest_result[item_active_property] ||= {}
+              compacted_item = case container
+              when '@id'
+                id_prop = context.compact_iri('@id', vocab: true, quiet: true)
+                map_key = compacted_item[id_prop]
+                map_key = context.compact_iri(map_key, quiet: true)
+                compacted_item.delete(id_prop)
+                compacted_item
+              when '@index'
+                map_key = expanded_item[container]
+                compacted_item
+              when '@language'
+                map_key = expanded_item[container]
+                value?(expanded_item) ? expanded_item['@value'] : compacted_item
+              when '@type'
+                type_prop = context.compact_iri('@type', vocab: true, quiet: true)
+                map_key, *types = Array(compacted_item[type_prop])
+                map_key = context.compact_iri(map_key, vocab: true, quiet: true)
+                case types.length
+                when 0 then compacted_item.delete(type_prop)
+                when 1 then compacted_item[type_prop] = types.first
+                else        compacted_item[type_prop] = types
+                end
+                compacted_item
+              end
               merge_compacted_value(map_object, map_key, compacted_item)
             else
               compacted_item = [compacted_item] if
@@ -151,7 +203,7 @@ module JSON::LD
                   %w(@set @list).include?(container) ||
                   %w(@list @graph).include?(expanded_property)
                 )
-              merge_compacted_value(result, item_active_property, compacted_item)
+              merge_compacted_value(nest_result, item_active_property, compacted_item)
             end
           end
         end
@@ -163,6 +215,9 @@ module JSON::LD
         #log_debug("compact") {element.class.to_s}
         element
       end
+
+    ensure
+      self.context = input_context
     end
   end
 end

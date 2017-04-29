@@ -184,23 +184,48 @@ module JSON::LD
     end
 
     ##
-    # Replace @preserve keys with the values, also replace @null with null
+    # Recursively find and count blankNode identifiers.
+    # @return [Hash{String => Integer}]
+    def count_blank_node_identifiers(input, results = {})
+      case input
+      when Array
+        input.map {|o| count_blank_node_identifiers(o, results)}
+      when Hash
+        input.each do |k, v|
+          count_blank_node_identifiers(v, results)
+        end
+      when String
+        if input.start_with?('_:')
+          results[input] ||= 0
+          results[input] += 1
+        end
+      end
+      results
+    end
+
+    ##
+    # Replace @preserve keys with the values, also replace @null with null.
+    #
+    # Optionally, remove BNode identifiers only used once.
     #
     # @param [Array, Hash] input
+    # @param [Array<String>] bnodes_to_clear
     # @return [Array, Hash]
-    def cleanup_preserve(input)
+    def cleanup_preserve(input, bnodes_to_clear)
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        input.map {|o| cleanup_preserve(o)}.compact
+        input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
       when Hash
         output = Hash.new
         input.each do |key, value|
           if key == '@preserve'
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
-            output = cleanup_preserve(value)
+            output = cleanup_preserve(value, bnodes_to_clear)
+          elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
+            # Don't add this to output, as it is pruned as being superfluous
           else
-            v = cleanup_preserve(value)
+            v = cleanup_preserve(value, bnodes_to_clear)
 
             # Because we may have added a null value to an array, we need to clean that up, if we possible
             v = v.first if v.is_a?(Array) && v.length == 1 &&

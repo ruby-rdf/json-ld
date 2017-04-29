@@ -12,8 +12,6 @@ require 'rdf/vocab'
 require 'rdf/spec'
 require 'rdf/spec/matchers'
 require 'yaml'
-require 'restclient/components'
-require 'rack/cache'
 begin
   require 'simplecov'
   require 'coveralls'
@@ -41,10 +39,6 @@ JSON_STATE = JSON::State.new(
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)
 # Cache client requests
-RestClient.enable Rack::Cache,
-  verbose:      false, 
-  metastore:   "file:" + ::File.expand_path("../uri-cache/meta", __FILE__),
-  entitystore: "file:" + ::File.expand_path("../uri-cache/body", __FILE__)
 
 ::RSpec.configure do |c|
   c.filter_run focus: true

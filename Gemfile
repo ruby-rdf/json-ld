@@ -12,10 +12,11 @@ group :development do
   gem 'rdf-vocab',      github: "ruby-rdf/rdf-vocab",       branch: "develop"
   gem 'rdf-xsd',        github: "ruby-rdf/rdf-xsd",         branch: "develop"
   gem 'fasterer'
+  gem 'earl-report'
 end
 
 group :development, :test do
-  gem 'simplecov',  require: false, platform: :mri
+  gem 'simplecov',  require: false, platform: :mri, github: "colszowka/simplecov" # Until Fixnum issues solved
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'

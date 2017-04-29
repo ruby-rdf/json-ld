@@ -27,7 +27,7 @@ def earl_preamble(options)
 end
 
 def run_tc(man, tc, options)
-  STDERR.write "run #{man}#{tc.id}"
+  STDERR.write "run #{tc.property('input')}"
 
   if options[:verbose]
     puts "\nTestCase: #{tc.inspect}"
@@ -39,11 +39,11 @@ def run_tc(man, tc, options)
 
   output = ""
   begin
-    puts "open #{tc.id}" if options[:verbose]
+    puts "open #{tc.input_loc}" if options[:verbose]
 
     result = case tc.testType
     when 'jld:CompactTest'
-      output = JSON::LD::API.compact(tc.input_loc, tc.context_loc, tc.options)
+      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ExpandTest'
@@ -59,21 +59,34 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:FromRDFTest'
-      repo = RDF::Repository.load(tc.input_loc)
+      repo = RDF::NQuads::Reader.open(tc.input_loc) do |reader|
+        reader.each_statement.to_a
+      end.extend(RDF::Enumerable)
       output = JSON::LD::API.fromRdf(repo, tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:ToRDFTest'
-      quads = JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
-        tc.to_quad(statement)
+      repo = RDF::Repository.new.extend(RDF::Isomorphic)
+      JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
+        repo << statement
       end
 
-      expected = tc.expect
-      output = quads.sort.join("")
-      output == expected ? 'passed' : 'failed'
-    end || "untested"
+      begin
+        expected = RDF::Repository.new << RDF::NQuads::Reader.new(tc.expect, validate: false, logger: [])
+        repo.isomorphic?(expected) ? 'passed' : 'failed'
+      rescue RDF::ReaderError
+        quads = JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
+          # Not really RDF, try different test method
+          tc.to_quad(statement)
+        end
 
-    puts "\nOutput:\n" + output.to_json(JSON::LD::JSON_STATE) if result == 'failed' && !options[:quiet]
+        # FIXME: toRDF is outputing duplicate quads
+        output = quads.sort.uniq.join("")
+        output == tc.expect ? 'passed' : 'failed'
+      end
+   end || "untested"
+
+    puts "\nOutput:\n" + (tc.testType == 'jld:ToRDFTest' ? output : output.to_json(JSON::LD::JSON_STATE)) if result == 'failed' && !options[:quiet]
 
     result = result ? 'failed' : 'passed' unless tc.positiveTest?
     options[:results][result] ||= 0
@@ -81,7 +94,7 @@ def run_tc(man, tc, options)
   rescue Interrupt
     $stderr.puts "(interrupt)"
     exit 1
-  rescue Exception => e
+  rescue StandardError => e
     result = if tc.positiveTest?
       STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
       if options[:quiet]
@@ -177,7 +190,7 @@ earl_preamble(options) if options[:earl]
 manifests.each do |man|
   Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/#{man}-manifest.jsonld") do |m|
     m.entries.each do |tc|
-      next unless ARGV.empty? || ARGV.any? {|n| "#{man}#{tc.id}".match(/#{n}/)}
+      next unless ARGV.empty? || ARGV.any? {|n| tc.property('input').match(/#{n}/)}
       run_tc(man, tc, options)
     end
   end

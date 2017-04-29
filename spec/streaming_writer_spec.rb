@@ -99,7 +99,7 @@ describe JSON::LD::StreamingWriter do
   end
 
 
-  context "Writes fromRdf tests to isomorphic graph", skip: ENV['CI'] do
+  context "Writes fromRdf tests to isomorphic graph" do
     require 'suite_helper'
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/fromRdf-manifest.jsonld")
     [nil, {}].each do |ctx|
@@ -124,7 +124,7 @@ describe JSON::LD::StreamingWriter do
         end
       end
     end
-  end
+  end unless ENV['CI']
 
   def parse(input, options = {})
     format = options.fetch(:format, :trig)

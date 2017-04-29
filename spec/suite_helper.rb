@@ -42,7 +42,7 @@ module Fixtures
       def options
         @options ||= begin
           opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          {'processingMode' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
+          (property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
           opts
@@ -94,6 +94,7 @@ module Fixtures
         else
           self.options.dup
         end
+        options = {validate: true}.merge(options)
 
         if positiveTest?
           logger.info "expected: #{expect rescue nil}" if expect_loc
@@ -142,8 +143,6 @@ module Fixtures
             end
           rescue JSON::LD::JsonLdError => e
             fail("Processing error: #{e.message}")
-          rescue JSON::LD::InvalidFrame => e
-            fail("Invalid Frame: #{e.message}")
           end
         else
           logger.info "expected: #{property('expect')}" if property('expect')

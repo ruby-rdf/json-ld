@@ -14,6 +14,8 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 If the [jsonlint][] gem is installed, it will be used when validating an input document.
 
+[Implementation Report](file.earl.html)
+
 Install with `gem install json-ld`
 
 ### MultiJson parser
@@ -45,9 +47,9 @@ This gem implements an optimized streaming writer used for generating JSON-LD fr
     JSON::LD::API.expand(input) =>
     
     [{
-        "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
-        "http://xmlns.com/foaf/0.1/homepage": ["http://manu.sporny.org/"],
-        "http://xmlns.com/foaf/0.1/avatar": ["http://twitter.com/account/profile_image/manusporny"]
+        "http://xmlns.com/foaf/0.1/name": [{"@value"=>"Manu Sporny"}],
+        "http://xmlns.com/foaf/0.1/homepage": [{"@value"=>"http://manu.sporny.org/"}], 
+        "http://xmlns.com/foaf/0.1/avatar": [{"@value": "http://twitter.com/account/profile_image/manusporny"}]
     }]
 
 ### Compact a Document
@@ -261,6 +263,107 @@ A context may be serialized to Ruby to speed this process using `Context#to_rb`.
 
 As JSON-LD may come from many different sources, included as an embedded script tag within an HTML document, the RDF Reader will strip input before the leading `{` or `[` and after the trailing `}` or `]`.
 
+## Extensions from JSON-LD 1.0
+This implementation is being used as a test-bed for features planned for an upcoming JSON-LD 1.1 Community release.
+
+### Scoped Contexts
+A term definition can include `@context`, which is applied to values of that object. This is also used when compacting. Taken together, this allows framing to effectively include context definitions more deeply within the framed structure.
+
+    {
+      "@context": {
+        "ex": "http://example.com/",
+        "foo": {
+          "@id": "ex:foo",
+          "@type": "@vocab"
+          "@context": {
+            "Bar": "ex:Bar",
+            "Baz": "ex:Baz"
+          }
+        }
+      },
+      "foo": "Bar"
+    }
+
+### @id and @type maps
+The value of `@container` in a term definition can include `@id` or `@type`, in addition to `@set`, `@list`, `@language`, and `@index`. This allows value indexing based on either the `@id` or `@type` of associated objects.
+
+    {
+      "@context": {
+        "@vocab": "http://example/",
+        "idmap": {"@container": "@id"}
+      },
+      "idmap": {
+        "http://example.org/foo": {"label": "Object with @id <foo>"},
+        "_:bar": {"label": "Object with @id _:bar"}
+      }
+    }
+
+### Transparent Nesting
+Many JSON APIs separate properties from their entities using an intermediate object. For example, a set of possible labels may be grouped under a common property:
+
+    {
+      "@context": {
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "labels": "@nest",
+        "main_label": {"@id": "skos:prefLabel"},
+        "other_label": {"@id": "skos:altLabel"},
+        "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+      },
+      "@id":"http://example.org/myresource",
+      "homepage": "http://example.org",
+      "labels": {
+         "main_label": "This is the main label for my resource",
+         "other_label": "This is the other label"
+      }
+    }
+ 
+ In this case, the `labels` property is semantically meaningless. Defining it as equivalent to `@nest` causes it to be ignored when expanding, making it equivalent to the following:
+
+    {
+      "@context": {
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "labels": "@nest",
+        "main_label": {"@id": "skos:prefLabel"},
+        "other_label": {"@id": "skos:altLabel"},
+        "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+      },
+      "@id":"http://example.org/myresource",
+      "homepage": "http://example.org",
+      "main_label": "This is the main label for my resource",
+      "other_label": "This is the other label"
+    }
+ 
+ Similarly, properties may be marked with "@nest": "nest-term", to cause them to be nested. Note that the `@nest` keyword can also be aliased in the context.
+
+     {
+       "@context": {
+         "skos": "http://www.w3.org/2004/02/skos/core#",
+         "labels": "@nest",
+         "main_label": {"@id": "skos:prefLabel", "@nest": "labels"},
+         "other_label": {"@id": "skos:altLabel", "@nest": "labels"},
+         "homepage": {"@id":"http://schema.org/description", "@type":"@id"}
+       },
+       "@id":"http://example.org/myresource",
+       "homepage": "http://example.org",
+       "labels": {
+          "main_label": "This is the main label for my resource",
+          "other_label": "This is the other label"
+       }
+     }
+
+In this way, nesting survives round-tripping through expansion, and framed output can include nested properties.
+
+### Framing Updates
+The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versions.
+
+* [More Specific Frame matching](https://github.com/json-ld/json-ld.org/issues/110) – Allows framing to extend to elements of value objects, and objects are matched through recursive frame matching. `{}` is used as a wildcard, and `[]` as matching nothing.
+* [Graph framing](https://github.com/json-ld/json-ld.org/issues/118) – previously, only the merged graph can be framed, this update allows arbitrary graphs to be framed.
+  * Use `@graph` in frame, matches the default graph, not the merged graph.
+  * Use `@graph` in property value, causes the apropriatly named graph to be used for filling in values.
+* [Reverse properties](https://github.com/json-ld/json-ld.org/issues/311) – `@reverse` (or a property defined with `@reverse`) can cause matching values to be included, allowing a matched object to include reverse references to any objects referencing it.
+* [@omitDefault behavior](https://github.com/json-ld/json-ld.org/issues/389) – In addition to `true` and `false`, `@omitDefault` can take `@last`, `@always`, `@never`, and `@link`.
+* [multiple `@id` matching](https://github.com/json-ld/json-ld.org/issues/424) – A frame can match based on one or more specific object `@id` values.
+
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
@@ -286,7 +389,7 @@ Note, the API method signatures differed in versions before 1.0, in that they al
 
 ## Dependencies
 * [Ruby](http://ruby-lang.org/) (>= 2.2.2)
-* [RDF.rb](http://rubygems.org/gems/rdf) (>= 2.0)
+* [RDF.rb](http://rubygems.org/gems/rdf) (>= 2.2)
 * [JSON](https://rubygems.org/gems/json) (>= 1.5)
 
 ## Installation

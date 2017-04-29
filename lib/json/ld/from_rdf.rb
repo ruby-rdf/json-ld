@@ -13,8 +13,9 @@ module JSON::LD
     # @param [Array<RDF::Statement>, RDF::Enumerable] input
     # @param [Boolean] useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
+    # @param [Boolean] useNativeTypes (false) use native representations
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(input, useRdfType: false)
+    def from_statements(input, useRdfType: false, useNativeTypes: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       node_usages_map = {}
@@ -48,7 +49,7 @@ module JSON::LD
         end
 
         # Set value to the result of using the RDF to Object Conversion algorithm, passing object and use native types.
-        value = ec.expand_value(nil, statement.object, useNativeTypes: @options[:useNativeTypes], log_depth: @options[:log_depth])
+        value = ec.expand_value(nil, statement.object, useNativeTypes: useNativeTypes, log_depth: @options[:log_depth])
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -77,7 +78,7 @@ module JSON::LD
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
           #log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
           while property == RDF.rest.to_s &&
-              node_usages_map[node['@id']].uniq.length == 1 &&
+              Array(node_usages_map[node['@id']]).uniq.length == 1 &&
               blank_node?(node) &&
               node.keys.none? {|k| !["@id", '@type', :usages, RDF.first.to_s, RDF.rest.to_s].include?(k)} &&
               Array(node[:usages]).length == 1 &&
