@@ -83,7 +83,7 @@ parser_options = {
   progress: false,
   profile:  false,
   validate: false,
-  logger: logger,
+  logger:   logger,
 }
 
 options = {
@@ -91,11 +91,12 @@ options = {
   output:        STDOUT,
   output_format: :turtle,
   input_format:  :jsonld,
+  logger:        logger,
 }
 input = nil
 
 opts = GetoptLong.new(
-  ["--dbg", GetoptLong::NO_ARGUMENT],
+  ["--debug", GetoptLong::NO_ARGUMENT],
   ["--automatic", GetoptLong::NO_ARGUMENT],
   ["--compact", GetoptLong::NO_ARGUMENT],
   ["--context", GetoptLong::REQUIRED_ARGUMENT],
@@ -115,7 +116,7 @@ opts = GetoptLong.new(
 )
 opts.each do |opt, arg|
   case opt
-  when '--dbg'          then logger.level = Logger::DEBUG
+  when '--debug'        then logger.level = Logger::DEBUG
   when '--compact'      then options[:compact] = true
   when '--context'      then options[:context] = arg
   when '--execute'      then input = arg
