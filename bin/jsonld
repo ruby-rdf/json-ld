@@ -63,7 +63,12 @@ def run(input, options)
     STDERR.puts "\nParsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second." unless options[:quiet]
   end
 rescue
-  fname = input.respond_to?(:path) ? input.path : "-stdin-"
+  fname = case
+  when input.respond_to?(:path) then input.path
+  when input.respond_to?(:requested_url) && input.requested_url then input.requested_url
+  when input.respond_to?(:base_uri) then input.base_uri
+  else  "-stdin-"
+  end
   STDERR.puts("Error in #{fname}")
   raise
 end
