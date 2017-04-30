@@ -467,7 +467,7 @@ module JSON::LD
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-          raise JsonLdError::InvalidLocalContext, context.inspect
+          raise JsonLdError::InvalidLocalContext, "must be a URL, JSON object or array of same: #{context.inspect}"
         end
       end
       result
@@ -650,7 +650,7 @@ module JSON::LD
 
         if value.has_key?('@context')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           begin
             self.parse(value['@context'])
@@ -670,10 +670,10 @@ module JSON::LD
 
         if value.has_key?('@nest')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           nest = value['@nest']
           raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
@@ -873,7 +873,7 @@ module JSON::LD
           term.nest
         else
           nest_term = find_definition(term.nest)
-          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
+          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
           term.nest
         end
       end
