@@ -215,11 +215,15 @@ module JSON::LD
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+        v = input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+
+        # If the array contains a single member, which is itself an array, use that value as the result
+         v.length == 1 && v.first.is_a?(Array) ? v.first : v
       when Hash
         output = Hash.new
         input.each do |key, value|
           if key == '@preserve'
+            #require 'byebug'; byebug
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
             output = cleanup_preserve(value, bnodes_to_clear)
           elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)

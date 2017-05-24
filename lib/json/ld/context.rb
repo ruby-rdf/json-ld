@@ -1023,6 +1023,9 @@ module JSON::LD
         containers = []
         tl, tl_value = "@language", "@null"
 
+        # If the value is a JSON Object with the key @preserve, use the value of @preserve.
+        value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
+
         # If the value is a JSON Object, then for the keywords @index, @id, and @type, if the value contains that keyword, append it to containers.
         %w(@index @id @type).each do |kw|
           containers << kw if value.has_key?(kw)

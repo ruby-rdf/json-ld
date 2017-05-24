@@ -101,6 +101,17 @@ module JSON::LD
             next
           end
 
+          if expanded_property == '@preserve'
+            # Compact using `property`
+            compacted_value = compact(expanded_value, property: property)
+            #log_debug("@preserve") {"compacted_value: #{compacted_value.inspect}"}
+
+            unless compacted_value.is_a?(Array) && compacted_value.empty?
+              result['@preserve'] = compacted_value
+            end
+            next
+          end
+
           if expanded_property == '@index' && context.container(property) == '@index'
             #log_debug("@index") {"drop @index"}
             next

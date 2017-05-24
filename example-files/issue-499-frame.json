@@ -1,0 +1,13 @@
+{"@context": ["http://schema.org", {
+    "maintainer": {"@type": "@id"}
+  }],
+ "@embed": "@always",
+ "author": {
+   "familyName": {},
+   "affiliation": 
+     {"@default": "@null"}
+  },
+ "maintainer": {
+   "familyName": { "@default": "none" }
+ }
+}
