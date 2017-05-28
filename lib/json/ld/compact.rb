@@ -30,7 +30,7 @@ module JSON::LD
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
-        if result.length == 1 && context.container(property).nil? && @options[:compactArrays]
+        if result.length == 1 && !context.as_array?(property) && @options[:compactArrays]
           #log_debug("=> extract single element: #{result.first.inspect}")
           result.first
         else
@@ -85,7 +85,7 @@ module JSON::LD
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
                 value = [value] if !value.is_a?(Array) &&
-                  (context.container(prop) == '@set' || !@options[:compactArrays])
+                  (context.as_array?(prop) || !@options[:compactArrays])
                 #log_debug("") {"merge #{prop} => #{value.inspect}"}
 
                 merge_compacted_value(result, prop, value)
@@ -161,6 +161,7 @@ module JSON::LD
             end
 
             container = context.container(item_active_property)
+            as_array = context.as_array?(item_active_property)
             value = list?(expanded_item) ? expanded_item['@list'] : expanded_item
             compacted_item = compact(value, property: item_active_property)
             #log_debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
@@ -206,14 +207,11 @@ module JSON::LD
                 end
                 compacted_item
               end
+              compacted_item = [compacted_item] if as_array && !compacted_item.is_a?(Array)
               merge_compacted_value(map_object, map_key, compacted_item)
             else
               compacted_item = [compacted_item] if
-                !compacted_item.is_a?(Array) && (
-                  !@options[:compactArrays] ||
-                  %w(@set @list).include?(container) ||
-                  %w(@list @graph).include?(expanded_property)
-                )
+                !compacted_item.is_a?(Array) && (!@options[:compactArrays] || as_array)
               merge_compacted_value(nest_result, item_active_property, compacted_item)
             end
           end

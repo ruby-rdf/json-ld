@@ -218,7 +218,7 @@ module JSON::LD
         v = input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
 
         # If the array contains a single member, which is itself an array, use that value as the result
-         v.length == 1 && v.first.is_a?(Array) ? v.first : v
+        (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
       when Hash
         output = Hash.new
         input.each do |key, value|
@@ -232,8 +232,7 @@ module JSON::LD
             v = cleanup_preserve(value, bnodes_to_clear)
 
             # Because we may have added a null value to an array, we need to clean that up, if we possible
-            v = v.first if v.is_a?(Array) && v.length == 1 &&
-              context.expand_iri(key) != "@graph" && context.container(key).nil?
+            v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)
             output[key] = v
           end
         end
