@@ -26,7 +26,9 @@ module RDF::Util
       when filename_or_url.to_s =~ /^file:/
         path = filename_or_url[5..-1]
         Kernel.open(path.to_s, options, &block)
-      when (filename_or_url.to_s =~ %r{^#{REMOTE_PATH}} && Dir.exist?(LOCAL_PATH))
+      when Dir.exist?(LOCAL_PATH) &&
+           !filename_or_url.to_s.include?('remote-doc') &&
+           filename_or_url.to_s =~ %r{^#{REMOTE_PATH}}
         #puts "attempt to open #{filename_or_url} locally"
         localpath = filename_or_url.to_s.sub(REMOTE_PATH, LOCAL_PATH)
         response = begin
