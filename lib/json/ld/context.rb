@@ -1357,6 +1357,7 @@ module JSON::LD
       defn << "base: #{self.base.to_s.inspect}" if self.base
       defn << "language: #{self.default_language.inspect}" if self.default_language
       defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
+      defn << "processingMode: #{self.processingMode.inspect}" if self.processingMode
       term_defs = term_definitions.map do |term, td|
         "      " + term.inspect + " => " + td.to_rb
       end.sort

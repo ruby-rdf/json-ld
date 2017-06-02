@@ -136,7 +136,7 @@ module JSON::LD
       @context = Context.parse(context || {}, @options)
 
       # If not set explicitly, the context figures out the processing mode
-      @options[:processingMode] ||= @context.processingMode
+      @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
       @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
 
       if block_given?

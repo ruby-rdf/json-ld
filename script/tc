@@ -27,6 +27,7 @@ def earl_preamble(options)
 end
 
 def run_tc(man, tc, options)
+  tc.options[:logger] = options[:logger]
   STDERR.write "run #{tc.property('input')}"
 
   if options[:verbose]
@@ -140,12 +141,13 @@ logger.formatter = lambda {|severity, datetime, progname, msg| "#{severity}: #{m
 
 options = {
   output: STDOUT,
-  results: {}
+  results: {},
+  logger: logger
 }
 
 opts = GetoptLong.new(
   ["--help", "-?", GetoptLong::NO_ARGUMENT],
-  ["--dbg", GetoptLong::NO_ARGUMENT],
+  ["--debug", GetoptLong::NO_ARGUMENT],
   ["--earl", GetoptLong::NO_ARGUMENT],
   ["--quiet", "-q", GetoptLong::NO_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
@@ -166,11 +168,10 @@ def help(options)
   exit(0)
 end
 
-
 opts.each do |opt, arg|
   case opt
   when '--help'             then help(options)
-  when '--dbg'              then logger.level = Logger::DEBUG
+  when '--debug'            then logger.level = Logger::DEBUG
   when '--earl'
     options[:quiet] = options[:earl] = true
     logger.level = Logger::FATAL
