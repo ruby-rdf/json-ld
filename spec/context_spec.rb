@@ -200,14 +200,6 @@ describe JSON::LD::Context do
         }, logger)
       end
 
-      it "associates @set container mapping with term" do
-        expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@container" => "@set"}
-        }).containers).to produce({
-          "foo" => '@set'
-        }, logger)
-      end
-
       it "associates @type container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
@@ -934,7 +926,6 @@ describe JSON::LD::Context do
           "listdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
           "listdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
           "listid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
-          "setplain" => {"@id" => "http://example.com/plain", "@container" => "@set"},
           "setlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
           "setbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
           "setinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
@@ -950,7 +941,7 @@ describe JSON::LD::Context do
       {
         "langmap" => [{"@value" => "en", "@language" => "en"}],
         #"plain" => [{"@value" => "foo"}],
-        "setplain" => [{"@value" => "foo", "@language" => "pl"}]
+        #"setplain" => [{"@value" => "foo", "@language" => "pl"}]
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
@@ -1370,7 +1361,6 @@ describe JSON::LD::Context do
       {
         "ex"       => nil,
         "list"     => "@list",
-        "set"      => "@set",
         "language" => "@language",
         "ndx"      => "@index",
         "id"       => "@id",
@@ -1384,7 +1374,6 @@ describe JSON::LD::Context do
       {
         "ex"       => nil,
         "list"     => "@list",
-        "set"      => "@set",
         "language" => "@language",
         "ndx"      => "@index",
         "id"       => "@id",
@@ -1519,7 +1508,7 @@ describe JSON::LD::Context do
 
     context "with container_mapping" do
       subject {described_class.new("term", container_mapping: "@set")}
-      its(:container_mapping) {is_expected.to eq "@set"}
+      its(:container_mapping) {is_expected.to be_nil}
       its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@set"))}
     end
 

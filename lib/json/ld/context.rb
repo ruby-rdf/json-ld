@@ -36,8 +36,13 @@ module JSON::LD
       # @return [String] Type mapping
       attr_accessor :type_mapping
 
-      # @return ['@index', '@language', '@index', '@set', '@type', '@id'] Container mapping
-      attr_accessor :container_mapping
+      # Base container mapping, without @set
+      # @return ['@index', '@language', '@index', '@type', '@id'] Container mapping
+      attr_reader :container_mapping
+
+      # If container mapping was defined along with @set
+      # @return [Boolean]
+      attr_reader :as_set
 
       # @return [String] Term used for nest properties
       attr_accessor :nest
@@ -81,15 +86,24 @@ module JSON::LD
                     nest: nil,
                     simple: false,
                     context: nil)
-        @term               = term
-        @id                 = id.to_s           if id
-        @type_mapping       = type_mapping.to_s if type_mapping
-        @container_mapping  = container_mapping if container_mapping
-        @language_mapping   = language_mapping  if language_mapping
-        @reverse_property   = reverse_property  if reverse_property
-        @nest               = nest              if nest
-        @simple             = simple            if simple
-        @context            = context           if context
+        @term                   = term
+        @id                     = id.to_s           if id
+        @type_mapping           = type_mapping.to_s if type_mapping
+        self.container_mapping  = container_mapping if container_mapping
+        @language_mapping       = language_mapping  if language_mapping
+        @reverse_property       = reverse_property  if reverse_property
+        @nest                   = nest              if nest
+        @simple                 = simple            if simple
+        @context                = context           if context
+      end
+
+      # Set container mapping, from an array which may include @set
+      def container_mapping=(mapping)
+        mapping = Array(mapping)
+        if @as_set = mapping.include?('@set')
+          mapping -= %w(@set)
+        end
+        @container_mapping = mapping.first
       end
 
       ##
@@ -109,6 +123,7 @@ module JSON::LD
 
         if language_mapping.nil? &&
            container_mapping.nil? &&
+           !as_set &&
            type_mapping.nil? &&
            reverse_property.nil? &&
            self.context.nil? &&
@@ -125,7 +140,10 @@ module JSON::LD
               context.compact_iri(type_mapping, vocab: true)
             end
           end
-          defn['@container'] = container_mapping if container_mapping
+
+          cm = [container_mapping, ('@set' if as_set)].compact
+          cm = cm.first if cm.length == 1
+          defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
           defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
           defn['@context'] = self.context unless self.context.nil?
@@ -143,6 +161,9 @@ module JSON::LD
         %w(id type_mapping container_mapping language_mapping reverse_property nest simple context).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
+          if acc == 'container_mapping' && as_set
+            v = v ? [v, '@set'] : '@set'
+          end
           defn << "#{acc}: #{v.inspect}" if v
         end
         defn.join(', ') + ")"
@@ -154,6 +175,7 @@ module JSON::LD
         v << "term=#{@term}"
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
+        v << "as_set=#{as_set.inspect}"
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
@@ -467,7 +489,7 @@ module JSON::LD
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-          raise JsonLdError::InvalidLocalContext, context.inspect
+          raise JsonLdError::InvalidLocalContext, "must be a URL, JSON object or array of same: #{context.inspect}"
         end
       end
       result
@@ -607,7 +629,7 @@ module JSON::LD
             container = value['@container']
             raise JsonLdError::InvalidReverseProperty,
                   "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                   ['@set', '@index'].include?(container)
+                   container.is_a?(String) && ['@set', '@index'].include?(container)
             definition.container_mapping = check_container(container, local_context, defined, term)
           end
           definition.reverse_property = true
@@ -650,7 +672,7 @@ module JSON::LD
 
         if value.has_key?('@context')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           begin
             self.parse(value['@context'])
@@ -670,10 +692,10 @@ module JSON::LD
 
         if value.has_key?('@nest')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
 
           nest = value['@nest']
           raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
@@ -849,6 +871,17 @@ module JSON::LD
     end
 
     ##
+    # Should values be represented as a set?
+    #
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [Boolean]
+    def as_array?(term)
+      return true if %w(@graph @list).include?(term)
+      term = find_definition(term)
+      term && (term.as_set || term.container_mapping == '@list')
+    end
+
+    ##
     # Retrieve content of a term
     #
     # @param [Term, #to_s] term in unexpanded form
@@ -873,7 +906,7 @@ module JSON::LD
           term.nest
         else
           nest_term = find_definition(term.nest)
-          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
+          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
           term.nest
         end
       end
@@ -1022,6 +1055,9 @@ module JSON::LD
         default_language = self.default_language || @none
         containers = []
         tl, tl_value = "@language", "@null"
+
+        # If the value is a JSON Object with the key @preserve, use the value of @preserve.
+        value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
 
         # If the value is a JSON Object, then for the keywords @index, @id, and @type, if the value contains that keyword, append it to containers.
         %w(@index @id @type).each do |kw|
@@ -1321,6 +1357,7 @@ module JSON::LD
       defn << "base: #{self.base.to_s.inspect}" if self.base
       defn << "language: #{self.default_language.inspect}" if self.default_language
       defn << "vocab: #{self.vocab.to_s.inspect}" if self.vocab
+      defn << "processingMode: #{self.processingMode.inspect}" if self.processingMode
       term_defs = term_definitions.map do |term, td|
         "      " + term.inspect + " => " + td.to_rb
       end.sort
@@ -1444,7 +1481,7 @@ module JSON::LD
           a.length == b.length ? (a <=> b) : (a.length <=> b.length)
         end.each do |term|
           next unless td = term_definitions[term]
-          container = td.container_mapping || '@none'
+          container = td.container_mapping || (td.as_set ? '@set' : '@none')
           container_map = result[td.id.to_s] ||= {}
           tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}}
           type_map = tl_map['@type']
@@ -1561,8 +1598,23 @@ module JSON::LD
     # Ensure @container mapping is appropriate
     # The result is the original container definition. For IRI containers, this is necessary to be able to determine the @type mapping for string values
     def check_container(container, local_context, defined, term)
-      case container
-      when '@set', '@list', '@language', '@index', nil
+      if container.is_a?(Array) && processingMode < 'json-ld-1.1'
+        raise JsonLdError::InvalidContainerMapping,
+              "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
+      end
+
+      val = Array(container)
+      val -= %w(@set) if has_set = val.include?('@set')
+
+      raise JsonLdError::InvalidContainerMapping,
+        "'@container' has more than one value other than @set" if val.length > 1
+
+      case val.first
+      when '@list'
+        raise JsonLdError::InvalidContainerMapping,
+          "'@container' on term #{term.inspect} cannot be both @list and @set" if has_set
+        # Okay
+      when '@language', '@index', nil
         # Okay
       when '@type', '@id', nil
         raise JsonLdError::InvalidContainerMapping,
@@ -1572,7 +1624,7 @@ module JSON::LD
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"
       end
-      container
+      Array(container)
     end
   end
 end

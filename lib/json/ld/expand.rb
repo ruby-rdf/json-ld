@@ -384,7 +384,6 @@ module JSON::LD
             
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered)
-            #require 'byebug'; byebug
             index_value.each do |item|
               case container
               when '@index' then item[container] ||= k

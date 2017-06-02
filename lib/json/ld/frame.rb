@@ -84,6 +84,7 @@ module JSON::LD
 
         # Subject is also the name of a graph
         if state[:graphMap].has_key?(id)
+          log_debug("frame") {"#{id} in graphMap"}
           # check frame's "@graph" to see what to do next
           # 1. if it doesn't exist and state.graph === "@merged", don't recurse
           # 2. if it doesn't exist and state.graph !== "@merged", recurse
@@ -95,7 +96,7 @@ module JSON::LD
             recurse, subframe = (state[:graph] != '@merged'), {}
           else
             subframe = frame['@graph'].first
-            recurse = !%w(@merged @default).include?(subframe)
+            recurse = !%w(@merged @default).include?(id)
             subframe = {} unless subframe.is_a?(Hash)
           end
 
@@ -215,11 +216,15 @@ module JSON::LD
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+        v = input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+
+        # If the array contains a single member, which is itself an array, use that value as the result
+        (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
       when Hash
         output = Hash.new
         input.each do |key, value|
           if key == '@preserve'
+            #require 'byebug'; byebug
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
             output = cleanup_preserve(value, bnodes_to_clear)
           elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
@@ -228,8 +233,7 @@ module JSON::LD
             v = cleanup_preserve(value, bnodes_to_clear)
 
             # Because we may have added a null value to an array, we need to clean that up, if we possible
-            v = v.first if v.is_a?(Array) && v.length == 1 &&
-              context.expand_iri(key) != "@graph" && context.container(key).nil?
+            v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)
             output[key] = v
           end
         end

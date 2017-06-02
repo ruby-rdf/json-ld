@@ -8,6 +8,7 @@ $:.unshift(File.expand_path("../../lib", __FILE__))
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
+require 'logger'
 
 def run(input, options)
   reader_class = RDF::Reader.for(options[:input_format].to_sym)
@@ -62,17 +63,26 @@ def run(input, options)
     STDERR.puts "\nParsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second." unless options[:quiet]
   end
 rescue
-  fname = input.respond_to?(:path) ? input.path : "-stdin-"
+  fname = case
+  when input.respond_to?(:path) then input.path
+  when input.respond_to?(:requested_url) && input.requested_url then input.requested_url
+  when input.respond_to?(:base_uri) then input.base_uri
+  else  "-stdin-"
+  end
   STDERR.puts("Error in #{fname}")
   raise
 end
 
+logger = Logger.new(STDERR)
+logger.level = Logger::WARN
+logger.formatter = lambda {|severity, datetime, progname, msg| "#{severity}: #{msg}\n"}
+
 parser_options = {
   base:     nil,
-  progress: false,
   validate: false,
   stream:   false,
   strict:   false,
+  logger:   logger,
 }
 
 options = {
@@ -80,11 +90,12 @@ options = {
   output:         STDOUT,
   output_format:  :jsonld,
   input_format:   :jsonld,
+  logger:         logger,
 }
 input = nil
 
 OPT_ARGS = [
-  ["--dbg",           GetoptLong::NO_ARGUMENT,      "Turn on verbose debugging"],
+  ["--debug",         GetoptLong::NO_ARGUMENT,      "Turn on verbose debugging"],
   ["--compact",       GetoptLong::NO_ARGUMENT,      "Compact document, using --context"],
   ["--compactArrays", GetoptLong::OPTIONAL_ARGUMENT, "Set compactArrays option"],
   ["--context",       GetoptLong::REQUIRED_ARGUMENT,"Context to apply for expand, compact and converting from RDF"],
@@ -130,7 +141,7 @@ opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 
 opts.each do |opt, arg|
   case opt
-  when '--dbg'            then parser_options[:debug] = ::JSON::LD::debug = true
+  when '--debug'          then logger.level = Logger::DEBUG
   when '--compact'        then options[:compact] = true
   when "--compactArrays"  then options[:compactArrays] = (arg || 'true') == 'true'
   when '--context'        then options[:context] = arg
@@ -146,7 +157,9 @@ opts.each do |opt, arg|
   when '--output'         then options[:output] = File.open(arg, "w")
   when '--parse-only'     then options[:parse_only] = true
   when '--processingMode' then options[:processingMode] = arg
-  when '--quiet'          then options[:quiet] = true
+  when '--quiet'
+    options[:quiet] = true
+    logger.level = Logger::FATAL
   when "--rename_bnodes"  then options[:rename_bnodes] = (arg || 'true') == 'true'
   when "--requireAll"     then options[:requireAll] = (arg || 'true') == 'true'
   when '--stream'         then parser_options[:stream] = true

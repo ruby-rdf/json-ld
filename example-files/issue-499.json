@@ -1,0 +1,13 @@
+{
+  "@context": "http://schema.org",
+  "@type": "SoftwareSourceCode",
+  "author": 
+    {
+      "@type": "Person",
+      "givenName": "Carl",
+      "familyName": "Boettiger",
+      "email": "cboettig@gmail.com",
+      "@id": "http://orcid.org/0000-0002-1642-628X"
+    },
+  "maintainer": "http://orcid.org/0000-0002-1642-628X"
+}
