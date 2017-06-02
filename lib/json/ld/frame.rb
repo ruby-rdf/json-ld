@@ -84,6 +84,7 @@ module JSON::LD
 
         # Subject is also the name of a graph
         if state[:graphMap].has_key?(id)
+          log_debug("frame") {"#{id} in graphMap"}
           # check frame's "@graph" to see what to do next
           # 1. if it doesn't exist and state.graph === "@merged", don't recurse
           # 2. if it doesn't exist and state.graph !== "@merged", recurse
@@ -95,7 +96,7 @@ module JSON::LD
             recurse, subframe = (state[:graph] != '@merged'), {}
           else
             subframe = frame['@graph'].first
-            recurse = !%w(@merged @default).include?(subframe)
+            recurse = !%w(@merged @default).include?(id)
             subframe = {} unless subframe.is_a?(Hash)
           end
 
