@@ -299,6 +299,70 @@ describe JSON::LD::API do
       end
     end
 
+    context "IRI Compaction" do
+      {
+        "Expands and compacts to document base in 1.0" => {
+          input: %({
+            "@id": "a",
+            "http://example.com/b": {"@id": "c"}
+          }),
+          context: %({"b": "http://example.com/b"}),
+          output: %({
+            "@context": {"b": "http://example.com/b"},
+            "@id": "a",
+            "b": {"@id": "c"}
+          }),
+          base: "http://example.org/"
+        },
+        "Expands and compacts to document base in 1.1 with compactToRelative true" => {
+          input: %({
+            "@id": "a",
+            "http://example.com/b": {"@id": "c"}
+          }),
+          context: %({"b": "http://example.com/b"}),
+          output: %({
+            "@context": {"b": "http://example.com/b"},
+            "@id": "a",
+            "b": {"@id": "c"}
+          }),
+          base: "http://example.org/",
+          compactToRelative: true,
+          processingMode: 'json-ld-1.1'
+        },
+        "Expands but does not compact to document base in 1.1 with compactToRelative false" => {
+          input: %({
+            "@id": "a",
+            "http://example.com/b": {"@id": "c"}
+          }),
+          context: %({"b": "http://example.com/b"}),
+          output: %({
+            "@context": {"b": "http://example.com/b"},
+            "@id": "http://example.org/a",
+            "b": {"@id": "http://example.org/c"}
+          }),
+          base: "http://example.org/",
+          compactToRelative: false,
+          processingMode: 'json-ld-1.1'
+        },
+        "Expands and compacts to document base in 1.1 by default" => {
+          input: %({
+            "@id": "a",
+            "http://example.com/b": {"@id": "c"}
+          }),
+          context: %({"b": "http://example.com/b"}),
+          output: %({
+            "@context": {"b": "http://example.com/b"},
+            "@id": "a",
+            "b": {"@id": "c"}
+          }),
+          base: "http://example.org/",
+          processingMode: 'json-ld-1.1'
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
     context "@container: @reverse" do
       {
         "@container: @reverse" => {
@@ -1275,15 +1339,15 @@ describe JSON::LD::API do
   end
 
   def run_compact(params)
-    input, output, context, processingMode = params[:input], params[:output], params[:context], params[:processingMode]
+    input, output, context = params[:input], params[:output], params[:context]
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.compact(input, context, logger: logger, processingMode: processingMode)}.to raise_error(params[:exception])
+      expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.compact(input, context, logger: logger, processingMode: processingMode)
+      jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))
       expect(jld).to produce(output, logger)
     end
   end

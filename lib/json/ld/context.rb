@@ -194,7 +194,7 @@ module JSON::LD
     # @return [RDF::URI] Document base IRI, to initialize `base`.
     attr_reader :doc_base
 
-    # @return [RDF::URI] base IRI of the context, if loaded remotely. XXX
+    # @return [RDF::URI] base IRI of the context, if loaded remotely.
     attr_accessor :context_base
 
     # Term definitions
@@ -1189,7 +1189,7 @@ module JSON::LD
         end
       end
 
-      if !vocab
+      if !vocab && @options[:compactToRelative]
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(iri)
         #log_debug("") {"=> relative iri: #{iri.inspect}"} unless quiet

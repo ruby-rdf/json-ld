@@ -24,7 +24,7 @@ end
 
 describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
-  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1")}
+  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {

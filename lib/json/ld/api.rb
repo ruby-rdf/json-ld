@@ -63,6 +63,8 @@ module JSON::LD
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context. If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
+    # @option options [Boolean] :compactToRelative (true)
+    #   Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
@@ -88,11 +90,11 @@ module JSON::LD
     # @raise [JsonLdError]
     def initialize(input, context, options = {}, &block)
       @options = {
-        compactArrays: true,
-        rename_bnodes: true,
-        documentLoader: self.class.method(:documentLoader)
-      }
-      @options = @options.merge(options)
+        compactArrays:      true,
+        rename_bnodes:      true,
+        documentLoader:     self.class.method(:documentLoader),
+        compactToRelative:  true
+      }.merge(options)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
@@ -101,7 +103,7 @@ module JSON::LD
       @value = case input
       when Array, Hash then input.dup
       when IO, StringIO
-        @options = {base: input.base_uri}.merge!(@options) if input.respond_to?(:base_uri)
+        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
 
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
@@ -116,7 +118,7 @@ module JSON::LD
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        @options = {base: remote_doc.documentUrl}.merge!(@options)
+        @options = {base: remote_doc.documentUrl}.merge(@options)
         context_ref = remote_doc.contextUrl
 
         case remote_doc.document
@@ -128,9 +130,6 @@ module JSON::LD
         end
       end
 
-      # Update calling context :base option, if not defined
-      options[:base] ||= @options[:base] if @options[:base]
-
       # If not provided, first use context from document, or from a Link header
       context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
       @context = Context.parse(context || {}, @options)
@@ -138,6 +137,13 @@ module JSON::LD
       # If not set explicitly, the context figures out the processing mode
       @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
       @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
+
+      # If, after processing, the context does not have a _base IRI_, and the _compactToRelative_ option is set to true or processingMode is json-ld-1.0, set _base IRI_ in the active context to either the _base_ option from the API, if set, or the IRI of the currently being processed document.
+      if !@context.base && @options[:base]
+        doc_base = RDF::URI(@options[:base]).dup
+        doc_base.canonicalize! if options[:canonicalize]
+        @context.base = doc_base
+      end
 
       if block_given?
         case block.arity
@@ -160,17 +166,20 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @raise [JsonLdError]
-    # @yield jsonld
+    # @yield jsonld, base_iri
     # @yieldparam [Array<Hash>] jsonld
     #   The expanded JSON-LD document
+    # @yieldparam [RDF::URI] base_iri
+    #   The document base as determined during expansion
     # @yieldreturn [Object] returned object
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
-    def self.expand(input, options = {})
-      result = nil
-      API.new(input, options[:expandContext], options) do |api|
-        result = api.expand(api.value, nil, api.context, ordered: options.fetch(:ordered, true))
+    def self.expand(input, options = {}, &block)
+      result, doc_base = nil
+      API.new(input, options[:expandContext], options) do
+        result = self.expand(self.value, nil, self.context, ordered: options.fetch(:ordered, true))
+        doc_base = @options[:base]
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an JSON object with just a @graph property, element is set to the value of @graph's value.
@@ -178,7 +187,17 @@ module JSON::LD
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
-      block_given? ? yield(result) : result
+
+      if block_given?
+        case block.arity
+        when 1 then yield(result)
+        when 2 then yield(result, doc_base)
+        else
+          raise "Unexpected number of yield parameters to expand"
+        end
+      else
+        result
+      end
     end
 
     ##
@@ -204,12 +223,16 @@ module JSON::LD
     # @raise [JsonLdError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
     def self.compact(input, context, options = {})
-      expanded = result = nil
+      result = nil
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded_input = options[:expanded] ? input : API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+        options[:base] ||= base_iri
+        result
+      end
 
+      #require 'byebug'; byebug
       API.new(expanded_input, context, options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
@@ -248,7 +271,10 @@ module JSON::LD
       flattened = []
 
       # Expand input to simplify processing
-      expanded_input = options[:expanded] ? input : API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+        options[:base] ||= base_iri
+        result
+      end
 
       # Initialize input using
       API.new(expanded_input, context, options) do
@@ -322,7 +348,7 @@ module JSON::LD
         omitDefault:                false,
         pruneBlankNodeIdentifiers:  true,
         documentLoader:             method(:documentLoader)
-      }.merge!(options)
+      }.merge(options)
 
       framing_state = {
         graphMap:     {},
@@ -344,7 +370,10 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = options[:expanded] ? input : API.expand(input, options)
+      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+        options[:base] ||= base_iri
+        result
+      end
 
       # Expand frame to simplify processing
       expanded_frame = API.expand(frame, options.merge(processingMode: "json-ld-1.1-expand-frame"))
