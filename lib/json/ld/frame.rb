@@ -224,7 +224,6 @@ module JSON::LD
         output = Hash.new
         input.each do |key, value|
           if key == '@preserve'
-            #require 'byebug'; byebug
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
             output = cleanup_preserve(value, bnodes_to_clear)
           elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)

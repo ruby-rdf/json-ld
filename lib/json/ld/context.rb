@@ -1052,7 +1052,7 @@ module JSON::LD
 
       if vocab && inverse_context.has_key?(iri)
         #log_debug("") {"vocab and key in inverse context"} unless quiet
-        default_language = self.default_language || @none
+        default_language = self.default_language || "@none"
         containers = []
         tl, tl_value = "@language", "@null"
 
@@ -1136,7 +1136,8 @@ module JSON::LD
             preferred_values.concat(%w(@id @vocab @none))
           end
         else
-          preferred_values.concat([tl_value, '@none'])
+          tl = '@any' if list?(value) && value['@list'].empty?
+          preferred_values.concat([tl_value, '@none'].compact)
         end
         #log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless quiet
         if p_term = select_term(iri, containers, tl, preferred_values)
@@ -1483,9 +1484,11 @@ module JSON::LD
           next unless td = term_definitions[term]
           container = td.container_mapping || (td.as_set ? '@set' : '@none')
           container_map = result[td.id.to_s] ||= {}
-          tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}}
+          tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}, '@any' => {}}
           type_map = tl_map['@type']
           language_map = tl_map['@language']
+          any_map = tl_map['@any']
+          any_map['@none'] ||= term
           if td.reverse_property
             type_map['@reverse'] ||= term
           elsif td.type_mapping
