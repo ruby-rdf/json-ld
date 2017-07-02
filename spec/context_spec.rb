@@ -747,6 +747,7 @@ describe JSON::LD::Context do
         '@base' => 'http://base/',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
+        'colon:' => 'http://example.net/',
         '' => 'http://empty/',
         '_' => 'http://underscore/'
       })
@@ -771,6 +772,7 @@ describe JSON::LD::Context do
           "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
           "term" =>          ["ex",                  RDF::URI("ex")],
           "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "colon:suffix"  => ["colon:suffix",        RDF::URI("http://example.net/suffix")],
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("foo")],
@@ -792,6 +794,7 @@ describe JSON::LD::Context do
           "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
           "term" =>          ["ex",                  RDF::URI("http://base/ex")],
           "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "colon:suffix"  => ["colon:suffix",        RDF::URI("http://example.net/suffix")],
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
@@ -813,6 +816,7 @@ describe JSON::LD::Context do
           "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
           "term" =>          ["ex",                  RDF::URI("http://example.org/")],
           "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+          "colon:suffix"  => ["colon:suffix",        RDF::URI("http://example.net/suffix")],
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],

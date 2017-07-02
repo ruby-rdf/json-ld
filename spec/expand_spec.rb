@@ -83,7 +83,25 @@ describe JSON::LD::API do
       "@value with false" => {
         input: {"http://example.com/ex" => {"@value" => false}},
         output: [{"http://example.com/ex" => [{"@value" => false}]}]
-      }
+      },
+      "compact IRI" => {
+        input: {
+          "@context" => {"ex" => "http://example.com/"},
+          "ex:p" => {"@id" => "ex:Sub1"}
+        },
+        output: [{
+          "http://example.com/p" => [{"@id" => "http://example.com/Sub1"}]
+        }]
+      },
+      "compact IRI with term having trailing ':'" => {
+        input: {
+          "@context" => {"ex:" => "http://example.com/"},
+          "ex:p" => {"@id" => "ex:Sub1"}
+        },
+        output: [{
+          "http://example.com/p" => [{"@id" => "http://example.com/Sub1"}]
+        }]
+      },
     }.each_pair do |title, params|
       it(title) {run_expand params}
     end

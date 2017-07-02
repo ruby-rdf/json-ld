@@ -993,13 +993,19 @@ module JSON::LD
         return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
         return RDF::URI(value) if suffix[0,2] == '//'
 
-        # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
-        if local_context && local_context.has_key?(prefix) && !defined[prefix]
-          create_term_definition(local_context, prefix, defined)
+        # If local context is not null, it contains a key that equals prefix, or prefix followed by a ':', and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix (possibly with an added ':') as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
+        if local_context
+          if local_context.has_key?(prefix + ':') && !defined[prefix + ':']
+            create_term_definition(local_context, prefix + ':', defined)
+          elsif local_context.has_key?(prefix) && !defined[prefix]
+            create_term_definition(local_context, prefix, defined)
+          end
         end
 
-        # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
-        result = if (td = term_definitions[prefix])
+        # If active context contains a term definition for prefix followed by ':', or prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
+        result = if (td = term_definitions[prefix + ':'])
+          result = td.id + suffix
+        elsif (td = term_definitions[prefix])
           result = td.id + suffix
         else
           # (Otherwise) Return value as it is already an absolute IRI.
