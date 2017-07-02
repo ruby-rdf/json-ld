@@ -1336,6 +1336,94 @@ describe JSON::LD::API do
         it(title) {run_compact(params)}
       end
     end
+
+    context "compact IRI selection" do
+      {
+        "does not compact using expanded term" => {
+          input: %({"http://example.org/foo": "term"}),
+          context: %({"ex": {"@id": "http://example.org/"}}),
+          output: %({
+            "@context": {"ex": {"@id": "http://example.org/"}},
+            "http://example.org/foo": "term"
+          })
+        },
+        "does not compact using simple term not ending in gen-delim" => {
+          input: %({"http://example.org/foo": "term"}),
+          context: %({"ex": "http://example.org/f"}),
+          output: %({
+            "@context": {"ex": "http://example.org/f"},
+            "http://example.org/foo": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim ('/')" => {
+          input: %({"http://example.org/foo": "term"}),
+          context: %({"ex": "http://example.org/"}),
+          output: %({
+            "@context": {"ex": "http://example.org/"},
+            "ex:foo": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim (':')" => {
+          input: %({"http://example.org/foo:bar": "term"}),
+          context: %({"ex": "http://example.org/foo:"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo:"},
+            "ex:bar": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim ('?')" => {
+          input: %({"http://example.org/foo?bar": "term"}),
+          context: %({"ex": "http://example.org/foo?"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo?"},
+            "ex:bar": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim ('#')" => {
+          input: %({"http://example.org/foo#bar": "term"}),
+          context: %({"ex": "http://example.org/foo#"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo#"},
+            "ex:bar": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim ('[')" => {
+          input: %({"http://example.org/foo[bar": "term"}),
+          context: %({"ex": "http://example.org/foo["}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo["},
+            "ex:bar": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim (']')" => {
+          input: %({"http://example.org/foo]bar": "term"}),
+          context: %({"ex": "http://example.org/foo]"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo]"},
+            "ex:bar": "term"
+          })
+        },
+        "compacts using simple term ending in gen-delim ('@')" => {
+          input: %({"http://example.org/foo@bar": "term"}),
+          context: %({"ex": "http://example.org/foo@"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo@"},
+            "ex:bar": "term"
+          })
+        },
+        "prefers compacting using simple term ending ':' in 1.1" => {
+          input: %({"http://example.org/foo/bar": "term"}),
+          context: %({"ex": "http://example.org/foo/", "xe:": "http://example.org/foo/"}),
+          output: %({
+            "@context": {"ex": "http://example.org/foo/", "xe:": "http://example.org/foo/"},
+            "xe:bar": "term"
+          }),
+          processingMode: 'json-ld-1.1'
+        },
+      }.each do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
   end
 
   def run_compact(params)

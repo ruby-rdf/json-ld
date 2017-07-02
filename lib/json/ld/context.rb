@@ -252,8 +252,6 @@ module JSON::LD
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
-    # @option options [Boolean]  :simple_compact_iris   (false)
-    #   When compacting IRIs, do not use terms with expanded term definitions
     # @option options [String, #to_s] :vocab
     #   Initial value for @vocab
     # @option options [String, #to_s] :language
@@ -1156,17 +1154,32 @@ module JSON::LD
       # The iri could not be compacted using the active context's vocabulary mapping. Try to create a compact IRI, starting by initializing compact IRI to null. This variable will be used to tore the created compact IRI, if any.
       candidates = []
 
+      # For 1.1, favor simple terms that end in a ':'
       term_definitions.each do |term, td|
-        next if term.include?(":")
+        # Skip things that don't end with a ':' or contain a ':'
+        next unless term.end_with?(':')
         next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
 
-        # Also skip term if it was not a simple term and the :simple_compact_iris flag is true
-        next if @options[:simple_compact_iris] && !td.simple?
+        # Also skip term if it was not a simple term with an id ends in a gen-delim, or if the term ends with ':'
+        next unless td.simple?
+
+        suffix = iri[td.id.length..-1]
+        ciri = "#{term}#{suffix}"
+        candidates << ciri unless value && term_definitions.has_key?(ciri)
+      end if processingMode >= 'json-ld-1.1'
+
+      term_definitions.each do |term, td|
+        next if term =~ /:\w+/ # Skip things that already look like compact IRIs
+        next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
+
+        # Also skip term if it was not a simple term with an id ends in a gen-delim, or if the term ends with ':'
+        next unless td.simple?
+        next unless td.id.to_s.end_with?(*%w(: / ? # [ ] @))
 
         suffix = iri[td.id.length..-1]
         ciri = "#{term}:#{suffix}"
         candidates << ciri unless value && term_definitions.has_key?(ciri)
-      end
+      end if candidates.empty?
 
       if !candidates.empty?
         #log_debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless quiet

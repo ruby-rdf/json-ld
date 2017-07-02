@@ -858,7 +858,7 @@ describe JSON::LD::Context do
       "unmapped"      => ["foo",                 "foo"],
       "bnode"         => ["_:a",                 RDF::Node("a")],
       "relative"      => ["foo/bar",             "http://base/foo/bar"],
-      "odd CURIE"     => ["exp:s",               "http://example.org/perts"]
+      "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         expect(subject.compact_iri(input)).to produce(result, logger)
@@ -904,7 +904,7 @@ describe JSON::LD::Context do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
         expect(subject.compact_iri("http://example.org/name", position: :predicate)).
-          to produce("lex:name", logger)
+          not_to produce("name", logger)
       end
     end
 
@@ -984,9 +984,7 @@ describe JSON::LD::Context do
       end
     end
 
-    context "with :simple_compact_iris" do
-      before(:each) { subject.instance_variable_get(:@options)[:simple_compact_iris] = true}
-
+    context "CURIE compaction" do
       {
         "nil" => [nil, nil],
         "absolute IRI"  => ["http://example.com/", "http://example.com/"],
