@@ -670,7 +670,7 @@ module JSON::LD
 
         if value.has_key?('@context')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
 
           begin
             self.parse(value['@context'])
@@ -690,10 +690,10 @@ module JSON::LD
 
         if value.has_key?('@nest')
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
 
           # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode < 'json-ld-1.1'
+          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
 
           nest = value['@nest']
           raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
@@ -1166,7 +1166,7 @@ module JSON::LD
         suffix = iri[td.id.length..-1]
         ciri = "#{term}#{suffix}"
         candidates << ciri unless value && term_definitions.has_key?(ciri)
-      end if processingMode >= 'json-ld-1.1'
+      end if processingMode && processingMode >= 'json-ld-1.1'
 
       term_definitions.each do |term, td|
         next if term =~ /:\w+/ # Skip things that already look like compact IRIs
