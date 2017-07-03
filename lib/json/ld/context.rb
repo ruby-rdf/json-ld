@@ -1172,7 +1172,7 @@ module JSON::LD
         suffix = iri[td.id.length..-1]
         ciri = "#{term}#{suffix}"
         candidates << ciri unless value && term_definitions.has_key?(ciri)
-      end if processingMode && processingMode >= 'json-ld-1.1'
+      end
 
       term_definitions.each do |term, td|
         next if term =~ /:\w+/ # Skip things that already look like compact IRIs
