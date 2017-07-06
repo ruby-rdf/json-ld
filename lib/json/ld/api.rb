@@ -90,13 +90,12 @@ module JSON::LD
       @options = {
         compactArrays:      true,
         rename_bnodes:      true,
-        documentLoader:     self.class.method(:documentLoader),
-        compactToRelative:  true
+        documentLoader:     self.class.method(:documentLoader)
       }.merge(options)
       @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
-      context_ref = nil
+      remote_base, context_ref = nil, nil
 
       @value = case input
       when Array, Hash then input.dup
@@ -116,8 +115,9 @@ module JSON::LD
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        @options = {base: remote_doc.documentUrl}.merge(@options)
+        remote_base = remote_doc.documentUrl
         context_ref = remote_doc.contextUrl
+        @options = {base: remote_doc.documentUrl}.merge(@options) unless @options[:no_default_base]
 
         case remote_doc.document
         when String
@@ -135,13 +135,6 @@ module JSON::LD
       # If not set explicitly, the context figures out the processing mode
       @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
       @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
-
-      # If, after processing, the context does not have a _base IRI_, and the _compactToRelative_ option is set to true or processingMode is json-ld-1.0, set _base IRI_ in the active context to either the _base_ option from the API, if set, or the IRI of the currently being processed document.
-      if !@context.base && @options[:base]
-        doc_base = RDF::URI(@options[:base]).dup
-        doc_base.canonicalize! if options[:canonicalize]
-        @context.base = doc_base
-      end
 
       if block_given?
         case block.arity
@@ -222,16 +215,17 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
     def self.compact(input, context, options = {})
       result = nil
+      options = {compactToRelative:  true}.merge(options)
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
       expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
-        options[:base] ||= base_iri
+        options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
 
       #require 'byebug'; byebug
-      API.new(expanded_input, context, options) do
+      API.new(expanded_input, context, options.merge(no_default_base: true)) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
 
@@ -267,15 +261,16 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.flatten(input, context, options = {})
       flattened = []
+      options = {compactToRelative:  true}.merge(options)
 
       # Expand input to simplify processing
       expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
-        options[:base] ||= base_iri
+        options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
 
       # Initialize input using
-      API.new(expanded_input, context, options) do
+      API.new(expanded_input, context, options.merge(no_default_base: true)) do
         log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
@@ -340,6 +335,7 @@ module JSON::LD
       options = {
         base:                       (input if input.is_a?(String)),
         compactArrays:              true,
+        compactToRelative:          true,
         embed:                      '@last',
         explicit:                   false,
         requireAll:                 true,
@@ -369,7 +365,7 @@ module JSON::LD
 
       # Expand input to simplify processing
       expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
-        options[:base] ||= base_iri
+        options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
 
@@ -377,7 +373,7 @@ module JSON::LD
       expanded_frame = API.expand(frame, options.merge(processingMode: "json-ld-1.1-expand-frame"))
 
       # Initialize input using frame as context
-      API.new(expanded_input, nil, options) do
+      API.new(expanded_input, nil, options.merge(no_default_base: true)) do
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary

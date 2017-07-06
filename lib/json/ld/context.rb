@@ -1187,10 +1187,7 @@ module JSON::LD
         candidates << ciri unless value && term_definitions.has_key?(ciri)
       end if candidates.empty?
 
-      if !candidates.empty?
-        #log_debug("") {"=> compact iri: #{candidates.term_sort.first.inspect}"} unless quiet
-        return candidates.term_sort.first
-      end
+      return candidates.term_sort.first if !candidates.empty?
 
       # If we still don't have any terms and we're using standard_prefixes,
       # try those, and add to mapping
@@ -1203,13 +1200,10 @@ module JSON::LD
             iri.sub(v.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
           end
 
-        if !candidates.empty?
-          #log_debug("") {"=> standard prefies: #{candidates.term_sort.first.inspect}"} unless quiet
-          return candidates.term_sort.first
-        end
+        return candidates.term_sort.first if !candidates.empty?
       end
 
-      if !vocab && @options[:compactToRelative]
+      if !vocab
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(iri)
         #log_debug("") {"=> relative iri: #{iri.inspect}"} unless quiet
