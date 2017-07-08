@@ -58,6 +58,9 @@ module JSON::LD
       # @return [Boolean]
       attr_accessor :simple
 
+      # Indicate that term may be used as a prefix
+      attr_writer :prefix
+
       # Term-specific context
       # @return [Hash{String => Object}]
       attr_accessor :context
@@ -65,6 +68,10 @@ module JSON::LD
       # This is a simple term definition, not an expanded term definition
       # @return [Boolean] simple
       def simple?; simple; end
+
+      # This is an appropriate term to use as the prefix of a compact IRI
+      # @return [Boolean] simple
+      def prefix?; @prefix; end
 
       # Create a new Term Mapping with an ID
       # @param [String] term
@@ -77,6 +84,8 @@ module JSON::LD
       # @param [String] nest term used for nest properties
       # @param [Boolean] simple
       #   This is a simple term definition, not an expanded term definition
+      # @param [Boolean] prefix
+      #   Term may be used as a prefix
       def initialize(term,
                     id: nil,
                     type_mapping: nil,
@@ -85,16 +94,18 @@ module JSON::LD
                     reverse_property: false,
                     nest: nil,
                     simple: false,
+                    prefix: nil,
                     context: nil)
         @term                   = term
-        @id                     = id.to_s           if id
-        @type_mapping           = type_mapping.to_s if type_mapping
-        self.container_mapping  = container_mapping if container_mapping
-        @language_mapping       = language_mapping  if language_mapping
-        @reverse_property       = reverse_property  if reverse_property
-        @nest                   = nest              if nest
-        @simple                 = simple            if simple
-        @context                = context           if context
+        @id                     = id.to_s           unless id.nil?
+        @type_mapping           = type_mapping.to_s unless type_mapping.nil?
+        self.container_mapping  = container_mapping unless container_mapping.nil?
+        @language_mapping       = language_mapping  unless language_mapping.nil?
+        @reverse_property       = reverse_property
+        @nest                   = nest              unless nest.nil?
+        @simple                 = simple
+        @prefix                 = prefix            unless prefix.nil?
+        @context                = context           unless context.nil?
       end
 
       # Set container mapping, from an array which may include @set
@@ -121,14 +132,7 @@ module JSON::LD
           iri && iri != id ? "#{prefix}:#{id.to_s[iri.length..-1]}" : id
         end
 
-        if language_mapping.nil? &&
-           container_mapping.nil? &&
-           !as_set &&
-           type_mapping.nil? &&
-           reverse_property.nil? &&
-           self.context.nil? &&
-           nest.nil?
-
+        if simple?
            cid.to_s unless cid == term && context.vocab
         else
           defn = {}
@@ -145,9 +149,10 @@ module JSON::LD
           cm = cm.first if cm.length == 1
           defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
-          defn['@language'] = (language_mapping ? language_mapping : nil) unless language_mapping.nil?
-          defn['@context'] = self.context unless self.context.nil?
-          defn['@nest'] = selfnest unless self.nest.nil?
+          defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
+          defn['@context'] = @context if @context
+          defn['@nest'] = @nest if @nest
+          defn['@prefix'] = @prefix unless @prefix.nil? || (context.processingMode || 'json-ld-1.0') == 'json-ld-1.0'
           defn
         end
       end
@@ -158,7 +163,7 @@ module JSON::LD
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id type_mapping container_mapping language_mapping reverse_property nest simple context).each do |acc|
+        %w(id type_mapping container_mapping language_mapping reverse_property nest simple prefix context).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping' && as_set
@@ -179,6 +184,8 @@ module JSON::LD
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
+        v << "simple=true" if @simple
+        v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
         v << "has-context" unless context.nil?
         v.join(" ") + "]"
       end
@@ -279,8 +286,7 @@ module JSON::LD
       (options[:prefixes] || {}).each_pair do |k, v|
         next if k.nil?
         @iri_to_term[v.to_s] = k
-        @term_definitions[k.to_s] = TermDefinition.new(k, id: v.to_s)
-        @term_definitions[k.to_s].simple = true
+        @term_definitions[k.to_s] = TermDefinition.new(k, id: v.to_s, simple: true, prefix: true)
       end
 
       self.vocab = options[:vocab] if options[:vocab]
@@ -439,7 +445,7 @@ module JSON::LD
                 end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
-                if processingMode && processingMode <= "json-ld-1.1"
+                if  (processingMode || 'json-ld-1.0') <= "json-ld-1.1"
                   context_no_base.provided_context = context.dup
                 end
               end
@@ -561,7 +567,7 @@ module JSON::LD
       # Initialize value to a the value associated with the key term in local context.
       value = local_context.fetch(term, false)
       simple_term = value.is_a?(String)
-      value = {'@id' => value} if value.is_a?(String)
+      value = {'@id' => value} if simple_term
 
       case value
       when nil, {'@id' => nil}
@@ -575,9 +581,9 @@ module JSON::LD
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
-        expected_keys = case @options[:processingMode]
-        when "json-ld-1.0" then %w(@id @reverse @type @container @language)
-        else  %w(@id @reverse @type @container @language @context @nest)
+        expected_keys = case processingMode
+        when "json-ld-1.0", nil then %w(@container @id @language @reverse @type)
+        else  %w(@container @context @id @language @nest @prefix @reverse @type)
         end
 
         extra_keys = value.keys - expected_keys
@@ -641,6 +647,12 @@ module JSON::LD
             defined: defined)
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
+
+            # If id ends with a gen-delim, it may be used as a prefix
+            if definition.id.to_s.end_with?(*%w(: / ? # [ ] @))
+              definition.prefix = true if simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0')
+            end
+            value['@prefix'] = value['@id'].end_with?(*%w(: / ? # [ ] @)) if simple_term && (processingMode || 'json-ld-1.0') >= 'json-ld-1.1'
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':')
@@ -669,9 +681,6 @@ module JSON::LD
         end
 
         if value.has_key?('@context')
-          # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@context not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
-
           begin
             self.parse(value['@context'])
             definition.context = value['@context']
@@ -689,17 +698,20 @@ module JSON::LD
         end
 
         if value.has_key?('@nest')
-          # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
-
-          # Not supported in JSON-LD 1.0
-          raise JsonLdError::InvalidTermDefinition, '@nest not valid in term definition for JSON-LD 1.0 on term #{term.inspect}, set processing mode using @version' if processingMode && processingMode < 'json-ld-1.1'
-
           nest = value['@nest']
           raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
           raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
           #log_debug("") {"nest: #{nest.inspect}"}
           definition.nest = nest
+        end
+
+        if value.has_key?('@prefix')
+          case pfx = value['@prefix']
+          when TrueClass, FalseClass
+            definition.prefix = pfx
+          else
+            raise JsonLdError::InvalidPrefixValue, "unknown value for '@prefix': #{pfx.inspect} on term #{term.inspect}"
+          end
         end
 
         term_definitions[term] = definition
@@ -837,7 +849,7 @@ module JSON::LD
     def set_mapping(term, value)
       #log_debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
-      term_definitions[term] = TermDefinition.new(term, id: value)
+      term_definitions[term] = TermDefinition.new(term, id: value, simple: true, prefix: (value.to_s.end_with?(*%w(: / ? # [ ] @))))
       term_definitions[term].simple = true
 
       term_sym = term.empty? ? "" : term.to_sym
@@ -993,19 +1005,13 @@ module JSON::LD
         return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
         return RDF::URI(value) if suffix[0,2] == '//'
 
-        # If local context is not null, it contains a key that equals prefix, or prefix followed by a ':', and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix (possibly with an added ':') as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
-        if local_context
-          if local_context.has_key?(prefix + ':') && !defined[prefix + ':']
-            create_term_definition(local_context, prefix + ':', defined)
-          elsif local_context.has_key?(prefix) && !defined[prefix]
-            create_term_definition(local_context, prefix, defined)
-          end
+        # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
+        if local_context && local_context.has_key?(prefix) && !defined[prefix]
+          create_term_definition(local_context, prefix, defined)
         end
 
-        # If active context contains a term definition for prefix followed by ':', or prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
-        result = if (td = term_definitions[prefix + ':'])
-          result = td.id + suffix
-        elsif (td = term_definitions[prefix])
+        # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
+        result = if (td = term_definitions[prefix])
           result = td.id + suffix
         else
           # (Otherwise) Return value as it is already an absolute IRI.
@@ -1160,32 +1166,16 @@ module JSON::LD
       # The iri could not be compacted using the active context's vocabulary mapping. Try to create a compact IRI, starting by initializing compact IRI to null. This variable will be used to tore the created compact IRI, if any.
       candidates = []
 
-      # For 1.1, favor simple terms that end in a ':'
       term_definitions.each do |term, td|
-        # Skip things that don't end with a ':' or contain a ':'
-        next unless term.end_with?(':')
         next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
 
-        # Also skip term if it was not a simple term with an id ends in a gen-delim, or if the term ends with ':'
-        next unless td.simple?
-
-        suffix = iri[td.id.length..-1]
-        ciri = "#{term}#{suffix}"
-        candidates << ciri unless value && term_definitions.has_key?(ciri)
-      end
-
-      term_definitions.each do |term, td|
-        next if term =~ /:\w+/ # Skip things that already look like compact IRIs
-        next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
-
-        # Also skip term if it was not a simple term with an id ends in a gen-delim, or if the term ends with ':'
-        next unless td.simple?
-        next unless td.id.to_s.end_with?(*%w(: / ? # [ ] @))
+        # Skip term if `@prefix` is not true in term definition
+        next unless td.prefix?
 
         suffix = iri[td.id.length..-1]
         ciri = "#{term}:#{suffix}"
         candidates << ciri unless value && term_definitions.has_key?(ciri)
-      end if candidates.empty?
+      end
 
       return candidates.term_sort.first if !candidates.empty?
 
@@ -1614,7 +1604,7 @@ module JSON::LD
     # Ensure @container mapping is appropriate
     # The result is the original container definition. For IRI containers, this is necessary to be able to determine the @type mapping for string values
     def check_container(container, local_context, defined, term)
-      if container.is_a?(Array) && processingMode < 'json-ld-1.1'
+      if container.is_a?(Array) &&  (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
         raise JsonLdError::InvalidContainerMapping,
               "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
       end
@@ -1635,7 +1625,7 @@ module JSON::LD
       when '@type', '@id', nil
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-              processingMode < 'json-ld-1.1'
+               (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
       else
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"

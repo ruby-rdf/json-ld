@@ -331,8 +331,8 @@ describe JSON::LD::API do
         },
         "Expands but does not compact to document base in 1.1 with compactToRelative false" => {
           input: %({
-            "@id": "a",
-            "http://example.com/b": {"@id": "c"}
+            "@id": "http://example.org/a",
+            "http://example.com/b": {"@id": "http://example.org/c"}
           }),
           context: %({"b": "http://example.com/b"}),
           output: %({
@@ -340,7 +340,6 @@ describe JSON::LD::API do
             "@id": "http://example.org/a",
             "b": {"@id": "http://example.org/c"}
           }),
-          base: "http://example.org/",
           compactToRelative: false,
           processingMode: 'json-ld-1.1'
         },
@@ -1148,6 +1147,7 @@ describe JSON::LD::API do
             "foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
           processingMode: nil,
+          validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
       }.each_pair do |title, params|
@@ -1308,6 +1308,7 @@ describe JSON::LD::API do
             "Foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
           processingMode: nil,
+          validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
       }.each_pair do |title, params|
@@ -1339,13 +1340,23 @@ describe JSON::LD::API do
 
     context "compact IRI selection" do
       {
-        "does not compact using expanded term" => {
+        "compacts using expanded term in 1.0" => {
+          input: %({"http://example.org/foo": "term"}),
+          context: %({"ex": {"@id": "http://example.org/"}}),
+          output: %({
+            "@context": {"ex": {"@id": "http://example.org/"}},
+            "ex:foo": "term"
+          }),
+          processingMode: "json-ld-1.0"
+        },
+        "does not compact using expanded term in 1.1" => {
           input: %({"http://example.org/foo": "term"}),
           context: %({"ex": {"@id": "http://example.org/"}}),
           output: %({
             "@context": {"ex": {"@id": "http://example.org/"}},
             "http://example.org/foo": "term"
-          })
+          }),
+          processingMode: "json-ld-1.1"
         },
         "does not compact using simple term not ending in gen-delim" => {
           input: %({"http://example.org/foo": "term"}),
@@ -1410,15 +1421,6 @@ describe JSON::LD::API do
             "@context": {"ex": "http://example.org/foo@"},
             "ex:bar": "term"
           })
-        },
-        "prefers compacting using simple term ending ':' in 1.1" => {
-          input: %({"http://example.org/foo/bar": "term"}),
-          context: %({"ex": "http://example.org/foo/", "xe:": "http://example.org/foo/"}),
-          output: %({
-            "@context": {"ex": "http://example.org/foo/", "xe:": "http://example.org/foo/"},
-            "xe:bar": "term"
-          }),
-          processingMode: 'json-ld-1.1'
         },
       }.each do |title, params|
         it(title) {run_compact(params)}

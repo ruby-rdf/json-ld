@@ -93,15 +93,6 @@ describe JSON::LD::API do
           "http://example.com/p" => [{"@id" => "http://example.com/Sub1"}]
         }]
       },
-      "compact IRI with term having trailing ':'" => {
-        input: {
-          "@context" => {"ex:" => "http://example.com/"},
-          "ex:p" => {"@id" => "ex:Sub1"}
-        },
-        output: [{
-          "http://example.com/p" => [{"@id" => "http://example.com/Sub1"}]
-        }]
-      },
     }.each_pair do |title, params|
       it(title) {run_expand params}
     end
@@ -1219,6 +1210,7 @@ describe JSON::LD::API do
             }
           }),
           processingMode: nil,
+          validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
       }.each do |title, params|
@@ -1341,6 +1333,7 @@ describe JSON::LD::API do
             }
           }),
           processingMode: nil,
+          validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
       }.each do |title, params|
@@ -1470,6 +1463,7 @@ describe JSON::LD::API do
             "a": {"@type": "Foo", "bar": "baz"}
           }),
           processingMode: nil,
+          validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
       }.each do |title, params|
@@ -1640,7 +1634,7 @@ describe JSON::LD::API do
     output = ::JSON.parse(output) if output.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.expand(input, processingMode: processingMode)}.to raise_error(params[:exception])
+      expect {JSON::LD::API.expand(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
     else
       jld = JSON::LD::API.expand(input, base: params[:base], logger: logger, processingMode: processingMode)
       expect(jld).to produce(output, logger)

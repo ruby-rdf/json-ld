@@ -224,7 +224,6 @@ module JSON::LD
         result
       end
 
-      #require 'byebug'; byebug
       API.new(expanded_input, context, options.merge(no_default_base: true)) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
