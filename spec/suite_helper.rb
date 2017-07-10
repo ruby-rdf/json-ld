@@ -108,7 +108,7 @@ module Fixtures
       def options
         @options ||= begin
           opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          (property('option') || {}).each do |k, v|
+          {'specVersion' => "1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
           opts
@@ -161,6 +161,11 @@ module Fixtures
           self.options.dup
         end
         options = {validate: true}.merge(options)
+
+        unless options[:specVersion] == "1.1"
+          skip "not a 1.1 test" 
+          return
+        end
 
         if positiveTest?
           logger.info "expected: #{expect rescue nil}" if expect_loc
