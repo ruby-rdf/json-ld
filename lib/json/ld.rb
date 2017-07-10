@@ -115,6 +115,7 @@ module JSON
       class InvalidLanguageTaggedValue < JsonLdError; @code = "invalid language-tagged value"; end
       class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
       class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
+      class InvalidPrefixValue < JsonLdError; @code = "invalid @prefix value"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end

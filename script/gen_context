@@ -15,8 +15,7 @@ require 'json/ld'
 
 options = {
   output: STDOUT,
-  prefixes: {},
-  simple_compact_iris: true
+  prefixes: {}
 }
 
 OPT_ARGS = [
