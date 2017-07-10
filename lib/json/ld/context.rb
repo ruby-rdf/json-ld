@@ -649,10 +649,9 @@ module JSON::LD
             definition.id == '@context'
 
             # If id ends with a gen-delim, it may be used as a prefix
-            if definition.id.to_s.end_with?(*%w(: / ? # [ ] @))
-              definition.prefix = true if simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0')
-            end
-            value['@prefix'] = value['@id'].end_with?(*%w(: / ? # [ ] @)) if simple_term && (processingMode || 'json-ld-1.0') >= 'json-ld-1.1'
+            definition.prefix = true if !term.include?(':') &&
+              definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
+              (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':')
@@ -706,6 +705,7 @@ module JSON::LD
         end
 
         if value.has_key?('@prefix')
+          raise JsonLdError::InvalidTermDefinition, "@prefix used on compact IRI term #{term.inspect}" if term.include?(':')
           case pfx = value['@prefix']
           when TrueClass, FalseClass
             definition.prefix = pfx
