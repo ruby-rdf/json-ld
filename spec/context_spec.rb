@@ -24,7 +24,7 @@ end
 
 describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
-  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1")}
+  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
       "@context": {
@@ -76,11 +76,11 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
-      
+
       it "notes non-existing @context" do
         expect {subject.parse(StringIO.new("{}"))}.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
       end
-      
+
       it "parses a referenced context at a relative URI" do
         rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
@@ -302,7 +302,7 @@ describe JSON::LD::Context do
           expect(nil_ec.coercions).to eq init_ec.coercions
           expect(nil_ec.containers).to eq init_ec.containers
         end
-        
+
         it "removes a term definition" do
           expect(subject.parse({"name" => nil}).send(:mapping, "name")).to be_nil
         end
@@ -322,11 +322,14 @@ describe JSON::LD::Context do
         "@type as @list" => {"foo" => {"@type" => "@list"}},
         "@type as @set" => {"foo" => {"@type" => "@set"}},
         "@container as object" => {"foo" => {"@container" => {}}},
-        "@container as array" => {"foo" => {"@container" => []}},
+        "@container as empty array" => {"foo" => {"@container" => []}},
         "@container as string" => {"foo" => {"@container" => "true"}},
         "@context which is invalid" => {"foo" => {"@context" => {"bar" => []}}},
         "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
         "@vocab as @id" => {"@vocab" => {"@id" => "http://example.com/"}},
+        "@prefix string" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => "str"}},
+        "@prefix array" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => []}},
+        "@prefix object" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => {}}},
       }.each do |title, context|
         it title do
           expect {
@@ -335,7 +338,25 @@ describe JSON::LD::Context do
           }.to raise_error(JSON::LD::JsonLdError)
         end
       end
-      
+
+      context "1.0" do
+        let(:context) {JSON::LD::Context.new(logger: logger, validate: true)}
+        {
+          "@context" => {"foo" => {"@id" => 'http://example.org/', "@context" => {}}},
+          "@container @id" => {"foo" => {"@container" => "@id"}},
+          "@container @type" => {"foo" => {"@container" => "@type"}},
+          "@nest" => {"foo" => {"@id" => 'http://example.org/', "@nest" => "@nest"}},
+          "@prefix" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => true}},
+        }.each do |title, context|
+          it title do
+            expect {
+              ec = subject.parse(context)
+              expect(ec.serialize).to produce({}, logger)
+            }.to raise_error(JSON::LD::JsonLdError)
+          end
+        end
+      end
+
       (JSON::LD::KEYWORDS - %w(@base @language @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
@@ -807,7 +828,7 @@ describe JSON::LD::Context do
           end
         end
       end
-    
+
       context "@vocab" do
         {
           "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
@@ -858,7 +879,7 @@ describe JSON::LD::Context do
       "unmapped"      => ["foo",                 "foo"],
       "bnode"         => ["_:a",                 RDF::Node("a")],
       "relative"      => ["foo/bar",             "http://base/foo/bar"],
-      "odd CURIE"     => ["exp:s",               "http://example.org/perts"]
+      "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         expect(subject.compact_iri(input)).to produce(result, logger)
@@ -904,7 +925,7 @@ describe JSON::LD::Context do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
         expect(subject.compact_iri("http://example.org/name", position: :predicate)).
-          to produce("lex:name", logger)
+          not_to produce("name", logger)
       end
     end
 
@@ -963,7 +984,7 @@ describe JSON::LD::Context do
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => true}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
             [{"@value" => "de", "@language" => "de"}, {"@value" => "jp", "@language" => "jp"}],
-            [{"@value" => true}], [{"@value" => false}], 
+            [{"@value" => true}], [{"@value" => false}],
             [{"@value" => 1}], [{"@value" => 1.1}],
           ],
           "listlang" => [[{"@value" => "en", "@language" => "en"}]],
@@ -984,9 +1005,7 @@ describe JSON::LD::Context do
       end
     end
 
-    context "with :simple_compact_iris" do
-      before(:each) { subject.instance_variable_get(:@options)[:simple_compact_iris] = true}
-
+    context "CURIE compaction" do
       {
         "nil" => [nil, nil],
         "absolute IRI"  => ["http://example.com/", "http://example.com/"],
@@ -1223,7 +1242,7 @@ describe JSON::LD::Context do
         end
       end
     end
-    
+
     context "coercion" do
       before(:each) {subject.default_language = "en"}
       {

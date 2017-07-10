@@ -115,7 +115,6 @@ OPT_ARGS = [
   ["--quiet",         GetoptLong::NO_ARGUMENT,      "Supress most output other than progress indicators"],
   ["--rename_bnodes", GetoptLong::OPTIONAL_ARGUMENT,"Rename bnodes as part of expansion, or keep them the same"],
   ["--requireAll",    GetoptLong::OPTIONAL_ARGUMENT,"Rename bnodes as part of expansion, or keep them the same"],
-  ["--simple_compact_iris",GetoptLong::OPTIONAL_ARGUMENT,"When compacting IRIs, do not use terms with expanded term definitions"],
   ["--stream",        GetoptLong::NO_ARGUMENT,      "Use Streaming reader/writer"],
   ["--unique_bnodes", GetoptLong::OPTIONAL_ARGUMENT,"Use unique bnode identifiers"],
   ["--uri",           GetoptLong::REQUIRED_ARGUMENT,"URI to be used as the document base"],

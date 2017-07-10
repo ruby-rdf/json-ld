@@ -78,6 +78,11 @@ module JSON::LD
           on: ["--compact-arrays"],
           description: "Replaces arrays with just one element with that element during compaction.") {true},
         RDF::CLI::Option.new(
+          symbol: :compactToRelative,
+          datatype: TrueClass,
+          on: ["--compact-to-relative"],
+          description: "Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded. Default is `true` use --no-compact-to-relative to disable.") {true},
+        RDF::CLI::Option.new(
           symbol: :context,
           datatype: RDF::URI,
           on: ["--context CONTEXT"],
