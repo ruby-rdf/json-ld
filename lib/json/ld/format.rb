@@ -53,6 +53,7 @@ module JSON::LD
           description: "Expand JSON-LD or parsed RDF",
           parse: false,
           help: "expand [--context <context-file>] files ...",
+          filter: {output_format: :jsonld},  # Only shows output format set
           lambda: ->(files, options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
@@ -80,11 +81,15 @@ module JSON::LD
                 end
               end
             end
-          end
+          end,
+          options: [
+            RDF::CLI::Option.new(symbol: :context, on: [])
+          ]
         },
         compact: {
           description: "Compact JSON-LD or parsed RDF",
           parse: false,
+          filter: {output_format: :jsonld},  # Only shows output format set
           help: "compact --context <context-file> files ...",
           lambda: ->(files, options) do
             raise ArgumentError, "Compacting requires a context" unless options[:context]
@@ -115,12 +120,22 @@ module JSON::LD
                 end
               end
             end
-          end
+          end,
+          options: [
+            RDF::CLI::Option.new(
+              symbol: :context,
+              datatype: RDF::URI,
+              control: :url2,
+              required: true,
+              on: ["--context CONTEXT"],
+              description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
+          ]
         },
         flatten: {
           description: "Flatten JSON-LD or parsed RDF",
           parse: false,
           help: "flatten [--context <context-file>] files ...",
+          filter: {output_format: :jsonld},  # Only shows output format set
           lambda: ->(files, options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
@@ -155,6 +170,7 @@ module JSON::LD
           description: "Frame JSON-LD or parsed RDF",
           parse: false,
           help: "frame --frame <frame-file>  files ...",
+          filter: {output_format: :jsonld},  # Only shows output format set
           lambda: ->(files, options) do
             raise ArgumentError, "Framing requires a frame" unless options[:frame]
             out = options[:output] || $stdout
@@ -184,7 +200,16 @@ module JSON::LD
                 end
               end
             end
-          end
+          end,
+          options: [
+            RDF::CLI::Option.new(
+              symbol: :frame,
+              datatype: RDF::URI,
+              control: :url2,
+              required: true,
+              on: ["--frame FRAME", :REQUIRED],
+              description: "Frame to use when serializing.") {|arg| RDF::URI(arg)}
+          ]
         },
       }
     end
