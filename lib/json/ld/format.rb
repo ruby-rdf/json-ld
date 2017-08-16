@@ -82,9 +82,7 @@ module JSON::LD
               end
             end
           end,
-          options: [
-            RDF::CLI::Option.new(symbol: :context, on: [])
-          ]
+          option_use: {context: :removed}
         },
         compact: {
           description: "Compact JSON-LD or parsed RDF",
@@ -126,7 +124,7 @@ module JSON::LD
               symbol: :context,
               datatype: RDF::URI,
               control: :url2,
-              required: true,
+              use: :required,
               on: ["--context CONTEXT"],
               description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
           ]
@@ -201,13 +199,14 @@ module JSON::LD
               end
             end
           end,
+          option_use: {context: :removed},
           options: [
             RDF::CLI::Option.new(
               symbol: :frame,
               datatype: RDF::URI,
               control: :url2,
-              required: true,
-              on: ["--frame FRAME", :REQUIRED],
+              use: :required,
+              on: ["--frame FRAME"],
               description: "Frame to use when serializing.") {|arg| RDF::URI(arg)}
           ]
         },
