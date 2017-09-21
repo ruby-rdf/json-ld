@@ -3,6 +3,7 @@
 $:.unshift(File.expand_path("../ld", __FILE__))
 require 'rdf' # @see http://rubygems.org/gems/rdf
 require 'multi_json'
+require 'set'
 
 module JSON
   ##
@@ -41,7 +42,7 @@ module JSON
       RDF.type.to_s => {"@type" => "@id"}
     }.freeze
 
-    KEYWORDS = %w(
+    KEYWORDS = Set.new(%w(
       @base
       @container
       @context
@@ -62,7 +63,7 @@ module JSON
       @value
       @version
       @vocab
-    ).freeze
+    )).freeze
 
     # Regexp matching an NCName.
     NC_REGEXP = Regexp.new(
