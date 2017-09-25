@@ -40,9 +40,9 @@ module JSON::LD
     def blank_node?(value)
       case value
       when nil    then true
-      when String then value[0,2] == '_:'
+      when String then value.start_with?('_:')
       else
-        (node?(value) || node_reference?(value)) && value.fetch('@id', '_:')[0,2] == '_:'
+        (node?(value) || node_reference?(value)) && value.fetch('@id', '_:').start_with?('_:')
       end
     end
 
@@ -80,7 +80,7 @@ module JSON::LD
     # @return [RDF::Resource]
     def as_resource(id, base = nil)
       @nodes ||= {} # Re-use BNodes
-      if id[0,2] == '_:'
+      if id.start_with?('_:')
         (@nodes[id] ||= RDF::Node.new(namer.get_sym(id)))
       elsif base
         base.join(id)

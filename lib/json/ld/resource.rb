@@ -88,7 +88,7 @@ module JSON::LD
         node_definition
       end
       @id = @attributes['@id']
-      @anon = @id.nil? || @id.to_s[0,2] == '_:'
+      @anon = @id.nil? || @id.to_s.start_with?('_:')
     end
 
     ##

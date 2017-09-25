@@ -1003,7 +1003,7 @@ module JSON::LD
 
         # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
         return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
-        return RDF::URI(value) if suffix[0,2] == '//'
+        return RDF::URI(value) if suffix.start_with?('//')
 
         # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
         if local_context && local_context.has_key?(prefix) && !defined[prefix]
