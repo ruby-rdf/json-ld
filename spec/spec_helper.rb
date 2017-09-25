@@ -14,10 +14,10 @@ require 'rdf/spec/matchers'
 require 'yaml'
 begin
   require 'simplecov'
-  require 'coveralls'
+  require 'coveralls' unless ENV['NOCOVERALLS']
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
     SimpleCov::Formatter::HTMLFormatter,
-    Coveralls::SimpleCov::Formatter
+    (Coveralls::SimpleCov::Formatter unless ENV['NOCOVERALLS'])
   ])
   SimpleCov.start do
     add_filter "/spec/"

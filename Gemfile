@@ -20,6 +20,7 @@ group :development, :test do
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'
+  gem 'rake'
 end
 
 group :debug do
