@@ -42,7 +42,6 @@ module JSON::LD
         end
 
         output_object = {}
-        keys = ordered ? input.keys.kw_sort : input.keys
 
         # See if keys mapping to @type have terms with a local context
         input.keys.select do |key|
