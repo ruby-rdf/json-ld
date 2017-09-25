@@ -87,7 +87,7 @@ module JSON::LD
         elsif !output_object.fetch('@type', []).is_a?(Array)
           # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.
           output_object['@type'] = [output_object['@type']]
-        elsif output_object.keys.any? {|k| %w(@set @list).include?(k)}
+        elsif output_object.key?('@set') || output_object.key?('@list')
           # Otherwise, if result contains the key @set or @list:
           # The result must contain at most one other key and that key must be @index. Otherwise, an invalid set or list object error has been detected and processing is aborted.
           raise JsonLdError::InvalidSetOrListObject,
@@ -95,15 +95,15 @@ module JSON::LD
                 (output_object.keys - %w(@set @list @index)).empty?
 
           # If result contains the key @set, then set result to the key's associated value.
-          return output_object['@set'] if output_object.keys.include?('@set')
+          return output_object['@set'] if output_object.key?('@set')
         end
 
         # If result contains only the key @language, set result to null.
-        return nil if output_object.keys == %w(@language)
+        return nil if output_object.length == 1 && output_object.key?('@language')
 
         # If active property is null or @graph, drop free-floating values as follows:
         if (active_property || '@graph') == '@graph' &&
-          (output_object.keys.any? {|k| %w(@value @list).include?(k)} ||
+          (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - %w(@id)).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil

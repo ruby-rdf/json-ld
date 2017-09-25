@@ -43,7 +43,7 @@ module JSON::LD
         # @null objects are used in framing
         return nil if element.has_key?('@null')
 
-        if element.keys.any? {|k| %w(@id @value).include?(k)}
+        if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, log_depth: @options[:log_depth])
           unless result.is_a?(Hash)
             #log_debug("") {"=> scalar result: #{result.inspect}"}

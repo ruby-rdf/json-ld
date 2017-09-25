@@ -615,7 +615,7 @@ module JSON::LD
 
         if value.has_key?('@reverse')
           raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
-            value.keys.any? {|k| %w(@id @nest).include?(k)}
+            value.key?('@id') || value.key?('@nest')
           raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
             value['@reverse'].is_a?(String)
 
@@ -1297,7 +1297,7 @@ module JSON::LD
     def compact_value(property, value, options = {})
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
-      num_members = value.keys.length
+      num_members = value.length
 
       num_members -= 1 if index?(value) && container(property) == '@index'
       if num_members > 2
