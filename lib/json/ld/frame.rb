@@ -191,21 +191,26 @@ module JSON::LD
     ##
     # Recursively find and count blankNode identifiers.
     # @return [Hash{String => Integer}]
-    def count_blank_node_identifiers(input, results = {})
-      case input
-      when Array
-        input.map {|o| count_blank_node_identifiers(o, results)}
-      when Hash
-        input.each do |k, v|
-          count_blank_node_identifiers(v, results)
-        end
-      when String
-        if input.start_with?('_:')
-          results[input] ||= 0
-          results[input] += 1
-        end
+    def count_blank_node_identifiers(input)
+      {}.tap do |results|
+        count_blank_node_identifiers_internal(input, results)
       end
-      results
+    end
+
+    def count_blank_node_identifiers_internal(input, results)
+      case input
+        when Array
+          input.each {|o| count_blank_node_identifiers_internal(o, results)}
+        when Hash
+          input.each do |k, v|
+            count_blank_node_identifiers_internal(v, results)
+          end
+        when String
+          if input.start_with?('_:')
+            results[input] ||= 0
+            results[input] += 1
+          end
+      end
     end
 
     ##
