@@ -88,7 +88,7 @@ module JSON::LD
         node_definition
       end
       @id = @attributes['@id']
-      @anon = @id.nil? || @id.to_s[0,2] == '_:'
+      @anon = @id.nil? || @id.to_s.start_with?('_:')
     end
 
     ##
@@ -110,19 +110,19 @@ module JSON::LD
     # @return [Hash] deresolved attribute hash
     def deresolve
       node_definition = if resolved?
-        deresolved = attributes.keys.inject({}) do |memo, prop|
-          value = attributes[prop]
-          memo[prop] = case value
-          when Resource
-            {'id' => value.id}
-          when Array
-            value.map do |v|
-              v.is_a?(Resource) ? {'id' => v.id} : v
+        deresolved = [].tap do |memo|
+          attributes.each_pair do |prop, value|
+            memo[prop] = case value
+            when Resource
+              {'id' => value.id}
+            when Array
+              value.map do |v|
+                v.is_a?(Resource) ? {'id' => v.id} : v
+              end
+            else
+              value
             end
-          else
-            value
           end
-          memo
         end
         deresolved
       else
@@ -188,7 +188,7 @@ module JSON::LD
 
       #$logger.debug "resolve(0): #{attributes.inspect}"
       @attributes.each do |k, v|
-        next if %w(id type).include?(k)
+        next if k == 'id' || k == 'type'
         @attributes[k] = update_obj(@attributes[k], reference_map)
       end
       #$logger.debug "resolve(1): #{attributes.inspect}"

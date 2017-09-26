@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
+require 'set'
+
 module JSON::LD
   module Frame
     include Utils
@@ -96,7 +98,7 @@ module JSON::LD
             recurse, subframe = (state[:graph] != '@merged'), {}
           else
             subframe = frame['@graph'].first
-            recurse = !%w(@merged @default).include?(id)
+            recurse = !(id == '@merged' || id == '@default')
             subframe = {} unless subframe.is_a?(Hash)
           end
 
@@ -152,7 +154,9 @@ module JSON::LD
         end
 
         # handle defaults in order
-        frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
+        frame.keys.kw_sort.each do |prop|
+          next if prop.start_with?('@')
+
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
           n = frame[prop].first || {}
           omit_default_on = get_frame_flag(n, options, :omitDefault)
@@ -187,21 +191,26 @@ module JSON::LD
     ##
     # Recursively find and count blankNode identifiers.
     # @return [Hash{String => Integer}]
-    def count_blank_node_identifiers(input, results = {})
-      case input
-      when Array
-        input.map {|o| count_blank_node_identifiers(o, results)}
-      when Hash
-        input.each do |k, v|
-          count_blank_node_identifiers(v, results)
-        end
-      when String
-        if input.start_with?('_:')
-          results[input] ||= 0
-          results[input] += 1
-        end
+    def count_blank_node_identifiers(input)
+      {}.tap do |results|
+        count_blank_node_identifiers_internal(input, results)
       end
-      results
+    end
+
+    def count_blank_node_identifiers_internal(input, results)
+      case input
+        when Array
+          input.each {|o| count_blank_node_identifiers_internal(o, results)}
+        when Hash
+          input.each do |k, v|
+            count_blank_node_identifiers_internal(v, results)
+          end
+        when String
+          if input.start_with?('_:')
+            results[input] ||= 0
+            results[input] += 1
+          end
+      end
     end
 
     ##
@@ -260,12 +269,13 @@ module JSON::LD
     #
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame, flags)
-      subjects.inject({}) do |memo, id|
+      subjects.each_with_object({}) do |id, memo|
         subject = state[:graphMap][state[:graph]][id]
         memo[id] = subject if filter_subject(subject, frame, state, flags)
-        memo
       end
     end
+
+    EXCLUDED_FRAMING_KEYWORDS = Set.new(%w(@default @embed @explicit @omitDefault @requireAll)).freeze
 
     ##
     # Returns true if the given node matches the given frame.
@@ -320,7 +330,7 @@ module JSON::LD
             validate_frame(v)
             has_default = v.has_key?('@default')
             # Exclude framing keywords
-            v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
+            v = v.reject {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
           end
 
 
@@ -490,7 +500,11 @@ module JSON::LD
     # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
-      flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}
+      {}.tap do |memo|
+        flags.each_pair do |key, val|
+          memo["@#{key}"] = [val]
+        end
+      end
     end
 
   private
@@ -512,8 +526,8 @@ module JSON::LD
       v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
       return true if (v2 + t2 + l2).empty?
       return false unless v2.include?(v1) || v2 == [{}]
-      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []) == []
-      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []) == []
+      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []).empty?
+      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
       true
     end
   end

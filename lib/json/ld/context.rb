@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 require 'json'
 require 'bigdecimal'
+require 'set'
 
 module JSON::LD
   class Context
@@ -112,7 +113,7 @@ module JSON::LD
       def container_mapping=(mapping)
         mapping = Array(mapping)
         if @as_set = mapping.include?('@set')
-          mapping -= %w(@set)
+          mapping.delete('@set')
         end
         @container_mapping = mapping.first
       end
@@ -554,7 +555,7 @@ module JSON::LD
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if KEYWORDS.include?(term) && !%w(@vocab @language @version).include?(term)
+      if KEYWORDS.include?(term) && (term != '@vocab' && term != '@language' && term != '@version')
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
@@ -606,7 +607,7 @@ module JSON::LD
           else
             :error
           end
-          unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
+          unless (type == '@id' || type == '@vocab') || type.is_a?(RDF::URI) && type.absolute?
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           #log_debug("") {"type_mapping: #{type.inspect}"}
@@ -615,7 +616,7 @@ module JSON::LD
 
         if value.has_key?('@reverse')
           raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
-            value.keys.any? {|k| %w(@id @nest).include?(k)}
+            value.key?('@id') || value.key?('@nest')
           raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
             value['@reverse'].is_a?(String)
 
@@ -633,7 +634,7 @@ module JSON::LD
             container = value['@container']
             raise JsonLdError::InvalidReverseProperty,
                   "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                   container.is_a?(String) && ['@set', '@index'].include?(container)
+                   container.is_a?(String) && (container == '@set' || container == '@index')
             definition.container_mapping = check_container(container, local_context, defined, term)
           end
           definition.reverse_property = true
@@ -654,7 +655,7 @@ module JSON::LD
               (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
-          prefix, suffix = term.split(':')
+          prefix, suffix = term.split(':', 2)
           create_term_definition(local_context, prefix, defined) if local_context.has_key?(prefix)
 
           definition.id = if td = term_definitions[prefix]
@@ -791,7 +792,7 @@ module JSON::LD
         (statements[statement.subject] ||= []) << statement
 
         # Keep track of predicate ranges
-        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate) 
+        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate)
           (ranges[statement.subject] ||= []) << statement.object
         end
       end
@@ -799,7 +800,7 @@ module JSON::LD
       # Add term definitions for each class and property not in vocab, and
       # for those properties having an object range
       statements.each do |subject, values|
-        types = values.select {|v| v.predicate == RDF.type}.map(&:object)
+        types = values.each_with_object([]) { |v, memo| memo << v.object if v.predicate == RDF.type }
         is_property = types.any? {|t| t.to_s.include?("Property")}
         
         term = subject.to_s.split(/[\/\#]/).last
@@ -886,7 +887,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
     def as_array?(term)
-      return true if %w(@graph @list).include?(term)
+      return true if term == '@graph' || term == '@list'
       term = find_definition(term)
       term && (term.as_set || term.container_mapping == '@list')
     end
@@ -979,11 +980,13 @@ module JSON::LD
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
-    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: {}, quiet: false, **options)
+    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: nil, quiet: false, **options)
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
       #log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
+
+      defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.
 
       # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
       if local_context && local_context.has_key?(value) && !defined[value]
@@ -1003,7 +1006,7 @@ module JSON::LD
 
         # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
         return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
-        return RDF::URI(value) if suffix[0,2] == '//'
+        return RDF::URI(value) if suffix.start_with?('//')
 
         # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
         if local_context && local_context.has_key?(prefix) && !defined[prefix]
@@ -1138,7 +1141,7 @@ module JSON::LD
         tl_value ||= '@null'
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
-        if %w(@id @reverse).include?(tl_value) && value.is_a?(Hash) && value.has_key?('@id')
+        if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.has_key?('@id')
           t_iri = compact_iri(value['@id'], vocab: true, document_relative: true)
           if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
             preferred_values.concat(%w(@vocab @id @none))
@@ -1204,6 +1207,8 @@ module JSON::LD
       end
     end
 
+    RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
+
     ##
     # If active property has a type mapping in the active context set to @id or @vocab, a JSON object with a single member @id whose value is the result of using the IRI Expansion algorithm on value is returned.
     #
@@ -1246,7 +1251,7 @@ module JSON::LD
       when RDF::Literal
         #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
-        if useNativeTypes && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+        if useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
           res['@value'] = value.object
           res['@type'] = uri(coerce(property)) if coerce(property)
         else
@@ -1297,7 +1302,7 @@ module JSON::LD
     def compact_value(property, value, options = {})
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
-      num_members = value.keys.length
+      num_members = value.length
 
       num_members -= 1 if index?(value) && container(property) == '@index'
       if num_members > 2
@@ -1407,7 +1412,7 @@ module JSON::LD
     def coerce(property)
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
-      return '@id' if [RDF.type, '@type'].include?(property)
+      return '@id' if property == RDF.type || property == '@type'
       term_definitions[property] && term_definitions[property].type_mapping
     end
 
@@ -1573,9 +1578,10 @@ module JSON::LD
     #
     # @return [Array<RDF::URI>]
     def mappings
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td ? td.id : nil
-        memo
+      {}.tap do |memo|
+        term_definitions.each_pair do |t,td|
+          memo[t] = td ? td.id : nil
+        end
       end
     end
 
@@ -1595,9 +1601,10 @@ module JSON::LD
     # @return [Array<String>]
     # @deprecated
     def languages
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.language_mapping
-        memo
+      {}.tap do |memo|
+        term_definitions.each_pair do |t,td|
+          memo[t] = td.language_mapping
+        end
       end
     end
 
@@ -1610,7 +1617,7 @@ module JSON::LD
       end
 
       val = Array(container)
-      val -= %w(@set) if has_set = val.include?('@set')
+      val.delete('@set') if has_set = val.include?('@set')
 
       raise JsonLdError::InvalidContainerMapping,
         "'@container' has more than one value other than @set" if val.length > 1

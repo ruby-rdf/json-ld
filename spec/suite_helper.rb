@@ -69,7 +69,7 @@ end
 
 module Fixtures
   module SuiteTest
-    SUITE = RDF::URI("http://json-ld.org/test-suite/")
+    SUITE = RDF::URI("https://json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
@@ -287,7 +287,7 @@ module Fixtures
       end
     end
 
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
+    REMOTE_PATH = "https://json-ld.org/test-suite/"
     LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
     ##
     # Document loader to use for tests having `useDocumentLoader` option
