@@ -24,7 +24,7 @@ module JSON::LD
       when Array
         # If element is an array,
         is_list = context.container(active_property) == '@list'
-        value = input.map do |v|
+        value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered)
 
@@ -32,8 +32,8 @@ module JSON::LD
           raise JsonLdError::ListOfLists,
                 "A list may not contain another list" if
                 is_list && (v.is_a?(Array) || list?(v))
-          v
-        end.flatten.compact
+          memo << v unless v.nil?
+        end
 
         value
       when Hash
