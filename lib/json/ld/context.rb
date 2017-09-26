@@ -655,7 +655,7 @@ module JSON::LD
               (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
-          prefix, suffix = term.split(':')
+          prefix, suffix = term.split(':', 2)
           create_term_definition(local_context, prefix, defined) if local_context.has_key?(prefix)
 
           definition.id = if td = term_definitions[prefix]
@@ -980,11 +980,13 @@ module JSON::LD
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
-    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: {}, quiet: false, **options)
+    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: nil, quiet: false, **options)
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
       #log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
+
+      defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.
 
       # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
       if local_context && local_context.has_key?(value) && !defined[value]
