@@ -800,7 +800,7 @@ module JSON::LD
       # Add term definitions for each class and property not in vocab, and
       # for those properties having an object range
       statements.each do |subject, values|
-        types = values.select {|v| v.predicate == RDF.type}.map(&:object)
+        types = values.each_with_object([]) { |v, memo| memo << v.object if v.predicate == RDF.type }
         is_property = types.any? {|t| t.to_s.include?("Property")}
         
         term = subject.to_s.split(/[\/\#]/).last

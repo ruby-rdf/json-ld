@@ -277,7 +277,9 @@ module JSON::LD
         create_node_map(value, graph_maps)
 
         default_graph = graph_maps['@default']
-        graph_maps.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
+        graph_maps.keys.kw_sort.each do |graph_name|
+          next if graph_name == '@default'
+
           graph = graph_maps[graph_name]
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []

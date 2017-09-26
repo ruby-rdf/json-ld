@@ -154,7 +154,9 @@ module JSON::LD
         end
 
         # handle defaults in order
-        frame.keys.kw_sort.reject {|p| p.start_with?('@')}.each do |prop|
+        frame.keys.kw_sort.each do |prop|
+          next if prop.start_with?('@')
+
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
           n = frame[prop].first || {}
           omit_default_on = get_frame_flag(n, options, :omitDefault)
