@@ -68,13 +68,14 @@ module JSON::LD
             "value object has unknown keys: #{output_object.inspect}"
           end
 
-          output_object.delete('@language') if Array(output_object['@language']).join('').to_s.empty?
-          output_object.delete('@type') if Array(output_object['@type']).join('').to_s.empty?
+          output_object.delete('@language') if output_object.key?('@language') && Array(output_object['@language']).empty?
+          output_object.delete('@type') if output_object.key?('@type') && Array(output_object['@type']).empty?
 
           # If the value of result's @value key is null, then set result to null.
-          return nil if Array(output_object['@value']).empty?
+          ary = Array(output_object['@value'])
+          return nil if ary.empty?
 
-          if !Array(output_object['@value']).all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
+          if !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
