@@ -1576,9 +1576,10 @@ module JSON::LD
     #
     # @return [Array<RDF::URI>]
     def mappings
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td ? td.id : nil
-        memo
+      {}.tap do |memo|
+        term_definitions.each_pair do |t,td|
+          memo[t] = td ? td.id : nil
+        end
       end
     end
 
@@ -1598,9 +1599,10 @@ module JSON::LD
     # @return [Array<String>]
     # @deprecated
     def languages
-      term_definitions.inject({}) do |memo, (t,td)|
-        memo[t] = td.language_mapping
-        memo
+      {}.tap do |memo|
+        term_definitions.each_pair do |t,td|
+          memo[t] = td.language_mapping
+        end
       end
     end
 

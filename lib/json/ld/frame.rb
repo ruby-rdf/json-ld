@@ -264,10 +264,9 @@ module JSON::LD
     #
     # @return all of the matched subjects.
     def filter_subjects(state, subjects, frame, flags)
-      subjects.inject({}) do |memo, id|
+      subjects.each_with_object({}) do |id, memo|
         subject = state[:graphMap][state[:graph]][id]
         memo[id] = subject if filter_subject(subject, frame, state, flags)
-        memo
       end
     end
 

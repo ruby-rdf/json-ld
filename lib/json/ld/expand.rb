@@ -113,7 +113,7 @@ module JSON::LD
 
         # Re-order result keys if ordering
         if ordered
-          output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
+          output_object.keys.kw_sort.each_with_object({}) {|kk, memo| memo[kk] = output_object[kk]}
         else
           output_object
         end
