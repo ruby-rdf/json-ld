@@ -110,19 +110,19 @@ module JSON::LD
     # @return [Hash] deresolved attribute hash
     def deresolve
       node_definition = if resolved?
-        deresolved = attributes.keys.inject({}) do |memo, prop|
-          value = attributes[prop]
-          memo[prop] = case value
-          when Resource
-            {'id' => value.id}
-          when Array
-            value.map do |v|
-              v.is_a?(Resource) ? {'id' => v.id} : v
+        deresolved = [].tap do |memo|
+          attributes.each_pair do |prop, value|
+            memo[prop] = case value
+            when Resource
+              {'id' => value.id}
+            when Array
+              value.map do |v|
+                v.is_a?(Resource) ? {'id' => v.id} : v
+              end
+            else
+              value
             end
-          else
-            value
           end
-          memo
         end
         deresolved
       else

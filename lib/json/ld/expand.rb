@@ -44,10 +44,9 @@ module JSON::LD
         output_object = {}
 
         # See if keys mapping to @type have terms with a local context
-        input.keys.select do |key|
-          context.expand_iri(key, vocab: true) == '@type'
-        end.each do |key|
-          Array(input[key]).each do |term|
+        input.each_pair do |key, val|
+          next unless context.expand_iri(key, vocab: true) == '@type'
+          Array(val).each do |term|
             term_context = context.term_definitions[term].context if context.term_definitions[term]
             context = term_context ? context.parse(term_context) : context
           end
@@ -303,7 +302,7 @@ module JSON::LD
             end
 
             # If expanded value contains members other than @reverse:
-            unless value.keys.reject {|k| k == '@reverse'}.empty?
+            if !value.key?('@reverse') || value.length > 1
               # If result does not have an @reverse member, create one and set its value to an empty JSON object.
               reverse_map = output_object['@reverse'] ||= {}
               value.each do |property, items|

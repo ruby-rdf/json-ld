@@ -490,7 +490,11 @@ module JSON::LD
     # @param [Hash] flags the current framing flags.
     # @return [Array<Hash>] the implicit frame.
     def create_implicit_frame(flags)
-      flags.keys.inject({}) {|memo, key| memo["@#{key}"] = [flags[key]]; memo}
+      {}.tap do |memo|
+        flags.each_pair do |key, val|
+          memo["@#{key}"] = [val]
+        end
+      end
     end
 
   private

@@ -20,7 +20,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def node_reference?(value)
-      value.is_a?(Hash) && value.keys == %w(@id)
+      value.is_a?(Hash) && value.length == 1 && value.key?('@id')
     end
 
     ##
