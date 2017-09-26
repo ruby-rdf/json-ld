@@ -62,7 +62,7 @@ module JSON::LD
         # If result contains the key @value:
         if value?(output_object)
           unless (output_object.keys - %w(@value @language @type @index)).empty? &&
-                 (output_object.keys & %w(@language @type)).length < 2
+                 !(output_object.key?('@language') && output_object.key?('@type'))
             # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
             raise JsonLdError::InvalidValueObject,
             "value object has unknown keys: #{output_object.inspect}"
