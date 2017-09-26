@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 require 'json'
 require 'bigdecimal'
+require 'set'
 
 module JSON::LD
   class Context
@@ -554,7 +555,7 @@ module JSON::LD
       end
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if KEYWORDS.include?(term) && !%w(@vocab @language @version).include?(term)
+      if KEYWORDS.include?(term) && (term != '@vocab' && term != '@language' && term != '@version')
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
@@ -606,7 +607,7 @@ module JSON::LD
           else
             :error
           end
-          unless %w(@id @vocab).include?(type) || type.is_a?(RDF::URI) && type.absolute?
+          unless (type == '@id' || type == '@vocab') || type.is_a?(RDF::URI) && type.absolute?
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           #log_debug("") {"type_mapping: #{type.inspect}"}
@@ -633,7 +634,7 @@ module JSON::LD
             container = value['@container']
             raise JsonLdError::InvalidReverseProperty,
                   "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                   container.is_a?(String) && ['@set', '@index'].include?(container)
+                   container.is_a?(String) && (container == '@set' || container == '@index')
             definition.container_mapping = check_container(container, local_context, defined, term)
           end
           definition.reverse_property = true
@@ -791,7 +792,7 @@ module JSON::LD
         (statements[statement.subject] ||= []) << statement
 
         # Keep track of predicate ranges
-        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate) 
+        if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate)
           (ranges[statement.subject] ||= []) << statement.object
         end
       end
@@ -886,7 +887,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
     def as_array?(term)
-      return true if %w(@graph @list).include?(term)
+      return true if term == '@graph' || term == '@list'
       term = find_definition(term)
       term && (term.as_set || term.container_mapping == '@list')
     end
@@ -1138,7 +1139,7 @@ module JSON::LD
         tl_value ||= '@null'
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
-        if %w(@id @reverse).include?(tl_value) && value.is_a?(Hash) && value.has_key?('@id')
+        if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.has_key?('@id')
           t_iri = compact_iri(value['@id'], vocab: true, document_relative: true)
           if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
             preferred_values.concat(%w(@vocab @id @none))
@@ -1204,6 +1205,8 @@ module JSON::LD
       end
     end
 
+    RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
+
     ##
     # If active property has a type mapping in the active context set to @id or @vocab, a JSON object with a single member @id whose value is the result of using the IRI Expansion algorithm on value is returned.
     #
@@ -1246,7 +1249,7 @@ module JSON::LD
       when RDF::Literal
         #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
-        if useNativeTypes && [RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double].include?(value.datatype)
+        if useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
           res['@value'] = value.object
           res['@type'] = uri(coerce(property)) if coerce(property)
         else
@@ -1407,7 +1410,7 @@ module JSON::LD
     def coerce(property)
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
-      return '@id' if [RDF.type, '@type'].include?(property)
+      return '@id' if property == RDF.type || property == '@type'
       term_definitions[property] && term_definitions[property].type_mapping
     end
 

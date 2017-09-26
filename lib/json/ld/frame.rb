@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
+require 'set'
+
 module JSON::LD
   module Frame
     include Utils
@@ -96,7 +98,7 @@ module JSON::LD
             recurse, subframe = (state[:graph] != '@merged'), {}
           else
             subframe = frame['@graph'].first
-            recurse = !%w(@merged @default).include?(id)
+            recurse = !(id == '@merged' || id == '@default')
             subframe = {} unless subframe.is_a?(Hash)
           end
 
@@ -267,6 +269,8 @@ module JSON::LD
       end
     end
 
+    EXCLUDED_FRAMING_KEYWORDS = Set.new(%w(@default @embed @explicit @omitDefault @requireAll)).freeze
+
     ##
     # Returns true if the given node matches the given frame.
     #
@@ -320,7 +324,7 @@ module JSON::LD
             validate_frame(v)
             has_default = v.has_key?('@default')
             # Exclude framing keywords
-            v = v.dup.delete_if {|kk,vv| %w(@default @embed @explicit @omitDefault @requireAll).include?(kk)}
+            v = v.dup.delete_if {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
           end
 
 

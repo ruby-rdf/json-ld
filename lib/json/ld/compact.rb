@@ -58,7 +58,7 @@ module JSON::LD
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
-          if %w(@id @type).include?(expanded_property)
+          if expanded_property == '@id' || expanded_property == '@type'
             compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
               context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
             end
@@ -118,7 +118,7 @@ module JSON::LD
           end
 
           # Otherwise, if expanded property is @index, @value, or @language:
-          if %w(@index @value @language).include?(expanded_property)
+          if expanded_property == '@index' || expanded_property == '@value' || expanded_property == '@language'
             al = context.compact_iri(expanded_property, vocab: true, quiet: true)
             #log_debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value
@@ -181,7 +181,7 @@ module JSON::LD
               end
             end
 
-            if %w(@language @index @id @type).include?(container)
+            if container == '@language' || container == '@index' || container == '@id' || container == '@type'
               map_object = nest_result[item_active_property] ||= {}
               compacted_item = case container
               when '@id'

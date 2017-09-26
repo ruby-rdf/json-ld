@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
+require 'set'
+
 module JSON::LD
   ##
   # Expand module, used as part of API
@@ -125,6 +127,8 @@ module JSON::LD
     end
 
   private
+    CONTAINER_MAPPING_INDEX_ID_TYPE = Set.new(%w(@index @id @type)).freeze
+
     # Expand each key and value of element adding them to result
     def expand_object(input, active_property, context, output_object, ordered: false)
       framing = @options[:processingMode].include?("expand-frame")
@@ -366,7 +370,7 @@ module JSON::LD
           end
 
           ary
-        elsif %w(@index @id @type).include?(container) && value.is_a?(Hash)
+        elsif CONTAINER_MAPPING_INDEX_ID_TYPE.include?(container) && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @index, @id, @type, an IRI or Blank Node and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.

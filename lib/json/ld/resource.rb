@@ -188,7 +188,7 @@ module JSON::LD
 
       #$logger.debug "resolve(0): #{attributes.inspect}"
       @attributes.each do |k, v|
-        next if %w(id type).include?(k)
+        next if k == 'id' || k == 'type'
         @attributes[k] = update_obj(@attributes[k], reference_map)
       end
       #$logger.debug "resolve(1): #{attributes.inspect}"
