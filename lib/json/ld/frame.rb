@@ -520,8 +520,8 @@ module JSON::LD
       v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
       return true if (v2 + t2 + l2).empty?
       return false unless v2.include?(v1) || v2 == [{}]
-      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []) == []
-      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []) == []
+      return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []).empty?
+      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
       true
     end
   end

@@ -125,7 +125,7 @@ module JSON::LD
             next
           end
 
-          if expanded_value == []
+          if expanded_value.empty?
             item_active_property =
               context.compact_iri(expanded_property,
                                   value: expanded_value,
