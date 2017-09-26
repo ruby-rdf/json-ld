@@ -325,7 +325,7 @@ module JSON::LD
             validate_frame(v)
             has_default = v.has_key?('@default')
             # Exclude framing keywords
-            v = v.dup.delete_if {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
+            v = v.reject {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
           end
 
 
