@@ -19,7 +19,7 @@ module JSON::LD
   #     RDF::Format.file_extensions    #=> {:jsonld => [JSON::LD::Format] }
   #
   # @see http://www.w3.org/TR/json-ld/
-  # @see http://json-ld.org/test-suite/
+  # @see https://json-ld.org/test-suite/
   class Format < RDF::Format
     content_type     'application/ld+json',
                      extension: :jsonld,

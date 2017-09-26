@@ -37,14 +37,14 @@ file "etc/manifests.nt" do
   require 'json/ld'
   require 'rdf/ntriples'
   graph = RDF::Graph.new do |g|
-    %w( http://json-ld.org/test-suite/tests/compact-manifest.jsonld
-        http://json-ld.org/test-suite/tests/error-manifest.jsonld
-        http://json-ld.org/test-suite/tests/expand-manifest.jsonld
-        http://json-ld.org/test-suite/tests/flatten-manifest.jsonld
-        http://json-ld.org/test-suite/tests/frame-manifest.jsonld
-        http://json-ld.org/test-suite/tests/fromRdf-manifest.jsonld
-        http://json-ld.org/test-suite/tests/remote-doc-manifest.jsonld
-        http://json-ld.org/test-suite/tests/toRdf-manifest.jsonld
+    %w( https://json-ld.org/test-suite/tests/compact-manifest.jsonld
+        https://json-ld.org/test-suite/tests/error-manifest.jsonld
+        https://json-ld.org/test-suite/tests/expand-manifest.jsonld
+        https://json-ld.org/test-suite/tests/flatten-manifest.jsonld
+        https://json-ld.org/test-suite/tests/frame-manifest.jsonld
+        https://json-ld.org/test-suite/tests/fromRdf-manifest.jsonld
+        https://json-ld.org/test-suite/tests/remote-doc-manifest.jsonld
+        https://json-ld.org/test-suite/tests/toRdf-manifest.jsonld
     ).each do |man|
       puts "load #{man}"
       g.load(man, unique_bnodes: true)

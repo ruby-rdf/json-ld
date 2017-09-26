@@ -5,7 +5,7 @@ require 'support/extensions'
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util
   module File
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
+    REMOTE_PATH = "https://json-ld.org/test-suite/"
     LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
 
     class << self

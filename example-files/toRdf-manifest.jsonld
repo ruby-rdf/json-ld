@@ -1,10 +1,10 @@
 {
-  "@context": "http://json-ld.org/test-suite/context.jsonld",
+  "@context": "https://json-ld.org/test-suite/context.jsonld",
   "@id": "",
   "@type": "jld:Manifest",
   "rdfs:comment": "JSON-LD to RDF tests generate N-Quads Output",
   "name": "toRdf",
-  "baseIri": "http://json-ld.org/test-suite/tests/",
+  "baseIri": "https://json-ld.org/test-suite/tests/",
   "sequence": [
     {
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
