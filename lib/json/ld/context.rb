@@ -113,7 +113,7 @@ module JSON::LD
       def container_mapping=(mapping)
         mapping = Array(mapping)
         if @as_set = mapping.include?('@set')
-          mapping -= %w(@set)
+          mapping.delete('@set')
         end
         @container_mapping = mapping.first
       end
@@ -1615,7 +1615,7 @@ module JSON::LD
       end
 
       val = Array(container)
-      val -= %w(@set) if has_set = val.include?('@set')
+      val.delete('@set') if has_set = val.include?('@set')
 
       raise JsonLdError::InvalidContainerMapping,
         "'@container' has more than one value other than @set" if val.length > 1
