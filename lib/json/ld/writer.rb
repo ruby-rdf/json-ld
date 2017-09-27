@@ -75,31 +75,37 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :compactArrays,
           datatype: TrueClass,
+          control: :checkbox,
           on: ["--compact-arrays"],
           description: "Replaces arrays with just one element with that element during compaction.") {true},
         RDF::CLI::Option.new(
           symbol: :compactToRelative,
           datatype: TrueClass,
+          control: :checkbox,
           on: ["--compact-to-relative"],
           description: "Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded. Default is `true` use --no-compact-to-relative to disable.") {true},
         RDF::CLI::Option.new(
           symbol: :context,
           datatype: RDF::URI,
+          control: :url2,
           on: ["--context CONTEXT"],
-          description: "Context to use when serializing. Constructed context for native serialization.") {|arg| RDF::URI(arg)},
+          description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
-          symbol: :frame,
-          datatype: RDF::URI,
-          on: ["--frame FRAME"],
-          description: "Frame to use when serializing.") {|arg| RDF::URI(arg)},
+          symbol: :processing_mode,
+          datatype: %w(json-ld-1.0 json-ld-1.1),
+          control: :radio,
+          on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
+          description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
         RDF::CLI::Option.new(
           symbol: :stream,
           datatype: TrueClass,
+          control: :checkbox,
           on: ["--stream"],
           description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {true},
         RDF::CLI::Option.new(
           symbol: :useRdfType,
           datatype: TrueClass,
+          control: :checkbox,
           on: ["--use-rdf-type"],
           description: "Treat `rdf:type` like a normal property instead of using `@type`.") {true},
       ]

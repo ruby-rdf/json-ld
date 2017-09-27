@@ -15,10 +15,17 @@ module JSON::LD
     def self.options
       super + [
         RDF::CLI::Option.new(
-          symbol: :compactArrays,
-          datatype: TrueClass,
-          on: ["--compact-arrays"],
-          description: "Replaces arrays with just one element with that element during compaction.") {true},
+          symbol: :expandContext,
+          control: :url2,
+          datatype: RDF::URI,
+          on: ["--expand-context CONTEXT"],
+          description: "Context to use when expanding.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :processing_mode,
+          datatype: %w(json-ld-1.0 json-ld-1.1),
+          control: :radio,
+          on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
+          description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
       ]
     end
 

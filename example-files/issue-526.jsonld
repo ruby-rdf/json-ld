@@ -1,0 +1,8 @@
+{
+  "@context": {
+    "@vocab"  : "http://vocab.getty.edu/",
+    "a"     : "http://vocab.getty.edu/aaaaaaaaaat/"
+  }, 
+  "@id" : "http://vocab.getty.edu/aaaaaaaaaat/5001065997",
+  "@type": "http://vocab.getty.edu/aaaaaaaaaat/datatype"
+}

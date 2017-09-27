@@ -174,7 +174,7 @@ module JSON::LD
       end
 
       # If, after the algorithm outlined above is run, the resulting element is an JSON object with just a @graph property, element is set to the value of @graph's value.
-      result = result['@graph'] if result.is_a?(Hash) && result.keys == %w(@graph)
+      result = result['@graph'] if result.is_a?(Hash) && result.length == 1 && result.key?('@graph')
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
@@ -277,7 +277,9 @@ module JSON::LD
         create_node_map(value, graph_maps)
 
         default_graph = graph_maps['@default']
-        graph_maps.keys.kw_sort.reject {|k| k == '@default'}.each do |graph_name|
+        graph_maps.keys.kw_sort.each do |graph_name|
+          next if graph_name == '@default'
+
           graph = graph_maps[graph_name]
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []

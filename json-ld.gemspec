@@ -10,7 +10,6 @@ Gem::Specification.new do |gem|
   gem.license               = 'Unlicense'
   gem.summary               = "JSON-LD reader/writer for Ruby."
   gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."
-  gem.rubyforge_project     = 'json-ld'
 
   gem.authors               = ['Gregg Kellogg']
   gem.email                 = 'public-linked-json@w3.org'
@@ -27,7 +26,7 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 2.2.2'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '~> 2.2'
+  gem.add_runtime_dependency     'rdf',             '~> 2.2', '>= 2.2.8'
   gem.add_runtime_dependency     'multi_json',      '~> 1.12'
   gem.add_development_dependency 'linkeddata',      '~> 2.2'
   gem.add_development_dependency 'jsonlint',        '~> 0.2'  unless RUBY_ENGINE == "jruby"

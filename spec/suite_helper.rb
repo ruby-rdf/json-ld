@@ -5,7 +5,7 @@ require 'support/extensions'
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util
   module File
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
+    REMOTE_PATH = "https://json-ld.org/test-suite/"
     LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
 
     class << self
@@ -69,7 +69,7 @@ end
 
 module Fixtures
   module SuiteTest
-    SUITE = RDF::URI("http://json-ld.org/test-suite/")
+    SUITE = RDF::URI("https://json-ld.org/test-suite/")
 
     class Manifest < JSON::LD::Resource
       def self.open(file)
@@ -108,7 +108,7 @@ module Fixtures
       def options
         @options ||= begin
           opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          {'specVersion' => "1.1"}.merge(property('option') || {}).each do |k, v|
+          {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
           opts
@@ -162,7 +162,7 @@ module Fixtures
         end
         options = {validate: true}.merge(options)
 
-        unless options[:specVersion] == "1.1"
+        unless options[:specVersion] == "json-ld-1.1"
           skip "not a 1.1 test" 
           return
         end
@@ -287,7 +287,7 @@ module Fixtures
       end
     end
 
-    REMOTE_PATH = "http://json-ld.org/test-suite/"
+    REMOTE_PATH = "https://json-ld.org/test-suite/"
     LOCAL_PATH = ::File.expand_path("../json-ld.org/test-suite", __FILE__) + '/'
     ##
     # Document loader to use for tests having `useDocumentLoader` option

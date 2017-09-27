@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
+require 'set'
+
 module JSON::LD
   ##
   # Expand module, used as part of API
@@ -22,7 +24,7 @@ module JSON::LD
       when Array
         # If element is an array,
         is_list = context.container(active_property) == '@list'
-        value = input.map do |v|
+        value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered)
 
@@ -30,8 +32,8 @@ module JSON::LD
           raise JsonLdError::ListOfLists,
                 "A list may not contain another list" if
                 is_list && (v.is_a?(Array) || list?(v))
-          v
-        end.flatten.compact
+          memo << v unless v.nil?
+        end
 
         value
       when Hash
@@ -42,13 +44,11 @@ module JSON::LD
         end
 
         output_object = {}
-        keys = ordered ? input.keys.kw_sort : input.keys
 
         # See if keys mapping to @type have terms with a local context
-        input.keys.select do |key|
-          context.expand_iri(key, vocab: true) == '@type'
-        end.each do |key|
-          Array(input[key]).each do |term|
+        input.each_pair do |key, val|
+          next unless context.expand_iri(key, vocab: true) == '@type'
+          Array(val).each do |term|
             term_context = context.term_definitions[term].context if context.term_definitions[term]
             context = term_context ? context.parse(term_context) : context
           end
@@ -62,19 +62,20 @@ module JSON::LD
         # If result contains the key @value:
         if value?(output_object)
           unless (output_object.keys - %w(@value @language @type @index)).empty? &&
-                 (output_object.keys & %w(@language @type)).length < 2
+                 !(output_object.key?('@language') && output_object.key?('@type'))
             # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
             raise JsonLdError::InvalidValueObject,
             "value object has unknown keys: #{output_object.inspect}"
           end
 
-          output_object.delete('@language') if Array(output_object['@language']).join('').to_s.empty?
-          output_object.delete('@type') if Array(output_object['@type']).join('').to_s.empty?
+          output_object.delete('@language') if output_object.key?('@language') && Array(output_object['@language']).empty?
+          output_object.delete('@type') if output_object.key?('@type') && Array(output_object['@type']).empty?
 
           # If the value of result's @value key is null, then set result to null.
-          return nil if Array(output_object['@value']).empty?
+          ary = Array(output_object['@value'])
+          return nil if ary.empty?
 
-          if !Array(output_object['@value']).all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
+          if !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
@@ -88,7 +89,7 @@ module JSON::LD
         elsif !output_object.fetch('@type', []).is_a?(Array)
           # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.
           output_object['@type'] = [output_object['@type']]
-        elsif output_object.keys.any? {|k| %w(@set @list).include?(k)}
+        elsif output_object.key?('@set') || output_object.key?('@list')
           # Otherwise, if result contains the key @set or @list:
           # The result must contain at most one other key and that key must be @index. Otherwise, an invalid set or list object error has been detected and processing is aborted.
           raise JsonLdError::InvalidSetOrListObject,
@@ -96,15 +97,15 @@ module JSON::LD
                 (output_object.keys - %w(@set @list @index)).empty?
 
           # If result contains the key @set, then set result to the key's associated value.
-          return output_object['@set'] if output_object.keys.include?('@set')
+          return output_object['@set'] if output_object.key?('@set')
         end
 
         # If result contains only the key @language, set result to null.
-        return nil if output_object.keys == %w(@language)
+        return nil if output_object.length == 1 && output_object.key?('@language')
 
         # If active property is null or @graph, drop free-floating values as follows:
         if (active_property || '@graph') == '@graph' &&
-          (output_object.keys.any? {|k| %w(@value @list).include?(k)} ||
+          (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - %w(@id)).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil
@@ -112,7 +113,7 @@ module JSON::LD
 
         # Re-order result keys if ordering
         if ordered
-          output_object.keys.kw_sort.inject({}) {|map, kk| map[kk] = output_object[kk]; map}
+          output_object.keys.kw_sort.each_with_object({}) {|kk, memo| memo[kk] = output_object[kk]}
         else
           output_object
         end
@@ -127,6 +128,8 @@ module JSON::LD
     end
 
   private
+    CONTAINER_MAPPING_INDEX_ID_TYPE = Set.new(%w(@index @id @type)).freeze
+
     # Expand each key and value of element adding them to result
     def expand_object(input, active_property, context, output_object, ordered: false)
       framing = @options[:processingMode].include?("expand-frame")
@@ -304,7 +307,7 @@ module JSON::LD
             end
 
             # If expanded value contains members other than @reverse:
-            unless value.keys.reject {|k| k == '@reverse'}.empty?
+            if !value.key?('@reverse') || value.length > 1
               # If result does not have an @reverse member, create one and set its value to an empty JSON object.
               reverse_map = output_object['@reverse'] ||= {}
               value.each do |property, items|
@@ -368,7 +371,7 @@ module JSON::LD
           end
 
           ary
-        elsif %w(@index @id @type).include?(container) && value.is_a?(Hash)
+        elsif CONTAINER_MAPPING_INDEX_ID_TYPE.include?(container) && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @index, @id, @type, an IRI or Blank Node and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.

@@ -67,7 +67,7 @@ describe JSON::LD::Format do
     end
   end
 
-  describe ".cli_commands", skip: ("TextMate OptionParser issues" if ENV['TM_SELECTED_FILE']) do
+  describe ".cli_commands" do
     require 'rdf/cli'
     let(:ttl) {File.expand_path("../test-files/test-1-rdf.ttl", __FILE__)}
     let(:json) {File.expand_path("../test-files/test-1-input.json", __FILE__)}
@@ -75,37 +75,37 @@ describe JSON::LD::Format do
 
     describe "#expand" do
       it "expands RDF" do
-        expect {RDF::CLI.exec(["expand", ttl], format: :ttl)}.to write.to(:output)
+        expect {RDF::CLI.exec(["expand", ttl], format: :ttl, output_format: :jsonld)}.to write.to(:output)
       end
       it "expands JSON" do
-        expect {RDF::CLI.exec(["expand", json], format: :jsonld, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["expand", json], format: :jsonld, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
     end
 
     describe "#compact" do
       it "compacts RDF" do
-        expect {RDF::CLI.exec(["compact", ttl], context: context, format: :ttl, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["compact", ttl], context: context, format: :ttl, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
       it "compacts JSON" do
-        expect {RDF::CLI.exec(["compact", json], context: context, format: :jsonld, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["compact", json], context: context, format: :jsonld, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
     end
 
     describe "#flatten" do
       it "flattens RDF" do
-        expect {RDF::CLI.exec(["flatten", ttl], context: context, format: :ttl, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["flatten", ttl], context: context, format: :ttl, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
       it "flattens JSON" do
-        expect {RDF::CLI.exec(["flatten", json], context: context, format: :jsonld, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["flatten", json], context: context, format: :jsonld, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
     end
 
     describe "#frame" do
       it "frames RDF" do
-        expect {RDF::CLI.exec(["frame", ttl], frame: context, format: :ttl)}.to write.to(:output)
+        expect {RDF::CLI.exec(["frame", ttl], frame: context, format: :ttl, output_format: :jsonld)}.to write.to(:output)
       end
       it "frames JSON" do
-        expect {RDF::CLI.exec(["frame", json], frame: context, format: :jsonld, validate: false)}.to write.to(:output)
+        expect {RDF::CLI.exec(["frame", json], frame: context, format: :jsonld, output_format: :jsonld, validate: false)}.to write.to(:output)
       end
     end
   end
