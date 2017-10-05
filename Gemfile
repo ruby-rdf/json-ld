@@ -1,22 +1,22 @@
 source "https://rubygems.org"
 
 gemspec
-gem 'rdf',              github: "ruby-rdf/rdf",             branch: "develop"
-gem 'rdf-spec',         github: "ruby-rdf/rdf-spec",        branch: "develop"
+gem 'rdf',              git: "https://github.com/ruby-rdf/rdf",             branch: "develop"
+gem 'rdf-spec',         git: "https://github.com/ruby-rdf/rdf-spec",        branch: "develop"
 
 group :development do
-  gem 'ebnf',           github: "gkellogg/ebnf",            branch: "develop"
-  gem 'sxp',            github: "dryruby/sxp.rb",           branch: "develop"
-  gem 'rdf-isomorphic', github: "ruby-rdf/rdf-isomorphic",  branch: "develop"
-  gem 'rdf-trig',       github: "ruby-rdf/rdf-trig",        branch: "develop"
-  gem 'rdf-vocab',      github: "ruby-rdf/rdf-vocab",       branch: "develop"
-  gem 'rdf-xsd',        github: "ruby-rdf/rdf-xsd",         branch: "develop"
+  gem 'ebnf',           git: "https://github.com/gkellogg/ebnf",            branch: "develop"
+  gem 'sxp',            git: "https://github.com/dryruby/sxp.rb",           branch: "develop"
+  gem 'rdf-isomorphic', git: "https://github.com/ruby-rdf/rdf-isomorphic",  branch: "develop"
+  gem 'rdf-trig',       git: "https://github.com/ruby-rdf/rdf-trig",        branch: "develop"
+  gem 'rdf-vocab',      git: "https://github.com/ruby-rdf/rdf-vocab",       branch: "develop"
+  gem 'rdf-xsd',        git: "https://github.com/ruby-rdf/rdf-xsd",         branch: "develop"
   gem 'fasterer'
   gem 'earl-report'
 end
 
 group :development, :test do
-  gem 'simplecov',  require: false, platform: :mri, github: "colszowka/simplecov" # Until Fixnum issues solved
+  gem 'simplecov',  require: false, platform: :mri
   gem 'coveralls',  require: false, platform: :mri
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'
