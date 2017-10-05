@@ -637,6 +637,29 @@ describe JSON::LD::API do
             "http://example.com/foo" => []
           }]
         },
+        "Free-floating values in sets" => {
+          input: %({
+            "@context": {"property": "http://example.com/property"},
+            "@graph": [{
+                "@set": [
+                    "free-floating strings in set objects are removed",
+                    {"@id": "http://example.com/free-floating-node"},
+                    {
+                        "@id": "http://example.com/node",
+                        "property": "nodes with properties are not removed"
+                    }
+                ]
+            }]
+          }),
+          output: %([{
+            "@id": "http://example.com/node",
+            "http://example.com/property": [
+              {
+                "@value": "nodes with properties are not removed"
+              }
+            ]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand params}
       end

@@ -32,7 +32,11 @@ module JSON::LD
           raise JsonLdError::ListOfLists,
                 "A list may not contain another list" if
                 is_list && (v.is_a?(Array) || list?(v))
-          memo << v unless v.nil?
+          case v
+          when nil then nil
+          when Array then memo.concat(v)
+          else            memo << v
+          end
         end
 
         value
