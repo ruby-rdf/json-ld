@@ -113,6 +113,7 @@ module JSON::LD
       def container_mapping=(mapping)
         mapping = Array(mapping)
         if @as_set = mapping.include?('@set')
+          mapping = mapping.dup
           mapping.delete('@set')
         end
         @container_mapping = mapping.first
@@ -1616,7 +1617,7 @@ module JSON::LD
               "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
       end
 
-      val = Array(container)
+      val = Array(container).dup
       val.delete('@set') if has_set = val.include?('@set')
 
       raise JsonLdError::InvalidContainerMapping,
