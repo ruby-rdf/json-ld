@@ -1,6 +1,5 @@
 require 'json/ld'
-require 'support/extensions'
-
+require_relative 'support/extensions'
 
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util

@@ -1,6 +1,5 @@
 # coding: utf-8
-$:.unshift "."
-require 'spec_helper'
+require_relative 'spec_helper'
 
 describe JSON::LD::API do
   let(:logger) {RDF::Spec.logger}
@@ -897,6 +896,205 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
+      end
+    end
+
+    context "@container: @graph" do
+      {
+        "Creates a graph object given a value" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "value": "x"
+            }
+          }),
+          output: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }])
+        },
+        "Creates a graph object within an array given a value" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@set"]}
+            },
+            "input": {
+              "value": "x"
+            }
+          }),
+          output: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }])
+        },
+        "Does not create an graph object if value is a graph" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "@graph": {
+                "value": "x"
+              }
+            }
+          }),
+          output: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
+      end
+
+      context "+ @index" do
+        {
+          "Creates a graph object given an indexed value" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "g1": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@index": "g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value with @set" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index", "@set"]}
+              },
+              "input": {
+                "g1": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@index": "g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Does not create a new graph object if indexed value is already a graph object" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "g1": {
+                  "@graph": {
+                    "value": "x"
+                  }
+                }
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@index": "g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
+        end
+      end
+
+      context "+ @id" do
+        {
+          "Creates a graph object given an indexed value" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "http://example.com/g1": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@id": "http://example.com/g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value with @set" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id", "@set"]}
+              },
+              "input": {
+                "http://example.com/g1": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@id": "http://example.com/g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Does not create a new graph object if indexed value is already a graph object" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "http://example.com/g1": {
+                  "@graph": {
+                    "value": "x"
+                  }
+                }
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@id": "http://example.com/g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
+        end
       end
     end
 

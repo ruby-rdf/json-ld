@@ -38,12 +38,8 @@ module JSON::LD
       attr_accessor :type_mapping
 
       # Base container mapping, without @set
-      # @return ['@index', '@language', '@index', '@type', '@id'] Container mapping
+      # @return Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'> Container mapping
       attr_reader :container_mapping
-
-      # If container mapping was defined along with @set
-      # @return [Boolean]
-      attr_reader :as_set
 
       # @return [String] Term used for nest properties
       attr_accessor :nest
@@ -78,7 +74,7 @@ module JSON::LD
       # @param [String] term
       # @param [String] id
       # @param [String] type_mapping Type mapping
-      # @param ['@index', '@language', '@index', '@set', '@type', '@id'] container_mapping
+      # @param [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
@@ -100,7 +96,7 @@ module JSON::LD
         @term                   = term
         @id                     = id.to_s           unless id.nil?
         @type_mapping           = type_mapping.to_s unless type_mapping.nil?
-        self.container_mapping  = container_mapping unless container_mapping.nil?
+        self.container_mapping  = container_mapping
         @language_mapping       = language_mapping  unless language_mapping.nil?
         @reverse_property       = reverse_property
         @nest                   = nest              unless nest.nil?
@@ -116,7 +112,7 @@ module JSON::LD
           mapping = mapping.dup
           mapping.delete('@set')
         end
-        @container_mapping = mapping.first
+        @container_mapping = mapping.sort
       end
 
       ##
@@ -147,7 +143,7 @@ module JSON::LD
             end
           end
 
-          cm = [container_mapping, ('@set' if as_set)].compact
+          cm = (Array(container_mapping) + (as_set? ? %w(@set) : [])).compact
           cm = cm.first if cm.length == 1
           defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
@@ -168,13 +164,18 @@ module JSON::LD
         %w(id type_mapping container_mapping language_mapping reverse_property nest simple prefix context).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
-          if acc == 'container_mapping' && as_set
-            v = v ? [v, '@set'] : '@set'
+          if acc == 'container_mapping'
+            v.concat(%w(@set)) if as_set?
+            v = v.first if v.length <= 1
           end
           defn << "#{acc}: #{v.inspect}" if v
         end
         defn.join(', ') + ")"
       end
+
+      # If container mapping was defined along with @set
+      # @return [Boolean]
+      def as_set?; @as_set || false; end
 
       def inspect
         v = %w([TD)
@@ -182,7 +183,7 @@ module JSON::LD
         v << "term=#{@term}"
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
-        v << "as_set=#{as_set.inspect}"
+        v << "as_set=#{as_set?.inspect}"
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
@@ -874,23 +875,22 @@ module JSON::LD
     # Retrieve container mapping, add it if `value` is provided
     #
     # @param [Term, #to_s] term in unexpanded form
-    # @return [String]
+    # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>]
     def container(term)
-      return '@set' if term == '@graph'
-      return term if KEYWORDS.include?(term)
+      return [term] if KEYWORDS.include?(term)
       term = find_definition(term)
-      term && term.container_mapping
+      term ? term.container_mapping : []
     end
 
     ##
-    # Should values be represented as a set?
+    # Should values be represented using an array?
     #
     # @param [Term, #to_s] term in unexpanded form
     # @return [Boolean]
     def as_array?(term)
-      return true if term == '@graph' || term == '@list'
+      return true if CONTEXT_CONTAINER_ARRAY_TERMS.include?(term)
       term = find_definition(term)
-      term && (term.as_set || term.container_mapping == '@list')
+      term && (term.as_set? || term.container_mapping.include?('@list'))
     end
 
     ##
@@ -1122,6 +1122,11 @@ module JSON::LD
             tl_value = common_language
           end
           #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
+        elsif graph?(value)
+          # TODO: support `@graphId`?
+          # TODO: "@graph@set"?
+          containers << '@graph'
+          containers << '@set'
         else
           if value?(value)
             if value.has_key?('@language') && !index?(value)
@@ -1305,7 +1310,7 @@ module JSON::LD
 
       num_members = value.length
 
-      num_members -= 1 if index?(value) && container(property) == '@index'
+      num_members -= 1 if index?(value) && container(property).include?('@index')
       if num_members > 2
         #log_debug("") {"can't compact value with # members > 2"}
         return value
@@ -1442,6 +1447,10 @@ module JSON::LD
 
   private
 
+    CONTEXT_CONTAINER_ARRAY_TERMS = %w(@set @list @graph).freeze
+    CONTEXT_CONTAINER_ID_GRAPH = %w(@id @graph).freeze
+    CONTEXT_CONTAINER_INDEX_GRAPH = %w(@index @graph).freeze
+
     def uri(value)
       case value.to_s
       when /^_:(.*)$/
@@ -1482,7 +1491,26 @@ module JSON::LD
     #
     # To make use of an inverse context, a list of preferred container mappings and the type mapping or language mapping are gathered for a particular value associated with an IRI. These parameters are then fed to the Term Selection algorithm, which will find the term that most appropriately matches the value's mappings.
     #
+    # @example Basic structure of resulting inverse context
+    #     {
+    #       "http://example.com/term": {
+    #         "@language": {
+    #           "@null": "term",
+    #           "@none": "term",
+    #           "en": "term"
+    #         },
+    #         "@type": {
+    #           "@reverse": "term",
+    #           "@none": "term",
+    #           "http://datatype": "term"
+    #         },
+    #         "@any": {
+    #           "@none": "term",
+    #         }
+    #       }
+    #     }
     # @return [Hash{String => Hash{String => String}}]
+    # @todo May want to include @set along with container to allow selecting terms using @set over those without @set. May require adding some notion of value cardinality to compact_iri
     def inverse_context
       @inverse_context ||= begin
         result = {}
@@ -1491,7 +1519,15 @@ module JSON::LD
           a.length == b.length ? (a <=> b) : (a.length <=> b.length)
         end.each do |term|
           next unless td = term_definitions[term]
-          container = td.container_mapping || (td.as_set ? '@set' : '@none')
+
+          container = Array(td.container_mapping).sort.first
+          container ||= td.as_set? ? %(@set) : %(@none)
+          # FIXME: Alternative to consider
+          ## Creates "@language", "@language@set", "@set", or "@none"
+          ## for each of "@language", "@index", "@type", "@id", "@list", and "@graph"
+          #container = td.container_mapping.to_s
+          #container += '@set' if td.as_set?
+          #container = '@none' if container.empty?
           container_map = result[td.id.to_s] ||= {}
           tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}, '@any' => {}}
           type_map = tl_map['@type']
@@ -1620,20 +1656,45 @@ module JSON::LD
       val = Array(container).dup
       val.delete('@set') if has_set = val.include?('@set')
 
-      raise JsonLdError::InvalidContainerMapping,
-        "'@container' has more than one value other than @set" if val.length > 1
-
-      case val.first
-      when '@list'
+      if val.include?('@list')
         raise JsonLdError::InvalidContainerMapping,
-          "'@container' on term #{term.inspect} cannot be both @list and @set" if has_set
+          "'@container' on term #{term.inspect} using @list cannot have any other values" unless
+          !has_set && val.length == 1
         # Okay
-      when '@language', '@index', nil
+      elsif val.include?('@language')
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
+               has_set && (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+        raise JsonLdError::InvalidContainerMapping,
+          "'@container' on term #{term.inspect} using @language cannot have any values other than @set, found  #{container.inspect}" unless
+          val.length == 1
         # Okay
-      when '@type', '@id', nil
+      elsif val.include?('@index')
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
+               has_set && (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+        raise JsonLdError::InvalidContainerMapping,
+          "'@container' on term #{term.inspect} using @index cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
+          (val - CONTEXT_CONTAINER_INDEX_GRAPH).empty?
+        # Okay
+      elsif val.include?('@id')
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
                (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+        raise JsonLdError::InvalidContainerMapping,
+          "'@container' on term #{term.inspect} using @id cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
+          (val - CONTEXT_CONTAINER_ID_GRAPH).empty?
+        # Okay
+      elsif val.include?('@type') || val.include?('@graph')
+        raise JsonLdError::InvalidContainerMapping,
+              "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
+               (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+        raise JsonLdError::InvalidContainerMapping,
+          "'@container' on term #{term.inspect} using @language cannot have any values other than @set, found  #{container.inspect}" unless
+          val.length == 1
+        # Okay
+      elsif val.empty?
+        # Okay
       else
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"

@@ -47,6 +47,27 @@ module JSON::LD
     end
 
     ##
+    # Is value an expaned @graph?
+    #
+    # Note: A value is a simple graph if all of these hold true:
+    # 1. It is an object.
+    # 2. It has an `@graph` key.
+    # 3. It may have '@context', '@id' or '@index'
+    #
+    # @param [Object] value
+    # @return [Boolean]
+    def graph?(value)
+      value.is_a?(Hash) && (value.keys - UTIL_GRAPH_KEYS) == ['@graph']
+    end
+    ##
+    # Is value a simple @graph (lacking @id)?
+    # @param [Object] value
+    # @return [Boolean]
+    def simple_graph?(value)
+      graph?(value) && !value.has_key?('@id')
+    end
+    
+    ##
     # Is value an expaned @list?
     #
     # @param [Object] value
@@ -184,6 +205,7 @@ module JSON::LD
     end
 
     private
+    UTIL_GRAPH_KEYS = %w(@context @id @index).freeze
 
     # Merge the last value into an array based for the specified key if hash is not null and value is not already in that array
     def merge_value(hash, key, value)

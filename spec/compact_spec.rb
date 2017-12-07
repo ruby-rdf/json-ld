@@ -1,6 +1,5 @@
 # coding: utf-8
-$:.unshift "."
-require 'spec_helper'
+require_relative 'spec_helper'
 
 describe JSON::LD::API do
   let(:logger) {RDF::Spec.logger}
@@ -741,6 +740,301 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+      end
+    end
+
+    context "@container: @graph" do
+      {
+        "Compacts simple graph" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": "@graph"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "value": "x"
+            }
+          })
+        },
+        "Compacts simple graph with @set" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": ["@graph", "@set"]}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@set"]}
+            },
+            "input": [{
+              "value": "x"
+            }]
+          })
+        },
+        "Compacts simple graph with @index" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }],
+              "@index": "ndx"
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": "@graph"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "value": "x"
+            }
+          })
+        },
+        "Does not compact graph with @id" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }],
+              "@id": "http://example.org/id"
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": "@graph"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "@id": "http://example.org/id",
+              "@graph": [{"value": "x"}]
+            }
+          })
+        },
+      }.each_pair do |title, params|
+        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+      end
+
+      context "+ @index" do
+        {
+          "Compacts simple graph" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@index": "g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@index"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "g1": {"value": "x"}
+              }
+            })
+          },
+          "Compacts simple graph with @set" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@index": "g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@index", "@set"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index", "@set"]}
+              },
+              "input": {
+                "g1": [{"value": "x"}]
+              }
+            })
+          },
+          "Does not compact graph with @id" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }],
+                "@index": "g1",
+                "@id": "http://example.org/id"
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@index"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "@id": "http://example.org/id",
+                "@index": "g1",
+                "@graph": [{"value": "x"}]
+              }
+            })
+          },
+        }.each_pair do |title, params|
+          it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        end
+      end
+
+      context "+ @id" do
+        {
+          "Compacts simple graph" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "_:b0": {"value": "x"}
+              }
+            })
+          },
+          "Compacts simple graph with @set" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id", "@set"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id", "@set"]}
+              },
+              "input": {"_:b0": [{"value": "x"}]}
+            })
+          },
+          "Compacts simple graph with @index" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }],
+                "@index": "ndx"
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "_:b0": {"value": "x"}
+              }
+            })
+          },
+          "Compacts graph with @id" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }],
+                "@id": "http://example.org/id"
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "http://example.org/id" : {"value": "x"}
+              }
+            })
+          },
+          "Compacts graph with @id and @set" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }],
+                "@id": "http://example.org/id"
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id", "@set"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id", "@set"]}
+              },
+              "input": {
+                "http://example.org/id" : [{"value": "x"}]
+              }
+            })
+          },
+        }.each_pair do |title, params|
+          it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        end
       end
     end
 

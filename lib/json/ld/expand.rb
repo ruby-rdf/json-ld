@@ -23,7 +23,7 @@ module JSON::LD
       result = case input
       when Array
         # If element is an array,
-        is_list = context.container(active_property) == '@list'
+        is_list = context.container(active_property) == %w(@list)
         value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered)
@@ -352,7 +352,7 @@ module JSON::LD
         term_context = context.term_definitions[key].context if context.term_definitions[key]
         active_context = term_context ? context.parse(term_context) : context
         container = active_context.container(key)
-        expanded_value = if container == '@language' && value.is_a?(Hash)
+        expanded_value = if container == %w(@language) && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
           
           # Set multilingual array to an empty array.
@@ -375,17 +375,17 @@ module JSON::LD
           end
 
           ary
-        elsif CONTAINER_MAPPING_INDEX_ID_TYPE.include?(container) && value.is_a?(Hash)
-          # Otherwise, if key's container mapping in active context is @index, @id, @type, an IRI or Blank Node and value is a JSON object then value is expanded from an index map as follows:
+        elsif !(CONTAINER_MAPPING_INDEX_ID_TYPE & container).empty? && value.is_a?(Hash)
+          # Otherwise, if key's container mapping in active context contains @index, @id, @type and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.
-          container, ary = container.to_s, []
+          ary = []
 
           # For each key-value in the object:
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
-            # If container mapping in the active context is @type, and k is a term in the active context having a local context, use that context when expanding values
-            map_context = active_context.term_definitions[k].context if container == '@type' && active_context.term_definitions[k]
+            # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
+            map_context = active_context.term_definitions[k].context if container.include?('@type') && active_context.term_definitions[k]
             map_context = active_context.parse(map_context) if map_context
             map_context ||= active_context
             
@@ -393,15 +393,25 @@ module JSON::LD
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered)
             index_value.each do |item|
               case container
-              when '@index' then item[container] ||= k
-              when '@id'
+              when %w(@index) then item['@index'] ||= k
+              when %w(@id)
                 # Expand k document relative
                 expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s
-                item[container] ||= expanded_k
-              when '@type'
+                item['@id'] ||= expanded_k
+              when %w(@type)
                 # Expand k vocabulary relative
                 expanded_k = active_context.expand_iri(k, vocab: true, documentRelative: true, quiet: true).to_s
-                item[container] = [expanded_k].concat(Array(item[container]))
+                item['@type'] = [expanded_k].concat(Array(item['@type']))
+              when %w(@graph @index), %w(@graph @id)
+                # Indexed graph by graph name
+                if !graph?(item)
+                  item = [item] unless expanded_value.is_a?(Array)
+                  item = {'@graph' => item}
+                end
+                expanded_k = container.include?('@index') ? k :
+                  active_context.expand_iri(k, documentRelative: true, quiet: true).to_s
+                # Expand k document relative
+                item[container.include?('@index') ? '@index' : '@id'] ||= k
               end
 
               # Append item to expanded value.
@@ -422,11 +432,20 @@ module JSON::LD
         #log_debug {" => #{expanded_value.inspect}"}
 
         # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
-        if active_context.container(key) == '@list' && !list?(expanded_value)
+        if active_context.container(key) == %w(@list) && !list?(expanded_value)
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
-          expanded_value = {'@list' => [expanded_value].flatten}
+          expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
+          expanded_value = {'@list' => expanded_value}
         end
         #log_debug {" => #{expanded_value.inspect}"}
+
+        # convert expanded value to @graph if container specifies it
+        # FIXME value may be a named graph, as well as a simple graph.
+        if active_context.container(key) == %w(@graph) && !graph?(expanded_value)
+          #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
+          expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
+          expanded_value = {'@graph' => expanded_value}
+        end
 
         # Otherwise, if the term definition associated to key indicates that it is a reverse property
         # Spec FIXME: this is not an otherwise.
