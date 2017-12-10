@@ -6,91 +6,91 @@ describe JSON::LD::API do
 
   describe ".expand" do
     {
-      "empty doc" => {
+      "empty doc": {
         input: {},
         output: []
       },
-      "@list coercion" => {
-        input: {
-          "@context" => {
-            "foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}
+      "@list coercion": {
+        input: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
           },
-          "foo" => [{"@value" => "bar"}]
-        },
-        output: [{
-          "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
-        }]
+          "foo": [{"@value": "bar"}]
+        }),
+        output: %([{
+          "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
+        }])
       },
-      "native values in list" => {
-        input: {
-          "http://example.com/foo" => {"@list" => [1, 2]}
-        },
-        output: [{
-          "http://example.com/foo" => [{"@list" => [{"@value" => 1}, {"@value" => 2}]}]
-        }]
+      "native values in list": {
+        input: %({
+          "http://example.com/foo": {"@list": [1, 2]}
+        }),
+        output: %([{
+          "http://example.com/foo": [{"@list": [{"@value": 1}, {"@value": 2}]}]
+        }])
       },
-      "@graph" => {
-        input: {
-          "@context" => {"ex" => "http://example.com/"},
-          "@graph" => [
-            {"ex:foo"  => {"@value" => "foo"}},
-            {"ex:bar" => {"@value" => "bar"}}
+      "@graph": {
+        input: %({
+          "@context": {"ex": "http://example.com/"},
+          "@graph": [
+            {"ex:foo": {"@value": "foo"}},
+            {"ex:bar": {"@value": "bar"}}
           ]
-        },
-        output: [
-          {"http://example.com/foo" => [{"@value" => "foo"}]},
-          {"http://example.com/bar" => [{"@value" => "bar"}]}
-        ]
+        }),
+        output: %([
+          {"http://example.com/foo": [{"@value": "foo"}]},
+          {"http://example.com/bar": [{"@value": "bar"}]}
+        ])
       },
-      "@graph value (expands to array form)" => {
-        input: {
-          "@context" => {"ex" => "http://example.com/"},
-          "ex:p" => {
-            "@id" => "ex:Sub1",
-            "@graph" => {
-              "ex:q" => "foo"
+      "@graph value (expands to array form)": {
+        input: %({
+          "@context": {"ex": "http://example.com/"},
+          "ex:p": {
+            "@id": "ex:Sub1",
+            "@graph": {
+              "ex:q": "foo"
             }
           }
-        },
-        output: [{
-          "http://example.com/p" => [{
-            "@id" => "http://example.com/Sub1",
-            "@graph" => [{
-              "http://example.com/q" => [{"@value" => "foo"}],
+        }),
+        output: %([{
+          "http://example.com/p": [{
+            "@id": "http://example.com/Sub1",
+            "@graph": [{
+              "http://example.com/q": [{"@value": "foo"}]
             }]
           }]
-        }]
+        }])
       },
-      "@type with CURIE" => {
-        input: {
-          "@context" => {"ex" => "http://example.com/"},
-          "@type" => "ex:type"
-        },
-        output: [
-          {"@type" => ["http://example.com/type"]}
-        ]
+      "@type with CURIE": {
+        input: %({
+          "@context": {"ex": "http://example.com/"},
+          "@type": "ex:type"
+        }),
+        output: %([
+          {"@type": ["http://example.com/type"]}
+        ])
       },
-      "@type with CURIE and muliple values" => {
-        input: {
-          "@context" => {"ex" => "http://example.com/"},
-          "@type" => ["ex:type1", "ex:type2"]
-        },
-        output: [
-          {"@type" => ["http://example.com/type1", "http://example.com/type2"]}
-        ]
+      "@type with CURIE and muliple values": {
+        input: %({
+          "@context": {"ex": "http://example.com/"},
+          "@type": ["ex:type1", "ex:type2"]
+        }),
+        output: %([
+          {"@type": ["http://example.com/type1", "http://example.com/type2"]}
+        ])
       },
-      "@value with false" => {
-        input: {"http://example.com/ex" => {"@value" => false}},
-        output: [{"http://example.com/ex" => [{"@value" => false}]}]
+      "@value with false": {
+        input: %({"http://example.com/ex": {"@value": false}}),
+        output: %([{"http://example.com/ex": [{"@value": false}]}])
       },
-      "compact IRI" => {
-        input: {
-          "@context" => {"ex" => "http://example.com/"},
-          "ex:p" => {"@id" => "ex:Sub1"}
-        },
-        output: [{
-          "http://example.com/p" => [{"@id" => "http://example.com/Sub1"}]
-        }]
+      "compact IRI": {
+        input: %({
+          "@context": {"ex": "http://example.com/"},
+          "ex:p": {"@id": "ex:Sub1"}
+        }),
+        output: %([{
+          "http://example.com/p": [{"@id": "http://example.com/Sub1"}]
+        }])
       },
     }.each_pair do |title, params|
       it(title) {run_expand params}
@@ -98,43 +98,43 @@ describe JSON::LD::API do
 
     context "with relative IRIs" do
       {
-        "base" => {
-          input: {
-            "@id" => "",
-            "@type" => "http://www.w3.org/2000/01/rdf-schema#Resource"
-          },
-          output: [{
-            "@id" => "http://example.org/",
-            "@type" => ["http://www.w3.org/2000/01/rdf-schema#Resource"]
-          }]
+        "base": {
+          input: %({
+            "@id": "",
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource"
+          }),
+          output: %([{
+            "@id": "http://example.org/",
+            "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"]
+          }])
         },
-        "relative" => {
-          input: {
-            "@id" => "a/b",
-            "@type" => "http://www.w3.org/2000/01/rdf-schema#Resource"
-          },
-          output: [{
-            "@id" => "http://example.org/a/b",
-            "@type" => ["http://www.w3.org/2000/01/rdf-schema#Resource"]
-          }]
+        "relative": {
+          input: %({
+            "@id": "a/b",
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource"
+          }),
+          output: %([{
+            "@id": "http://example.org/a/b",
+            "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"]
+          }])
         },
-        "hash" => {
-          input: {
-            "@id" => "#a",
-            "@type" => "http://www.w3.org/2000/01/rdf-schema#Resource"
-          },
-          output: [{
-            "@id" => "http://example.org/#a",
-            "@type" => ["http://www.w3.org/2000/01/rdf-schema#Resource"]
-          }]
+        "hash": {
+          input: %({
+            "@id": "#a",
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource"
+          }),
+          output: %([{
+            "@id": "http://example.org/#a",
+            "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"]
+          }])
         },
-        "unmapped @id" => {
-          input: {
-            "http://example.com/foo" => {"@id" => "bar"}
-          },
-          output: [{
-            "http://example.com/foo" => [{"@id" => "http://example.org/bar"}]
-          }]
+        "unmapped @id": {
+          input: %({
+            "http://example.com/foo": {"@id": "bar"}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@id": "http://example.org/bar"}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params.merge(base: "http://example.org/")}
@@ -143,54 +143,54 @@ describe JSON::LD::API do
 
     context "keyword aliasing" do
       {
-        "@id" => {
-          input: {
-            "@context" => {"id" => "@id"},
-            "id" => "",
-            "@type" => "http://www.w3.org/2000/01/rdf-schema#Resource"
-          },
-          output: [{
-            "@id" => "",
-            "@type" =>[ "http://www.w3.org/2000/01/rdf-schema#Resource"]
-          }]
+        "@id": {
+          input: %({
+            "@context": {"id": "@id"},
+            "id": "",
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource"
+          }),
+          output: %([{
+            "@id": "",
+            "@type":[ "http://www.w3.org/2000/01/rdf-schema#Resource"]
+          }])
         },
-        "@type" => {
-          input: {
-            "@context" => {"type" => "@type"},
-            "type" => "http://www.w3.org/2000/01/rdf-schema#Resource",
-            "http://example.com/foo" => {"@value" => "bar", "type" => "http://example.com/baz"}
-          },
-          output: [{
-            "@type" => ["http://www.w3.org/2000/01/rdf-schema#Resource"],
-            "http://example.com/foo" => [{"@value" => "bar", "@type" => "http://example.com/baz"}]
-          }]
+        "@type": {
+          input: %({
+            "@context": {"type": "@type"},
+            "type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+            "http://example.com/foo": {"@value": "bar", "type": "http://example.com/baz"}
+          }),
+          output: %([{
+            "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
+            "http://example.com/foo": [{"@value": "bar", "@type": "http://example.com/baz"}]
+          }])
         },
-        "@language" => {
-          input: {
-            "@context" => {"language" => "@language"},
-            "http://example.com/foo" => {"@value" => "bar", "language" => "baz"}
-          },
-          output: [{
-            "http://example.com/foo" => [{"@value" => "bar", "@language" => "baz"}]
-          }]
+        "@language": {
+          input: %({
+            "@context": {"language": "@language"},
+            "http://example.com/foo": {"@value": "bar", "language": "baz"}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@value": "bar", "@language": "baz"}]
+          }])
         },
-        "@value" => {
-          input: {
-            "@context" => {"literal" => "@value"},
-            "http://example.com/foo" => {"literal" => "bar"}
-          },
-          output: [{
-            "http://example.com/foo" => [{"@value" => "bar"}]
-          }]
+        "@value": {
+          input: %({
+            "@context": {"literal": "@value"},
+            "http://example.com/foo": {"literal": "bar"}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@value": "bar"}]
+          }])
         },
-        "@list" => {
-          input: {
-            "@context" => {"list" => "@list"},
-            "http://example.com/foo" => {"list" => ["bar"]}
-          },
-          output: [{
-            "http://example.com/foo" => [{"@list" => [{"@value" => "bar"}]}]
-          }]
+        "@list": {
+          input: %({
+            "@context": {"list": "@list"},
+            "http://example.com/foo": {"list": ["bar"]}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params}
@@ -199,53 +199,157 @@ describe JSON::LD::API do
 
     context "native types" do
       {
-        "true" => {
-          input: {
-            "@context" => {"e" => "http://example.org/vocab#"},
-            "e:bool" => true
-          },
-          output: [{
-            "http://example.org/vocab#bool" => [{"@value" => true}]
-          }]
+        "true": {
+          input: %({
+            "@context": {"e": "http://example.org/vocab#"},
+            "e:bool": true
+          }),
+          output: %([{
+            "http://example.org/vocab#bool": [{"@value": true}]
+          }])
         },
-        "false" => {
-          input: {
-            "@context" => {"e" => "http://example.org/vocab#"},
-            "e:bool" => false
-          },
-          output: [{
-            "http://example.org/vocab#bool" => [{"@value" => false}]
-          }]
+        "false": {
+          input: %({
+            "@context": {"e": "http://example.org/vocab#"},
+            "e:bool": false
+          }),
+          output: %([{
+            "http://example.org/vocab#bool": [{"@value": false}]
+          }])
         },
-        "double" => {
-          input: {
-            "@context" => {"e" => "http://example.org/vocab#"},
-            "e:double" => 1.23
-          },
-          output: [{
-            "http://example.org/vocab#double" => [{"@value" => 1.23}]
-          }]
+        "double": {
+          input: %({
+            "@context": {"e": "http://example.org/vocab#"},
+            "e:double": 1.23
+          }),
+          output: %([{
+            "http://example.org/vocab#double": [{"@value": 1.23}]
+          }])
         },
-        "double-zero" => {
-          input: {
-            "@context" => {"e" => "http://example.org/vocab#"},
-            "e:double-zero" => 0.0e0
-          },
-          output: [{
-            "http://example.org/vocab#double-zero" => [{"@value" => 0.0e0}]
-          }]
+        "double-zero": {
+          input: %({
+            "@context": {"e": "http://example.org/vocab#"},
+            "e:double-zero": 0.0e0
+          }),
+          output: %([{
+            "http://example.org/vocab#double-zero": [{"@value": 0.0e0}]
+          }])
         },
-        "integer" => {
-          input: {
-            "@context" => {"e" => "http://example.org/vocab#"},
-            "e:integer" => 123
-          },
-          output: [{
-            "http://example.org/vocab#integer" => [{"@value" => 123}]
-          }]
+        "integer": {
+          input: %({
+            "@context": {"e": "http://example.org/vocab#"},
+            "e:integer": 123
+          }),
+          output: %([{
+            "http://example.org/vocab#integer": [{"@value": 123}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params}
+      end
+
+      context "with @type: @id" do
+        {
+          "true": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@id"}},
+              "e": true
+            }),
+            output:%( [{
+              "http://example.org/vocab#bool": [{"@value": true}]
+            }])
+          },
+          "false": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@id"}},
+              "e": false
+            }),
+            output: %([{
+              "http://example.org/vocab#bool": [{"@value": false}]
+            }])
+          },
+          "double": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@id"}},
+              "e": 1.23
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 1.23}]
+            }])
+          },
+          "double-zero": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@id"}},
+              "e": 0.0e0
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 0.0e0}]
+            }])
+          },
+          "integer": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#integer", "@type": "@id"}},
+              "e": 123
+            }),
+            output: %([{
+              "http://example.org/vocab#integer": [{"@value": 123}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand params}
+        end
+      end
+
+      context "with @type: @vocab" do
+        {
+          "true": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@vocab"}},
+              "e": true
+            }),
+            output:%( [{
+              "http://example.org/vocab#bool": [{"@value": true}]
+            }])
+          },
+          "false": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@vocab"}},
+              "e": false
+            }),
+            output: %([{
+              "http://example.org/vocab#bool": [{"@value": false}]
+            }])
+          },
+          "double": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@vocab"}},
+              "e": 1.23
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 1.23}]
+            }])
+          },
+          "double-zero": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@vocab"}},
+              "e": 0.0e0
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 0.0e0}]
+            }])
+          },
+          "integer": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#integer", "@type": "@vocab"}},
+              "e": 123
+            }),
+            output: %([{
+              "http://example.org/vocab#integer": [{"@value": 123}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand params}
+        end
       end
     end
 

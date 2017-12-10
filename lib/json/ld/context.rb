@@ -1233,14 +1233,16 @@ module JSON::LD
     def expand_value(property, value, useNativeTypes: false, **options)
       #log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
+      td = term_definitions.fetch(property, TermDefinition.new(property))
+
       # If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
-      if (td = term_definitions.fetch(property, TermDefinition.new(property))) && td.type_mapping == '@id'
+      if value.is_a?(String) && td.type_mapping == '@id'
         #log_debug("") {"as relative IRI: #{value.inspect}"}
         return {'@id' => expand_iri(value, documentRelative: true).to_s}
       end
 
       # If active property has a type mapping in active context that is @vocab, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
-      if td.type_mapping == '@vocab'
+      if value.is_a?(String) && td.type_mapping == '@vocab'
         #log_debug("") {"as vocab IRI: #{value.inspect}"}
         return {'@id' => expand_iri(value, vocab: true, documentRelative: true).to_s}
       end
@@ -1276,15 +1278,14 @@ module JSON::LD
         # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
         res = {'@value' => value}
 
-        if td.type_mapping
+        if td.type_mapping && !%w(@id @vocab).include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
-        elsif value.is_a?(String)
-          if td.language_mapping
-            res['@language'] = td.language_mapping
-          elsif default_language && td.language_mapping.nil?
-            res['@language'] = default_language
-          end
+        elsif value.is_a?(String) && td.language_mapping
+          res['@language'] = td.language_mapping
+        elsif value.is_a?(String) && default_language && td.language_mapping.nil?
+          res['@language'] = default_language
         end
+
         res
       end
 
