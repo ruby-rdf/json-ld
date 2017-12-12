@@ -175,7 +175,7 @@ module JSON::LD
             when Array
               # Framing allows an array of IRIs, and always puts values in an array
               raise JsonLdError::InvalidIdValue,
-                    "value of @id must be a string, array of string or hash if framing: #{value.inspect}" unless framing
+                    "value of @id must be a string unless framing: #{value.inspect}" unless framing
               context.expand_iri(value, documentRelative: true, quiet: true).to_s
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
@@ -187,7 +187,7 @@ module JSON::LD
                     "value of @id must be a string unless framing: #{value.inspect}" unless framing
               raise JsonLdError::InvalidTypeValue,
                     "value of @id must be a an empty object for framing: #{value.inspect}" unless
-                    value.empty? && framing
+                    value.empty?
               [{}]
             else
               raise JsonLdError::InvalidIdValue,
