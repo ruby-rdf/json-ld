@@ -1,6 +1,5 @@
 # coding: utf-8
-$:.unshift "."
-require 'spec_helper'
+require_relative 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do

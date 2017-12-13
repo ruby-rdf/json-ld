@@ -298,6 +298,86 @@ The value of `@container` in a term definition can include `@id` or `@type`, in 
       }
     }
 
+### @graph containers and maps
+A term can have `@container` set to include `@graph` optionally including `@id` or `@index` and `@set`. In the first form, with `@container` set to `@graph`, the value of a property is treated as a _simple graph object_, meaning that values treated as if they were contained in an object with `@graph`, creating _named graph_ with an anonymous name.
+
+    {
+      "@context": {
+        "@vocab": "http://example.org/",
+        "input": {"@container": "@graph"}
+      },
+      "input": {
+        "value": "x"
+      }
+    }
+
+which expands to the following:
+
+    [{
+      "http://example.org/input": [{
+        "@graph": [{
+          "http://example.org/value": [{"@value": "x"}]
+        }]
+      }]
+    }]
+
+Compaction reverses this process, optionally ensuring that a single value is contained within an array of `@container` also includes `@set`:
+
+    {
+      "@context": {
+        "@vocab": "http://example.org/",
+        "input": {"@container": ["@graph", "@set"]}
+      }
+    }
+
+A graph map uses the map form already existing for `@index`, `@language`, `@type`, and `@id` where the index is either an index value or an id.
+
+    {
+      "@context": {
+        "@vocab": "http://example.org/",
+        "input": {"@container": ["@graph", "@index"]}
+      },
+      "input": {
+        "g1": {"value": "x"}
+      }
+    }
+
+treats "g1" as an index, and expands to the following:
+
+    [{
+      "http://example.org/input": [{
+        "@index": "g1",
+        "@graph": [{
+          "http://example.org/value": [{"@value": "x"}]
+        }]
+      }]
+    }])
+
+This can also include `@set` to ensure that, when compacting, a single value of an index will be in array form.
+
+The _id_ version is similar:
+
+    {
+      "@context": {
+        "@vocab": "http://example.org/",
+        "input": {"@container": ["@graph", "@id"]}
+      },
+      "input": {
+        "http://example.com/g1": {"value": "x"}
+      }
+    }
+
+which expands to:
+
+    [{
+      "http://example.org/input": [{
+        "@id": "http://example.com/g1",
+        "@graph": [{
+          "http://example.org/value": [{"@value": "x"}]
+        }]
+      }]
+    }])
+
 ### Transparent Nesting
 Many JSON APIs separate properties from their entities using an intermediate object. For example, a set of possible labels may be grouped under a common property:
 

@@ -1,6 +1,5 @@
 # coding: utf-8
-$:.unshift "."
-require 'spec_helper'
+require_relative 'spec_helper'
 
 describe JSON::LD::Resource do
   subject {JSON::LD::Resource.new({'@id' => '_:foo', "http://schema.org/name" => "foo"})}

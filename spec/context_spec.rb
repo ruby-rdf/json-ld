@@ -1,6 +1,5 @@
 # coding: utf-8
-$:.unshift "."
-require 'spec_helper'
+require_relative 'spec_helper'
 require 'rdf/xsd'
 require 'rdf/spec/reader'
 
@@ -196,7 +195,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers).to produce({
-          "foo" => '@list'
+          "foo" => %w(@list)
         }, logger)
       end
 
@@ -204,7 +203,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
         }).containers).to produce({
-          "foo" => "@type"
+          "foo" => %w(@type)
         }, logger)
       end
 
@@ -212,7 +211,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@id"}
         }).containers).to produce({
-          "foo" => "@id"
+          "foo" => %w(@id)
         }, logger)
       end
 
@@ -953,6 +952,7 @@ describe JSON::LD::Context do
           "setdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
           "setdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
           "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
+          'setgraph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
           "langmap" => {"@id" => "http://example.com/langmap", "@container" => "@language"},
         })
         logger.clear
@@ -960,9 +960,12 @@ describe JSON::LD::Context do
       end
 
       {
+        "plain" => [{"@value" => "foo"}],
         "langmap" => [{"@value" => "en", "@language" => "en"}],
-        #"plain" => [{"@value" => "foo"}],
-        #"setplain" => [{"@value" => "foo", "@language" => "pl"}]
+        "setbool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
+        "setinteger" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
+        "setid" => [{"@id" => "http://example.org/id"}],
+        "setgraph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
@@ -1365,38 +1368,95 @@ describe JSON::LD::Context do
   describe "#container" do
     subject {
       ctx = context.parse({
-        "ex"       => "http://example.org/",
-        "list"     => {"@id" => "ex:list", "@container" => "@list"},
-        "set"      => {"@id" => "ex:set", "@container" => "@set"},
-        "language" => {"@id" => "ex:language", "@container" => "@language"},
-        "ndx"      => {"@id" => "ex:ndx", "@container" => "@index"},
-        "id"       => {"@id" => "ex:id", "@container" => "@id"},
-        "type"     => {"@id" => "ex:type", "@container" => "@type"}
+        "ex"          => "http://example.org/",
+        "graph"       => {"@id" => "ex:graph", "@container" => "@graph"},
+        "graphSet"    => {"@id" => "ex:graphSet", "@container" => ["@graph", "@set"]},
+        "graphId"     => {"@id" => "ex:graphSet", "@container" => ["@graph", "@id"]},
+        "graphIdSet"  => {"@id" => "ex:graphSet", "@container" => ["@graph", "@id", "@set"]},
+        "graphNdx"    => {"@id" => "ex:graphSet", "@container" => ["@graph", "@index"]},
+        "graphNdxSet" => {"@id" => "ex:graphSet", "@container" => ["@graph", "@index", "@set"]},
+        "id"          => {"@id" => "ex:idSet", "@container" => "@id"},
+        "idSet"       => {"@id" => "ex:id", "@container" => ["@id", "@set"]},
+        "language"    => {"@id" => "ex:language", "@container" => "@language"},
+        "langSet"     => {"@id" => "ex:languageSet", "@container" => ["@language", "@set"]},
+        "list"        => {"@id" => "ex:list", "@container" => "@list"},
+        "ndx"         => {"@id" => "ex:ndx", "@container" => "@index"},
+        "ndxSet"      => {"@id" => "ex:ndxSet", "@container" => ["@index", "@set"]},
+        "set"         => {"@id" => "ex:set", "@container" => "@set"},
+        "type"        => {"@id" => "ex:type", "@container" => "@type"},
+        "typeSet"     => {"@id" => "ex:typeSet", "@container" => ["@type", "@set"]},
       })
       logger.clear
       ctx
     }
+
     it "uses TermDefinition" do
       {
-        "ex"       => nil,
-        "list"     => "@list",
-        "language" => "@language",
-        "ndx"      => "@index",
-        "id"       => "@id",
-        "type"     => "@type",
+        "ex"          => [],
+        "graph"       => %w(@graph),
+        "graphSet"    => %w(@graph),
+        "graphId"     => %w(@graph @id),
+        "graphIdSet"  => %w(@graph @id),
+        "graphNdx"    => %w(@graph @index),
+        "graphNdxSet" => %w(@graph @index),
+        "id"          => %w(@id),
+        "idSet"       => %w(@id),
+        "language"    => %w(@language),
+        "langSet"     => %w(@language),
+        "list"        => %w(@list),
+        "ndx"         => %w(@index),
+        "ndxSet"      => %w(@index),
+        "set"         => [],
+        "type"        => %w(@type),
+        "typeSet"     => %w(@type),
       }.each do |defn, container|
         expect(subject.container(subject.term_definitions[defn])).to eq container
       end
     end
 
-    it "uses string" do
+    it "#as_array" do
       {
-        "ex"       => nil,
-        "list"     => "@list",
-        "language" => "@language",
-        "ndx"      => "@index",
-        "id"       => "@id",
-        "type"     => "@type",
+        "ex"          => false,
+        "graph"       => false,
+        "graphSet"    => true,
+        "graphId"     => false,
+        "graphIdSet"  => true,
+        "graphNdx"    => false,
+        "graphNdxSet" => true,
+        "id"          => false,
+        "idSet"       => true,
+        "language"    => false,
+        "langSet"     => true,
+        "list"        => true,
+        "ndx"         => false,
+        "ndxSet"      => true,
+        "set"         => true,
+        "type"        => false,
+        "typeSet"     => true,
+      }.each do |defn, as_array|
+        expect(subject.as_array?(subject.term_definitions[defn])).to eq as_array
+      end
+    end
+
+    it "uses array" do
+      {
+        "ex"          => [],
+        "graph"       => %w(@graph),
+        "graphSet"    => %w(@graph),
+        "graphId"     => %w(@graph @id),
+        "graphIdSet"  => %w(@graph @id),
+        "graphNdx"    => %w(@graph @index),
+        "graphNdxSet" => %w(@graph @index),
+        "id"          => %w(@id),
+        "idSet"       => %w(@id),
+        "language"    => %w(@language),
+        "langSet"     => %w(@language),
+        "list"        => %w(@list),
+        "ndx"         => %w(@index),
+        "ndxSet"      => %w(@index),
+        "set"         => [],
+        "type"        => %w(@type),
+        "typeSet"     => %w(@type),
       }.each do |defn, container|
         expect(subject.container(defn)).to eq container
       end
@@ -1525,10 +1585,22 @@ describe JSON::LD::Context do
       its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", type_mapping: "http://example.org/type"))}
     end
 
-    context "with container_mapping" do
+    context "with container_mapping @set" do
       subject {described_class.new("term", container_mapping: "@set")}
-      its(:container_mapping) {is_expected.to be_nil}
+      its(:container_mapping) {is_expected.to be_empty}
       its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@set"))}
+    end
+
+    context "with container_mapping @id @set" do
+      subject {described_class.new("term", container_mapping: %w(@id @set))}
+      its(:container_mapping) {is_expected.to eq %w(@id)}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: ["@id", "@set"]))}
+    end
+
+    context "with container_mapping @list" do
+      subject {described_class.new("term", container_mapping: "@list")}
+      its(:container_mapping) {is_expected.to eq %w(@list)}
+      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@list"))}
     end
 
     context "with language_mapping" do
