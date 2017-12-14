@@ -30,7 +30,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'rdf',             '>= 2.2.8', '< 4.0'
   gem.add_runtime_dependency     'multi_json',      '~> 1.12'
   #gem.add_development_dependency 'linkeddata',      '~> 2.2'
-  gem.add_development_dependency 'linkeddata',      '>= 2.2', '< 4.0'
+  #gem.add_development_dependency 'linkeddata',      '>= 2.2', '< 4.0'
   gem.add_development_dependency 'jsonlint',        '~> 0.2'  unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'oj',              '~> 2.18' unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'yajl-ruby',       '~> 1.2'  unless RUBY_ENGINE == "jruby"

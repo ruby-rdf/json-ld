@@ -2,11 +2,12 @@ source "https://rubygems.org"
 
 gemspec
 gem 'rdf',              git: "https://github.com/ruby-rdf/rdf",             branch: "develop"
-gem 'rdf-spec',         git: "https://github.com/ruby-rdf/rdf-spec",        branch: "develop"
 
 group :development do
   gem 'ebnf',           git: "https://github.com/gkellogg/ebnf",            branch: "develop"
   gem 'sxp',            git: "https://github.com/dryruby/sxp.rb",           branch: "develop"
+  #gem 'linkeddata',     git: "https://github.com/ruby-rdf/linkeddata",      branch: "develop"
+  gem 'rdf-spec',       git: "https://github.com/ruby-rdf/rdf-spec",        branch: "develop"
   gem 'rdf-isomorphic', git: "https://github.com/ruby-rdf/rdf-isomorphic",  branch: "develop"
   gem 'rdf-trig',       git: "https://github.com/ruby-rdf/rdf-trig",        branch: "develop"
   gem 'rdf-vocab',      git: "https://github.com/ruby-rdf/rdf-vocab",       branch: "develop"
