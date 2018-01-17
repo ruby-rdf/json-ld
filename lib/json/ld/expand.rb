@@ -361,16 +361,16 @@ module JSON::LD
           # For each key-value pair language-language value in value, ordered lexicographically by language
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
+            expanded_k = active_context.expand_iri(k, vocab: true, quiet: true).to_s
             [value[k]].flatten.each do |item|
               # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
               raise JsonLdError::InvalidLanguageMapValue,
                     "Expected #{item.inspect} to be a string" unless item.nil? || item.is_a?(String)
 
               # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
-              ary << {
-                '@value' => item,
-                '@language' => k.downcase
-              } if item
+              v = {'@value' => item}
+              v['@language'] = k.downcase unless expanded_k == '@none'
+              ary << v if item
             end
           end
 
@@ -388,30 +388,31 @@ module JSON::LD
             map_context = active_context.term_definitions[k].context if container.include?('@type') && active_context.term_definitions[k]
             map_context = active_context.parse(map_context) if map_context
             map_context ||= active_context
-            
+
+            expanded_k = active_context.expand_iri(k, vocab: true, quiet: true).to_s
+
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered)
             index_value.each do |item|
               case container
-              when %w(@index) then item['@index'] ||= k
-              when %w(@id)
-                # Expand k document relative
-                expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s
-                item['@id'] ||= expanded_k
-              when %w(@type)
-                # Expand k vocabulary relative
-                expanded_k = active_context.expand_iri(k, vocab: true, documentRelative: true, quiet: true).to_s
-                item['@type'] = [expanded_k].concat(Array(item['@type']))
-              when %w(@graph @index), %w(@graph @id)
+              when %w(@graph @index), %w(@index)
                 # Indexed graph by graph name
-                if !graph?(item)
+                if !graph?(item) && container.include?('@graph')
                   item = [item] unless expanded_value.is_a?(Array)
                   item = {'@graph' => item}
                 end
-                expanded_k = container.include?('@index') ? k :
-                  active_context.expand_iri(k, documentRelative: true, quiet: true).to_s
+                item['@index'] ||= k unless expanded_k == '@none'
+              when %w(@graph @id), %w(@id)
+                # Indexed graph by graph name
+                if !graph?(item) && container.include?('@graph')
+                  item = [item] unless expanded_value.is_a?(Array)
+                  item = {'@graph' => item}
+                end
                 # Expand k document relative
-                item[container.include?('@index') ? '@index' : '@id'] ||= k
+                expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s unless expanded_k == '@none'
+                item['@id'] ||= expanded_k unless expanded_k == '@none'
+              when %w(@type)
+                item['@type'] = [expanded_k].concat(Array(item['@type'])) unless expanded_k == '@none'
               end
 
               # Append item to expanded value.

@@ -994,8 +994,14 @@ module JSON::LD
         create_term_definition(local_context, value, defined)
       end
 
+      if (v_td = term_definitions[value]) && KEYWORDS.include?(v_td.id)
+        #log_debug("") {"match with #{v_td.id}"} unless quiet
+        return v_td.id
+      end
+
+      # If active context has a term definition for value, and the associated mapping is a keyword, return that keyword.
       # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
-      if vocab && (v_td = term_definitions[value])
+      if (v_td = term_definitions[value]) && (vocab || KEYWORDS.include?(v_td.id))
         #log_debug("") {"match with #{v_td.id}"} unless quiet
         return v_td.id
       end
@@ -1069,14 +1075,10 @@ module JSON::LD
         default_language = self.default_language || "@none"
         containers = []
         tl, tl_value = "@language", "@null"
+        containers << '@index' if index?(value) && processingMode < 'json-ld-1.1'
 
         # If the value is a JSON Object with the key @preserve, use the value of @preserve.
         value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
-
-        # If the value is a JSON Object, then for the keywords @index, @id, and @type, if the value contains that keyword, append it to containers.
-        %w(@index @id @type).each do |kw|
-          containers << kw if value.has_key?(kw)
-        end if value.is_a?(Hash)
 
         if reverse
           tl, tl_value = "@type", "@reverse"
@@ -1123,20 +1125,19 @@ module JSON::LD
           end
           #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         elsif graph?(value)
-          # TODO: support `@graphId`?
-          # TODO: "@graph@set"?
-          containers << '@graph'
-          containers << '@set'
+          containers.concat(%w(@graph @id @index @set))
         else
           if value?(value)
+            containers.concat(%w(@language @index)) if processingMode >= 'json-ld-1.1'
             if value.has_key?('@language') && !index?(value)
               tl_value = value['@language']
-              containers << '@language'
+              containers << '@language' if processingMode < 'json-ld-1.1'
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
             end
           else
+            containers.concat(%w(@id @type @index)) if processingMode >= 'json-ld-1.1'
             tl, tl_value = '@type', '@id'
           end
           containers << '@set'

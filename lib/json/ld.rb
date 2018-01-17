@@ -55,6 +55,7 @@ module JSON
       @language
       @list
       @nest
+      @none
       @omitDefault
       @requireAll
       @reverse

@@ -796,6 +796,63 @@ describe JSON::LD::API do
             }
           ]
         },
+        "simple map with @none" => {
+          input: {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {
+                "@id" => "vocab:label",
+                "@container" => "@language"
+              }
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ],
+              "@none" => "The Queen"
+            }
+          },
+          output: [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "The Queen"},
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"},
+              ]
+            }
+          ]
+        },
+        "simple map with alias of @none" => {
+          input: {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {
+                "@id" => "vocab:label",
+                "@container" => "@language"
+              },
+              "none" => "@none"
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ],
+              "none" => "The Queen"
+            }
+          },
+          output: [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"},
+                {"@value" => "The Queen"},
+              ]
+            }
+          ]
+        },
         "expand-0035" => {
           input: {
             "@context" => {
@@ -902,6 +959,25 @@ describe JSON::LD::API do
           processingMode: nil,
           exception: JSON::LD::JsonLdError::InvalidContainerMapping
         },
+        "Does not add @id if it is @none, or expands to @none": {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"},
+              "none": "@none"
+            },
+            "idmap": {
+              "@none": {"label": "Object with no @id"},
+              "none": {"label": "Another object with no @id"}
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with no @id"}]},
+              {"http://example/label": [{"@value": "Another object with no @id"}]}
+            ]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
@@ -970,7 +1046,8 @@ describe JSON::LD::API do
         "Adds document expanded @type to object" => {
           input: %({
             "@context": {
-              "typemap": {"@id": "http://example/typemap", "@container": "@type"},
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
               "label": "http://example/label"
             },
             "typemap": {
@@ -979,10 +1056,28 @@ describe JSON::LD::API do
           }),
           output: %([{
             "http://example/typemap": [
-              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/Foo"]}
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example/Foo"]}
             ]
-          }]),
-          base: "http://example.org/"
+          }])
+        },
+        "Does not add @type if it is @none, or expands to @none": {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
+              "none": "@none"
+            },
+            "typemap": {
+              "@none": {"label": "Object with no @type"},
+              "none": {"label": "Another object with no @type"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with no @type"}]},
+              {"http://example/label": [{"@value": "Another object with no @type"}]}
+            ]
+          }])
         },
         "Raises InvalidContainerMapping if processingMode is not specified" => {
           input: %({
@@ -1086,6 +1181,43 @@ describe JSON::LD::API do
               }]
             }])
           },
+          "Creates a graph object given an indexed value with index @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "@none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value with index alias of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]},
+                "none": "@none"
+              },
+              "input": {
+                "none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
           "Creates a graph object given an indexed value with @set" => {
             input: %({
               "@context": {
@@ -1148,6 +1280,43 @@ describe JSON::LD::API do
             output: %([{
               "http://example.org/input": [{
                 "@id": "http://example.com/g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "@none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value of alias of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]},
+                "none": "@none"
+              },
+              "input": {
+                "none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
                 "@graph": [{
                   "http://example.org/value": [{"@value": "x"}]
                 }]

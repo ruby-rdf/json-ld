@@ -4,7 +4,7 @@ gemspec
 gem 'rdf',              git: "https://github.com/ruby-rdf/rdf",             branch: "develop"
 
 group :development do
-  gem 'ebnf',           git: "https://github.com/gkellogg/ebnf",            branch: "develop"
+  gem 'ebnf',           git: "https://github.com/dryruby/ebnf",             branch: "develop"
   gem 'sxp',            git: "https://github.com/dryruby/sxp.rb",           branch: "develop"
   gem 'linkeddata',     git: "https://github.com/ruby-rdf/linkeddata",      branch: "develop"
   gem 'rdf-spec',       git: "https://github.com/ruby-rdf/rdf-spec",        branch: "develop"

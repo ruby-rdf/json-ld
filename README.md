@@ -469,8 +469,8 @@ Note, the API method signatures differed in versions before 1.0, in that they al
 
 ## Dependencies
 * [Ruby](http://ruby-lang.org/) (>= 2.2.2)
-* [RDF.rb](http://rubygems.org/gems/rdf) (>= 2.2)
-* [JSON](https://rubygems.org/gems/json) (>= 1.5)
+* [RDF.rb](http://rubygems.org/gems/rdf) (~> 3.0)
+* [JSON](https://rubygems.org/gems/json) (>= 2.1)
 
 ## Installation
 The recommended installation method is via [RubyGems](http://rubygems.org/).

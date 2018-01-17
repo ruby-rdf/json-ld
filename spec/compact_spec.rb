@@ -526,6 +526,96 @@ describe JSON::LD::API do
             }
           })
         },
+        "simple map with @none node definition" => {
+          input: %([{
+             "@id": "http://example.com/article",
+             "http://example.com/vocab/author": [{
+                "@id": "http://example.org/person/1",
+                "@index": "regular"
+             }, {
+                "@id": "http://example.org/guest/cd24f329aa"
+             }]
+          }]),
+          context: %({
+            "author": {"@id": "http://example.com/vocab/author", "@container": "@index" }
+          }),
+          output: %({
+            "@context": {
+              "author": {
+                "@id": "http://example.com/vocab/author",
+                "@container": "@index"
+              }
+            },
+            "@id": "http://example.com/article",
+            "author": {
+              "regular": {
+                "@id": "http://example.org/person/1"
+              },
+              "@none": {
+                "@id": "http://example.org/guest/cd24f329aa"
+              }
+            }
+          }),
+          processingMode: 'json-ld-1.1'
+        },
+        "simple map with @none value" => {
+          input: %([{
+             "@id": "http://example.com/article",
+             "http://example.com/vocab/author": [{
+                "@value": "Gregg",
+                "@index": "regular"
+             }, {
+                "@value": "Manu"
+             }]
+          }]),
+          context: %({
+            "author": {"@id": "http://example.com/vocab/author", "@container": "@index" }
+          }),
+          output: %({
+            "@context": {
+              "author": {
+                "@id": "http://example.com/vocab/author",
+                "@container": "@index"
+              }
+            },
+            "@id": "http://example.com/article",
+            "author": {
+              "regular": "Gregg",
+              "@none": "Manu"
+            }
+          }),
+          processingMode: 'json-ld-1.1'
+        },
+        "simple map with @none value using alias of @none" => {
+          input: %([{
+             "@id": "http://example.com/article",
+             "http://example.com/vocab/author": [{
+                "@value": "Gregg",
+                "@index": "regular"
+             }, {
+                "@value": "Manu"
+             }]
+          }]),
+          context: %({
+            "author": {"@id": "http://example.com/vocab/author", "@container": "@index" },
+            "none": "@none"
+          }),
+          output: %({
+            "@context": {
+              "author": {
+                "@id": "http://example.com/vocab/author",
+                "@container": "@index"
+              },
+              "none": "@none"
+            },
+            "@id": "http://example.com/article",
+            "author": {
+              "regular": "Gregg",
+              "none": "Manu"
+            }
+          }),
+          processingMode: 'json-ld-1.1'
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
@@ -559,6 +649,66 @@ describe JSON::LD::API do
               "de": ["Die Königin", "Ihre Majestät"]
             }
           })
+        },
+        "with no @language" => {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "The Queen", "@language": "en"},
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät"}
+              ]
+            }
+          ]),
+          context: %({
+            "vocab": "http://example.com/vocab/",
+            "label": {"@id": "vocab:label", "@container": "@language"}
+          }),
+          output: %({
+            "@context": {
+              "vocab": "http://example.com/vocab/",
+              "label": {"@id": "vocab:label", "@container": "@language"}
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": "Die Königin",
+              "@none": "Ihre Majestät"
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "with no @language using alias of @none" => {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "The Queen", "@language": "en"},
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät"}
+              ]
+            }
+          ]),
+          context: %({
+            "vocab": "http://example.com/vocab/",
+            "label": {"@id": "vocab:label", "@container": "@language"},
+            "none": "@none"
+          }),
+          output: %({
+            "@context": {
+              "vocab": "http://example.com/vocab/",
+              "label": {"@id": "vocab:label", "@container": "@language"},
+              "none": "@none"
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": "Die Königin",
+              "none": "Ihre Majestät"
+            }
+          }),
+          processingMode: "json-ld-1.1"
         },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
@@ -630,6 +780,52 @@ describe JSON::LD::API do
             },
             "idmap": {
               "ex:foo": {"label": "Object with @id <foo>"}
+            }
+          })
+        },
+        "Indexes using @none" => {
+          input: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with no @id"}]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "ex": "http://example.org/",
+            "idmap": {"@container": "@id"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "ex": "http://example.org/",
+              "idmap": {"@container": "@id"}
+            },
+            "idmap": {
+              "@none": {"label": "Object with no @id"}
+            }
+          })
+        },
+        "Indexes using @none with alias" => {
+          input: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with no @id"}]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "ex": "http://example.org/",
+            "idmap": {"@container": "@id"},
+            "none": "@none"
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "ex": "http://example.org/",
+              "idmap": {"@container": "@id"},
+              "none": "@none"
+            },
+            "idmap": {
+              "none": {"label": "Object with no @id"}
             }
           })
         },
@@ -735,6 +931,52 @@ describe JSON::LD::API do
             },
             "typemap": {
               "Foo": {"label": "Object with @type <foo>"}
+            }
+          })
+        },
+        "Indexes using @none" => {
+          input: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with no @type"}]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "ex": "http://example.org/",
+            "typemap": {"@container": "@type"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "ex": "http://example.org/",
+              "typemap": {"@container": "@type"}
+            },
+            "typemap": {
+              "@none": {"label": "Object with no @type"}
+            }
+          })
+        },
+        "Indexes using @none with alias" => {
+          input: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with no @id"}]}
+            ]
+          }]),
+          context: %({
+            "@vocab": "http://example/",
+            "ex": "http://example.org/",
+            "typemap": {"@container": "@type"},
+            "none": "@none"
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "ex": "http://example.org/",
+              "typemap": {"@container": "@type"},
+              "none": "@none"
+            },
+            "typemap": {
+              "none": {"label": "Object with no @id"}
             }
           })
         },
@@ -888,6 +1130,28 @@ describe JSON::LD::API do
               }
             })
           },
+          "Compacts simple graph with no @index" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@index", "@set"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index", "@set"]}
+              },
+              "input": {
+                "@none": [{"value": "x"}]
+              }
+            })
+          },
           "Does not compact graph with @id" => {
             input: %([{
               "http://example.org/input": [{
@@ -939,7 +1203,7 @@ describe JSON::LD::API do
                 "input": {"@container": ["@graph", "@id"]}
               },
               "input": {
-                "_:b0": {"value": "x"}
+                "@none": {"value": "x"}
               }
             })
           },
@@ -960,7 +1224,7 @@ describe JSON::LD::API do
                 "@vocab": "http://example.org/",
                 "input": {"@container": ["@graph", "@id", "@set"]}
               },
-              "input": {"_:b0": [{"value": "x"}]}
+              "input": {"@none": [{"value": "x"}]}
             })
           },
           "Compacts simple graph with @index" => {
@@ -982,7 +1246,7 @@ describe JSON::LD::API do
                 "input": {"@container": ["@graph", "@id"]}
               },
               "input": {
-                "_:b0": {"value": "x"}
+                "@none": {"value": "x"}
               }
             })
           },
@@ -1032,6 +1296,52 @@ describe JSON::LD::API do
               }
             })
           },
+          "Compacts graph without @id" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id"]}
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "@none" : {"value": "x"}
+              }
+            })
+          },
+          "Compacts graph without @id using alias of @none" => {
+            input: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }]),
+            context: %({
+              "@vocab": "http://example.org/",
+              "input": {"@container": ["@graph", "@id"]},
+              "none": "@none"
+            }),
+            output: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]},
+                 "none": "@none"
+              },
+              "input": {
+                "none" : {"value": "x"}
+              }
+            })
+          },
         }.each_pair do |title, params|
           it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
         end
@@ -1040,7 +1350,7 @@ describe JSON::LD::API do
 
     context "@nest" do
       {
-        "Indexes to @nest for property with @container: @nest" => {
+        "Indexes to @nest for property with @nest" => {
           input: %([{
             "http://example.org/p1": [{"@value": "v1"}],
             "http://example.org/p2": [{"@value": "v2"}]
@@ -1060,7 +1370,7 @@ describe JSON::LD::API do
             }
           })
         },
-        "Indexes to @nest for all properties with @container: @nest" => {
+        "Indexes to @nest for all properties with @nest" => {
           input: %([{
             "http://example.org/p1": [{"@value": "v1"}],
             "http://example.org/p2": [{"@value": "v2"}]
