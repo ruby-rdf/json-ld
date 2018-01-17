@@ -939,47 +939,57 @@ describe JSON::LD::Context do
           "double" => {"@id" => "http://example.com/double", "@type" => "xsd:double"},
           "date" => {"@id" => "http://example.com/date", "@type" => "xsd:date"},
           "id" => {"@id" => "http://example.com/id", "@type" => "@id"},
-          "listplain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
-          "listlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
-          "listbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
-          "listinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
-          "listdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
-          "listdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
-          "listid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
-          "setlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
-          "setbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
-          "setinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
-          "setdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
-          "setdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
-          "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
-          'setgraph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
-          "langmap" => {"@id" => "http://example.com/langmap", "@container" => "@language"},
+          'graph' => {'@id' => 'http://example.com/graph', '@container' => '@graph'},
+
+          "list_plain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
+          "list_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
+          "list_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
+          "list_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
+          "list_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
+          "list_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
+          "list_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
+          "list_graph" => {"@id" => "http://example.com/graph", "@type" => "@id", "@container" => "@list"},
+
+          "set_plain" => {"@id" => "http://example.com/plain", "@container" => "@set"},
+          "set_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
+          "set_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
+          "set_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
+          "set_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
+          "set_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
+          "set_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
+          'set_graph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
+
+          "map_lang" => {"@id" => "http://example.com/lang", "@container" => "@language"},
+
+          "set_map_lang" => {"@id" => "http://example.com/lang", "@container" => ["@language", "@set"]},
         })
         logger.clear
         c
       end
 
+      # Prefered sets and maps over non sets or maps
       {
-        "plain" => [{"@value" => "foo"}],
-        "langmap" => [{"@value" => "en", "@language" => "en"}],
-        "setbool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
-        "setinteger" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
-        "setid" => [{"@id" => "http://example.org/id"}],
-        "setgraph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
+        "set_plain" => [{"@value" => "foo"}],
+        "map_lang" => [{"@value" => "en", "@language" => "en"}],
+        "set_bool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
+        "set_integer" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
+        "set_id" => [{"@id" => "http://example.org/id"}],
+        "graph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              expect(ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", value: value, vocab: true)).
+              expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: value, vocab: true)).
                 to produce(prop, logger)
             end
           end
         end
       end
 
+      # @language and @type with @list
       context "for @list" do
         {
-          "listplain"   => [
+          "list_plain"   => [
             [{"@value" => "foo"}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => "baz"}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
@@ -990,16 +1000,16 @@ describe JSON::LD::Context do
             [{"@value" => true}], [{"@value" => false}],
             [{"@value" => 1}], [{"@value" => 1.1}],
           ],
-          "listlang" => [[{"@value" => "en", "@language" => "en"}]],
-          "listbool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
-          "listinteger" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
-          "listdouble" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
-          "listdate" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
+          "list_lang" => [[{"@value" => "en", "@language" => "en"}]],
+          "list_bool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
+          "list_integer" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
+          "list_double" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
+          "list_date" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
         }.each do |prop, values|
           context "uses #{prop}" do
             values.each do |value|
               it "for #{{"@list" => value}.inspect}" do
-                expect(ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", value: {"@list" => value}, vocab: true)).
+                expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: {"@list" => value}, vocab: true)).
                   to produce(prop, logger)
               end
             end

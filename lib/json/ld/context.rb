@@ -1075,7 +1075,7 @@ module JSON::LD
         default_language = self.default_language || "@none"
         containers = []
         tl, tl_value = "@language", "@null"
-        containers << '@index' if index?(value) && processingMode < 'json-ld-1.1'
+        containers.concat(%w(@index @index@set)) if index?(value) && !graph?(value)
 
         # If the value is a JSON Object with the key @preserve, use the value of @preserve.
         value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
@@ -1125,24 +1125,40 @@ module JSON::LD
           end
           #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         elsif graph?(value)
-          containers.concat(%w(@graph @id @index @set))
+          # Prefer @index and @id containers, then @graph, then @index
+          containers.concat(%w(@graph@index @graph@index@set @index @index@set)) if index?(value)
+          containers.concat(%w(@graph@id @graph@id@set)) if value.has_key?('@id')
+
+          # Prefer an @graph container next
+          containers.concat(%w(@graph @graph@set))
+
+          # Lastly, in 1.1, any graph can be indexed on @index or @id, so add if we haven't already
+          containers.concat(%w(@graph@index @graph@index@set)) unless index?(value)
+          containers.concat(%w(@graph@id @graph@id@set)) unless value.has_key?('@id')
+          containers.concat(%w(@index @index@set)) unless index?(value)
         else
           if value?(value)
-            containers.concat(%w(@language @index)) if processingMode >= 'json-ld-1.1'
+            # In 1.1, an language map can be used to index values using @none
             if value.has_key?('@language') && !index?(value)
               tl_value = value['@language']
-              containers << '@language' if processingMode < 'json-ld-1.1'
+              containers.concat(%w(@language @language@set))
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
+            elsif !index?(value)
+              # Can use @language map
+              containers.concat(%w(@language @language@set))
             end
           else
-            containers.concat(%w(@id @type @index)) if processingMode >= 'json-ld-1.1'
+            # In 1.1, an id or type map can be used to index values using @none
+            containers.concat(%w(@id @id@set @type @type@set))
             tl, tl_value = '@type', '@id'
           end
-          containers << '@set'
           #log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         end
+
+        # In 1.1, an index map can be used to index values using @none, so add as a low priority
+        containers.concat(%w(@index @index@set @set)) unless index?(value)
 
         containers << '@none'
         tl_value ||= '@null'
@@ -1522,14 +1538,11 @@ module JSON::LD
         end.each do |term|
           next unless td = term_definitions[term]
 
-          container = Array(td.container_mapping).sort.first
-          container ||= td.as_set? ? %(@set) : %(@none)
-          # FIXME: Alternative to consider
-          ## Creates "@language", "@language@set", "@set", or "@none"
-          ## for each of "@language", "@index", "@type", "@id", "@list", and "@graph"
-          #container = td.container_mapping.to_s
-          #container += '@set' if td.as_set?
-          #container = '@none' if container.empty?
+          container = td.container_mapping.join('')
+          if container.empty?
+            container = td.as_set? ? %(@set) : %(@none)
+          end
+
           container_map = result[td.id.to_s] ||= {}
           tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}, '@any' => {}}
           type_map = tl_map['@type']
