@@ -1151,7 +1151,7 @@ module JSON::LD
             end
           else
             # In 1.1, an id or type map can be used to index values using @none
-            containers.concat(%w(@id @id@set @type @type@set))
+            containers.concat(%w(@id @id@set @type @set@type))
             tl, tl_value = '@type', '@id'
           end
           #log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
