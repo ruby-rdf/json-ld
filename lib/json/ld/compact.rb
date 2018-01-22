@@ -136,7 +136,7 @@ module JSON::LD
 
             if nest_prop = context.nest(item_active_property)
               result[nest_prop] ||= {}
-              iap = result[result[nest_prop]] ||= []
+              iap = result[nest_prop][item_active_property] ||= []
               result[nest_prop][item_active_property] = [iap] unless iap.is_a?(Array)
             else
               iap = result[item_active_property] ||= []

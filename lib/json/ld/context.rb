@@ -1130,7 +1130,7 @@ module JSON::LD
           containers.concat(%w(@graph@id @graph@id@set)) if value.has_key?('@id')
 
           # Prefer an @graph container next
-          containers.concat(%w(@graph @graph@set))
+          containers.concat(%w(@graph @graph@set @set))
 
           # Lastly, in 1.1, any graph can be indexed on @index or @id, so add if we haven't already
           containers.concat(%w(@graph@index @graph@index@set)) unless index?(value)
@@ -1145,22 +1145,23 @@ module JSON::LD
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
-            elsif !index?(value)
-              # Can use @language map
-              containers.concat(%w(@language @language@set))
             end
           else
             # In 1.1, an id or type map can be used to index values using @none
             containers.concat(%w(@id @id@set @type @set@type))
             tl, tl_value = '@type', '@id'
           end
+          containers << '@set'
           #log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         end
 
-        # In 1.1, an index map can be used to index values using @none, so add as a low priority
-        containers.concat(%w(@index @index@set @set)) unless index?(value)
-
         containers << '@none'
+
+        # In 1.1, an index map can be used to index values using @none, so add as a low priority
+        containers.concat(%w(@index @index@set)) unless index?(value)
+        # Values without type or language can use @language map
+        containers.concat(%w(@language @language@set)) if value?(value) && value.keys == %w(@value)
+
         tl_value ||= '@null'
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
