@@ -21,10 +21,10 @@ module JSON::LD
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, **options)
-      log_depth do
-      log_debug("frame") {"subjects: #{subjects.inspect}"}
-      log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-      log_debug("frame") {"property: #{options[:property].inspect}"}
+      #log_depth do
+      #log_debug("frame") {"subjects: #{subjects.inspect}"}
+      #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
+      #log_debug("frame") {"property: #{options[:property].inspect}"}
 
       parent, property = options[:parent], options[:property]
       # Validate the frame
@@ -49,7 +49,7 @@ module JSON::LD
       matches.keys.kw_sort.each do |id|
         subject = matches[id]
 
-        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
+        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is nil, which only occurs at the top-level.
         if property.nil?
           state[:uniqueEmbeds] = {state[:graph] => {}}
         else
@@ -185,7 +185,7 @@ module JSON::LD
         # pop matching subject from circular ref-checking stack
         state[:subjectStack].pop()
       end
-      end
+      #end
     end
 
     ##
@@ -319,7 +319,6 @@ module JSON::LD
           else
             # Match on specific @type
             return !(v & node_values).empty?
-            false
           end
         when /@/
           # Skip other keywords
@@ -329,8 +328,6 @@ module JSON::LD
           if v = v.first
             validate_frame(v)
             has_default = v.has_key?('@default')
-            # Exclude framing keywords
-            v = v.reject {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
           end
 
 
@@ -348,7 +345,7 @@ module JSON::LD
             # node does not match if values is not empty and the value of property in frame is match none.
             return false unless node_values.empty?
             true
-          when {}
+          when Hash # Empty other than framing keywords
             # node matches if values is not empty and the value of property in frame is wildcard
             !node_values.empty?
           else

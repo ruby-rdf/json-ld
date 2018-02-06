@@ -651,10 +651,10 @@ module JSON::LD
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
 
-            # If id ends with a gen-delim, it may be used as a prefix
-            definition.prefix = true if !term.include?(':') &&
-              definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
-              (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
+          # If id ends with a gen-delim, it may be used as a prefix
+          definition.prefix = true if !term.include?(':') &&
+            definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
+            (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':', 2)
