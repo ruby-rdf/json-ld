@@ -85,11 +85,8 @@ module JSON::LD
             # handle double-reversed properties
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
-                value = [value] if !value.is_a?(Array) &&
-                  (context.as_array?(prop) || !@options[:compactArrays])
-                #log_debug("") {"merge #{prop} => #{value.inspect}"}
-
-                merge_compacted_value(result, prop, value)
+                add_value(result, prop, value,
+                  property_is_array: context.as_array?(prop) || !@options[:compactArrays])
                 compacted_value.delete(prop)
               end
             end
@@ -136,11 +133,11 @@ module JSON::LD
 
             if nest_prop = context.nest(item_active_property)
               result[nest_prop] ||= {}
-              iap = result[nest_prop][item_active_property] ||= []
-              result[nest_prop][item_active_property] = [iap] unless iap.is_a?(Array)
+              add_value(result[nest_prop], item_active_property, [],
+                property_is_array: true)
             else
-              iap = result[item_active_property] ||= []
-              result[item_active_property] = [iap] unless iap.is_a?(Array)
+              add_value(result, item_active_property, [],
+                property_is_array: true)
             end
           end
 
@@ -162,7 +159,7 @@ module JSON::LD
             end
 
             container = context.container(item_active_property)
-            as_array = context.as_array?(item_active_property)
+            as_array = !@options[:compactArrays] || context.as_array?(item_active_property)
 
             value = case
             when list?(expanded_item) then expanded_item['@list']
@@ -192,28 +189,25 @@ module JSON::LD
 
             # Graph object compaction cases:
             if graph?(expanded_item)
-              if container.include?('@graph') && container.include?('@id')
+              if container.include?('@graph') &&
+                (container.include?('@id') || container.include?('@index') && simple_graph?(expanded_item))
                 # container includes @graph and @id
                 map_object = nest_result[item_active_property] ||= {}
                 # If there is no @id, create a blank node identifier to use as an index
-                map_key = if expanded_item['@id']
+                map_key = if container.include?('@id') && expanded_item['@id']
                   context.compact_iri(expanded_item['@id'], quiet: true)
+                elsif container.include?('@index') && expanded_item['@index']
+                  context.compact_iri(expanded_item['@index'], quiet: true)
                 else
                   context.compact_iri('@none', vocab: true, quiet: true)
                 end
-                merge_compacted_value(map_object, map_key, compacted_item)
-              elsif container.include?('@graph') && container.include?('@index') && simple_graph?(expanded_item)
-                # container includes @graph and @index and value is a simple graph object
-                map_object = nest_result[item_active_property] ||= {}
-                # If there is no @index, use @none
-                map_key = expanded_item['@index'] || '@none'
-                merge_compacted_value(map_object, map_key, compacted_item)
+                add_value(map_object, map_key, compacted_item,
+                  property_is_array: as_array)
               elsif container.include?('@graph') && simple_graph?(expanded_item)
                 # container includes @graph but not @id or @index and value is a simple graph object
                 # Drop through, where compacted_value will be added
-                compacted_item = [compacted_item] if
-                  !compacted_item.is_a?(Array) && (!@options[:compactArrays] || as_array)
-                merge_compacted_value(nest_result, item_active_property, compacted_item)
+                add_value(nest_result, item_active_property, compacted_item,
+                  property_is_array: as_array)
               else
                 # container does not include @graph or otherwise does not match one of the previous cases, redo compacted_item
                 compacted_item = [compacted_item]
@@ -227,8 +221,8 @@ module JSON::LD
                   key = context.compact_iri('@index', vocab: true, quiet: true)
                   compacted_item[key] = expanded_item['@index']
                 end
-                compacted_item = [compacted_item] if !@options[:compactArrays] || as_array
-                merge_compacted_value(nest_result, item_active_property, compacted_item)
+                add_value(nest_result, item_active_property, compacted_item,
+                  property_is_array: as_array)
               end
             elsif !(container & %w(@language @index @id @type)).empty? && !container.include?('@graph')
               map_object = nest_result[item_active_property] ||= {}
@@ -255,13 +249,12 @@ module JSON::LD
                 end
                 compacted_item
               end
-              compacted_item = [compacted_item] if as_array && !compacted_item.is_a?(Array)
               map_key ||= context.compact_iri('@none', vocab: true, quiet: true)
-             merge_compacted_value(map_object, map_key, compacted_item)
+              add_value(map_object, map_key, compacted_item,
+                property_is_array: as_array)
             else
-              compacted_item = [compacted_item] if
-                !compacted_item.is_a?(Array) && (!@options[:compactArrays] || as_array)
-              merge_compacted_value(nest_result, item_active_property, compacted_item)
+              add_value(nest_result, item_active_property, compacted_item,
+                property_is_array: as_array)
             end
           end
         end

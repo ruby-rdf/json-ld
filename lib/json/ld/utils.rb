@@ -142,30 +142,29 @@ module JSON::LD
     # @param [Hash] subject the hash to add the value to.
     # @param [String] property the property that relates the value to the subject.
     # @param [Object] value the value to add.
-    # @param [Hash{Symbol => Object}] options
-    # @option options [Boolean] :property_is_array
-    #   true if the property is always (false)
-    #   an array, false if not.
-    # @option options [Boolean] :allow_duplicate (true)
+    # @param [Boolean] property_is_array (false)
+    #   true if the property is always an array, false if not.
+    # @param [Boolean] allow_duplicate (true)
     #   true to allow duplicates, false not to (uses
     #     a simple shallow comparison of subject ID or value).
-    def add_value(subject, property, value, options = {})
-      options = {property_is_array: false, allow_duplicate: true}.merge!(options)
-
+    def add_value(subject, property, value, property_is_array: false, allow_duplicate: true)
       if value.is_a?(Array)
-        subject[property] = [] if value.empty? && options[:property_is_array]
-        value.each {|v| add_value(subject, property, v, options)}
+        subject[property] = [] if value.empty? && property_is_array
+        value.each do |v|
+          add_value(subject, property, v,
+            property_is_array: property_is_array, allow_duplicate: allow_duplicate)
+        end
       elsif subject[property]
         # check if subject already has value if duplicates not allowed
-        _has_value = !options[:allow_duplicate] && has_value(subject, property, value)
+        _has_value = !allow_duplicate && has_value(subject, property, value)
 
         # make property an array if value not present or always an array
-        if !subject[property].is_a?(Array) && (!_has_value || options[:property_is_array])
+        if !subject[property].is_a?(Array) && (!_has_value || property_is_array)
           subject[property] = [subject[property]]
         end
         subject[property] << value unless _has_value
       else
-        subject[property] = options[:property_is_array] ? [value] : value
+        subject[property] = property_is_array ? [value] : value
       end
     end
 
@@ -217,27 +216,6 @@ module JSON::LD
         values << value
       elsif !values.include?(value)
         values << value
-      end
-    end
-
-    # Merge values into compacted results, creating arrays if necessary
-    def merge_compacted_value(hash, key, value)
-      return unless hash
-      case hash[key]
-      when nil then hash[key] = value
-      when Array
-        if value.is_a?(Array)
-          hash[key].concat(value)
-        else
-          hash[key] << value
-        end
-      else
-        hash[key] = [hash[key]]
-        if value.is_a?(Array)
-          hash[key].concat(value)
-        else
-          hash[key] << value
-        end
       end
     end
   end

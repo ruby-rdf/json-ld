@@ -375,6 +375,7 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, nil, options.merge(no_default_base: true)) do
+        log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
