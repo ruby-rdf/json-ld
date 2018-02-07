@@ -275,8 +275,6 @@ module JSON::LD
       end
     end
 
-    EXCLUDED_FRAMING_KEYWORDS = Set.new(%w(@default @embed @explicit @omitDefault @requireAll)).freeze
-
     ##
     # Returns true if the given node matches the given frame.
     #

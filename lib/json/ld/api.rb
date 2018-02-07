@@ -169,7 +169,9 @@ module JSON::LD
     def self.expand(input, options = {}, &block)
       result, doc_base = nil
       API.new(input, options[:expandContext], options) do
-        result = self.expand(self.value, nil, self.context, ordered: options.fetch(:ordered, true))
+        result = self.expand(self.value, nil, self.context,
+          ordered: options.fetch(:ordered, true),
+          framing: @options[:processingMode].to_s.include?('expand-frame'))
         doc_base = @options[:base]
       end
 
