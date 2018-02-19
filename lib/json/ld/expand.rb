@@ -21,6 +21,7 @@ module JSON::LD
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context, ordered: true, framing: false)
       #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
+      framing = false if active_property == '@default'
       result = case input
       when Array
         # If element is an array,
