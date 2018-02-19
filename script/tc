@@ -28,6 +28,12 @@ end
 
 def run_tc(man, tc, options)
   tc.options[:logger] = options[:logger]
+
+  if tc.options[:specVersion] == "json-ld-1.0"
+    STDERR.puts "skip #{tc.property('input')} (1.0 test)"
+    return
+  end
+
   STDERR.write "run #{tc.property('input')}"
 
   if options[:verbose]
@@ -87,7 +93,7 @@ def run_tc(man, tc, options)
       end
    end || "untested"
 
-    puts "\nOutput:\n" + (tc.testType == 'jld:ToRDFTest' ? output : output.to_json(JSON::LD::JSON_STATE)) if result == 'failed' && !options[:quiet]
+    puts "\nOutput:\n" + (tc.testType == 'jld:ToRDFTest' ? output : output.to_json(JSON::LD::JSON_STATE)) if (result == 'failed' && !options[:quiet]) || options[:verbose]
 
     result = result ? 'failed' : 'passed' unless tc.positiveTest?
     options[:results][result] ||= 0

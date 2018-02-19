@@ -119,7 +119,7 @@ module JSON::LD
 
         # Re-order result keys if ordering
         if ordered
-          output_object.keys.kw_sort.each_with_object({}) {|kk, memo| memo[kk] = output_object[kk]}
+          output_object.keys.sort.each_with_object({}) {|kk, memo| memo[kk] = output_object[kk]}
         else
           output_object
         end
@@ -141,7 +141,7 @@ module JSON::LD
       nests = []
 
       # Then, proceed and process each property and value in element as follows:
-      keys = ordered ? input.keys.kw_sort : input.keys
+      keys = ordered ? input.keys.sort : input.keys
       keys.each do |key|
         # For each key and value in element, ordered lexicographically by key:
         value = input[key]

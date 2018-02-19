@@ -46,7 +46,7 @@ module JSON::LD
       matches = filter_subjects(state, subjects, frame, flags)
 
       # For each id and node from the set of matched subjects ordered by id
-      matches.keys.kw_sort.each do |id|
+      matches.keys.sort.each do |id|
         subject = matches[id]
 
         # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is nil, which only occurs at the top-level.
@@ -111,7 +111,7 @@ module JSON::LD
         end
 
         # iterate over subject properties in order
-        subject.keys.kw_sort.each do |prop|
+        subject.keys.sort.each do |prop|
           objects = subject[prop]
 
           # copy keywords to output
@@ -154,7 +154,7 @@ module JSON::LD
         end
 
         # handle defaults in order
-        frame.keys.kw_sort.each do |prop|
+        frame.keys.sort.each do |prop|
           next if prop.start_with?('@')
 
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject

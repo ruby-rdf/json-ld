@@ -46,7 +46,7 @@ module JSON::LD
           # create new subject or merge into existing one
           subject = (graphs[graph] ||= {})[name] ||= {'@id' => name}
 
-          input.keys.kw_sort.each do |property|
+          input.keys.sort.each do |property|
             objects = input[property]
             case property
             when '@id'
