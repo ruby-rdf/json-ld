@@ -1915,6 +1915,133 @@ describe JSON::LD::API do
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
+        "applies context for all values" => {
+          input: %([
+            {
+              "@id": "http://example.org/id",
+              "@type": ["http://example/type"],
+              "http://example/a": [{
+                "@id": "http://example.org/Foo",
+                "@type": ["http://example/Foo"],
+                "http://example/bar": [{"@id": "http://example.org/baz"}]
+              }]
+            }
+          ]),
+          context: %({
+            "@vocab": "http://example/",
+            "id": "@id",
+            "type": "@type",
+            "Foo": {"@context": {"id": null, "type": null}}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "id": "@id",
+              "type": "@type",
+              "Foo": {"@context": {"id": null, "type": null}}
+            },
+            "id": "http://example.org/id",
+            "type": "http://example/type",
+            "a": {
+              "@id": "http://example.org/Foo",
+              "@type": "Foo",
+              "bar": {"@id": "http://example.org/baz"}
+            }
+          }),
+        },
+        "issue 546" => {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "eg": "http://example.com/",
+              "id": "@id",
+              "type": "@type",
+              "service": "eg:service",
+              "profile": {
+                "@id": "eg:profile",
+                "@type": "@vocab"
+              },
+              "ImageService1": {
+                "@id": "http://iiif.io/api/image/1/ImageService",
+                "@context": [
+                  "http://iiif.io/api/image/1/context.json",
+                  {
+                    "id": null,
+                    "type": null,
+                    "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
+                    "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
+                    "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
+                  }
+                ]
+              }
+            },
+            "id": "uri1",
+            "type": "Manifest",
+            "service": {
+              "@id": "uri2",
+              "@type": "ImageService1",
+              "profile": "level1"
+            }
+          }),
+          context: %({
+            "@version": 1.1,
+            "eg": "http://example.com/",
+            "id": "@id",
+            "type": "@type",
+            "service": "eg:service",
+            "profile": {
+              "@id": "eg:profile",
+              "@type": "@vocab"
+            },
+            "ImageService1": {
+              "@id": "http://iiif.io/api/image/1/ImageService",
+              "@context": [
+                "http://iiif.io/api/image/1/context.json",
+                {
+                  "id": null,
+                  "type": null,
+                  "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
+                  "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
+                  "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
+                }
+              ]
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "eg": "http://example.com/",
+              "id": "@id",
+              "type": "@type",
+              "service": "eg:service",
+              "profile": {
+                "@id": "eg:profile",
+                "@type": "@vocab"
+              },
+              "ImageService1": {
+                "@id": "http://iiif.io/api/image/1/ImageService",
+                "@context": [
+                  "http://iiif.io/api/image/1/context.json",
+                  {
+                    "id": null,
+                    "type": null,
+                    "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
+                    "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
+                    "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
+                  }
+                ]
+              }
+            },
+            "id": "uri1",
+            "type": "http://example/Manifest",
+            "service": {
+              "@id": "uri2",
+              "@type": "ImageService1",
+              "profile": "level1"
+            }
+          }),
+          base: "http://example/"
+        }
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
