@@ -86,16 +86,15 @@ module JSON::LD
     # @yield [api]
     # @yieldparam [API]
     # @raise [JsonLdError]
-    def initialize(input, context, options = {}, &block)
+    def initialize(input, context, rename_bnodes: true, unique_bnodes: false, **options, &block)
       @options = {
         compactArrays:      true,
-        rename_bnodes:      true,
         documentLoader:     self.class.method(:documentLoader)
       }.merge(options)
-      @namer = options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+      @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       # For context via Link header
-      remote_base, context_ref = nil, nil
+      _, context_ref = nil, nil
 
       @value = case input
       when Array, Hash then input.dup
@@ -115,7 +114,6 @@ module JSON::LD
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
-        remote_base = remote_doc.documentUrl
         context_ref = remote_doc.contextUrl
         @options = {base: remote_doc.documentUrl}.merge(@options) unless @options[:no_default_base]
 
@@ -166,12 +164,12 @@ module JSON::LD
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
-    def self.expand(input, options = {}, &block)
+    def self.expand(input, ordered: true, framing: false, **options, &block)
       result, doc_base = nil
       API.new(input, options[:expandContext], options) do
         result = self.expand(self.value, nil, self.context,
-          ordered: options.fetch(:ordered, true),
-          framing: @options[:processingMode].to_s.include?('expand-frame'))
+          ordered: ordered,
+          framing: framing)
         doc_base = @options[:base]
       end
 
@@ -215,18 +213,18 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
     # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
-    def self.compact(input, context, options = {})
+    def self.compact(input, context, expanded: false, **options)
       result = nil
       options = {compactToRelative:  true}.merge(options)
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
-        result
+        res
       end
 
-      API.new(expanded_input, context, options.merge(no_default_base: true)) do
+      API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
 
@@ -260,18 +258,18 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
-    def self.flatten(input, context, options = {})
+    def self.flatten(input, context, expanded: false, **options)
       flattened = []
       options = {compactToRelative:  true}.merge(options)
 
       # Expand input to simplify processing
-      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options) do |result, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
 
       # Initialize input using
-      API.new(expanded_input, context, options.merge(no_default_base: true)) do
+      API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
@@ -333,7 +331,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
-    def self.frame(input, frame, options = {})
+    def self.frame(input, frame, expanded: false, **options)
       result = nil
       options = {
         base:                       (input if input.is_a?(String)),
@@ -367,16 +365,16 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = options[:expanded] ? input : API.expand(input, options) do |result, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
-        result
+        res
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(processingMode: "json-ld-1.1-expand-frame"))
+      expanded_frame = API.expand(frame, framing: true, **options)
 
       # Initialize input using frame as context
-      API.new(expanded_input, nil, options.merge(no_default_base: true)) do
+      API.new(expanded_input, nil, no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
@@ -397,7 +395,7 @@ module JSON::LD
         framing_state[:subjects] = framing_state[:graphMap][framing_state[:graph]]
 
         result = []
-        frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), options.merge(parent: result))
+        frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), parent: result, **options)
 
         # Count blank node identifiers used in the document, if pruning
         bnodes_to_clear = if options[:pruneBlankNodeIdentifiers]
@@ -433,7 +431,7 @@ module JSON::LD
     # @yield statement
     # @yieldparam [RDF::Statement] statement
     # @return [RDF::Enumerable] set of statements, unless a block is given.
-    def self.toRdf(input, options = {}, &block)
+    def self.toRdf(input, expanded: false, **options, &block)
       unless block_given?
         results = []
         results.extend(RDF::Enumerable)
@@ -444,7 +442,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = options[:expanded] ? input : API.expand(input, options.merge(ordered: false))
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -495,9 +493,7 @@ module JSON::LD
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
-    def self.fromRdf(input, options = {}, &block)
-      useRdfType = options.fetch(:useRdfType, false)
-      useNativeTypes = options.fetch(:useNativeTypes, false)
+    def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
       result = nil
 
       API.new(nil, nil, options) do |api|
@@ -519,12 +515,12 @@ module JSON::LD
     # @return [Object, RemoteDocument]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
-    def self.documentLoader(url, options = {})
+    def self.documentLoader(url, validate: false, **options)
       options = OPEN_OPTS.merge(options)
       RDF::Util::File.open_file(url, options) do |remote_doc|
         content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
         # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
-        if content_type && options[:validate]
+        if content_type && validate
           main, sub = content_type.split("/")
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" if
             main != 'application' ||

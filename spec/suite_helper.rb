@@ -20,7 +20,7 @@ module RDF::Util
     #   HTTP Request headers.
     # @return [IO] File stream
     # @yield [IO] File stream
-    def self.open_file(filename_or_url, options = {}, &block)
+    def self.open_file(filename_or_url, **options, &block)
       case 
       when filename_or_url.to_s =~ /^file:/
         path = filename_or_url[5..-1]
@@ -171,23 +171,23 @@ module Fixtures
           begin
             result = case testType
             when "jld:ExpandTest"
-              JSON::LD::API.expand(input_loc, options.merge(logger: logger))
+              JSON::LD::API.expand(input_loc, logger: logger, **options)
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_json['@context'], options.merge(logger: logger))
+              JSON::LD::API.compact(input_loc, context_json['@context'], logger: logger, **options)
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input_loc, context_loc, options.merge(logger: logger))
+              JSON::LD::API.flatten(input_loc, context_loc, logger: logger, **options)
             when "jld:FrameTest"
-              JSON::LD::API.frame(input_loc, frame_loc, options.merge(logger: logger))
+              JSON::LD::API.frame(input_loc, frame_loc, logger: logger, **options)
             when "jld:FromRDFTest"
               # Use an array, to preserve input order
               repo = RDF::NQuads::Reader.open(input_loc) do |reader|
                 reader.each_statement.to_a
               end.extend(RDF::Enumerable)
               logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-              JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
+              JSON::LD::API.fromRdf(repo, logger: logger, **options)
             when "jld:ToRDFTest"
               repo = RDF::Repository.new
-              JSON::LD::API.toRdf(input_loc, options.merge(logger: logger)) do |statement|
+              JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
                 repo << statement
               end
               repo
@@ -222,19 +222,19 @@ module Fixtures
               expect do
                 case t.testType
                 when "jld:ExpandTest"
-                  JSON::LD::API.expand(t.input_loc, options.merge(logger: logger))
+                  JSON::LD::API.expand(t.input_loc, logger: logger, **options)
                 when "jld:CompactTest"
-                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], options.merge(logger: logger))
+                  JSON::LD::API.compact(t.input_loc, t.context_json['@context'], logger: logger, **options)
                 when "jld:FlattenTest"
-                  JSON::LD::API.flatten(t.input_loc, t.context_loc, options.merge(logger: logger))
+                  JSON::LD::API.flatten(t.input_loc, t.context_loc, logger: logger, **options)
                 when "jld:FrameTest"
-                  JSON::LD::API.frame(t.input_loc, t.frame_loc, options.merge(logger: logger))
+                  JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
                   logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
-                  JSON::LD::API.fromRdf(repo, options.merge(logger: logger))
+                  JSON::LD::API.fromRdf(repo, logger: logger, **options)
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, options.merge(logger: logger)) {}
+                  JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
                 else
                   success("Unknown test type: #{testType}")
                 end
@@ -299,7 +299,7 @@ module Fixtures
     # @yield remote_document
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
-    def documentLoader(url, options = {}, &block)
+    def documentLoader(url, **options, &block)
       remote_document = nil
       options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
 

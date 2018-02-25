@@ -735,7 +735,7 @@ module JSON::LD
     #
     # @param  [Hash{Symbol => Object}] options ({})
     # @return [Hash]
-    def serialize(options = {})
+    def serialize(**options)
       # FIXME: not setting provided_context now
       use_context = case provided_context
       when String, RDF::URI
@@ -1324,7 +1324,7 @@ module JSON::LD
     # @raise [JsonLdError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     # FIXME: revisit the specification version of this.
-    def compact_value(property, value, options = {})
+    def compact_value(property, value, **options)
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
       num_members = value.length

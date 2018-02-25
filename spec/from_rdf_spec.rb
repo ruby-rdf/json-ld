@@ -398,17 +398,17 @@ describe JSON::LD::API do
     end
   end
 
-  def parse(input, options = {})
+  def parse(input, **options)
     reader = options[:reader] || RDF::TriG::Reader
     reader.new(input, options, &:each_statement).to_a.extend(RDF::Enumerable)
   end
 
   # Serialize ntstr to a string and compare against regexps
-  def serialize(ntstr, options = {})
+  def serialize(ntstr, **options)
     logger.info ntstr if ntstr.is_a?(String)
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     logger.info g.dump(:trig)
     statements = g.each_statement.to_a
-    JSON::LD::API.fromRdf(statements, options.merge(logger: logger))
+    JSON::LD::API.fromRdf(statements, logger: logger, **options)
   end
 end

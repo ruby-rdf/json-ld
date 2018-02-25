@@ -50,10 +50,10 @@ describe JSON::LD::StreamingWriter do
       )
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
-      expect(obj).to contain_exactly *JSON.parse(%{[
+      expect(obj).to contain_exactly(*JSON.parse(%{[
         {"@id": "http://example.com/test-cases/0001", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]},
         {"@id": "http://example.com/test-cases/0002", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]}
-      ]})
+      ]}))
     end
   end
 
@@ -91,7 +91,7 @@ describe JSON::LD::StreamingWriter do
       context title do
         subject {serialize(input)}
         it "matches expected json" do
-          expect(subject).to contain_exactly *JSON.parse(matches)
+          expect(subject).to contain_exactly(*JSON.parse(matches))
         end
       end
     end
@@ -125,18 +125,17 @@ describe JSON::LD::StreamingWriter do
     end
   end unless ENV['CI']
 
-  def parse(input, options = {})
-    format = options.fetch(:format, :trig)
+  def parse(input, format: :trig, **options)
     reader = RDF::Reader.for(format)
     RDF::Repository.new << reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
-  def serialize(ntstr, options = {})
+  def serialize(ntstr, **options)
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     logger = RDF::Spec.logger
     logger.info(g.dump(:ttl))
-    result = JSON::LD::Writer.buffer(options.merge(logger: logger, stream: true)) do |writer|
+    result = JSON::LD::Writer.buffer(logger: logger, stream: true, **options) do |writer|
       writer << g
     end
     puts result if $verbose

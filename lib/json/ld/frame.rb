@@ -20,13 +20,12 @@ module JSON::LD
     # @option options [String] :property (nil)
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, **options)
+    def frame(state, subjects, frame, parent: nil, property: nil, **options)
       #log_depth do
       #log_debug("frame") {"subjects: #{subjects.inspect}"}
       #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-      #log_debug("frame") {"property: #{options[:property].inspect}"}
+      #log_debug("frame") {"property: #{property.inspect}"}
 
-      parent, property = options[:parent], options[:property]
       # Validate the frame
       validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
@@ -105,7 +104,7 @@ module JSON::LD
           if recurse
             state[:graphStack].push(state[:graph])
             state[:graph] = id
-            frame(state, state[:graphMap][id].keys, [subframe], options.merge(parent: output, property: '@graph'))
+            frame(state, state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
             state[:graph] = state[:graphStack].pop
           end
         end
@@ -138,14 +137,14 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
+                  frame(state, [oo['@id']], subframe, parent: list, property: '@list', **options)
                 else
                   add_frame_output(list, '@list', oo.dup)
                 end
               end
             when node_reference?(o)
               # recurse into subject reference
-              frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
+              frame(state, [o['@id']], subframe, parent: output, property: prop, **options)
             when value_match?(subframe, o)
               # Include values if they match
               add_frame_output(output, prop, o.dup)
@@ -174,7 +173,7 @@ module JSON::LD
               # Node has property referencing this subject
               # recurse into  reference
               (output['@reverse'] ||= {})[reverse_prop] ||= []
-              frame(state, [r_id], subframe, options.merge(parent: output['@reverse'][reverse_prop]))
+              frame(state, [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
             end
           end
         end

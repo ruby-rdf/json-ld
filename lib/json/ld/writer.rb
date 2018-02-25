@@ -139,7 +139,7 @@ module JSON::LD
     # @yieldreturn [void]
     # @yield  [writer]
     # @yieldparam [RDF::Writer] writer
-    def initialize(output = $stdout, options = {}, &block)
+    def initialize(output = $stdout, **options, &block)
       options[:base_uri] ||= options[:base] if options.has_key?(:base)
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do

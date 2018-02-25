@@ -76,7 +76,7 @@ module JSON::LD
     # @option options [Boolean] :stub (false)
     #   This is a stand-in for another resource that has
     #   not yet been retrieved (or created) from Mongo
-    def initialize(node_definition, options = {})
+    def initialize(node_definition, **options)
       @context = options[:context]
       @clean = options.fetch(:clean, false)
       @new = options.fetch(:new, true)
