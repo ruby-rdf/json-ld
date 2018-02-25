@@ -323,6 +323,7 @@ module JSON::LD
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
     # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
+    # @option options [Boolean] :omitGraph does not use `@graph` at top level unless necessary to describe multiple objects, defaults to `true` if processingMode is 1.1, otherwise `false`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The framed JSON-LD document
@@ -404,13 +405,23 @@ module JSON::LD
 
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
+
+        # Set omitGraph default
+        unless options.has_key?(:omitGraph)
+          options[:omitGraph] = @context.processingMode == 'json-ld-1.1'
+        end
+
         # Compact result
         compacted = compact(result)
-        compacted = [compacted] unless compacted.is_a?(Array)
+        compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
 
         # Add the given context to the output
-        kwgraph = context.compact_iri('@graph', quiet: true)
-        result = context.serialize.merge({kwgraph => compacted})
+        result = if !compacted.is_a?(Array)
+          context.serialize.merge(compacted)
+        else
+          kwgraph = context.compact_iri('@graph', quiet: true)
+          context.serialize.merge({kwgraph => compacted})
+        end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = cleanup_preserve(result, bnodes_to_clear || [])
       end
