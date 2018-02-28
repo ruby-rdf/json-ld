@@ -342,6 +342,7 @@ module JSON::LD
         explicit:                   false,
         requireAll:                 true,
         omitDefault:                false,
+        omitGraph:                  false,
         pruneBlankNodeIdentifiers:  true,
         documentLoader:             method(:documentLoader)
       }.merge(options)
@@ -405,12 +406,6 @@ module JSON::LD
 
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
-
-        # Set omitGraph default
-        unless options.has_key?(:omitGraph)
-          options[:omitGraph] = @context.processingMode == 'json-ld-1.1'
-        end
-
         # Compact result
         compacted = compact(result)
         compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
