@@ -210,7 +210,6 @@ module JSON::LD
                   property_is_array: as_array)
               else
                 # container does not include @graph or otherwise does not match one of the previous cases, redo compacted_item
-                compacted_item = [compacted_item]
                 al = context.compact_iri('@graph', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item['@id']

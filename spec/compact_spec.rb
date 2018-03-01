@@ -1074,7 +1074,7 @@ describe JSON::LD::API do
             },
             "input": {
               "@id": "http://example.org/id",
-              "@graph": [{"value": "x"}]
+              "@graph": {"value": "x"}
             }
           })
         },
@@ -1174,7 +1174,7 @@ describe JSON::LD::API do
               "input": {
                 "@id": "http://example.org/id",
                 "@index": "g1",
-                "@graph": [{"value": "x"}]
+                "@graph": {"value": "x"}
               }
             })
           },
