@@ -2153,6 +2153,14 @@ describe JSON::LD::API do
             "ex:bar": "term"
           })
         },
+        "compacts using base if @vocab: @base" => {
+          input: %({"http://example.org/foo/bar": "term"}),
+          context: %({"@base": "http://example.org/foo/", "@vocab": "@base"}),
+          output: %({
+            "@context": {"@base": "http://example.org/foo/", "@vocab": "@base"},
+            "bar": "term"
+          })
+        },
       }.each do |title, params|
         it(title) {run_compact(params)}
       end

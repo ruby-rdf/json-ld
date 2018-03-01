@@ -769,7 +769,7 @@ describe JSON::LD::Context do
   describe "#expand_iri" do
     subject {
       context.parse({
-        '@base' => 'http://base/',
+        '@base' => 'http://base/base',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '' => 'http://empty/',
@@ -799,6 +799,8 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("foo")],
+          "relative" =>      ["foo/bar",             RDF::URI("foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
@@ -820,7 +822,9 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
-          "empty term" =>    ["",                    RDF::URI("http://base/")],
+          "relative" =>      ["foo/bar",             RDF::URI("http://base/foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
+          "empty term" =>    ["",                    RDF::URI("http://base/base")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
@@ -841,6 +845,8 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],
+          "relative" =>      ["foo/bar",             RDF::URI("http://vocab/foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("http://vocab/../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("http://empty/")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
@@ -850,6 +856,39 @@ describe JSON::LD::Context do
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
+          end
+        end
+
+        context "set to @base" do
+          subject {
+            context.parse({
+              '@base' => 'http://base/base',
+              '@vocab' => '@base',
+              'ex' => 'http://example.org/',
+              '' => 'http://empty/',
+              '_' => 'http://underscore/'
+            })
+          }
+
+          {
+            "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
+            "term" =>          ["ex",                  RDF::URI("http://example.org/")],
+            "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+            "keyword" =>       ["@type",               "@type"],
+            "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
+            "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
+            "relative" =>      ["foo/bar",             RDF::URI("http://base/foo/bar")],
+            "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
+            "empty term" =>    ["",                    RDF::URI("http://empty/")],
+            "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+            "absolute IRI looking like a curie" =>
+                               ["foo:bar",             RDF::URI("foo:bar")],
+            "bnode" =>         ["_:t0",                RDF::Node("t0")],
+            "_" =>             ["_",                   RDF::URI("http://underscore/")],
+          }.each do |title, (input, result)|
+            it title do
+              expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
+            end
           end
         end
       end
@@ -930,6 +969,28 @@ describe JSON::LD::Context do
         subject.set_mapping("ex", nil)
         expect(subject.compact_iri("http://example.org/name", position: :predicate)).
           not_to produce("name", logger)
+      end
+
+      context "with @vocab: @base" do
+        before(:each) {
+          subject.vocab = "@base"
+          subject.base = 'http://base/base'
+        }
+
+        {
+          "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+          "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
+          "keyword"       => ["@type",               "@type"],
+          "empty"         => [":suffix",             "http://empty/suffix"],
+          "unmapped"      => ["foo",                 "foo"],
+          "bnode"         => ["_:a",                 RDF::Node("a")],
+          "relative"      => ["foo/bar",             "http://base/foo/bar"],
+          "odd CURIE"     => ["experts",             "http://example.org/perts"]
+        }.each do |title, (result, input)|
+          it title do
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          end
+        end
       end
     end
 

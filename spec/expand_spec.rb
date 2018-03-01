@@ -141,6 +141,125 @@ describe JSON::LD::API do
       end
     end
 
+    context "with relative property IRIs" do
+      {
+        "base": {
+          input: %({
+            "http://a/b": "foo"
+          }),
+          output: %([{
+            "http://a/b": [{"@value": "foo"}]
+          }])
+        },
+        "relative": {
+          input: %({
+            "a/b": "foo"
+          }),
+          output: %([])
+        },
+        "hash": {
+          input: %({
+            "#a": "foo"
+          }),
+          output: %([])
+        },
+        "dotseg": {
+          input: %({
+            "../a": "foo"
+          }),
+          output: %([])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params.merge(base: "http://example.org/")}
+      end
+
+      context "with @vocab" do
+        {
+          "base": {
+            input: %({
+              "@context": {"@vocab": "http:///vocab/"},
+              "http://a/b": "foo"
+            }),
+            output: %([{
+              "http://a/b": [{"@value": "foo"}]
+            }])
+          },
+          "relative": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "a/b": "foo"
+            }),
+            output: %([{
+              "http://vocab/a/b": [{"@value": "foo"}]
+            }])
+          },
+          "hash": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "#a": "foo"
+            }),
+            output: %([{
+              "http://vocab/#a": [{"@value": "foo"}]
+            }])
+          },
+          "dotseg": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "../a": "foo"
+            }),
+            output: %([{
+              "http://vocab/../a": [{"@value": "foo"}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand params.merge(base: "http://example.org/")}
+        end
+      end
+
+      context "with @vocab: @base" do
+        {
+          "base": {
+            input: %({
+              "@context": {"@vocab": "@base"},
+              "http://a/b": "foo"
+            }),
+            output: %([{
+              "http://a/b": [{"@value": "foo"}]
+            }])
+          },
+          "relative": {
+            input: %({
+              "@context": {"@vocab": "@base"},
+              "a/b": "foo"
+            }),
+            output: %([{
+              "http://example.org/a/b": [{"@value": "foo"}]
+            }])
+          },
+          "hash": {
+            input: %({
+              "@context": {"@vocab": "@base"},
+              "#a": "foo"
+            }),
+            output: %([{
+              "http://example.org/#a": [{"@value": "foo"}]
+            }])
+          },
+          "dotseg": {
+            input: %({
+              "@context": {"@vocab": "@base"},
+              "../a": "foo"
+            }),
+            output: %([{
+              "http://example.org/a": [{"@value": "foo"}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand params.merge(base: "http://example.org/")}
+        end
+      end
+    end
+
     context "keyword aliasing" do
       {
         "@id": {
