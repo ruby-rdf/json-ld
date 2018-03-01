@@ -1160,10 +1160,10 @@ describe JSON::LD::API do
               "@type": "Class",
               "preserve": {
                 "@id": "urn:gr-1",
-                "@graph": [{
+                "@graph": {
                   "@id": "urn:id-2",
                   "term": "data"
-                }]
+                }
               }
             }]
           })
@@ -1206,10 +1206,10 @@ describe JSON::LD::API do
               },
               "preserve": {
                 "@id": "urn:graph-1",
-                "@graph": [{
+                "@graph": {
                   "@id": "urn:id-3",
                   "term": "bar"
-                }]
+                }
               }
             }]
           })
@@ -1255,10 +1255,10 @@ describe JSON::LD::API do
               },
               "preserve": {
                 "deep": {
-                  "@graph": [{
+                  "@graph": {
                     "@id": "urn:id-3",
                     "term": "bar"
-                  }]
+                  }
                 }
               }
             }]
@@ -1303,20 +1303,18 @@ describe JSON::LD::API do
                 "name": "Library",
                 "contains": {
                   "@id": "http://example.org/graphs/books",
-                  "@graph": [
-                    {
-                      "@id": "http://example.org/library/the-republic",
-                      "@type": "Book",
-                      "creator": "Plato",
-                      "title": "The Republic",
-                      "contains": {
-                        "@id": "http://example.org/library/the-republic#introduction",
-                        "@type": "Chapter",
-                        "description": "An introductory chapter on The Republic.",
-                        "title": "The Introduction"
-                      }
+                  "@graph": {
+                    "@id": "http://example.org/library/the-republic",
+                    "@type": "Book",
+                    "creator": "Plato",
+                    "title": "The Republic",
+                    "contains": {
+                      "@id": "http://example.org/library/the-republic#introduction",
+                      "@type": "Chapter",
+                      "description": "An introductory chapter on The Republic.",
+                      "title": "The Introduction"
                     }
-                  ]
+                  }
                 }
               }
             ]
