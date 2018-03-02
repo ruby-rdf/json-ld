@@ -464,6 +464,7 @@ module JSON::LD
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts.dup)
+            PRELOADED[context_canon.to_s] = context
             context.provided_context = result.provided_context
           end
           context.base ||= result.base
