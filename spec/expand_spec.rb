@@ -254,6 +254,22 @@ describe JSON::LD::API do
               "http://example.org/a": [{"@value": "foo"}]
             }])
           },
+          "example": {
+            input: %({
+              "@context": {
+                "@base": "http://example/document",
+                "@vocab": "@base"
+              },
+              "@id": "http://example.org/places#BrewEats",
+              "@type": "#Restaurant",
+              "#name": "Brew Eats"
+            }),
+            output: %([{
+              "@id": "http://example.org/places#BrewEats",
+              "@type": ["http://example/document#Restaurant"],
+              "http://example/document#name": [{"@value": "Brew Eats"}]
+            }])
+          }
         }.each do |title, params|
           it(title) {run_expand params.merge(base: "http://example.org/")}
         end
