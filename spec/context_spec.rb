@@ -55,12 +55,14 @@ describe JSON::LD::Context do
     context "remote" do
 
       it "retrieves and parses a remote context document" do
+        JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.provided_context).to produce("http://example.com/context", logger)
       end
 
       it "fails given a missing remote @context" do
+        JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
         expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
@@ -81,6 +83,7 @@ describe JSON::LD::Context do
       end
 
       it "parses a referenced context at a relative URI" do
+        JSON::LD::Context::PRELOADED.clear
         rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
@@ -95,6 +98,7 @@ describe JSON::LD::Context do
 
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
+        before {JSON::LD::Context::PRELOADED.clear}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           subject.parse(ctx)
@@ -436,6 +440,7 @@ describe JSON::LD::Context do
   end
 
   describe "#serialize" do
+    before {JSON::LD::Context::PRELOADED.clear}
     it "context document" do
       expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
