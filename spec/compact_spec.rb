@@ -2153,11 +2153,11 @@ describe JSON::LD::API do
             "ex:bar": "term"
           })
         },
-        "compacts using base if @vocab: @base" => {
+        "compacts using base if @vocab: relative" => {
           input: %({"http://example.org/foo/bar": "term"}),
-          context: %({"@base": "http://example.org/foo/", "@vocab": "@base"}),
+          context: %({"@base": "http://example.org/foo/", "@vocab": ""}),
           output: %({
-            "@context": {"@base": "http://example.org/foo/", "@vocab": "@base"},
+            "@context": {"@base": "http://example.org/foo/", "@vocab": ""},
             "bar": "term"
           })
         },

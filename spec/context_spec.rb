@@ -859,11 +859,11 @@ describe JSON::LD::Context do
           end
         end
 
-        context "set to @base" do
+        context "set to ''" do
           subject {
             context.parse({
               '@base' => 'http://base/base',
-              '@vocab' => '@base',
+              '@vocab' => '',
               'ex' => 'http://example.org/',
               '' => 'http://empty/',
               '_' => 'http://underscore/'
@@ -876,9 +876,9 @@ describe JSON::LD::Context do
             "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
             "keyword" =>       ["@type",               "@type"],
             "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
-            "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
-            "relative" =>      ["foo/bar",             RDF::URI("http://base/foo/bar")],
-            "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
+            "unmapped" =>      ["foo",                 RDF::URI("http://base/basefoo")],
+            "relative" =>      ["foo/bar",             RDF::URI("http://base/basefoo/bar")],
+            "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/base../foo/bar")],
             "empty term" =>    ["",                    RDF::URI("http://empty/")],
             "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
             "absolute IRI looking like a curie" =>
@@ -971,9 +971,9 @@ describe JSON::LD::Context do
           not_to produce("name", logger)
       end
 
-      context "with @vocab: @base" do
+      context "with @vocab: relative" do
         before(:each) {
-          subject.vocab = "@base"
+          subject.vocab = ""
           subject.base = 'http://base/base'
         }
 

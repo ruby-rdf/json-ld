@@ -177,7 +177,7 @@ describe JSON::LD::API do
         {
           "base": {
             input: %({
-              "@context": {"@vocab": "http:///vocab/"},
+              "@context": {"@vocab": "http://vocab/"},
               "http://a/b": "foo"
             }),
             output: %([{
@@ -216,11 +216,11 @@ describe JSON::LD::API do
         end
       end
 
-      context "with @vocab: @base" do
+      context "with @vocab: ''" do
         {
           "base": {
             input: %({
-              "@context": {"@vocab": "@base"},
+              "@context": {"@vocab": ""},
               "http://a/b": "foo"
             }),
             output: %([{
@@ -229,7 +229,7 @@ describe JSON::LD::API do
           },
           "relative": {
             input: %({
-              "@context": {"@vocab": "@base"},
+              "@context": {"@vocab": ""},
               "a/b": "foo"
             }),
             output: %([{
@@ -238,7 +238,7 @@ describe JSON::LD::API do
           },
           "hash": {
             input: %({
-              "@context": {"@vocab": "@base"},
+              "@context": {"@vocab": ""},
               "#a": "foo"
             }),
             output: %([{
@@ -247,18 +247,18 @@ describe JSON::LD::API do
           },
           "dotseg": {
             input: %({
-              "@context": {"@vocab": "@base"},
+              "@context": {"@vocab": ""},
               "../a": "foo"
             }),
             output: %([{
-              "http://example.org/a": [{"@value": "foo"}]
+              "http://example.org/../a": [{"@value": "foo"}]
             }])
           },
           "example": {
             input: %({
               "@context": {
                 "@base": "http://example/document",
-                "@vocab": "@base"
+                "@vocab": ""
               },
               "@id": "http://example.org/places#BrewEats",
               "@type": "#Restaurant",

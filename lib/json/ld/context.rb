@@ -354,16 +354,16 @@ module JSON::LD
     # @param [String] value must be an absolute IRI
     def vocab=(value)
       @vocab = case value
-      when /_:/, '@base'
+      when /_:/
         value
       when String, RDF::URI
-        v = as_resource(value.to_s)
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative? && @options[:validate]
+        v = as_resource(value.to_s, base)
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
         v
       when nil
         nil
       else
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}"
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}"
       end
     end
 
@@ -1034,10 +1034,10 @@ module JSON::LD
       end
       #log_debug("") {"=> #{result.inspect}"} unless quiet
 
-      result = if vocab && self.vocab && self.vocab != '@base'
+      result = if vocab && self.vocab
         # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
         self.vocab + value
-      elsif (documentRelative || self.vocab == '@base') && (base ||= self.base)
+      elsif (documentRelative || self.vocab == '') && (base ||= self.base)
         # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
         value = RDF::URI(value)
         value.absolute? ? value : RDF::URI(base).join(value)
@@ -1221,7 +1221,7 @@ module JSON::LD
         return candidates.term_sort.first if !candidates.empty?
       end
 
-      if !vocab || self.vocab == '@base'
+      if !vocab
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(iri)
         #log_debug("") {"=> relative iri: #{iri.inspect}"} unless quiet
