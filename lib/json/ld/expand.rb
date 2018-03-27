@@ -439,11 +439,11 @@ module JSON::LD
         #log_debug {" => #{expanded_value.inspect}"}
 
         # convert expanded value to @graph if container specifies it
-        # FIXME value may be a named graph, as well as a simple graph.
-        if active_context.container(key) == %w(@graph) && !graph?(expanded_value)
+        if active_context.container(key) == %w(@graph)
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
-          expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
-          expanded_value = {'@graph' => expanded_value}
+          expanded_value = as_array(expanded_value).map do |v|
+            graph?(v) ? v : {'@graph' => as_array(v)}
+          end
         end
 
         # Otherwise, if the term definition associated to key indicates that it is a reverse property
