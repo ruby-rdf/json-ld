@@ -56,8 +56,10 @@ module JSON::LD
 
         # Apply any context defined on an alias of @type
         # If key is @type and any compacted value is a term having a local context, overlay that context.
-        Array(element['@type']).each do |expanded_type|
-          term = context.compact_iri(expanded_type, vocab: true)
+        Array(element['@type']).
+          map {|expanded_type| context.compact_iri(expanded_type, vocab: true)}.
+          sort.
+          each do |term|
           term_context = self.context.term_definitions[term].context if context.term_definitions[term]
           self.context = context.parse(term_context) if term_context
         end

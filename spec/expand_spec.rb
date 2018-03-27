@@ -2083,6 +2083,23 @@ describe JSON::LD::API do
             ]
           }])
         },
+        "orders lexicographically" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "t1": {"@context": {"foo": {"@id": "http://example.com/foo"}}},
+              "t2": {"@context": {"foo": {"@id": "http://example.org/foo", "@type": "@id"}}}
+            },
+            "@type": ["t2", "t1"],
+            "foo": "urn:bar"
+          }),
+          output: %([{
+            "@type": ["http://example/t2", "http://example/t1"],
+            "http://example.org/foo": [
+              {"@id": "urn:bar"}
+            ]
+          }])
+        },
         "Raises InvalidTermDefinition if processingMode is not specified" => {
           input: %({
             "@context": {

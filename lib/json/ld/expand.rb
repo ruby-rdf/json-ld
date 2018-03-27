@@ -54,7 +54,7 @@ module JSON::LD
         # See if keys mapping to @type have terms with a local context
         input.each_pair do |key, val|
           next unless context.expand_iri(key, vocab: true) == '@type'
-          Array(val).each do |term|
+          Array(val).sort.each do |term|
             term_context = context.term_definitions[term].context if context.term_definitions[term]
             context = term_context ? context.parse(term_context) : context
           end
