@@ -196,8 +196,8 @@ module JSON::LD
             end
 
             # Use array form if framing
-            if framing && !e_id.is_a?(Array)
-              [e_id]
+            if framing
+              as_array(e_id)
             else
               e_id
             end
@@ -226,7 +226,7 @@ module JSON::LD
           when '@graph'
             # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
             value = expand(value, '@graph', context, ordered: ordered, framing: framing)
-            value.is_a?(Array) ? value : [value]
+            as_array(value)
           when '@value'
             # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
             # If framing, always use array form, unless null
@@ -281,7 +281,7 @@ module JSON::LD
             value = expand(value, active_property, context, ordered: ordered, framing: framing)
 
             # Spec FIXME: need to be sure that result is an array
-            value = [value] unless value.is_a?(Array)
+            value = as_array(value)
 
             # If expanded value is a list object, a list of lists error has been detected and processing is aborted.
             # Spec FIXME: Also look at each object if result is an array
@@ -399,15 +399,13 @@ module JSON::LD
               when %w(@graph @index), %w(@index)
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
-                  item = [item] unless expanded_value.is_a?(Array)
-                  item = {'@graph' => item}
+                  item = {'@graph' => as_array(item)}
                 end
                 item['@index'] ||= k unless expanded_k == '@none'
               when %w(@graph @id), %w(@id)
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
-                  item = [item] unless expanded_value.is_a?(Array)
-                  item = {'@graph' => item}
+                  item = {'@graph' => as_array(item)}
                 end
                 # Expand k document relative
                 expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s unless expanded_k == '@none'
@@ -436,8 +434,7 @@ module JSON::LD
         # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
         if active_context.container(key) == %w(@list) && !list?(expanded_value)
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
-          expanded_value = [expanded_value] unless expanded_value.is_a?(Array)
-          expanded_value = {'@list' => expanded_value}
+          expanded_value = {'@list' => as_array(expanded_value)}
         end
         #log_debug {" => #{expanded_value.inspect}"}
 
@@ -472,8 +469,7 @@ module JSON::LD
 
       # For each key in nests, recusively expand content
       nests.each do |key|
-        nested_values = input[key]
-        nested_values = [input[key]] unless input[key].is_a?(Array)
+        nested_values = as_array(input[key])
         nested_values.each do |nv|
           raise JsonLdError::InvalidNestValue, nv.inspect unless
             nv.is_a?(Hash) && nv.keys.none? {|k| context.expand_iri(k, vocab: true) == '@value'}

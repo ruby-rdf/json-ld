@@ -160,8 +160,7 @@ module JSON::LD
           n = frame[prop].first || {}
           omit_default_on = get_frame_flag(n, options, :omitDefault)
           if !omit_default_on && !output[prop]
-            preserve = n.fetch('@default', '@null').dup
-            preserve = [preserve] unless preserve.is_a?(Array)
+            preserve = as_array(n.fetch('@default', '@null').dup)
             output[prop] = [{'@preserve' => preserve}]
           end
         end

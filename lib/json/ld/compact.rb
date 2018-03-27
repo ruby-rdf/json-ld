@@ -172,7 +172,7 @@ module JSON::LD
 
             # handle @list
             if list?(expanded_item)
-              compacted_item = [compacted_item] unless compacted_item.is_a?(Array)
+              compacted_item = as_array(compacted_item)
               unless container == %w(@list)
                 al = context.compact_iri('@list', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}

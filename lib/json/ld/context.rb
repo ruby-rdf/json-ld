@@ -385,7 +385,7 @@ module JSON::LD
       result = self.dup
       result.provided_context = local_context if self.empty?
 
-      local_context = [local_context] unless local_context.is_a?(Array)
+      local_context = as_array(local_context)
 
       local_context.each do |context|
         case context

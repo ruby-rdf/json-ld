@@ -111,6 +111,14 @@ module JSON::LD
     end
 
     ##
+    # Represent as an array
+    # @param [Object] object
+    # @return [Array<Object>]
+    def as_array(object)
+      object.is_a?(Array) ? object : [object]
+    end
+
+    ##
     # Compares two JSON-LD values for equality. Two JSON-LD values will be
     # considered equal if:
     # 
