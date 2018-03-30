@@ -375,7 +375,7 @@ module JSON::LD
       expanded_frame = API.expand(frame, framing: true, **options)
 
       # Initialize input using frame as context
-      API.new(expanded_input, nil, no_default_base: true, **options) do
+      API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
@@ -399,8 +399,9 @@ module JSON::LD
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), parent: result, **options)
 
         # Count blank node identifiers used in the document, if pruning
-        bnodes_to_clear = if options[:pruneBlankNodeIdentifiers]
-          count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
+        if options[:pruneBlankNodeIdentifiers]
+          bnodes_to_clear = count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
+          result = prune_bnodes(result, bnodes_to_clear)
         end
 
         # Initalize context from frame
@@ -417,7 +418,7 @@ module JSON::LD
           context.serialize.merge({kwgraph => compacted})
         end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = cleanup_preserve(result, bnodes_to_clear || [])
+        result = cleanup_preserve(result)
       end
 
       block_given? ? yield(result) : result

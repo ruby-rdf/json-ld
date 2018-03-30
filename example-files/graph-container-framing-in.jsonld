@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@vocab": "https://example.com#",
+    "ex": "http://example.org/",
+    "claim": {
+      "@id": "ex:claim",
+      "@container": "@graph"
+    },
+    "id": "@id"
+  },
+  "claim": {
+    "id": "ex:1",
+    "test": "foo"
+  }
+}

@@ -1078,6 +1078,53 @@ describe JSON::LD::API do
             }
           })
         },
+        "Odd framing test" => {
+          input: %([
+            {
+              "http://example.org/claim": [
+                {
+                  "@graph": [
+                    {
+                      "@id": "http://example.org/1",
+                      "https://example.com#test": [
+                        {
+                          "@value": "foo"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+          ),
+          context: %( {
+            "@version": 1.1,
+            "@vocab": "https://example.com#",
+            "ex": "http://example.org/",
+            "claim": {
+              "@id": "ex:claim",
+              "@container": "@graph"
+            },
+            "id": "@id"
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "https://example.com#",
+              "ex": "http://example.org/",
+              "claim": {
+                "@id": "ex:claim",
+                "@container": "@graph"
+              },
+              "id": "@id"
+            },
+            "claim": {
+              "id": "ex:1",
+              "test": "foo"
+            }
+          })
+        }
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end

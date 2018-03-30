@@ -1,0 +1,18 @@
+[
+  {
+    "ex:claim": [
+      {
+        "@graph": [
+          {
+            "@id": "ex:1",
+            "https://example.com#test": [
+              {
+                "@value": "foo"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

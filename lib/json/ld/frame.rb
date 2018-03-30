@@ -212,18 +212,44 @@ module JSON::LD
     end
 
     ##
+    # Prune BNode identifiers recursively
+    #
+    # @param [Array, Hash] input
+    # @param [Array<String>] bnodes_to_clear
+    # @return [Array, Hash]
+    def prune_bnodes(input, bnodes_to_clear)
+      result = case input
+      when Array
+        # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
+        input.map {|o| prune_bnodes(o, bnodes_to_clear)}.compact
+      when Hash
+        output = Hash.new
+        input.each do |key, value|
+          if context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
+            # Don't add this to output, as it is pruned as being superfluous
+          else
+            output[key] = prune_bnodes(value, bnodes_to_clear)
+          end
+        end
+        output
+      else
+        input
+      end
+      result
+    end
+
+    ##
     # Replace @preserve keys with the values, also replace @null with null.
     #
     # Optionally, remove BNode identifiers only used once.
     #
     # @param [Array, Hash] input
-    # @param [Array<String>] bnodes_to_clear
     # @return [Array, Hash]
-    def cleanup_preserve(input, bnodes_to_clear)
+    def cleanup_preserve(input)
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        v = input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+        v = input.map {|o| cleanup_preserve(o)}.compact
 
         # If the array contains a single member, which is itself an array, use that value as the result
         (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
@@ -232,11 +258,9 @@ module JSON::LD
         input.each do |key, value|
           if key == '@preserve'
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
-            output = cleanup_preserve(value, bnodes_to_clear)
-          elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
-            # Don't add this to output, as it is pruned as being superfluous
+            output = cleanup_preserve(value)
           else
-            v = cleanup_preserve(value, bnodes_to_clear)
+            v = cleanup_preserve(value)
 
             # Because we may have added a null value to an array, we need to clean that up, if we possible
             v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)

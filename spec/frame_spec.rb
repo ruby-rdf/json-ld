@@ -1476,6 +1476,59 @@ describe JSON::LD::API do
       })
       do_frame(input: input, frame: frame, output: expected)
     end
+
+    it "framing with @container: @graph assumes pruneBnodeIdentifiers" do
+      input = JSON.parse %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "claim": {
+          "id": "ex:1",
+          "test": "foo"
+        }
+      })
+      frame = JSON.parse %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "claim": {}
+      })
+      expected = JSON.parse %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "@graph": [
+          {
+            "claim": {
+              "id": "ex:1",
+              "test": "foo"
+            }
+          }
+        ]
+      })
+      do_frame(input: input, frame: frame, output: expected)
+    end
   end
 
   def do_frame(params)
