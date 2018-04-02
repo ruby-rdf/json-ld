@@ -72,10 +72,7 @@ module JSON::LD
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
     # @option options [String] :processingMode
-    #   Processing mode, json-ld-1.0 or json-ld-1.1. Also can have other values:
-    #
-    #   * json-ld-1.1-expand-frame – special frame expansion mode.
-    #
+    #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
@@ -321,7 +318,6 @@ module JSON::LD
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
-    # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
     # @option options [Boolean] :omitGraph does not use `@graph` at top level unless necessary to describe multiple objects, defaults to `true` if processingMode is 1.1, otherwise `false`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
@@ -342,7 +338,6 @@ module JSON::LD
         requireAll:                 true,
         omitDefault:                false,
         omitGraph:                  false,
-        pruneBlankNodeIdentifiers:  true,
         documentLoader:             method(:documentLoader)
       }.merge(options)
 
@@ -399,7 +394,7 @@ module JSON::LD
         frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), parent: result, **options)
 
         # Count blank node identifiers used in the document, if pruning
-        if options[:pruneBlankNodeIdentifiers]
+        unless @options[:processingMode] == 'json-ld-1.0'
           bnodes_to_clear = count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
           result = prune_bnodes(result, bnodes_to_clear)
         end

@@ -667,7 +667,8 @@ describe JSON::LD::API do
               "name": "Test 0001"
             }]
           }]
-        })
+        }),
+        processingMode: 'json-ld-1.1'
       },
       "library" => {
         frame: %({
@@ -1133,7 +1134,8 @@ describe JSON::LD::API do
               "@type": "Class",
               "preserve": {}
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Frame default graph if outer @graph is used" => {
           frame: %({
@@ -1166,7 +1168,8 @@ describe JSON::LD::API do
                 }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Merge one graph and preserve another" => {
           frame: %({
@@ -1212,7 +1215,8 @@ describe JSON::LD::API do
                 }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Merge one graph and deep preserve another" => {
           frame: %({
@@ -1262,7 +1266,8 @@ describe JSON::LD::API do
                 }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "library" => {
           frame: %({
@@ -1318,7 +1323,8 @@ describe JSON::LD::API do
                 }
               }
             ]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         }
       }.each do |title, params|
         it title do
@@ -1328,8 +1334,8 @@ describe JSON::LD::API do
     end
   end
 
-  describe "pruneBlankNodeIdentifiers" do
-    it "preserves single-use bnode identifiers if option set to false" do
+  describe "prune blank nodes" do
+    it "preserves single-use bnode identifiers if @version 1.0" do
       do_frame(
         input: %({
           "@context": {
@@ -1378,8 +1384,7 @@ describe JSON::LD::API do
               }
             }
           ]
-        }),
-        prune: false
+        })
       )
     end
   end
@@ -1477,7 +1482,7 @@ describe JSON::LD::API do
       do_frame(input: input, frame: frame, output: expected)
     end
 
-    it "framing with @container: @graph assumes pruneBnodeIdentifiers" do
+    it "framing with @version: 1.1 prunes identifiers" do
       input = JSON.parse %({
         "@context": {
           "@version": 1.1,
@@ -1527,17 +1532,17 @@ describe JSON::LD::API do
           }
         ]
       })
-      do_frame(input: input, frame: frame, output: expected)
+      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
     end
   end
 
   def do_frame(params)
     begin
-      input, frame, output, prune = params[:input], params[:frame], params[:output], params.fetch(:prune, true)
+      input, frame, output, processingMode = params[:input], params[:frame], params[:output], params.fetch(:processingMode, 'json-ld-1.0')
       input = ::JSON.parse(input) if input.is_a?(String)
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
-      jld = JSON::LD::API.frame(input, frame, logger: logger, pruneBlankNodeIdentifiers: prune)
+      jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)
       expect(jld).to produce(output, logger)
     rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +
