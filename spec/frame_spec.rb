@@ -1426,7 +1426,7 @@ describe JSON::LD::API do
     end
 
     it "issue #28" do
-      input = JSON.parse %({
+      input = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
         },
@@ -1443,7 +1443,7 @@ describe JSON::LD::API do
           }
         ]
       })
-      frame = JSON.parse %({
+      frame = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
           "talksAbout": {
@@ -1457,7 +1457,7 @@ describe JSON::LD::API do
         },
         "@id": "http://www.myresource/uuid"
       })
-      expected = JSON.parse %({
+      expected = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
           "talksAbout": {
@@ -1483,7 +1483,7 @@ describe JSON::LD::API do
     end
 
     it "framing with @version: 1.1 prunes identifiers" do
-      input = JSON.parse %({
+      input = %({
         "@context": {
           "@version": 1.1,
           "@vocab": "https://example.com#",
@@ -1499,7 +1499,7 @@ describe JSON::LD::API do
           "test": "foo"
         }
       })
-      frame = JSON.parse %({
+      frame = %({
         "@context": {
           "@version": 1.1,
           "@vocab": "https://example.com#",
@@ -1512,7 +1512,7 @@ describe JSON::LD::API do
         },
         "claim": {}
       })
-      expected = JSON.parse %({
+      expected = %({
         "@context": {
           "@version": 1.1,
           "@vocab": "https://example.com#",
@@ -1529,6 +1529,171 @@ describe JSON::LD::API do
               "id": "ex:1",
               "test": "foo"
             }
+          }
+        ]
+      })
+      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
+    end
+
+    it "PR #663" do
+      input = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@type": "Act",
+            "@graph": [
+              {
+                "@id": "Romeo",
+                "@type": "Person"
+              },
+              {
+                "@id": "Juliet",
+                "@type": "Person"
+              }
+            ]
+          },
+          {
+            "@id": "ActTwo",
+            "@type": "Act",
+            "@graph": [
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": "Juliet"
+              },
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": "Romeo"
+              }
+            ]
+          },
+          {
+            "@id": "Person",
+            "@type": "Class",
+            "unionOf": {
+              "@list": [
+                {
+                  "@id": "Montague",
+                  "@type": "Class"
+                },
+                {
+                  "@id": "Capulet",
+                  "@type": "Class"
+                }
+              ]
+            }
+          }
+        ]
+      })
+      frame = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@explicit": false,
+            "@embed": "@last",
+            "@type": [
+              "Act",
+              "Class"
+            ],
+            "@graph": [{
+              "@explicit": true,
+              "@embed": "@always",
+              "@type": "Person",
+              "@id": {},
+              "loves": {"@embed": "@never"}
+            }]
+          }
+        ]
+      })
+      expected = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@graph": [
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": "Romeo"
+              },
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": "Juliet"
+              }
+            ],
+            "@id": "ActTwo",
+            "@type": "Act"
+          },
+          {
+            "@id": "Capulet",
+            "@type": "Class"
+          },
+          {
+            "@id": "Montague",
+            "@type": "Class"
+          },
+          {
+            "@id": "Person",
+            "@type": "Class",
+            "unionOf": [
+              {
+                "@id": "Montague",
+                "@type": "Class"
+              },
+              {
+                "@id": "Capulet",
+                "@type": "Class"
+              }
+            ]
+          },
+          {
+            "@graph": [
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": null
+              },
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": null
+              }
+            ],
+            "@type": "Act"
           }
         ]
       })
