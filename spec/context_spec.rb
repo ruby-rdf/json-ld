@@ -379,16 +379,6 @@ describe JSON::LD::Context do
   end
 
   describe "#processingMode" do
-    it "sets to json-ld-1.0 if not specified" do
-      [
-        %({}),
-        %([{}]),
-      ].each do |str|
-        ctx = JSON::LD::Context.parse(::JSON.parse(str))
-        expect(ctx.processingMode).to eql "json-ld-1.0"
-      end
-    end
-
     it "sets to json-ld-1.1 if @version: 1.1" do
       [
         %({"@version": 1.1}),
@@ -414,8 +404,8 @@ describe JSON::LD::Context do
       expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0")}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
     end
 
-    it "raises ProcessingModeConflict nested context is different from starting context" do
-      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+    it "does not raise ProcessingModeConflict nested context is different from starting context" do
+      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.not_to raise_error
     end
   end
 

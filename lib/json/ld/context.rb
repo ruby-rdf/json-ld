@@ -336,15 +336,15 @@ module JSON::LD
     end
 
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
-    #   If processingMode has been set, and "json-ld-1.1" is not a prefix of processingMode , a "processing mode conflict" has been detecting, and processing is aborted.
+    # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
     # @param [Number] vaule must be a decimal number
     def version=(value)
       case value
       when 1.1
-        if processingMode && !processingMode.start_with?("json-ld-1.1")
+        if processingMode && processingMode < "json-ld-1.1"
           raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{processingMode}"
         end
-        @processingMode ||= "json-ld-1.1"
+        @processingMode = "json-ld-1.1"
       else
         raise JsonLdError::InvalidVersionValue, value
       end
@@ -448,9 +448,6 @@ module JSON::LD
                 end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
-                if  (processingMode || 'json-ld-1.0') <= "json-ld-1.1"
-                  context_no_base.provided_context = context.dup
-                end
               end
             rescue JsonLdError::LoadingDocumentFailed => e
               #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
@@ -487,11 +484,9 @@ module JSON::LD
             end
           end
 
-          # If not set explicitly, set processingMode to "json-ld-1.0"
-          result.processingMode ||= "json-ld-1.0"
-
           defined = {}
-        # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
+
+          # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             result.create_term_definition(context, key, defined)
           end
@@ -652,10 +647,10 @@ module JSON::LD
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
 
-          # If id ends with a gen-delim, it may be used as a prefix
+          # If id ends with a gen-delim, it may be used as a prefix for simple terms
           definition.prefix = true if !term.include?(':') &&
             definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
-            (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
+            simple_term
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':', 2)
