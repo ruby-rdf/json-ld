@@ -292,7 +292,47 @@ describe JSON::LD::API do
             },
             "http://example.org/vocab#contains": "this-is-not-an-IRI"
           })
-        }
+        },
+        "Language map term with language value" => {
+          input: %([{"http://example/t": {"@value": "foo", "@language": "en"}}]),
+          context: %({"t": {"@id": "http://example/t", "@container": "@language"}}),
+          output: %({
+            "@context": {
+              "t": {"@id": "http://example/t", "@container": "@language"}
+            },
+            "t": {"en": "foo"}
+          })
+        },
+        "Datatyped term with datatyped value" => {
+          input: %([{"http://example/t": {"@value": "foo", "@type": "http:/example/type"}}]),
+          context: %({"t": {"@id": "http://example/t", "@type": "http:/example/type"}}),
+          output: %({
+            "@context": {
+              "t": {"@id": "http://example/t", "@type": "http:/example/type"}
+            },
+            "t": "foo"
+          })
+        },
+        "Datatyped term with simple value" => {
+          input: %([{"http://example/t": {"@value": "foo"}}]),
+          context: %({"t": {"@id": "http://example/t", "@type": "http:/example/type"}}),
+          output: %({
+            "@context": {
+              "t": {"@id": "http://example/t", "@type": "http:/example/type"}
+            },
+            "http://example/t": "foo"
+          })
+        },
+        "Datatyped term with object value" => {
+          input: %([{"http://example/t": {"@id": "http://example/id"}}]),
+          context: %({"t": {"@id": "http://example/t", "@type": "http:/example/type"}}),
+          output: %({
+            "@context": {
+              "t": {"@id": "http://example/t", "@type": "http:/example/type"}
+            },
+            "http://example/t": {"@id": "http://example/id"}
+          })
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
@@ -2140,12 +2180,12 @@ describe JSON::LD::API do
 
     context "compact IRI selection" do
       {
-        "compacts using expanded term in 1.0" => {
+        "does not compact using expanded term in 1.0" => {
           input: %({"http://example.org/foo": "term"}),
           context: %({"ex": {"@id": "http://example.org/"}}),
           output: %({
             "@context": {"ex": {"@id": "http://example.org/"}},
-            "ex:foo": "term"
+            "http://example.org/foo": "term"
           }),
           processingMode: "json-ld-1.0"
         },
