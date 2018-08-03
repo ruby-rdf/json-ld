@@ -152,11 +152,15 @@ module JSON::LD
     # @param [Object] value the value to add.
     # @param [Boolean] property_is_array (false)
     #   true if the property is always an array, false if not.
+    # @param [Boolean] value_is_array (false)
+    #   true if the value to be added should be preserved as an array (lists)
     # @param [Boolean] allow_duplicate (true)
     #   true to allow duplicates, false not to (uses
     #     a simple shallow comparison of subject ID or value).
-    def add_value(subject, property, value, property_is_array: false, allow_duplicate: true)
-      if value.is_a?(Array)
+    def add_value(subject, property, value, property_is_array: false, value_is_array: false, allow_duplicate: true)
+      if value_is_array
+        subject[property] = value
+      elsif value.is_a?(Array)
         subject[property] = [] if value.empty? && property_is_array
         value.each do |v|
           add_value(subject, property, v,

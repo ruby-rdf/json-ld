@@ -100,7 +100,6 @@ module JSON
       end
 
       class CollidingKeywords < JsonLdError; @code = "colliding keywords"; end
-      class CompactionToListOfLists < JsonLdError; @code = "compaction to list of lists"; end
       class ConflictingIndexes < JsonLdError; @code = "conflicting indexes"; end
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
@@ -133,7 +132,6 @@ module JSON
       class InvalidValueObjectValue < JsonLdError; @code = "invalid value object value"; end
       class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
       class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
-      class ListOfLists < JsonLdError; @code = "list of lists"; end
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end

@@ -100,7 +100,7 @@ describe JSON::LD::StreamingWriter do
 
   context "Writes fromRdf tests to isomorphic graph" do
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/fromRdf-manifest.jsonld")
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}fromRdf-manifest.jsonld")
     [nil, {}].each do |ctx|
       context "with context #{ctx.inspect}" do
         describe m.name do
@@ -109,7 +109,7 @@ describe JSON::LD::StreamingWriter do
             t.logger = RDF::Spec.logger
             t.logger.info "test: #{t.inspect}"
             t.logger.info "source: #{t.input}"
-            specify "#{t.property('input')}: #{t.name}" do
+            specify "#{t.property('@id')}: #{t.name}" do
               repo = RDF::Repository.load(t.input_loc, format: :nquads)
               jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger) do |writer|
                 writer << repo

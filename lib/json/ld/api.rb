@@ -375,7 +375,7 @@ module JSON::LD
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
-        create_node_map(value, framing_state[:graphMap], graph: '@default')
+        create_node_map(value, framing_state[:graphMap], active_graph: '@default')
 
         frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true, quiet: true)}
         if frame_keys.include?('@graph')
@@ -482,7 +482,7 @@ module JSON::LD
     #
     # The resulting `Array` is either returned or yielded, if a block is given.
     #
-    # @param [Array<RDF::Statement>] input
+    # @param [RDF::Enumerable] input
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @option options [Boolean] :useRdfType (false)

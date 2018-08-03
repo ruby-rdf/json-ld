@@ -527,6 +527,72 @@ describe JSON::LD::API do
             "foo_de": ["de"]
           })
         },
+        "coerced @list containing an empty list" => {
+          input: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }]),
+          context: %({
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          }),
+          output: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[]]
+          }),
+        },
+        "coerced @list containing a list" => {
+          input: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }]),
+          context: %({
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          }),
+          output: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["baz"]]
+          }),
+        },
+        "coerced @list containing an deep list" => {
+          input: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@list": [{"@value": "baz"}]}]}]}]
+          }]),
+          context: %({
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          }),
+          output: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[["baz"]]]
+          }),
+        },
+        "coerced @list containing multiple lists" => {
+          input: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@list": [{"@value": "b"}]}
+            ]}]
+          }]),
+          context: %({
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          }),
+          output: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], ["b"]]
+          }),
+        },
+        "coerced @list containing mixed list values" => {
+          input: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@value": "b"}
+            ]}]
+          }]),
+          context: %({
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          }),
+          output: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], "b"]
+          }),
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
@@ -2058,123 +2124,8 @@ describe JSON::LD::API do
             }
           }),
         },
-        "issue 546" => {
-          input: %({
-            "@context": {
-              "@version": 1.1,
-              "eg": "http://example.com/",
-              "id": "@id",
-              "type": "@type",
-              "service": "eg:service",
-              "profile": {
-                "@id": "eg:profile",
-                "@type": "@vocab"
-              },
-              "ImageService1": {
-                "@id": "http://iiif.io/api/image/1/ImageService",
-                "@context": [
-                  "http://iiif.io/api/image/1/context.json",
-                  {
-                    "id": null,
-                    "type": null,
-                    "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
-                    "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
-                    "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
-                  }
-                ]
-              }
-            },
-            "id": "uri1",
-            "type": "Manifest",
-            "service": {
-              "@id": "uri2",
-              "@type": "ImageService1",
-              "profile": "level1"
-            }
-          }),
-          context: %({
-            "@version": 1.1,
-            "eg": "http://example.com/",
-            "id": "@id",
-            "type": "@type",
-            "service": "eg:service",
-            "profile": {
-              "@id": "eg:profile",
-              "@type": "@vocab"
-            },
-            "ImageService1": {
-              "@id": "http://iiif.io/api/image/1/ImageService",
-              "@context": [
-                "http://iiif.io/api/image/1/context.json",
-                {
-                  "id": null,
-                  "type": null,
-                  "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
-                  "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
-                  "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
-                }
-              ]
-            }
-          }),
-          output: %({
-            "@context": {
-              "@version": 1.1,
-              "eg": "http://example.com/",
-              "id": "@id",
-              "type": "@type",
-              "service": "eg:service",
-              "profile": {
-                "@id": "eg:profile",
-                "@type": "@vocab"
-              },
-              "ImageService1": {
-                "@id": "http://iiif.io/api/image/1/ImageService",
-                "@context": [
-                  "http://iiif.io/api/image/1/context.json",
-                  {
-                    "id": null,
-                    "type": null,
-                    "level0": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
-                    "level1": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
-                    "level2": "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level2"
-                  }
-                ]
-              }
-            },
-            "id": "uri1",
-            "type": "http://example/Manifest",
-            "service": {
-              "@id": "uri2",
-              "@type": "ImageService1",
-              "profile": "level1"
-            }
-          }),
-          base: "http://example/"
-        }
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
-      end
-    end
-
-    context "exceptions" do
-      {
-        "@list containing @list" => {
-          input: %({
-            "http://example.org/foo": {"@list": [{"@list": ["baz"]}]}
-          }),
-          context: {},
-          exception: JSON::LD::JsonLdError::ListOfLists
-        },
-        "@list containing @list (with coercion)" => {
-          input: %({
-            "@context": {"http://example.org/foo": {"@container": "@list"}},
-            "http://example.org/foo": [{"@list": ["baz"]}]
-          }),
-          context: {},
-          exception: JSON::LD::JsonLdError::ListOfLists
-        },
-      }.each do |title, params|
-        it(title) {run_compact(params)}
       end
     end
 

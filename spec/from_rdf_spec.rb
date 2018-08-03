@@ -272,6 +272,105 @@ describe JSON::LD::API do
           }],
           RDF::NQuads::Reader
         ],
+        "multiple graphs with shared BNode (at head)" => [
+          %q(
+            <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-A" <http://www.example.com/G> .
+            _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:z1 <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-B" <http://www.example.com/G> .
+            _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://www.example.com/G> .
+            <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G1> .
+          ),
+          [{
+            "@id" => "http://www.example.com/G",
+            "@graph" => [{
+              "@id" => "_:z0",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-A"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@list" => [{ "@value" => "cell-B" }]}]
+            }, {
+              "@id" => "http://www.example.com/z",
+              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+            }]
+          },
+          {
+            "@id" => "http://www.example.com/G1",
+            "@graph" => [{
+              "@id" => "http://www.example.com/z",
+              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+            }]
+          }],
+          RDF::NQuads::Reader
+        ],
+        "@list containing empty @list" => [
+          %(
+            <http://example.com/a> <http://example.com/property> (()) .
+          ),
+          JSON.parse(%([{
+            "@id": "http://example.com/a",
+            "http://example.com/property": [{"@list": [{"@list": []}]}]
+          }])),
+          RDF::Turtle::Reader
+        ],
+        "@list containing multiple lists" => [
+          %(
+            <http://example.com/a> <http://example.com/property> (("a") ("b")) .
+          ),
+          JSON.parse(%([{
+            "@id": "http://example.com/a",
+            "http://example.com/property": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@list": [{"@value": "b"}]}
+            ]}]
+          }])),
+          RDF::Turtle::Reader
+        ],
+        "0008a" => [
+          %(
+          <http://example.com> <http://example.com/property> _:outerlist .
+          _:outerlist <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:lista .
+          _:outerlist <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b0 .
+
+          _:lista <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "a1" .
+          _:lista <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:a2 .
+          _:a2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "a2" .
+          _:a2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:a3 .
+          _:a3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "a3" .
+          _:a3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+          _:c0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:c1 .
+          _:c0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          _:c1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "c1" .
+          _:c1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:c2 .
+          _:c2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "c2" .
+          _:c2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:c3 .
+          _:c3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "c3" .
+          _:c3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+          _:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:b1 .
+          _:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:c0 .
+          _:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "b1" .
+          _:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b2 .
+          _:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "b2" .
+          _:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b3 .
+          _:b3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "b3" .
+          _:b3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+          ),
+          JSON.parse(%([
+            {
+              "@id": "http://example.com",
+              "http://example.com/property": [
+                {
+                  "@list": [
+                    {"@list": [{"@value": "a1"}, {"@value": "a2"}, {"@value": "a3"}]},
+                    {"@list": [{"@value": "b1"}, {"@value": "b2"}, {"@value": "b3"}]},
+                    {"@list": [{"@value": "c1"}, {"@value": "c2"}, {"@value": "c3"}]}
+                  ]
+                }
+              ]
+            }
+          ])),
+          RDF::NQuads::Reader
+        ]
       }.each do |name, (input, output, reader)|
         it name do
           r = serialize(input, reader: reader)

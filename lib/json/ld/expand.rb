@@ -30,10 +30,9 @@ module JSON::LD
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered, framing: framing)
 
-          # If the active property is @list or its container mapping is set to @list, the expanded item must not be an array or a list object, otherwise a list of lists error has been detected and processing is aborted.
-          raise JsonLdError::ListOfLists,
-                "A list may not contain another list" if
-                is_list && (v.is_a?(Array) || list?(v))
+          # If the active property is @list or its container mapping is set to @list and v is an array, change it to a list object
+          v = {"@list" => v} if is_list && v.is_a?(Array)
+
           case v
           when nil then nil
           when Array then memo.concat(v)
@@ -282,11 +281,6 @@ module JSON::LD
 
             # Spec FIXME: need to be sure that result is an array
             value = as_array(value)
-
-            # If expanded value is a list object, a list of lists error has been detected and processing is aborted.
-            # Spec FIXME: Also look at each object if result is an array
-            raise JsonLdError::ListOfLists,
-                  "A list may not contain another list" if value.any? {|v| list?(v)}
 
             value
           when '@set'

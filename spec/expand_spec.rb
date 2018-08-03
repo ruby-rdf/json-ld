@@ -806,24 +806,98 @@ describe JSON::LD::API do
           ])
         },
         "@list containing @list" => {
-          input: {
-            "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "http://example.com/foo": {"@list": [{"@list": ["baz"]}]}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "@list containing empty @list" => {
+          input: %({
+            "http://example.com/foo": {"@list": [{"@list": []}]}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
         },
         "@list containing @list (with coercion)" => {
-          input: {
-            "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
-            "foo" => [{"@list" => ["baz"]}]
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [{"@list": ["baz"]}]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "@list containing empty @list (with coercion)" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [{"@list": []}]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
         },
         "coerced @list containing an array" => {
-          input: {
-            "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
-            "foo" => [["baz"]]
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["baz"]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "coerced @list containing an empty array" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
+        },
+        "coerced @list containing deep arrays" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[["baz"]]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@list": [{"@value": "baz"}]}]}]}]
+          }])
+        },
+        "coerced @list containing deep empty arrays" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[[]]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@list": []}]}]}]
+          }]),
+        },
+        "coerced @list containing multiple lists" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], ["b"]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@list": [{"@value": "b"}]}
+            ]}]
+          }])
+        },
+        "coerced @list containing mixed list values" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], "b"]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@value": "b"}
+            ]}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params}

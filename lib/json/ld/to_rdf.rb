@@ -37,6 +37,9 @@ module JSON::LD
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
         language = item.fetch('@language', nil)
         return RDF::Literal.new(value, datatype: datatype, language: language)
+      elsif list?(item)
+        # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
+        return parse_list(item['@list'], graph_name: graph_name, &block)
       end
 
       subject = item['@id'] ? as_resource(item['@id']) : node
@@ -64,8 +67,7 @@ module JSON::LD
             vv.each do |v|
               if list?(v)
                 #log_debug("item_to_rdf")  {"list: #{v.inspect}"}
-                # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
-                object = parse_list(v['@list'], graph_name: graph_name, &block)
+                object = item_to_rdf(v, graph_name: graph_name, &block)
 
                 # Append a triple composed of object, prediate, and object to results and add all triples from list_results to results.
                 yield RDF::Statement(object, predicate, subject, graph_name: graph_name)

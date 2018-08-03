@@ -356,6 +356,24 @@ describe JSON::LD::API do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "@list containing @list" => [
+          %q({
+            "@id": "http://example/A",
+            "http://example.com/foo": {"@list": [{"@list": ["baz"]}]}
+          }),
+          %q(
+            <http://example/A> <http://example.com/foo> (("baz")) .
+          )
+        ],
+        "@list containing empty @list" => [
+          %({
+            "@id": "http://example/A",
+            "http://example.com/foo": {"@list": [{"@list": []}]}
+          }),
+          %q(
+            <http://example/A> <http://example.com/foo> (()) .
+          )
+        ],
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"

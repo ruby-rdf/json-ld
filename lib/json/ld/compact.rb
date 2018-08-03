@@ -30,7 +30,8 @@ module JSON::LD
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
-        if result.length == 1 && !context.as_array?(property) && @options[:compactArrays]
+        if result.length == 1 &&
+           !context.as_array?(property) && @options[:compactArrays]
           #log_debug("=> extract single element: #{result.first.inspect}")
           result.first
         else
@@ -50,6 +51,12 @@ module JSON::LD
             return result
           end
         end
+
+        # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
+        if list?(element) && context.container(property) == %w(@list)
+          return compact(element['@list'], property: property)
+        end
+
 
         inside_reverse = property == '@reverse'
         result, nest_result = {}, nil
@@ -183,9 +190,9 @@ module JSON::LD
                   compacted_item[key] = expanded_item['@index']
                 end
               else
-                raise JsonLdError::CompactionToListOfLists,
-                      "key cannot have more than one list value" if nest_result.has_key?(item_active_property)
-              # Falls through to add list value below
+                add_value(nest_result, item_active_property, compacted_item,
+                  value_is_array: true, allow_duplicate: true)
+                  next
               end
             end
 

@@ -38,6 +38,7 @@ def run_tc(man, tc, options)
 
   if options[:verbose]
     puts "\nTestCase: #{tc.inspect}"
+    puts "\nPurpose:\n" + tc.purpose
     puts "\nInput:\n" + tc.input
     puts "\nContext:\n" + tc.context if tc.context
     puts "\nFrame:\n" + tc.frame if tc.frame
@@ -58,7 +59,7 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:FlattenTest'
-      output = JSON::LD::API.flatten(tc.input_loc, tc.context_loc, tc.options)
+      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), tc.options)
       expected = JSON.load(tc.expect)
       output == expected ? 'passed' : 'failed'
     when 'jld:FrameTest'
@@ -190,14 +191,14 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand error compact flatten frame fromRdf remote-doc toRdf)
+manifests = %w(expand compact flatten frame fromRdf remote-doc toRdf)
 
 earl_preamble(options) if options[:earl]
 
 manifests.each do |man|
-  Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/#{man}-manifest.jsonld") do |m|
+  Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}#{man}-manifest.jsonld") do |m|
     m.entries.each do |tc|
-      next unless ARGV.empty? || ARGV.any? {|n| tc.property('input').match(/#{n}/)}
+      next unless ARGV.empty? || ARGV.any? {|n| tc.property('@id').match(/#{n}/) || tc.property('input').match(/#{n}/)}
       run_tc(man, tc, options)
     end
   end
