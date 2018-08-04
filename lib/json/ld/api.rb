@@ -455,19 +455,9 @@ module JSON::LD
           item_to_rdf(node) do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRdf]
 
-            # Drop results with relative IRIs
-            relative = statement.to_a.any? do |r|
-              case r
-              when RDF::URI
-                r.relative?
-              when RDF::Literal
-                r.has_datatype? && r.datatype.relative?
-              else
-                false
-              end
-            end
-            if relative
-              log_debug(".toRdf") {"drop statement with relative IRIs: #{statement.to_ntriples}"}
+            # Drop invalid statements (other than IRIs)
+            unless statement.valid_extended?
+              log_debug(".toRdf") {"drop invalid statement: #{statement.to_nquads}"}
               next
             end
 
