@@ -18,11 +18,8 @@ Gem::Specification.new do |gem|
   gem.files                 = %w(AUTHORS README.md UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
   gem.bindir               = %q(bin)
   gem.executables          = %w(jsonld)
-  gem.default_executable   = gem.executables.first
   gem.require_paths         = %w(lib)
-  gem.extensions            = %w()
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
-  gem.has_rdoc              = false
 
   gem.required_ruby_version = '>= 2.2.2'
   gem.requirements          = []
