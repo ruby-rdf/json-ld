@@ -419,6 +419,7 @@ module JSON::LD
 
           raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
           remote_contexts << context.to_s
+          raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
 
           context_no_base = result.dup
           context_no_base.base = nil

@@ -91,6 +91,8 @@ module JSON
       array_nl:     "\n"
     )
 
+    MAX_CONTEXTS_LOADED = 50
+
     class JsonLdError < StandardError
       def to_s
         "#{self.class.instance_variable_get :@code}: #{super}"
@@ -134,6 +136,7 @@ module JSON
       class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
+      class ContextOverflow < JsonLdError; @code = "maximum number of @context URLs exceeded"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
       class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end
       class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
