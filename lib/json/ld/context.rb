@@ -336,15 +336,15 @@ module JSON::LD
     end
 
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
-    #   If processingMode has been set, and "json-ld-1.1" is not a prefix of processingMode , a "processing mode conflict" has been detecting, and processing is aborted.
+    # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
     # @param [Number] vaule must be a decimal number
     def version=(value)
       case value
       when 1.1
-        if processingMode && !processingMode.start_with?("json-ld-1.1")
+        if processingMode && processingMode < "json-ld-1.1"
           raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{processingMode}"
         end
-        @processingMode ||= "json-ld-1.1"
+        @processingMode = "json-ld-1.1"
       else
         raise JsonLdError::InvalidVersionValue, value
       end
@@ -357,13 +357,13 @@ module JSON::LD
       when /_:/
         value
       when String, RDF::URI
-        v = as_resource(value.to_s)
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}" if v.uri? && v.relative? && @options[:validate]
+        v = as_resource(value.to_s, base)
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
         v
       when nil
         nil
       else
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI: #{value.inspect}"
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}"
       end
     end
 
@@ -385,7 +385,7 @@ module JSON::LD
       result = self.dup
       result.provided_context = local_context if self.empty?
 
-      local_context = [local_context] unless local_context.is_a?(Array)
+      local_context = as_array(local_context)
 
       local_context.each do |context|
         case context
@@ -419,6 +419,7 @@ module JSON::LD
 
           raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
           remote_contexts << context.to_s
+          raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
 
           context_no_base = result.dup
           context_no_base.base = nil
@@ -448,9 +449,6 @@ module JSON::LD
                 end
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
-                if  (processingMode || 'json-ld-1.0') <= "json-ld-1.1"
-                  context_no_base.provided_context = context.dup
-                end
               end
             rescue JsonLdError::LoadingDocumentFailed => e
               #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
@@ -464,6 +462,7 @@ module JSON::LD
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts.dup)
+            PRELOADED[context_canon.to_s] = context
             context.provided_context = result.provided_context
           end
           context.base ||= result.base
@@ -486,11 +485,9 @@ module JSON::LD
             end
           end
 
-          # If not set explicitly, set processingMode to "json-ld-1.0"
-          result.processingMode ||= "json-ld-1.0"
-
           defined = {}
-        # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
+
+          # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             result.create_term_definition(context, key, defined)
           end
@@ -651,10 +648,10 @@ module JSON::LD
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
 
-            # If id ends with a gen-delim, it may be used as a prefix
-            definition.prefix = true if !term.include?(':') &&
-              definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
-              (simple_term || ((processingMode || 'json-ld-1.0') == 'json-ld-1.0'))
+          # If id ends with a gen-delim, it may be used as a prefix for simple terms
+          definition.prefix = true if !term.include?(':') &&
+            definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
+            simple_term
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':', 2)
@@ -735,7 +732,7 @@ module JSON::LD
     #
     # @param  [Hash{Symbol => Object}] options ({})
     # @return [Hash]
-    def serialize(options = {})
+    def serialize(**options)
       # FIXME: not setting provided_context now
       use_context = case provided_context
       when String, RDF::URI
@@ -994,8 +991,14 @@ module JSON::LD
         create_term_definition(local_context, value, defined)
       end
 
+      if (v_td = term_definitions[value]) && KEYWORDS.include?(v_td.id)
+        #log_debug("") {"match with #{v_td.id}"} unless quiet
+        return v_td.id
+      end
+
+      # If active context has a term definition for value, and the associated mapping is a keyword, return that keyword.
       # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
-      if vocab && (v_td = term_definitions[value])
+      if (v_td = term_definitions[value]) && (vocab || KEYWORDS.include?(v_td.id))
         #log_debug("") {"match with #{v_td.id}"} unless quiet
         return v_td.id
       end
@@ -1030,7 +1033,7 @@ module JSON::LD
       result = if vocab && self.vocab
         # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
         self.vocab + value
-      elsif documentRelative && (base ||= self.base)
+      elsif (documentRelative || self.vocab == '') && (base ||= self.base)
         # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
         value = RDF::URI(value)
         value.absolute? ? value : RDF::URI(base).join(value)
@@ -1069,14 +1072,10 @@ module JSON::LD
         default_language = self.default_language || "@none"
         containers = []
         tl, tl_value = "@language", "@null"
+        containers.concat(%w(@index @index@set)) if index?(value) && !graph?(value)
 
         # If the value is a JSON Object with the key @preserve, use the value of @preserve.
         value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
-
-        # If the value is a JSON Object, then for the keywords @index, @id, and @type, if the value contains that keyword, append it to containers.
-        %w(@index @id @type).each do |kw|
-          containers << kw if value.has_key?(kw)
-        end if value.is_a?(Hash)
 
         if reverse
           tl, tl_value = "@type", "@reverse"
@@ -1123,20 +1122,30 @@ module JSON::LD
           end
           #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         elsif graph?(value)
-          # TODO: support `@graphId`?
-          # TODO: "@graph@set"?
-          containers << '@graph'
-          containers << '@set'
+          # Prefer @index and @id containers, then @graph, then @index
+          containers.concat(%w(@graph@index @graph@index@set @index @index@set)) if index?(value)
+          containers.concat(%w(@graph@id @graph@id@set)) if value.has_key?('@id')
+
+          # Prefer an @graph container next
+          containers.concat(%w(@graph @graph@set @set))
+
+          # Lastly, in 1.1, any graph can be indexed on @index or @id, so add if we haven't already
+          containers.concat(%w(@graph@index @graph@index@set)) unless index?(value)
+          containers.concat(%w(@graph@id @graph@id@set)) unless value.has_key?('@id')
+          containers.concat(%w(@index @index@set)) unless index?(value)
         else
           if value?(value)
+            # In 1.1, an language map can be used to index values using @none
             if value.has_key?('@language') && !index?(value)
               tl_value = value['@language']
-              containers << '@language'
+              containers.concat(%w(@language @language@set))
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
             end
           else
+            # In 1.1, an id or type map can be used to index values using @none
+            containers.concat(%w(@id @id@set @type @set@type))
             tl, tl_value = '@type', '@id'
           end
           containers << '@set'
@@ -1144,6 +1153,12 @@ module JSON::LD
         end
 
         containers << '@none'
+
+        # In 1.1, an index map can be used to index values using @none, so add as a low priority
+        containers.concat(%w(@index @index@set)) unless index?(value)
+        # Values without type or language can use @language map
+        containers.concat(%w(@language @language@set)) if value?(value) && value.keys == %w(@value)
+
         tl_value ||= '@null'
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
@@ -1306,7 +1321,7 @@ module JSON::LD
     # @raise [JsonLdError] if the iri cannot be expanded
     # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
     # FIXME: revisit the specification version of this.
-    def compact_value(property, value, options = {})
+    def compact_value(property, value, **options)
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
       num_members = value.length
@@ -1521,14 +1536,11 @@ module JSON::LD
         end.each do |term|
           next unless td = term_definitions[term]
 
-          container = Array(td.container_mapping).sort.first
-          container ||= td.as_set? ? %(@set) : %(@none)
-          # FIXME: Alternative to consider
-          ## Creates "@language", "@language@set", "@set", or "@none"
-          ## for each of "@language", "@index", "@type", "@id", "@list", and "@graph"
-          #container = td.container_mapping.to_s
-          #container += '@set' if td.as_set?
-          #container = '@none' if container.empty?
+          container = td.container_mapping.join('')
+          if container.empty?
+            container = td.as_set? ? %(@set) : %(@none)
+          end
+
           container_map = result[td.id.to_s] ||= {}
           tl_map = container_map[container] ||= {'@language' => {}, '@type' => {}, '@any' => {}}
           type_map = tl_map['@type']

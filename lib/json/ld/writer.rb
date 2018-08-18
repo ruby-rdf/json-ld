@@ -91,11 +91,35 @@ module JSON::LD
           on: ["--context CONTEXT"],
           description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
+          symbol: :embed,
+          datatype: %w(@always @last @never),
+          control: :select,
+          on: ["--embed EMBED"],
+          description: "How to embed matched objects (@last).") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :explicit,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--explicit"],
+          description: "Only include explicitly declared properties in output (false)") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :omitDefault,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--omitDefault"],
+          description: "Omit missing properties from output (false)") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
           symbol: :processing_mode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
           description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
+        RDF::CLI::Option.new(
+          symbol: :requireAll,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--requireAll"],
+          description: "Require all properties to match (true)") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :stream,
           datatype: TrueClass,
@@ -139,7 +163,7 @@ module JSON::LD
     # @yieldreturn [void]
     # @yield  [writer]
     # @yieldparam [RDF::Writer] writer
-    def initialize(output = $stdout, options = {}, &block)
+    def initialize(output = $stdout, **options, &block)
       options[:base_uri] ||= options[:base] if options.has_key?(:base)
       options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
       super do

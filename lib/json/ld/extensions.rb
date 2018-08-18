@@ -7,27 +7,42 @@ module RDF
       Node.new(id + value.to_s)
     end
   end
-end
 
-class Array
-  # Sort values, but impose special keyword ordering
-  # @yield a, b
-  # @yieldparam [Object] a
-  # @yieldparam [Object] b
-  # @yieldreturn [Integer]
-  # @return [Array]
-  KW_ORDER = %w(@base @id @value @type @language @vocab @container @graph @list @set @index).freeze
-  KW_ORDER_CACHE = KW_ORDER.each_with_object({}) do |kw, memo|
-    memo[kw] = "@#{KW_ORDER.index(kw)}"
-  end.freeze
-
-  # Order, considering keywords to come before other strings
-  def kw_sort
-    self.sort do |a, b|
-      KW_ORDER_CACHE.fetch(a, a) <=> KW_ORDER_CACHE.fetch(b, b)
+  class Statement
+    # Validate extended RDF
+    def valid_extended?
+      has_subject?    && subject.resource? && subject.valid_extended? &&
+      has_predicate?  && predicate.resource? && predicate.valid_extended? &&
+      has_object?     && object.term? && object.valid_extended? &&
+      (has_graph?      ? (graph_name.resource? && graph_name.valid_extended?) : true)
     end
   end
 
+  class URI 
+    # Validate extended RDF
+    def valid_extended?
+      self.valid?
+    end
+  end
+
+  class Node 
+    # Validate extended RDF
+    def valid_extended?
+      self.valid?
+    end
+  end
+
+  class Literal 
+    # Validate extended RDF
+    def valid_extended?
+      return false if language? && language.to_s !~ /^[a-zA-Z]+(-[a-zA-Z0-9]+)*$/
+      return false if datatype? && datatype.invalid?
+      value.is_a?(String)
+    end
+  end
+end
+
+class Array
   # Order terms, length first, then lexographically
   def term_sort
     self.sort do |a, b|

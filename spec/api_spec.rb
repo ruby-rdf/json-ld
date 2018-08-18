@@ -3,6 +3,7 @@ require_relative 'spec_helper'
 
 describe JSON::LD::API do
   let(:logger) {RDF::Spec.logger}
+  before {JSON::LD::Context::PRELOADED.clear}
 
   describe "#initialize" do
     context "with string input" do

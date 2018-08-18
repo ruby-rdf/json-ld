@@ -141,6 +141,141 @@ describe JSON::LD::API do
       end
     end
 
+    context "with relative property IRIs" do
+      {
+        "base": {
+          input: %({
+            "http://a/b": "foo"
+          }),
+          output: %([{
+            "http://a/b": [{"@value": "foo"}]
+          }])
+        },
+        "relative": {
+          input: %({
+            "a/b": "foo"
+          }),
+          output: %([])
+        },
+        "hash": {
+          input: %({
+            "#a": "foo"
+          }),
+          output: %([])
+        },
+        "dotseg": {
+          input: %({
+            "../a": "foo"
+          }),
+          output: %([])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params.merge(base: "http://example.org/")}
+      end
+
+      context "with @vocab" do
+        {
+          "base": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "http://a/b": "foo"
+            }),
+            output: %([{
+              "http://a/b": [{"@value": "foo"}]
+            }])
+          },
+          "relative": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "a/b": "foo"
+            }),
+            output: %([{
+              "http://vocab/a/b": [{"@value": "foo"}]
+            }])
+          },
+          "hash": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "#a": "foo"
+            }),
+            output: %([{
+              "http://vocab/#a": [{"@value": "foo"}]
+            }])
+          },
+          "dotseg": {
+            input: %({
+              "@context": {"@vocab": "http://vocab/"},
+              "../a": "foo"
+            }),
+            output: %([{
+              "http://vocab/../a": [{"@value": "foo"}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand params.merge(base: "http://example.org/")}
+        end
+      end
+
+      context "with @vocab: ''" do
+        {
+          "base": {
+            input: %({
+              "@context": {"@vocab": ""},
+              "http://a/b": "foo"
+            }),
+            output: %([{
+              "http://a/b": [{"@value": "foo"}]
+            }])
+          },
+          "relative": {
+            input: %({
+              "@context": {"@vocab": ""},
+              "a/b": "foo"
+            }),
+            output: %([{
+              "http://example.org/a/b": [{"@value": "foo"}]
+            }])
+          },
+          "hash": {
+            input: %({
+              "@context": {"@vocab": ""},
+              "#a": "foo"
+            }),
+            output: %([{
+              "http://example.org/#a": [{"@value": "foo"}]
+            }])
+          },
+          "dotseg": {
+            input: %({
+              "@context": {"@vocab": ""},
+              "../a": "foo"
+            }),
+            output: %([{
+              "http://example.org/../a": [{"@value": "foo"}]
+            }])
+          },
+          "example": {
+            input: %({
+              "@context": {
+                "@base": "http://example/document",
+                "@vocab": ""
+              },
+              "@id": "http://example.org/places#BrewEats",
+              "@type": "#Restaurant",
+              "#name": "Brew Eats"
+            }),
+            output: %([{
+              "@id": "http://example.org/places#BrewEats",
+              "@type": ["http://example/document#Restaurant"],
+              "http://example/document#name": [{"@value": "Brew Eats"}]
+            }])
+          }
+        }.each do |title, params|
+          it(title) {run_expand params.merge(base: "http://example.org/")}
+        end
+      end
+    end
+
     context "keyword aliasing" do
       {
         "@id": {
@@ -671,24 +806,98 @@ describe JSON::LD::API do
           ])
         },
         "@list containing @list" => {
-          input: {
-            "http://example.com/foo" => {"@list" => [{"@list" => ["baz"]}]}
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "http://example.com/foo": {"@list": [{"@list": ["baz"]}]}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "@list containing empty @list" => {
+          input: %({
+            "http://example.com/foo": {"@list": [{"@list": []}]}
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
         },
         "@list containing @list (with coercion)" => {
-          input: {
-            "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
-            "foo" => [{"@list" => ["baz"]}]
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [{"@list": ["baz"]}]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "@list containing empty @list (with coercion)" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [{"@list": []}]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
         },
         "coerced @list containing an array" => {
-          input: {
-            "@context" => {"foo" => {"@id" => "http://example.com/foo", "@container" => "@list"}},
-            "foo" => [["baz"]]
-          },
-          exception: JSON::LD::JsonLdError::ListOfLists
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["baz"]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@value": "baz"}]}]}]
+          }])
+        },
+        "coerced @list containing an empty array" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": []}]}]
+          }])
+        },
+        "coerced @list containing deep arrays" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[["baz"]]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@list": [{"@value": "baz"}]}]}]}]
+          }])
+        },
+        "coerced @list containing deep empty arrays" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [[[]]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [{"@list": [{"@list": []}]}]}]
+          }]),
+        },
+        "coerced @list containing multiple lists" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], ["b"]]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@list": [{"@value": "b"}]}
+            ]}]
+          }])
+        },
+        "coerced @list containing mixed list values" => {
+          input: %({
+            "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
+            "foo": [["a"], "b"]
+          }),
+          output: %([{
+            "http://example.com/foo": [{"@list": [
+              {"@list": [{"@value": "a"}]},
+              {"@value": "b"}
+            ]}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params}
@@ -792,6 +1001,63 @@ describe JSON::LD::API do
                 {"@value" => "Die Königin", "@language" => "de"},
                 {"@value" => "Ihre Majestät", "@language" => "de"},
                 {"@value" => "The Queen", "@language" => "en"}
+              ]
+            }
+          ]
+        },
+        "simple map with @none" => {
+          input: {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {
+                "@id" => "vocab:label",
+                "@container" => "@language"
+              }
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ],
+              "@none" => "The Queen"
+            }
+          },
+          output: [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "The Queen"},
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"},
+              ]
+            }
+          ]
+        },
+        "simple map with alias of @none" => {
+          input: {
+            "@context" => {
+              "vocab" => "http://example.com/vocab/",
+              "label" => {
+                "@id" => "vocab:label",
+                "@container" => "@language"
+              },
+              "none" => "@none"
+            },
+            "@id" => "http://example.com/queen",
+            "label" => {
+              "en" => "The Queen",
+              "de" => [ "Die Königin", "Ihre Majestät" ],
+              "none" => "The Queen"
+            }
+          },
+          output: [
+            {
+              "@id" => "http://example.com/queen",
+              "http://example.com/vocab/label" => [
+                {"@value" => "Die Königin", "@language" => "de"},
+                {"@value" => "Ihre Majestät", "@language" => "de"},
+                {"@value" => "The Queen", "@language" => "en"},
+                {"@value" => "The Queen"},
               ]
             }
           ]
@@ -902,6 +1168,25 @@ describe JSON::LD::API do
           processingMode: nil,
           exception: JSON::LD::JsonLdError::InvalidContainerMapping
         },
+        "Does not add @id if it is @none, or expands to @none": {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "idmap": {"@container": "@id"},
+              "none": "@none"
+            },
+            "idmap": {
+              "@none": {"label": "Object with no @id"},
+              "none": {"label": "Another object with no @id"}
+            }
+          }),
+          output: %([{
+            "http://example/idmap": [
+              {"http://example/label": [{"@value": "Object with no @id"}]},
+              {"http://example/label": [{"@value": "Another object with no @id"}]}
+            ]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
@@ -970,7 +1255,8 @@ describe JSON::LD::API do
         "Adds document expanded @type to object" => {
           input: %({
             "@context": {
-              "typemap": {"@id": "http://example/typemap", "@container": "@type"},
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
               "label": "http://example/label"
             },
             "typemap": {
@@ -979,10 +1265,28 @@ describe JSON::LD::API do
           }),
           output: %([{
             "http://example/typemap": [
-              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example.org/Foo"]}
+              {"http://example/label": [{"@value": "Object with @type <foo>"}], "@type": ["http://example/Foo"]}
             ]
-          }]),
-          base: "http://example.org/"
+          }])
+        },
+        "Does not add @type if it is @none, or expands to @none": {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "typemap": {"@container": "@type"},
+              "none": "@none"
+            },
+            "typemap": {
+              "@none": {"label": "Object with no @type"},
+              "none": {"label": "Another object with no @type"}
+            }
+          }),
+          output: %([{
+            "http://example/typemap": [
+              {"http://example/label": [{"@value": "Object with no @type"}]},
+              {"http://example/label": [{"@value": "Another object with no @type"}]}
+            ]
+          }])
         },
         "Raises InvalidContainerMapping if processingMode is not specified" => {
           input: %({
@@ -1086,6 +1390,43 @@ describe JSON::LD::API do
               }]
             }])
           },
+          "Creates a graph object given an indexed value with index @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]}
+              },
+              "input": {
+                "@none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value with index alias of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@index"]},
+                "none": "@none"
+              },
+              "input": {
+                "none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
           "Creates a graph object given an indexed value with @set" => {
             input: %({
               "@context": {
@@ -1148,6 +1489,43 @@ describe JSON::LD::API do
             output: %([{
               "http://example.org/input": [{
                 "@id": "http://example.com/g1",
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]}
+              },
+              "input": {
+                "@none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
+              }]
+            }])
+          },
+          "Creates a graph object given an indexed value of alias of @none" => {
+            input: %({
+              "@context": {
+                "@vocab": "http://example.org/",
+                "input": {"@container": ["@graph", "@id"]},
+                "none": "@none"
+              },
+              "input": {
+                "none": {"value": "x"}
+              }
+            }),
+            output: %([{
+              "http://example.org/input": [{
                 "@graph": [{
                   "http://example.org/value": [{"@value": "x"}]
                 }]
@@ -1776,6 +2154,23 @@ describe JSON::LD::API do
           output: %([{
             "http://example/typemap": [
               {"http://example.org/a": [{"@value": "Object with @type <Type>"}], "@type": ["http://example/Type"]}
+            ]
+          }])
+        },
+        "orders lexicographically" => {
+          input: %({
+            "@context": {
+              "@vocab": "http://example/",
+              "t1": {"@context": {"foo": {"@id": "http://example.com/foo"}}},
+              "t2": {"@context": {"foo": {"@id": "http://example.org/foo", "@type": "@id"}}}
+            },
+            "@type": ["t2", "t1"],
+            "foo": "urn:bar"
+          }),
+          output: %([{
+            "@type": ["http://example/t2", "http://example/t1"],
+            "http://example.org/foo": [
+              {"@id": "urn:bar"}
             ]
           }])
         },

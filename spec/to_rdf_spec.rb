@@ -356,6 +356,24 @@ describe JSON::LD::API do
             _:b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
           )
         ],
+        "@list containing @list" => [
+          %q({
+            "@id": "http://example/A",
+            "http://example.com/foo": {"@list": [{"@list": ["baz"]}]}
+          }),
+          %q(
+            <http://example/A> <http://example.com/foo> (("baz")) .
+          )
+        ],
+        "@list containing empty @list" => [
+          %({
+            "@id": "http://example/A",
+            "http://example.com/foo": {"@list": [{"@list": []}]}
+          }),
+          %q(
+            <http://example/A> <http://example.com/foo> (()) .
+          )
+        ],
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
@@ -649,12 +667,68 @@ describe JSON::LD::API do
           %q(
             [<http://rdfs.org/sioc/ns#content> "foo"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral>] .
           )
-        ]
+        ],
       }.each do |title, (js, ttl)|
         it title do
           ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
           expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
+      end
+    end
+
+    context "exceptions" do
+      {
+        "Invalid subject" => {
+          input: %({
+            "@id": "http://example.com/a b",
+            "http://example.com/foo": "bar"
+          }),
+          output: %()
+        },
+        "Invalid predicate" => {
+          input: %({
+            "@id": "http://example.com/foo",
+            "http://example.com/a b": "bar"
+          }),
+          output: %()
+        },
+        "Invalid object" => {
+          input: %({
+            "@id": "http://example.com/foo",
+            "http://example.com/bar": {"@id": "http://example.com/baz z"}
+          }),
+          output: %()
+        },
+        "Invalid type" => {
+          input: %({
+            "@id": "http://example.com/foo",
+            "@type": ["http://example.com/bar", "relative"]
+          }),
+          output: %(<http://example.com/foo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/bar> .)
+        },
+        "Invalid language" => {
+          input: %({
+            "@id": "http://example.com/foo",
+            "http://example.com/bar": {"@value": "bar", "@language": "a b"}
+          }),
+          output: %()
+        },
+        "Invalid datatype" => {
+          input: %({
+            "@id": "http://example.com/foo",
+            "http://example.com/bar": {"@value": "bar", "@type": "http://example.com/baz z"}
+          }),
+          output: %()
+        },
+        "Injected IRIs check" => {
+          input: %({
+            "@id": "http://foo/> <http://bar/> <http://baz> .\n<data:little> <data:bobby> <data:tables> .\n<data:in-ur-base",
+            "http://killin/#yer": "dudes"
+          }),
+          output: %()
+        },
+      }.each do |title, params|
+        it(title) {run_to_rdf params}
       end
     end
   end
@@ -664,5 +738,18 @@ describe JSON::LD::API do
     options = {logger: logger, validate: true, canonicalize: false}.merge(options)
     JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
     graph
+  end
+
+  def run_to_rdf(params)
+    input, output, processingMode = params[:input], params[:output], params[:processingMode]
+    graph = params[:graph] || RDF::Graph.new
+    input = StringIO.new(input) if input.is_a?(String)
+    pending params.fetch(:pending, "test implementation") unless input
+    if params[:exception]
+      expect {JSON::LD::API.toRdf(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
+    else
+      JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode) {|st| graph << st}
+      expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
+    end
   end
 end

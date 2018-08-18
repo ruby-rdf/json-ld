@@ -1,5 +1,6 @@
 /.yardoc/
 /doc/
+/coverage/
 /*.gem
 /coverage/
 /spec.html

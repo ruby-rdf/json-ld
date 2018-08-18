@@ -55,12 +55,14 @@ describe JSON::LD::Context do
     context "remote" do
 
       it "retrieves and parses a remote context document" do
+        JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.provided_context).to produce("http://example.com/context", logger)
       end
 
       it "fails given a missing remote @context" do
+        JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
         expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
@@ -81,6 +83,7 @@ describe JSON::LD::Context do
       end
 
       it "parses a referenced context at a relative URI" do
+        JSON::LD::Context::PRELOADED.clear
         rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
@@ -95,6 +98,7 @@ describe JSON::LD::Context do
 
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
+        before {JSON::LD::Context::PRELOADED.clear}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           subject.parse(ctx)
@@ -375,16 +379,6 @@ describe JSON::LD::Context do
   end
 
   describe "#processingMode" do
-    it "sets to json-ld-1.0 if not specified" do
-      [
-        %({}),
-        %([{}]),
-      ].each do |str|
-        ctx = JSON::LD::Context.parse(::JSON.parse(str))
-        expect(ctx.processingMode).to eql "json-ld-1.0"
-      end
-    end
-
     it "sets to json-ld-1.1 if @version: 1.1" do
       [
         %({"@version": 1.1}),
@@ -410,8 +404,8 @@ describe JSON::LD::Context do
       expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0")}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
     end
 
-    it "raises ProcessingModeConflict nested context is different from starting context" do
-      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+    it "does not raise ProcessingModeConflict nested context is different from starting context" do
+      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.not_to raise_error
     end
   end
 
@@ -436,6 +430,7 @@ describe JSON::LD::Context do
   end
 
   describe "#serialize" do
+    before {JSON::LD::Context::PRELOADED.clear}
     it "context document" do
       expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")
@@ -764,7 +759,7 @@ describe JSON::LD::Context do
   describe "#expand_iri" do
     subject {
       context.parse({
-        '@base' => 'http://base/',
+        '@base' => 'http://base/base',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '' => 'http://empty/',
@@ -794,6 +789,8 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("foo")],
+          "relative" =>      ["foo/bar",             RDF::URI("foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
@@ -815,7 +812,9 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
-          "empty term" =>    ["",                    RDF::URI("http://base/")],
+          "relative" =>      ["foo/bar",             RDF::URI("http://base/foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
+          "empty term" =>    ["",                    RDF::URI("http://base/base")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
@@ -836,6 +835,8 @@ describe JSON::LD::Context do
           "keyword" =>       ["@type",               "@type"],
           "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
           "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],
+          "relative" =>      ["foo/bar",             RDF::URI("http://vocab/foo/bar")],
+          "dotseg" =>        ["../foo/bar",          RDF::URI("http://vocab/../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("http://empty/")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a curie" =>
@@ -845,6 +846,39 @@ describe JSON::LD::Context do
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
+          end
+        end
+
+        context "set to ''" do
+          subject {
+            context.parse({
+              '@base' => 'http://base/base',
+              '@vocab' => '',
+              'ex' => 'http://example.org/',
+              '' => 'http://empty/',
+              '_' => 'http://underscore/'
+            })
+          }
+
+          {
+            "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
+            "term" =>          ["ex",                  RDF::URI("http://example.org/")],
+            "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
+            "keyword" =>       ["@type",               "@type"],
+            "empty" =>         [":suffix",             RDF::URI("http://empty/suffix")],
+            "unmapped" =>      ["foo",                 RDF::URI("http://base/basefoo")],
+            "relative" =>      ["foo/bar",             RDF::URI("http://base/basefoo/bar")],
+            "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/base../foo/bar")],
+            "empty term" =>    ["",                    RDF::URI("http://empty/")],
+            "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+            "absolute IRI looking like a curie" =>
+                               ["foo:bar",             RDF::URI("foo:bar")],
+            "bnode" =>         ["_:t0",                RDF::Node("t0")],
+            "_" =>             ["_",                   RDF::URI("http://underscore/")],
+          }.each do |title, (input, result)|
+            it title do
+              expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
+            end
           end
         end
       end
@@ -926,6 +960,28 @@ describe JSON::LD::Context do
         expect(subject.compact_iri("http://example.org/name", position: :predicate)).
           not_to produce("name", logger)
       end
+
+      context "with @vocab: relative" do
+        before(:each) {
+          subject.vocab = ""
+          subject.base = 'http://base/base'
+        }
+
+        {
+          "absolute IRI"  => ["http://example.com/", "http://example.com/"],
+          "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
+          "keyword"       => ["@type",               "@type"],
+          "empty"         => [":suffix",             "http://empty/suffix"],
+          "unmapped"      => ["foo",                 "foo"],
+          "bnode"         => ["_:a",                 RDF::Node("a")],
+          "relative"      => ["foo/bar",             "http://base/foo/bar"],
+          "odd CURIE"     => ["experts",             "http://example.org/perts"]
+        }.each do |title, (result, input)|
+          it title do
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          end
+        end
+      end
     end
 
     context "with value" do
@@ -939,47 +995,57 @@ describe JSON::LD::Context do
           "double" => {"@id" => "http://example.com/double", "@type" => "xsd:double"},
           "date" => {"@id" => "http://example.com/date", "@type" => "xsd:date"},
           "id" => {"@id" => "http://example.com/id", "@type" => "@id"},
-          "listplain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
-          "listlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
-          "listbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
-          "listinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
-          "listdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
-          "listdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
-          "listid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
-          "setlang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
-          "setbool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
-          "setinteger" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
-          "setdouble" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
-          "setdate" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
-          "setid" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
-          'setgraph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
-          "langmap" => {"@id" => "http://example.com/langmap", "@container" => "@language"},
+          'graph' => {'@id' => 'http://example.com/graph', '@container' => '@graph'},
+
+          "list_plain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
+          "list_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
+          "list_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
+          "list_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
+          "list_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
+          "list_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
+          "list_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
+          "list_graph" => {"@id" => "http://example.com/graph", "@type" => "@id", "@container" => "@list"},
+
+          "set_plain" => {"@id" => "http://example.com/plain", "@container" => "@set"},
+          "set_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
+          "set_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
+          "set_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
+          "set_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
+          "set_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
+          "set_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
+          'set_graph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
+
+          "map_lang" => {"@id" => "http://example.com/lang", "@container" => "@language"},
+
+          "set_map_lang" => {"@id" => "http://example.com/lang", "@container" => ["@language", "@set"]},
         })
         logger.clear
         c
       end
 
+      # Prefered sets and maps over non sets or maps
       {
-        "plain" => [{"@value" => "foo"}],
-        "langmap" => [{"@value" => "en", "@language" => "en"}],
-        "setbool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
-        "setinteger" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
-        "setid" => [{"@id" => "http://example.org/id"}],
-        "setgraph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
+        "set_plain" => [{"@value" => "foo"}],
+        "map_lang" => [{"@value" => "en", "@language" => "en"}],
+        "set_bool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
+        "set_integer" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
+        "set_id" => [{"@id" => "http://example.org/id"}],
+        "graph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              expect(ctx.compact_iri("http://example.com/#{prop.sub('set', '')}", value: value, vocab: true)).
+              expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: value, vocab: true)).
                 to produce(prop, logger)
             end
           end
         end
       end
 
+      # @language and @type with @list
       context "for @list" do
         {
-          "listplain"   => [
+          "list_plain"   => [
             [{"@value" => "foo"}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => "baz"}],
             [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
@@ -990,16 +1056,16 @@ describe JSON::LD::Context do
             [{"@value" => true}], [{"@value" => false}],
             [{"@value" => 1}], [{"@value" => 1.1}],
           ],
-          "listlang" => [[{"@value" => "en", "@language" => "en"}]],
-          "listbool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
-          "listinteger" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
-          "listdouble" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
-          "listdate" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
+          "list_lang" => [[{"@value" => "en", "@language" => "en"}]],
+          "list_bool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
+          "list_integer" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
+          "list_double" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
+          "list_date" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
         }.each do |prop, values|
           context "uses #{prop}" do
             values.each do |value|
               it "for #{{"@list" => value}.inspect}" do
-                expect(ctx.compact_iri("http://example.com/#{prop.sub('list', '')}", value: {"@list" => value}, vocab: true)).
+                expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: {"@list" => value}, vocab: true)).
                   to produce(prop, logger)
               end
             end

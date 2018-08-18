@@ -667,7 +667,8 @@ describe JSON::LD::API do
               "name": "Test 0001"
             }]
           }]
-        })
+        }),
+        processingMode: 'json-ld-1.1'
       },
       "library" => {
         frame: %({
@@ -1133,7 +1134,8 @@ describe JSON::LD::API do
               "@type": "Class",
               "preserve": {}
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Frame default graph if outer @graph is used" => {
           frame: %({
@@ -1160,13 +1162,14 @@ describe JSON::LD::API do
               "@type": "Class",
               "preserve": {
                 "@id": "urn:gr-1",
-                "@graph": [{
+                "@graph": {
                   "@id": "urn:id-2",
                   "term": "data"
-                }]
+                }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Merge one graph and preserve another" => {
           frame: %({
@@ -1206,13 +1209,14 @@ describe JSON::LD::API do
               },
               "preserve": {
                 "@id": "urn:graph-1",
-                "@graph": [{
+                "@graph": {
                   "@id": "urn:id-3",
                   "term": "bar"
-                }]
+                }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "Merge one graph and deep preserve another" => {
           frame: %({
@@ -1255,14 +1259,15 @@ describe JSON::LD::API do
               },
               "preserve": {
                 "deep": {
-                  "@graph": [{
+                  "@graph": {
                     "@id": "urn:id-3",
                     "term": "bar"
-                  }]
+                  }
                 }
               }
             }]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "library" => {
           frame: %({
@@ -1303,24 +1308,23 @@ describe JSON::LD::API do
                 "name": "Library",
                 "contains": {
                   "@id": "http://example.org/graphs/books",
-                  "@graph": [
-                    {
-                      "@id": "http://example.org/library/the-republic",
-                      "@type": "Book",
-                      "creator": "Plato",
-                      "title": "The Republic",
-                      "contains": {
-                        "@id": "http://example.org/library/the-republic#introduction",
-                        "@type": "Chapter",
-                        "description": "An introductory chapter on The Republic.",
-                        "title": "The Introduction"
-                      }
+                  "@graph": {
+                    "@id": "http://example.org/library/the-republic",
+                    "@type": "Book",
+                    "creator": "Plato",
+                    "title": "The Republic",
+                    "contains": {
+                      "@id": "http://example.org/library/the-republic#introduction",
+                      "@type": "Chapter",
+                      "description": "An introductory chapter on The Republic.",
+                      "title": "The Introduction"
                     }
-                  ]
+                  }
                 }
               }
             ]
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         }
       }.each do |title, params|
         it title do
@@ -1330,8 +1334,8 @@ describe JSON::LD::API do
     end
   end
 
-  describe "pruneBlankNodeIdentifiers" do
-    it "preserves single-use bnode identifiers if option set to false" do
+  describe "prune blank nodes" do
+    it "preserves single-use bnode identifiers if @version 1.0" do
       do_frame(
         input: %({
           "@context": {
@@ -1380,8 +1384,7 @@ describe JSON::LD::API do
               }
             }
           ]
-        }),
-        prune: false
+        })
       )
     end
   end
@@ -1423,7 +1426,7 @@ describe JSON::LD::API do
     end
 
     it "issue #28" do
-      input = JSON.parse %({
+      input = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
         },
@@ -1440,7 +1443,7 @@ describe JSON::LD::API do
           }
         ]
       })
-      frame = JSON.parse %({
+      frame = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
           "talksAbout": {
@@ -1454,7 +1457,7 @@ describe JSON::LD::API do
         },
         "@id": "http://www.myresource/uuid"
       })
-      expected = JSON.parse %({
+      expected = %({
         "@context": {
           "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
           "talksAbout": {
@@ -1478,15 +1481,233 @@ describe JSON::LD::API do
       })
       do_frame(input: input, frame: frame, output: expected)
     end
+
+    it "framing with @version: 1.1 prunes identifiers" do
+      input = %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "claim": {
+          "id": "ex:1",
+          "test": "foo"
+        }
+      })
+      frame = %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "claim": {}
+      })
+      expected = %({
+        "@context": {
+          "@version": 1.1,
+          "@vocab": "https://example.com#",
+          "ex": "http://example.org/",
+          "claim": {
+            "@id": "ex:claim",
+            "@container": "@graph"
+          },
+          "id": "@id"
+        },
+        "@graph": [
+          {
+            "claim": {
+              "id": "ex:1",
+              "test": "foo"
+            }
+          }
+        ]
+      })
+      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
+    end
+
+    it "PR #663" do
+      input = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@type": "Act",
+            "@graph": [
+              {
+                "@id": "Romeo",
+                "@type": "Person"
+              },
+              {
+                "@id": "Juliet",
+                "@type": "Person"
+              }
+            ]
+          },
+          {
+            "@id": "ActTwo",
+            "@type": "Act",
+            "@graph": [
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": "Juliet"
+              },
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": "Romeo"
+              }
+            ]
+          },
+          {
+            "@id": "Person",
+            "@type": "Class",
+            "unionOf": {
+              "@list": [
+                {
+                  "@id": "Montague",
+                  "@type": "Class"
+                },
+                {
+                  "@id": "Capulet",
+                  "@type": "Class"
+                }
+              ]
+            }
+          }
+        ]
+      })
+      frame = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@explicit": false,
+            "@embed": "@last",
+            "@type": [
+              "Act",
+              "Class"
+            ],
+            "@graph": [{
+              "@explicit": true,
+              "@embed": "@always",
+              "@type": "Person",
+              "@id": {},
+              "loves": {"@embed": "@never"}
+            }]
+          }
+        ]
+      })
+      expected = %({
+        "@context": {
+          "@vocab": "http://example.com/",
+          "loves": {
+            "@type": "@id"
+          },
+          "unionOf": {
+            "@type": "@id",
+            "@id": "owl:unionOf",
+            "@container": "@list"
+          },
+          "Class": "owl:Class"
+        },
+        "@graph": [
+          {
+            "@graph": [
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": "Romeo"
+              },
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": "Juliet"
+              }
+            ],
+            "@id": "ActTwo",
+            "@type": "Act"
+          },
+          {
+            "@id": "Capulet",
+            "@type": "Class"
+          },
+          {
+            "@id": "Montague",
+            "@type": "Class"
+          },
+          {
+            "@id": "Person",
+            "@type": "Class",
+            "unionOf": [
+              {
+                "@id": "Montague",
+                "@type": "Class"
+              },
+              {
+                "@id": "Capulet",
+                "@type": "Class"
+              }
+            ]
+          },
+          {
+            "@graph": [
+              {
+                "@id": "Juliet",
+                "@type": "Person",
+                "loves": null
+              },
+              {
+                "@id": "Romeo",
+                "@type": "Person",
+                "loves": null
+              }
+            ],
+            "@type": "Act"
+          }
+        ]
+      })
+      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
+    end
   end
 
   def do_frame(params)
     begin
-      input, frame, output, prune = params[:input], params[:frame], params[:output], params.fetch(:prune, true)
+      input, frame, output, processingMode = params[:input], params[:frame], params[:output], params.fetch(:processingMode, 'json-ld-1.0')
       input = ::JSON.parse(input) if input.is_a?(String)
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
-      jld = JSON::LD::API.frame(input, frame, logger: logger, pruneBlankNodeIdentifiers: prune)
+      jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)
       expect(jld).to produce(output, logger)
     rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +

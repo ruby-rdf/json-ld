@@ -10,23 +10,23 @@ module JSON::LD
     # Generate a JSON-LD array representation from an array of `RDF::Statement`.
     # Representation is in expanded form
     #
-    # @param [Array<RDF::Statement>, RDF::Enumerable] input
+    # @param [Array<RDF::Statement>, RDF::Enumerable] dataset
     # @param [Boolean] useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @param [Boolean] useNativeTypes (false) use native representations
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(input, useRdfType: false, useNativeTypes: false)
+    def from_statements(dataset, useRdfType: false, useNativeTypes: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
-      node_usages_map = {}
+      referenced_once = {}
 
       value = nil
       ec = Context.new
 
       # Create a map for node to object representation
 
-      # For each triple in input
-      input.each do |statement|
+      # For each statement in dataset
+      dataset.each do |statement|
         #log_debug("statement") { statement.to_nquads.chomp}
 
         name = statement.graph_name ? ec.expand_iri(statement.graph_name).to_s : '@default'
@@ -53,16 +53,23 @@ module JSON::LD
 
         merge_value(node, statement.predicate.to_s, value)
 
-        # If object is a blank node identifier or IRI, it might represent the a list node:
-        if statement.object.resource?
+        # If object is a blank node identifier or rdf:nil, it might represent the a list node:
+        if statement.object == RDF.nil
           # Append a new JSON object consisting of three members, node, property, and value to the usages array. The node member is set to a reference to node, property to predicate, and value to a reference to value.
-          merge_value(node_map[statement.object.to_s], :usages, {
+          object = node_map[statement.object.to_s]
+          merge_value(object, :usages, {
             node:     node,
             property: statement.predicate.to_s,
             value:    value
           })
-
-          (node_usages_map[statement.object.to_s] ||= []) << node['@id']
+        elsif referenced_once.has_key?(statement.object.to_s)
+          referenced_once[statement.object.to_s] = false
+        elsif statement.object.node?
+          referenced_once[statement.object.to_s] = {
+            node:     node,
+            property: statement.predicate.to_s,
+            value:    value
+          }
         end
       end
 
@@ -78,30 +85,31 @@ module JSON::LD
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
           #log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
           while property == RDF.rest.to_s &&
-              Array(node_usages_map[node['@id']]).uniq.length == 1 &&
               blank_node?(node) &&
+              referenced_once[node['@id']] &&
               node.keys.none? {|k| !["@id", '@type', :usages, RDF.first.to_s, RDF.rest.to_s].include?(k)} &&
-              Array(node[:usages]).length == 1 &&
               (f = node[RDF.first.to_s]).is_a?(Array) && f.length == 1 &&
               (r = node[RDF.rest.to_s]).is_a?(Array) && r.length == 1 &&
               ((t = node['@type']).nil? || t == [RDF.List.to_s])
             list << Array(node[RDF.first.to_s]).first
             list_nodes << node['@id']
-            node_usage = Array(node[:usages]).first
+
+            # get next node, moving backwards through list
+            node_usage = referenced_once[node['@id']]
             node, property, head = node_usage[:node], node_usage[:property], node_usage[:value]
           end
 
           # If property equals rdf:first, i.e., the detected list is nested inside another list
-          if property == RDF.first.to_s
-            # and the value of the @id of node equals rdf:nil, i.e., the detected list is empty, continue with the next usage item. The rdf:nil node cannot be converted to a list object as it would result in a list of lists, which isn't supported.
-            next if node['@id'] == RDF.nil.to_s
-
-            # Otherwise, the list consists of at least one item. We preserve the head node and transform the rest of the linked list to a list object
-            head_id = head['@id']
-            head = graph_object[head_id]
-            head = Array(head[RDF.rest.to_s]).first
-            list.pop; list_nodes.pop
-          end
+          #if property == RDF.first.to_s
+          #  # and the value of the @id of node equals rdf:nil, i.e., the detected list is empty, continue with the next usage item. The rdf:nil node cannot be converted to a list object as it would result in a list of lists, which isn't supported.
+          #  next if node['@id'] == RDF.nil.to_s
+          #
+          #  # Otherwise, the list consists of at least one item. We preserve the head node and transform the rest of the linked list to a list object
+          #  head_id = head['@id']
+          #  head = graph_object[head_id]
+          #  head = Array(head[RDF.rest.to_s]).first
+          #  list.pop; list_nodes.pop
+          #end
 
           head.delete('@id')
           head['@list'] = list.reverse

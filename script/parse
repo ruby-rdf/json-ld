@@ -17,7 +17,7 @@ def run(input, options)
     output_dir = File.expand_path("../../doc/profiles/#{File.basename __FILE__, ".rb"}", __FILE__)
     FileUtils.mkdir_p(output_dir)
     result = RubyProf.profile do
-      run(input, options.merge(profile: false))
+      run(input, profile: false, **options)
     end
     result.eliminate_methods!([/Hash#each/, /JSON::LD::Utils#debug/, /Array#map/, /JSON::LD::Utils#depth/])
     # Print a graph profile to text

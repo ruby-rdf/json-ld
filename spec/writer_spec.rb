@@ -191,11 +191,11 @@ describe JSON::LD::Writer do
 
   context "Writes fromRdf tests to isomorphic graph" do
     require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}tests/fromRdf-manifest.jsonld")
+    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}fromRdf-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
         next unless t.positiveTest? && !t.property('input').include?('0016')
-        specify "#{t.property('input')}: #{t.name}" do
+        specify "#{t.property('@id')}: #{t.name}" do
           logger.info "test: #{t.inspect}"
           logger.info "source: #{t.input}"
           t.logger = logger
@@ -213,17 +213,16 @@ describe JSON::LD::Writer do
     end
   end unless ENV['CI']
 
-  def parse(input, options = {})
-    format = options.fetch(:format, :trig)
+  def parse(input, format: :trig, **options)
     reader = RDF::Reader.for(format)
     RDF::Repository.new << reader.new(input, options)
   end
 
   # Serialize ntstr to a string and compare against regexps
-  def serialize(ntstr, options = {})
+  def serialize(ntstr, **options)
     g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
     #logger.info g.dump(:ttl)
-    result = JSON::LD::Writer.buffer(options.merge(logger: logger)) do |writer|
+    result = JSON::LD::Writer.buffer(logger: logger, **options) do |writer|
       writer << g
     end
     if $verbose

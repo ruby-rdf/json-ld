@@ -30,7 +30,8 @@ module JSON::LD
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
         # member; otherwise the compacted value is element
-        if result.length == 1 && !context.as_array?(property) && @options[:compactArrays]
+        if result.length == 1 &&
+           !context.as_array?(property) && @options[:compactArrays]
           #log_debug("=> extract single element: #{result.first.inspect}")
           result.first
         else
@@ -51,24 +52,32 @@ module JSON::LD
           end
         end
 
+        # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
+        if list?(element) && context.container(property) == %w(@list)
+          return compact(element['@list'], property: property)
+        end
+
+
         inside_reverse = property == '@reverse'
         result, nest_result = {}, nil
+
+        # Apply any context defined on an alias of @type
+        # If key is @type and any compacted value is a term having a local context, overlay that context.
+        Array(element['@type']).
+          map {|expanded_type| context.compact_iri(expanded_type, vocab: true)}.
+          sort.
+          each do |term|
+          term_context = self.context.term_definitions[term].context if context.term_definitions[term]
+          self.context = context.parse(term_context) if term_context
+        end
 
         element.keys.sort.each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
           if expanded_property == '@id' || expanded_property == '@type'
-            compacted_value = [expanded_value].flatten.compact.map do |expanded_type|
+            compacted_value = Array(expanded_value).map do |expanded_type|
               context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
-            end
-
-            # If key is @type and any compacted value is a term having a local context, overlay that context.
-            if expanded_property == '@type'
-              compacted_value.each do |term|
-                term_context = self.context.term_definitions[term].context if context.term_definitions[term]
-                self.context = context.parse(term_context) if term_context
-              end
             end
 
             compacted_value = compacted_value.first if compacted_value.length == 1
@@ -85,11 +94,8 @@ module JSON::LD
             # handle double-reversed properties
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
-                value = [value] if !value.is_a?(Array) &&
-                  (context.as_array?(prop) || !@options[:compactArrays])
-                #log_debug("") {"merge #{prop} => #{value.inspect}"}
-
-                merge_compacted_value(result, prop, value)
+                add_value(result, prop, value,
+                  property_is_array: context.as_array?(prop) || !@options[:compactArrays])
                 compacted_value.delete(prop)
               end
             end
@@ -136,11 +142,11 @@ module JSON::LD
 
             if nest_prop = context.nest(item_active_property)
               result[nest_prop] ||= {}
-              iap = result[result[nest_prop]] ||= []
-              result[nest_prop][item_active_property] = [iap] unless iap.is_a?(Array)
+              add_value(result[nest_prop], item_active_property, [],
+                property_is_array: true)
             else
-              iap = result[item_active_property] ||= []
-              result[item_active_property] = [iap] unless iap.is_a?(Array)
+              add_value(result, item_active_property, [],
+                property_is_array: true)
             end
           end
 
@@ -162,7 +168,7 @@ module JSON::LD
             end
 
             container = context.container(item_active_property)
-            as_array = context.as_array?(item_active_property)
+            as_array = !@options[:compactArrays] || context.as_array?(item_active_property)
 
             value = case
             when list?(expanded_item) then expanded_item['@list']
@@ -175,7 +181,7 @@ module JSON::LD
 
             # handle @list
             if list?(expanded_item)
-              compacted_item = [compacted_item] unless compacted_item.is_a?(Array)
+              compacted_item = as_array(compacted_item)
               unless container == %w(@list)
                 al = context.compact_iri('@list', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}
@@ -184,36 +190,35 @@ module JSON::LD
                   compacted_item[key] = expanded_item['@index']
                 end
               else
-                raise JsonLdError::CompactionToListOfLists,
-                      "key cannot have more than one list value" if nest_result.has_key?(item_active_property)
-              # Falls through to add list value below
+                add_value(nest_result, item_active_property, compacted_item,
+                  value_is_array: true, allow_duplicate: true)
+                  next
               end
             end
 
             # Graph object compaction cases:
             if graph?(expanded_item)
-              if container.include?('@graph') && container.include?('@id')
+              if container.include?('@graph') &&
+                (container.include?('@id') || container.include?('@index') && simple_graph?(expanded_item))
                 # container includes @graph and @id
                 map_object = nest_result[item_active_property] ||= {}
-                map_key = expanded_item['@id']
                 # If there is no @id, create a blank node identifier to use as an index
-                map_key = map_key ? context.compact_iri(map_key, quiet: true) : namer.get_name
-                merge_compacted_value(map_object, map_key, compacted_item)
-              elsif container.include?('@graph') && container.include?('@index') && simple_graph?(expanded_item)
-                # container includes @graph and @index and value is a simple graph object
-                map_object = nest_result[item_active_property] ||= {}
-                # If there is no @index, use @none
-                map_key = expanded_item['@index'] || '@none'
-                merge_compacted_value(map_object, map_key, compacted_item)
+                map_key = if container.include?('@id') && expanded_item['@id']
+                  context.compact_iri(expanded_item['@id'], quiet: true)
+                elsif container.include?('@index') && expanded_item['@index']
+                  context.compact_iri(expanded_item['@index'], quiet: true)
+                else
+                  context.compact_iri('@none', vocab: true, quiet: true)
+                end
+                add_value(map_object, map_key, compacted_item,
+                  property_is_array: as_array)
               elsif container.include?('@graph') && simple_graph?(expanded_item)
                 # container includes @graph but not @id or @index and value is a simple graph object
                 # Drop through, where compacted_value will be added
-                compacted_item = [compacted_item] if
-                  !compacted_item.is_a?(Array) && (!@options[:compactArrays] || as_array)
-                merge_compacted_value(nest_result, item_active_property, compacted_item)
+                add_value(nest_result, item_active_property, compacted_item,
+                  property_is_array: as_array)
               else
                 # container does not include @graph or otherwise does not match one of the previous cases, redo compacted_item
-                compacted_item = [compacted_item]
                 al = context.compact_iri('@graph', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item['@id']
@@ -224,47 +229,46 @@ module JSON::LD
                   key = context.compact_iri('@index', vocab: true, quiet: true)
                   compacted_item[key] = expanded_item['@index']
                 end
-                compacted_item = [compacted_item] if !@options[:compactArrays] || as_array
-                merge_compacted_value(nest_result, item_active_property, compacted_item)
+                add_value(nest_result, item_active_property, compacted_item,
+                  property_is_array: as_array)
               end
             elsif !(container & %w(@language @index @id @type)).empty? && !container.include?('@graph')
               map_object = nest_result[item_active_property] ||= {}
+              c = container.first
+              container_key = context.compact_iri(c, vocab: true, quiet: true)
               compacted_item = case container
               when %w(@id)
-                id_prop = context.compact_iri('@id', vocab: true, quiet: true)
-                map_key = compacted_item[id_prop]
-                map_key = context.compact_iri(map_key, quiet: true)
-                compacted_item.delete(id_prop)
+                map_key = compacted_item[container_key]
+                compacted_item.delete(container_key)
                 compacted_item
               when %w(@index)
                 map_key = expanded_item['@index']
+                compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                 compacted_item
               when %w(@language)
                 map_key = expanded_item['@language']
                 value?(expanded_item) ? expanded_item['@value'] : compacted_item
               when %w(@type)
-                type_prop = context.compact_iri('@type', vocab: true, quiet: true)
-                map_key, *types = Array(compacted_item[type_prop])
-                map_key = context.compact_iri(map_key, vocab: true, quiet: true)
+                map_key, *types = Array(compacted_item[container_key])
                 case types.length
-                when 0 then compacted_item.delete(type_prop)
-                when 1 then compacted_item[type_prop] = types.first
-                else        compacted_item[type_prop] = types
+                when 0 then compacted_item.delete(container_key)
+                when 1 then compacted_item[container_key] = types.first
+                else        compacted_item[container_key] = types
                 end
                 compacted_item
               end
-              compacted_item = [compacted_item] if as_array && !compacted_item.is_a?(Array)
-              merge_compacted_value(map_object, map_key, compacted_item)
+              map_key ||= context.compact_iri('@none', vocab: true, quiet: true)
+              add_value(map_object, map_key, compacted_item,
+                property_is_array: as_array)
             else
-              compacted_item = [compacted_item] if
-                !compacted_item.is_a?(Array) && (!@options[:compactArrays] || as_array)
-              merge_compacted_value(nest_result, item_active_property, compacted_item)
+              add_value(nest_result, item_active_property, compacted_item,
+                property_is_array: as_array)
             end
           end
         end
 
         # Re-order result keys
-        result.keys.kw_sort.each_with_object({}) {|kk, memo| memo[kk] = result[kk]}
+        result.keys.sort.each_with_object({}) {|kk, memo| memo[kk] = result[kk]}
       else
         # For other types, the compacted value is the element value
         #log_debug("compact") {element.class.to_s}

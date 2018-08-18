@@ -20,13 +20,12 @@ module JSON::LD
     # @option options [String] :property (nil)
     #   The parent property.
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, **options)
-      log_depth do
-      log_debug("frame") {"subjects: #{subjects.inspect}"}
-      log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-      log_debug("frame") {"property: #{options[:property].inspect}"}
+    def frame(state, subjects, frame, parent: nil, property: nil, **options)
+      #log_depth do
+      #log_debug("frame") {"subjects: #{subjects.inspect}"}
+      #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
+      #log_debug("frame") {"property: #{property.inspect}"}
 
-      parent, property = options[:parent], options[:property]
       # Validate the frame
       validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
@@ -46,10 +45,10 @@ module JSON::LD
       matches = filter_subjects(state, subjects, frame, flags)
 
       # For each id and node from the set of matched subjects ordered by id
-      matches.keys.kw_sort.each do |id|
+      matches.keys.sort.each do |id|
         subject = matches[id]
 
-        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is None, which only occurs at the top-level.
+        # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is nil, which only occurs at the top-level.
         if property.nil?
           state[:uniqueEmbeds] = {state[:graph] => {}}
         else
@@ -105,13 +104,13 @@ module JSON::LD
           if recurse
             state[:graphStack].push(state[:graph])
             state[:graph] = id
-            frame(state, state[:graphMap][id].keys, [subframe], options.merge(parent: output, property: '@graph'))
+            frame(state, state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
             state[:graph] = state[:graphStack].pop
           end
         end
 
         # iterate over subject properties in order
-        subject.keys.kw_sort.each do |prop|
+        subject.keys.sort.each do |prop|
           objects = subject[prop]
 
           # copy keywords to output
@@ -138,14 +137,14 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  frame(state, [oo['@id']], subframe, options.merge(parent: list, property: '@list'))
+                  frame(state, [oo['@id']], subframe, parent: list, property: '@list', **options)
                 else
                   add_frame_output(list, '@list', oo.dup)
                 end
               end
             when node_reference?(o)
               # recurse into subject reference
-              frame(state, [o['@id']], subframe, options.merge(parent: output, property: prop))
+              frame(state, [o['@id']], subframe, parent: output, property: prop, **options)
             when value_match?(subframe, o)
               # Include values if they match
               add_frame_output(output, prop, o.dup)
@@ -154,15 +153,14 @@ module JSON::LD
         end
 
         # handle defaults in order
-        frame.keys.kw_sort.each do |prop|
+        frame.keys.sort.each do |prop|
           next if prop.start_with?('@')
 
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
           n = frame[prop].first || {}
           omit_default_on = get_frame_flag(n, options, :omitDefault)
           if !omit_default_on && !output[prop]
-            preserve = n.fetch('@default', '@null').dup
-            preserve = [preserve] unless preserve.is_a?(Array)
+            preserve = as_array(n.fetch('@default', '@null').dup)
             output[prop] = [{'@preserve' => preserve}]
           end
         end
@@ -174,7 +172,7 @@ module JSON::LD
               # Node has property referencing this subject
               # recurse into  reference
               (output['@reverse'] ||= {})[reverse_prop] ||= []
-              frame(state, [r_id], subframe, options.merge(parent: output['@reverse'][reverse_prop]))
+              frame(state, [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
             end
           end
         end
@@ -185,7 +183,7 @@ module JSON::LD
         # pop matching subject from circular ref-checking stack
         state[:subjectStack].pop()
       end
-      end
+      #end
     end
 
     ##
@@ -214,18 +212,44 @@ module JSON::LD
     end
 
     ##
+    # Prune BNode identifiers recursively
+    #
+    # @param [Array, Hash] input
+    # @param [Array<String>] bnodes_to_clear
+    # @return [Array, Hash]
+    def prune_bnodes(input, bnodes_to_clear)
+      result = case input
+      when Array
+        # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
+        input.map {|o| prune_bnodes(o, bnodes_to_clear)}.compact
+      when Hash
+        output = Hash.new
+        input.each do |key, value|
+          if context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
+            # Don't add this to output, as it is pruned as being superfluous
+          else
+            output[key] = prune_bnodes(value, bnodes_to_clear)
+          end
+        end
+        output
+      else
+        input
+      end
+      result
+    end
+
+    ##
     # Replace @preserve keys with the values, also replace @null with null.
     #
     # Optionally, remove BNode identifiers only used once.
     #
     # @param [Array, Hash] input
-    # @param [Array<String>] bnodes_to_clear
     # @return [Array, Hash]
-    def cleanup_preserve(input, bnodes_to_clear)
+    def cleanup_preserve(input)
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        v = input.map {|o| cleanup_preserve(o, bnodes_to_clear)}.compact
+        v = input.map {|o| cleanup_preserve(o)}.compact
 
         # If the array contains a single member, which is itself an array, use that value as the result
         (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
@@ -234,11 +258,9 @@ module JSON::LD
         input.each do |key, value|
           if key == '@preserve'
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
-            output = cleanup_preserve(value, bnodes_to_clear)
-          elsif context.expand_iri(key) == '@id' && bnodes_to_clear.include?(value)
-            # Don't add this to output, as it is pruned as being superfluous
+            output = cleanup_preserve(value)
           else
-            v = cleanup_preserve(value, bnodes_to_clear)
+            v = cleanup_preserve(value)
 
             # Because we may have added a null value to an array, we need to clean that up, if we possible
             v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)
@@ -274,8 +296,6 @@ module JSON::LD
         memo[id] = subject if filter_subject(subject, frame, state, flags)
       end
     end
-
-    EXCLUDED_FRAMING_KEYWORDS = Set.new(%w(@default @embed @explicit @omitDefault @requireAll)).freeze
 
     ##
     # Returns true if the given node matches the given frame.
@@ -319,7 +339,6 @@ module JSON::LD
           else
             # Match on specific @type
             return !(v & node_values).empty?
-            false
           end
         when /@/
           # Skip other keywords
@@ -329,8 +348,6 @@ module JSON::LD
           if v = v.first
             validate_frame(v)
             has_default = v.has_key?('@default')
-            # Exclude framing keywords
-            v = v.reject {|kk,vv| EXCLUDED_FRAMING_KEYWORDS.include?(kk)}
           end
 
 
@@ -348,7 +365,7 @@ module JSON::LD
             # node does not match if values is not empty and the value of property in frame is match none.
             return false unless node_values.empty?
             true
-          when {}
+          when Hash # Empty other than framing keywords
             # node matches if values is not empty and the value of property in frame is wildcard
             !node_values.empty?
           else

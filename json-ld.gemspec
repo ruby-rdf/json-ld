@@ -18,11 +18,8 @@ Gem::Specification.new do |gem|
   gem.files                 = %w(AUTHORS README.md UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
   gem.bindir               = %q(bin)
   gem.executables          = %w(jsonld)
-  gem.default_executable   = gem.executables.first
   gem.require_paths         = %w(lib)
-  gem.extensions            = %w()
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
-  gem.has_rdoc              = false
 
   gem.required_ruby_version = '>= 2.2.2'
   gem.requirements          = []
@@ -48,7 +45,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-xsd',         '>= 2.2', '< 4.0'
   gem.add_development_dependency 'rspec',           '~> 3.7'
   gem.add_development_dependency 'rspec-its',       '~> 1.2'
-  gem.add_development_dependency 'yard' ,           '~> 0.8'
+  gem.add_development_dependency 'yard' ,           '~> 0.9.12'
 
   gem.post_install_message  = nil
 end
