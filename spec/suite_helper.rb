@@ -72,37 +72,50 @@ module Fixtures
     FRAME_SUITE = RDF::URI("https://w3c.github.io/json-ld-framing/tests/")
 
     class Manifest < JSON::LD::Resource
+      attr_accessor :manifest_url
+
       def self.open(file)
         RDF::Util::File.open_file(file) do |remote|
           json = JSON.parse(remote.read)
           if block_given?
-            yield self.from_jsonld(json)
+            yield self.from_jsonld(json, manifest_url: RDF::URI(file))
           else
-            self.from_jsonld(json)
+            self.from_jsonld(json, manifest_url: RDF::URI(file))
           end
         end
       end
 
+      def initialize(json, manifest_url:)
+        @manifest_url = manifest_url
+        super
+      end
+
       # @param [Hash] json framed JSON-LD
       # @return [Array<Manifest>]
-      def self.from_jsonld(json)
-        Manifest.new(json)
+      def self.from_jsonld(json, manifest_url: )
+        Manifest.new(json, manifest_url: manifest_url)
       end
 
       def entries
         # Map entries to resources
         attributes['sequence'].map do |e|
-          e.is_a?(String) ? Manifest.open("#{SUITE}#{e}") : Entry.new(e)
+          e.is_a?(String) ? Manifest.open(manifest_url.join(e).to_s) : Entry.new(e, manifest_url: manifest_url)
         end
       end
     end
 
     class Entry < JSON::LD::Resource
       attr_accessor :logger
+      attr_accessor :manifest_url
+
+      def initialize(json, manifest_url:)
+        @manifest_url = manifest_url
+        super
+      end
 
       # Base is expanded input file
       def base
-        options.fetch('base', "#{SUITE}#{property('input')}")
+        options.fetch('base', manifest_url.join(property('input')).to_s)
       end
 
       def options
@@ -138,7 +151,7 @@ module Fixtures
             file = options[:redirectTo]
           end
 
-          property(m) && "#{SUITE}#{file}"
+          property(m) && manifest_url.join(file).to_s
         end
 
         define_method("#{m}_json".to_sym) do
