@@ -102,14 +102,12 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :explicit,
           datatype: TrueClass,
-          default: false,
           control: :checkbox,
           on: ["--[no-]explicit"],
           description: "Only include explicitly declared properties in output (false)") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :omitDefault,
           datatype: TrueClass,
-          default: false,
           control: :checkbox,
           on: ["--[no-]omitDefault"],
           description: "Omit missing properties from output (false)") {|arg| arg},
@@ -129,14 +127,12 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :stream,
           datatype: TrueClass,
-          default: false,
           control: :checkbox,
           on: ["--[no-]stream"],
           description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :useRdfType,
           datatype: TrueClass,
-          default: false,
           control: :checkbox,
           on: ["--[no-]use-rdf-type"],
           description: "Treat `rdf:type` like a normal property instead of using `@type`.") {|arg| arg},
