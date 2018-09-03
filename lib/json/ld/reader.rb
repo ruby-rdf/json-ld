@@ -21,7 +21,7 @@ module JSON::LD
           on: ["--expand-context CONTEXT"],
           description: "Context to use when expanding.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
-          symbol: :processing_mode,
+          symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
