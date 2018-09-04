@@ -71,6 +71,8 @@ module JSON::LD
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :language
+    #   When set, this has the effect of inserting a context definition with `@language` set to the associated value, creating a default language for interpreting string values.
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
@@ -84,6 +86,7 @@ module JSON::LD
     # @yieldparam [API]
     # @raise [JsonLdError]
     def initialize(input, context, rename_bnodes: true, unique_bnodes: false, **options, &block)
+      #require 'byebug'; byebug
       @options = {
         compactArrays:      true,
         documentLoader:     self.class.method(:documentLoader)
