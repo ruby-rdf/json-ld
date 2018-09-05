@@ -86,7 +86,6 @@ module JSON::LD
     # @yieldparam [API]
     # @raise [JsonLdError]
     def initialize(input, context, rename_bnodes: true, unique_bnodes: false, **options, &block)
-      #require 'byebug'; byebug
       @options = {
         compactArrays:      true,
         documentLoader:     self.class.method(:documentLoader)
@@ -340,7 +339,6 @@ module JSON::LD
         explicit:                   false,
         requireAll:                 true,
         omitDefault:                false,
-        omitGraph:                  false,
         documentLoader:             method(:documentLoader)
       }.merge(options)
 
@@ -376,6 +374,11 @@ module JSON::LD
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+
+        # Set omitGraph option, if not present, based on processingMode
+        unless options.has_key?(:omitGraph)
+          options[:omitGraph] = @options[:processingMode] != 'json-ld-1.0'
+        end
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')

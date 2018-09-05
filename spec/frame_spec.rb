@@ -652,20 +652,18 @@ describe JSON::LD::API do
             "query": {"@id": "mq:query", "@type": "@id"},
             "result": {"@id": "mf:result", "@type": "xsd:boolean"}
           },
-          "@graph": [{
-            "@type": "mf:Manifest",
-            "comment": "Positive processor tests",
-            "entries": [{
-              "@type": "mf:ManifestEntry",
-              "action": {
-                "@type": "mq:QueryTest",
-                "data": "http://www.w3.org/TR/microdata-rdf/tests/0001.html",
-                "query": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
-              },
-              "comment": "Item with no itemtype and literal itemprop",
-              "mf:result": "true",
-              "name": "Test 0001"
-            }]
+          "@type": "mf:Manifest",
+          "comment": "Positive processor tests",
+          "entries": [{
+            "@type": "mf:ManifestEntry",
+            "action": {
+              "@type": "mq:QueryTest",
+              "data": "http://www.w3.org/TR/microdata-rdf/tests/0001.html",
+              "query": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"
+            },
+            "comment": "Item with no itemtype and literal itemprop",
+            "mf:result": "true",
+            "name": "Test 0001"
           }]
         }),
         processingMode: 'json-ld-1.1'
@@ -1129,11 +1127,9 @@ describe JSON::LD::API do
           }),
           output: %({
             "@context": {"@vocab": "urn:"},
-            "@graph": [{
-              "@id": "urn:id-1",
-              "@type": "Class",
-              "preserve": {}
-            }]
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "preserve": {}
           }),
           processingMode: 'json-ld-1.1'
         },
@@ -1157,17 +1153,15 @@ describe JSON::LD::API do
           }),
           output: %({
             "@context": {"@vocab": "urn:"},
-            "@graph": [{
-              "@id": "urn:id-1",
-              "@type": "Class",
-              "preserve": {
-                "@id": "urn:gr-1",
-                "@graph": {
-                  "@id": "urn:id-2",
-                  "term": "data"
-                }
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "preserve": {
+              "@id": "urn:gr-1",
+              "@graph": {
+                "@id": "urn:id-2",
+                "term": "data"
               }
-            }]
+            }
           }),
           processingMode: 'json-ld-1.1'
         },
@@ -1200,21 +1194,19 @@ describe JSON::LD::API do
           }),
           output: %({
             "@context": {"@vocab": "urn:"},
-            "@graph": [{
-              "@id": "urn:id-1",
-              "@type": "Class",
-              "merge": {
-                "@id": "urn:id-2",
-                "term": "foo"
-              },
-              "preserve": {
-                "@id": "urn:graph-1",
-                "@graph": {
-                  "@id": "urn:id-3",
-                  "term": "bar"
-                }
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "merge": {
+              "@id": "urn:id-2",
+              "term": "foo"
+            },
+            "preserve": {
+              "@id": "urn:graph-1",
+              "@graph": {
+                "@id": "urn:id-3",
+                "term": "bar"
               }
-            }]
+            }
           }),
           processingMode: 'json-ld-1.1'
         },
@@ -1250,22 +1242,20 @@ describe JSON::LD::API do
           }),
           output: %({
             "@context": {"@vocab": "urn:"},
-            "@graph": [{
-              "@id": "urn:id-1",
-              "@type": "Class",
-              "merge": {
-                "@id": "urn:id-2",
-                "term": "foo"
-              },
-              "preserve": {
-                "deep": {
-                  "@graph": {
-                    "@id": "urn:id-3",
-                    "term": "bar"
-                  }
+            "@id": "urn:id-1",
+            "@type": "Class",
+            "merge": {
+              "@id": "urn:id-2",
+              "term": "foo"
+            },
+            "preserve": {
+              "deep": {
+                "@graph": {
+                  "@id": "urn:id-3",
+                  "term": "bar"
                 }
               }
-            }]
+            }
           }),
           processingMode: 'json-ld-1.1'
         },
@@ -1301,28 +1291,24 @@ describe JSON::LD::API do
           }),
           output: %({
             "@context": {"@vocab": "http://example.org/"},
-            "@graph": [
-              {
-                "@id": "http://example.org/library",
-                "@type": "Library",
-                "name": "Library",
+            "@id": "http://example.org/library",
+            "@type": "Library",
+            "name": "Library",
+            "contains": {
+              "@id": "http://example.org/graphs/books",
+              "@graph": {
+                "@id": "http://example.org/library/the-republic",
+                "@type": "Book",
+                "creator": "Plato",
+                "title": "The Republic",
                 "contains": {
-                  "@id": "http://example.org/graphs/books",
-                  "@graph": {
-                    "@id": "http://example.org/library/the-republic",
-                    "@type": "Book",
-                    "creator": "Plato",
-                    "title": "The Republic",
-                    "contains": {
-                      "@id": "http://example.org/library/the-republic#introduction",
-                      "@type": "Chapter",
-                      "description": "An introductory chapter on The Republic.",
-                      "title": "The Introduction"
-                    }
-                  }
+                  "@id": "http://example.org/library/the-republic#introduction",
+                  "@type": "Chapter",
+                  "description": "An introductory chapter on The Republic.",
+                  "title": "The Introduction"
                 }
               }
-            ]
+            }
           }),
           processingMode: 'json-ld-1.1'
         }
@@ -1523,14 +1509,10 @@ describe JSON::LD::API do
           },
           "id": "@id"
         },
-        "@graph": [
-          {
-            "claim": {
-              "id": "ex:1",
-              "test": "foo"
-            }
-          }
-        ]
+        "claim": {
+          "id": "ex:1",
+          "test": "foo"
+        }
       })
       do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
     end
