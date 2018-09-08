@@ -112,6 +112,12 @@ module JSON::LD
           on: ["--[no-]omitDefault"],
           description: "Omit missing properties from output (false)") {|arg| arg},
         RDF::CLI::Option.new(
+          symbol: :ordered,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]ordered"],
+          description: "Order object member processing lexographically.") {|arg| arg},
+        RDF::CLI::Option.new(
           symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
