@@ -2383,7 +2383,7 @@ describe JSON::LD::API do
       expect {JSON::LD::API.expand(input, params)}.to raise_error(params[:exception])
     else
       jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))
-      expect(jld).to produce(output, logger)
+      expect(jld).to produce_jsonld(output, logger)
     end
   end
 end

@@ -7,8 +7,13 @@ describe JSON::LD do
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}flatten-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
-        specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          pending "context corner-case" if t.input_loc.end_with?('flatten-0044-in.jsonld')
+        specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
+          t.options[:ordered] = false
+          t.run self
+        end
+
+        specify "#{t.property('@id')}: #{t.name} ordered#{' (negative test)' unless t.positiveTest?}" do
+          t.options[:ordered] = true
           t.run self
         end
       end

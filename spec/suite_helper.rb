@@ -1,5 +1,4 @@
 require 'json/ld'
-require_relative 'support/extensions'
 
 # For now, override RDF::Utils::File.open_file to look for the file locally before attempting to retrieve it
 module RDF::Util
@@ -168,7 +167,7 @@ module Fixtures
       end
 
       def positiveTest?
-        property('@type').include?('jld:PositiveEvaluationTest')
+        property('@type').to_s.include?('Positive')
       end
       
 
@@ -227,9 +226,27 @@ module Fixtures
                 }
               else
                 expected = JSON.load(expect)
-                rspec_example.instance_eval {
-                  expect(result).to produce(expected, logger)
-                }
+                if options[:ordered]
+                  # Compare without transformation
+                  rspec_example.instance_eval {
+                    expect(result).to produce(expected, logger)
+                  }
+                else
+                  # Without key ordering, reorder result and expected embedded array values and compare
+                  # If results are compacted, expand both, reorder and re-compare
+                  rspec_example.instance_eval {
+                    expect(result).to produce_jsonld(expected, logger)
+                  }
+
+                  # If results are compacted, expand both, reorder and re-compare
+                  if result.to_s.include?('@context')
+                    exp_expected = JSON::LD::API.expand(expected, **options)
+                    exp_result = JSON::LD::API.expand(result, **options)
+                    rspec_example.instance_eval {
+                      expect(exp_result).to produce_jsonld(exp_expected, logger)
+                    }
+                  end
+                end
               end
             else
               rspec_example.instance_eval {

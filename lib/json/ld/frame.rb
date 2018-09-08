@@ -14,13 +14,15 @@ module JSON::LD
     # @param [Array<String>] subjects
     #   The subjects to filter
     # @param [Hash{String => Object}] frame
-    # @param [Hash{Symbol => Object}] options ({})
-    # @option options [Hash{String => Object}] :parent (nil)
-    #   Parent subject or top-level array
-    # @option options [String] :property (nil)
+    # @param [String] property (nil)
     #   The parent property.
+    # @param [Hash{String => Object}] parent (nil)
+    #   Parent subject or top-level array
+    # @param [Boolean] ordered (true)
+    #   Ensure output objects have keys ordered properly
+    # @param [Hash{Symbol => Object}] options ({})
     # @raise [JSON::LD::InvalidFrame]
-    def frame(state, subjects, frame, parent: nil, property: nil, **options)
+    def frame(state, subjects, frame, parent: nil, property: nil, ordered: false, **options)
       #log_depth do
       #log_debug("frame") {"subjects: #{subjects.inspect}"}
       #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
@@ -45,7 +47,7 @@ module JSON::LD
       matches = filter_subjects(state, subjects, frame, flags)
 
       # For each id and node from the set of matched subjects ordered by id
-      matches.keys.sort.each do |id|
+      matches.keys.opt_sort(ordered: ordered).each do |id|
         subject = matches[id]
 
         # Note: In order to treat each top-level match as a compartmentalized result, clear the unique embedded subjects map when the property is nil, which only occurs at the top-level.
@@ -110,7 +112,7 @@ module JSON::LD
         end
 
         # iterate over subject properties in order
-        subject.keys.sort.each do |prop|
+        subject.keys.opt_sort(ordered: ordered).each do |prop|
           objects = subject[prop]
 
           # copy keywords to output
@@ -153,7 +155,7 @@ module JSON::LD
         end
 
         # handle defaults in order
-        frame.keys.sort.each do |prop|
+        frame.keys.opt_sort(ordered: ordered).each do |prop|
           next if prop.start_with?('@')
 
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject

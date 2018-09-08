@@ -11,6 +11,7 @@ require 'rdf/trig'
 require 'rdf/vocab'
 require 'rdf/spec'
 require 'rdf/spec/matchers'
+require_relative 'matchers'
 require 'yaml'
 begin
   require 'simplecov'

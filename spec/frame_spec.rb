@@ -813,7 +813,7 @@ describe JSON::LD::API do
             frame = ::JSON.parse(frame) if frame.is_a?(String)
             output = ::JSON.parse(output) if output.is_a?(String)
             jld = JSON::LD::API.frame(input, frame, logger: logger)
-            expect(jld).to produce(output, logger)
+            expect(jld).to produce_jsonld(output, logger)
           rescue JSON::LD::JsonLdError => e
             fail("#{e.class}: #{e.message}\n" +
               "#{logger}\n" +
@@ -1690,7 +1690,12 @@ describe JSON::LD::API do
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
       jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)
-      expect(jld).to produce(output, logger)
+      expect(jld).to produce_jsonld(output, logger)
+
+      # Compare expanded jld/output too to make sure list values remain ordered
+      exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
+      exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1')
+      expect(exp_jld).to produce_jsonld(exp_output, logger)
     rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +
         "#{logger}\n" +

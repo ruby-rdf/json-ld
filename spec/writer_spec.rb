@@ -29,7 +29,7 @@ describe JSON::LD::Writer do
   context "simple tests" do
     it "should use full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
-      expect(serialize(input)).to produce([{
+      expect(serialize(input)).to produce_jsonld([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
       }], logger)
@@ -37,7 +37,7 @@ describe JSON::LD::Writer do
 
     it "should use qname URIs with standard prefix" do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
-      expect(serialize(input, standard_prefixes: true)).to produce({
+      expect(serialize(input, standard_prefixes: true)).to produce_jsonld({
         '@context' => {
           "foaf"  => "http://xmlns.com/foaf/0.1/",
         },
@@ -57,7 +57,7 @@ describe JSON::LD::Writer do
         dc:    "http://purl.org/dc/terms/",
         frbr:  "http://vocab.org/frbr/core#",
         senet: "https://senet.org/ns#",
-      })).to produce({
+      })).to produce_jsonld({
         '@context' => {
           "dc" => "http://purl.org/dc/terms/",
           "frbr" => "http://vocab.org/frbr/core#",
@@ -75,7 +75,7 @@ describe JSON::LD::Writer do
       input = %(<http://xmlns.com/foaf/0.1/b> <http://xmlns.com/foaf/0.1/c> <http://xmlns.com/foaf/0.1/d> .)
       begin
         expect(serialize(input, prefixes: { "" => RDF::Vocab::FOAF})).
-        to produce({
+        to produce_jsonld({
           "@context" => {
             "" => "http://xmlns.com/foaf/0.1/"
           },
@@ -92,7 +92,7 @@ describe JSON::LD::Writer do
     it "should not use terms if no suffix" do
       input = %(<http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> <http://xmlns.com/foaf/0.1/> .)
       expect(serialize(input, standard_prefixes: true)).
-      not_to produce({
+      not_to produce_jsonld({
         "@context" => {"foaf" => "http://xmlns.com/foaf/0.1/"},
         '@id'   => "foaf",
         "foaf"   => {"@id" => "foaf"}
@@ -109,7 +109,7 @@ describe JSON::LD::Writer do
       expect(serialize(input, prefixes: {
           "db" => RDF::URI("http://dbpedia.org/resource/"),
           "dbo" => RDF::URI("http://dbpedia.org/ontology/")})).
-      to produce({
+      to produce_jsonld({
         "@context" => {
           "db"    => "http://dbpedia.org/resource/",
           "dbo"   => "http://dbpedia.org/ontology/"
@@ -133,7 +133,7 @@ describe JSON::LD::Writer do
         <http://example.com/test-cases/0002> a :TestCase .
       )
       expect(serialize(input, prefixes: {"" => "http://www.w3.org/2006/03/test-description#"})).
-      to produce({
+      to produce_jsonld({
         '@context'     => {
           "" => "http://www.w3.org/2006/03/test-description#",
           "dc" => RDF::Vocab::DC.to_s 
@@ -164,7 +164,7 @@ describe JSON::LD::Writer do
         rdfs: "http://www.w3.org/2000/01/rdf-schema#",
         xsd:  "http://www.w3.org/2001/XMLSchema#"
       })).
-      to produce({
+      to produce_jsonld({
         '@context'     => {
           "owl"  => "http://www.w3.org/2002/07/owl#",
           "rdf"  => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",

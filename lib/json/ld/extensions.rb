@@ -43,11 +43,11 @@ module RDF
 end
 
 class Array
-  # Order terms, length first, then lexographically
-  def term_sort
-    self.sort do |a, b|
-      len_diff = a.length <=> b.length
-      len_diff == 0 ? a <=> b : len_diff
-    end
+  # Optionally order items
+  #
+  # @param [Boolean] ordered
+  # @return [Array]
+  def opt_sort(ordered: false)
+    ordered ? self.sort : self
   end
 end

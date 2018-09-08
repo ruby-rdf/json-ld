@@ -294,7 +294,7 @@ describe JSON::LD::API do
       expect {JSON::LD::API.flatten(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
     else
       jld = JSON::LD::API.flatten(input, context, params.merge(logger: logger))
-      expect(jld).to produce(output, logger)
+      expect(jld).to produce_jsonld(output, logger)
     end
   end
 end

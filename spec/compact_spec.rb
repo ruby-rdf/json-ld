@@ -501,7 +501,7 @@ describe JSON::LD::API do
         })
         allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         jld = JSON::LD::API.compact(input, "http://example.com/context", logger: logger, validate: true)
-        expect(jld).to produce(expected, logger)
+        expect(jld).to produce_jsonld(expected, logger)
       end
     end
 
@@ -2237,7 +2237,12 @@ describe JSON::LD::API do
       expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
     else
       jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))
-      expect(jld).to produce(output, logger)
+      expect(jld).to produce_jsonld(output, logger)
+
+      # Compare expanded jld/output too to make sure list values remain ordered
+      exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
+      exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1')
+      expect(exp_jld).to produce_jsonld(exp_output, logger)
     end
   end
 end

@@ -17,7 +17,7 @@ describe JSON::LD::StreamingWriter do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
-      expect(obj).to produce([{
+      expect(obj).to produce_jsonld([{
         '@id'         => "http://a/b",
         "http://a/c"  => [{"@id" => "http://a/d"}]
       }], logger)
