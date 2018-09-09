@@ -365,13 +365,13 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, framing: true, **options)
+      expanded_frame = API.expand(frame, options.merge(framing: true, ordered: false))
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
@@ -452,7 +452,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
+      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
