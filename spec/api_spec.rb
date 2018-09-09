@@ -81,17 +81,17 @@ describe JSON::LD::API do
               options = {logger: logger, adapter: adapter}
               options[:expandContext] = File.open(context) if context
               jld = described_class.expand(File.open(filename), options)
-              expect(jld).to produce(JSON.load(File.open(expanded)), logger)
+              expect(jld).to produce_jsonld(JSON.load(File.open(expanded)), logger)
             end if File.exist?(expanded)
         
             it "compacts" do
               jld = described_class.compact(File.open(filename), File.open(context), adapter: adapter, logger: logger)
-              expect(jld).to produce(JSON.load(File.open(compacted)), logger)
+              expect(jld).to produce_jsonld(JSON.load(File.open(compacted)), logger)
             end if File.exist?(compacted) && File.exist?(context)
         
             it "frame" do
               jld = described_class.frame(File.open(filename), File.open(frame), adapter: adapter, logger: logger)
-              expect(jld).to produce(JSON.load(File.open(framed)), logger)
+              expect(jld).to produce_jsonld(JSON.load(File.open(framed)), logger)
             end if File.exist?(framed) && File.exist?(frame)
 
             it "toRdf" do

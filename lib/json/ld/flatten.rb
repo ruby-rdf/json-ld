@@ -18,6 +18,8 @@ module JSON::LD
     #   Property within current node
     # @param [Array] list (nil)
     #   Used when property value is a list
+    # @param [Boolean] ordered (true)
+    #   Ensure output objects have keys ordered properly
     def create_node_map(element, graph_map,
                         active_graph: '@default',
                         active_subject: nil,
@@ -110,7 +112,7 @@ module JSON::LD
                             active_graph: id)
           end
 
-          element.keys.sort.each do |property|
+          element.keys.each do |property|
             value = element[property]
 
             property = namer.get_name(property) if blank_node?(property)

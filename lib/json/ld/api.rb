@@ -71,6 +71,8 @@ module JSON::LD
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
+    # @option options [String] :language
+    #   When set, this has the effect of inserting a context definition with `@language` set to the associated value, creating a default language for interpreting string values.
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
@@ -80,12 +82,15 @@ module JSON::LD
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
     # @option options [Symbol] :adapter used with MultiJson
     # @option options [Boolean] :validate Validate input, if a string or readable object.
+    # @option options [Boolean] :ordered (true)
+    #   Order traversal of dictionary members by key when performing algorithms.
     # @yield [api]
     # @yieldparam [API]
     # @raise [JsonLdError]
     def initialize(input, context, rename_bnodes: true, unique_bnodes: false, **options, &block)
       @options = {
         compactArrays:      true,
+        ordered:            false,
         documentLoader:     self.class.method(:documentLoader)
       }.merge(options)
       @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
@@ -161,11 +166,11 @@ module JSON::LD
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
-    def self.expand(input, ordered: true, framing: false, **options, &block)
+    def self.expand(input, framing: false, **options, &block)
       result, doc_base = nil
       API.new(input, options[:expandContext], options) do
         result = self.expand(self.value, nil, self.context,
-          ordered: ordered,
+          ordered: @options[:ordered],
           framing: framing)
         doc_base = @options[:base]
       end
@@ -216,14 +221,14 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded_input = expanded ? input : API.expand(input, options) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
 
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value)
+        result = compact(value, ordered: @options[:ordered])
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize
@@ -274,23 +279,23 @@ module JSON::LD
         create_node_map(value, graph_maps)
 
         default_graph = graph_maps['@default']
-        graph_maps.keys.sort.each do |graph_name|
+        graph_maps.keys.opt_sort(ordered: @options[:ordered]).each do |graph_name|
           next if graph_name == '@default'
 
           graph = graph_maps[graph_name]
           entry = default_graph[graph_name] ||= {'@id' => graph_name}
           nodes = entry['@graph'] ||= []
-          graph.keys.sort.each do |id|
+          graph.keys.opt_sort(ordered: @options[:ordered]).each do |id|
             nodes << graph[id] unless node_reference?(graph[id])
           end
         end
-        default_graph.keys.sort.each do |id|
+        default_graph.keys.opt_sort(ordered: @options[:ordered]).each do |id|
           flattened << default_graph[id] unless node_reference?(default_graph[id])
         end
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = as_array(compact(flattened))
+          compacted = as_array(compact(flattened, ordered: @options[:ordered]))
           kwgraph = self.context.compact_iri('@graph', quiet: true)
           flattened = self.context.serialize.merge(kwgraph => compacted)
         end
@@ -337,7 +342,6 @@ module JSON::LD
         explicit:                   false,
         requireAll:                 true,
         omitDefault:                false,
-        omitGraph:                  false,
         documentLoader:             method(:documentLoader)
       }.merge(options)
 
@@ -361,18 +365,23 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, framing: true, **options)
+      expanded_frame = API.expand(frame, options.merge(framing: true, ordered: false))
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+
+        # Set omitGraph option, if not present, based on processingMode
+        unless options.has_key?(:omitGraph)
+          options[:omitGraph] = @options[:processingMode] != 'json-ld-1.0'
+        end
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')
@@ -391,7 +400,7 @@ module JSON::LD
         framing_state[:subjects] = framing_state[:graphMap][framing_state[:graph]]
 
         result = []
-        frame(framing_state, framing_state[:subjects].keys.sort, (expanded_frame.first || {}), parent: result, **options)
+        frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
         # Count blank node identifiers used in the document, if pruning
         unless @options[:processingMode] == 'json-ld-1.0'
@@ -402,7 +411,7 @@ module JSON::LD
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
         # Compact result
-        compacted = compact(result)
+        compacted = compact(result, ordered: @options[:ordered])
         compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
 
         # Add the given context to the output
@@ -443,7 +452,7 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
+      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false))
 
       API.new(expanded_input, nil, options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
@@ -487,8 +496,11 @@ module JSON::LD
     def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
       result = nil
 
-      API.new(nil, nil, options) do |api|
-        result = api.from_statements(input, useRdfType: useRdfType, useNativeTypes: useNativeTypes)
+      API.new(nil, nil, options) do
+        result = from_statements(input,
+          useRdfType: useRdfType,
+          useNativeTypes: useNativeTypes,
+          ordered: @options[:ordered])
       end
 
       block_given? ? yield(result) : result

@@ -96,6 +96,32 @@ describe JSON::LD::API do
       it(title) {run_expand params}
     end
 
+    context "default language" do
+      {
+        "base": {
+          input: %({
+            "http://example/foo": "bar"
+          }),
+          output: %([{
+            "http://example/foo": [{"@value": "bar", "@language": "en"}]
+          }]),
+          language: "en"
+        },
+        "override": {
+          input: %({
+            "@context": {"@language": null},
+            "http://example/foo": "bar"
+          }),
+          output: %([{
+            "http://example/foo": [{"@value": "bar"}]
+          }]),
+          language: "en"
+        }
+      }.each_pair do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
     context "with relative IRIs" do
       {
         "base": {
@@ -2349,15 +2375,15 @@ describe JSON::LD::API do
   end
 
   def run_expand(params)
-    input, output, processingMode = params[:input], params[:output], params[:processingMode]
+    input, output = params[:input], params[:output]
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.expand(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
+      expect {JSON::LD::API.expand(input, params)}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.expand(input, base: params[:base], logger: logger, processingMode: processingMode)
-      expect(jld).to produce(output, logger)
+      jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))
+      expect(jld).to produce_jsonld(output, logger)
     end
   end
 end

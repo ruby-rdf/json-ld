@@ -750,7 +750,7 @@ module JSON::LD
         ctx['@vocab'] = vocab.to_s if vocab
 
         # Term Definitions
-        term_definitions.keys.sort.each do |term|
+        term_definitions.keys.each do |term|
           defn = term_definitions[term].to_context_definition(self)
           ctx[term] = defn if defn
         end
@@ -1201,7 +1201,7 @@ module JSON::LD
         candidates << ciri unless value && term_definitions.has_key?(ciri)
       end
 
-      return candidates.term_sort.first if !candidates.empty?
+      return candidates.sort.first if !candidates.empty?
 
       # If we still don't have any terms and we're using standard_prefixes,
       # try those, and add to mapping
@@ -1214,7 +1214,7 @@ module JSON::LD
             iri.sub(v.to_uri.to_s, "#{prefix}:").sub(/:$/, '')
           end
 
-        return candidates.term_sort.first if !candidates.empty?
+        return candidates.sort.first if !candidates.empty?
       end
 
       if !vocab

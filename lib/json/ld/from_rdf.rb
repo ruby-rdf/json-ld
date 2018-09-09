@@ -14,8 +14,10 @@ module JSON::LD
     # @param [Boolean] useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @param [Boolean] useNativeTypes (false) use native representations
+    # @param [Boolean] ordered (true)
+    #   Ensure output objects have keys ordered properly
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(dataset, useRdfType: false, useNativeTypes: false)
+    def from_statements(dataset, useRdfType: false, useNativeTypes: false, ordered: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       referenced_once = {}
@@ -118,11 +120,11 @@ module JSON::LD
       end
 
       result = []
-      default_graph.keys.sort.each do |subject|
+      default_graph.keys.opt_sort(ordered: ordered).each do |subject|
         node = default_graph[subject]
         if graph_map.has_key?(subject)
           node['@graph'] = []
-          graph_map[subject].keys.sort.each do |s|
+          graph_map[subject].keys.opt_sort(ordered: ordered).each do |s|
             n = graph_map[subject][s]
             n.delete(:usages)
             node['@graph'] << n unless node_reference?(n)

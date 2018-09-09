@@ -19,7 +19,7 @@ module JSON::LD
     # @param [Boolean] framing (false)
     #   Special rules for expanding a frame
     # @return [Array<Hash{String => Object}>]
-    def expand(input, active_property, context, ordered: true, framing: false)
+    def expand(input, active_property, context, ordered: false, framing: false)
       #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
       result = case input

@@ -191,12 +191,14 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand compact flatten frame fromRdf remote-doc toRdf)
+manifests = %w(expand compact flatten fromRdf remote-doc toRdf).map do |man|
+  "#{Fixtures::SuiteTest::SUITE}#{man}-manifest.jsonld"
+end + ["#{Fixtures::SuiteTest::FRAME_SUITE}frame-manifest.jsonld"]
 
 earl_preamble(options) if options[:earl]
 
 manifests.each do |man|
-  Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}#{man}-manifest.jsonld") do |m|
+  Fixtures::SuiteTest::Manifest.open(man) do |m|
     m.entries.each do |tc|
       next unless ARGV.empty? || ARGV.any? {|n| tc.property('@id').match(/#{n}/) || tc.property('input').match(/#{n}/)}
       run_tc(man, tc, options)

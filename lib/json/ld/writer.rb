@@ -75,15 +75,17 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :compactArrays,
           datatype: TrueClass,
+          default: true,
           control: :checkbox,
-          on: ["--compact-arrays"],
-          description: "Replaces arrays with just one element with that element during compaction.") {true},
+          on: ["--[no-]compact-arrays"],
+          description: "Replaces arrays with just one element with that element during compaction. Default is `true` use --no-compact-arrays to disable.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :compactToRelative,
           datatype: TrueClass,
+          default: true,
           control: :checkbox,
-          on: ["--compact-to-relative"],
-          description: "Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded. Default is `true` use --no-compact-to-relative to disable.") {true},
+          on: ["--[no-]compact-to-relative"],
+          description: "Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded. Default is `true` use --no-compact-to-relative to disable.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :context,
           datatype: RDF::URI,
@@ -93,6 +95,7 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :embed,
           datatype: %w(@always @last @never),
+          default: '@last',
           control: :select,
           on: ["--embed EMBED"],
           description: "How to embed matched objects (@last).") {|arg| RDF::URI(arg)},
@@ -100,16 +103,22 @@ module JSON::LD
           symbol: :explicit,
           datatype: TrueClass,
           control: :checkbox,
-          on: ["--explicit"],
-          description: "Only include explicitly declared properties in output (false)") {|arg| RDF::URI(arg)},
+          on: ["--[no-]explicit"],
+          description: "Only include explicitly declared properties in output (false)") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :omitDefault,
           datatype: TrueClass,
           control: :checkbox,
-          on: ["--omitDefault"],
-          description: "Omit missing properties from output (false)") {|arg| RDF::URI(arg)},
+          on: ["--[no-]omitDefault"],
+          description: "Omit missing properties from output (false)") {|arg| arg},
         RDF::CLI::Option.new(
-          symbol: :processing_mode,
+          symbol: :ordered,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]ordered"],
+          description: "Order object member processing lexographically.") {|arg| arg},
+        RDF::CLI::Option.new(
+          symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
@@ -117,21 +126,22 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :requireAll,
           datatype: TrueClass,
+          default: true,
           control: :checkbox,
-          on: ["--requireAll"],
-          description: "Require all properties to match (true)") {|arg| RDF::URI(arg)},
+          on: ["--[no-]requireAll"],
+          description: "Require all properties to match (true). Default is `true` use --no-compact-to-relative to disable.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :stream,
           datatype: TrueClass,
           control: :checkbox,
-          on: ["--stream"],
-          description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {true},
+          on: ["--[no-]stream"],
+          description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :useRdfType,
           datatype: TrueClass,
           control: :checkbox,
-          on: ["--use-rdf-type"],
-          description: "Treat `rdf:type` like a normal property instead of using `@type`.") {true},
+          on: ["--[no-]use-rdf-type"],
+          description: "Treat `rdf:type` like a normal property instead of using `@type`.") {|arg| arg},
       ]
     end
 
