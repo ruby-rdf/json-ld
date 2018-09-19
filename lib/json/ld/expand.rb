@@ -347,7 +347,7 @@ module JSON::LD
         term_context = context.term_definitions[key].context if context.term_definitions[key]
         active_context = term_context ? context.parse(term_context) : context
         container = active_context.container(key)
-        expanded_value = if container == %w(@language) && value.is_a?(Hash)
+        expanded_value = if container.length == 1 && container.first == '@language' && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
           
           # Set multilingual array to an empty array.
@@ -370,7 +370,7 @@ module JSON::LD
           end
 
           ary
-        elsif !(CONTAINER_MAPPING_INDEX_ID_TYPE & container).empty? && value.is_a?(Hash)
+        elsif container.any? { |key| CONTAINER_MAPPING_INDEX_ID_TYPE.include?(key) } && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context contains @index, @id, @type and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.
@@ -426,14 +426,14 @@ module JSON::LD
         #log_debug {" => #{expanded_value.inspect}"}
 
         # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
-        if active_context.container(key) == %w(@list) && !list?(expanded_value)
+        if container.first == '@list' && container.length == 1 && !list?(expanded_value)
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
           expanded_value = {'@list' => as_array(expanded_value)}
         end
         #log_debug {" => #{expanded_value.inspect}"}
 
         # convert expanded value to @graph if container specifies it
-        if active_context.container(key) == %w(@graph)
+        if container.first == '@graph' && container.length == 1
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
           expanded_value = as_array(expanded_value).map do |v|
             graph?(v) ? v : {'@graph' => as_array(v)}
@@ -457,7 +457,14 @@ module JSON::LD
         else
           # Otherwise, if key is not a reverse property:
           # If result does not have an expanded property member, create one and initialize its value to an empty array.
-          (output_object[expanded_property] ||= []).concat([expanded_value].flatten)
+          (output_object[expanded_property] ||= []).tap do |memo|
+            # expanded_value is either Array[Hash] or Hash; in both case append to memo without flatten
+            if expanded_value.is_a?(Array)
+              memo.concat(expanded_value)
+            else # Hash
+              memo << expanded_value
+            end
+          end
         end
       end
 
