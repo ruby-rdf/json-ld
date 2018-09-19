@@ -4,6 +4,9 @@ module JSON::LD
   module Compact
     include Utils
 
+    # The following constant is used to reduce object allocations in #compact below
+    CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE = Set.new(%w(@language @index @id @type)).freeze
+
     ##
     # This algorithm compacts a JSON-LD document, such that the given context is applied. This must result in shortening any applicable IRIs to terms or compact IRIs, any applicable keywords to keyword aliases, and any applicable JSON-LD values expressed in expanded form to simple values such as strings or numbers.
     #
@@ -234,7 +237,7 @@ module JSON::LD
                 add_value(nest_result, item_active_property, compacted_item,
                   property_is_array: as_array)
               end
-            elsif !(container & %w(@language @index @id @type)).empty? && !container.include?('@graph')
+            elsif container.any? { |key| CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE.include?(key) } && !container.include?('@graph')
               map_object = nest_result[item_active_property] ||= {}
               c = container.first
               container_key = context.compact_iri(c, vocab: true, quiet: true)
