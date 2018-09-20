@@ -527,6 +527,11 @@ module JSON::LD
       self
     end
 
+    # The following constants are used to reduce object allocations in #create_term_definition below
+    ID_NULL_OBJECT = { '@id' => nil }.freeze
+    JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
+    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @type)).freeze
+
     ##
     # Create Term Definition
     #
@@ -570,7 +575,7 @@ module JSON::LD
       value = {'@id' => value} if simple_term
 
       case value
-      when nil, {'@id' => nil}
+      when nil, ID_NULL_OBJECT
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
         #log_debug("") {"=> nil"}
         term_definitions[term] = TermDefinition.new(term)
@@ -581,14 +586,16 @@ module JSON::LD
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
-        expected_keys = case processingMode
-        when "json-ld-1.0", nil then %w(@container @id @language @reverse @type)
-        else  %w(@container @context @id @language @nest @prefix @reverse @type)
-        end
+        if options[:validate]
+          expected_keys = case processingMode
+          when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
+          else JSON_LD_EXPECTED_KEYS
+          end
 
-        extra_keys = value.keys - expected_keys
-        if !extra_keys.empty? && @options[:validate]
-          raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
+          if value.any? { |key, _| !expected_keys.include?(key) }
+            extra_keys = value.keys - expected_keys.to_a
+            raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
+          end
         end
 
         if value.has_key?('@type')
@@ -650,7 +657,7 @@ module JSON::LD
 
           # If id ends with a gen-delim, it may be used as a prefix for simple terms
           definition.prefix = true if !term.include?(':') &&
-            definition.id.to_s.end_with?(*%w(: / ? # [ ] @)) &&
+            definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') &&
             simple_term
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
