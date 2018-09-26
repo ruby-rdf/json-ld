@@ -412,9 +412,18 @@ module JSON::LD
     end
 
     def validate_frame(frame)
-      raise InvalidFrame::Syntax,
-            "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
+      frame = frame.first if frame.is_a?(Array)
+
+      # Check values of @id and @type
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; invalid value of @id: #{frame['@id']}" unless
+            Array(frame['@id']) == [{}] || Array(frame['@id']).all?{|v| RDF::URI(v).valid?}
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; invalid value of @type: #{frame['@type']}" unless
+            Array(frame['@type']) == [{}] || Array(frame['@type']).all?{|v| RDF::URI(v).valid?}
     end
 
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.

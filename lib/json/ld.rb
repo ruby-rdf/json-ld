@@ -140,10 +140,8 @@ module JSON
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
       class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end
       class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
-      class InvalidFrame < JsonLdError
-        class MultipleEmbeds < InvalidFrame; end
-        class Syntax < InvalidFrame; end
-      end
+      class InvalidFrame < JsonLdError; @code = "invalid frame"; end
+      class InvalidEmbedValue < InvalidFrame; @code = "invalid @embed value"; end
     end
   end
 end
