@@ -489,7 +489,8 @@ module JSON::LD
 
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
-            result.create_term_definition(context, key, defined)
+            # ... where key is not @base, @vocab, @language, or @version
+            result.create_term_definition(context, key, defined) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -529,6 +530,7 @@ module JSON::LD
 
     # The following constants are used to reduce object allocations in #create_term_definition below
     ID_NULL_OBJECT = { '@id' => nil }.freeze
+    NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @version)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
     JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @type)).freeze
 
@@ -558,8 +560,14 @@ module JSON::LD
         raise JsonLdError::CyclicIRIMapping, "Cyclical term dependency found: #{term.inspect}"
       end
 
+      # Initialize value to a the value associated with the key term in local context.
+      value = local_context.fetch(term, false)
+      simple_term = value.is_a?(String)
+
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if KEYWORDS.include?(term) && (term != '@vocab' && term != '@language' && term != '@version')
+      if term == '@type' && value == {'@container' => '@set'}
+        # this is the only case were redefining a keyword is allowed
+      elsif KEYWORDS.include?(term)
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
@@ -569,9 +577,6 @@ module JSON::LD
       # Remove any existing term definition for term in active context.
       term_definitions.delete(term)
 
-      # Initialize value to a the value associated with the key term in local context.
-      value = local_context.fetch(term, false)
-      simple_term = value.is_a?(String)
       value = {'@id' => value} if simple_term
 
       case value
@@ -672,6 +677,9 @@ module JSON::LD
             term
           end
           #log_debug("") {"=> #{definition.id}"}
+        elsif KEYWORDS.include?(term)
+          # This should only happen for @type when @container is @set
+          definition.id = term
         else
           # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
           raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
@@ -881,7 +889,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>]
     def container(term)
-      return [term] if KEYWORDS.include?(term)
+      return [term] if term == '@list'
       term = find_definition(term)
       term ? term.container_mapping : []
     end

@@ -85,7 +85,10 @@ module JSON::LD
               context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
             end
 
-            compacted_value = compacted_value.first if compacted_value.length == 1
+            kw_alias = context.compact_iri(expanded_property, vocab: true)
+            as_array = (context.as_array?(kw_alias) && !value?(element)) ||
+                       compacted_value.length > 1
+            compacted_value = compacted_value.first unless as_array
 
             al = context.compact_iri(expanded_property, vocab: true, quiet: true)
             #log_debug(expanded_property) {"result[#{al}] = #{compacted_value.inspect}"}

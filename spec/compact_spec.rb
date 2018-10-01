@@ -125,6 +125,18 @@ describe JSON::LD::API do
           "b": ["c"]
         })
       },
+      "@set coercion on @type" => {
+        input: %({
+          "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+          "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+        }),
+        context: %({"@type": {"@container": "@set"}}),
+        output: %({
+          "@context": {"@type": {"@container": "@set"}},
+          "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
+          "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+        })
+      },
       "empty @set coercion" => {
         input: %({
           "http://example.com/b": []
@@ -203,6 +215,18 @@ describe JSON::LD::API do
           output: %({
             "@context": {"type": "@type"},
             "type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+            "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
+          })
+        },
+        "@type with @container: @set": {
+          input: %({
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+            "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+          }),
+          context: %({"type": {"@id": "@type", "@container": "@set"}}),
+          output: %({
+            "@context": {"type": {"@id": "@type", "@container": "@set"}},
+            "type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
             "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
           })
         },
