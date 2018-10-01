@@ -86,7 +86,9 @@ module JSON::LD
             end
 
             kw_alias = context.compact_iri(expanded_property, vocab: true)
-            as_array = (context.as_array?(kw_alias) && !value?(element)) ||
+            as_array = (context.processingMode == 'json-ld-1.1' &&
+                        context.as_array?(kw_alias) &&
+                        !value?(element)) ||
                        compacted_value.length > 1
             compacted_value = compacted_value.first unless as_array
 

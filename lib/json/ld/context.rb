@@ -565,7 +565,7 @@ module JSON::LD
       simple_term = value.is_a?(String)
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if term == '@type' && value == {'@container' => '@set'}
+      if processingMode == 'json-ld-1.1' &&  term == '@type' && value == {'@container' => '@set'}
         # this is the only case were redefining a keyword is allowed
       elsif KEYWORDS.include?(term)
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if

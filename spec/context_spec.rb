@@ -358,9 +358,18 @@ describe JSON::LD::Context do
             }.to raise_error(JSON::LD::JsonLdError)
           end
         end
+
+        (JSON::LD::KEYWORDS - %w(@base @language @version @vocab)).each do |kw|
+          it "does not redefine #{kw} with an @container" do
+            expect {
+              ec = subject.parse({kw => {"@container" => "@set"}})
+              expect(ec.serialize).to produce({}, logger)
+            }.to raise_error(JSON::LD::JsonLdError)
+          end
+        end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
@@ -374,6 +383,18 @@ describe JSON::LD::Context do
             expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
+
+        it "does not redefine #{kw} with an @container" do
+          expect {
+            ec = subject.parse({"@version" => 1.1, kw => {"@container" => "@set"}})
+            expect(ec.serialize).to produce({}, logger)
+          }.to raise_error(JSON::LD::JsonLdError)
+        end unless kw == '@type'
+
+        it "redefines #{kw} with an @container" do
+          ec = subject.parse({kw => {"@container" => "@set"}})
+          expect(ec.as_array('@type')).to be_truthy
+        end if kw == '@type'
       end
     end
   end

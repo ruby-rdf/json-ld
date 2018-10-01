@@ -130,9 +130,9 @@ describe JSON::LD::API do
           "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
           "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
         }),
-        context: %({"@type": {"@container": "@set"}}),
+        context: %({"@version": 1.1, "@type": {"@container": "@set"}}),
         output: %({
-          "@context": {"@type": {"@container": "@set"}},
+          "@context": {"@version": 1.1, "@type": {"@container": "@set"}},
           "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
           "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
         })
@@ -228,7 +228,8 @@ describe JSON::LD::API do
             "@context": {"type": {"@id": "@type", "@container": "@set"}},
             "type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
             "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
-          })
+          }),
+          processingMode: 'json-ld-1.1'
         },
         "@language" => {
           input: %({
