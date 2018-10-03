@@ -162,6 +162,21 @@ describe JSON::LD::API do
             "http://example.com/foo": [{"@id": "http://example.org/bar"}]
           }])
         },
+        "json-ld-syntax#66": {
+          input: %({
+            "@context": {
+              "@base": "https://ex.org/",
+              "u": {"@id": "urn:u:", "@type": "@id"}
+            },
+            "u": ["#Test", "#Test:2"]
+          }),
+          output: %([{
+            "urn:u:": [
+              {"@id": "https://ex.org/#Test"},
+              {"@id": "https://ex.org/#Test:2"}
+            ]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand params.merge(base: "http://example.org/")}
       end

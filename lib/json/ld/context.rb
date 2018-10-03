@@ -1033,15 +1033,14 @@ module JSON::LD
         end
 
         # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
-        result = if (td = term_definitions[prefix])
-          result = td.id + suffix
+        if (td = term_definitions[prefix])
+          return td.id + suffix
+        elsif RDF::URI(value).absolute?
+          # Otherwise, if the value has the form of an absolute IRI, return it
+          return RDF::URI(value)
         else
-          # (Otherwise) Return value as it is already an absolute IRI.
-          RDF::URI(value)
+          # Otherwise, it is a relative IRI
         end
-
-        #log_debug("") {"=> #{result.inspect}"} unless quiet
-        return result
       end
       #log_debug("") {"=> #{result.inspect}"} unless quiet
 
