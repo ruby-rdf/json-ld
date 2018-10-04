@@ -1321,8 +1321,21 @@ describe JSON::LD::API do
   end
 
   describe "prune blank nodes" do
-    it "preserves single-use bnode identifiers if @version 1.0" do
-      do_frame(
+    {
+      "preserves single-use bnode identifiers if @version 1.0" => {
+        frame: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@id": "http://example.com/asset",
+          "@type": "ps:Asset",
+          "dc:creator": {}
+        }),
         input: %({
           "@context": {
             "dc0": "http://purl.org/dc/terms/",
@@ -1337,19 +1350,6 @@ describe JSON::LD::API do
           "dc:creator": {
             "foaf:name": "John Doe"
           }
-        }),
-        frame: %({
-          "@context": {
-            "dc": "http://purl.org/dc/terms/",
-            "dc:creator": {
-              "@type": "@id"
-            },
-            "foaf": "http://xmlns.com/foaf/0.1/",
-            "ps": "http://purl.org/payswarm#"
-          },
-          "@id": "http://example.com/asset",
-          "@type": "ps:Asset",
-          "dc:creator": {}
         }),
         output: %({
           "@context": {
@@ -1370,316 +1370,342 @@ describe JSON::LD::API do
               }
             }
           ]
-        })
-      )
+        }),
+        processingMode: 'json-ld-1.0'
+      },
+      "framing with @version: 1.1 prunes identifiers" => {
+        frame: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "https://example.com#",
+            "ex": "http://example.org/",
+            "claim": {
+              "@id": "ex:claim",
+              "@container": "@graph"
+            },
+            "id": "@id"
+          },
+          "claim": {}
+        }),
+        input: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "https://example.com#",
+            "ex": "http://example.org/",
+            "claim": {
+              "@id": "ex:claim",
+              "@container": "@graph"
+            },
+            "id": "@id"
+          },
+          "claim": {
+            "id": "ex:1",
+            "test": "foo"
+          }
+        }),
+        output: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "https://example.com#",
+            "ex": "http://example.org/",
+            "claim": {
+              "@id": "ex:claim",
+              "@container": "@graph"
+            },
+            "id": "@id"
+          },
+          "claim": {
+            "id": "ex:1",
+            "test": "foo"
+          }
+        }),
+        processingMode: 'json-ld-1.1'
+      }
+    }.each do |title, params|
+      it title do
+        do_frame(params)
+      end
     end
   end
 
   context "problem cases" do
-    it "pr #20" do
-      expanded = %([
-        {
-          "@id": "_:gregg",
-          "@type": "http://xmlns.com/foaf/0.1/Person",
-          "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
-        }, {
-          "@id": "http://manu.sporny.org/#me",
-          "@type": "http://xmlns.com/foaf/0.1/Person",
-          "http://xmlns.com/foaf/0.1/knows": {"@id": "_:gregg"},
-          "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
-        }
-      ])
-      expected = %({
-        "@graph": [
+    {
+      "pr #20" => {
+        frame: %({}),
+        input: %([
           {
-            "@id": "_:b0",
+            "@id": "_:gregg",
             "@type": "http://xmlns.com/foaf/0.1/Person",
             "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
-          },
-          {
+          }, {
             "@id": "http://manu.sporny.org/#me",
             "@type": "http://xmlns.com/foaf/0.1/Person",
-            "http://xmlns.com/foaf/0.1/knows": {
+            "http://xmlns.com/foaf/0.1/knows": {"@id": "_:gregg"},
+            "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
+          }
+        ]),
+        output: %({
+          "@graph": [
+            {
               "@id": "_:b0",
               "@type": "http://xmlns.com/foaf/0.1/Person",
               "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
             },
-            "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
-          }
-        ]
-      })
-      do_frame(input: expanded, frame: {}, output: expected)
-    end
-
-    it "issue #28" do
-      input = %({
-        "@context": {
-          "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
-        },
-        "@id": "http://www.myresource/uuid",
-        "http://www.myresource.com/ontology/1.0#talksAbout": [
-          {
-            "@id": "http://rdf.freebase.com/ns/m.018w8",
-            "rdfs:label": [
-              {
-                "@value": "Basketball",
-                "@language": "en"
-              }
-            ]
-          }
-        ]
-      })
-      frame = %({
-        "@context": {
-          "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-          "talksAbout": {
-            "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
-            "@type": "@id"
-          },
-          "label": {
-            "@id": "rdfs:label",
-            "@language": "en"
-          }
-        },
-        "@id": "http://www.myresource/uuid"
-      })
-      expected = %({
-        "@context": {
-          "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-          "talksAbout": {
-            "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
-            "@type": "@id"
-          },
-          "label": {
-            "@id": "rdfs:label",
-            "@language": "en"
-          }
-        },
-        "@graph": [
-          {
-            "@id": "http://www.myresource/uuid",
-            "talksAbout": {
-              "@id": "http://rdf.freebase.com/ns/m.018w8",
-              "label": "Basketball"
+            {
+              "@id": "http://manu.sporny.org/#me",
+              "@type": "http://xmlns.com/foaf/0.1/Person",
+              "http://xmlns.com/foaf/0.1/knows": {
+                "@id": "_:b0",
+                "@type": "http://xmlns.com/foaf/0.1/Person",
+                "http://xmlns.com/foaf/0.1/name": "Gregg Kellogg"
+              },
+              "http://xmlns.com/foaf/0.1/name": "Manu Sporny"
             }
-          }
-        ]
-      })
-      do_frame(input: input, frame: frame, output: expected)
-    end
-
-    it "framing with @version: 1.1 prunes identifiers" do
-      input = %({
-        "@context": {
-          "@version": 1.1,
-          "@vocab": "https://example.com#",
-          "ex": "http://example.org/",
-          "claim": {
-            "@id": "ex:claim",
-            "@container": "@graph"
+          ]
+        })
+      },
+      "issue #28" => {
+        frame: %({
+          "@context": {
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "talksAbout": {
+              "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
+              "@type": "@id"
+            },
+            "label": {
+              "@id": "rdfs:label",
+              "@language": "en"
+            }
           },
-          "id": "@id"
-        },
-        "claim": {
-          "id": "ex:1",
-          "test": "foo"
-        }
-      })
-      frame = %({
-        "@context": {
-          "@version": 1.1,
-          "@vocab": "https://example.com#",
-          "ex": "http://example.org/",
-          "claim": {
-            "@id": "ex:claim",
-            "@container": "@graph"
+          "@id": "http://www.myresource/uuid"
+        }),
+        input: %({
+          "@context": {
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
           },
-          "id": "@id"
-        },
-        "claim": {}
-      })
-      expected = %({
-        "@context": {
-          "@version": 1.1,
-          "@vocab": "https://example.com#",
-          "ex": "http://example.org/",
-          "claim": {
-            "@id": "ex:claim",
-            "@container": "@graph"
+          "@id": "http://www.myresource/uuid",
+          "http://www.myresource.com/ontology/1.0#talksAbout": [
+            {
+              "@id": "http://rdf.freebase.com/ns/m.018w8",
+              "rdfs:label": [
+                {
+                  "@value": "Basketball",
+                  "@language": "en"
+                }
+              ]
+            }
+          ]
+        }),
+        output: %({
+          "@context": {
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "talksAbout": {
+              "@id": "http://www.myresource.com/ontology/1.0#talksAbout",
+              "@type": "@id"
+            },
+            "label": {
+              "@id": "rdfs:label",
+              "@language": "en"
+            }
           },
-          "id": "@id"
-        },
-        "claim": {
-          "id": "ex:1",
-          "test": "foo"
-        }
-      })
-      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
-    end
-
-    it "PR #663" do
-      input = %({
-        "@context": {
-          "@vocab": "http://example.com/",
-          "loves": {
-            "@type": "@id"
+          "@graph": [
+            {
+              "@id": "http://www.myresource/uuid",
+              "talksAbout": {
+                "@id": "http://rdf.freebase.com/ns/m.018w8",
+                "label": "Basketball"
+              }
+            }
+          ]
+        })
+      },
+      "PR #663" => {
+        frame: %({
+          "@context": {
+            "@vocab": "http://example.com/",
+            "loves": {"@type": "@id"},
+            "unionOf": {
+              "@type": "@id",
+              "@id": "owl:unionOf",
+              "@container": "@list"
+            },
+            "Class": "owl:Class"
           },
-          "unionOf": {
-            "@type": "@id",
-            "@id": "owl:unionOf",
-            "@container": "@list"
+          "@graph": [
+            {
+              "@explicit": false,
+              "@embed": "@last",
+              "@type": ["Act", "Class"],
+              "@graph": [{
+                "@explicit": true,
+                "@embed": "@always",
+                "@type": "Person",
+                "@id": {},
+                "loves": {"@embed": "@never"}
+              }]
+            }
+          ]
+        }),
+        input: %({
+          "@context": {
+            "@vocab": "http://example.com/",
+            "loves": {"@type": "@id"},
+            "unionOf": {
+              "@type": "@id",
+              "@id": "owl:unionOf",
+              "@container": "@list"
+            },
+            "Class": "owl:Class"
           },
-          "Class": "owl:Class"
-        },
-        "@graph": [
-          {
+          "@graph": [{
             "@type": "Act",
             "@graph": [
-              {
-                "@id": "Romeo",
-                "@type": "Person"
-              },
-              {
-                "@id": "Juliet",
-                "@type": "Person"
-              }
+              {"@id": "Romeo", "@type": "Person"},
+              {"@id": "Juliet", "@type": "Person"}
             ]
-          },
-          {
+          }, {
             "@id": "ActTwo",
             "@type": "Act",
             "@graph": [
-              {
-                "@id": "Romeo",
-                "@type": "Person",
-                "loves": "Juliet"
-              },
-              {
-                "@id": "Juliet",
-                "@type": "Person",
-                "loves": "Romeo"
-              }
+              {"@id": "Romeo", "@type": "Person", "loves": "Juliet"},
+              {"@id": "Juliet", "@type": "Person", "loves": "Romeo"}
             ]
-          },
-          {
+          }, {
             "@id": "Person",
             "@type": "Class",
             "unionOf": {
               "@list": [
-                {
-                  "@id": "Montague",
-                  "@type": "Class"
-                },
-                {
-                  "@id": "Capulet",
-                  "@type": "Class"
-                }
+                {"@id": "Montague", "@type": "Class"},
+                {"@id": "Capulet", "@type": "Class"}
               ]
             }
-          }
-        ]
-      })
-      frame = %({
-        "@context": {
-          "@vocab": "http://example.com/",
-          "loves": {
-            "@type": "@id"
+          }]
+        }),
+        output: %({
+          "@context": {
+            "@vocab": "http://example.com/",
+            "loves": {"@type": "@id"},
+            "unionOf": {
+              "@type": "@id",
+              "@id": "owl:unionOf",
+              "@container": "@list"
+            },
+            "Class": "owl:Class"
           },
-          "unionOf": {
-            "@type": "@id",
-            "@id": "owl:unionOf",
-            "@container": "@list"
-          },
-          "Class": "owl:Class"
-        },
-        "@graph": [
-          {
-            "@explicit": false,
-            "@embed": "@last",
-            "@type": [
-              "Act",
-              "Class"
-            ],
-            "@graph": [{
-              "@explicit": true,
-              "@embed": "@always",
-              "@type": "Person",
-              "@id": {},
-              "loves": {"@embed": "@never"}
-            }]
-          }
-        ]
-      })
-      expected = %({
-        "@context": {
-          "@vocab": "http://example.com/",
-          "loves": {
-            "@type": "@id"
-          },
-          "unionOf": {
-            "@type": "@id",
-            "@id": "owl:unionOf",
-            "@container": "@list"
-          },
-          "Class": "owl:Class"
-        },
-        "@graph": [
-          {
-            "@graph": [
-              {
-                "@id": "Juliet",
-                "@type": "Person",
-                "loves": "Romeo"
-              },
-              {
-                "@id": "Romeo",
-                "@type": "Person",
-                "loves": "Juliet"
-              }
-            ],
+          "@graph": [{
             "@id": "ActTwo",
-            "@type": "Act"
-          },
-          {
+            "@type": "Act",
+            "@graph": [
+              {"@id": "Juliet", "@type": "Person", "loves": "Romeo"},
+              {"@id": "Romeo", "@type": "Person", "loves": "Juliet"}
+            ]
+          }, {
             "@id": "Capulet",
             "@type": "Class"
-          },
-          {
+          }, {
             "@id": "Montague",
             "@type": "Class"
-          },
-          {
+          }, {
             "@id": "Person",
             "@type": "Class",
             "unionOf": [
-              {
-                "@id": "Montague",
-                "@type": "Class"
-              },
-              {
-                "@id": "Capulet",
-                "@type": "Class"
-              }
+              {"@id": "Montague", "@type": "Class"},
+              {"@id": "Capulet", "@type": "Class"}
             ]
-          },
-          {
+          }, {
+            "@type": "Act",
             "@graph": [
               {
                 "@id": "Juliet",
                 "@type": "Person",
                 "loves": null
-              },
-              {
+              }, {
                 "@id": "Romeo",
                 "@type": "Person",
                 "loves": null
               }
-            ],
-            "@type": "Act"
+            ]
+          }]
+        }),
+        processingMode: 'json-ld-1.1'
+      },
+      "w3c/json-ld-framing#5" => {
+        frame: %({ 
+          "@context" : {
+            "@vocab" : "http://purl.bdrc.io/ontology/core/",
+            "taxSubclassOf" : {
+              "@id" : "http://purl.bdrc.io/ontology/core/taxSubclassOf",
+              "@type" : "@id"
+            },
+            "bdr" : "http://purl.bdrc.io/resource/",
+            "children": { "@reverse": "http://purl.bdrc.io/ontology/core/taxSubclassOf" }
+          },
+          "@id" : "bdr:O9TAXTBRC201605",
+          "children": {
+            "children": {
+              "children": {}
+            }
           }
-        ]
-      })
-      do_frame(input: input, frame: frame, output: expected, processingMode: 'json-ld-1.1')
+        }),
+        input: %({
+          "@context": {
+            "@vocab": "http://purl.bdrc.io/ontology/core/",
+            "taxSubclassOf": {
+              "@id": "http://purl.bdrc.io/ontology/core/taxSubclassOf",
+              "@type": "@id"
+            },
+            "bdr": "http://purl.bdrc.io/resource/"
+          },
+          "@graph": [{
+            "@id": "bdr:O9TAXTBRC201605",
+            "@type": "Taxonomy"
+          }, {
+            "@id": "bdr:O9TAXTBRC201605_0001",
+            "@type": "Taxonomy",
+            "taxSubclassOf": "bdr:O9TAXTBRC201605"
+          }, {
+            "@id": "bdr:O9TAXTBRC201605_0002",
+            "@type": "Taxonomy",
+            "taxSubclassOf": "bdr:O9TAXTBRC201605_0001"
+          }, {
+            "@id": "bdr:O9TAXTBRC201605_0010",
+            "@type": "Taxonomy",
+            "taxSubclassOf": "bdr:O9TAXTBRC201605"
+          }]
+        }),
+        output: %({
+          "@context" : {
+            "@vocab" : "http://purl.bdrc.io/ontology/core/",
+            "taxSubclassOf" : {
+              "@id" : "http://purl.bdrc.io/ontology/core/taxSubclassOf",
+              "@type" : "@id"
+            },
+            "bdr" : "http://purl.bdrc.io/resource/",
+            "children": { "@reverse": "http://purl.bdrc.io/ontology/core/taxSubclassOf" }
+          },
+          "@id" : "bdr:O9TAXTBRC201605",
+          "@type": "Taxonomy",
+          "children": [{
+            "@id": "bdr:O9TAXTBRC201605_0001",
+            "@type": "Taxonomy",
+            "taxSubclassOf": "bdr:O9TAXTBRC201605",
+            "children": {
+              "@id": "bdr:O9TAXTBRC201605_0002",
+              "@type": "Taxonomy",
+              "taxSubclassOf": "bdr:O9TAXTBRC201605_0001"
+            }
+          }, {
+            "@id": "bdr:O9TAXTBRC201605_0010",
+            "@type": "Taxonomy",
+            "taxSubclassOf": "bdr:O9TAXTBRC201605"
+          }]
+        }),
+        processingMode: 'json-ld-1.1'
+      }
+    }.each do |title, params|
+      it title do
+        do_frame(params)
+      end
     end
   end
 
