@@ -454,8 +454,10 @@ module JSON::LD
         rval = case rval
         when true then '@last'
         when false then '@never'
-        when '@always', '@never', '@link' then rval
-        else '@last'
+        when '@always', '@never', '@link', '@last' then rval
+        else
+          raise JsonLdError::InvalidEmbedValue,
+                "Invalid JSON-LD frame syntax; invalid value of @embed: #{rval}"
         end
       end
       rval
