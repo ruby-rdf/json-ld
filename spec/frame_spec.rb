@@ -877,7 +877,6 @@ describe JSON::LD::API do
         "matches exact values" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": "P",
             "ex:q": {"@value": "Q", "@type": "ex:q"},
             "ex:r": {"@value": "R", "@language": "r"}
@@ -902,7 +901,6 @@ describe JSON::LD::API do
         "matches wildcard @value" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": {"@value": {}},
             "ex:q": {"@value": {}, "@type": "ex:q"},
             "ex:r": {"@value": {}, "@language": "r"}
@@ -927,7 +925,6 @@ describe JSON::LD::API do
         "matches wildcard @type" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:q": {"@value": "Q", "@type": {}}
           }),
           input: %({
@@ -946,7 +943,6 @@ describe JSON::LD::API do
         "matches wildcard @language" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:r": {"@value": "R", "@language": {}}
           }),
           input: %({
@@ -965,7 +961,6 @@ describe JSON::LD::API do
         "match none @type" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": {"@value": {}, "@type": []},
             "ex:q": {"@value": {}, "@type": "ex:q"},
             "ex:r": {"@value": {}, "@language": "r"}
@@ -990,7 +985,6 @@ describe JSON::LD::API do
         "match none @language" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": {"@value": {}, "@language": []},
             "ex:q": {"@value": {}, "@type": "ex:q"},
             "ex:r": {"@value": {}, "@language": "r"}
@@ -1015,7 +1009,6 @@ describe JSON::LD::API do
         "matches some @value" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": {"@value": ["P", "Q", "R"]},
             "ex:q": {"@value": ["P", "Q", "R"], "@type": "ex:q"},
             "ex:r": {"@value": ["P", "Q", "R"], "@language": "r"}
@@ -1040,7 +1033,6 @@ describe JSON::LD::API do
         "matches some @type" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:q": {"@value": "Q", "@type": ["ex:q", "ex:Q"]}
           }),
           input: %({
@@ -1059,7 +1051,6 @@ describe JSON::LD::API do
         "matches some @language" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:r": {"@value": "R", "@language": ["p", "q", "r"]}
           }),
           input: %({
@@ -1078,7 +1069,6 @@ describe JSON::LD::API do
         "excludes non-matched values" => {
           frame: %({
             "@context": {"ex": "http://example.org/"},
-            "@id": "ex:Sub1",
             "ex:p": {"@value": {}},
             "ex:q": {"@value": {}, "@type": "ex:q"},
             "ex:r": {"@value": {}, "@language": "R"}

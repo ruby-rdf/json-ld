@@ -362,42 +362,40 @@ module JSON::LD
           # If frame value is empty, don't match if subject has any value
           return false if !node_values.empty? && is_empty
 
-          match_this = case v
-          when nil
+          match_this = case
+          when v.nil?
             # node does not match if values is not empty and the value of property in frame is match none.
             return false unless node_values.empty?
             true
-          when Hash # Empty other than framing keywords
-            # node matches if values is not empty and the value of property in frame is wildcard
+          when v.is_a?(Hash) && (v.keys - FRAMING_KEYWORDS).empty?
+            # node matches if values is not empty and the value of property in frame is wildcard (frame with properties other than framing keywords)
             !node_values.empty?
-          else
-            if value?(v)
+          when value?(v)
+            # Match on any matching value
+            node_values.any? {|nv| value_match?(v, nv)}
+          when node?(v) || node_reference?(v)
+            node_values.any? do |nv|
+              node_match?(v, nv, state, flags)
+            end
+          when list?(v)
+            vv = v['@list'].first
+            node_values = list?(node_values.first) ?
+              node_values.first['@list'] :
+              false
+            if !node_values
+              false # Lists match Lists
+            elsif value?(vv)
               # Match on any matching value
-              node_values.any? {|nv| value_match?(v, nv)}
-            elsif node?(v) || node_reference?(v)
+              node_values.any? {|nv| value_match?(vv, nv)}
+            elsif node?(vv) || node_reference?(vv)
               node_values.any? do |nv|
-                node_match?(v, nv, state, flags)
-              end
-            elsif list?(v)
-              vv = v['@list'].first
-              node_values = list?(node_values.first) ?
-                node_values.first['@list'] :
-                false
-              if !node_values
-                false # Lists match Lists
-              elsif value?(vv)
-                # Match on any matching value
-                node_values.any? {|nv| value_match?(vv, nv)}
-              elsif node?(vv) || node_reference?(vv)
-                node_values.any? do |nv|
-                  node_match?(vv, nv, state, flags)
-                end
-              else
-                false
+                node_match?(vv, nv, state, flags)
               end
             else
-              false # No matching on non-value or node values
+              false
             end
+          else
+            false # No matching on non-value or node values
           end
         end
 
@@ -560,5 +558,7 @@ module JSON::LD
       return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
       true
     end
+
+    FRAMING_KEYWORDS = %w(@default @embed @explicit @omitDefault @requireAll).freeze
   end
 end
