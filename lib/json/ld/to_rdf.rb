@@ -65,19 +65,11 @@ module JSON::LD
             #log_debug("item_to_rdf")  {"@reverse predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
             # For each item in values
             vv.each do |v|
-              if list?(v)
-                #log_debug("item_to_rdf")  {"list: #{v.inspect}"}
-                object = item_to_rdf(v, graph_name: graph_name, &block)
-
-                # Append a triple composed of object, prediate, and object to results and add all triples from list_results to results.
-                yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
-              else
-                # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
-                object = item_to_rdf(v, graph_name: graph_name, &block)
-                #log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
-                # yield subject, prediate, and literal to results.
-                yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
-              end
+              # Item is a node definition. Generate object as the result of the Object Converstion algorithm passing item.
+              object = item_to_rdf(v, graph_name: graph_name, &block)
+              #log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
+              # yield subject, prediate, and literal to results.
+              yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
             end
           end
         when /^@/
