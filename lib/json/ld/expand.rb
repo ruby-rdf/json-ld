@@ -203,7 +203,7 @@ module JSON::LD
           when '@type'
             # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
             #log_debug("@type") {"value: #{value.inspect}"}
-            case value
+            e_type = case value
             when Array
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
@@ -221,6 +221,13 @@ module JSON::LD
             else
               raise JsonLdError::InvalidTypeValue,
                     "@type value must be a string or array of strings: #{value.inspect}"
+            end
+
+            # Use array form if framing
+            if framing
+              as_array(e_type)
+            else
+              e_type
             end
           when '@graph'
             # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
