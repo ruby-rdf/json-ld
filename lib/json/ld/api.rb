@@ -110,7 +110,7 @@ module JSON::LD
           link.href if link
         end
 
-        validate_input(input) if options[:validate]
+        validate_input(input, url: (input.base_uri if input.respond_to?(:base_uri))) if options[:validate]
 
         MultiJson.load(input.read, options)
       when String
@@ -121,7 +121,7 @@ module JSON::LD
 
         case remote_doc.document
         when String
-          validate_input(remote_doc.document) if options[:validate]
+          validate_input(remote_doc.document, url: input) if options[:validate]
           MultiJson.load(remote_doc.document, options)
         else
           remote_doc.document
@@ -557,12 +557,12 @@ module JSON::LD
     end
 
     private
-    def validate_input(input)
+    def validate_input(input, url:)
       return unless defined?(JsonLint)
       jsonlint = JsonLint::Linter.new
       input = StringIO.new(input) unless input.respond_to?(:read)
       unless jsonlint.check_stream(input)
-        raise JsonLdError::LoadingDocumentFailed, jsonlint.errors[''].join("\n")
+        raise JsonLdError::LoadingDocumentFailed, "url: #{url}\n" + jsonlint.errors[''].join("\n")
       end
       input.rewind
     end
