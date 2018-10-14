@@ -205,7 +205,7 @@ module Fixtures
               # Use an array, to preserve input order
               repo = RDF::NQuads::Reader.open(input_loc) do |reader|
                 reader.each_statement.to_a
-              end.uniq.extend(RDF::Enumerable)
+              end.to_a.uniq.extend(RDF::Enumerable)
               logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, logger: logger, **options)
             when "jld:ToRDFTest"
