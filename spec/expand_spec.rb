@@ -2355,6 +2355,360 @@ describe JSON::LD::API do
       end
     end
 
+    begin
+      require 'nokogiri'
+    rescue LoadError
+    end
+    require 'rexml/document'
+
+    context "html" do
+      %w(Nokogiri REXML).each do |impl|
+        next unless Module.constants.map(&:to_s).include?(impl)
+        context impl do
+          before(:all) {@library = impl.downcase.to_s.to_sym}
+
+          {
+            "Expands embedded JSON-LD script element": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
+              }])
+            },
+            "Expands first script element": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {"ex": "http://example.com/"},
+                    "@graph": [
+                      {"ex:foo": {"@value": "foo"}},
+                      {"ex:bar": {"@value": "bar"}}
+                    ]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
+              }])
+            },
+            "Expands targeted script element": {
+              input: %(
+              <html>
+                <head>
+                  <script id="first" type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                  <script id="second" type="application/ld+json">
+                  {
+                    "@context": {"ex": "http://example.com/"},
+                    "@graph": [
+                      {"ex:foo": {"@value": "foo"}},
+                      {"ex:bar": {"@value": "bar"}}
+                    ]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([
+                {"http://example.com/foo": [{"@value": "foo"}]},
+                {"http://example.com/bar": [{"@value": "bar"}]}
+              ]),
+              base: "http://example.org/doc#second"
+            },
+            "Expands all script elements with extractAllScripts option": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {"ex": "http://example.com/"},
+                    "@graph": [
+                      {"ex:foo": {"@value": "foo"}},
+                      {"ex:bar": {"@value": "bar"}}
+                    ]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([
+                {"http://example.com/foo": [{"@list": [{"@value": "bar"}]}]},
+                {
+                  "@graph": [{
+                    "http://example.com/foo": [{"@value": "foo"}]
+                  }, {
+                    "http://example.com/bar": [{"@value": "bar"}]
+                  }]
+                }
+              ]),
+              extractAllScripts: true
+            },
+            "Expands multiple scripts where one is an array": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                  <script type="application/ld+json">
+                  [
+                    {"@context": {"ex": "http://example.com/"}, "ex:foo": {"@value": "foo"}},
+                    {"@context": {"ex": "http://example.com/"}, "ex:bar": {"@value": "bar"}}
+                  ]
+                  </script>
+                </head>
+              </html>),
+              output: %([
+                {"http://example.com/foo": [{"@list": [{"@value": "bar"}]}]},
+                {"http://example.com/foo": [{"@value": "foo"}]},
+                {"http://example.com/bar": [{"@value": "bar"}]}
+              ]),
+              extractAllScripts: true
+            },
+            "Expands as empty with no script element": {
+              input: %(<html><head></head></html>),
+              output: %([])
+            },
+            "Expands as empty with no script element and extractAllScripts": {
+              input: %(<html><head></head></html>),
+              output: %([]),
+              extractAllScripts: true
+            },
+            "Expands script element with comments": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  <!--
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  -->
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
+              }])
+            },
+            "Expands script element with escaped tokens": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {"@vocab": "http://example/"},
+                    "comment-start": "<\\!--",
+                    "comment-end": "--\\>",
+                    "script-start": "<\\ScRiPt>",
+                    "script-end": "<\\/sCrIpT>"
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "http://example/comment-start": [{"@value": "<!--"}],
+                "http://example/comment-end": [{"@value": "-->"}],
+                "http://example/script-start": [{"@value": "<ScRiPt>"}],
+                "http://example/script-end": [{"@value": "</sCrIpT>"}]
+              }]),
+              not: :rexml
+            },
+            "Expands script element with HTML character references": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {"@vocab": "http://example/"},
+                    "foo": "&lt;&amp;&gt;"
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "http://example/foo": [{"@value": "<&>"}]
+              }])
+            },
+            "Errors if no element found at target": {
+              input: %(
+              <html>
+                <head>
+                  <script id="first" type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                  <script id="second" type="application/ld+json">
+                  {
+                    "@context": {"ex": "http://example.com/"},
+                    "@graph": [
+                      {"ex:foo": {"@value": "foo"}},
+                      {"ex:bar": {"@value": "bar"}}
+                    ]
+                  }
+                  </script>
+                </head>
+              </html>),
+              base: "http://example.org/doc#third",
+              exception: JSON::LD::JsonLdError::InvalidScriptElement
+            },
+            "Errors if targeted element is not a script element": {
+              input: %(
+              <html>
+                <head>
+                  <pre id="first" type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </pre>
+                </head>
+              </html>),
+              base: "http://example.org/doc#first",
+              exception: JSON::LD::JsonLdError::InvalidScriptElement
+            },
+            "Errors if targeted element does not have type application/ld+json": {
+              input: %(
+              <html>
+                <head>
+                  <script id="first" type="application/json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              base: "http://example.org/doc#first",
+              exception: JSON::LD::JsonLdError::InvalidScriptElement
+            },
+            "Errors if uncommented script text contains comment": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  <!--
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "<!-- -->"}]
+                  }
+                  -->
+                  </script>
+                </head>
+              </html>),
+              exception: JSON::LD::JsonLdError::InvalidScriptElement,
+              not: :rexml
+            },
+            "Errors if end comment missing": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  <!--
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              exception: JSON::LD::JsonLdError::InvalidScriptElement,
+              not: :rexml
+            },
+            "Errors if start comment missing": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+                    },
+                    "foo": [{"@value": "bar"}]
+                  }
+                  -->
+                  </script>
+                </head>
+              </html>),
+              exception: JSON::LD::JsonLdError::InvalidScriptElement
+            },
+            "Errors if uncommented script is not valid JSON": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  foo
+                  </script>
+                </head>
+              </html>),
+              exception: JSON::LD::JsonLdError::InvalidScriptElement
+            },
+          }.each do |title, params|
+            it(title) do
+              skip "rexml" if params[:not] == @library
+              params[:input] = StringIO.new(params[:input])
+              params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+              run_expand params.merge(validate: true, library: @library)
+            end
+          end
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "non-null @value and null @type" => {

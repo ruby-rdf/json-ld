@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 require 'openssl'
+require 'cgi'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/flatten'
@@ -69,10 +70,14 @@ module JSON::LD
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean] :extractAllScripts
+    #   If set, when given an HTML input without a fragment identifier, extracts all `script` elements with type `application/ld+json` into an array during expansion.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
     # @option options [String] :language
     #   When set, this has the effect of inserting a context definition with `@language` set to the associated value, creating a default language for interpreting string values.
+    # @option options [Symbol] :library
+    #   One of :nokogiri or :rexml. If nil/unspecified uses :nokogiri if available, :rexml otherwise.
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
@@ -91,7 +96,8 @@ module JSON::LD
       @options = {
         compactArrays:      true,
         ordered:            false,
-        documentLoader:     self.class.method(:documentLoader)
+        documentLoader:     self.class.method(:documentLoader),
+        extractAllScripts:  false,
       }.merge(options)
       @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
@@ -110,9 +116,14 @@ module JSON::LD
           link.href if link
         end
 
-        validate_input(input, url: (input.base_uri if input.respond_to?(:base_uri))) if options[:validate]
-
-        MultiJson.load(input.read, options)
+        if content_type.to_s.downcase.start_with? 'text/html'
+          load_html(input.read,
+                    url: options[:base] || (input.base_uri if input.respond_to?(:base_uri)),
+                    **options)
+        else
+          validate_input(input, url: options[:base] || (input.base_uri if input.respond_to?(:base_uri))) if options[:validate]
+          MultiJson.load(input.read, options)
+        end
       when String
         remote_doc = @options[:documentLoader].call(input, @options)
 
@@ -121,8 +132,12 @@ module JSON::LD
 
         case remote_doc.document
         when String
-          validate_input(remote_doc.document, url: input) if options[:validate]
-          MultiJson.load(remote_doc.document, options)
+          if remote_doc.contentType.to_s.downcase.start_with?('text/html')
+            load_html(remote_doc.document, url: options[:base] || input, **options)
+          else
+            validate_input(remote_doc.document, url: options[:base] || input) if options[:validate]
+            MultiJson.load(remote_doc.document, options)
+          end
         else
           remote_doc.document
         end
@@ -262,7 +277,10 @@ module JSON::LD
     # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
     def self.flatten(input, context, expanded: false, **options)
       flattened = []
-      options = {compactToRelative:  true}.merge(options)
+      options = {
+        compactToRelative:  true,
+        extractAllScripts:  true,
+      }.merge(options)
 
       # Expand input to simplify processing
       expanded_input = expanded ? input : API.expand(input, options) do |result, base_iri|
@@ -451,6 +469,10 @@ module JSON::LD
         return results
       end
 
+      options = {
+        extractAllScripts:  true,
+      }.merge(options)
+
       # Expand input to simplify processing
       expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false))
 
@@ -524,14 +546,13 @@ module JSON::LD
         content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
         # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
         if content_type && validate
-          main, sub = content_type.split("/")
-          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" if
-            main != 'application' ||
-            sub !~ /^(.*\+)?json$/
+          ct, *params = content_type.split(';')
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" unless
+            ct.match?(/application\/(.+\+)?json|text\/html/)
         end
 
         # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-        contextUrl = unless content_type.nil? || content_type.start_with?("application/ld+json")
+        contextUrl = if content_type.nil? || content_type.start_with?("application/ld+json")
           # Get context link(s)
           # Note, we can't simply use #find_link, as we need to detect multiple
           links = remote_doc.links.links.select do |link|
@@ -543,7 +564,7 @@ module JSON::LD
         end
 
         doc_uri = remote_doc.base_uri rescue url
-        doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl)
+        doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl, content_type)
         block_given? ? yield(doc) : doc
       end
     rescue IOError => e
@@ -568,6 +589,89 @@ module JSON::LD
     end
 
     ##
+    # Load one or more script tags from an HTML source.
+    # Unescapes and uncomments input, returns the internal representation
+    def load_html(input, url:, library: nil, extractAllScripts: false, **options)
+      if input.is_a?(String)
+        library ||= begin
+          require 'nokogiri'
+          :nokogiri
+        rescue LoadError
+          :rexml
+        end
+        require "json/ld/html/#{library}"
+
+        # Parse HTML using the appropriate library
+        @implementation = case library
+        when :nokogiri then Nokogiri
+        when :rexml then REXML
+        end
+        self.extend(@implementation)
+
+        begin
+          initialize_html(input, options)
+        rescue
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
+        end
+        input = root
+      end
+
+      def clean(text, url:, **options)
+        # Clear out any enclosing comment
+        if md = text.match(/^\s*<!--\s*(.*)\s*-->\s*$/m)
+          text = md[1]
+        end
+        if md = text.match(/(<!--|-->|<script|<\/script)/i)
+          # Text includes illegal unescaped sequences
+          raise JSON::LD::JsonLdError::InvalidScriptElement, "Script element includes #{md[1]}"
+        end
+        # Clean up escaped code
+        text = text.gsub('<\\!--', '<!--').
+          gsub('--\\>', '-->').
+          gsub(/<\\(script)/i, '<\1').
+          gsub(/<\\\/(script)/i, '</\1')
+
+        # Clean up character references
+        text = CGI.unescapeHTML(text)
+        begin
+          validate_input(text, url: url) if options[:validate]
+        rescue JsonLdError::LoadingDocumentFailed => e
+          raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
+        end
+
+        text
+      end
+
+      url = RDF::URI.parse(url)
+      if url.fragment
+        id = CGI.unescape(url.fragment)
+        # Find script with an ID based on that fragment.
+        element = input.at_xpath("//script[@id='#{id}']")
+        raise JSON::LD::JsonLdError::InvalidScriptElement, "No script tag found with id=#{id}" unless element
+        raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
+        content = clean(element.inner_html, url: url, **options)
+        MultiJson.load(content, options)
+      elsif extractAllScripts
+        res = []
+        input.xpath("//script[starts-with(@type, 'application/ld+json')]").each do |element|
+          content = clean(element.inner_html, url: url, **options)
+          r = MultiJson.load(content, options)
+          if r.is_a?(Hash)
+            res << r
+          elsif r.is_a?(Array)
+            res = res.concat(r)
+          end
+        end
+        res
+      else
+        # Find the first script with type application/ld+json.
+        element = input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
+        content = clean(element ? element.inner_html : "[]", url: url, **options)
+        MultiJson.load(content, options)
+      end
+    end
+
+    ##
     # A {RemoteDocument} is returned from a {documentLoader}.
     class RemoteDocument
       # @return [String] URL of the loaded document, after redirects
@@ -581,15 +685,20 @@ module JSON::LD
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
       attr_accessor :contextUrl
 
+      # @return [String]
+      #   The Content-Type of the returned coeument
+      attr_accessor :contentType
+
       # @param [String] url URL of the loaded document, after redirects
       # @param [String, Array<Hash>, Hash] document
       #   The retrieved document, either as raw text or parsed JSON
       # @param [String] context_url (nil)
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-      def initialize(url, document, context_url = nil)
+      def initialize(url, document, context_url = nil, content_type = nil)
         @documentUrl = url
         @document = document
         @contextUrl = context_url
+        @contentType = content_type
       end
     end
   end

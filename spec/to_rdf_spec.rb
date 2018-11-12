@@ -733,6 +733,88 @@ describe JSON::LD::API do
     end
   end
 
+  context "html" do
+    {
+      "Transforms embedded JSON-LD script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %([ <http://example.com/foo> ( "bar")] .)
+      },
+      "Transforms first script element with extractAllScripts: false": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %([ <http://example.com/foo> ( "bar")] .),
+        extractAllScripts: false
+      },
+      "Transforms targeted script element": {
+        input: %(
+        <html>
+          <head>
+            <script id="first" type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script id="second" type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %(
+          [ <http://example.com/foo> "foo"] .
+          [ <http://example.com/bar> "bar"] .
+        ),
+        base: "http://example.org/doc#second"
+      },
+    }.each do |title, params|
+      it(title) do
+        params[:input] = StringIO.new(params[:input])
+        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        run_to_rdf params.merge(validate: true)
+      end
+    end
+  end
+
   def parse(input, options = {})
     graph = options[:graph] || RDF::Graph.new
     options = {logger: logger, validate: true, canonicalize: false}.merge(options)
@@ -748,7 +830,7 @@ describe JSON::LD::API do
     if params[:exception]
       expect {JSON::LD::API.toRdf(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
     else
-      JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode) {|st| graph << st}
+      JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end
   end

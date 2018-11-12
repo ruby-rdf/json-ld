@@ -8,11 +8,12 @@
 
 ## Features
 
-JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces.
+JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces. It also extracts JSON-LD from HTML.
 
 JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the `script/gen_context` script.
 
-If the [jsonlint][] gem is installed, it will be used when validating an input document.
+* If the [jsonlint][] gem is installed, it will be used when validating an input document.
+* If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
 
 [Implementation Report](file.earl.html)
 

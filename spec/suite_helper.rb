@@ -26,7 +26,10 @@ module RDF::Util
       LOCAL_PATHS.each do |r, l|
         next unless Dir.exist?(l) && filename_or_url.start_with?(r)
         #puts "attempt to open #{filename_or_url} locally"
-        localpath = filename_or_url.to_s.sub(r, l)
+        url_no_frag_or_query = RDF::URI(filename_or_url).dup
+        url_no_frag_or_query.query = nil
+        url_no_frag_or_query.fragment = nil
+        localpath = url_no_frag_or_query.to_s.sub(r, l)
         response = begin
           ::File.open(localpath)
         rescue Errno::ENOENT => e
@@ -34,15 +37,16 @@ module RDF::Util
         end
 
         document_options = {
-          base_uri:     RDF::URI(filename_or_url),
+          base_uri:     RDF::URI(url_no_frag_or_query.to_s),
           charset:      Encoding::UTF_8,
           code:         200,
           headers:      options.fetch(:headers, {})
         }
         #puts "use #{filename_or_url} locally"
-        document_options[:headers][:content_type] = case filename_or_url.to_s
+        document_options[:headers][:content_type] = case localpath
         when /\.ttl$/    then 'text/turtle'
         when /\.nt$/     then 'application/n-triples'
+        when /\.html$/   then 'text/html'
         when /\.jsonld$/ then 'application/ld+json'
         when /\.json$/   then 'application/json'
         else                  'unknown'

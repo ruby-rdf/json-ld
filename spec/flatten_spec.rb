@@ -284,6 +284,140 @@ describe JSON::LD::API do
     end
   end
 
+  context "html" do
+    {
+      "Flattens embedded JSON-LD script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [{"@id": "_:b0","foo": ["bar"]}]
+        })
+      },
+      "Flattens first script element with extractAllScripts: false": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [{"@id": "_:b0","foo": ["bar"]}]
+        }),
+        extractAllScripts: false
+      },
+      "Flattens targeted script element": {
+        input: %(
+        <html>
+          <head>
+            <script id="first" type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script id="second" type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"ex": "http://example.com/"}),
+        output: %({
+          "@context": {"ex": "http://example.com/"},
+          "@graph": [
+            {"@id": "_:b0", "ex:foo": "foo"},
+            {"@id": "_:b1", "ex:bar": "bar"}
+          ]
+        }),
+        base: "http://example.org/doc#second"
+      },
+      "Flattens all script elements by default": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            [
+              {"http://example.com/foo": {"@value": "foo"}},
+              {"http://example.com/bar": {"@value": "bar"}}
+            ]
+            </script>
+          </head>
+        </html>),
+        context: %({
+          "ex": "http://example.com/",
+          "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.com/",
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [
+            {"@id": "_:b0", "foo": ["bar"]},
+            {"@id": "_:b1", "ex:foo": "foo"},
+            {"@id": "_:b2", "ex:bar": "bar"}
+          ]
+        })
+      },
+    }.each do |title, params|
+      it(title) do
+        params[:input] = StringIO.new(params[:input])
+        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        run_flatten params.merge(validate: true)
+      end
+    end
+  end
+
   def run_flatten(params)
     input, output, context = params[:input], params[:output], params[:context]
     input = ::JSON.parse(input) if input.is_a?(String)

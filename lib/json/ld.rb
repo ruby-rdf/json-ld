@@ -125,6 +125,7 @@ module JSON
       class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
       class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
       class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
+      class InvalidScriptElement < JsonLdError; @code = "invalid script element"; end
       class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
       class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
       class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end

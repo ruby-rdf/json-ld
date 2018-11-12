@@ -2252,6 +2252,147 @@ describe JSON::LD::API do
     end
   end
 
+  context "html" do
+    {
+      "Compacts embedded JSON-LD script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "foo": ["bar"]
+        })
+      },
+      "Compacts first script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "foo": ["bar"]
+        })
+      },
+      "Compacts targeted script element": {
+        input: %(
+        <html>
+          <head>
+            <script id="first" type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script id="second" type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"ex": "http://example.com/"}),
+        output: %({
+          "@context": {"ex": "http://example.com/"},
+          "@graph": [
+            {"ex:foo": "foo"},
+            {"ex:bar": "bar"}
+          ]
+        }),
+        base: "http://example.org/doc#second"
+      },
+      "Compacts all script elements with extractAllScripts option": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({
+          "ex": "http://example.com/",
+          "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.com/",
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [
+            {"foo": ["bar"]},
+            {
+              "@graph": [
+                {"ex:foo": "foo"},
+                {"ex:bar": "bar"}
+              ]
+            }
+          ]
+        }),
+        extractAllScripts: true
+      },
+    }.each do |title, params|
+      it(title) do
+        params[:input] = StringIO.new(params[:input])
+        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        run_compact params.merge(validate: true)
+      end
+    end
+  end
+
   def run_compact(params)
     input, output, context = params[:input], params[:output], params[:context]
     input = ::JSON.parse(input) if input.is_a?(String)
