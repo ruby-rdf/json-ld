@@ -117,9 +117,10 @@ module JSON::LD
         end
 
         if content_type.to_s.downcase.start_with? 'text/html'
-          load_html(input.read,
-                    url: options[:base] || (input.base_uri if input.respond_to?(:base_uri)),
-                    **options)
+          # Note, @options[:base] may be updated from HTML processing.
+          load_html(input.read, url: options[:base], **@options) do |base|
+            @options[:base] = base if base
+          end
         else
           validate_input(input, url: options[:base] || (input.base_uri if input.respond_to?(:base_uri))) if options[:validate]
           MultiJson.load(input.read, options)
@@ -133,7 +134,10 @@ module JSON::LD
         case remote_doc.document
         when String
           if remote_doc.contentType.to_s.downcase.start_with?('text/html')
-            load_html(remote_doc.document, url: options[:base] || input, **options)
+            # Note, @options[:base] may be updated from HTML processing.
+            load_html(remote_doc.document, url: options[:base] || input, **@options) do |base|
+            @options[:base] = base if base
+          end
           else
             validate_input(remote_doc.document, url: options[:base] || input) if options[:validate]
             MultiJson.load(remote_doc.document, options)
@@ -591,6 +595,7 @@ module JSON::LD
     ##
     # Load one or more script tags from an HTML source.
     # Unescapes and uncomments input, returns the internal representation
+    # Yields document base
     def load_html(input, url:, library: nil, extractAllScripts: false, **options)
       if input.is_a?(String)
         library ||= begin
@@ -612,6 +617,14 @@ module JSON::LD
           initialize_html(input, options)
         rescue
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
+        end
+
+        # Potentially update options[:base]
+        if html_base = root.at_xpath("/html/head/base/@href")
+          base = RDF::URI(options[:base]) if options[:base]
+          html_base = RDF::URI(html_base)
+          html_base = base.join(html_base) if base
+          yield html_base
         end
         input = root
       end

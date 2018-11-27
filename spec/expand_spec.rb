@@ -2572,6 +2572,71 @@ describe JSON::LD::API do
                 "http://example/foo": [{"@value": "<&>"}]
               }])
             },
+            "Expands embedded JSON-LD script element relative to document base": {
+              input: %(
+              <html>
+                <head>
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo"}
+                    },
+                    "@id": "",
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "@id": "http://example.org/doc",
+                "http://example.com/foo": [{"@value": "bar"}]
+              }]),
+              base: "http://example.org/doc"
+            },
+            "Expands embedded JSON-LD script element relative to HTML base": {
+              input: %(
+              <html>
+                <head>
+                  <base href="http://example.org/base" />
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo"}
+                    },
+                    "@id": "",
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "@id": "http://example.org/base",
+                "http://example.com/foo": [{"@value": "bar"}]
+              }]),
+              base: "http://example.org/doc"
+            },
+            "Expands embedded JSON-LD script element relative to relative HTML base": {
+              input: %(
+              <html>
+                <head>
+                  <base href="base" />
+                  <script type="application/ld+json">
+                  {
+                    "@context": {
+                      "foo": {"@id": "http://example.com/foo"}
+                    },
+                    "@id": "",
+                    "foo": [{"@value": "bar"}]
+                  }
+                  </script>
+                </head>
+              </html>),
+              output: %([{
+                "@id": "http://example.org/base",
+                "http://example.com/foo": [{"@value": "bar"}]
+              }]),
+              base: "http://example.org/doc"
+            },
             "Errors if no element found at target": {
               input: %(
               <html>
