@@ -344,7 +344,7 @@ module Fixtures
     # @yieldparam [RemoteDocument] remote_document
     # @raise [JsonLdError]
     def documentLoader(url, **options, &block)
-      options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
+      options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers].dup
       options[:headers][:link] = Array(options[:httpLink]).join(',') if options[:httpLink]
     
       url = url.to_s[5..-1] if url.to_s.start_with?("file:")

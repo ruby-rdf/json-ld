@@ -556,7 +556,7 @@ module JSON::LD
         end
 
         # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-        contextUrl = if content_type.nil? || content_type.start_with?("application/ld+json")
+        contextUrl = if content_type.nil? || !content_type.start_with?("application/ld+json")
           # Get context link(s)
           # Note, we can't simply use #find_link, as we need to detect multiple
           links = remote_doc.links.links.select do |link|
@@ -630,20 +630,6 @@ module JSON::LD
       end
 
       def clean(text, url:, **options)
-        # Clear out any enclosing comment
-        if md = text.match(/^\s*<!--\s*(.*)\s*-->\s*$/m)
-          text = md[1]
-        end
-        if md = text.match(/(<!--|-->|<script|<\/script)/i)
-          # Text includes illegal unescaped sequences
-          raise JSON::LD::JsonLdError::InvalidScriptElement, "Script element includes #{md[1]}"
-        end
-        # Clean up escaped code
-        text = text.gsub('<\\!--', '<!--').
-          gsub('--\\>', '-->').
-          gsub(/<\\(script)/i, '<\1').
-          gsub(/<\\\/(script)/i, '</\1')
-
         # Clean up character references
         text = CGI.unescapeHTML(text)
         begin

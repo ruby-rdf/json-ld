@@ -2513,49 +2513,6 @@ describe JSON::LD::API do
               output: %([]),
               extractAllScripts: true
             },
-            "Expands script element with comments": {
-              input: %(
-              <html>
-                <head>
-                  <script type="application/ld+json">
-                  <!--
-                  {
-                    "@context": {
-                      "foo": {"@id": "http://example.com/foo", "@container": "@list"}
-                    },
-                    "foo": [{"@value": "bar"}]
-                  }
-                  -->
-                  </script>
-                </head>
-              </html>),
-              output: %([{
-                "http://example.com/foo": [{"@list": [{"@value": "bar"}]}]
-              }])
-            },
-            "Expands script element with escaped tokens": {
-              input: %(
-              <html>
-                <head>
-                  <script type="application/ld+json">
-                  {
-                    "@context": {"@vocab": "http://example/"},
-                    "comment-start": "<\\!--",
-                    "comment-end": "--\\>",
-                    "script-start": "<\\ScRiPt>",
-                    "script-end": "<\\/sCrIpT>"
-                  }
-                  </script>
-                </head>
-              </html>),
-              output: %([{
-                "http://example/comment-start": [{"@value": "<!--"}],
-                "http://example/comment-end": [{"@value": "-->"}],
-                "http://example/script-start": [{"@value": "<ScRiPt>"}],
-                "http://example/script-end": [{"@value": "</sCrIpT>"}]
-              }]),
-              not: :rexml
-            },
             "Expands script element with HTML character references": {
               input: %(
               <html>
