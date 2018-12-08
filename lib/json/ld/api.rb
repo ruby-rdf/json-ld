@@ -629,18 +629,6 @@ module JSON::LD
         input = root
       end
 
-      def clean(text, url:, **options)
-        # Clean up character references
-        text = CGI.unescapeHTML(text)
-        begin
-          validate_input(text, url: url) if options[:validate]
-        rescue JsonLdError::LoadingDocumentFailed => e
-          raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
-        end
-
-        text
-      end
-
       url = RDF::URI.parse(url)
       if url.fragment
         id = CGI.unescape(url.fragment)
@@ -648,12 +636,14 @@ module JSON::LD
         element = input.at_xpath("//script[@id='#{id}']")
         raise JSON::LD::JsonLdError::InvalidScriptElement, "No script tag found with id=#{id}" unless element
         raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
-        content = clean(element.inner_html, url: url, **options)
+        content = element.inner_html
+        validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, options)
       elsif extractAllScripts
         res = []
         input.xpath("//script[starts-with(@type, 'application/ld+json')]").each do |element|
-          content = clean(element.inner_html, url: url, **options)
+          content = element.inner_html
+          validate_input(content, url: url) if options[:validate]
           r = MultiJson.load(content, options)
           if r.is_a?(Hash)
             res << r
@@ -665,9 +655,12 @@ module JSON::LD
       else
         # Find the first script with type application/ld+json.
         element = input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
-        content = clean(element ? element.inner_html : "[]", url: url, **options)
+        content = element ? element.inner_html : "[]"
+        validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, options)
       end
+    rescue JSON::LD::JsonLdError::LoadingDocumentFailed => e
+      raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
     end
 
     ##

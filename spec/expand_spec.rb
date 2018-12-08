@@ -2526,7 +2526,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               output: %([{
-                "http://example/foo": [{"@value": "<&>"}]
+                "http://example/foo": [{"@value": "&lt;&amp;&gt;"}]
               }])
             },
             "Expands embedded JSON-LD script element relative to document base": {
