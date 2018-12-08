@@ -1691,6 +1691,26 @@ describe JSON::LD::API do
           }]
         }),
         processingMode: 'json-ld-1.1'
+      },
+      "issue json-ld-framing#30" => {
+        input: %({
+          "@context": {"eg": "https://example.org/ns/"},
+          "@id": "https://example.org/what",
+          "eg:sameAs": "https://example.org/what",
+          "eg:age": 42
+        }),
+        frame: %({
+          "@context": {"eg": "https://example.org/ns/"},
+          "@id": "https://example.org/what"
+        }),
+        output: %({
+          "@context": {"eg": "https://example.org/ns/"},
+          "@graph": [{
+            "@id": "https://example.org/what",
+            "eg:age": 42,
+            "eg:sameAs": "https://example.org/what"
+          }]
+        })
       }
     }.each do |title, params|
       it title do
