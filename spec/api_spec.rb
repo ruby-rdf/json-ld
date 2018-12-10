@@ -9,20 +9,22 @@ describe JSON::LD::API do
   describe "#initialize" do
     context "with string input" do
       let(:context) do
-        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
+        RDF::Util::File::RemoteDocument.new(%q({
           "@context": {
             "xsd": "http://www.w3.org/2001/XMLSchema#",
             "name": "http://xmlns.com/foaf/0.1/name",
             "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
             "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
           }
-        }))
+        }), base_uri: "http://example.com/context")
       end
       let(:remote_doc) do
-        JSON::LD::API::RemoteDocument.new("http://example.com/foo", %q({
+        d = RDF::Util::File::RemoteDocument.new(%q({
           "@id": "",
           "name": "foo"
-        }), "http://example.com/context")
+        }), base_uri: "http://example.com/foo")
+        d.contextUrl = "http://example.com/context"
+        d
       end
 
       it "loads document with loader and loads context" do
@@ -34,14 +36,14 @@ describe JSON::LD::API do
 
     context "with RDF::Util::File::RemoteDoc input" do
       let(:context) do
-        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
+        RDF::Util::File::RemoteDocument.new(%q({
           "@context": {
             "xsd": "http://www.w3.org/2001/XMLSchema#",
             "name": "http://xmlns.com/foaf/0.1/name",
             "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
             "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
           }
-        }))
+        }), base_uri: "http://example.com/context")
       end
       let(:remote_doc) do
         RDF::Util::File::RemoteDocument.new(%q({"@id": "", "name": "foo"}),
@@ -101,6 +103,15 @@ describe JSON::LD::API do
           end
         end
       end
+    end
+  end
+
+  # This class is deprecated
+  describe JSON::LD::API::RemoteDocument do
+    it "creates with deprecation" do
+      expect {
+        described_class.new("http://example.com", "foo")
+      }.to write('[DEPRECATION]').to(:error)
     end
   end
 end

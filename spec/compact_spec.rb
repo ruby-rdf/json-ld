@@ -514,7 +514,7 @@ describe JSON::LD::API do
 
     context "context as reference" do
       let(:remote_doc) do
-        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({"@context": {"b": "http://example.com/b"}}))
+        RDF::Util::File::RemoteDocument.new(%q({"@context": {"b": "http://example.com/b"}}), base_uri: "http://example.com/context")
       end
       it "uses referenced context" do
         input = ::JSON.parse %({

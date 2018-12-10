@@ -339,9 +339,9 @@ module Fixtures
     # @param [Hash<Symbol => Object>] options
     # @option options [Boolean] :validate
     #   Allow only appropriate content types
-    # @return [RemoteDocument] retrieved remote document and context information unless block given
+    # @return [RDF::Util::File::RemoteDocument] retrieved remote document and context information unless block given
     # @yield remote_document
-    # @yieldparam [RemoteDocument] remote_document
+    # @yieldparam [RDF::Util::File::RemoteDocument] remote_document
     # @raise [JsonLdError]
     def documentLoader(url, **options, &block)
       options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers].dup

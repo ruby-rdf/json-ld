@@ -25,14 +25,14 @@ describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
   let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
   let(:remote_doc) do
-    JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({
+    RDF::Util::File::RemoteDocument.new(%q({
       "@context": {
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    }))
+    }), base_uri: "http://example.com/context")
   end
   subject {context}
 
@@ -84,7 +84,7 @@ describe JSON::LD::Context do
 
       it "parses a referenced context at a relative URI" do
         JSON::LD::Context::PRELOADED.clear
-        rd1 = JSON::LD::API::RemoteDocument.new("http://example.com/c1", %({"@context": "context"}))
+        rd1 = RDF::Util::File::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
@@ -149,11 +149,11 @@ describe JSON::LD::Context do
 
       it "merges definitions from remote contexts" do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        rd2 = JSON::LD::API::RemoteDocument.new("http://example.com/c2", %q({
+        rd2 = RDF::Util::File::RemoteDocument.new(%q({
           "@context": {
             "title": {"@id": "http://purl.org/dc/terms/title"}
           }
-        }))
+        }), base_uri: "http://example.com/c2")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c2", anything).and_yield(rd2)
         ec = subject.parse(%w(http://example.com/context http://example.com/c2))
         expect(ec.send(:mappings)).to produce({

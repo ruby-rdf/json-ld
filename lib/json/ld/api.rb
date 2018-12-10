@@ -111,12 +111,12 @@ module JSON::LD
 
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
-        context_ref = if content_type.start_with?('application/json') && input.respond_to?(:links)
+        context_ref = if content_type == 'application/json' && input.respond_to?(:links)
           link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context))
           link.href if link
         end
 
-        if content_type.to_s.downcase.start_with? 'text/html'
+        if content_type.to_s.downcase == 'text/html'
           # Note, @options[:base] may be updated from HTML processing.
           load_html(input.read, url: options[:base], **@options) do |base|
             @options[:base] = base if base
@@ -129,11 +129,11 @@ module JSON::LD
         remote_doc = @options[:documentLoader].call(input, @options)
 
         context_ref = remote_doc.contextUrl
-        @options = {base: remote_doc.documentUrl}.merge(@options) unless @options[:no_default_base]
+        @options = {base: remote_doc.base_uri}.merge(@options) unless @options[:no_default_base]
 
         case remote_doc.document
         when String
-          if remote_doc.contentType.to_s.downcase.start_with?('text/html')
+          if remote_doc.content_type.to_s.downcase == 'text/html'
             # Note, @options[:base] may be updated from HTML processing.
             load_html(remote_doc.document, url: options[:base] || input, **@options) do |base|
             @options[:base] = base if base
@@ -539,9 +539,9 @@ module JSON::LD
     # @option options [Boolean] :validate
     #   Allow only appropriate content types
     # @yield remote_document
-    # @yieldparam [RemoteDocument] remote_document
+    # @yieldparam [RDF::Util::File::RemoteDocument] remote_document
     # @yieldreturn [Object] returned object
-    # @return [Object, RemoteDocument]
+    # @return [Object, RDF::Util::File::RemoteDocument]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.documentLoader(url, validate: false, **options)
@@ -550,13 +550,12 @@ module JSON::LD
         content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
         # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
         if content_type && validate
-          ct, *params = content_type.split(';')
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" unless
-            ct.match?(/application\/(.+\+)?json|text\/html/)
+            content_type.match?(/application\/(.+\+)?json|text\/html/)
         end
 
         # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-        contextUrl = if content_type.nil? || !content_type.start_with?("application/ld+json")
+        remote_doc.contextUrl = if (content_type || 'application/json') != "application/ld+json"
           # Get context link(s)
           # Note, we can't simply use #find_link, as we need to detect multiple
           links = remote_doc.links.links.select do |link|
@@ -567,9 +566,7 @@ module JSON::LD
           Array(links.first).first
         end
 
-        doc_uri = remote_doc.base_uri rescue url
-        doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl, content_type)
-        block_given? ? yield(doc) : doc
+        block_given? ? yield(remote_doc) : remote_doc
       end
     rescue IOError => e
       raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
@@ -665,33 +662,29 @@ module JSON::LD
 
     ##
     # A {RemoteDocument} is returned from a {documentLoader}.
+    #
+    # @deprecated Use `RDF::Util::File::RemoteDocument` instead.
     class RemoteDocument
-      # @return [String] URL of the loaded document, after redirects
-      attr_reader :documentUrl
-
-      # @return [String, Array<Hash>, Hash]
-      #   The retrieved document, either as raw text or parsed JSON
-      attr_reader :document
-
-      # @return [String]
-      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-      attr_accessor :contextUrl
-
-      # @return [String]
-      #   The Content-Type of the returned coeument
-      attr_accessor :contentType
-
       # @param [String] url URL of the loaded document, after redirects
       # @param [String, Array<Hash>, Hash] document
       #   The retrieved document, either as raw text or parsed JSON
       # @param [String] context_url (nil)
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
+      # @deprecated Use `RDF::Util::File::RemoteDocument#initialize` instead.
       def initialize(url, document, context_url = nil, content_type = nil)
-        @documentUrl = url
-        @document = document
-        @contextUrl = context_url
-        @contentType = content_type
+        warn "[DEPRECATION] JSON::LD::API::RemoteDocument is deprecated, use RDF::Util::File::RemoteDocument instead.\n" +
+             "Called from #{Gem.location_of_caller.join(':')}"
+        d = RDF::Util::File::RemoteDocument.new(document, base_uri: url, content_type: content_type)
+        d.contextUrl = context_url
+        d
       end
+
+      # @return [String] URL of the loaded document, after redirects
+      def documentUrl; base_uri; end
+
+      # @return [String]
+      #   The Content-Type of the returned coeument
+      def contentType; content_type; end
     end
   end
 end
