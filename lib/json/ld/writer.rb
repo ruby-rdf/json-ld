@@ -145,6 +145,70 @@ module JSON::LD
       ]
     end
 
+    class << self
+      attr_reader :white_list
+      attr_reader :black_list
+
+      ##
+      # Use parameters from accept-params to determine if the parameters are acceptable to invoke this writer. The `accept_params` will subsequently be provided to the writer instance.
+      #
+      # Uses {#white_list} or {#black_list} for profile arguments that are not a defined namespace URI to determine if the format is acceptable.
+      #
+      # @example rejecting a writer based on a profile
+      #   JSON::LD::Writer.accept?(profile: "http://www.w3.org/ns/json-ld#compacted http://example.org/black-listed")
+      #     # => false
+      #
+      # @param [Hash{Symbol => String}] accept_params
+      # @yield [accept_params] if a block is given, returns the result of evaluating that block
+      # @yieldparam [Hash{Symbol => String}] accept_params
+      # @return [Boolean]
+      # @see    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
+      def accept?(accept_params)
+        # Profiles that aren't specific IANA relations represent the URL
+        # of a context or frame that may be subject to black- or white-listing
+        profile = accept_params[:profile].to_s.split(/\s+/)
+        contexts = (profile - PROFILES)
+
+        # only a single context URL may be supplied in profiles
+        return false if contexts.length > 1
+
+        if block_given?
+          yield(accept_params)
+        elsif profile.empty?
+          true
+        elsif profile.include?(JSON_LD_NS+"framed") && contexts.empty?
+          # Can't use framed profile without a frame
+          false
+        elsif !Array(white_list).empty?
+          white_list.any? {|url| profile.match?(url)}
+        elsif !Array(black_list).empty?
+          black_list.none? {|url| profile.match?(url)}
+        else
+          true
+        end
+      end
+
+      ##
+      # Sets a white list of contexts and formats
+      #
+      # @param [Array<String, Regexp>] patterns
+      #   An array of strings and/or regular expressions representing
+      #   context or frame URLs which are specifically allowed in {accept?}.
+      def self.white_list=(*patterns)
+        @white_list = patterns
+      end
+
+      ##
+      # Sets a white list of contexts and formats
+      #
+      # @param [Array<String, Regexp>] patterns
+      #   An array of strings and/or regular expressions representing
+      #   context or frame URLs which are specifically disallowed in {accept?}.
+      def self.black_list=(*patterns)
+        @black_list = patterns
+      end
+    end
+
     ##
     # Initializes the RDF-LD writer instance.
     #
@@ -239,9 +303,18 @@ module JSON::LD
         log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
         result = API.fromRdf(@repo, @options)
 
+        # Some options may be indicated from accept parameters
+        profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
+        profile_context = (profile - PROFILES).first
+        profile_context ||= DEFAULT_CONTEXT if profile.include?(JSON_LD_NS+"compacted")
+        if profile.include?(JSON_LD_NS + "framed")
+          @options[:frame] ||= profile_context
+        else
+          @options[:context] ||= profile_context
+        end
+
         # If we were provided a context, or prefixes, use them to compact the output
-        context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
-        context ||= @options[:context]
+        context = @options[:context]
         context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
           ctx = Context.new(@options)
           ctx.language = @options[:language] if @options[:language]
@@ -256,8 +329,7 @@ module JSON::LD
           result = API.flatten(result, context, @options)
         end
 
-        frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
-        if frame ||= @options[:frame]
+        if frame = @options[:frame]
           # Perform framing, if given a frame
           log_debug("writer") { "frame result"}
           result = API.frame(result, frame, @options)

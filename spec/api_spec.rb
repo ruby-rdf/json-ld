@@ -49,11 +49,11 @@ describe JSON::LD::API do
         RDF::Util::File::RemoteDocument.new(%q({"@id": "", "name": "foo"}),
           headers: {
             content_type: 'application/json',
-            link: %(<http://example.com/context>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json")
+            link: %(<http://example.com/context>; rel="#{JSON::LD::JSON_LD_NS}context"; type="application/ld+json")
           }
         )
       end
-
+    
       it "processes document and retrieves linked context" do
         expect(described_class).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
         described_class.new(remote_doc, nil)

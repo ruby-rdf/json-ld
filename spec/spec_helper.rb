@@ -36,6 +36,9 @@ JSON_STATE = JSON::State.new(
   array_nl:     "\n"
 )
 
+require 'webmock'
+WebMock.disable_net_connect!
+
 # Create and maintain a cache of downloaded URIs
 URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)
@@ -64,3 +67,181 @@ def detect_format(stream)
   end
 end
 
+LIBRARY_INPUT = JSON.parse(%([
+  {
+    "@id": "http://example.org/library",
+    "@type": "http://example.org/vocab#Library",
+    "http://example.org/vocab#contains": {"@id": "http://example.org/library/the-republic"}
+  }, {
+    "@id": "http://example.org/library/the-republic",
+    "@type": "http://example.org/vocab#Book",
+    "http://purl.org/dc/elements/1.1/creator": "Plato",
+    "http://purl.org/dc/elements/1.1/title": "The Republic",
+    "http://example.org/vocab#contains": {
+      "@id": "http://example.org/library/the-republic#introduction",
+      "@type": "http://example.org/vocab#Chapter",
+      "http://purl.org/dc/elements/1.1/description": "An introductory chapter on The Republic.",
+      "http://purl.org/dc/elements/1.1/title": "The Introduction"
+    }
+  }
+]))
+
+LIBRARY_EXPANDED = JSON.parse(%([
+  {
+    "@id": "http://example.org/library",
+    "@type": ["http://example.org/vocab#Library"],
+    "http://example.org/vocab#contains": [{"@id": "http://example.org/library/the-republic"}]
+  }, {
+    "@id": "http://example.org/library/the-republic",
+    "@type": ["http://example.org/vocab#Book"],
+    "http://purl.org/dc/elements/1.1/creator": [{"@value": "Plato"}],
+    "http://purl.org/dc/elements/1.1/title": [{"@value": "The Republic"}],
+    "http://example.org/vocab#contains": [{
+      "@id": "http://example.org/library/the-republic#introduction",
+      "@type": ["http://example.org/vocab#Chapter"],
+      "http://purl.org/dc/elements/1.1/description": [{"@value": "An introductory chapter on The Republic."}],
+      "http://purl.org/dc/elements/1.1/title": [{"@value": "The Introduction"}]
+    }]
+  }
+]))
+
+LIBRARY_COMPACTED_DEFAULT = JSON.parse(%({
+  "@context": "http://schema.org",
+  "@graph": [
+    {
+      "id": "http://example.org/library",
+      "type": "http://example.org/vocab#Library",
+      "http://example.org/vocab#contains": {"id": "http://example.org/library/the-republic"}
+    }, {
+      "id": "http://example.org/library/the-republic",
+      "type": "http://example.org/vocab#Book",
+      "http://purl.org/dc/elements/1.1/creator": "Plato",
+      "http://purl.org/dc/elements/1.1/title": "The Republic",
+      "http://example.org/vocab#contains": {
+        "id": "http://example.org/library/the-republic#introduction",
+        "type": "http://example.org/vocab#Chapter",
+        "http://purl.org/dc/elements/1.1/description": "An introductory chapter on The Republic.",
+        "http://purl.org/dc/elements/1.1/title": "The Introduction"
+      }
+    }
+  ]
+}))
+
+LIBRARY_COMPACTED = JSON.parse(%({
+  "@context": "http://conneg.example.com/context",
+  "@graph": [
+    {
+      "@id": "http://example.org/library",
+      "@type": "ex:Library",
+      "ex:contains": {
+        "@id": "http://example.org/library/the-republic"
+      }
+    },
+    {
+      "@id": "http://example.org/library/the-republic",
+      "@type": "ex:Book",
+      "dc:creator": "Plato",
+      "dc:title": "The Republic",
+      "ex:contains": {
+        "@id": "http://example.org/library/the-republic#introduction",
+        "@type": "ex:Chapter",
+        "dc:description": "An introductory chapter on The Republic.",
+        "dc:title": "The Introduction"
+      }
+    }
+  ]
+}))
+
+LIBRARY_FLATTENED_EXPANDED = JSON.parse(%([
+  {
+    "@id": "http://example.org/library",
+    "@type": ["http://example.org/vocab#Library"],
+    "http://example.org/vocab#contains": [{"@id": "http://example.org/library/the-republic"}]
+  },
+  {
+    "@id": "http://example.org/library/the-republic",
+    "@type": ["http://example.org/vocab#Book"],
+    "http://purl.org/dc/elements/1.1/creator": [{"@value": "Plato"}],
+    "http://purl.org/dc/elements/1.1/title": [{"@value": "The Republic"}],
+    "http://example.org/vocab#contains": [{"@id": "http://example.org/library/the-republic#introduction"}]
+  },
+  {
+    "@id": "http://example.org/library/the-republic#introduction",
+    "@type": ["http://example.org/vocab#Chapter"],
+    "http://purl.org/dc/elements/1.1/description": [{"@value": "An introductory chapter on The Republic."}],
+    "http://purl.org/dc/elements/1.1/title": [{"@value": "The Introduction"}]
+  }
+]))
+
+LIBRARY_FLATTENED_COMPACTED_DEFAULT = JSON.parse(%({
+  "@context": "http://schema.org",
+  "@graph": [
+    {
+      "id": "http://example.org/library",
+      "type": "http://example.org/vocab#Library",
+      "http://example.org/vocab#contains": {"id": "http://example.org/library/the-republic"}
+    },
+    {
+      "id": "http://example.org/library/the-republic",
+      "type": "http://example.org/vocab#Book",
+      "http://purl.org/dc/elements/1.1/creator": "Plato",
+      "http://purl.org/dc/elements/1.1/title": "The Republic",
+      "http://example.org/vocab#contains": {"id": "http://example.org/library/the-republic#introduction"}
+    },
+    {
+      "id": "http://example.org/library/the-republic#introduction",
+      "type": "http://example.org/vocab#Chapter",
+      "http://purl.org/dc/elements/1.1/description": "An introductory chapter on The Republic.",
+      "http://purl.org/dc/elements/1.1/title": "The Introduction"
+    }
+  ]
+}))
+
+LIBRARY_FLATTENED_COMPACTED = JSON.parse(%({
+  "@context": "http://conneg.example.com/context",
+  "@graph": [
+    {
+      "@id": "http://example.org/library",
+      "@type": "ex:Library",
+      "ex:contains": {"@id": "http://example.org/library/the-republic"}
+    },
+    {
+      "@id": "http://example.org/library/the-republic",
+      "@type": "ex:Book",
+      "dc:creator": "Plato",
+      "dc:title": "The Republic",
+      "ex:contains": {"@id": "http://example.org/library/the-republic#introduction"}
+    },
+    {
+      "@id": "http://example.org/library/the-republic#introduction",
+      "@type": "ex:Chapter",
+      "dc:description": "An introductory chapter on The Republic.",
+      "dc:title": "The Introduction"
+    }
+  ]
+}))
+
+LIBRARY_FRAMED = JSON.parse(%({
+  "@context": {
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "ex": "http://example.org/vocab#"
+  },
+  "@graph": [
+    {
+      "@id": "http://example.org/library",
+      "@type": "ex:Library",
+      "ex:contains": {
+        "@id": "http://example.org/library/the-republic",
+        "@type": "ex:Book",
+        "dc:creator": "Plato",
+        "dc:title": "The Republic",
+        "ex:contains": {
+          "@id": "http://example.org/library/the-republic#introduction",
+          "@type": "ex:Chapter",
+          "dc:description": "An introductory chapter on The Republic.",
+          "dc:title": "The Introduction"
+        }
+      }
+    }
+  ]
+}))

@@ -12,7 +12,7 @@ describe JSON::LD::Writer do
   end
 
   describe ".for" do
-    formats = [
+    [
       :jsonld,
       "etc/doap.jsonld",
       {file_name:      'etc/doap.jsonld'},

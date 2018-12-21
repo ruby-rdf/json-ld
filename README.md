@@ -445,6 +445,50 @@ The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versi
 * [@omitDefault behavior](https://github.com/json-ld/json-ld.org/issues/389) – In addition to `true` and `false`, `@omitDefault` can take `@last`, `@always`, `@never`, and `@link`.
 * [multiple `@id` matching](https://github.com/json-ld/json-ld.org/issues/424) – A frame can match based on one or more specific object `@id` values.
 
+## Sinatra/Rack support
+JSON-LD 1.1 describes support for the _profile_ parameter to a media type in an HTTP ACCEPT header. This allows an HTTP request to specify the format (expanded/compacted/flattened/framed) along with a reference to a context or frame to use to format the returned document.
+
+An HTTP header may be constructed as follows:
+
+    GET /ordinary-json-document.json HTTP/1.1
+    Host: example.com
+    Accept: application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context", application/ld+json
+
+This tells a server that the top priority is to return JSON-LD compacted using a context at `http://conneg.example.com/context`, and if not available, to just return any form of JSON-LD.
+
+The {JSON::LD::ContentNegotiation} class provides a [Rack][Rack] `call` method, and [Sinatra][Sinatra] `registered` class method to allow content-negotiation using such profile parameters. For example:
+
+    #!/usr/bin/env rackup
+    require 'sinatra/base'
+    require 'json/ld'
+    
+    module My
+      class Application < Sinatra::Base
+        register JSON::LD::ContentNegotiation
+    
+        get '/hello' do
+          [{
+            "http://example.org/input": [{
+              "@id": "http://example.com/g1",
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }])
+        end
+      end
+    end
+    
+    run My::Application
+
+The {JSON::LD::ContentNegotiation#call} method looks for a result which includes an object, with an acceptable `Accept` header and formats the result as JSON-LD, considering the profile parameters. This can be tested using something like the following:
+
+    $ rackup config.ru
+    
+    $ curl -iH 'Accept: application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context"' http://localhost:9292/hello
+
+See [Rack::LinkedData][] to do the same thing with an RDF Graph or Dataset as the source, rather than Ruby objects.
+
 ## Documentation
 Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
 
@@ -515,9 +559,12 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [YARD-GS]:          http://rubydoc.info/docs/yard/file/docs/GettingStarted.md
 [PDD]:              http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
 [RDF.rb]:           http://rubygems.org/gems/rdf
+[Rack::LinkedData]: http://rubygems.org/gems/rack-linkeddata
 [Backports]:        http://rubygems.org/gems/backports
 [JSON-LD]:          http://www.w3.org/TR/json-ld/ "JSON-LD 1.0"
 [JSON-LD API]:      http://www.w3.org/TR/json-ld-api/ "JSON-LD 1.0 Processing Algorithms and API"
 [JSON-LD Framing]:  http://json-ld.org/spec/latest/json-ld-framing/ "JSON-LD Framing 1.0"
 [Promises]:         http://dom.spec.whatwg.org/#promises
 [jsonlint]:         https://rubygems.org/gems/jsonlint
+[Sinatra]:          http://www.sinatrarb.com/
+[Rack]:             http://rack.github.com/

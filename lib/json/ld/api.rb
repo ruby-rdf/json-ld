@@ -112,7 +112,7 @@ module JSON::LD
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
         context_ref = if content_type == 'application/json' && input.respond_to?(:links)
-          link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context))
+          link = input.links.find_link(%W(rel #{JSON_LD_NS}context))
           link.href if link
         end
 

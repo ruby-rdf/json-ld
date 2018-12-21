@@ -29,6 +29,7 @@ module JSON
     require 'json/ld/format'
     require 'json/ld/utils'
     autoload :API,                'json/ld/api'
+    autoload :ContentNegotiation, 'json/ld/conneg'
     autoload :Context,            'json/ld/context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
@@ -36,11 +37,12 @@ module JSON
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
 
-    # Initial context
-    # @see http://json-ld.org/spec/latest/json-ld-api/#appendix-b
-    INITIAL_CONTEXT = {
-      RDF.type.to_s => {"@type" => "@id"}
-    }.freeze
+    # JSON-LD profiles
+    JSON_LD_NS = "http://www.w3.org/ns/json-ld#"
+    PROFILES = %w(expanded compacted flattened framed).map {|p| JSON_LD_NS + p}.freeze
+
+    # Default context when compacting without one being specified
+    DEFAULT_CONTEXT = "http://schema.org"
 
     KEYWORDS = Set.new(%w(
       @base
