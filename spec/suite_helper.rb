@@ -219,6 +219,16 @@ module Fixtures
               end
               logger.info "nq: #{repo.to_nquads}"
               repo
+            when "jld:HttpTest"
+              res = input_json
+              rspec_example.instance_eval do
+                # use the parsed input file as @result for Rack Test application
+                @results = res
+                get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, "")
+                expect(last_response.status).to eq 200
+                expect(last_response.content_type).to eq options.fetch(:contentType, "")
+                JSON.parse(last_response.body)
+              end
             else
               fail("Unknown test type: #{testType}")
             end
@@ -279,6 +289,16 @@ module Fixtures
                   repo = RDF::Repository.load(t.input_loc)
                   logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
+                when "jld:HttpTest"
+                  rspec_example.instance_eval do
+                    # use the parsed input file as @result for Rack Test application
+                    @results = t.input_json
+                    get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, "")
+                    expect(last_response.status).to eq t.property('expect')
+                    expect(last_response.content_type).to eq options.fetch(:contentType, "")
+                    raise "406" if t.property('expect') == 406
+                    raise "Expected status #{t.property('expect')}, not #{last_response.status}"
+                  end
                 when "jld:ToRDFTest"
                   JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
                 else
