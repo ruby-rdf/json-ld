@@ -207,6 +207,16 @@ module JSON::LD
       def self.black_list=(*patterns)
         @black_list = patterns
       end
+
+      ##
+      # Returns default context used for compacted profile without an explicit context URL
+      # @return [String]
+      def default_context; @default_context || JSON::LD::DEFAULT_CONTEXT; end
+
+      ##
+      # Sets default context used for compacted profile without an explicit context URL
+      # @url [String]
+      def default_context=(url); @default_context = url; end
     end
 
     ##
@@ -306,7 +316,7 @@ module JSON::LD
         # Some options may be indicated from accept parameters
         profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
         profile_context = (profile - PROFILES).first
-        profile_context ||= DEFAULT_CONTEXT if profile.include?(JSON_LD_NS+"compacted")
+        profile_context ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
         if profile.include?(JSON_LD_NS + "framed")
           @options[:frame] ||= profile_context
         else

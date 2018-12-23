@@ -91,7 +91,7 @@ module JSON::LD
         context = (profile - PROFILES).first
         # accept? already determined that there are appropriate contexts
         # If profile also includes a URI which is not a namespace, use it for compaction.
-        context ||= DEFAULT_CONTEXT if profile.include?(JSON_LD_NS+"compacted")
+        context ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
 
         result = if profile.include?(JSON_LD_NS+"flattened")
           API.flatten(body, context)
