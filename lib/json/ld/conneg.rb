@@ -99,15 +99,17 @@ module JSON::LD
           API.frame(body, context)
         elsif context
           API.compact(body, context)
-        else
+        elsif profile.include?(JSON_LD_NS+"expanded")
           API.expand(body)
+        else
+          body
         end
 
         headers = headers.merge(VARY).merge('Content-Type' => ct)
         [status, headers, [result.to_json]]
       end
-    rescue JSON::LD::JsonLdError => e
-      http_error(500, e.message)
+    rescue
+      http_error(500, $!.message)
     end
 
     protected

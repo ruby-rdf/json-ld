@@ -92,14 +92,14 @@ describe JSON::LD::ContentNegotiation do
 
       it "returns expanded result" do
         get '/'
-        expect(JSON.parse(last_response.body)).to produce_jsonld(LIBRARY_EXPANDED, logger)
+        expect(JSON.parse(last_response.body)).to produce_jsonld(LIBRARY_INPUT, logger)
       end
 
       context "with Accept" do
         {
           "application/n-triples"                           => "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
-          "application/json"                                => LIBRARY_EXPANDED,
-          "application/ld+json"                             => LIBRARY_EXPANDED,
+          "application/json"                                => LIBRARY_INPUT,
+          "application/ld+json"                             => LIBRARY_INPUT,
           %(application/ld+json;profile=http://www.w3.org/ns/json-ld#expanded) =>
                                                                LIBRARY_EXPANDED,
 
