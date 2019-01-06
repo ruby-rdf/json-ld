@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 require 'rack'
+require 'link_header'
 
 module JSON::LD
   ##
@@ -70,7 +71,7 @@ module JSON::LD
       # This will only return json-ld content types, possibly with parameters
       content_types = parse_accept_header(env['HTTP_ACCEPT'] || 'application/ld+json')
       content_types = content_types.select do |content_type|
-        ct, *params = content_type.split(';').map(&:strip)
+        _, *params = content_type.split(';').map(&:strip)
         accept_params = params.inject({}) do |memo, pv|
           p, v = pv.split('=').map(&:strip)
           memo.merge(p.downcase.to_sym => v.sub(/^["']?([^"']*)["']?$/, '\1'))
@@ -86,9 +87,18 @@ module JSON::LD
           memo.merge(p.downcase.to_sym => v.sub(/^["']?([^"']*)["']?$/, '\1'))
         end
 
-        # Determine API method and context/frame from profile
+        # Determine API method from profile
         profile = accept_params[:profile].to_s.split(' ')
-        context = (profile - PROFILES).first
+
+        # Get context from Link header
+        links = LinkHeader.parse(env['HTTP_LINK'])
+        context = links.find_link(['rel', JSON_LD_NS+"context"]).href rescue nil
+        frame = links.find_link(['rel', JSON_LD_NS+"frame"]).href rescue nil
+
+        if profile.include?(JSON_LD_NS+"framed") && frame.nil?
+          return not_acceptable("framed profile without a frame")
+        end
+
         # accept? already determined that there are appropriate contexts
         # If profile also includes a URI which is not a namespace, use it for compaction.
         context ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
@@ -96,7 +106,7 @@ module JSON::LD
         result = if profile.include?(JSON_LD_NS+"flattened")
           API.flatten(body, context)
         elsif profile.include?(JSON_LD_NS+"framed")
-          API.frame(body, context)
+          API.frame(body, frame)
         elsif context
           API.compact(body, context)
         elsif profile.include?(JSON_LD_NS+"expanded")

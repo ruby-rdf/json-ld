@@ -224,7 +224,7 @@ module Fixtures
               rspec_example.instance_eval do
                 # use the parsed input file as @result for Rack Test application
                 @results = res
-                get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, "")
+                get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, ""), "HTTP_LINK" => options.fetch(:httpLink, nil)
                 expect(last_response.status).to eq 200
                 expect(last_response.content_type).to eq options.fetch(:contentType, "")
                 JSON.parse(last_response.body)

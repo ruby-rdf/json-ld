@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 require 'json/ld/streaming_writer'
+require 'link_header'
+
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.
@@ -152,12 +154,6 @@ module JSON::LD
       ##
       # Use parameters from accept-params to determine if the parameters are acceptable to invoke this writer. The `accept_params` will subsequently be provided to the writer instance.
       #
-      # Uses {#white_list} or {#black_list} for profile arguments that are not a defined namespace URI to determine if the format is acceptable.
-      #
-      # @example rejecting a writer based on a profile
-      #   JSON::LD::Writer.accept?(profile: "http://www.w3.org/ns/json-ld#compacted http://example.org/black-listed")
-      #     # => false
-      #
       # @param [Hash{Symbol => String}] accept_params
       # @yield [accept_params] if a block is given, returns the result of evaluating that block
       # @yieldparam [Hash{Symbol => String}] accept_params
@@ -167,45 +163,12 @@ module JSON::LD
         # Profiles that aren't specific IANA relations represent the URL
         # of a context or frame that may be subject to black- or white-listing
         profile = accept_params[:profile].to_s.split(/\s+/)
-        contexts = (profile - PROFILES)
-
-        # only a single context URL may be supplied in profiles
-        return false if contexts.length > 1
 
         if block_given?
           yield(accept_params)
-        elsif profile.empty?
-          true
-        elsif profile.include?(JSON_LD_NS+"framed") && contexts.empty?
-          # Can't use framed profile without a frame
-          false
-        elsif !Array(white_list).empty?
-          white_list.any? {|url| profile.match?(url)}
-        elsif !Array(black_list).empty?
-          black_list.none? {|url| profile.match?(url)}
         else
           true
         end
-      end
-
-      ##
-      # Sets a white list of contexts and formats
-      #
-      # @param [Array<String, Regexp>] patterns
-      #   An array of strings and/or regular expressions representing
-      #   context or frame URLs which are specifically allowed in {accept?}.
-      def self.white_list=(*patterns)
-        @white_list = patterns
-      end
-
-      ##
-      # Sets a white list of contexts and formats
-      #
-      # @param [Array<String, Regexp>] patterns
-      #   An array of strings and/or regular expressions representing
-      #   context or frame URLs which are specifically disallowed in {accept?}.
-      def self.black_list=(*patterns)
-        @black_list = patterns
       end
 
       ##
@@ -315,13 +278,10 @@ module JSON::LD
 
         # Some options may be indicated from accept parameters
         profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
-        profile_context = (profile - PROFILES).first
-        profile_context ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
-        if profile.include?(JSON_LD_NS + "framed")
-          @options[:frame] ||= profile_context
-        else
-          @options[:context] ||= profile_context
-        end
+        links = LinkHeader.parse(@options[:link])
+        @options[:context] ||= links.find_link(['rel', JSON_LD_NS+"context"]).href rescue nil
+        @options[:context] ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
+        @options[:frame] ||= links.find_link(['rel', JSON_LD_NS+"frame"]).href rescue nil
 
         # If we were provided a context, or prefixes, use them to compact the output
         context = @options[:context]

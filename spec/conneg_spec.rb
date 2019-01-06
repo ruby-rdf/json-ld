@@ -105,12 +105,6 @@ describe JSON::LD::ContentNegotiation do
 
           %(application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted) =>
                                                                LIBRARY_COMPACTED_DEFAULT,
-          %(application/ld+json;profile=http://conneg.example.com/context) =>
-                                                               LIBRARY_COMPACTED,
-          %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context") =>
-                                                               LIBRARY_COMPACTED,
-          %(application/ld+json;profile="http://conneg.example.com/context http://www.w3.org/ns/json-ld#compacted") =>
-                                                               LIBRARY_COMPACTED,
 
           %(application/ld+json;profile=http://www.w3.org/ns/json-ld#flattened) =>
                                                                LIBRARY_FLATTENED_EXPANDED,
@@ -124,26 +118,16 @@ describe JSON::LD::ContentNegotiation do
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#flattened") =>
                                                                LIBRARY_FLATTENED_COMPACTED_DEFAULT,
 
-          %(application/ld+json;profile="http://www.w3.org/ns/json-ld#flattened http://conneg.example.com/context") =>
-                                                               LIBRARY_FLATTENED_COMPACTED,
-          %(application/ld+json;profile="http://conneg.example.com/context http://www.w3.org/ns/json-ld#flattened") =>
-                                                               LIBRARY_FLATTENED_COMPACTED,
-
-          %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://conneg.example.com/frame") =>
-                                                               LIBRARY_FRAMED,
-          %(application/ld+json;profile="http://conneg.example.com/frame http://www.w3.org/ns/json-ld#framed") =>
-                                                               LIBRARY_FRAMED,
-
           %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed) =>
-                                                               "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n",
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://www.w3.org/ns/json-ld#expanded") =>
-                                                               "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n",
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#expanded http://www.w3.org/ns/json-ld#framed") =>
-                                                               "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n",
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://www.w3.org/ns/json-ld#compacted") =>
-                                                               "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n",
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#framed") =>
-                                                               "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n",
         }.each do |accepts, result|
           context accepts do
             before(:each) do
@@ -151,7 +135,7 @@ describe JSON::LD::ContentNegotiation do
             end
 
             it "status" do
-              expect(last_response.status).to satisfy("200 or 406") {|x| [200, 406].include?(x)}
+              expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
             end
 
             it "sets content type" do
@@ -163,6 +147,64 @@ describe JSON::LD::ContentNegotiation do
                 expect(last_response.body).to eq result
               else
                 expect(JSON.parse(last_response.body)).to produce_jsonld(result, logger)
+              end
+            end
+          end
+        end
+      end
+
+      context "with Link" do
+        {
+          "compacted with context" => {
+            accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted),
+            link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+            result: LIBRARY_COMPACTED
+          },
+          "flattened with context" => {
+            accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#flattened),
+            link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+            result: LIBRARY_FLATTENED_COMPACTED
+          },
+          "flattened and compacted with context" => {
+            accept: %(application/ld+json;profile="http://www.w3.org/ns/json-ld#flattened http://www.w3.org/ns/json-ld#compacted"),
+            link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+            result: LIBRARY_FLATTENED_COMPACTED
+          },
+          "compacted and flattened with context" => {
+            accept: %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#flattened"),
+            link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+            result: LIBRARY_FLATTENED_COMPACTED
+          },
+          "framed with frame" => {
+            accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed),
+            link: %(<http://conneg.example.com/frame> rel="http://www.w3.org/ns/json-ld#frame"),
+            result: LIBRARY_FRAMED
+          },
+
+          "framed with context" => {
+            accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed),
+            link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+            result: "406 Not Acceptable (framed profile without a frame)\n"
+          },
+        }.each do |name, params|
+          context name do
+            before(:each) do
+              get '/', {}, {"HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link]}
+            end
+
+            it "status" do
+              expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
+            end
+
+            it "sets content type" do
+              expect(last_response.content_type).to eq(last_response.status == 406 ? 'text/plain' : 'application/ld+json')
+            end
+
+            it "returns serialization" do
+              if last_response.status == 406
+                expect(last_response.body).to eq params[:result]
+              else
+                expect(JSON.parse(last_response.body)).to produce_jsonld(params[:result], logger)
               end
             end
           end
@@ -239,12 +281,6 @@ describe Rack::LinkedData::ContentNegotiation do
 
       %(application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted) =>
                                                            LIBRARY_FLATTENED_COMPACTED_DEFAULT,
-      %(application/ld+json;profile=http://conneg.example.com/context) =>
-                                                           LIBRARY_FLATTENED_COMPACTED,
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context") =>
-                                                           LIBRARY_FLATTENED_COMPACTED,
-      %(application/ld+json;profile="http://conneg.example.com/context http://www.w3.org/ns/json-ld#compacted") =>
-                                                           LIBRARY_FLATTENED_COMPACTED,
 
       %(application/ld+json;profile=http://www.w3.org/ns/json-ld#flattened) =>
                                                            LIBRARY_FLATTENED_EXPANDED,
@@ -258,26 +294,6 @@ describe Rack::LinkedData::ContentNegotiation do
       %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#flattened") =>
                                                            LIBRARY_FLATTENED_COMPACTED_DEFAULT,
 
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#flattened http://conneg.example.com/context") =>
-                                                           LIBRARY_FLATTENED_COMPACTED,
-      %(application/ld+json;profile="http://conneg.example.com/context http://www.w3.org/ns/json-ld#flattened") =>
-                                                           LIBRARY_FLATTENED_COMPACTED,
-
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://conneg.example.com/frame") =>
-                                                           LIBRARY_FRAMED,
-      %(application/ld+json;profile="http://conneg.example.com/frame http://www.w3.org/ns/json-ld#framed") =>
-                                                           LIBRARY_FRAMED,
-
-      %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed) =>
-                                                           "406 Not Acceptable\n",
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://www.w3.org/ns/json-ld#expanded") =>
-                                                           "406 Not Acceptable\n",
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#expanded http://www.w3.org/ns/json-ld#framed") =>
-                                                           "406 Not Acceptable\n",
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://www.w3.org/ns/json-ld#compacted") =>
-                                                           "406 Not Acceptable\n",
-      %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#framed") =>
-                                                           "406 Not Acceptable\n",
     }.each do |accepts, result|
       context accepts do
         before(:each) do
@@ -297,6 +313,58 @@ describe Rack::LinkedData::ContentNegotiation do
             expect(last_response.body).to eq result
           else
             expect(JSON.parse(last_response.body)).to produce_jsonld(result, logger)
+          end
+        end
+      end
+    end
+
+    context "with Link" do
+      {
+        "with context" => {
+          accept: %(application/ld+json),
+          link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+          result: LIBRARY_FLATTENED_COMPACTED
+        },
+        "compacted with context" => {
+          accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted),
+          link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+          result: LIBRARY_FLATTENED_COMPACTED
+        },
+        "flattened and compacted with context" => {
+          accept: %(application/ld+json;profile="http://www.w3.org/ns/json-ld#flattened http://www.w3.org/ns/json-ld#compacted"),
+          link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+          result: LIBRARY_FLATTENED_COMPACTED
+        },
+        "compacted and flattened with context" => {
+          accept: %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#flattened"),
+          link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
+          result: LIBRARY_FLATTENED_COMPACTED
+        },
+        "framed with frame" => {
+          accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed),
+          link: %(<http://conneg.example.com/frame> rel="http://www.w3.org/ns/json-ld#frame"),
+          result: LIBRARY_FRAMED
+        },
+      }.each do |name, params|
+        context name do
+          before(:each) do
+            get '/', {}, {"HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link]}
+          end
+
+          it "status" do
+            expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
+          end
+
+          it "sets content type" do
+            expect(last_response.content_type).to eq(last_response.status == 406 ? 'text/plain' : 'application/ld+json')
+          end
+
+          it "returns serialization" do
+            if last_response.status == 406
+              expect(last_response.body).to eq params[:result]
+            else
+              expect(JSON.parse(last_response.body)).to produce_jsonld(params[:result], logger)
+            end
           end
         end
       end
