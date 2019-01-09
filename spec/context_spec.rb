@@ -187,12 +187,32 @@ describe JSON::LD::Context do
         }, logger)
       end
 
+      it "maps term with blank node value (with deprecation)" do
+        expect do
+          expect(subject.parse({
+            "foo" => "_:bn"
+          }).send(:mappings)).to produce({
+            "foo" => RDF::Node("bn")
+          }, logger)
+        end.to write("[DEPRECATION]").to(:error)
+      end
+
       it "maps term with @id" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/"}
         }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, logger)
+      end
+
+      it "maps term with blank node @id (with deprecation)" do
+        expect do
+          expect(subject.parse({
+            "foo" => {"@id" => "_:bn"}
+          }).send(:mappings)).to produce({
+            "foo" => RDF::Node("bn")
+          }, logger)
+        end.to write("[DEPRECATION]").to(:error)
       end
 
       it "associates @list container mapping with term" do
@@ -630,7 +650,7 @@ describe JSON::LD::Context do
       }, logger)
     end
 
-    it "CURIE with @type" do
+    it "Compact IRI with @type" do
       expect(subject.parse({
         "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "foaf:knows" => {
@@ -712,7 +732,7 @@ describe JSON::LD::Context do
       }, logger)
     end
 
-    it "compacts IRIs to CURIEs" do
+    it "compacts IRIs to Compact IRIs" do
       expect(subject.parse({
         "ex" => 'http://example.org/',
         "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
@@ -777,6 +797,31 @@ describe JSON::LD::Context do
     end
   end
 
+  describe "#vocab=" do
+    subject {
+      context.parse({
+        '@base' => 'http://base/',
+      })
+    }
+
+    it "sets vocab from absolute iri" do
+      subject.vocab = "http://example.org/"
+      expect(subject.vocab).to eql RDF::URI("http://example.org/")
+    end
+
+    it "sets vocab from empty string" do
+      subject.vocab = ""
+      expect(subject.vocab).to eql RDF::URI("http://base/")
+    end
+
+    it "sets vocab to blank node (with deprecation)" do
+      expect do
+        subject.vocab = "_:bn"
+      end.to write("[DEPRECATION]").to(:error)
+      expect(subject.vocab).to eql "_:bn"
+    end
+  end
+
   describe "#expand_iri" do
     subject {
       context.parse({
@@ -816,7 +861,7 @@ describe JSON::LD::Context do
           "dotseg" =>        ["../foo/bar",          RDF::URI("../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
-          "absolute IRI looking like a curie" =>
+          "absolute IRI looking like a Compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("_")],
@@ -841,7 +886,7 @@ describe JSON::LD::Context do
           "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
           "empty term" =>    ["",                    RDF::URI("http://base/base")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
-          "absolute IRI looking like a curie" =>
+          "absolute IRI looking like a compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("http://base/_")],
@@ -866,7 +911,7 @@ describe JSON::LD::Context do
           "dotseg" =>        ["../foo/bar",          RDF::URI("http://vocab/../foo/bar")],
           "empty term" =>    ["",                    RDF::URI("http://empty/")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
-          "absolute IRI looking like a curie" =>
+          "absolute IRI looking like a compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("http://underscore/")],
@@ -900,7 +945,7 @@ describe JSON::LD::Context do
             "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/base../foo/bar")],
             "empty term" =>    ["",                    RDF::URI("http://empty/")],
             "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
-            "absolute IRI looking like a curie" =>
+            "absolute IRI looking like a compact IRI" =>
                                ["foo:bar",             RDF::URI("foo:bar")],
             "bnode" =>         ["_:t0",                RDF::Node("t0")],
             "_" =>             ["_",                   RDF::URI("http://underscore/")],
@@ -941,7 +986,7 @@ describe JSON::LD::Context do
       "unmapped"      => ["foo",                 "foo"],
       "bnode"         => ["_:a",                 RDF::Node("a")],
       "relative"      => ["foo/bar",             "http://base/foo/bar"],
-      "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
+      "odd Compact IRI"=> ["ex:perts",            "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         expect(subject.compact_iri(input)).to produce(result, logger)
@@ -957,7 +1002,7 @@ describe JSON::LD::Context do
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
         "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-        "odd CURIE"     => ["experts",             "http://example.org/perts"]
+        "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
@@ -976,7 +1021,7 @@ describe JSON::LD::Context do
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
         "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-        "odd CURIE"     => ["experts",             "http://example.org/perts"]
+        "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
@@ -1004,7 +1049,7 @@ describe JSON::LD::Context do
           "unmapped"      => ["foo",                 "foo"],
           "bnode"         => ["_:a",                 RDF::Node("a")],
           "relative"      => ["foo/bar",             "http://base/foo/bar"],
-          "odd CURIE"     => ["experts",             "http://example.org/perts"]
+          "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
             expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
@@ -1103,7 +1148,7 @@ describe JSON::LD::Context do
       end
     end
 
-    context "CURIE compaction" do
+    context "Compact IRI compaction" do
       {
         "nil" => [nil, nil],
         "absolute IRI"  => ["http://example.com/", "http://example.com/"],
@@ -1113,7 +1158,7 @@ describe JSON::LD::Context do
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => ["_:a",                 RDF::Node("a")],
         "relative"      => ["foo/bar",             "http://base/foo/bar"],
-        "odd CURIE"     => ["ex:perts",            "http://example.org/perts"]
+        "odd Compact IRI"=> ["ex:perts",            "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           expect(subject.compact_iri(input)).to produce(result, logger)
@@ -1131,7 +1176,7 @@ describe JSON::LD::Context do
           "unmapped"      => ["foo",                 "foo"],
           "bnode"         => ["_:a",                 RDF::Node("a")],
           "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-          "odd CURIE"     => ["experts",             "http://example.org/perts"]
+          "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
             expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
@@ -1389,7 +1434,7 @@ describe JSON::LD::Context do
       "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
-      "no IRI (CURIE)" => ["foo", {"@id" => RDF::Vocab::FOAF.Person.to_s},       {"@id" => RDF::Vocab::FOAF.Person.to_s}],
+      "no IRI (Compact IRI)" => ["foo", {"@id" => RDF::Vocab::FOAF.Person.to_s},       {"@id" => RDF::Vocab::FOAF.Person.to_s}],
       "no boolean" =>     ["foo", {"@value" => "true", "@type" => RDF::XSD.boolean.to_s},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "no integer" =>     ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
       "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
