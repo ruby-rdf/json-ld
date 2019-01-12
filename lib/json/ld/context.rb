@@ -359,7 +359,7 @@ module JSON::LD
         warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1"
         value
       when String, RDF::URI
-        v = as_resource(value.to_s, base)
+        v = expand_iri(value.to_s, vocab: true, documentRelative: true)
         raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
         v
       when nil

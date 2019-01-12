@@ -148,7 +148,7 @@ module JSON::LD
       end
 
       # If not provided, first use context from document, or from a Link header
-      context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
+      context ||= context_ref || {}
       @context = Context.parse(context || {}, @options)
 
       # If not set explicitly, the context figures out the processing mode

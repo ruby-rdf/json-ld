@@ -825,6 +825,18 @@ describe JSON::LD::Context do
       subject.vocab = "relative#"
       expect(subject.vocab).to eql RDF::URI("http://base/relative#")
     end
+
+    it "sets vocab from relative IRI given an existing vocab" do
+      subject.vocab = "http://example.org/."
+      subject.vocab = "relative#"
+      expect(subject.vocab).to eql RDF::URI("http://example.org/.relative#")
+    end
+
+    it "sets vocab from relative IRI given an existing vocab which is also relative" do
+      subject.vocab = "/rel1"
+      subject.vocab = "rel2#"
+      expect(subject.vocab).to eql RDF::URI("http://base/rel1rel2#")
+    end
   end
 
   describe "#expand_iri" do
@@ -960,6 +972,14 @@ describe JSON::LD::Context do
             end
           end
         end
+
+        it "expand-0110" do
+          ctx = JSON::LD::Context.parse({
+            "@base" => "http://example.com/some/deep/directory/and/file/",
+            "@vocab" => "/relative"
+          })
+          expect(ctx.expand_iri("#fragment-works", vocab: true)).to produce("http://example.com/relative#fragment-works", logger)
+        end
       end
     end
   end
@@ -1042,7 +1062,7 @@ describe JSON::LD::Context do
 
       context "with @vocab: relative" do
         before(:each) {
-          subject.vocab = ""
+          subject.vocab = nil
           subject.base = 'http://base/base'
         }
 
@@ -1053,8 +1073,8 @@ describe JSON::LD::Context do
           "empty"         => [":suffix",             "http://empty/suffix"],
           "unmapped"      => ["foo",                 "foo"],
           "bnode"         => ["_:a",                 RDF::Node("a")],
-          "relative"      => ["foo/bar",             "http://base/foo/bar"],
-          "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
+          "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
+          "odd Compact IRI"=> ["experts",            "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
             expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)

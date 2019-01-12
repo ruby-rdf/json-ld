@@ -315,6 +315,65 @@ describe JSON::LD::API do
           it(title) {run_expand params.merge(base: "http://example.org/")}
         end
       end
+
+      context "with @vocab: '/relative#'" do
+        {
+          "base": {
+            input: %({
+              "@context": {"@vocab": "/relative#"},
+              "http://a/b": "foo"
+            }),
+            output: %([{
+              "http://a/b": [{"@value": "foo"}]
+            }])
+          },
+          "relative": {
+            input: %({
+              "@context": {"@vocab": "/relative#"},
+              "a/b": "foo"
+            }),
+            output: %([{
+              "http://example.org/relative#a/b": [{"@value": "foo"}]
+            }])
+          },
+          "hash": {
+            input: %({
+              "@context": {"@vocab": "/relative#"},
+              "#a": "foo"
+            }),
+            output: %([{
+              "http://example.org/relative##a": [{"@value": "foo"}]
+            }])
+          },
+          "dotseg": {
+            input: %({
+              "@context": {"@vocab": "/relative#"},
+              "../a": "foo"
+            }),
+            output: %([{
+              "http://example.org/relative#../a": [{"@value": "foo"}]
+            }])
+          },
+          "example": {
+            input: %({
+              "@context": {
+                "@base": "http://example/document",
+                "@vocab": "/relative#"
+              },
+              "@id": "http://example.org/places#BrewEats",
+              "@type": "Restaurant",
+              "name": "Brew Eats"
+            }),
+            output: %([{
+              "@id": "http://example.org/places#BrewEats",
+              "@type": ["http://example/relative#Restaurant"],
+              "http://example/relative#name": [{"@value": "Brew Eats"}]
+            }])
+          }
+        }.each do |title, params|
+          it(title) {run_expand params.merge(base: "http://example.org/")}
+        end
+      end
     end
 
     context "keyword aliasing" do
