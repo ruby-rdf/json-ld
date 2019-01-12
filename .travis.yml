@@ -5,7 +5,9 @@ before_install:
   - 'gem update --system --conservative || (gem i "rubygems-update:~>2.7" --no-document && update_rubygems)'
   - 'gem update bundler --conservative'
 env:
-  - CI=true
+  global:
+    - CI=true
+    - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
 gemfile:
   - Gemfile
   - Gemfile-pure
