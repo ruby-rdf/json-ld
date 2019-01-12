@@ -356,7 +356,7 @@ module JSON::LD
       @vocab = case value
       when /_:/
         # BNode vocab is deprecated
-        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1."
+        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1"
         value
       when String, RDF::URI
         v = as_resource(value.to_s, base)
@@ -642,7 +642,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
-          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if definition.id.start_with?("_:")
+          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
           if value.has_key?('@container')
@@ -664,7 +664,7 @@ module JSON::LD
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
 
-          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if definition.id.start_with?("_:")
+          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 
           # If id ends with a gen-delim, it may be used as a prefix for simple terms
           definition.prefix = true if !term.include?(':') &&

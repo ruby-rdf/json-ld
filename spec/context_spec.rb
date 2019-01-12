@@ -800,7 +800,7 @@ describe JSON::LD::Context do
   describe "#vocab=" do
     subject {
       context.parse({
-        '@base' => 'http://base/',
+        '@base' => 'http://base/resource',
       })
     }
 
@@ -811,7 +811,7 @@ describe JSON::LD::Context do
 
     it "sets vocab from empty string" do
       subject.vocab = ""
-      expect(subject.vocab).to eql RDF::URI("http://base/")
+      expect(subject.vocab).to eql RDF::URI("http://base/resource")
     end
 
     it "sets vocab to blank node (with deprecation)" do
@@ -819,6 +819,11 @@ describe JSON::LD::Context do
         subject.vocab = "_:bn"
       end.to write("[DEPRECATION]").to(:error)
       expect(subject.vocab).to eql "_:bn"
+    end
+
+    it "sets vocab from relative IRI" do
+      subject.vocab = "relative#"
+      expect(subject.vocab).to eql RDF::URI("http://base/relative#")
     end
   end
 
