@@ -142,7 +142,9 @@ if ARGV.empty?
   run(StringIO.new(s), options)
 else
   ARGV.each do |test_file|
-    run(Kernel.open(test_file), options)
+    io = Kernel.open(test_file)
+    io.define_singleton_method(:content_type) {"text/html"} if test_file.end_with?('.html')
+    run(io, options)
   end
 end
 puts
