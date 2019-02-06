@@ -51,6 +51,7 @@ module JSON
       @default
       @embed
       @explicit
+      @sealed
       @id
       @index
       @graph

@@ -44,7 +44,7 @@ module JSON::LD
       when Hash
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
-          context = context.parse(input.delete('@context'))
+          context = context.parse(input.delete('@context'), from_term: active_property)
           #log_debug("expand") {"context: #{context.inspect}"}
         end
 
@@ -54,8 +54,9 @@ module JSON::LD
         input.each_pair do |key, val|
           next unless context.expand_iri(key, vocab: true) == '@type'
           Array(val).sort.each do |term|
-            term_context = context.term_definitions[term].context if context.term_definitions[term]
-            context = term_context ? context.parse(term_context) : context
+            term_def = context.term_definitions[term]
+            term_context = term_def.context if term_def
+            context = term_context ? context.parse(term_context, from_term: active_property) : context
           end
         end
 
@@ -351,8 +352,10 @@ module JSON::LD
         end
 
         # Use a term-specific context, if defined
-        term_context = context.term_definitions[key].context if context.term_definitions[key]
+        term_def = context.term_definitions[key]
+        term_context = term_def.context if term_def
         active_context = term_context ? context.parse(term_context) : context
+
         container = active_context.container(key)
         expanded_value = if container.length == 1 && container.first == '@language' && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
@@ -387,8 +390,9 @@ module JSON::LD
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
             # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
-            map_context = active_context.term_definitions[k].context if container.include?('@type') && active_context.term_definitions[k]
-            map_context = active_context.parse(map_context) if map_context
+            term_def = context.term_definitions[k]
+            term_context = term_def.context if container.include?('@type') && term_def
+            map_context = term_context ? context.parse(term_context, from_term: active_property) : context
             map_context ||= active_context
 
             expanded_k = active_context.expand_iri(k, vocab: true, quiet: true).to_s

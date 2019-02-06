@@ -379,7 +379,7 @@ describe JSON::LD::Context do
           end
         end
 
-        (JSON::LD::KEYWORDS - %w(@base @language @version @vocab)).each do |kw|
+        (JSON::LD::KEYWORDS - %w(@base @language @version @sealed @vocab)).each do |kw|
           it "does not redefine #{kw} with an @container" do
             expect {
               ec = subject.parse({kw => {"@container" => "@set"}})
@@ -389,7 +389,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @sealed @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
@@ -1726,6 +1726,59 @@ describe JSON::LD::Context do
     it "uses string" do
       expect(subject.reverse_term('ex')).to eql subject.term_definitions['reverse']
       expect(subject.reverse_term('reverse')).to eql subject.term_definitions['ex']
+    end
+  end
+
+  describe "sealed contexts" do
+    it "seals a term with @sealed true" do
+      ctx = context.parse({
+        "sealed" => {"@id" => "http://example.com/sealed", "@sealed" => true},
+        "unsealed" => {"@id" => "http://example.com/unsealed"},
+      })
+      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
+      expect(ctx.term_definitions["unsealed"].sealed).to be_nil
+    end
+
+    it "seals all term with @sealed true in context" do
+      ctx = context.parse({
+        "@sealed" => true,
+        "sealed" => {"@id" => "http://example.com/sealed"},
+        "sealed2" => {"@id" => "http://example.com/sealed2"},
+      })
+      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
+      expect(ctx.term_definitions["sealed2"].sealed).not_to be_nil
+    end
+
+    it "seals does not seal term with @unsealed: false when context is sealed" do
+      ctx = context.parse({
+        "@sealed" => true,
+        "sealed" => {"@id" => "http://example.com/sealed"},
+        "unsealed" => {"@id" => "http://example.com/unsealed", "@sealed" => false},
+      })
+      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
+      expect(ctx.term_definitions["unsealed"].sealed).to be_nil
+    end
+
+    it "warns when clearing a context having sealed terms, if from a sealed term" do
+      ctx = context.parse({
+        "sealed" => {"@id" => "http://example.com/sealed", "@sealed" => true}
+      })
+
+      expect do
+        ctx.parse(nil, from_term: 'sealed')
+        expect(ctx.term_definitions).to have_key("sealed")
+      end.to write(:anything).to(:error)
+    end
+
+    it "does not warn when clearing a context having sealed terms, if not from a sealed term" do
+      ctx = context.parse({
+        "sealed" => {"@id" => "http://example.com/sealed", "@sealed" => true}
+      })
+
+      expect do
+        ctx.parse(nil)
+        expect(ctx.term_definitions).to have_key("sealed")
+      end.not_to write(:anything).to(:error)
     end
   end
 
