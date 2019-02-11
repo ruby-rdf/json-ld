@@ -62,8 +62,8 @@ module JSON::LD
       # @return [Hash{String => Object}]
       attr_accessor :context
 
-      # Term is sealed. Value is the identifier of the context which defined the term.
-      # @return [RDF::Resource]
+      # Term is sealed.
+      # @return [Boolean]
       attr_accessor :sealed
 
       # This is a simple term definition, not an expanded term definition
@@ -82,7 +82,7 @@ module JSON::LD
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
-      # @param [RDF::Resource] sealed Value is the identifier of the context which defined the term.
+      # @param [Boolean] sealed
       # @param [String] nest term used for nest properties
       # @param [Boolean] simple
       #   This is a simple term definition, not an expanded term definition
@@ -95,7 +95,7 @@ module JSON::LD
                     language_mapping: nil,
                     reverse_property: false,
                     nest: nil,
-                    sealed: nil,
+                    sealed: false,
                     simple: false,
                     prefix: nil,
                     context: nil)
@@ -195,7 +195,7 @@ module JSON::LD
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
         v << "simple=true" if @simple
-        v << "sealed=#{sealed}" if @sealed
+        v << "sealed=true" if @sealed
         v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
         v << "has-context" unless context.nil?
         v.join(" ") + "]"
@@ -257,8 +257,8 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, from_term: nil, **options)
-      self.new(options).parse(local_context, from_term: from_term)
+    def self.parse(local_context, **options)
+      self.new(options).parse(local_context)
     end
 
     ##
@@ -388,32 +388,21 @@ module JSON::LD
     #
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [Array<String>] remote_contexts
-    # @param [String] from_term
-    #   The active term, when expanding. Context may not be cleared and existing term definitions
-    #   associated with this term, if sealed, may not be changed if from_term is sealed
-    # @param [RDF::Resource] context_id from context IRI, for sealing terms
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
-    def parse(local_context, remote_contexts: [], from_term: nil, context_id: RDF::Node.new)
+    def parse(local_context, remote_contexts: [])
       result = self.dup
       result.provided_context = local_context if self.empty?
-
-      current_seal = term_definitions[from_term].sealed if from_term && term_definitions[from_term]
 
       local_context = as_array(local_context)
 
       local_context.each do |context|
         case context
         when nil
-          # 3.1 If the `from_term` is  not null, and the term associated with `from_term`
-          # in the active context is sealed, this fails.
-          if current_seal.nil?
-            result = Context.new(options)
-          else
-            Kernel.warn "Attempt to clear a context from a sealed term"
-          end
+          # 3.1 If nil, set to a new empty context
+          result = Context.new(options)
         when Context
            #log_debug("parse") {"context: #{context.inspect}"}
            result = context.dup
@@ -485,7 +474,7 @@ module JSON::LD
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, from_term: from_term, context_id: context_canon)
+            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup)
             PRELOADED[context_canon.to_s] = context
             context.provided_context = result.provided_context
           end
@@ -514,7 +503,7 @@ module JSON::LD
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
-            result.create_term_definition(context, key, defined, sealed: context['@sealed'], context_id: context_id, current_seal: current_seal) unless NON_TERMDEF_KEYS.include?(key)
+            result.create_term_definition(context, key, defined, sealed: context['@sealed']) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -568,16 +557,11 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
-    # @param [RDF::Resource] context_id
-    #   Identifier used for sealing terms. Also  used to check if existing terms
-    #   are sealed with the same identifier.
-    # @param [RDF::Resource] current_seal
-    #   The identifier associated with the active property invoking this context.
     # @param [Boolean] sealed if true, causes all terms to be sealed with context_id
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, context_id: nil, current_seal: nil, sealed: false)
+    def create_term_definition(local_context, term, defined, sealed: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -607,7 +591,7 @@ module JSON::LD
       value = {'@id' => value} if simple_term
 
       # Remove any existing term definition for term in active context.
-      if term_definitions[term] && current_seal && term_definitions[term].sealed
+      if term_definitions[term] && term_definitions[term].sealed
         Kernel.warn "Attempt to redefine sealed term #{term}"
         return
       else
@@ -639,7 +623,7 @@ module JSON::LD
         end
 
         # Potentially note that the term is sealed
-        definition.sealed = context_id if value.fetch('@sealed', sealed)
+        definition.sealed = value.fetch('@sealed', sealed)
 
         if value.has_key?('@type')
           type = value['@type']
@@ -709,7 +693,7 @@ module JSON::LD
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':', 2)
-          create_term_definition(local_context, prefix, defined, sealed: sealed, context_id: context_id) if local_context.has_key?(prefix)
+          create_term_definition(local_context, prefix, defined, sealed: sealed) if local_context.has_key?(prefix)
 
           definition.id = if td = term_definitions[prefix]
             # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
