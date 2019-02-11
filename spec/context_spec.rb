@@ -1735,8 +1735,8 @@ describe JSON::LD::Context do
         "sealed" => {"@id" => "http://example.com/sealed", "@sealed" => true},
         "unsealed" => {"@id" => "http://example.com/unsealed"},
       })
-      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
-      expect(ctx.term_definitions["unsealed"].sealed).to be_nil
+      expect(ctx.term_definitions["sealed"]).to be_sealed
+      expect(ctx.term_definitions["unsealed"]).not_to be_sealed
     end
 
     it "seals all term with @sealed true in context" do
@@ -1745,8 +1745,8 @@ describe JSON::LD::Context do
         "sealed" => {"@id" => "http://example.com/sealed"},
         "sealed2" => {"@id" => "http://example.com/sealed2"},
       })
-      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
-      expect(ctx.term_definitions["sealed2"].sealed).not_to be_nil
+      expect(ctx.term_definitions["sealed"]).to be_sealed
+      expect(ctx.term_definitions["sealed2"]).to be_sealed
     end
 
     it "seals does not seal term with @sealed: false when context is sealed" do
@@ -1755,8 +1755,8 @@ describe JSON::LD::Context do
         "sealed" => {"@id" => "http://example.com/sealed"},
         "unsealed" => {"@id" => "http://example.com/unsealed", "@sealed" => false},
       })
-      expect(ctx.term_definitions["sealed"].sealed).not_to be_nil
-      expect(ctx.term_definitions["unsealed"].sealed).to be_nil
+      expect(ctx.term_definitions["sealed"]).to be_sealed
+      expect(ctx.term_definitions["unsealed"]).not_to be_sealed
     end
 
     it "does not warn when clearing a context having sealed terms" do

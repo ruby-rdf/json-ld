@@ -64,7 +64,7 @@ module JSON::LD
 
       # Term is sealed.
       # @return [Boolean]
-      attr_accessor :sealed
+      attr_writer :sealed
 
       # This is a simple term definition, not an expanded term definition
       # @return [Boolean] simple
@@ -111,6 +111,10 @@ module JSON::LD
         @prefix                 = prefix            unless prefix.nil?
         @context                = context           unless context.nil?
       end
+
+      # Term is sealed.
+      # @return [Boolean]
+      def sealed?; !!@sealed; end
 
       # Set container mapping, from an array which may include @set
       def container_mapping=(mapping)
@@ -591,7 +595,7 @@ module JSON::LD
       value = {'@id' => value} if simple_term
 
       # Remove any existing term definition for term in active context.
-      if term_definitions[term] && term_definitions[term].sealed
+      if term_definitions[term] && term_definitions[term].sealed?
         Kernel.warn "Attempt to redefine sealed term #{term}"
         return
       else
