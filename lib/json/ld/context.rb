@@ -434,7 +434,6 @@ module JSON::LD
             context_canon = RDF::URI(context_canon.to_h.merge(scheme: 'http'))
           end
 
-          raise JsonLdError::RecursiveContextInclusion, "#{context}" if remote_contexts.include?(context.to_s)
           remote_contexts << context.to_s
           raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
 
