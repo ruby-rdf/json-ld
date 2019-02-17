@@ -343,6 +343,7 @@ describe JSON::LD::Context do
         "@type as object" => {"foo" => {"@type" => {}}},
         "@type as array" => {"foo" => {"@type" => []}},
         "@type as @list" => {"foo" => {"@type" => "@list"}},
+        "@type as @none" => {"@version": 1.1, "foo" => {"@type" => "@none"}},
         "@type as @set" => {"foo" => {"@type" => "@set"}},
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as empty array" => {"foo" => {"@container" => []}},
@@ -369,6 +370,7 @@ describe JSON::LD::Context do
           "@container @id" => {"foo" => {"@container" => "@id"}},
           "@container @type" => {"foo" => {"@container" => "@type"}},
           "@nest" => {"foo" => {"@id" => 'http://example.org/', "@nest" => "@nest"}},
+          "@type as @none" => {"foo" => {"@type" => "@none"}},
           "@prefix" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => true}},
         }.each do |title, context|
           it title do
@@ -1355,6 +1357,7 @@ describe JSON::LD::Context do
         "ex:integer" => {"@type" => "xsd:integer"},
         "ex:double" => {"@type" => "xsd:double"},
         "ex:boolean" => {"@type" => "xsd:boolean"},
+        "ex:none" => {"@type" => "@none"},
       })
       logger.clear
       ctx
@@ -1388,7 +1391,11 @@ describe JSON::LD::Context do
       "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
       "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27")), {"@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s}],
       "rdf nonNeg" =>     ["foo", RDF::Literal::NonNegativeInteger.new(1), {"@value" => "1", "@type" => RDF::XSD.nonNegativeInteger}],
-      "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0), {"@value" => "1.0", "@type" => RDF::XSD.float}],
+      "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0),   {"@value" => "1.0", "@type" => RDF::XSD.float}],
+      "ex:none string" => ["ex:none", "foo",                      {"@value" => "foo"}],
+      "ex:none boolean" =>["ex:none", true,                       {"@value" => true}],
+      "ex:none integer" =>["ex:none", 1,                          {"@value" => 1}],
+      "ex:none double" => ["ex:none", 1.1e1,                      {"@value" => 1.1E1}],
     }.each do |title, (key, compacted, expanded)|
       it title do
         expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1447,6 +1454,7 @@ describe JSON::LD::Context do
         "dc:created" => {"@type" => RDF::XSD.date.to_s},
         "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
         "foaf:knows" => {"@type" => "@id"},
+        "ex:none" => {"@type" => "@none"},
       })
       logger.clear
       c
@@ -1460,15 +1468,18 @@ describe JSON::LD::Context do
       "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
       "no IRI (Compact IRI)" => ["foo", {"@id" => RDF::Vocab::FOAF.Person.to_s},       {"@id" => RDF::Vocab::FOAF.Person.to_s}],
-      "no boolean" =>     ["foo", {"@value" => "true", "@type" => RDF::XSD.boolean.to_s},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-      "no integer" =>     ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-      "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+      "no boolean" =>     ["foo", {"@value" => "true", "@type" => "xsd:boolean"},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
+      "no integer" =>     ["foo", {"@value" => "54", "@type" => "xsd:integer"},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
+      "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => "xsd:date"}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
       "no string " =>     ["foo", "string",                       {"@value" => "string"}],
       "no lang " =>       ["nolang", "string",                    {"@value" => "string"}],
       "native boolean" => ["foo", true,                           {"@value" => true}],
       "native integer" => ["foo", 1,                              {"@value" => 1}],
       "native integer(list)"=>["list", 1,                         {"@value" => 1}],
       "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
+      "ex:none IRI" =>    ["ex:none", {"@id" => "http://example.com/"},  {"@id" => "http://example.com/"}],
+      "ex:none string" => ["ex:none", {"@value" => "string"},     {"@value" => "string"}],
+      "ex:none integer" =>["ex:none", {"@value" => "54", "@type" => "xsd:integer"}, {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
     }.each do |title, (key, compacted, expanded)|
       it title do
         expect(subject.compact_value(key, expanded)).to produce(compacted, logger)
@@ -1478,8 +1489,8 @@ describe JSON::LD::Context do
     context "@language" do
       {
         "@id"                            => ["foo", {"@id" => "foo"},                                 {"@id" => "foo"}],
-        "integer"                        => ["foo", {"@value" => "54", "@type" => RDF::XSD.integer.to_s},     {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-        "date"                           => ["foo", {"@value" => "2011-12-27Z","@type" => RDF::XSD.date.to_s},{"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
+        "integer"                        => ["foo", {"@value" => "54", "@type" => "xsd:integer"},     {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
+        "date"                           => ["foo", {"@value" => "2011-12-27Z","@type" => "xsd:date"},{"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
         "no lang"                        => ["foo", {"@value" => "foo"  },                            {"@value" => "foo"}],
         "same lang"                      => ["foo", "foo",                                            {"@value" => "foo", "@language" => "en"}],
         "other lang"                     => ["foo",  {"@value" => "foo", "@language" => "bar"},       {"@value" => "foo", "@language" => "bar"}],

@@ -483,6 +483,58 @@ describe JSON::LD::API do
         it(title) {run_expand params}
       end
 
+      context "with @type: @none" do
+        {
+          "true": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@none"}},
+              "e": true
+            }),
+            output:%( [{
+              "http://example.org/vocab#bool": [{"@value": true}]
+            }])
+          },
+          "false": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#bool", "@type": "@none"}},
+              "e": false
+            }),
+            output: %([{
+              "http://example.org/vocab#bool": [{"@value": false}]
+            }])
+          },
+          "double": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@none"}},
+              "e": 1.23
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 1.23}]
+            }])
+          },
+          "double-zero": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#double", "@type": "@none"}},
+              "e": 0.0e0
+            }),
+            output: %([{
+              "http://example.org/vocab#double": [{"@value": 0.0e0}]
+            }])
+          },
+          "integer": {
+            input: %({
+              "@context": {"e": {"@id": "http://example.org/vocab#integer", "@type": "@none"}},
+              "e": 123
+            }),
+            output: %([{
+              "http://example.org/vocab#integer": [{"@value": 123}]
+            }])
+          },
+        }.each do |title, params|
+          it(title) {run_expand(processingMode: "json-ld-1.1", **params)}
+        end
+      end
+
       context "with @type: @id" do
         {
           "true": {

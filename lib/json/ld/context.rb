@@ -232,7 +232,7 @@ module JSON::LD
     # This adds a language to plain strings that aren't otherwise coerced
     # @return [String]
     attr_reader :default_language
-    
+
     # Default vocabulary
     #
     # Sets the default vocabulary used for expanding terms which
@@ -309,7 +309,7 @@ module JSON::LD
       @term_definitions = options[:term_definitions] if options[:term_definitions]
 
       #log_debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
-      
+
       yield(self) if block_given?
     end
 
@@ -384,11 +384,11 @@ module JSON::LD
     # Create an Evaluation Context
     #
     # When processing a JSON-LD data structure, each processing rule is applied using information provided by the active context. This section describes how to produce an active context.
-    # 
+    #
     # The active context contains the active term definitions which specify how properties and values have to be interpreted as well as the current base IRI, the vocabulary mapping and the default language. Each term definition consists of an IRI mapping, a boolean flag reverse property, an optional type mapping or language mapping, and an optional container mapping. A term definition can not only be used to map a term to an IRI, but also to map a term to a keyword, in which case it is referred to as a keyword alias.
-    # 
+    #
     # When processing, the active context is initialized without any term definitions, vocabulary mapping, or default language. If a local context is encountered during processing, a new active context is created by cloning the existing active context. Then the information from the local context is merged into the new active context. Given that local contexts may contain references to remote contexts, this includes their retrieval.
-    # 
+    #
     #
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [Array<String>] remote_contexts
@@ -554,7 +554,7 @@ module JSON::LD
     # Create Term Definition
     #
     # Term definitions are created by parsing the information in the given local context for the given term. If the given term is a compact IRI, it may omit an IRI mapping by depending on its prefix having its own term definition. If the prefix is a key in the local context, then its term definition must first be created, through recursion, before continuing. Because a term definition can depend on other term definitions, a mechanism must be used to detect cyclical dependencies. The solution employed here uses a map, defined, that keeps track of whether or not a term has been defined or is currently in the process of being defined. This map is checked before any recursion is attempted.
-    # 
+    #
     # After all dependencies for a term have been defined, the rest of the information in the local context for the given term is taken into account, creating the appropriate IRI mapping, container mapping, and type mapping or language mapping for the term.
     #
     # @param [Hash] local_context
@@ -643,7 +643,9 @@ module JSON::LD
           else
             :error
           end
-          unless (type == '@id' || type == '@vocab') || type.is_a?(RDF::URI) && type.absolute?
+          if type == '@none' && processingMode == 'json-ld-1.1'
+            # This is okay and used in compaction in 1.1
+          elsif !%w(@id @vocab).include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           #log_debug("") {"type_mapping: #{type.inspect}"}
@@ -846,7 +848,7 @@ module JSON::LD
       statements.each do |subject, values|
         types = values.each_with_object([]) { |v, memo| memo << v.object if v.predicate == RDF.type }
         is_property = types.any? {|t| t.to_s.include?("Property")}
-        
+
         term = subject.to_s.split(/[\/\#]/).last
 
         if !is_property
@@ -1100,7 +1102,7 @@ module JSON::LD
     # @param [Boolean] vocab
     #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     # @param [Boolean] reverse
-    #   specifies whether a reverse property is being compacted 
+    #   specifies whether a reverse property is being compacted
     # @param [Boolean] quiet (false)
     # @param  [Hash{Symbol => Object}] options ({})
     #
@@ -1218,6 +1220,7 @@ module JSON::LD
           preferred_values.concat([tl_value, '@none'].compact)
         end
         #log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless quiet
+        preferred_values << '@any'
         if p_term = select_term(iri, containers, tl, preferred_values)
           #log_debug("") {"=> term: #{p_term.inspect}"} unless quiet
           return p_term
@@ -1337,7 +1340,7 @@ module JSON::LD
         # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
         res = {'@value' => value}
 
-        if td.type_mapping && !%w(@id @vocab).include?(td.type_mapping.to_s)
+        if td.type_mapping && !%w(@id @vocab @none).include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
         elsif value.is_a?(String) && td.language_mapping
           res['@language'] = td.language_mapping
@@ -1377,6 +1380,9 @@ module JSON::LD
       end
 
       result = case
+      when coerce(property) == '@none'
+        # use original expanded value
+        value
       when coerce(property) == '@id' && value.has_key?('@id') && num_members == 1
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce)"}
@@ -1407,6 +1413,16 @@ module JSON::LD
         # Otherwise, use original value
         #log_debug("") {" (no change)"}
         value
+      end
+
+      if result.is_a?(Hash) && result.has_key?('@type')
+        # Compact values of @type
+        #require 'byebug'; byebug
+        result['@type'] = if result['@type'].is_a?(Array)
+          result['@type'].map {|t| compact_iri(t, vocab: true)}
+        else
+          compact_iri(result['@type'], vocab: true)
+        end
       end
       
       # If the result is an object, tranform keys using any term keyword aliases
@@ -1455,7 +1471,7 @@ module JSON::LD
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
       v.join(" ") + "]"
     end
-    
+
     def dup
       # Also duplicate mappings, coerce and list
       that = self
@@ -1479,7 +1495,8 @@ module JSON::LD
       # Map property, if it's not an RDF::Value
       # @type is always is an IRI
       return '@id' if property == RDF.type || property == '@type'
-      term_definitions[property] && term_definitions[property].type_mapping
+      td = term_definitions[property]
+      td && td.type_mapping
     end
 
     ##
@@ -1510,6 +1527,7 @@ module JSON::LD
     CONTEXT_CONTAINER_ARRAY_TERMS = %w(@set @list @graph).freeze
     CONTEXT_CONTAINER_ID_GRAPH = %w(@id @graph).freeze
     CONTEXT_CONTAINER_INDEX_GRAPH = %w(@index @graph).freeze
+    CONTEXT_BASE_FRAG_OR_QUERY = %w(? #).freeze
 
     def uri(value)
       case value.to_s
@@ -1593,6 +1611,10 @@ module JSON::LD
           any_map['@none'] ||= term
           if td.reverse_property
             type_map['@reverse'] ||= term
+          elsif td.type_mapping == '@none'
+            type_map['@any'] ||= term
+            language_map['@any'] ||= term
+            any_map['@any'] ||= term
           elsif td.type_mapping
             type_map[td.type_mapping.to_s] ||= term
           elsif !td.language_mapping.nil?
@@ -1657,7 +1679,7 @@ module JSON::LD
         iri_set
       end
       b = base.to_s
-      return iri[b.length..-1] if iri.start_with?(b) && %w(? #).include?(iri[b.length, 1])
+      return iri[b.length..-1] if iri.start_with?(b) && CONTEXT_BASE_FRAG_OR_QUERY.include?(iri[b.length, 1])
 
       @base_and_parents.each_with_index do |bb, index|
         next unless iri.start_with?(bb)
