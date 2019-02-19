@@ -25,6 +25,7 @@ Gem::Specification.new do |gem|
   gem.requirements          = []
   gem.add_runtime_dependency     'rdf',             '~> 3.0', '>= 3.0.8'
   gem.add_runtime_dependency     'multi_json',      '~> 1.13'
+  gem.add_runtime_dependency     'i18n',            '<= 1.5.1' if RUBY_VERSION < "2.3"
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
   gem.add_development_dependency 'sinatra-linkeddata','~> 3.0'
   gem.add_development_dependency 'jsonlint',        '~> 0.2'  unless RUBY_ENGINE == "jruby"
