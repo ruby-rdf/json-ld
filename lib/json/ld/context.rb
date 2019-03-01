@@ -62,9 +62,9 @@ module JSON::LD
       # @return [Hash{String => Object}]
       attr_accessor :context
 
-      # Term is sealed.
+      # Term is protected.
       # @return [Boolean]
-      attr_writer :sealed
+      attr_writer :protected
 
       # This is a simple term definition, not an expanded term definition
       # @return [Boolean] simple
@@ -82,7 +82,7 @@ module JSON::LD
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
       # @param [Boolean] reverse_property
-      # @param [Boolean] sealed
+      # @param [Boolean] protected
       # @param [String] nest term used for nest properties
       # @param [Boolean] simple
       #   This is a simple term definition, not an expanded term definition
@@ -95,7 +95,7 @@ module JSON::LD
                     language_mapping: nil,
                     reverse_property: false,
                     nest: nil,
-                    sealed: false,
+                    protected: false,
                     simple: false,
                     prefix: nil,
                     context: nil)
@@ -105,16 +105,16 @@ module JSON::LD
         self.container_mapping  = container_mapping
         @language_mapping       = language_mapping  unless language_mapping.nil?
         @reverse_property       = reverse_property
-        @sealed                 = sealed
+        @protected              = protected
         @nest                   = nest              unless nest.nil?
         @simple                 = simple
         @prefix                 = prefix            unless prefix.nil?
         @context                = context           unless context.nil?
       end
 
-      # Term is sealed.
+      # Term is protected.
       # @return [Boolean]
-      def sealed?; !!@sealed; end
+      def protected?; !!@protected; end
 
       # Set container mapping, from an array which may include @set
       def container_mapping=(mapping)
@@ -172,7 +172,7 @@ module JSON::LD
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id type_mapping container_mapping language_mapping reverse_property nest simple prefix context sealed).each do |acc|
+        %w(id type_mapping container_mapping language_mapping reverse_property nest simple prefix context protected).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping'
@@ -199,7 +199,7 @@ module JSON::LD
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
         v << "simple=true" if @simple
-        v << "sealed=true" if @sealed
+        v << "protected=true" if @protected
         v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
         v << "has-context" unless context.nil?
         v.join(" ") + "]"
@@ -503,10 +503,15 @@ module JSON::LD
 
           defined = {}
 
+          # FIXME: Remove this when @sealed removed
+          if context.has_key?('@sealed')
+            context['@protected'] ||= context.delete('@sealed')
+          end
+
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
-            result.create_term_definition(context, key, defined, sealed: context['@sealed']) unless NON_TERMDEF_KEYS.include?(key)
+            result.create_term_definition(context, key, defined, protected: context['@protected']) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -546,9 +551,9 @@ module JSON::LD
 
     # The following constants are used to reduce object allocations in #create_term_definition below
     ID_NULL_OBJECT = { '@id' => nil }.freeze
-    NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @sealed @version)).freeze
+    NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @protected @version)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
-    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @sealed @type)).freeze
+    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @protected @type)).freeze
 
     ##
     # Create Term Definition
@@ -560,11 +565,11 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
-    # @param [Boolean] sealed if true, causes all terms to be sealed with context_id
+    # @param [Boolean] protected if true, causes all terms to be marked protected
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, sealed: false)
+    def create_term_definition(local_context, term, defined, protected: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -594,8 +599,8 @@ module JSON::LD
       value = {'@id' => value} if simple_term
 
       # Remove any existing term definition for term in active context.
-      if term_definitions[term] && term_definitions[term].sealed?
-        Kernel.warn "Attempt to redefine sealed term #{term}"
+      if term_definitions[term] && term_definitions[term].protected?
+        Kernel.warn "Attempt to redefine protected term #{term}"
         return
       else
         term_definitions.delete(term) unless term_definitions[term]
@@ -613,6 +618,9 @@ module JSON::LD
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
+        if value.has_key?('@sealed')
+          value['@protected'] ||= value.delete('@sealed')
+        end
         if options[:validate]
           expected_keys = case processingMode
           when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
@@ -625,8 +633,8 @@ module JSON::LD
           end
         end
 
-        # Potentially note that the term is sealed
-        definition.sealed = value.fetch('@sealed', sealed)
+        # Potentially note that the term is protected
+        definition.protected = value.fetch('@protected', protected)
 
         if value.has_key?('@type')
           type = value['@type']
@@ -698,7 +706,7 @@ module JSON::LD
         elsif term.include?(':')
           # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
           prefix, suffix = term.split(':', 2)
-          create_term_definition(local_context, prefix, defined, sealed: sealed) if local_context.has_key?(prefix)
+          create_term_definition(local_context, prefix, defined, protected: protected) if local_context.has_key?(prefix)
 
           definition.id = if td = term_definitions[prefix]
             # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.

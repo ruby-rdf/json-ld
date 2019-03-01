@@ -51,7 +51,6 @@ module JSON
       @default
       @embed
       @explicit
-      @sealed
       @id
       @index
       @graph
@@ -60,6 +59,7 @@ module JSON
       @nest
       @none
       @omitDefault
+      @protected
       @requireAll
       @reverse
       @set
