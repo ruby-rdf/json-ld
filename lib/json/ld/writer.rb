@@ -97,10 +97,10 @@ module JSON::LD
         RDF::CLI::Option.new(
           symbol: :embed,
           datatype: %w(@always @first @last @never),
-          default: '@last',
+          default: '@first',
           control: :select,
           on: ["--embed EMBED"],
-          description: "How to embed matched objects (@last).") {|arg| RDF::URI(arg)},
+          description: "How to embed matched objects (@first).") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :explicit,
           datatype: TrueClass,

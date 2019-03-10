@@ -454,7 +454,7 @@ module JSON::LD
       rval = rval.values.first if value?(rval)
       if name == :embed
         rval = case rval
-        when true then '@last'
+        when true then '@first'
         when false then '@never'
         when '@always', '@first', '@last', '@link', '@never' then rval
         else

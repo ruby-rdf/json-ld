@@ -360,7 +360,7 @@ module JSON::LD
         base:                       (input if input.is_a?(String)),
         compactArrays:              true,
         compactToRelative:          true,
-        embed:                      '@last',
+        embed:                      '@first',
         explicit:                   false,
         requireAll:                 true,
         omitDefault:                false,

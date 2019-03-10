@@ -173,7 +173,7 @@ opts.each do |opt, arg|
     when 'true'
       options[:embed] = '@never'
     when 'false'
-      options[:embed] = '@last'
+      options[:embed] = '@first'
     else
       STDERR.puts "--embed option takes one of @always, @never, @link, @first, or @last"
       exit(1)
