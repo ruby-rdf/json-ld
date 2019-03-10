@@ -66,21 +66,25 @@ module JSON::LD
         output = {'@id' => id}
         link[id] = output
 
-        # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
         if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
+          # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
           add_frame_output(parent, property, output)
           next
-        end
-
-        # if only the last match should be embedded
-        if flags[:embed] == '@last'
+        elsif flags[:embed] == '@first' && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+          # if only the first match should be embedded
+          # Embed unless already embedded
+          add_frame_output(parent, property, output)
+          next
+        elsif flags[:embed] == '@last'
+          # if only the last match should be embedded
           # remove any existing embed
           remove_embed(state, id) if state[:uniqueEmbeds][state[:graph]].include?(id)
-          state[:uniqueEmbeds][state[:graph]][id] = {
-            parent: parent,
-            property: property
-          }
         end
+
+        state[:uniqueEmbeds][state[:graph]][id] = {
+          parent: parent,
+          property: property
+        }
 
         # push matching subject onto stack to enable circular embed checks
         state[:subjectStack] << {subject: subject, graph: state[:graph]}
@@ -452,7 +456,7 @@ module JSON::LD
         rval = case rval
         when true then '@last'
         when false then '@never'
-        when '@always', '@never', '@link', '@last' then rval
+        when '@always', '@first', '@last', '@link', '@never' then rval
         else
           raise JsonLdError::InvalidEmbedValue,
                 "Invalid JSON-LD frame syntax; invalid value of @embed: #{rval}"

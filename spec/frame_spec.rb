@@ -435,7 +435,7 @@ describe JSON::LD::API do
       "mixed content" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
-          "ex:mixed": {"@embed": false}
+          "ex:mixed": {"@embed": "@never"}
         }),
         input: %({
           "@context": {"ex": "http://example.org/"},
@@ -456,10 +456,10 @@ describe JSON::LD::API do
           }]
         })
       },
-      "no embedding (@embed: false)" => {
+      "no embedding (@embed: @never)" => {
         frame: %({
           "@context": {"ex": "http://example.org/"},
-          "ex:embed": {"@embed": false}
+          "ex:embed": {"@embed": "@never"}
         }),
         input: %({
           "@context": {"ex": "http://example.org/"},
@@ -475,6 +475,56 @@ describe JSON::LD::API do
             "@id": "ex:Sub1",
             "ex:embed": {"@id": "ex:Sub2"}
           }]
+        })
+      },
+      "first embed (@embed: @first)" => {
+        frame: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@type": "ex:Thing",
+          "@embed": "@first"
+        }),
+        input: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@id": "http://example/outer",
+          "@type": "ex:Thing",
+          "ex:embed1": {"@id": "http://example/embedded", "ex:name": "Embedded"},
+          "ex:embed2": {"@id": "http://example/embedded", "ex:name": "Embedded"}
+        }),
+        output: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@graph": [
+            {
+              "@id": "http://example/outer",
+              "@type": "ex:Thing",
+              "ex:embed1": {"@id": "http://example/embedded", "ex:name": "Embedded"},
+              "ex:embed2": {"@id": "http://example/embedded"}
+            }
+          ]
+        })
+      },
+      "always embed (@embed: @always)" => {
+        frame: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@type": "ex:Thing",
+          "@embed": "@always"
+        }),
+        input: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@id": "http://example/outer",
+          "@type": "ex:Thing",
+          "ex:embed1": {"@id": "http://example/embedded", "ex:name": "Embedded"},
+          "ex:embed2": {"@id": "http://example/embedded", "ex:name": "Embedded"}
+        }),
+        output: %({
+          "@context": {"ex": "http://www.example.com/#"},
+          "@graph": [
+            {
+              "@id": "http://example/outer",
+              "@type": "ex:Thing",
+              "ex:embed1": {"@id": "http://example/embedded", "ex:name": "Embedded"},
+              "ex:embed2": {"@id": "http://example/embedded", "ex:name": "Embedded"}
+            }
+          ]
         })
       },
       "mixed list" => {

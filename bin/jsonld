@@ -168,14 +168,14 @@ opts.each do |opt, arg|
   when '--help'           then usage
   when '--embed'
     case arg
-    when '@always', '@never', '@link', '@last'
+    when '@always', '@never', '@link', '@last', '@first'
       options[:embed] = arg
     when 'true'
-      options[:embed] = true
+      options[:embed] = '@never'
     when 'false'
-      options[:embed] = false
+      options[:embed] = '@last'
     else
-      STDERR.puts "--embed option takes one of '@always', '@never', '@link', '@last', true, or false"
+      STDERR.puts "--embed option takes one of @always, @never, @link, @first, or @last"
       exit(1)
     end
   end

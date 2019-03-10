@@ -96,7 +96,7 @@ module JSON::LD
           description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :embed,
-          datatype: %w(@always @last @never),
+          datatype: %w(@always @first @last @never),
           default: '@last',
           control: :select,
           on: ["--embed EMBED"],

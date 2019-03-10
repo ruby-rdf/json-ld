@@ -336,7 +336,7 @@ module JSON::LD
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
-    # @option options ['@last', '@always', '@never', '@link'] :embed ('@last')
+    # @option options ['@always', '@first', '@last', '@link', '@never'] :embed ('@last')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.

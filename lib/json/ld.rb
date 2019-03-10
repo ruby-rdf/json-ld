@@ -53,6 +53,7 @@ module JSON
       @explicit
       @id
       @index
+      @first
       @graph
       @language
       @list
