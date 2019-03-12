@@ -5,7 +5,12 @@ module JSON::LD
     include Utils
 
     # The following constant is used to reduce object allocations in #compact below
+    CONTAINER_MAPPING_ID = %w(@id).freeze
+    CONTAINER_MAPPING_INDEX = %w(@index).freeze
+    CONTAINER_MAPPING_LANGUAGE = %w(@language).freeze
     CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE = Set.new(%w(@language @index @id @type)).freeze
+    CONTAINER_MAPPING_LIST = %w(@list).freeze
+    CONTAINER_MAPPING_TYPE = %w(@type).freeze
 
     ##
     # This algorithm compacts a JSON-LD document, such that the given context is applied. This must result in shortening any applicable IRIs to terms or compact IRIs, any applicable keywords to keyword aliases, and any applicable JSON-LD values expressed in expanded form to simple values such as strings or numbers.
@@ -58,7 +63,7 @@ module JSON::LD
         end
 
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
-        if list?(element) && context.container(property) == %w(@list)
+        if list?(element) && context.container(property) == CONTAINER_MAPPING_LIST
           return compact(element['@list'], property: property, ordered: ordered)
         end
 
@@ -129,7 +134,7 @@ module JSON::LD
             next
           end
 
-          if expanded_property == '@index' && context.container(property) == %w(@index)
+          if expanded_property == '@index' && context.container(property) == CONTAINER_MAPPING_INDEX
             #log_debug("@index") {"drop @index"}
             next
           end
@@ -192,7 +197,7 @@ module JSON::LD
             # handle @list
             if list?(expanded_item)
               compacted_item = as_array(compacted_item)
-              unless container == %w(@list)
+              unless container == CONTAINER_MAPPING_LIST
                 al = context.compact_iri('@list', vocab: true, quiet: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
@@ -247,18 +252,18 @@ module JSON::LD
               c = container.first
               container_key = context.compact_iri(c, vocab: true, quiet: true)
               compacted_item = case container
-              when %w(@id)
+              when CONTAINER_MAPPING_ID
                 map_key = compacted_item[container_key]
                 compacted_item.delete(container_key)
                 compacted_item
-              when %w(@index)
+              when CONTAINER_MAPPING_INDEX
                 map_key = expanded_item['@index']
                 compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                 compacted_item
-              when %w(@language)
+              when CONTAINER_MAPPING_LANGUAGE
                 map_key = expanded_item['@language']
                 value?(expanded_item) ? expanded_item['@value'] : compacted_item
-              when %w(@type)
+              when CONTAINER_MAPPING_TYPE
                 map_key, *types = Array(compacted_item[container_key])
                 case types.length
                 when 0 then compacted_item.delete(container_key)

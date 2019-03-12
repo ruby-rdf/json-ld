@@ -38,6 +38,10 @@ module JSON::LD
       headers: {"Accept" => "application/ld+json, application/json"}
     }
 
+    # The following constants are used to reduce object allocations
+    LINK_REL_CONTEXT = %w(rel http://www.w3.org/ns/json-ld#context).freeze
+    JSON_LD_PROCESSING_MODES = %w(json-ld-1.0 json-ld-1.1).freeze
+
     # Current input
     # @!attribute [rw] input
     # @return [String, #read, Hash, Array]
@@ -112,7 +116,7 @@ module JSON::LD
         # if input impelements #links, attempt to get a contextUrl from that link
         content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
         context_ref = if content_type == 'application/json' && input.respond_to?(:links)
-          link = input.links.find_link(%W(rel #{JSON_LD_NS}context))
+          link = input.links.find_link(LINK_REL_CONTEXT)
           link.href if link
         end
 
@@ -153,7 +157,7 @@ module JSON::LD
 
       # If not set explicitly, the context figures out the processing mode
       @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
-      @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
+      @options[:validate] ||= JSON_LD_PROCESSING_MODES.include?(@options[:processingMode])
 
       if block_given?
         case block.arity
@@ -559,7 +563,7 @@ module JSON::LD
           # Get context link(s)
           # Note, we can't simply use #find_link, as we need to detect multiple
           links = remote_doc.links.links.select do |link|
-            link.attr_pairs.include?(%w(rel http://www.w3.org/ns/json-ld#context))
+            link.attr_pairs.include?(LINK_REL_CONTEXT)
           end
           raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
             "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1

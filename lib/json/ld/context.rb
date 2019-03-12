@@ -154,7 +154,8 @@ module JSON::LD
             end
           end
 
-          cm = (Array(container_mapping) + (as_set? ? %w(@set) : [])).compact
+          cm = Array(container_mapping)
+          cm << "@set" if as_set? && !cm.include?("@set")
           cm = cm.first if cm.length == 1
           defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
@@ -554,6 +555,8 @@ module JSON::LD
     NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @protected @version)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
     JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @protected @type)).freeze
+    JSON_LD_10_TYPE_VALUES = Set.new(%w(@id @vocab)).freeze
+    PREFIX_URI_ENDINGS = Set.new(%w(: / ? # [ ] @)).freeze
 
     ##
     # Create Term Definition
@@ -653,7 +656,7 @@ module JSON::LD
           end
           if type == '@none' && processingMode == 'json-ld-1.1'
             # This is okay and used in compaction in 1.1
-          elsif !%w(@id @vocab).include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
+          elsif !JSON_LD_10_TYPE_VALUES.include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
           end
           #log_debug("") {"type_mapping: #{type.inspect}"}
@@ -904,7 +907,7 @@ module JSON::LD
     def set_mapping(term, value)
       #log_debug("") {"map #{term.inspect} to #{value.inspect}"}
       term = term.to_s
-      term_definitions[term] = TermDefinition.new(term, id: value, simple: true, prefix: (value.to_s.end_with?(*%w(: / ? # [ ] @))))
+      term_definitions[term] = TermDefinition.new(term, id: value, simple: true, prefix: (value.to_s.end_with?(*PREFIX_URI_ENDINGS)))
       term_definitions[term].simple = true
 
       term_sym = term.empty? ? "" : term.to_sym
@@ -1101,6 +1104,18 @@ module JSON::LD
       result
     end
 
+    # The following constants are used to reduce object allocations in #compact_iri below
+    CONTAINERS_GRAPH = %w(@graph@id @graph@id@set).freeze
+    CONTAINERS_GRAPH_INDEX = %w(@graph@index @graph@index@set).freeze
+    CONTAINERS_GRAPH_INDEX_INDEX = %w(@graph@index @graph@index@set @index @index@set).freeze
+    CONTAINERS_GRAPH_SET = %w(@graph @graph@set @set).freeze
+    CONTAINERS_ID_TYPE = %w(@id @id@set @type @set@type).freeze
+    CONTAINERS_ID_VOCAB = %w(@id @vocab @none).freeze
+    CONTAINERS_INDEX_SET = %w(@index @index@set).freeze
+    CONTAINERS_LANGUAGE = %w(@language @language@set).freeze
+    CONTAINERS_VALUE = %w(@value).freeze
+    CONTAINERS_VOCAB_ID = %w(@vocab @id @none).freeze
+
     ##
     # Compacts an absolute IRI to the shortest matching term or compact IRI
     #
@@ -1126,7 +1141,7 @@ module JSON::LD
         default_language = self.default_language || "@none"
         containers = []
         tl, tl_value = "@language", "@null"
-        containers.concat(%w(@index @index@set)) if index?(value) && !graph?(value)
+        containers.concat(CONTAINERS_INDEX_SET) if index?(value) && !graph?(value)
 
         # If the value is a JSON Object with the key @preserve, use the value of @preserve.
         value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
@@ -1177,29 +1192,29 @@ module JSON::LD
           #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         elsif graph?(value)
           # Prefer @index and @id containers, then @graph, then @index
-          containers.concat(%w(@graph@index @graph@index@set @index @index@set)) if index?(value)
-          containers.concat(%w(@graph@id @graph@id@set)) if value.has_key?('@id')
+          containers.concat(CONTAINERS_GRAPH_INDEX_INDEX) if index?(value)
+          containers.concat(CONTAINERS_GRAPH) if value.has_key?('@id')
 
           # Prefer an @graph container next
-          containers.concat(%w(@graph @graph@set @set))
+          containers.concat(CONTAINERS_GRAPH_SET)
 
           # Lastly, in 1.1, any graph can be indexed on @index or @id, so add if we haven't already
-          containers.concat(%w(@graph@index @graph@index@set)) unless index?(value)
-          containers.concat(%w(@graph@id @graph@id@set)) unless value.has_key?('@id')
-          containers.concat(%w(@index @index@set)) unless index?(value)
+          containers.concat(CONTAINERS_GRAPH_INDEX) unless index?(value)
+          containers.concat(CONTAINERS_GRAPH) unless value.has_key?('@id')
+          containers.concat(CONTAINERS_INDEX_SET) unless index?(value)
         else
           if value?(value)
             # In 1.1, an language map can be used to index values using @none
             if value.has_key?('@language') && !index?(value)
               tl_value = value['@language']
-              containers.concat(%w(@language @language@set))
+              containers.concat(CONTAINERS_LANGUAGE)
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
             end
           else
             # In 1.1, an id or type map can be used to index values using @none
-            containers.concat(%w(@id @id@set @type @set@type))
+            containers.concat(CONTAINERS_ID_TYPE)
             tl, tl_value = '@type', '@id'
           end
           containers << '@set'
@@ -1209,9 +1224,9 @@ module JSON::LD
         containers << '@none'
 
         # In 1.1, an index map can be used to index values using @none, so add as a low priority
-        containers.concat(%w(@index @index@set)) unless index?(value)
+        containers.concat(CONTAINERS_INDEX_SET) unless index?(value)
         # Values without type or language can use @language map
-        containers.concat(%w(@language @language@set)) if value?(value) && value.keys == %w(@value)
+        containers.concat(CONTAINERS_LANGUAGE) if value?(value) && value.keys == CONTAINERS_VALUE
 
         tl_value ||= '@null'
         preferred_values = []
@@ -1219,9 +1234,9 @@ module JSON::LD
         if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.has_key?('@id')
           t_iri = compact_iri(value['@id'], vocab: true, document_relative: true)
           if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
-            preferred_values.concat(%w(@vocab @id @none))
+            preferred_values.concat(CONTAINERS_VOCAB_ID)
           else
-            preferred_values.concat(%w(@id @vocab @none))
+            preferred_values.concat(CONTAINERS_ID_VOCAB)
           end
         else
           tl = '@any' if list?(value) && value['@list'].empty?
@@ -1348,7 +1363,7 @@ module JSON::LD
         # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
         res = {'@value' => value}
 
-        if td.type_mapping && !%w(@id @vocab @none).include?(td.type_mapping.to_s)
+        if td.type_mapping && !CONTAINERS_ID_VOCAB.include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
         elsif value.is_a?(String) && td.language_mapping
           res['@language'] = td.language_mapping

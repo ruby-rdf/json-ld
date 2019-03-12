@@ -8,6 +8,17 @@ module JSON::LD
   module Expand
     include Utils
 
+    # The following constant is used to reduce object allocations
+    CONTAINER_INDEX_ID_TYPE = Set.new(%w(@index @id @type)).freeze
+    CONTAINER_GRAPH_INDEX = %w(@graph @index).freeze
+    CONTAINER_INDEX = %w(@index).freeze
+    CONTAINER_ID = %w(@id).freeze
+    CONTAINER_LIST = %w(@list).freeze
+    CONTAINER_TYPE = %w(@type).freeze
+    CONTAINER_GRAPH_ID = %w(@graph @id).freeze
+    KEYS_VALUE_LANGUAGE_TYPE_INDEX = %w(@value @language @type @index).freeze
+    KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
+
     ##
     # Expand an Array or Object given an active context and performing local context expansion.
     #
@@ -25,7 +36,7 @@ module JSON::LD
       result = case input
       when Array
         # If element is an array,
-        is_list = context.container(active_property) == %w(@list)
+        is_list = context.container(active_property) == CONTAINER_LIST
         value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered, framing: framing)
@@ -66,7 +77,7 @@ module JSON::LD
 
         # If result contains the key @value:
         if value?(output_object)
-          unless (output_object.keys - %w(@value @language @type @index)).empty? &&
+          unless (output_object.keys - KEYS_VALUE_LANGUAGE_TYPE_INDEX).empty? &&
                  !(output_object.key?('@language') && output_object.key?('@type'))
             # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
             raise JsonLdError::InvalidValueObject,
@@ -99,7 +110,7 @@ module JSON::LD
           # The result must contain at most one other key and that key must be @index. Otherwise, an invalid set or list object error has been detected and processing is aborted.
           raise JsonLdError::InvalidSetOrListObject,
                 "@set or @list may only contain @index: #{output_object.keys.inspect}" unless
-                (output_object.keys - %w(@set @list @index)).empty?
+                (output_object.keys - KEYS_SET_LIST_INDEX).empty?
 
           # If result contains the key @set, then set result to the key's associated value.
           return output_object['@set'] if output_object.key?('@set')
@@ -111,7 +122,7 @@ module JSON::LD
         # If active property is null or @graph, drop free-floating values as follows:
         if (active_property || '@graph') == '@graph' &&
           (output_object.key?('@value') || output_object.key?('@list') ||
-           (output_object.keys - %w(@id)).empty? && !framing)
+           (output_object.keys - CONTAINER_ID).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil
         end
@@ -133,7 +144,6 @@ module JSON::LD
     end
 
   private
-    CONTAINER_MAPPING_INDEX_ID_TYPE = Set.new(%w(@index @id @type)).freeze
 
     # Expand each key and value of element adding them to result
     def expand_object(input, active_property, context, output_object, ordered:, framing:)
@@ -378,7 +388,7 @@ module JSON::LD
           end
 
           ary
-        elsif container.any? { |key| CONTAINER_MAPPING_INDEX_ID_TYPE.include?(key) } && value.is_a?(Hash)
+        elsif container.any? { |key| CONTAINER_INDEX_ID_TYPE.include?(key) } && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context contains @index, @id, @type and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.
@@ -398,13 +408,13 @@ module JSON::LD
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered, framing: framing)
             index_value.each do |item|
               case container
-              when %w(@graph @index), %w(@index)
+              when CONTAINER_GRAPH_INDEX, CONTAINER_INDEX
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
                   item = {'@graph' => as_array(item)}
                 end
                 item['@index'] ||= k unless expanded_k == '@none'
-              when %w(@graph @id), %w(@id)
+              when CONTAINER_GRAPH_ID, CONTAINER_ID
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
                   item = {'@graph' => as_array(item)}
@@ -412,7 +422,7 @@ module JSON::LD
                 # Expand k document relative
                 expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s unless expanded_k == '@none'
                 item['@id'] ||= expanded_k unless expanded_k == '@none'
-              when %w(@type)
+              when CONTAINER_TYPE
                 item['@type'] = [expanded_k].concat(Array(item['@type'])) unless expanded_k == '@none'
               end
 
