@@ -56,7 +56,7 @@ module JSON::LD
 
         if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, log_depth: @options[:log_depth])
-          unless result.is_a?(Hash)
+          if !result.is_a?(Hash) || context.coerce(property) == '@json'
             #log_debug("") {"=> scalar result: #{result.inspect}"}
             return result
           end

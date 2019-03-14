@@ -196,6 +196,112 @@ describe JSON::LD::API do
           expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
+
+      context "with @type: @json" do
+        {
+          "true": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+              },
+              "e": true
+            }),
+            output:%(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:bool "true"^^jsonld:JSON] .
+            )
+          },
+          "false": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+              },
+              "e": false
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:bool "false"^^jsonld:JSON] .
+            )
+          },
+          "double": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+              },
+              "e": 1.23
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:double "1.23E0"^^jsonld:JSON] .
+            )
+          },
+          "double-zero": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+              },
+              "e": 0.0e0
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:double "0.0E0"^^jsonld:JSON] .
+            )
+          },
+          "integer": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#integer", "@type": "@json"}
+              },
+              "e": 123
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:integer "123"^^jsonld:JSON] .
+            )
+          },
+          "object": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#object", "@type": "@json"}
+              },
+              "e": {"foo": "bar"}
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:object """{"foo":"bar"}"""^^jsonld:JSON] .
+            )
+          },
+          "array": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#array", "@type": "@json"}
+              },
+              "e": [{"foo": "bar"}]
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:array """[{"foo":"bar"}]"""^^jsonld:JSON] .
+            )
+          },
+        }.each do |title, params|
+          params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
+          it(title) {run_to_rdf params}
+        end
+      end
     end
 
     context "prefixes" do

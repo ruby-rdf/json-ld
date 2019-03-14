@@ -247,6 +247,14 @@ describe JSON::LD::Context do
         }, logger)
       end
 
+      it "associates @json type mapping with term" do
+        expect(subject.parse({
+          "foo" => {"@id" => "http://example.com/", "@type" => "@json"}
+        }).coercions).to produce({
+          "foo" => "@json"
+        }, logger)
+      end
+
       it "associates type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
@@ -371,6 +379,7 @@ describe JSON::LD::Context do
           "@container @type" => {"foo" => {"@container" => "@type"}},
           "@nest" => {"foo" => {"@id" => 'http://example.org/', "@nest" => "@nest"}},
           "@type as @none" => {"foo" => {"@type" => "@none"}},
+          "@type as @json" => {"foo" => {"@type" => "@json"}},
           "@prefix" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => true}},
         }.each do |title, context|
           it title do
@@ -648,6 +657,18 @@ describe JSON::LD::Context do
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
+        }
+      }, logger)
+    end
+
+    it "prefix with @type @json" do
+      expect(subject.parse({
+        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
+      }).
+      send(:clear_provided_context).
+      serialize).to produce({
+        "@context" => {
+          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
         }
       }, logger)
     end
@@ -998,7 +1019,7 @@ describe JSON::LD::Context do
         'lex'     => {'@id' => 'ex', '@language' => 'en'},
         'tex'     => {'@id' => 'ex', '@type' => 'xsd:string'},
         'exp'     => {'@id' => 'ex:pert'},
-        'experts' => {'@id' => 'ex:perts'}
+        'experts' => {'@id' => 'ex:perts'},
       })
       logger.clear
       c
@@ -1013,7 +1034,7 @@ describe JSON::LD::Context do
       "unmapped"      => ["foo",                 "foo"],
       "bnode"         => ["_:a",                 RDF::Node("a")],
       "relative"      => ["foo/bar",             "http://base/foo/bar"],
-      "odd Compact IRI"=> ["ex:perts",            "http://example.org/perts"]
+      "odd Compact IRI"=>["ex:perts",            "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         expect(subject.compact_iri(input)).to produce(result, logger)
@@ -1097,6 +1118,7 @@ describe JSON::LD::Context do
           "date" => {"@id" => "http://example.com/date", "@type" => "xsd:date"},
           "id" => {"@id" => "http://example.com/id", "@type" => "@id"},
           'graph' => {'@id' => 'http://example.com/graph', '@container' => '@graph'},
+          'json'    => {'@id' => 'http://example.com/json', '@type' => '@json'},
 
           "list_plain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
           "list_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
@@ -1132,6 +1154,7 @@ describe JSON::LD::Context do
         "set_integer" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
         "set_id" => [{"@id" => "http://example.org/id"}],
         "graph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
+        'json' => [{"@value" => {"some" => "json"}, "@type" => "@json"}]
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
@@ -1358,6 +1381,7 @@ describe JSON::LD::Context do
         "ex:double" => {"@type" => "xsd:double"},
         "ex:boolean" => {"@type" => "xsd:boolean"},
         "ex:none" => {"@type" => "@none"},
+        "ex:json" => {"@type" => "@json"}
       })
       logger.clear
       ctx
@@ -1396,6 +1420,12 @@ describe JSON::LD::Context do
       "ex:none boolean" =>["ex:none", true,                       {"@value" => true}],
       "ex:none integer" =>["ex:none", 1,                          {"@value" => 1}],
       "ex:none double" => ["ex:none", 1.1e1,                      {"@value" => 1.1E1}],
+      "ex:json string" => ["ex:json", "foo",                      {"@value" => "foo", "@type" => "@json"}],
+      "ex:json boolean" =>["ex:json", true,                       {"@value" => true, "@type" => "@json"}],
+      "ex:json integer" =>["ex:json", 1,                          {"@value" => 1, "@type" => "@json"}],
+      "ex:json double" =>["ex:json", 1.1e1,                       {"@value" => 1.1e1, "@type" => "@json"}],
+      "ex:json object" =>["ex:json", {"foo" => "bar"},            {"@value" => {"foo" => "bar"}, "@type" => "@json"}],
+      "ex:json array" =>["ex:json", [{"foo" => "bar"}],           {"@value" => [{"foo" => "bar"}], "@type" => "@json"}],
     }.each do |title, (key, compacted, expanded)|
       it title do
         expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1424,15 +1454,20 @@ describe JSON::LD::Context do
         "boolean-boolean" => ["ex:boolean", true,   {"@value" => true, "@type" => RDF::XSD.boolean.to_s}],
         "boolean-integer" => ["ex:integer", true,   {"@value" => true, "@type" => RDF::XSD.integer.to_s}],
         "boolean-double"  => ["ex:double",  true,   {"@value" => true, "@type" => RDF::XSD.double.to_s}],
+        "boolean-json"    => ["ex:json",   true,    {"@value" => true, "@type" => '@json'}],
         "double-boolean"  => ["ex:boolean", 1.1,    {"@value" => 1.1, "@type" => RDF::XSD.boolean.to_s}],
         "double-double"   => ["ex:double",  1.1,    {"@value" => 1.1, "@type" => RDF::XSD.double.to_s}],
         "double-integer"  => ["foaf:age",   1.1,    {"@value" => 1.1, "@type" => RDF::XSD.integer.to_s}],
+        "double-json"     => ["ex:json",   1.1,     {"@value" => 1.1, "@type" => '@json'}],
+        "json-json"       => ["ex:json",   {"foo" => "bar"}, {"@value" => {"foo" => "bar"}, "@type" => '@json'}],
         "integer-boolean" => ["ex:boolean", 1,      {"@value" => 1, "@type" => RDF::XSD.boolean.to_s}],
         "integer-double"  => ["ex:double",  1,      {"@value" => 1, "@type" => RDF::XSD.double.to_s}],
         "integer-integer" => ["foaf:age",   1,      {"@value" => 1, "@type" => RDF::XSD.integer.to_s}],
+        "integer-json"    => ["ex:json",   1,       {"@value" => 1, "@type" => '@json'}],
         "string-boolean"  => ["ex:boolean", "foo",  {"@value" => "foo", "@type" => RDF::XSD.boolean.to_s}],
         "string-double"   => ["ex:double",  "foo",  {"@value" => "foo", "@type" => RDF::XSD.double.to_s}],
         "string-integer"  => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
+        "string-json"     => ["ex:json",   "foo",   {"@value" => "foo", "@type" => '@json'}],
       }.each do |title, (key, compacted, expanded)|
         it title do
           expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1454,7 +1489,7 @@ describe JSON::LD::Context do
         "dc:created" => {"@type" => RDF::XSD.date.to_s},
         "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
         "foaf:knows" => {"@type" => "@id"},
-        "ex:none" => {"@type" => "@none"},
+        "ex:none"    => {"@type" => "@none"},
       })
       logger.clear
       c

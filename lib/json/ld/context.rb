@@ -556,6 +556,7 @@ module JSON::LD
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
     JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @protected @type)).freeze
     JSON_LD_10_TYPE_VALUES = Set.new(%w(@id @vocab)).freeze
+    JSON_LD_11_TYPE_VALUES = Set.new(%w(@json @none)).freeze
     PREFIX_URI_ENDINGS = Set.new(%w(: / ? # [ ] @)).freeze
 
     ##
@@ -654,7 +655,7 @@ module JSON::LD
           else
             :error
           end
-          if type == '@none' && processingMode == 'json-ld-1.1'
+          if JSON_LD_11_TYPE_VALUES.include?(type) && processingMode == 'json-ld-1.1'
             # This is okay and used in compaction in 1.1
           elsif !JSON_LD_10_TYPE_VALUES.include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
             raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
@@ -935,6 +936,21 @@ module JSON::LD
       return [term] if term == '@list'
       term = find_definition(term)
       term ? term.container_mapping : []
+    end
+
+    ##
+    # Retrieve term coercion
+    #
+    # @param [String] property in unexpanded form
+    #
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [RDF::URI, '@id']
+    def coerce(term)
+      # Map property, if it's not an RDF::Value
+      # @type is always is an IRI
+      return '@id' if term == RDF.type || term == '@type'
+      term = find_definition(term)
+      term && term.type_mapping
     end
 
     ##
@@ -1344,7 +1360,12 @@ module JSON::LD
       when RDF::Literal
         #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
-        if useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
+        if processingMode == 'json-ld-1.1' && value.datatype == RDF::URI(JSON_LD_NS + "JSON")
+          # Value parsed as JSON
+          # FIXME: MultiJson
+          res['@value'] = ::JSON.parse(value.object)
+          res['@type'] = '@json'
+        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
           res['@value'] = value.object
           res['@type'] = uri(coerce(property)) if coerce(property)
         else
@@ -1418,7 +1439,7 @@ module JSON::LD
         #log_debug("") {" (@id)"}
         # return value as is
         value
-      when value['@type'] && expand_iri(value['@type'], vocab: true) == coerce(property)
+      when value['@type'] && value['@type'] == coerce(property)
         # Compact common datatype
         #log_debug("") {" (@type & coerce) == #{coerce(property)}"}
         value['@value']
@@ -1438,9 +1459,8 @@ module JSON::LD
         value
       end
 
-      if result.is_a?(Hash) && result.has_key?('@type')
+      if result.is_a?(Hash) && result.has_key?('@type') && value['@type'] != '@json'
         # Compact values of @type
-        #require 'byebug'; byebug
         result['@type'] = if result['@type'].is_a?(Array)
           result['@type'].map {|t| compact_iri(t, vocab: true)}
         else
@@ -1507,20 +1527,6 @@ module JSON::LD
     end
 
   protected
-
-    ##
-    # Retrieve term coercion
-    #
-    # @param [String] property in unexpanded form
-    #
-    # @return [RDF::URI, '@id']
-    def coerce(property)
-      # Map property, if it's not an RDF::Value
-      # @type is always is an IRI
-      return '@id' if property == RDF.type || property == '@type'
-      td = term_definitions[property]
-      td && td.type_mapping
-    end
 
     ##
     # Determine if `term` is a suitable term.

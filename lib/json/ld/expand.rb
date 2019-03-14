@@ -91,7 +91,9 @@ module JSON::LD
           ary = Array(output_object['@value'])
           return nil if ary.empty?
 
-          if !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
+          if context.processingMode == 'json-ld-1.1' && output_object['@type'] == '@json'
+            # Any value of @value is okay if @type: @json
+          elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
@@ -148,6 +150,11 @@ module JSON::LD
     # Expand each key and value of element adding them to result
     def expand_object(input, active_property, context, output_object, ordered:, framing:)
       nests = []
+
+      input_type = Array(input.detect do |k, v|
+        context.expand_iri(k, vocab: true, quiet: true) == '@type'
+      end).last
+      input_type = context.expand_iri(input_type, vocab: true, quiet: true) if input_type
 
       # Then, proceed and process each property and value in element as follows:
       keys = ordered ? input.keys.sort : input.keys
@@ -244,25 +251,31 @@ module JSON::LD
             value = expand(value, '@graph', context, ordered: ordered, framing: framing)
             as_array(value)
           when '@value'
-            # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
+            # If expanded property is @value and input contains @type: json, accept any value.
+            # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. (In 1.1, @value can have any JSON value of @type is @json or the property coerces to @json).
+            # Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
             # If framing, always use array form, unless null
-            case value
-            when String, TrueClass, FalseClass, Numeric then (framing ? [value] : value)
-            when nil
-              output_object['@value'] = nil
-              next;
-            when Array
-              raise JsonLdError::InvalidValueObjectValue,
-                    "@value value may not be an array unless framing: #{value.inspect}" unless framing
+            if context.processingMode == 'json-ld-1.1' && input_type == '@json'
               value
-            when Hash
-              raise JsonLdError::InvalidValueObjectValue,
-                    "@value value must be a an empty object for framing: #{value.inspect}" unless
-                    value.empty? && framing
-              [value]
             else
-              raise JsonLdError::InvalidValueObjectValue,
-                    "Value of #{expanded_property} must be a scalar or null: #{value.inspect}"
+              case value
+              when String, TrueClass, FalseClass, Numeric then (framing ? [value] : value)
+              when nil
+                output_object['@value'] = nil
+                next;
+              when Array
+                raise JsonLdError::InvalidValueObjectValue,
+                      "@value value may not be an array unless framing: #{value.inspect}" unless framing
+                value
+              when Hash
+                raise JsonLdError::InvalidValueObjectValue,
+                      "@value value must be a an empty object for framing: #{value.inspect}" unless
+                      value.empty? && framing
+                [value]
+              else
+                raise JsonLdError::InvalidValueObjectValue,
+                      "Value of #{expanded_property} must be a scalar or null: #{value.inspect}"
+              end
             end
           when '@language'
             # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
@@ -365,7 +378,10 @@ module JSON::LD
         active_context = term_context ? context.parse(term_context) : context
 
         container = active_context.container(key)
-        expanded_value = if container.length == 1 && container.first == '@language' && value.is_a?(Hash)
+        expanded_value = if active_context.coerce(key) == '@json'
+          # In JSON-LD 1.1, values can be native JSON
+          {"@value" => value, "@type" => "@json"}
+        elsif container.length == 1 && container.first == '@language' && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
           
           # Set multilingual array to an empty array.

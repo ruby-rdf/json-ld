@@ -23,7 +23,7 @@ module JSON::LD
       referenced_once = {}
 
       value = nil
-      ec = Context.new
+      ec = @context
 
       # Create a map for node to object representation
 

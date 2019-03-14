@@ -18,6 +18,8 @@ module JSON::LD
       if value?(item)
         value, datatype = item.fetch('@value'), item.fetch('@type', nil)
 
+        datatype = RDF::URI(JSON_LD_NS + "JSON") if datatype == '@json'
+
         case value
         when TrueClass, FalseClass
           # If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
@@ -28,6 +30,10 @@ module JSON::LD
           lit = RDF::Literal.new(value, canonicalize: true)
           value = lit.to_s
           datatype ||= lit.datatype
+        when Array, Hash
+          # Only valid for jsonld:JSON
+          # FIXME: Canonicalize
+          value = value.to_json
         else
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string

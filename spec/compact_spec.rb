@@ -623,6 +623,115 @@ describe JSON::LD::API do
       end
     end
 
+    context "with @type: @json" do
+      {
+        "true": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": true
+          }),
+          input:%( [{
+            "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
+          }]),
+        },
+        "false": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": false
+          }),
+          input: %([{
+            "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
+          }]),
+        },
+        "double": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 1.23
+          }),
+          input: %([{
+            "http://example.org/vocab#double": [{"@value": 1.23, "@type": "@json"}]
+          }]),
+        },
+        "double-zero": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 0.0e0
+          }),
+          input: %([{
+            "http://example.org/vocab#double": [{"@value": 0.0e0, "@type": "@json"}]
+          }]),
+        },
+        "integer": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#integer", "@type": "@json"}
+            },
+            "e": 123
+          }),
+          input: %([{
+            "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
+          }]),
+        },
+        "object": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#object", "@type": "@json"}
+            },
+            "e": {"foo": "bar"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }]),
+        },
+        "array": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#array", "@type": "@json", "@container": "@set"}
+            },
+            "e": [{"foo": "bar"}]
+          }),
+          input: %([{
+            "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
+          }]),
+        },
+        "Already expanded object": {
+          output: %({
+            "@context": {"@version": 1.1},
+            "http://example.org/vocab#object": {"@value": {"foo": "bar"}, "@type": "@json"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }]),
+        },
+        "Already expanded object with aliased keys": {
+          output: %({
+            "@context": {"@version": 1.1, "value": "@value", "type": "@type", "json": "@json"},
+            "http://example.org/vocab#object": {"value": {"foo": "bar"}, "type": "json"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_compact(processingMode: 'json-ld-1.1', **params)}
+      end
+    end
+
     context "@container: @index" do
       {
         "compact-0029" => {
@@ -2395,9 +2504,11 @@ describe JSON::LD::API do
 
   def run_compact(params)
     input, output, context = params[:input], params[:output], params[:context]
+    context ||= output  # Since it will have the context
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
+    context = context['@context'] if context.has_key?('@context')
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
       expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])

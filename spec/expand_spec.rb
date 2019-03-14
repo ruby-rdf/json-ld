@@ -640,6 +640,127 @@ describe JSON::LD::API do
       end
     end
 
+    context "with @type: @json" do
+      {
+        "true": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": true
+          }),
+          output:%( [{
+            "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
+          }])
+        },
+        "false": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": false
+          }),
+          output: %([{
+            "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
+          }])
+        },
+        "double": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 1.23
+          }),
+          output: %([{
+            "http://example.org/vocab#double": [{"@value": 1.23, "@type": "@json"}]
+          }])
+        },
+        "double-zero": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 0.0e0
+          }),
+          output: %([{
+            "http://example.org/vocab#double": [{"@value": 0.0e0, "@type": "@json"}]
+          }])
+        },
+        "integer": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#integer", "@type": "@json"}
+            },
+            "e": 123
+          }),
+          output: %([{
+            "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
+          }])
+        },
+        "object": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#object", "@type": "@json"}
+            },
+            "e": {"foo": "bar"}
+          }),
+          output: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }])
+        },
+        "array": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#array", "@type": "@json"}
+            },
+            "e": [{"foo": "bar"}]
+          }),
+          output: %([{
+            "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
+          }])
+        },
+        "Does not expand terms inside json": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#array", "@type": "@json"}
+            },
+            "e": [{"e": "bar"}]
+          }),
+          output: %([{
+            "http://example.org/vocab#array": [{"@value": [{"e": "bar"}], "@type": "@json"}]
+          }])
+        },
+        "Already expanded object": {
+          input: %({
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }),
+          output: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }]),
+          processingMode: 'json-ld-1.1'
+        },
+        "Already expanded object with aliased keys": {
+          input: %({
+            "@context": {"@version": 1.1, "value": "@value", "type": "@type", "json": "@json"},
+            "http://example.org/vocab#object": [{"value": {"foo": "bar"}, "type": "json"}]
+          }),
+          output: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
     context "coerced typed values" do
       {
         "boolean" => {
