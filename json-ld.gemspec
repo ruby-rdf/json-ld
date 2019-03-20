@@ -27,9 +27,10 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'multi_json',      '~> 1.13'
   gem.add_runtime_dependency     'i18n',            '<= 1.5.1' if RUBY_VERSION < "2.3"
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
+  gem.add_runtime_dependency     'json-canonicalization', '~> 0.1'
   gem.add_development_dependency 'sinatra-linkeddata','~> 3.0'
   gem.add_development_dependency 'jsonlint',        '~> 0.2'  unless RUBY_ENGINE == "jruby"
-  gem.add_development_dependency 'oj',              '~> 2' unless RUBY_ENGINE == "jruby"
+  gem.add_development_dependency 'oj',              '~> 2'    unless RUBY_ENGINE == "jruby"
   gem.add_development_dependency 'yajl-ruby',       '~> 1.4'  unless RUBY_ENGINE == "jruby"
   gem.add_runtime_dependency     'rack',            '>= 1.6', '< 3.0'
   gem.add_development_dependency 'rack-test',       '~> 1.1'

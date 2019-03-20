@@ -297,6 +297,83 @@ describe JSON::LD::API do
               [ex:array """[{"foo":"bar"}]"""^^jsonld:JSON] .
             )
           },
+          "c14n-arrays": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": [
+                56,
+                {
+                  "d": true,
+                  "10": null,
+                  "1": [ ]
+                }
+              ]
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:c14n """[56,{"1":[],"10":null,"d":true}]"""^^jsonld:JSON] .
+            )
+          },
+          "c14n-french": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "peach": "This sorting order",
+                "péché": "is wrong according to French",
+                "pêche": "but canonicalization MUST",
+                "sin":   "ignore locale"
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:c14n """{"peach":"This sorting order","péché":"is wrong according to French","pêche":"but canonicalization MUST","sin":"ignore locale"}"""^^jsonld:JSON] .
+            )
+          },
+          "c14n-structures": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "1": {"f": {"f": "hi","F": 5} ," ": 56.0},
+                "10": { },
+                "": "empty",
+                "a": { },
+                "111": [ {"e": "yes","E": "no" } ],
+                "A": { }
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^jsonld:JSON] .
+            )
+          },
+          "c14n-unicode": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "Unnormalized Unicode":"A\u030a"
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:c14n """{"Unnormalized Unicode":"Å"}"""^^jsonld:JSON] .
+            )
+          },
         }.each do |title, params|
           params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
           it(title) {run_to_rdf params}

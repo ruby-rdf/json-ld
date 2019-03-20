@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 require 'rdf'
 require 'rdf/nquads'
+require 'json/canonicalization'
 
 module JSON::LD
   module ToRDF
@@ -32,8 +33,7 @@ module JSON::LD
           datatype ||= lit.datatype
         when Array, Hash
           # Only valid for jsonld:JSON
-          # FIXME: Canonicalize
-          value = value.to_json
+          value = value.to_json_c14n
         else
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
