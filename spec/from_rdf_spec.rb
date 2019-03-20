@@ -160,7 +160,7 @@ describe JSON::LD::API do
         {
           "true": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
              }]),
             input:%(
@@ -171,7 +171,7 @@ describe JSON::LD::API do
           },
           "false": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
              }]),
             input: %(
@@ -182,7 +182,7 @@ describe JSON::LD::API do
           },
           "double": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#double": [{"@value": 1.23E0, "@type": "@json"}]
              }]),
             input: %(
@@ -193,7 +193,7 @@ describe JSON::LD::API do
           },
           "double-zero": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#double": [{"@value": 0, "@type": "@json"}]
              }]),
             input: %(
@@ -204,7 +204,7 @@ describe JSON::LD::API do
           },
           "integer": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
              }]),
             input: %(
@@ -215,7 +215,7 @@ describe JSON::LD::API do
           },
           "object": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
              }]),
             input: %(
@@ -226,7 +226,7 @@ describe JSON::LD::API do
           },
           "array": {
             output: %([{
-              "@id": "http://example.org/vocab#id",
+               "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
              }]),
             input: %(

@@ -238,7 +238,7 @@ describe JSON::LD::API do
             output: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:double "1.23E0"^^jsonld:JSON] .
+              [ex:double "1.23"^^jsonld:JSON] .
             )
           },
           "double-zero": {
@@ -247,12 +247,12 @@ describe JSON::LD::API do
                 "@version": 1.1,
                 "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
               },
-              "e": 0.0e0
+              "e": 0
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:double "0.0E0"^^jsonld:JSON] .
+              [ex:double "0"^^jsonld:JSON] .
             )
           },
           "integer": {
