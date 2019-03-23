@@ -55,6 +55,10 @@ module JSON::LD
       # @return [Boolean]
       attr_accessor :simple
 
+      # Property used for data indexing; defaults to @index
+      # @return [Boolean]
+      attr_accessor :index
+
       # Indicate that term may be used as a prefix
       attr_writer :prefix
 
@@ -90,6 +94,7 @@ module JSON::LD
       #   Term may be used as a prefix
       def initialize(term,
                     id: nil,
+                    index: nil,
                     type_mapping: nil,
                     container_mapping: nil,
                     language_mapping: nil,
@@ -101,6 +106,7 @@ module JSON::LD
                     context: nil)
         @term                   = term
         @id                     = id.to_s           unless id.nil?
+        @index                  = index.to_s        unless index.nil?
         @type_mapping           = type_mapping.to_s unless type_mapping.nil?
         self.container_mapping  = container_mapping
         @language_mapping       = language_mapping  unless language_mapping.nil?
@@ -124,6 +130,7 @@ module JSON::LD
           mapping.delete('@set')
         end
         @container_mapping = mapping.sort
+        @index ||= '@index' if mapping.include?('@index')
       end
 
       ##
@@ -162,6 +169,7 @@ module JSON::LD
           defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
           defn['@context'] = @context if @context
           defn['@nest'] = @nest if @nest
+          defn['@index'] = @index if @index
           defn['@prefix'] = @prefix unless @prefix.nil? || (context.processingMode || 'json-ld-1.0') == 'json-ld-1.0'
           defn
         end
@@ -173,7 +181,7 @@ module JSON::LD
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id type_mapping container_mapping language_mapping reverse_property nest simple prefix context protected).each do |acc|
+        %w(id index type_mapping container_mapping language_mapping reverse_property nest simple prefix context protected).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping'
@@ -192,6 +200,7 @@ module JSON::LD
       def inspect
         v = %w([TD)
         v << "id=#{@id}"
+        v << "index=#{index.inspect}" unless index.nil?
         v << "term=#{@term}"
         v << "rev" if reverse_property
         v << "container=#{container_mapping}" if container_mapping
@@ -565,7 +574,7 @@ module JSON::LD
     ID_NULL_OBJECT = { '@id' => nil }.freeze
     NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @protected @version)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
-    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @language @nest @prefix @reverse @protected @type)).freeze
+    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @index @language @nest @prefix @reverse @protected @type)).freeze
     JSON_LD_10_TYPE_VALUES = Set.new(%w(@id @vocab)).freeze
     JSON_LD_11_TYPE_VALUES = Set.new(%w(@json @none)).freeze
     PREFIX_URI_ENDINGS = Set.new(%w(: / ? # [ ] @)).freeze
@@ -748,6 +757,13 @@ module JSON::LD
         if value.has_key?('@container')
           #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
           definition.container_mapping = check_container(value['@container'], local_context, defined, term)
+        end
+
+        if value.has_key?('@index')
+          # property-based indexing
+          raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{term} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
+          raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{term} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
+          definition.index = value['@index'].to_s
         end
 
         if value.has_key?('@context')

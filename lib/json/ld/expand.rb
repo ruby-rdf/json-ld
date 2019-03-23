@@ -409,6 +409,7 @@ module JSON::LD
           
           # Set ary to an empty array.
           ary = []
+          index_key = context.term_definitions[key].index || '@index'
 
           # For each key-value in the object:
           keys = ordered ? value.keys.sort : value.keys
@@ -429,7 +430,16 @@ module JSON::LD
                 if !graph?(item) && container.include?('@graph')
                   item = {'@graph' => as_array(item)}
                 end
-                item['@index'] ||= k unless expanded_k == '@none'
+                if index_key == '@index'
+                  item['@index'] ||= k unless expanded_k == '@none'
+                elsif value?(item)
+                  raise JsonLdError::InvalidValueObject, "Attempt to add illegal key to value object: #{index_key}"
+                else
+                  # Expand key based on term
+                  expanded_k = k == '@none' ? '@none' : active_context.expand_value(index_key, k)
+                  index_property = active_context.expand_iri(index_key, vocab: true, quiet: true).to_s
+                  item[index_property] = [expanded_k].concat(Array(item[index_property])) unless expanded_k == '@none'
+                end
               when CONTAINER_GRAPH_ID, CONTAINER_ID
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')

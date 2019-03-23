@@ -859,6 +859,164 @@ describe JSON::LD::API do
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
+
+      context "@index: property" do
+        {
+          "property-valued index indexes property value, instead of property (value)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1"},
+                "guest": [{"@id": "person/2"}, {"@id": "person/3"}]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@value": "regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@value": "guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@value": "guest"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes property value, instead of @index (multiple values)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1", "prop": "foo"},
+                "guest": [
+                  {"@id": "person/2", "prop": "foo"},
+                  {"@id": "person/3", "prop": "foo"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@value": "regular"}, {"@value": "foo"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@value": "guest"}, {"@value": "foo"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@value": "guest"}, {"@value": "foo"}]}
+              ]
+            }])
+          },
+          "property-valued index extracts property value, instead of @index (node)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@vocab", "@container": "@index", "@index": "prop"},
+                "prop": {"@type": "@id"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1"},
+                "guest": [
+                  {"@id": "person/2"},
+                  {"@id": "person/3"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes property value, instead of property (multimple nodes)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@vocab", "@container": "@index", "@index": "prop"},
+                "prop": {"@type": "@id"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1", "prop": "foo"},
+                "guest": [
+                  {"@id": "person/2", "prop": "foo"},
+                  {"@id": "person/3", "prop": "foo"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}, {"@id": "http://example.com/foo"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}, {"@id": "http://example.com/foo"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}, {"@id": "http://example.com/foo"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes using @none if no property value exists": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "@none": ["person/1", "person/2", "person/3"]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1"},
+                {"@id": "http://example.com/person/2"},
+                {"@id": "http://example.com/person/3"}
+              ]
+            }])
+          },
+          "property-valued index indexes using @none if no property value does not compact to string": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "@none": [
+                  {"@id": "person/1", "prop": {"@id": "regular"}},
+                  {"@id": "person/2", "prop": {"@id": "guest"}},
+                  {"@id": "person/3", "prop": {"@id": "guest"}}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}]}
+              ]
+            }])
+          }
+        }.each do |title, params|
+          it(title) {run_compact(**params)}
+        end
+      end
     end
 
     context "@container: @language" do

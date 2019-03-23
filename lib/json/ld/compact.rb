@@ -52,7 +52,7 @@ module JSON::LD
         # Otherwise element is a JSON object.
 
         # @null objects are used in framing
-        return nil if element.has_key?('@null')
+        return nil if element.key?('@null')
 
         if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, log_depth: @options[:log_depth])
@@ -257,8 +257,24 @@ module JSON::LD
                 compacted_item.delete(container_key)
                 compacted_item
               when CONTAINER_MAPPING_INDEX
-                map_key = expanded_item['@index']
-                compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
+                index_key = context.term_definitions[item_active_property].index || '@index'
+                if index_key == '@index'
+                  map_key = expanded_item['@index']
+                  compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
+                else
+                  container_key = context.compact_iri(index_key, vocab: true, quiet: true)
+                  map_key, *others = Array(compacted_item[container_key])
+                  if map_key.is_a?(String)
+                    case others.length
+                    when 0 then compacted_item.delete(container_key)
+                    when 1 then compacted_item[container_key] = others.first
+                    else        compacted_item[container_key] = others
+                    end
+                  else
+                    map_key = context.compact_iri('@none', vocab: true, quiet: true)
+                  end
+                end
+                # Note, if compacted_item is a node reference and key is @id-valued, then this could be compacted further.
                 compacted_item
               when CONTAINER_MAPPING_LANGUAGE
                 map_key = expanded_item['@language']
