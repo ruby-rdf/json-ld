@@ -238,6 +238,11 @@ describe JSON::LD::API do
             output: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:double "1.23E0"^^jsonld:JSON] .
+            ),
+            c14n: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
               [ex:double "1.23"^^jsonld:JSON] .
             )
           },
@@ -355,6 +360,11 @@ describe JSON::LD::API do
             output: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
+              [ex:c14n """{"":"empty","1":{" ":5.6E1,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^jsonld:JSON] .
+            ),
+            c14n: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
               [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^jsonld:JSON] .
             )
           },
@@ -375,8 +385,15 @@ describe JSON::LD::API do
             )
           },
         }.each do |title, params|
-          params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
-          it(title) {run_to_rdf params}
+          it title do
+            params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
+            run_to_rdf params
+          end
+
+          it "#{title} with c14n" do
+            params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:c14n])
+            run_to_rdf(json_c14n: true, **params)
+          end if params[:c14n]
         end
       end
     end
