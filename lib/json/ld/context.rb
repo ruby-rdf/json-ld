@@ -1360,7 +1360,7 @@ module JSON::LD
       when RDF::Literal
         #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
-        if processingMode == 'json-ld-1.1' && value.datatype == RDF::URI(JSON_LD_NS + "JSON")
+        if processingMode == 'json-ld-1.1' && value.datatype == RDF::URI(RDF.to_uri + "JSON")
           # Value parsed as JSON
           # FIXME: MultiJson
           res['@value'] = ::JSON.parse(value.object)

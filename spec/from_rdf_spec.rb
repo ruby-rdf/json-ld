@@ -165,8 +165,8 @@ describe JSON::LD::API do
              }]),
             input:%(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:bool "true"^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:bool "true"^^rdf:JSON .
             )
           },
           "false": {
@@ -176,8 +176,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:bool "false"^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:bool "false"^^rdf:JSON .
             )
           },
           "double": {
@@ -187,8 +187,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:double "1.23E0"^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:double "1.23E0"^^rdf:JSON .
             )
           },
           "double-zero": {
@@ -198,8 +198,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:double "0.0E0"^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:double "0.0E0"^^rdf:JSON .
             )
           },
           "integer": {
@@ -209,8 +209,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:integer "123"^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:integer "123"^^rdf:JSON .
             )
           },
           "object": {
@@ -220,8 +220,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:object """{"foo":"bar"}"""^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:object """{"foo":"bar"}"""^^rdf:JSON .
             )
           },
           "array": {
@@ -231,8 +231,8 @@ describe JSON::LD::API do
              }]),
             input: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              ex:id ex:array """[{"foo":"bar"}]"""^^jsonld:JSON .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:array """[{"foo":"bar"}]"""^^rdf:JSON .
             )
           },
         }.each do |title, params|

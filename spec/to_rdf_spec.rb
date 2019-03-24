@@ -209,8 +209,8 @@ describe JSON::LD::API do
             }),
             output:%(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:bool "true"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:bool "true"^^rdf:JSON] .
             )
           },
           "false": {
@@ -223,8 +223,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:bool "false"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:bool "false"^^rdf:JSON] .
             )
           },
           "double": {
@@ -237,13 +237,13 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:double "1.23E0"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:double "1.23E0"^^rdf:JSON] .
             ),
             c14n: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:double "1.23"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:double "1.23"^^rdf:JSON] .
             )
           },
           "double-zero": {
@@ -256,8 +256,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:double "0"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:double "0"^^rdf:JSON] .
             )
           },
           "integer": {
@@ -270,8 +270,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:integer "123"^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:integer "123"^^rdf:JSON] .
             )
           },
           "object": {
@@ -284,8 +284,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:object """{"foo":"bar"}"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:object """{"foo":"bar"}"""^^rdf:JSON] .
             )
           },
           "array": {
@@ -298,8 +298,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:array """[{"foo":"bar"}]"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:array """[{"foo":"bar"}]"""^^rdf:JSON] .
             )
           },
           "c14n-arrays": {
@@ -319,8 +319,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:c14n """[56,{"1":[],"10":null,"d":true}]"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """[56,{"1":[],"10":null,"d":true}]"""^^rdf:JSON] .
             )
           },
           "c14n-french": {
@@ -338,8 +338,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:c14n """{"peach":"This sorting order","péché":"is wrong according to French","pêche":"but canonicalization MUST","sin":"ignore locale"}"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"peach":"This sorting order","péché":"is wrong according to French","pêche":"but canonicalization MUST","sin":"ignore locale"}"""^^rdf:JSON] .
             )
           },
           "c14n-structures": {
@@ -359,13 +359,13 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:c14n """{"":"empty","1":{" ":5.6E1,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^rdf:JSON] .
             ),
             c14n: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^rdf:JSON] .
             )
           },
           "c14n-unicode": {
@@ -380,8 +380,8 @@ describe JSON::LD::API do
             }),
             output: %(
               @prefix ex: <http://example.org/vocab#> .
-              @prefix jsonld: <http://www.w3.org/ns/json-ld#> .
-              [ex:c14n """{"Unnormalized Unicode":"Å"}"""^^jsonld:JSON] .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"Unnormalized Unicode":"Å"}"""^^rdf:JSON] .
             )
           },
         }.each do |title, params|
