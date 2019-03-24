@@ -1626,6 +1626,43 @@ describe JSON::LD::API do
         }.each_pair do |title, params|
           it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
         end
+
+        context "@index: property", pending: true do
+          {
+            "property-valued index on graph indexes property value, instead of property (value)": {
+              input: %([{
+                "http://example.org/input": [{
+                  "http://example.org/prop": [{"@value": "g1"}],
+                  "@graph": [{
+                    "http://example.org/value": [{"@value": "x"}]
+                  }]
+                }]
+              }]),
+              output: %({
+                "@context": {
+                  "@version": 1.1,
+                  "@vocab": "http://example.org/",
+                  "input": {"@container": ["@graph", "@index"], "@index": "prop"}
+                },
+                "input": {
+                  "g1": {"value": "x"}
+                }
+              })
+            },
+            "property-valued index on graph indexes property value, instead of @index (multiple values)": {
+            },
+            "property-valued index on graph extracts property value, instead of @index (node)": {
+            },
+            "property-valued index on graph indexes property value, instead of property (multimple nodes)": {
+            },
+            "property-valued index on graph indexes using @none if no property value exists": {
+            },
+            "property-valued index on graph indexes using @none if no property value does not compact to string": {
+            }
+          }.each do |title, params|
+            it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+          end
+        end
       end
 
       context "+ @id" do
