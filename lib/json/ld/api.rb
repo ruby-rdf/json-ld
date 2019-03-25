@@ -463,7 +463,6 @@ module JSON::LD
     # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
     # @option options [Boolean] :expanded Input is already expanded
-    # @option options [Boolean] :json_c14n Use `JSON::Canonicalization` for serializing JSON literals, otherwise internal implementation
     # @raise [JsonLdError]
     # @yield statement
     # @yieldparam [RDF::Statement] statement

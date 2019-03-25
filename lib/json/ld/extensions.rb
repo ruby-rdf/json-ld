@@ -59,43 +59,12 @@ module RDF
   end
 end
 
-class Object
-  # Default canonicalization output for Ruby objects
-  # @return [String]
-  def to_json_c14nx
-    self.to_json
-  end
-end
-
-class Hash
-  # Output JSON with keys sorted lexicographically
-  # @return [String]
-  def to_json_c14nx
-    "{" + self.
-      keys.
-      sort.
-      map {|k| k.to_json_c14nx + ':' + self[k].to_json_c14nx}
-      .join(',') +
-    '}'
-  end
-end
-
 class Array
-  def to_json_c14nx
-    '[' + self.map(&:to_json_c14nx).join(',') + ']'
-  end
-
   # Optionally order items
   #
   # @param [Boolean] ordered
   # @return [Array]
   def opt_sort(ordered: false)
     ordered ? self.sort : self
-  end
-end
-
-class Numeric
-  def to_json_c14nx
-    RDF::Literal.new(self.ceil != self ? self : self.numerator, canonicalize: true).to_s
   end
 end

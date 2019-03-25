@@ -238,11 +238,6 @@ describe JSON::LD::API do
             output: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-              [ex:double "1.23E0"^^rdf:JSON] .
-            ),
-            c14n: %(
-              @prefix ex: <http://example.org/vocab#> .
-              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               [ex:double "1.23"^^rdf:JSON] .
             )
           },
@@ -361,11 +356,6 @@ describe JSON::LD::API do
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^rdf:JSON] .
-            ),
-            c14n: %(
-              @prefix ex: <http://example.org/vocab#> .
-              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^rdf:JSON] .
             )
           },
           "c14n-unicode": {
@@ -389,11 +379,6 @@ describe JSON::LD::API do
             params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
             run_to_rdf params
           end
-
-          it "#{title} with c14n" do
-            params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:c14n])
-            run_to_rdf(json_c14n: true, **params)
-          end if params[:c14n]
         end
       end
     end

@@ -28,7 +28,7 @@ module JSON::LD
           datatype ||= RDF::XSD.boolean.to_s
         when Numeric
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
-          value = if datatype == RDF::URI(RDF.to_uri + "JSON") && @options[:json_c14n]
+          value = if datatype == RDF::URI(RDF.to_uri + "JSON")
             value.to_json_c14n
           else
             # Don't serialize as double if there are no fractional bits
@@ -38,7 +38,7 @@ module JSON::LD
           end
         when Array, Hash
           # Only valid for rdf:JSON
-          value = @options[:json_c14n] ? value.to_json_c14n : value.to_json_c14nx
+          value = value.to_json_c14n
         else
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
