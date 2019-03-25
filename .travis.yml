@@ -8,9 +8,6 @@ env:
   global:
     - CI=true
     - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
-gemfile:
-  - Gemfile
-  - Gemfile-pure
 rvm:
   - 2.2.2
   - 2.3
