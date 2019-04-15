@@ -375,7 +375,7 @@ module JSON::LD
 
         # Use a term-specific context, if defined
         term_context = context.term_definitions[key].context if context.term_definitions[key]
-        active_context = term_context ? context.parse(term_context) : context
+        active_context = term_context ? context.parse(term_context, from_term: key) : context
 
         container = active_context.container(key)
         expanded_value = if active_context.coerce(key) == '@json'

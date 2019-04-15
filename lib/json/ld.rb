@@ -111,6 +111,7 @@ module JSON
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
+      class InvalidContextNullification < JsonLdError; @code = "invalid context nullification"; end
       class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
       class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
       class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
@@ -144,6 +145,7 @@ module JSON
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class ContextOverflow < JsonLdError; @code = "maximum number of @context URLs exceeded"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
+      class ProtectedTermRedefinition < JsonLdError; @code = "protected term redefinition"; end
       class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end
       class InvalidFrame < JsonLdError; @code = "invalid frame"; end
       class InvalidEmbedValue < InvalidFrame; @code = "invalid @embed value"; end

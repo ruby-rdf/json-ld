@@ -262,8 +262,8 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, **options)
-      self.new(options).parse(local_context)
+    def self.parse(local_context, from_term: nil, **options)
+      self.new(options).parse(local_context, from_term: from_term)
     end
 
     ##
@@ -393,11 +393,15 @@ module JSON::LD
     #
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [Array<String>] remote_contexts
+    # @param [String] from_term
+    #   The active term, when expanding. Sealed terms may not be cleared unless from a
+    #   context associated with a term used as a property.
+    # @param [RDF::Resource] context_id from context IRI, for sealing terms
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
-    def parse(local_context, remote_contexts: [])
+    def parse(local_context, remote_contexts: [], from_term: nil)
       result = self.dup
       result.provided_context = local_context if self.empty?
 
@@ -406,8 +410,13 @@ module JSON::LD
       local_context.each do |context|
         case context
         when nil
-          # 3.1 If nil, set to a new empty context
-          result = Context.new(options)
+          # 3.1 If the `from_term` is  not null, and the active context contains protected terms, an error is raised.
+          if from_term || term_definitions.values.none?(&:protected?)
+            result = Context.new(options)
+          else
+            raise JSON::LD::JsonLdError::InvalidContextNullification,
+                  "Attempt to clear a context with protected terms"
+          end
         when Context
            #log_debug("parse") {"context: #{context.inspect}"}
            result = context.dup
@@ -478,7 +487,7 @@ module JSON::LD
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup)
+            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, from_term: from_term)
             PRELOADED[context_canon.to_s] = context
             context.provided_context = result.provided_context
           end
@@ -512,7 +521,9 @@ module JSON::LD
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
-            result.create_term_definition(context, key, defined, protected: context['@protected']) unless NON_TERMDEF_KEYS.include?(key)
+            result.create_term_definition(context, key, defined,
+                                          from_term: from_term,
+                                          protected: context['@protected']) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -569,11 +580,14 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
+    # @param [String] from_term
+    #   The active term, when expanding. Sealed terms may not be cleared unless from a
+    #   context associated with a term used as a property.
     # @param [Boolean] protected if true, causes all terms to be marked protected
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, protected: false)
+    def create_term_definition(local_context, term, defined, from_term: nil, protected: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -603,9 +617,8 @@ module JSON::LD
       value = {'@id' => value} if simple_term
 
       # Remove any existing term definition for term in active context.
-      if term_definitions[term] && term_definitions[term].protected?
-        Kernel.warn "Attempt to redefine protected term #{term}"
-        return
+      if term_definitions[term] && term_definitions[term].protected? && from_term.nil?
+        raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
       else
         term_definitions.delete(term) unless term_definitions[term]
       end
@@ -739,7 +752,7 @@ module JSON::LD
 
         if value.has_key?('@context')
           begin
-            self.parse(value['@context'])
+            self.parse(value['@context'], from_term: term)
             # Record null context in array form
             definition.context = value['@context'] ? value['@context'] : [nil]
           rescue JsonLdError => e

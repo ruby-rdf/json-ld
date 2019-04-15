@@ -1805,15 +1805,12 @@ describe JSON::LD::Context do
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
     end
 
-    it "does not warn when clearing a context having protected terms" do
+    it "errors when clearing a context having protected terms" do
       ctx = context.parse({
         "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
       })
 
-      expect do
-        ctx.parse(nil)
-        expect(ctx.term_definitions).to have_key("protected")
-      end.not_to write(:anything).to(:error)
+      expect {ctx.parse(nil)}.to raise_error(JSON::LD::JsonLdError::InvalidContextNullification)
     end
   end
 
