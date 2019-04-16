@@ -32,9 +32,10 @@ module JSON::LD
             value.to_json_c14n
           else
             # Don't serialize as double if there are no fractional bits
-            lit = RDF::Literal.new(value.ceil != value ? value : value.numerator, canonicalize: true)
+            as_double = value.ceil != value || value >= 1e21
+            lit = RDF::Literal.new(as_double ? value : value.numerator, canonicalize: true)
             datatype ||= lit.datatype
-            lit.to_s
+            lit.to_s.sub("E+", "E")
           end
         when Array, Hash
           # Only valid for rdf:JSON

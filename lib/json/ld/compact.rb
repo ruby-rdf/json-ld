@@ -30,7 +30,7 @@ module JSON::LD
       # If the term definition for active property itself contains a context, use that for compacting values.
       input_context = self.context
       td = self.context.term_definitions[property] if property
-      self.context = (td && td.context && self.context.parse(td.context)) || input_context
+      self.context = (td && td.context && self.context.parse(td.context, from_term: property)) || input_context
 
       case element
       when Array
@@ -229,7 +229,7 @@ module JSON::LD
                   property_is_array: as_array)
               elsif container.include?('@graph') && simple_graph?(expanded_item)
                 # container includes @graph but not @id or @index and value is a simple graph object
-                # Drop through, where compacted_value will be added
+                # Drop through, where compacted_item will be added
                 add_value(nest_result, item_active_property, compacted_item,
                   property_is_array: as_array)
               else

@@ -420,7 +420,7 @@ module JSON::LD
         case context
         when nil
           # 3.1 If the `from_term` is  not null, and the active context contains protected terms, an error is raised.
-          if from_term || term_definitions.values.none?(&:protected?)
+          if from_term || result.term_definitions.values.none?(&:protected?)
             result = Context.new(options)
           else
             raise JSON::LD::JsonLdError::InvalidContextNullification,
