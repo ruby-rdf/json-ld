@@ -522,11 +522,6 @@ module JSON::LD
 
           defined = {}
 
-          # FIXME: Remove this when @sealed removed
-          if context.has_key?('@sealed')
-            context['@protected'] ||= context.delete('@sealed')
-          end
-
           # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
@@ -644,9 +639,6 @@ module JSON::LD
         definition = TermDefinition.new(term)
         definition.simple = simple_term
 
-        if value.has_key?('@sealed')
-          value['@protected'] ||= value.delete('@sealed')
-        end
         if options[:validate]
           expected_keys = case processingMode
           when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
