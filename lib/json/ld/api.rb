@@ -22,7 +22,7 @@ module JSON::LD
   #
   # Note that the API method signatures are somewhat different than what is specified, as the use of Futures and explicit callback parameters is not as relevant for Ruby-based interfaces.
   #
-  # @see http://json-ld.org/spec/latest/json-ld-api/#the-application-programming-interface
+  # @see https://www.w3.org/TR/json-ld11-api/#the-application-programming-interface
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class API
     include Expand
@@ -188,7 +188,7 @@ module JSON::LD
     # @yieldreturn [Object] returned object
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
-    # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
     def self.expand(input, framing: false, **options, &block)
       result, doc_base = nil
       API.new(input, options[:expandContext], options) do
@@ -237,7 +237,7 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
-    # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#compaction-algorithm
     def self.compact(input, context, expanded: false, **options)
       result = nil
       options = {compactToRelative:  true}.merge(options)
@@ -282,7 +282,7 @@ module JSON::LD
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
-    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
     def self.flatten(input, context, expanded: false, **options)
       flattened = []
       options = {
@@ -357,7 +357,7 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
-    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
     def self.frame(input, frame, expanded: false, **options)
       result = nil
       options = {

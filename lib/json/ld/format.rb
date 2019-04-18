@@ -18,8 +18,8 @@ module JSON::LD
   # @example Obtaining serialization format file extension mappings
   #     RDF::Format.file_extensions    #=> {:jsonld => [JSON::LD::Format] }
   #
-  # @see http://www.w3.org/TR/json-ld/
-  # @see https://json-ld.org/test-suite/
+  # @see https://www.w3.org/TR/json-ld11/
+  # @see https://w3c.github.io/json-ld-api/tests/
   class Format < RDF::Format
     content_type     'application/ld+json',
                      extension: :jsonld,

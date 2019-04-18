@@ -1,21 +1,23 @@
-<http://rubygems.org/gems/json-ld> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://usefulinc.com/ns/doap#Project> .
-<http://rubygems.org/gems/json-ld> <http://purl.org/dc/terms/creator> <http://greggkellogg.net/foaf#me> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#blog> <http://greggkellogg.net/> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#bug-database> <http://github.com/ruby-rdf/json-ld/issues> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#created> "2011-05-07"^^<http://www.w3.org/2001/XMLSchema#date> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#description> "RDF.rb extension for parsing/serializing JSON-LD data."@en .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#developer> <http://greggkellogg.net/foaf#me> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#documenter> <http://greggkellogg.net/foaf#me> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#homepage> <http://github.com/ruby-rdf/json-ld/> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#implements> <http://json-ld.org/spec/latest/json-ld-api/> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#implements> <http://json-ld.org/spec/latest/json-ld-syntax/> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#license> <http://creativecommons.org/licenses/publicdomain/> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#maintainer> <http://greggkellogg.net/foaf#me> .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#name> "JSON::LD" .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#platform> "Ruby" .
-<http://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#shortdesc> "JSON-LD support for RDF.rb."@en .
-<http://rubygems.org/gems/json-ld> <http://xmlns.com/foaf/0.1/maker> <http://greggkellogg.net/foaf#me> .
-<http://greggkellogg.net/foaf#me> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://greggkellogg.net/foaf> .
-<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/made> <http://rubygems.org/gems/json-ld> .
-<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/mbox> <mailto:gregg@greggkellogg.net> .
-<http://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .
+<https://greggkellogg.net/foaf#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<https://greggkellogg.net/foaf#me> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://greggkellogg.net/foaf> .
+<https://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/made> <https://rubygems.org/gems/json-ld> .
+<https://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/mbox> <mailto:gregg@greggkellogg.net> .
+<https://greggkellogg.net/foaf#me> <http://xmlns.com/foaf/0.1/name> "Gregg Kellogg" .
+<https://rubygems.org/gems/json-ld> <http://purl.org/dc/terms/creator> <https://greggkellogg.net/foaf#me> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#blog> <https://greggkellogg.net/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#bug-database> <https://github.com/ruby-rdf/json-ld/issues> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#created> "2011-05-07"^^<http://www.w3.org/2001/XMLSchema#date> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#description> "RDF.rb extension for parsing/serializing JSON-LD data."@en .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#developer> <https://greggkellogg.net/foaf#me> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#documenter> <https://greggkellogg.net/foaf#me> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#homepage> <https://github.com/ruby-rdf/json-ld/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#implements> <https://www.w3.org/TR/json-ld11-api/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#implements> <https://www.w3.org/TR/json-ld11-framing/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#implements> <https://www.w3.org/TR/json-ld11/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#license> <https://creativecommons.org/licenses/publicdomain/> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#maintainer> <https://greggkellogg.net/foaf#me> .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#name> "JSON::LD" .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#platform> "Ruby" .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#shortdesc> "JSON-LD support for RDF.rb."@en .
+<https://rubygems.org/gems/json-ld> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://usefulinc.com/ns/doap#Project> .
+<https://rubygems.org/gems/json-ld> <http://xmlns.com/foaf/0.1/maker> <https://greggkellogg.net/foaf#me> .

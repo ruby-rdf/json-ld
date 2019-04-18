@@ -409,7 +409,7 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    # @see http://json-ld.org/spec/latest/json-ld-api/index.html#context-processing-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
     def parse(local_context, remote_contexts: [], from_term: nil)
       result = self.dup
       result.provided_context = local_context if self.empty?
@@ -590,7 +590,7 @@ module JSON::LD
     # @param [Boolean] protected if true, causes all terms to be marked protected
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
-    # @see http://json-ld.org/spec/latest/json-ld-api/index.html#create-term-definition
+    # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
     def create_term_definition(local_context, term, defined, from_term: nil, protected: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
@@ -1072,7 +1072,7 @@ module JSON::LD
     # @return [RDF::URI, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
-    # @see http://json-ld.org/spec/latest/json-ld-api/#iri-expansion
+    # @see https://www.w3.org/TR/json-ld11-api/#iri-expansion
     def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: nil, quiet: false, **options)
       return value unless value.is_a?(String)
 
@@ -1167,7 +1167,7 @@ module JSON::LD
     # @param  [Hash{Symbol => Object}] options ({})
     #
     # @return [String] compacted form of IRI
-    # @see http://json-ld.org/spec/latest/json-ld-api/#iri-compaction
+    # @see https://www.w3.org/TR/json-ld11-api/#iri-compaction
     def compact_iri(iri, value: nil, vocab: nil, reverse: false, quiet: false, **options)
       return if iri.nil?
       iri = iri.to_s
@@ -1351,7 +1351,7 @@ module JSON::LD
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
-    # @see http://json-ld.org/spec/latest/json-ld-api/#value-expansion
+    # @see https://www.w3.org/TR/json-ld11-api/#value-expansion
     def expand_value(property, value, useNativeTypes: false, **options)
       #log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
@@ -1431,7 +1431,7 @@ module JSON::LD
     #
     # @return [Hash] Object representation of value
     # @raise [JsonLdError] if the iri cannot be expanded
-    # @see http://json-ld.org/spec/latest/json-ld-api/#value-compaction
+    # @see https://www.w3.org/TR/json-ld11-api/#value-compaction
     # FIXME: revisit the specification version of this.
     def compact_value(property, value, **options)
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}

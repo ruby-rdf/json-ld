@@ -52,8 +52,8 @@ module JSON::LD
   #
   # Select the :expand option to output JSON-LD in expanded form
   #
-  # @see http://json-ld.org/spec/ED/20110507/
-  # @see http://json-ld.org/spec/ED/20110507/#the-normalization-algorithm
+  # @see https://www.w3.org/TR/json-ld11-api/
+  # @see https://www.w3.org/TR/json-ld11-api/#the-normalization-algorithm
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Writer < RDF::Writer
     include StreamingWriter

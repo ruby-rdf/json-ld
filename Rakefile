@@ -23,7 +23,7 @@ end
 desc "Generate schema.org context"
 task :schema_context do
   %x(
-    script/gen_context http://schema.org/docs/schema_org_rdfa.html \
+    script/gen_context https://schema.org/docs/schema_org_rdfa.html \
       --vocab http://schema.org/ \
       --prefix 'schema http://schema.org/' \
       --body --hier \
@@ -37,14 +37,13 @@ file "etc/manifests.nt" do
   require 'json/ld'
   require 'rdf/ntriples'
   graph = RDF::Graph.new do |g|
-    %w( https://json-ld.org/test-suite/tests/compact-manifest.jsonld
-        https://json-ld.org/test-suite/tests/error-manifest.jsonld
-        https://json-ld.org/test-suite/tests/expand-manifest.jsonld
-        https://json-ld.org/test-suite/tests/flatten-manifest.jsonld
-        https://json-ld.org/test-suite/tests/frame-manifest.jsonld
-        https://json-ld.org/test-suite/tests/fromRdf-manifest.jsonld
-        https://json-ld.org/test-suite/tests/remote-doc-manifest.jsonld
-        https://json-ld.org/test-suite/tests/toRdf-manifest.jsonld
+    %w( https://w3c.github.io/json-ld-api/tests/compact-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/expand-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/flatten-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/fromRdf-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/remote-doc-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/toRdf-manifest.jsonld
+        https://w3c.github.io/json-ld-framing/tests/frame-manifest.jsonld
     ).each do |man|
       puts "load #{man}"
       g.load(man, unique_bnodes: true)
