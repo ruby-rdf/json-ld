@@ -1534,8 +1534,8 @@ module JSON::LD
       require 'json/ld'
       class JSON::LD::Context
       ).gsub(/^      /, '') +
-      %[  add_preloaded("#{canon_base}") do\n    new(] + defn.join(", ")  + ")  end\n" +
-      aliases.map {|a| %[  alias_preloaded("#{a}", "#{canon_base}")]}.join("\n") +
+      %[  add_preloaded("#{canon_base}") do\n    new(] + defn.join(", ")  + ")\n  end\n" +
+      aliases.map {|a| %[  alias_preloaded("#{a}", "#{canon_base}")\n]}.join("") +
       "end\n"
     end
 
