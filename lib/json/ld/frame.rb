@@ -66,11 +66,16 @@ module JSON::LD
         output = {'@id' => id}
         link[id] = output
 
+        if context.processingMode == 'json-ld-1.1' && %w(@first @last).include?(flags[:embed])
+          raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{flags[:embed]} is not a valid value of @embed in 1.1 mode" if validate?
+          warn "[DEPRECATION] #{flags[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
+        end
+
         if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
           # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
           add_frame_output(parent, property, output)
           next
-        elsif flags[:embed] == '@first' && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+        elsif %w(@first @once).include?(flags[:embed]) && state[:uniqueEmbeds][state[:graph]].has_key?(id)
           # if only the first match should be embedded
           # Embed unless already embedded
           add_frame_output(parent, property, output)
@@ -462,9 +467,9 @@ module JSON::LD
       rval = rval.values.first if value?(rval)
       if name == :embed
         rval = case rval
-        when true then '@first'
+        when true then '@once'
         when false then '@never'
-        when '@always', '@first', '@last', '@link', '@never' then rval
+        when '@always', '@first', '@last', '@link', '@once', '@never' then rval
         else
           raise JsonLdError::InvalidEmbedValue,
                 "Invalid JSON-LD frame syntax; invalid value of @embed: #{rval}"

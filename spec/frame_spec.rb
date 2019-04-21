@@ -587,11 +587,11 @@ describe JSON::LD::API do
           }]
         })
       },
-      "first embed (@embed: @first)": {
+      "first embed (@embed: @once)": {
         frame: %({
           "@context": {"ex": "http://www.example.com/#"},
           "@type": "ex:Thing",
-          "@embed": "@first"
+          "@embed": "@once"
         }),
         input: %({
           "@context": {"ex": "http://www.example.com/#"},
@@ -610,7 +610,8 @@ describe JSON::LD::API do
               "ex:embed2": {"@id": "http://example/embedded"}
             }
           ]
-        })
+        }),
+        ordered: true
       },
       "always embed (@embed: @always)": {
         frame: %({

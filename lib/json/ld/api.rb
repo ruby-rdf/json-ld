@@ -340,7 +340,7 @@ module JSON::LD
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
-    # @option options ['@always', '@first', '@last', '@link', '@never'] :embed ('@last')
+    # @option options ['@always', '@first', '@last', '@link', '@once', '@never'] :embed ('@last')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.
@@ -364,7 +364,7 @@ module JSON::LD
         base:                       (input if input.is_a?(String)),
         compactArrays:              true,
         compactToRelative:          true,
-        embed:                      '@first',
+        embed:                      '@once',
         explicit:                   false,
         requireAll:                 false,
         omitDefault:                false,
@@ -403,6 +403,11 @@ module JSON::LD
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+
+        if context.processingMode == 'json-ld-1.1' && %w(@first @last).include?(options[:embed])
+          raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{options[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
+          warn "[DEPRECATION] #{options[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
+        end
 
         # Set omitGraph option, if not present, based on processingMode
         unless options.has_key?(:omitGraph)
