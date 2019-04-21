@@ -1685,7 +1685,7 @@ describe JSON::LD::API do
           "@graph": [
             {
               "@explicit": false,
-              "@embed": "@last",
+              "@embed": "@once",
               "@type": ["Act", "Class"],
               "@graph": [{
                 "@explicit": true,
