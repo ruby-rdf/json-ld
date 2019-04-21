@@ -24,6 +24,14 @@ module JSON::LD
       def add_preloaded(url, context = nil, &block)
         PRELOADED[url.to_s.freeze] = context || block
       end
+
+      ##
+      # Alias a previousliy loaded context
+      # @param [String, RDF::URI] alias
+      # @param [String, RDF::URI] url
+      def alias_preloaded(a, url)
+        PRELOADED[a.to_s.freeze] = PRELOADED[url.to_s.freeze]
+      end
     end
 
     # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
@@ -1505,8 +1513,11 @@ module JSON::LD
 
     ##
     # Turn this into a source for a new instantiation
+    # @param [Array<String>] aliases
+    #   Other URLs to alias when preloading
     # @return [String]
-    def to_rb
+    def to_rb(*aliases)
+      canon_base = RDF::URI(context_base).canonicalize
       defn = []
 
       defn << "base: #{self.base.to_s.inspect}" if self.base
@@ -1523,7 +1534,9 @@ module JSON::LD
       require 'json/ld'
       class JSON::LD::Context
       ).gsub(/^      /, '') +
-      "  add_preloaded(#{RDF::URI(context_base).canonicalize.to_s.inspect}) do\n    new(" + defn.join(", ")  + ")\n  end\nend\n"
+      %[  add_preloaded("#{canon_base}") do\n    new(] + defn.join(", ")  + ")  end\n" +
+      aliases.map {|a| %[  alias_preloaded("#{a}", "#{canon_base}")]}.join("\n") +
+      "end\n"
     end
 
     def inspect

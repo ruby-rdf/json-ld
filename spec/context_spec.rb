@@ -115,8 +115,10 @@ describe JSON::LD::Context do
         let(:ctx) {"http://example.com/preloaded"}
         before(:all) {
           JSON::LD::Context.add_preloaded("http://example.com/preloaded",
-          JSON::LD::Context.parse({'foo' => "http://example.com/"})
-        )}
+            JSON::LD::Context.parse({'foo' => "http://example.com/"})
+          )
+          JSON::LD::Context.alias_preloaded("https://example.com/preloaded", "http://example.com/preloaded")
+        }
         after(:all) {JSON::LD::Context::PRELOADED.clear}
 
         it "does not load referenced context" do
@@ -124,8 +126,20 @@ describe JSON::LD::Context do
           subject.parse(ctx)
         end
 
+        it "does not load aliased context" do
+          expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx.sub('http', 'https'), anything)
+          subject.parse(ctx.sub('http', 'https'))
+        end
+
         it "uses loaded context" do
           ec = subject.parse(ctx)
+          expect(ec.send(:mappings)).to produce({
+            "foo"   => "http://example.com/"
+          }, logger)
+        end
+
+        it "uses aliased context" do
+          ec = subject.parse(ctx.sub('http', 'https'))
           expect(ec.send(:mappings)).to produce({
             "foo"   => "http://example.com/"
           }, logger)
