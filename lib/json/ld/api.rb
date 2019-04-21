@@ -366,7 +366,7 @@ module JSON::LD
         compactToRelative:          true,
         embed:                      '@first',
         explicit:                   false,
-        requireAll:                 true,
+        requireAll:                 false,
         omitDefault:                false,
         documentLoader:             method(:documentLoader)
       }.merge(options)

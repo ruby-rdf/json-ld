@@ -308,7 +308,7 @@ module JSON::LD
     #
     # Matches either based on explicit type inclusion where the node has any type listed in the frame. If the frame has empty types defined matches nodes not having a @type. If the frame has a type of {} defined matches nodes having any type defined.
     #
-    # Otherwise, does duck typing, where the node must have all of the properties defined in the frame.
+    # Otherwise, does duck typing, where the node must have any or all of the properties defined in the frame, depending on the `requireAll` flag.
     #
     # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
@@ -328,24 +328,33 @@ module JSON::LD
           ids = v || []
 
           # Match on specific @id.
-          return ids.include?(subject['@id']) if !ids.empty? && ids != [{}]
-          match_this = true
+          match_this = case ids
+          when [], [{}]
+            # Match on no @id or any @id
+            true
+          else
+            # Match on specific @id
+            ids.include?(subject['@id'])
+          end
+          return match_this if !flags[:requireAll]
         when '@type'
           # No longer a wildcard pattern
           wildcard = false
 
           match_this = case v
           when []
-            # Don't Match on no @type
+            # Don't match with any @type
             return false if !node_values.empty?
             true
           when [{}]
-            # Match on wildcard @type
+            # Match with any @type
             !node_values.empty?
           else
             # Match on specific @type
-            return !(v & node_values).empty?
+            return false if (v & node_values).empty?
+            true
           end
+          return match_this if !flags[:requireAll]
         when /@/
           # Skip other keywords
           next
@@ -355,7 +364,6 @@ module JSON::LD
             validate_frame(v)
             has_default = v.has_key?('@default')
           end
-
 
           # No longer a wildcard pattern if frame has any non-keyword properties
           wildcard = false
