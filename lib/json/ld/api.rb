@@ -650,7 +650,14 @@ module JSON::LD
         MultiJson.load(content, options)
       elsif extractAllScripts
         res = []
-        elements = input.xpath("//script[starts-with(@type, 'application/ld+json')]")
+        elements = if profile
+          es = input.xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]")
+          # If no profile script, just take a single script without profile
+          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")] if es.empty?
+          es
+        else
+          input.xpath("//script[starts-with(@type, 'application/ld+json')]")
+        end
         elements.each do |element|
           content = element.inner_html
           validate_input(content, url: url) if options[:validate]
