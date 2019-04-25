@@ -32,7 +32,9 @@ describe JSON::LD::Context do
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    }), base_uri: "http://example.com/context")
+    }),
+    base_uri: "http://example.com/context",
+    headers: {content_type: "application/ld+json"})
   end
   subject {context}
 
@@ -68,6 +70,90 @@ describe JSON::LD::Context do
       end
 
       it "creates mappings" do
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        ec = subject.parse("http://example.com/context")
+        expect(ec.send(:mappings)).to produce({
+          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
+          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "homepage" => "http://xmlns.com/foaf/0.1/homepage",
+          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+        }, logger)
+      end
+
+      it "retrieves and parses a remote context document in HTML using the context profile" do
+        remote_doc =
+          RDF::Util::File::RemoteDocument.new(%q(
+            <html><head>
+            <script>Not This</script>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "homepage": {"@id": "http://example.com/this-would-be-wrong", "@type": "@id"},
+                "avatar": {"@id": "http://example.com/this-would-be-wrong", "@type": "@id"}
+              }
+            }
+            </script>
+            <script type="application/ld+json;profile=http://www.w3.org/ns/json-ld#context">
+            {
+              "@context": {
+                "xsd": "http://www.w3.org/2001/XMLSchema#",
+                "name": "http://xmlns.com/foaf/0.1/name",
+                "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+                "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
+              }
+            }
+            </script>
+            <script type="application/ld+json;profile=http://www.w3.org/ns/json-ld#context">
+            {
+              "@context": {
+                "homepage": {"@id": "http://example.com/this-would-also-be-wrong", "@type": "@id"},
+                "avatar": {"@id": "http://example.com/this-would-also-be-wrong", "@type": "@id"}
+              }
+            }
+            </script>
+            </head></html>
+            ),
+            base_uri: "http://example.com/context",
+            headers: {content_type: "text/html"})
+          JSON::LD::Context::PRELOADED.clear
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        ec = subject.parse("http://example.com/context")
+        expect(ec.send(:mappings)).to produce({
+          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
+          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "homepage" => "http://xmlns.com/foaf/0.1/homepage",
+          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+        }, logger)
+      end
+
+      it "retrieves and parses a remote context document in HTML" do
+        remote_doc =
+          RDF::Util::File::RemoteDocument.new(%q(
+            <html><head>
+            <script>Not This</script>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "xsd": "http://www.w3.org/2001/XMLSchema#",
+                "name": "http://xmlns.com/foaf/0.1/name",
+                "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
+                "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
+              }
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "homepage": {"@id": "http://example.com/this-would-also-be-wrong", "@type": "@id"},
+                "avatar": {"@id": "http://example.com/this-would-also-be-wrong", "@type": "@id"}
+              }
+            }
+            </script>
+            </head></html>
+            ),
+            base_uri: "http://example.com/context",
+            headers: {content_type: "text/html"})
+          JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
@@ -376,6 +462,16 @@ describe JSON::LD::Context do
         "@prefix string" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => "str"}},
         "@prefix array" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => []}},
         "@prefix object" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => {}}},
+        "IRI term expands to different IRI" => {
+          "ex" => "http://example.com/",
+          "ex2" => "http://example.com/2/",
+          "ex:foo" => "ex2:foo"
+      },
+        "IRI term expands to different IRI (reverse)" => {
+          "ex" => "http://example.com/",
+          "ex2" => "http://example.com/2/",
+          "ex:foo" => {"@reverse" => "ex2:foo"}
+        }
       }.each do |title, context|
         it title do
           expect {

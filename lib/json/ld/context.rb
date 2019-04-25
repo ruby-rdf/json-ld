@@ -486,10 +486,14 @@ module JSON::LD
               context_opts.delete(:headers)
               @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                jo = case remote_doc.document
-                when String then MultiJson.load(remote_doc.document)
-                else remote_doc.document
+                jo = if remote_doc.content_type == 'text/html'
+                  API.load_html(remote_doc.document, url: context.to_s, profile: 'http://www.w3.org/ns/json-ld#context')
+                elsif remote_doc.document.is_a?(String)
+                  MultiJson.load(remote_doc.document)
+                else
+                  remote_doc.document
                 end
+
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
                 context = jo['@context']
               end
@@ -701,6 +705,10 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
             definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
+          if term.include?(':') && (term_iri = expand_iri(term)) != definition.id
+            raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+          end
+
           warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 
           # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
@@ -722,6 +730,10 @@ module JSON::LD
             defined: defined)
           raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
             definition.id == '@context'
+
+          if term.match?(/:[^:]/) && (term_iri = expand_iri(term)) != definition.id
+            raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+          end
 
           warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 

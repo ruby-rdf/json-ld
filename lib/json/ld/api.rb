@@ -384,9 +384,12 @@ module JSON::LD
       when IO, StringIO then MultiJson.load(frame.read)
       when String
         remote_doc = options[:documentLoader].call(frame)
-        case remote_doc.document
-        when String then MultiJson.load(remote_doc.document)
-        else remote_doc.document
+        if remote_doc.content_type == 'text/html'
+          load_html(remote_doc.document, url: context.to_s, profile: 'http://www.w3.org/ns/json-ld#frame')
+        elsif remote_doc.document.is_a?(String)
+          MultiJson.load(remote_doc.document)
+        else
+          remote_doc.document
         end
       end
 
@@ -587,22 +590,22 @@ module JSON::LD
       alias :fromRDF :fromRdf
     end
 
-    private
-    def validate_input(input, url:)
-      return unless defined?(JsonLint)
-      jsonlint = JsonLint::Linter.new
-      input = StringIO.new(input) unless input.respond_to?(:read)
-      unless jsonlint.check_stream(input)
-        raise JsonLdError::LoadingDocumentFailed, "url: #{url}\n" + jsonlint.errors[''].join("\n")
-      end
-      input.rewind
-    end
-
     ##
     # Load one or more script tags from an HTML source.
     # Unescapes and uncomments input, returns the internal representation
     # Yields document base
-    def load_html(input, url:, library: nil, extractAllScripts: false, **options)
+    # @param [String] input
+    # @param [String] url   Original URL
+    # @param [:nokogiri, :rexml] library (nil)
+    # @param [Boolean] extractAllScripts (false)
+    # @param [Boolean] profile (nil) Optional priortized profile when loading a single script by type.
+    # @param [Hash{Symbol => Object}] options
+    def load_html(input, url:,
+                         library: nil,
+                         extractAllScripts: false,
+                         profile: nil,
+                         **options)
+
       if input.is_a?(String)
         library ||= begin
           require 'nokogiri'
@@ -647,7 +650,8 @@ module JSON::LD
         MultiJson.load(content, options)
       elsif extractAllScripts
         res = []
-        input.xpath("//script[starts-with(@type, 'application/ld+json')]").each do |element|
+        elements = input.xpath("//script[starts-with(@type, 'application/ld+json')]")
+        elements.each do |element|
           content = element.inner_html
           validate_input(content, url: url) if options[:validate]
           r = MultiJson.load(content, options)
@@ -660,13 +664,33 @@ module JSON::LD
         res
       else
         # Find the first script with type application/ld+json.
-        element = input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
+        element = input.at_xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]") if profile
+        element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
         content = element ? element.inner_html : "[]"
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, options)
       end
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
+    end
+
+    # Use from a differnet location
+    # @see {#load_html}
+    def self.load_html(input, **options)
+      self.new([], nil).load_html(input, **options)
+    end
+
+    ##
+    # Validate JSON using JsonLint, if loaded
+    private
+    def validate_input(input, url:)
+      return unless defined?(JsonLint)
+      jsonlint = JsonLint::Linter.new
+      input = StringIO.new(input) unless input.respond_to?(:read)
+      unless jsonlint.check_stream(input)
+        raise JsonLdError::LoadingDocumentFailed, "url: #{url}\n" + jsonlint.errors[''].join("\n")
+      end
+      input.rewind
     end
 
     ##
