@@ -37,7 +37,7 @@ module RDF::Util
         end
 
         document_options = {
-          base_uri:     RDF::URI(url_no_frag_or_query.to_s),
+          base_uri:     RDF::URI(filename_or_url),
           charset:      Encoding::UTF_8,
           code:         200,
           headers:      options.fetch(:headers, {})

@@ -35,7 +35,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      headers: {"Accept" => "application/ld+json, application/json"}
+      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/json;q=0.5"}
     }
 
     # The following constants are used to reduce object allocations
@@ -100,7 +100,6 @@ module JSON::LD
       @options = {
         compactArrays:      true,
         ordered:            false,
-        documentLoader:     self.class.method(:documentLoader),
         extractAllScripts:  false,
       }.merge(options)
       @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
@@ -110,43 +109,17 @@ module JSON::LD
 
       @value = case input
       when Array, Hash then input.dup
-      when IO, StringIO
-        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
-
-        # if input impelements #links, attempt to get a contextUrl from that link
-        content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
-        context_ref = if content_type == 'application/json' && input.respond_to?(:links)
-          link = input.links.find_link(LINK_REL_CONTEXT)
-          link.href if link
-        end
-
-        if content_type.to_s.downcase == 'text/html'
-          # Note, @options[:base] may be updated from HTML processing.
-          load_html(input.read, url: options[:base], **@options) do |base|
-            @options[:base] = base if base
-          end
-        else
-          validate_input(input, url: options[:base] || (input.base_uri if input.respond_to?(:base_uri))) if options[:validate]
-          MultiJson.load(input.read, options)
-        end
-      when String
-        remote_doc = @options[:documentLoader].call(input, @options)
+      when IO, StringIO, String
+        remote_doc = self.class.loadRemoteDocument(input, **@options)
 
         context_ref = remote_doc.contextUrl
-        @options = {base: remote_doc.base_uri}.merge(@options) unless @options[:no_default_base]
+        @options[:base] = remote_doc.documentUrl if remote_doc.documentUrl && !@options[:no_default_base]
 
         case remote_doc.document
         when String
-          if remote_doc.content_type.to_s.downcase == 'text/html'
-            # Note, @options[:base] may be updated from HTML processing.
-            load_html(remote_doc.document, url: options[:base] || input, **@options) do |base|
-            @options[:base] = base if base
-          end
-          else
-            validate_input(remote_doc.document, url: options[:base] || input) if options[:validate]
-            MultiJson.load(remote_doc.document, options)
-          end
+          MultiJson.load(remote_doc.document, options)
         else
+          # Already parsed
           remote_doc.document
         end
       end
@@ -368,7 +341,6 @@ module JSON::LD
         explicit:                   false,
         requireAll:                 false,
         omitDefault:                false,
-        documentLoader:             method(:documentLoader)
       }.merge(options)
 
       framing_state = {
@@ -381,12 +353,12 @@ module JSON::LD
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
-      when IO, StringIO then MultiJson.load(frame.read)
-      when String
-        remote_doc = options[:documentLoader].call(frame)
-        if remote_doc.content_type == 'text/html'
-          load_html(remote_doc.document, url: context.to_s, profile: 'http://www.w3.org/ns/json-ld#frame')
-        elsif remote_doc.document.is_a?(String)
+      when IO, StringIO, String
+        remote_doc = loadRemoteDocument(frame,
+                                        profile: 'http://www.w3.org/ns/json-ld#frame',
+                                        requestProfile: 'http://www.w3.org/ns/json-ld#frame',
+                                        **options)
+        if remote_doc.document.is_a?(String)
           MultiJson.load(remote_doc.document)
         else
           remote_doc.document
@@ -545,43 +517,129 @@ module JSON::LD
     end
 
     ##
-    # Default document loader.
+    # Uses built-in or provided documentLoader to retrieve a parsed document.
+    #
     # @param [RDF::URI, String] url
-    # @param [Hash<Symbol => Object>] options
-    # @option options [Boolean] :validate
+    # @param [Boolean] extractAllScripts
+    #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
+    # @param [String] profile
+    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    # @param [String] requestProfile
+    #   One or more IRIs to use in the request as a profile parameter.
+    # @param [Boolean] validate
     #   Allow only appropriate content types
+    # @param [String, RDF::URI] base
+    #   Location to use as documentUrl instead of `url`.
+    # @param [Hash<Symbol => Object>] options
     # @yield remote_document
-    # @yieldparam [RDF::Util::File::RemoteDocument] remote_document
+    # @yieldparam [RemoteDocumentRemoteDocument, RDF::Util::File::RemoteDocument] remote_document
     # @yieldreturn [Object] returned object
-    # @return [Object, RDF::Util::File::RemoteDocument]
+    # @return [Object, RemoteDocument]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
-    def self.documentLoader(url, validate: false, **options)
+    def self.loadRemoteDocument(url,
+                                extractAllScripts: false,
+                                profile: nil,
+                                requestProfile: nil,
+                                validate: false,
+                                base: nil,
+                                **options)
+      documentLoader = options.fetch(:documentLoader, self.method(:documentLoader))
       options = OPEN_OPTS.merge(options)
-      RDF::Util::File.open_file(url, options) do |remote_doc|
-        content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
-        # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
-        if content_type && validate
-          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" unless
-            content_type.match?(/application\/(.+\+)?json|text\/html/)
-        end
-
-        # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-        remote_doc.contextUrl = if (content_type || 'application/json') != "application/ld+json"
-          # Get context link(s)
-          # Note, we can't simply use #find_link, as we need to detect multiple
-          links = remote_doc.links.links.select do |link|
-            link.attr_pairs.include?(LINK_REL_CONTEXT)
+      if requestProfile
+        # Add any request profile
+        options[:headers]['Accept'] = options[:headers]['Accept'].sub('application/ld+json,', "application/ld+json;profile=#{requestProfile}, application/ld+json;q=0.9,")
+      end
+      documentLoader.call(url, **options) do |remote_doc|
+        case remote_doc
+        when RDF::Util::File::RemoteDocument
+          # Convert to RemoteDocument
+          context_url = if remote_doc.content_type != 'application/ld+json' &&
+                           (remote_doc.content_type == 'application/json' ||
+                            remote_doc.content_type.to_s.match?(%r(application/\w+\+json)))
+            # Get context link(s)
+            # Note, we can't simply use #find_link, as we need to detect multiple
+            links = remote_doc.links.links.select do |link|
+              link.attr_pairs.include?(LINK_REL_CONTEXT)
+            end
+            raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+              "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1
+            Array(links.first).first
           end
-          raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
-            "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1
-          Array(links.first).first
+
+          remote_doc = RemoteDocument.new(remote_doc.read,
+            documentUrl: remote_doc.base_uri,
+            contentType: remote_doc.content_type,
+            contextUrl: context_url)
+        when RemoteDocument
+          # Pass through
+        else
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "unknown result from documentLoader: #{remote_doc.class}"
         end
 
+        # Use specified document location
+        remote_doc.documentUrl = base if base
+
+        # Parse any HTML
+        if remote_doc.document.is_a?(String)
+          remote_doc.document = case remote_doc.contentType
+          when 'text/html'
+            load_html(remote_doc.document,
+                      url: remote_doc.documentUrl,
+                      extractAllScripts: extractAllScripts,
+                      profile: profile,
+                      **options) do |base|
+              remote_doc.documentUrl = base
+            end
+          else
+            validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
+            MultiJson.load(remote_doc.document, options)
+          end
+        end
+
+        if remote_doc.contentType && validate
+          raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html/)
+        end
         block_given? ? yield(remote_doc) : remote_doc
       end
     rescue IOError => e
       raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
+    end
+
+    ##
+    # Default document loader.
+    # @param [RDF::URI, String] url
+    # @param [Boolean] extractAllScripts
+    #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
+    # @param [String] profile
+    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    # @param [String] requestProfile
+    #   One or more IRIs to use in the request as a profile parameter.
+    # @param [Hash<Symbol => Object>] options
+    # @yield remote_document
+    # @yieldparam [RemoteDocument, RDF::Util::File::RemoteDocument] remote_document
+    # @raise [IOError]
+    def self.documentLoader(url, extractAllScripts: false, profile: nil, requestProfile: nil, **options, &block)
+      case url
+      when IO, StringIO
+        base_uri = options[:base]
+        base_uri ||= url.base_uri if url.respond_to?(:base_uri)
+        content_type = options[:content_type]
+        content_type ||= url.content_type if url.respond_to?(:content_type)
+        context_url = if url.respond_to?(:links) && url.links
+         (content_type == 'appliaction/json' || content_type.match?(%r(application/(^ld)+json)))
+          link = url.links.find_link(LINK_REL_CONTEXT)
+          link.href if link
+        end
+
+        block.call(RemoteDocument.new(url.read,
+          documentUrl: base_uri,
+          contentType: content_type,
+          contextUrl: context_url))
+      else
+        RDF::Util::File.open_file(url, options, &block)
+      end
     end
 
     # Add class method aliases for backwards compatibility
@@ -600,7 +658,7 @@ module JSON::LD
     # @param [Boolean] extractAllScripts (false)
     # @param [Boolean] profile (nil) Optional priortized profile when loading a single script by type.
     # @param [Hash{Symbol => Object}] options
-    def load_html(input, url:,
+    def self.load_html(input, url:,
                          library: nil,
                          extractAllScripts: false,
                          profile: nil,
@@ -622,20 +680,19 @@ module JSON::LD
         end
         self.extend(@implementation)
 
-        begin
+        input = begin
           initialize_html(input, options)
         rescue
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
         end
 
         # Potentially update options[:base]
-        if html_base = root.at_xpath("/html/head/base/@href")
-          base = RDF::URI(options[:base]) if options[:base]
+        if html_base = input.at_xpath("/html/head/base/@href")
+          base = RDF::URI(url) if url
           html_base = RDF::URI(html_base)
           html_base = base.join(html_base) if base
           yield html_base
         end
-        input = root
       end
 
       url = RDF::URI.parse(url)
@@ -677,20 +734,14 @@ module JSON::LD
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, options)
       end
-    rescue JSON::LD::JsonLdError::LoadingDocumentFailed => e
+    rescue JSON::LD::JsonLdError::LoadingDocumentFailed, MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
-    end
-
-    # Use from a differnet location
-    # @see {#load_html}
-    def self.load_html(input, **options)
-      self.new([], nil).load_html(input, **options)
     end
 
     ##
     # Validate JSON using JsonLint, if loaded
     private
-    def validate_input(input, url:)
+    def self.validate_input(input, url:)
       return unless defined?(JsonLint)
       jsonlint = JsonLint::Linter.new
       input = StringIO.new(input) unless input.respond_to?(:read)
@@ -702,29 +753,36 @@ module JSON::LD
 
     ##
     # A {RemoteDocument} is returned from a {documentLoader}.
-    #
-    # @deprecated Use `RDF::Util::File::RemoteDocument` instead.
     class RemoteDocument
-      # @param [String] url URL of the loaded document, after redirects
-      # @param [String, Array<Hash>, Hash] document
-      #   The retrieved document, either as raw text or parsed JSON
-      # @param [String] context_url (nil)
-      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-      # @deprecated Use `RDF::Util::File::RemoteDocument#initialize` instead.
-      def initialize(url, document, context_url = nil, content_type = nil)
-        warn "[DEPRECATION] JSON::LD::API::RemoteDocument is deprecated, use RDF::Util::File::RemoteDocument instead.\n" +
-             "Called from #{Gem.location_of_caller.join(':')}"
-        d = RDF::Util::File::RemoteDocument.new(document, base_uri: url, content_type: content_type)
-        d.contextUrl = context_url
-        d
-      end
+      # The final URL of the loaded document. This is important to handle HTTP redirects properly.
+      # @return [String]
+      attr_accessor :documentUrl
 
-      # @return [String] URL of the loaded document, after redirects
-      def documentUrl; base_uri; end
+      # The Content-Type of the loaded document, exclusive of any optional parameters.
+      # @return [String]
+      attr_reader :contentType
 
       # @return [String]
-      #   The Content-Type of the returned coeument
-      def contentType; content_type; end
+      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
+      attr_accessor :contextUrl
+
+      # The parsed retrieved document.
+      # @return [Array<Hash>, Hash]
+      attr_accessor :document
+
+      # The value of any profile parameter retrieved as part of the original contentType.
+      # @return [String]
+      attr_accessor :profile
+
+      # @param [RDF::Util::File::RemoteDocument] remote_doc
+      # @option options [Hash{Symbol => Object}] options
+      def initialize(document, documentUrl: nil, contentType: nil, contextUrl: nil, profile: nil, **options)
+        @document = document
+        @documentUrl = documentUrl || options[:base_uri]
+        @contentType = contentType || options[:content_type]
+        @contextUrl = contextUrl
+        @profile = profile
+      end
     end
   end
 end

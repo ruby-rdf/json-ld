@@ -3232,6 +3232,7 @@ describe JSON::LD::API do
 
   def run_expand(params)
     input, output = params[:input], params[:output]
+    params[:base] ||= nil
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input

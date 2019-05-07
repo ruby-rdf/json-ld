@@ -226,22 +226,22 @@ require 'json/ld'
       ]
 ```
 ## Use a custom Document Loader
-In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time.
+In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time (however, see [json-ld-preloaded](https://rubygems.org/gems/json-ld-preloaded)).
 
 All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
 ```ruby
-    def load_document_local(url, options={}, &block)
-      if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
-        remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
-        return block_given? ? yield(remote_document) : remote_document
-      else
-        JSON::LD::API.documentLoader(url, options, &block)
-      end
-    end
+def load_document_local(url, options={}, &block)
+  if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
+    remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
+    return block_given? ? yield(remote_document) : remote_document
+  else
+    JSON::LD::API.documentLoader(url, options, &block)
+  end
+end
 ```
 Then, when performing something like expansion:
 ```ruby
-    JSON::LD::API.expand(input, documentLoader: load_document_local)
+JSON::LD::API.expand(input, documentLoader: load_document_local)
 ```
 
 ## Preloading contexts

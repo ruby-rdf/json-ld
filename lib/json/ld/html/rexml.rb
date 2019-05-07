@@ -168,41 +168,18 @@ module JSON::LD
       # Initializes the underlying XML library.
       #
       # @param  [Hash{Symbol => Object}] options
-      # @return [void]
+      # @return [NodeProxy] of document root
       def initialize_html(input, options = {})
         require 'rexml/document' unless defined?(::REXML)
-        @doc = case input
+        doc = case input
         when ::REXML::Document
           input
         else
           # Only parse as XML, no HTML mode
           ::REXML::Document.new(input.respond_to?(:read) ? input.read : input.to_s)
         end
-      end
 
-      # Accessor methods to mask native elements & attributes
-
-      ##
-      # Return proxy for document root
-      def root
-        @root ||= NodeProxy.new(@doc.root) if @doc && @doc.root
-      end
-
-      ##
-      # Document errors
-      def doc_errors
-        []
-      end
-
-      ##
-      # Find value of document base
-      #
-      # @param [String] base Existing base from URI or :base_uri
-      # @return [String]
-      def doc_base(base)
-        # find if the document has a base element
-        base_el = ::REXML::XPath.first(@doc, "/html/head/base") rescue nil
-        base.join(base_el.attribute("href").to_s.split("#").first) if base_el
+        NodeProxy.new(doc.root) if doc && doc.root
       end
     end
   end

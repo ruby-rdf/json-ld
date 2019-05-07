@@ -9,54 +9,30 @@ describe JSON::LD::API do
   describe "#initialize" do
     context "with string input" do
       let(:context) do
-        RDF::Util::File::RemoteDocument.new(%q({
+        JSON::LD::API::RemoteDocument.new(%q({
           "@context": {
             "xsd": "http://www.w3.org/2001/XMLSchema#",
             "name": "http://xmlns.com/foaf/0.1/name",
             "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
             "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
           }
-        }), base_uri: "http://example.com/context")
+          }),
+          documentUrl: "http://example.com/context",
+          contentType: 'application/ld+json'
+        )
       end
       let(:remote_doc) do
-        d = RDF::Util::File::RemoteDocument.new(%q({
-          "@id": "",
-          "name": "foo"
-        }), base_uri: "http://example.com/foo")
-        d.contextUrl = "http://example.com/context"
-        d
+        JSON::LD::API::RemoteDocument.new(%q({"@id": "", "name": "foo"}),
+          documentUrl: "http://example.com/foo",
+          contentType: 'application/ld+json',
+          contextUrl: "http://example.com/context"
+        )
       end
 
       it "loads document with loader and loads context" do
-        expect(described_class).to receive(:documentLoader).with("http://example.com/foo", anything).and_return(remote_doc)
+        expect(described_class).to receive(:documentLoader).with("http://example.com/foo", anything).and_yield(remote_doc)
         expect(described_class).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
         described_class.new("http://example.com/foo", nil)
-      end
-    end
-
-    context "with RDF::Util::File::RemoteDoc input" do
-      let(:context) do
-        RDF::Util::File::RemoteDocument.new(%q({
-          "@context": {
-            "xsd": "http://www.w3.org/2001/XMLSchema#",
-            "name": "http://xmlns.com/foaf/0.1/name",
-            "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
-            "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
-          }
-        }), base_uri: "http://example.com/context")
-      end
-      let(:remote_doc) do
-        RDF::Util::File::RemoteDocument.new(%q({"@id": "", "name": "foo"}),
-          headers: {
-            content_type: 'application/json',
-            link: %(<http://example.com/context>; rel="#{JSON::LD::JSON_LD_NS}context"; type="application/ld+json")
-          }
-        )
-      end
-    
-      it "processes document and retrieves linked context" do
-        expect(described_class).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(context)
-        described_class.new(remote_doc, nil)
       end
     end
   end
@@ -103,15 +79,6 @@ describe JSON::LD::API do
           end
         end
       end
-    end
-  end
-
-  # This class is deprecated
-  describe JSON::LD::API::RemoteDocument do
-    it "creates with deprecation" do
-      expect {
-        described_class.new("http://example.com", "foo")
-      }.to write('[DEPRECATION]').to(:error)
     end
   end
 end

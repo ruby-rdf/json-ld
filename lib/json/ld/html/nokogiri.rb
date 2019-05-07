@@ -128,10 +128,10 @@ module JSON::LD
       # Initializes the underlying XML library.
       #
       # @param  [Hash{Symbol => Object}] options
-      # @return [void]
+      # @return [NodeProxy] of root element
       def initialize_html(input, options = {})
         require 'nokogiri' unless defined?(::Nokogiri)
-        @doc = case input
+        doc = case input
         when ::Nokogiri::HTML::Document, ::Nokogiri::XML::Document
           input
         else
@@ -143,37 +143,8 @@ module JSON::LD
             ::Nokogiri::HTML.parse(input, base_uri.to_s, 'utf-8')
           end
         end
-      end
 
-      # Accessor methods to mask native elements & attributes
-
-      ##
-      # Return proxy for document root
-      def root
-        @root ||= NodeProxy.new(@doc.root) if @doc && @doc.root
-      end
-
-      ##
-      # Document errors
-      def doc_errors
-        # FIXME: Nokogiri version 1.5 thinks many HTML5 elements are invalid, so just ignore all Tag errors.
-        # Nokogumbo might make this simpler
-        if @host_language == :html5
-          @doc.errors.reject {|e| e.to_s =~ /The doctype must be the first token in the document/}
-        else
-          @doc.errors.reject {|e| e.to_s =~ /(?:Tag \w+ invalid)|(?:Missing attribute name)/}
-        end
-      end
-
-      ##
-      # Find value of document base
-      #
-      # @param [String] base Existing base from URI or :base_uri
-      # @return [String]
-      def doc_base(base)
-        # find if the document has a base element
-        base_el = @doc.at_css("html>head>base")
-        base.join(base_el.attribute("href").to_s.split("#").first) if base_el
+        NodeProxy.new(doc.root) if doc && doc.root
       end
     end
   end

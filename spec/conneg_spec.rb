@@ -40,16 +40,16 @@ describe JSON::LD::ContentNegotiation do
 
   describe "#call" do
     let(:schema_context) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "@vocab": "http://schema.org/",
           "id": "@id",
           "type": "@type"
         }
-      }), base_uri: "http://schema.org")
+      }), documentUrl: "http://schema.org")
     }
     let(:frame) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
@@ -61,21 +61,21 @@ describe JSON::LD::ContentNegotiation do
             "@type": "ex:Chapter"
           }
         }
-      }), base_uri: "http://conneg.example.com/frame")
+      }), documentUrl: "http://conneg.example.com/frame")
     }
     let(:context) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
         }
-      }), base_uri: "http://conneg.example.com/context")
+      }), documentUrl: "http://conneg.example.com/context")
     }
 
     before(:each) do
       allow(JSON::LD::API).to receive(:documentLoader).with("http://schema.org", any_args).and_yield(schema_context)
       allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context", any_args).and_yield(context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_return(frame)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_yield(frame)
     end
 
     context "with text result" do
@@ -235,16 +235,16 @@ describe Rack::LinkedData::ContentNegotiation do
 
   describe "#call" do
     let(:schema_context) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "@vocab": "http://schema.org/",
           "id": "@id",
           "type": "@type"
         }
-      }), base_uri: "http://schema.org")
+      }), documentUrl: "http://schema.org")
     }
     let(:frame) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
@@ -256,21 +256,21 @@ describe Rack::LinkedData::ContentNegotiation do
             "@type": "ex:Chapter"
           }
         }
-      }), base_uri: "http://conneg.example.com/frame")
+      }), documentUrl: "http://conneg.example.com/frame")
     }
     let(:context) {
-      RDF::Util::File::RemoteDocument.new(%q({
+      JSON::LD::API::RemoteDocument.new(%q({
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
         }
-      }), base_uri: "http://conneg.example.com/context")
+      }), documentUrl: "http://conneg.example.com/context")
     }
 
     before(:each) do
       allow(JSON::LD::API).to receive(:documentLoader).with("http://schema.org", any_args).and_yield(schema_context)
       allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context", any_args).and_yield(context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_return(frame)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_yield(frame)
     end
 
     {

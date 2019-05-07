@@ -304,7 +304,6 @@ module JSON::LD
         @base = @doc_base = RDF::URI(options[:base]).dup
         @doc_base.canonicalize! if options[:canonicalize]
       end
-      options[:documentLoader] ||= JSON::LD::API.method(:documentLoader)
       @processingMode ||= options[:processingMode]
       @term_definitions = {}
       @iri_to_term = {
@@ -482,20 +481,15 @@ module JSON::LD
 
             # Load context document, if it is a string
             begin
-              context_opts = @options.dup
+              context_opts = @options.merge(
+                profile: 'http://www.w3.org/ns/json-ld#context',
+                requestProfile: 'http://www.w3.org/ns/json-ld#context',
+                base: nil)
               context_opts.delete(:headers)
-              @options[:documentLoader].call(context.to_s, context_opts) do |remote_doc|
+              JSON::LD::API.loadRemoteDocument(context.to_s, context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                jo = if remote_doc.content_type == 'text/html'
-                  API.load_html(remote_doc.document, url: context.to_s, profile: 'http://www.w3.org/ns/json-ld#context')
-                elsif remote_doc.document.is_a?(String)
-                  MultiJson.load(remote_doc.document)
-                else
-                  remote_doc.document
-                end
-
-                raise JsonLdError::InvalidRemoteContext, "#{context}" unless jo.is_a?(Hash) && jo.has_key?('@context')
-                context = jo['@context']
+                raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
+                context = remote_doc.document['@context']
               end
             rescue JsonLdError::LoadingDocumentFailed => e
               #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}

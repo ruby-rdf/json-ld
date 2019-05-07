@@ -40,23 +40,6 @@ module RDF
       value.is_a?(String)
     end
   end
-
-  module Util
-    module File
-      # Add contextUrl accessor
-      class RemoteDocument
-        # @return [String]
-        #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-        attr_accessor :contextUrl
-
-        # @return [String, Array<Hash>, Hash]
-        #   The retrieved document, either as raw text or parsed JSON
-        def document
-          @document ||= self.read
-        end
-      end
-    end
-  end
 end
 
 class Array

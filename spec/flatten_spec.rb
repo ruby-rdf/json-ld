@@ -423,6 +423,7 @@ describe JSON::LD::API do
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
+    params[:base] ||= nil
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
       expect {JSON::LD::API.flatten(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])

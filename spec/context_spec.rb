@@ -25,7 +25,7 @@ describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
   let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
   let(:remote_doc) do
-    RDF::Util::File::RemoteDocument.new(%q({
+    JSON::LD::API::RemoteDocument.new(%q({
       "@context": {
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
@@ -33,8 +33,8 @@ describe JSON::LD::Context do
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
     }),
-    base_uri: "http://example.com/context",
-    headers: {content_type: "application/ld+json"})
+    documentUrl: "http://example.com/context",
+    contentType: "application/ld+json")
   end
   subject {context}
 
@@ -82,7 +82,7 @@ describe JSON::LD::Context do
 
       it "retrieves and parses a remote context document in HTML using the context profile" do
         remote_doc =
-          RDF::Util::File::RemoteDocument.new(%q(
+          JSON::LD::API::RemoteDocument.new(%q(
             <html><head>
             <script>Not This</script>
             <script type="application/ld+json">
@@ -113,9 +113,10 @@ describe JSON::LD::Context do
             </script>
             </head></html>
             ),
-            base_uri: "http://example.com/context",
-            headers: {content_type: "text/html"})
-          JSON::LD::Context::PRELOADED.clear
+            documentUrl: "http://example.com/context",
+            contentType: "text/html")
+
+        JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
@@ -128,7 +129,7 @@ describe JSON::LD::Context do
 
       it "retrieves and parses a remote context document in HTML" do
         remote_doc =
-          RDF::Util::File::RemoteDocument.new(%q(
+          JSON::LD::API::RemoteDocument.new(%q(
             <html><head>
             <script>Not This</script>
             <script type="application/ld+json">
@@ -151,8 +152,8 @@ describe JSON::LD::Context do
             </script>
             </head></html>
             ),
-            base_uri: "http://example.com/context",
-            headers: {content_type: "text/html"})
+            documentUrl: "http://example.com/context",
+            contentType: "text/html")
           JSON::LD::Context::PRELOADED.clear
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
@@ -170,7 +171,7 @@ describe JSON::LD::Context do
 
       it "parses a referenced context at a relative URI" do
         JSON::LD::Context::PRELOADED.clear
-        rd1 = RDF::Util::File::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
+        rd1 = JSON::LD::API::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
@@ -249,7 +250,7 @@ describe JSON::LD::Context do
 
       it "merges definitions from remote contexts" do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        rd2 = RDF::Util::File::RemoteDocument.new(%q({
+        rd2 = JSON::LD::API::RemoteDocument.new(%q({
           "@context": {
             "title": {"@id": "http://purl.org/dc/terms/title"}
           }
