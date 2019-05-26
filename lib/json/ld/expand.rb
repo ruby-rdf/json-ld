@@ -29,17 +29,24 @@ module JSON::LD
     #   Ensure output objects have keys ordered properly
     # @param [Boolean] framing (false)
     #   Special rules for expanding a frame
+    # @param [Boolean] from_map
+    #   Expanding from a map, which could be an `@type` map, so don't clear out context term definitions
     # @return [Array<Hash{String => Object}>]
-    def expand(input, active_property, context, ordered: false, framing: false)
+    def expand(input, active_property, context, ordered: false, framing: false, from_map: false)
       #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
+      expanded_active_property = context.expand_iri(active_property, vocab: true).to_s if active_property
+
+      # Use a term-specific context, if defined, based on the non-type-scoped context.
+      property_scoped_context = context.term_definitions[active_property].context if active_property && context.term_definitions[active_property]
+
       result = case input
       when Array
         # If element is an array,
         is_list = context.container(active_property) == CONTAINER_LIST
         value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
-          v = expand(v, active_property, context, ordered: ordered, framing: framing)
+          v = expand(v, active_property, context, ordered: ordered, framing: framing, from_map: from_map)
 
           # If the active property is @list or its container mapping is set to @list and v is an array, change it to a list object
           v = {"@list" => v} if is_list && v.is_a?(Array)
@@ -53,25 +60,47 @@ module JSON::LD
 
         value
       when Hash
+        if context.previous_context
+          expanded_key_map = input.keys.inject({}) {|memo, key| memo.merge(key => context.expand_iri(key, vocab: true).to_s)}
+          # Revert any previously type-scoped term definitions, unless this is from a map, a value object or a subject reference
+          revert_context = !from_map &&
+            !expanded_key_map.values.include?('@value') &&
+            !(expanded_key_map.values == ['@id'])
+
+          # If there's a previous context, the context was type-scoped
+          context = context.previous_context if revert_context
+        end
+
+        # Apply property-scoped context after reverting term-scoped context
+        context = property_scoped_context ? context.parse(property_scoped_context, from_property: true) : context
+
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
           context = context.parse(input.delete('@context'))
           #log_debug("expand") {"context: #{context.inspect}"}
         end
 
+        # Set the type-scoped context to the context on input, for use later
+        type_scoped_context = context
+
         output_object = {}
 
         # See if keys mapping to @type have terms with a local context
-        input.each_pair do |key, val|
-          next unless context.expand_iri(key, vocab: true) == '@type'
-          Array(val).sort.each do |term|
-            term_context = context.term_definitions[term].context if context.term_definitions[term]
-            context = term_context ? context.parse(term_context) : context
+        type_key = input.keys.detect {|k| context.expand_iri(k, vocab: true, quite: true) == '@type'}
+        if type_key
+          Array(input[type_key]).sort.each do |term|
+            term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
+            context = term_context ? context.parse(term_context, from_type: true) : context
           end
         end
 
         # Process each key and value in element. Ignores @nesting content
-        expand_object(input, active_property, context, output_object, ordered: ordered, framing: framing)
+        expand_object(input, active_property, context, output_object,
+                      expanded_active_property: expanded_active_property,
+                      type_scoped_context: type_scoped_context,
+                      type_key: type_key,
+                      ordered: ordered,
+                      framing: framing)
 
         #log_debug("output object") {output_object.inspect}
 
@@ -122,7 +151,7 @@ module JSON::LD
         return nil if output_object.length == 1 && output_object.key?('@language')
 
         # If active property is null or @graph, drop free-floating values as follows:
-        if (active_property || '@graph') == '@graph' &&
+        if (expanded_active_property || '@graph') == '@graph' &&
           (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - CONTAINER_ID).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
@@ -137,7 +166,11 @@ module JSON::LD
         end
       else
         # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
-        return nil if input.nil? || active_property.nil? || active_property == '@graph'
+        return nil if input.nil? || active_property.nil? || expanded_active_property == '@graph'
+
+        # Apply property-scoped context
+        context = property_scoped_context ? context.parse(property_scoped_context, from_property: true) : context
+
         context.expand_value(active_property, input, log_depth: @options[:log_depth])
       end
 
@@ -148,12 +181,15 @@ module JSON::LD
   private
 
     # Expand each key and value of element adding them to result
-    def expand_object(input, active_property, context, output_object, ordered:, framing:)
+    def expand_object(input, active_property, context, output_object,
+                      expanded_active_property:,
+                      type_scoped_context:,
+                      type_key:,
+                      ordered:,
+                      framing:)
       nests = []
 
-      input_type = Array(input.detect do |k, v|
-        context.expand_iri(k, vocab: true, quiet: true) == '@type'
-      end).last
+      input_type = Array(input[type_key]).last
       input_type = context.expand_iri(input_type, vocab: true, quiet: true) if input_type
 
       # Then, proceed and process each property and value in element as follows:
@@ -177,7 +213,7 @@ module JSON::LD
         if KEYWORDS.include?(expanded_property)
           # If active property equals @reverse, an invalid reverse property map error has been detected and processing is aborted.
           raise JsonLdError::InvalidReversePropertyMap,
-                "@reverse not appropriate at this point" if active_property == '@reverse'
+                "@reverse not appropriate at this point" if expanded_active_property == '@reverse'
 
           # If result has already an expanded property member, an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
@@ -225,10 +261,10 @@ module JSON::LD
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
                       "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
-                context.expand_iri(v, vocab: true, documentRelative: true, quiet: true).to_s
+                type_scoped_context.expand_iri(v, vocab: true, documentRelative: true, quiet: true).to_s
               end
             when String
-              context.expand_iri(value, vocab: true, documentRelative: true, quiet: true).to_s
+              type_scoped_context.expand_iri(value, vocab: true, documentRelative: true, quiet: true).to_s
             when Hash
               # For framing
               raise JsonLdError::InvalidTypeValue,
@@ -304,7 +340,7 @@ module JSON::LD
             # If expanded property is @list:
 
             # If active property is null or @graph, continue with the next key from element to remove the free-floating list.
-            next if (active_property || '@graph') == '@graph'
+            next if (expanded_active_property || '@graph') == '@graph'
 
             # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
             value = expand(value, active_property, context, ordered: ordered, framing: framing)
@@ -373,12 +409,8 @@ module JSON::LD
           next
         end
 
-        # Use a term-specific context, if defined
-        term_context = context.term_definitions[key].context if context.term_definitions[key]
-        active_context = term_context ? context.parse(term_context, from_term: key) : context
-
-        container = active_context.container(key)
-        expanded_value = if active_context.coerce(key) == '@json'
+        container = context.container(key)
+        expanded_value = if context.coerce(key) == '@json'
           # In JSON-LD 1.1, values can be native JSON
           {"@value" => value, "@type" => "@json"}
         elsif container.length == 1 && container.first == '@language' && value.is_a?(Hash)
@@ -390,7 +422,7 @@ module JSON::LD
           # For each key-value pair language-language value in value, ordered lexicographically by language
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
-            expanded_k = active_context.expand_iri(k, vocab: true, quiet: true).to_s
+            expanded_k = context.expand_iri(k, vocab: true, quiet: true).to_s
             [value[k]].flatten.each do |item|
               # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
               raise JsonLdError::InvalidLanguageMapValue,
@@ -411,18 +443,21 @@ module JSON::LD
           ary = []
           index_key = context.term_definitions[key].index || '@index'
 
+          # While processing index keys, if container includes @type, clear type-scoped term definitions
+          container_context = container.include?('@type') && context.previous_context ? context.previous_context : context 
+
           # For each key-value in the object:
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
             # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
-            map_context = active_context.term_definitions[k].context if container.include?('@type') && active_context.term_definitions[k]
-            map_context = active_context.parse(map_context) if map_context
-            map_context ||= active_context
+            map_context = container_context.term_definitions[k].context if container.include?('@type') && container_context.term_definitions[k]
+            map_context = container_context.parse(map_context, from_type: true) if map_context
+            map_context ||= container_context
 
-            expanded_k = active_context.expand_iri(k, vocab: true, quiet: true).to_s
+            expanded_k = container_context.expand_iri(k, vocab: true, quiet: true).to_s
 
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
-            index_value = expand([value[k]].flatten, key, map_context, ordered: ordered, framing: framing)
+            index_value = expand([value[k]].flatten, key, map_context, ordered: ordered, framing: framing, from_map: true)
             index_value.each do |item|
               case container
               when CONTAINER_GRAPH_INDEX, CONTAINER_INDEX
@@ -436,8 +471,8 @@ module JSON::LD
                   raise JsonLdError::InvalidValueObject, "Attempt to add illegal key to value object: #{index_key}"
                 else
                   # Expand key based on term
-                  expanded_k = k == '@none' ? '@none' : active_context.expand_value(index_key, k)
-                  index_property = active_context.expand_iri(index_key, vocab: true, quiet: true).to_s
+                  expanded_k = k == '@none' ? '@none' : container_context.expand_value(index_key, k)
+                  index_property = container_context.expand_iri(index_key, vocab: true, quiet: true).to_s
                   item[index_property] = [expanded_k].concat(Array(item[index_property])) unless expanded_k == '@none'
                 end
               when CONTAINER_GRAPH_ID, CONTAINER_ID
@@ -446,7 +481,7 @@ module JSON::LD
                   item = {'@graph' => as_array(item)}
                 end
                 # Expand k document relative
-                expanded_k = active_context.expand_iri(k, documentRelative: true, quiet: true).to_s unless expanded_k == '@none'
+                expanded_k = container_context.expand_iri(k, documentRelative: true, quiet: true).to_s unless expanded_k == '@none'
                 item['@id'] ||= expanded_k unless expanded_k == '@none'
               when CONTAINER_TYPE
                 item['@type'] = [expanded_k].concat(Array(item['@type'])) unless expanded_k == '@none'
@@ -459,7 +494,7 @@ module JSON::LD
           ary
         else
           # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
-          expand(value, key, active_context, ordered: ordered, framing: framing)
+          expand(value, key, context, ordered: ordered, framing: framing)
         end
 
         # If expanded value is null, ignore key by continuing to the next key from element.
@@ -518,7 +553,12 @@ module JSON::LD
         nested_values.each do |nv|
           raise JsonLdError::InvalidNestValue, nv.inspect unless
             nv.is_a?(Hash) && nv.keys.none? {|k| context.expand_iri(k, vocab: true) == '@value'}
-          expand_object(nv, active_property, context, output_object, ordered: ordered, framing: framing)
+          expand_object(nv, active_property, context, output_object,
+                        expanded_active_property: expanded_active_property,
+                        type_scoped_context: type_scoped_context,
+                        type_key: type_key,
+                        ordered: ordered,
+                        framing: framing)
         end
       end
     end

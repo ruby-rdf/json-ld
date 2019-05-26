@@ -2312,7 +2312,7 @@ describe JSON::LD::API do
             "a": {"type": "Foo", "bar": "baz"}
           }),
         },
-        "deep @context affects nested nodes" => {
+        "deep @context does not affect nested nodes" => {
           input: %([
             {
               "@type": ["http://example/Foo"],
@@ -2331,7 +2331,7 @@ describe JSON::LD::API do
               "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
             },
             "@type": "Foo",
-            "bar": {"baz": "buzz"}
+            "bar": {"baz": {"@id": "http://example/buzz"}}
           }),
         },
         "scoped context layers on intemediate contexts" => {

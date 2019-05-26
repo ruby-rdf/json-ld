@@ -29,8 +29,6 @@ module JSON::LD
 
       # If the term definition for active property itself contains a context, use that for compacting values.
       input_context = self.context
-      td = self.context.term_definitions[property] if property
-      self.context = (td && td.context && self.context.parse(td.context, from_term: property)) || input_context
 
       case element
       when Array
@@ -54,6 +52,15 @@ module JSON::LD
         # @null objects are used in framing
         return nil if element.key?('@null')
 
+        # Revert any previously type-scoped context
+        if context.previous_context && !element.key?('@value') && element.keys != %w(@id)
+          self.context = context.previous_context
+        end
+
+        # Look up term definintions from property using the original type-scoped context, if it exists, but apply them to the now current previous context
+        td = input_context.term_definitions[property] if property
+        self.context = context.parse(td.context, from_property: property) if td && td.context
+
         if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, log_depth: @options[:log_depth])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
@@ -67,7 +74,6 @@ module JSON::LD
           return compact(element['@list'], property: property, ordered: ordered)
         end
 
-
         inside_reverse = property == '@reverse'
         result, nest_result = {}, nil
 
@@ -77,29 +83,34 @@ module JSON::LD
           map {|expanded_type| context.compact_iri(expanded_type, vocab: true)}.
           sort.
           each do |term|
-          term_context = self.context.term_definitions[term].context if context.term_definitions[term]
-          self.context = context.parse(term_context) if term_context
+          term_context = input_context.term_definitions[term].context if input_context.term_definitions[term]
+          self.context = context.parse(term_context, from_type: true) if term_context
         end
 
         element.keys.opt_sort(ordered: ordered).each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
-          if expanded_property == '@id' || expanded_property == '@type'
-            compacted_value = Array(expanded_value).map do |expanded_type|
-              context.compact_iri(expanded_type, vocab: (expanded_property == '@type'), log_depth: @options[:log_depth])
-            end
+          if expanded_property == '@id'
+            compacted_value = Array(expanded_value).map {|expanded_id| context.compact_iri(expanded_id)}
 
-            kw_alias = context.compact_iri(expanded_property, vocab: true)
+            kw_alias = context.compact_iri('@id', vocab: true)
+            as_array = compacted_value.length > 1
+            compacted_value = compacted_value.first unless as_array
+            result[kw_alias] = compacted_value
+            next
+          end
+
+          if expanded_property == '@type'
+            compacted_value = Array(expanded_value).map {|expanded_type| input_context.compact_iri(expanded_type, vocab: true)}
+
+            kw_alias = context.compact_iri('@type', vocab: true)
             as_array = (context.processingMode == 'json-ld-1.1' &&
                         context.as_array?(kw_alias) &&
                         !value?(element)) ||
                        compacted_value.length > 1
             compacted_value = compacted_value.first unless as_array
-
-            al = context.compact_iri(expanded_property, vocab: true, quiet: true)
-            #log_debug(expanded_property) {"result[#{al}] = #{compacted_value.inspect}"}
-            result[al] = compacted_value
+            result[kw_alias] = compacted_value
             next
           end
 

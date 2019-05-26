@@ -2605,7 +2605,7 @@ describe JSON::LD::API do
             }
           ])
         },
-        "deep @context affects nested nodes": {
+        "deep @context does not affect nested nodes": {
           input: %({
             "@context": {
               "@vocab": "http://example/",
@@ -2618,7 +2618,7 @@ describe JSON::LD::API do
             {
               "@type": ["http://example/Foo"],
               "http://example/bar": [{
-                "http://example/baz": [{"@id": "http://example/buzz"}]
+                "http://example/baz": [{"@value": "buzz"}]
               }]
             }
           ])
