@@ -205,6 +205,23 @@ module JSON::LD
       # @return [Boolean]
       def as_set?; @as_set || false; end
 
+      # Check if term definitions are identical, modulo @protected
+      # @return [Boolean]
+      def ==(other)
+        other.is_a?(TermDefinition) &&
+        id == other.id &&
+        term == other.term &&
+        type_mapping == other.type_mapping &&
+        container_mapping == other.container_mapping &&
+        nest == other.nest &&
+        language_mapping == other.language_mapping &&
+        reverse_property == other.reverse_property &&
+        simple == other.simple &&
+        index == other.index &&
+        context == other.context &&
+        prefix? == other.prefix?
+      end
+
       def inspect
         v = %w([TD)
         v << "id=#{@id}"
@@ -644,7 +661,7 @@ module JSON::LD
       # Remove any existing term definition for term in active context.
       previous_definition = term_definitions[term]
       if previous_definition && previous_definition.protected? && !from_property
-        raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
+        # Check later to detect identical redefinition
       else
         term_definitions.delete(term) if previous_definition
       end
@@ -653,7 +670,13 @@ module JSON::LD
       when nil, ID_NULL_OBJECT
         # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
         #log_debug("") {"=> nil"}
+        
         term_definitions[term] = TermDefinition.new(term)
+
+        if previous_definition && previous_definition.protected? && term_definitions[term] != previous_definition && !from_property
+          raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
+        end
+
         defined[term] = true
         return
       when Hash
@@ -822,6 +845,11 @@ module JSON::LD
           else
             raise JsonLdError::InvalidPrefixValue, "unknown value for '@prefix': #{pfx.inspect} on term #{term.inspect}"
           end
+        end
+
+        if previous_definition && previous_definition.protected? && definition != previous_definition && !from_property
+          definition == previous_definition
+          raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
         end
 
         term_definitions[term] = definition

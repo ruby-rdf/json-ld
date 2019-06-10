@@ -1906,7 +1906,7 @@ describe JSON::LD::Context do
       expect(ctx.term_definitions["protected2"]).to be_protected
     end
 
-    it "seals does not seal term with @protected: false when context is protected" do
+    it "does not seal term with @protected: false when context is protected" do
       ctx = context.parse({
         "@protected" => true,
         "protected" => {"@id" => "http://example.com/protected"},
@@ -1914,6 +1914,23 @@ describe JSON::LD::Context do
       })
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
+    end
+
+    it "does not error when redefining an identical term" do
+      c = {
+        "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
+      }
+      ctx = context.parse(c)
+
+      expect {ctx.parse(c)}.not_to raise_error
+    end
+
+    it "errors when redefining a protected term" do
+      ctx = context.parse({
+        "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
+      })
+
+      expect {ctx.parse({"protected" => "http://example.com/different"})}.to raise_error(JSON::LD::JsonLdError::ProtectedTermRedefinition)
     end
 
     it "errors when clearing a context having protected terms" do
