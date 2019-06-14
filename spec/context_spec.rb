@@ -1143,12 +1143,16 @@ describe JSON::LD::Context do
       "keyword"       => ["@type",               "@type"],
       "empty"         => [":suffix",             "http://empty/suffix"],
       "unmapped"      => ["foo",                 "foo"],
-      "bnode"         => ["_:a",                 RDF::Node("a")],
+      "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
       "relative"      => ["foo/bar",             "http://base/foo/bar"],
       "odd Compact IRI"=>["ex:perts",            "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
-        expect(subject.compact_iri(input)).to produce(result, logger)
+        if result.is_a?(Class)
+          expect {subject.compact_iri(input)}.to raise_error(result)
+        else
+          expect(subject.compact_iri(input)).to produce(result, logger)
+        end
       end
     end
 
@@ -1159,12 +1163,16 @@ describe JSON::LD::Context do
         "keyword"       => ["@type",               "@type"],
         "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
         "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
         "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          if result.is_a?(Class)
+            expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+          else
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          end
         end
       end
     end
@@ -1178,12 +1186,16 @@ describe JSON::LD::Context do
         "keyword"       => ["@type",               "@type"],
         "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
         "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
         "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          if result.is_a?(Class)
+            expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+          else
+            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+          end
         end
       end
 
@@ -1206,12 +1218,16 @@ describe JSON::LD::Context do
           "keyword"       => ["@type",               "@type"],
           "empty"         => [":suffix",             "http://empty/suffix"],
           "unmapped"      => ["foo",                 "foo"],
-          "bnode"         => ["_:a",                 RDF::Node("a")],
+          "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
           "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
           "odd Compact IRI"=> ["experts",            "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
-            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+            if result.is_a?(Class)
+              expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+            else
+              expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+            end
           end
         end
       end
@@ -1317,12 +1333,16 @@ describe JSON::LD::Context do
         "keyword"       => ["@type",               "@type"],
         "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => ["_:a",                 RDF::Node("a")],
+        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
         "relative"      => ["foo/bar",             "http://base/foo/bar"],
         "odd Compact IRI"=> ["ex:perts",            "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
-          expect(subject.compact_iri(input)).to produce(result, logger)
+          if result.is_a?(Class)
+            expect {subject.compact_iri(input)}.to raise_error(result)
+          else
+            expect(subject.compact_iri(input)).to produce(result, logger)
+          end
         end
       end
 
@@ -1335,12 +1355,16 @@ describe JSON::LD::Context do
           "keyword"       => ["@type",               "@type"],
           "empty"         => [":suffix",             "http://empty/suffix"],
           "unmapped"      => ["foo",                 "foo"],
-          "bnode"         => ["_:a",                 RDF::Node("a")],
+          "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
           "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
           "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
-            expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+            if result.is_a?(Class)
+              expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+            else
+              expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
+            end
           end
         end
       end

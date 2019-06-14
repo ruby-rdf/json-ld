@@ -1372,6 +1372,12 @@ module JSON::LD
         return candidates.sort.first if !candidates.empty?
       end
 
+      # If iri could be confused with a compact IRI using a term in this context, signal an error
+      term_definitions.each do |term, td|
+        next unless iri.to_s.start_with?("#{term}:") && td.prefix?
+        raise JSON::LD::JsonLdError:: IRIConfusedWithPrefix, "Absolute IRI '#{iri}' confused with prefix '#{term}'"
+      end
+
       if !vocab
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(iri)
@@ -1530,11 +1536,12 @@ module JSON::LD
 
       if result.is_a?(Hash) && result.has_key?('@type') && value['@type'] != '@json'
         # Compact values of @type
-        result['@type'] = if result['@type'].is_a?(Array)
+        c_type =  if result['@type'].is_a?(Array)
           result['@type'].map {|t| compact_iri(t, vocab: true)}
         else
           compact_iri(result['@type'], vocab: true)
         end
+        result = result.merge('@type' => c_type)
       end
       
       # If the result is an object, tranform keys using any term keyword aliases

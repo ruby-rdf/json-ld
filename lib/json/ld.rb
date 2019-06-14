@@ -140,6 +140,7 @@ module JSON
       class InvalidValueObject < JsonLdError; @code = "invalid value object"; end
       class InvalidValueObjectValue < JsonLdError; @code = "invalid value object value"; end
       class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
+      class IRIConfusedWithPrefix < JsonLdError; @code = "IRI confused with prefix"; end
       class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
