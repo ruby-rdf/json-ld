@@ -644,7 +644,7 @@ module JSON::LD
 
       # Initialize value to a the value associated with the key term in local context.
       value = local_context.fetch(term, false)
-      simple_term = value.is_a?(String)
+      simple_term = value.is_a?(String) || value.nil?
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if processingMode == 'json-ld-1.1' &&  term == '@type' && value == {'@container' => '@set'}
@@ -666,197 +666,184 @@ module JSON::LD
         term_definitions.delete(term) if previous_definition
       end
 
-      case value
-      when nil, ID_NULL_OBJECT
-        # If value equals null or value is a JSON object containing the key-value pair (@id-null), then set the term definition in active context to null, set the value associated with defined's key term to true, and return.
-        #log_debug("") {"=> nil"}
-        
-        term_definitions[term] = TermDefinition.new(term)
+      raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class} on term #{term.inspect}" unless value.is_a?(Hash)
 
-        if previous_definition && previous_definition.protected? && term_definitions[term] != previous_definition && !from_property
-          raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
+      #log_debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
+      definition = TermDefinition.new(term)
+      definition.simple = simple_term
+
+      if options[:validate]
+        expected_keys = case processingMode
+        when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
+        else JSON_LD_EXPECTED_KEYS
         end
 
-        defined[term] = true
-        return
-      when Hash
-        #log_debug("") {"Hash[#{term.inspect}] = #{value.inspect}"}
-        definition = TermDefinition.new(term)
-        definition.simple = simple_term
-
-        if options[:validate]
-          expected_keys = case processingMode
-          when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
-          else JSON_LD_EXPECTED_KEYS
-          end
-
-          if value.any? { |key, _| !expected_keys.include?(key) }
-            extra_keys = value.keys - expected_keys.to_a
-            raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
-          end
+        if value.any? { |key, _| !expected_keys.include?(key) }
+          extra_keys = value.keys - expected_keys.to_a
+          raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
         end
-
-        # Potentially note that the term is protected
-        definition.protected = value.fetch('@protected', protected)
-
-        if value.has_key?('@type')
-          type = value['@type']
-          # SPEC FIXME: @type may be nil
-          type = case type
-          when nil
-            type
-          when String
-            begin
-              expand_iri(type, vocab: true, documentRelative: false, local_context: local_context, defined: defined)
-            rescue JsonLdError::InvalidIRIMapping
-              raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect} on term #{term.inspect}"
-            end
-          else
-            :error
-          end
-          if JSON_LD_11_TYPE_VALUES.include?(type) && processingMode == 'json-ld-1.1'
-            # This is okay and used in compaction in 1.1
-          elsif !JSON_LD_10_TYPE_VALUES.include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
-            raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
-          end
-          #log_debug("") {"type_mapping: #{type.inspect}"}
-          definition.type_mapping = type
-        end
-
-        if value.has_key?('@reverse')
-          raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
-            value.key?('@id') || value.key?('@nest')
-          raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
-            value['@reverse'].is_a?(String)
-
-          # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
-          definition.id =  expand_iri(value['@reverse'],
-                                      vocab: true,
-                                      documentRelative: true,
-                                      local_context: local_context,
-                                      defined: defined)
-          raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
-            definition.id.is_a?(RDF::URI) && definition.id.absolute?
-
-          if term.include?(':') && (term_iri = expand_iri(term)) != definition.id
-            raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
-          end
-
-          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
-
-          # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
-          if value.has_key?('@container')
-            container = value['@container']
-            raise JsonLdError::InvalidReverseProperty,
-                  "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
-                   container.is_a?(String) && (container == '@set' || container == '@index')
-            definition.container_mapping = check_container(container, local_context, defined, term)
-          end
-          definition.reverse_property = true
-        elsif value.has_key?('@id') && value['@id'] != term
-          raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
-            value['@id'].is_a?(String)
-          definition.id = expand_iri(value['@id'],
-            vocab: true,
-            documentRelative: true,
-            local_context: local_context,
-            defined: defined)
-          raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
-            definition.id == '@context'
-
-          if term.match?(/:[^:]/) && (term_iri = expand_iri(term)) != definition.id
-            raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
-          end
-
-          warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
-
-          # If id ends with a gen-delim, it may be used as a prefix for simple terms
-          definition.prefix = true if !term.include?(':') &&
-            definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') &&
-            simple_term
-        elsif term.include?(':')
-          # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
-          prefix, suffix = term.split(':', 2)
-          create_term_definition(local_context, prefix, defined, protected: protected) if local_context.has_key?(prefix)
-
-          definition.id = if td = term_definitions[prefix]
-            # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
-            td.id + suffix
-          else
-            # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
-            term
-          end
-          #log_debug("") {"=> #{definition.id}"}
-        elsif KEYWORDS.include?(term)
-          # This should only happen for @type when @container is @set
-          definition.id = term
-        else
-          # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
-          raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
-          definition.id = vocab + term
-          #log_debug("") {"=> #{definition.id}"}
-        end
-
-        @iri_to_term[definition.id] = term if simple_term && definition.id
-
-        if value.has_key?('@container')
-          #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
-          definition.container_mapping = check_container(value['@container'], local_context, defined, term)
-        end
-
-        if value.has_key?('@index')
-          # property-based indexing
-          raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{term} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
-          raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{term} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
-          definition.index = value['@index'].to_s
-        end
-
-        if value.has_key?('@context')
-          begin
-            self.parse(value['@context'], from_property: true)
-            # Record null context in array form
-            definition.context = value['@context'] ? value['@context'] : [nil]
-          rescue JsonLdError => e
-            raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
-          end
-        end
-
-        if value.has_key?('@language')
-          language = value['@language']
-          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
-          language = language.downcase if language.is_a?(String)
-          #log_debug("") {"language_mapping: #{language.inspect}"}
-          definition.language_mapping = language || false
-        end
-
-        if value.has_key?('@nest')
-          nest = value['@nest']
-          raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
-          raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
-          #log_debug("") {"nest: #{nest.inspect}"}
-          definition.nest = nest
-        end
-
-        if value.has_key?('@prefix')
-          raise JsonLdError::InvalidTermDefinition, "@prefix used on compact IRI term #{term.inspect}" if term.include?(':')
-          case pfx = value['@prefix']
-          when TrueClass, FalseClass
-            definition.prefix = pfx
-          else
-            raise JsonLdError::InvalidPrefixValue, "unknown value for '@prefix': #{pfx.inspect} on term #{term.inspect}"
-          end
-        end
-
-        if previous_definition && previous_definition.protected? && definition != previous_definition && !from_property
-          definition == previous_definition
-          raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
-        end
-
-        term_definitions[term] = definition
-        defined[term] = true
-      else
-        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} is an #{value.class} on term #{term.inspect}"
       end
+
+      # Potentially note that the term is protected
+      definition.protected = value.fetch('@protected', protected)
+
+      if value.has_key?('@type')
+        type = value['@type']
+        # SPEC FIXME: @type may be nil
+        type = case type
+        when nil
+          type
+        when String
+          begin
+            expand_iri(type, vocab: true, documentRelative: false, local_context: local_context, defined: defined)
+          rescue JsonLdError::InvalidIRIMapping
+            raise JsonLdError::InvalidTypeMapping, "invalid mapping for '@type': #{type.inspect} on term #{term.inspect}"
+          end
+        else
+          :error
+        end
+        if JSON_LD_11_TYPE_VALUES.include?(type) && processingMode == 'json-ld-1.1'
+          # This is okay and used in compaction in 1.1
+        elsif !JSON_LD_10_TYPE_VALUES.include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
+          raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
+        end
+        #log_debug("") {"type_mapping: #{type.inspect}"}
+        definition.type_mapping = type
+      end
+
+      if value.has_key?('@reverse')
+        raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
+          value.key?('@id') || value.key?('@nest')
+        raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
+          value['@reverse'].is_a?(String)
+
+        # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
+        definition.id =  expand_iri(value['@reverse'],
+                                    vocab: true,
+                                    documentRelative: true,
+                                    local_context: local_context,
+                                    defined: defined)
+        raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
+          definition.id.is_a?(RDF::URI) && definition.id.absolute?
+
+        if term.include?(':') && (term_iri = expand_iri(term)) != definition.id
+          raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+        end
+
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+
+        # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
+        if value.has_key?('@container')
+          container = value['@container']
+          raise JsonLdError::InvalidReverseProperty,
+                "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
+                 container.is_a?(String) && (container == '@set' || container == '@index')
+          definition.container_mapping = check_container(container, local_context, defined, term)
+        end
+        definition.reverse_property = true
+      elsif value.has_key?('@id') && value['@id'].nil?
+        # Allowed to reserve a null term, which may be protected
+      elsif value.has_key?('@id') && value['@id'] != term
+        raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
+          value['@id'].is_a?(String)
+        definition.id = expand_iri(value['@id'],
+          vocab: true,
+          documentRelative: true,
+          local_context: local_context,
+          defined: defined)
+        raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
+          definition.id == '@context'
+
+        if term.match?(/:[^:]/) && (term_iri = expand_iri(term)) != definition.id
+          raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+        end
+
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+
+        # If id ends with a gen-delim, it may be used as a prefix for simple terms
+        definition.prefix = true if !term.include?(':') &&
+          definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') &&
+          simple_term
+      elsif term.include?(':')
+        # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
+        prefix, suffix = term.split(':', 2)
+        create_term_definition(local_context, prefix, defined, protected: protected) if local_context.has_key?(prefix)
+
+        definition.id = if td = term_definitions[prefix]
+          # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
+          td.id + suffix
+        else
+          # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
+          term
+        end
+        #log_debug("") {"=> #{definition.id}"}
+      elsif KEYWORDS.include?(term)
+        # This should only happen for @type when @container is @set
+        definition.id = term
+      else
+        # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
+        raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
+        definition.id = vocab + term
+        #log_debug("") {"=> #{definition.id}"}
+      end
+
+      @iri_to_term[definition.id] = term if simple_term && definition.id
+
+      if value.has_key?('@container')
+        #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
+        definition.container_mapping = check_container(value['@container'], local_context, defined, term)
+      end
+
+      if value.has_key?('@index')
+        # property-based indexing
+        raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{term} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
+        raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{term} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
+        definition.index = value['@index'].to_s
+      end
+
+      if value.has_key?('@context')
+        begin
+          self.parse(value['@context'], from_property: true)
+          # Record null context in array form
+          definition.context = value['@context'] ? value['@context'] : [nil]
+        rescue JsonLdError => e
+          raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
+        end
+      end
+
+      if value.has_key?('@language')
+        language = value['@language']
+        raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
+        language = language.downcase if language.is_a?(String)
+        #log_debug("") {"language_mapping: #{language.inspect}"}
+        definition.language_mapping = language || false
+      end
+
+      if value.has_key?('@nest')
+        nest = value['@nest']
+        raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
+        raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
+        #log_debug("") {"nest: #{nest.inspect}"}
+        definition.nest = nest
+      end
+
+      if value.has_key?('@prefix')
+        raise JsonLdError::InvalidTermDefinition, "@prefix used on compact IRI term #{term.inspect}" if term.include?(':')
+        case pfx = value['@prefix']
+        when TrueClass, FalseClass
+          definition.prefix = pfx
+        else
+          raise JsonLdError::InvalidPrefixValue, "unknown value for '@prefix': #{pfx.inspect} on term #{term.inspect}"
+        end
+      end
+
+      if previous_definition && previous_definition.protected? && definition != previous_definition && !from_property
+        definition == previous_definition
+        raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
+      end
+
+      term_definitions[term] = definition
+      defined[term] = true
     ensure
       # Re-build after term definitions set
       @inverse_context = nil
