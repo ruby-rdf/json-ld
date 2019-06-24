@@ -439,6 +439,13 @@ describe JSON::LD::Context do
           expect(subject.parse({"name" => nil}).send(:mapping, "name")).to be_nil
         end
       end
+
+
+      context "@propagate" do
+        it "generates an InvalidLocalContext error if not a boolean" do
+          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"})}.to raise_error(JSON::LD::JsonLdError::InvalidLocalContext)
+        end
+      end
     end
 
     describe "Syntax Errors" do
@@ -501,7 +508,11 @@ describe JSON::LD::Context do
           end
         end
 
-        (JSON::LD::KEYWORDS - %w(@base @language @version @protected @vocab)).each do |kw|
+        it "generates InvalidLocalContext if using @propagate" do
+          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidLocalContext)
+        end
+
+        (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|
           it "does not redefine #{kw} with an @container" do
             expect {
               ec = subject.parse({kw => {"@container" => "@set"}})
@@ -511,7 +522,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @protected @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})

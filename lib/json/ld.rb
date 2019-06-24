@@ -61,6 +61,7 @@ module JSON
       @nest
       @none
       @omitDefault
+      @propagate
       @protected
       @requireAll
       @reverse

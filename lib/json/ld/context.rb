@@ -423,6 +423,16 @@ module JSON::LD
       end
     end
 
+    # Set propagation
+    # @note: by the time this is called, the work has already been done.
+    #
+    # @param [Boolean] value
+    def propagate=(value)
+      raise JsonLdError::InvalidLocalContext, "@propagate may only be set in 1.1 mode}" unless processingMode == 'json-ld-1.1'
+      raise JsonLdError::InvalidLocalContext, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
+      value
+    end
+
     # Create an Evaluation Context
     #
     # When processing a JSON-LD data structure, each processing rule is applied using information provided by the active context. This section describes how to produce an active context.
@@ -436,8 +446,8 @@ module JSON::LD
     # @param [Array<String>] remote_contexts
     # @param [Boolean] from_property
     #   Context is created from a scoped context for a property. Sealed terms may not be cleared unless from a context associated with a term used as a property.
-    # @param [Boolean] from_type
-    #   Context is created from a scoped context for a type. Retains any previously defined term, which can be rolled back when the type context changes.
+    # @param [Boolean] propagate
+    #   Retains any previously defined term, which can be rolled back when the descending into a new node object changes.
     # @param [RDF::Resource] context_id from context IRI, for sealing terms
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
@@ -446,8 +456,9 @@ module JSON::LD
     def parse(local_context, remote_contexts: [], from_property: false, from_type: false)
       result = self.dup
       result.provided_context = local_context if self.empty?
-      result.previous_context ||= result.dup if from_type
-      result.property_scoped ||= from_property
+      # Early check for @propagate, which can only appear in a local context
+      propagate = local_context.is_a?(Hash) ? local_context.fetch('@propagate', !from_type) : !from_type
+      result.previous_context ||= result.dup unless propagate
 
       local_context = as_array(local_context)
 
@@ -457,7 +468,6 @@ module JSON::LD
           # 3.1 If the `from_property` is  not null, and the active context contains protected terms, an error is raised.
           if from_property || result.term_definitions.values.none?(&:protected?)
             null_context = Context.new(options)
-            null_context.property_scoped = from_property
             null_context.previous_context = result if from_type
             result = null_context
           else
@@ -543,17 +553,15 @@ module JSON::LD
           context = context.dup # keep from modifying a hash passed as a param
 
           {
-            '@base'     => :base=,
-            '@language' => :default_language=,
-            '@version'  => :version=,
-            '@vocab'    => :vocab=,
+            '@version'    => :version=,
+            '@base'       => :base=,
+            '@language'   => :default_language=,
+            '@propagate'  => :propagate=,
+            '@vocab'      => :vocab=,
           }.each do |key, setter|
-            v = context.fetch(key, false)
-            unless v == false
-              context.delete(key)
-              #log_debug("parse") {"Set #{key} to #{v.inspect}"}
-              result.send(setter, v)
-            end
+            next unless context.has_key?(key)
+            result.send(setter, context[key])
+            context.delete(key)
           end
 
           defined = {}

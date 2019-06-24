@@ -52,7 +52,7 @@ module JSON::LD
         # @null objects are used in framing
         return nil if element.key?('@null')
 
-        # Revert any previously type-scoped context
+        # Revert any previously type-scoped (non-preserved) context
         if context.previous_context && !element.key?('@value') && element.keys != %w(@id)
           self.context = context.previous_context
         end
