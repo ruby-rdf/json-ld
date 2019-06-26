@@ -364,7 +364,7 @@ module JSON::LD
     end
 
     # @param [String] value must be an absolute IRI
-    def base=(value)
+    def base=(value, **options)
       if value
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
         value = RDF::URI(value).dup
@@ -380,7 +380,7 @@ module JSON::LD
     end
 
     # @param [String] value
-    def default_language=(value)
+    def default_language=(value, **options)
       @default_language = if value
         raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
         value.downcase
@@ -392,7 +392,7 @@ module JSON::LD
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
     # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
     # @param [Number] vaule must be a decimal number
-    def version=(value)
+    def version=(value, **options)
       case value
       when 1.1
         if processingMode && processingMode < "json-ld-1.1"
@@ -406,7 +406,7 @@ module JSON::LD
 
     # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
     # @param [String] value must be an absolute IRI
-    def vocab=(value)
+    def vocab=(value, **options)
       @vocab = case value
       when /_:/
         # BNode vocab is deprecated
@@ -427,10 +427,20 @@ module JSON::LD
     # @note: by the time this is called, the work has already been done.
     #
     # @param [Boolean] value
-    def propagate=(value)
-      raise JsonLdError::InvalidLocalContext, "@propagate may only be set in 1.1 mode}" unless processingMode == 'json-ld-1.1'
-      raise JsonLdError::InvalidLocalContext, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
+    def propagate=(value, **options)
+      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode}" if (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+      raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
       value
+    end
+
+    # Process the referenced remote context and merge into the current context
+    #
+    # @param [String] value
+    # @return [self]
+    def source=(value, remote_contexts:)
+      raise JsonLdError::InvalidContextMember, "@source may only be used in 1.1 mode}" if (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+      raise JsonLdError::InvalidSourceValue, "@source must be a string: #{value.inspect}" unless value.is_a?(String)
+      self.merge!(self.parse(value, remote_contexts: remote_contexts.dup))
     end
 
     # Create an Evaluation Context
@@ -552,15 +562,17 @@ module JSON::LD
         when Hash
           context = context.dup # keep from modifying a hash passed as a param
 
+          # This counts on hash elements being processed in order
           {
             '@version'    => :version=,
+            '@source'     => :source=,
             '@base'       => :base=,
             '@language'   => :default_language=,
             '@propagate'  => :propagate=,
             '@vocab'      => :vocab=,
           }.each do |key, setter|
             next unless context.has_key?(key)
-            result.send(setter, context[key])
+            result.send(setter, context[key], remote_contexts: remote_contexts)
             context.delete(key)
           end
 
@@ -846,7 +858,7 @@ module JSON::LD
       end
 
       if previous_definition && previous_definition.protected? && definition != previous_definition && !from_property
-        definition == previous_definition
+        definition = previous_definition
         raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
       end
 

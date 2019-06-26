@@ -442,8 +442,24 @@ describe JSON::LD::Context do
 
 
       context "@propagate" do
-        it "generates an InvalidLocalContext error if not a boolean" do
-          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"})}.to raise_error(JSON::LD::JsonLdError::InvalidLocalContext)
+        it "generates an InvalidPropagateValue error if not a boolean" do
+          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"})}.to raise_error(JSON::LD::JsonLdError::InvalidPropagateValue)
+        end
+      end
+
+      context "@source" do
+        before(:each) {JSON::LD::Context::PRELOADED.clear}
+        it "generates an InvalidSourceValue error if not a string" do
+          expect {subject.parse({'@version' => 1.1, '@source' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidSourceValue)
+        end
+
+        it "retrieves remote context" do
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+          ec = subject.parse(JSON.parse %({
+            "@version": 1.1,
+            "@source": "http://example.com/context"
+          }))
+          expect(ec.term_definitions).to include("avatar")
         end
       end
     end
@@ -508,8 +524,12 @@ describe JSON::LD::Context do
           end
         end
 
-        it "generates InvalidLocalContext if using @propagate" do
-          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidLocalContext)
+        it "generates InvalidContextMember if using @propagate" do
+          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
+        end
+
+        it "generates InvalidContextMember if using @source" do
+          expect {context.parse({'@source' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
         end
 
         (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|
@@ -522,7 +542,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @source @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})

@@ -66,6 +66,7 @@ module JSON
       @requireAll
       @reverse
       @set
+      @source
       @type
       @value
       @version
@@ -112,6 +113,7 @@ module JSON
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
+      class InvalidContextMember < JsonLdError; @code = "invalid context member"; end
       class InvalidContextNullification < JsonLdError; @code = "invalid context nullification"; end
       class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
       class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
@@ -126,6 +128,7 @@ module JSON
       class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
       class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
       class InvalidPrefixValue < JsonLdError; @code = "invalid @prefix value"; end
+      class InvalidPropagateValue < JsonLdError; @code = "invalid @propagate value"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
@@ -134,6 +137,7 @@ module JSON
       class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
       class InvalidScriptElement < JsonLdError; @code = "invalid script element"; end
       class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
+      class InvalidSourceValue < JsonLdError; @code = "invalid @source value"; end
       class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
       class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
       class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
