@@ -304,8 +304,8 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, from_property: false, from_type: false, **options)
-      self.new(options).parse(local_context, from_property: from_property, from_type: from_type)
+    def self.parse(local_context, protected: false, override_protected: false, propagate: true, **options)
+      self.new(options).parse(local_context, protected: false, override_protected: override_protected, propagate: propagate)
     end
 
     ##
@@ -437,10 +437,10 @@ module JSON::LD
     #
     # @param [String] value
     # @return [self]
-    def source=(value, remote_contexts:)
+    def source=(value, remote_contexts:, protected:)
       raise JsonLdError::InvalidContextMember, "@source may only be used in 1.1 mode}" if (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
       raise JsonLdError::InvalidSourceValue, "@source must be a string: #{value.inspect}" unless value.is_a?(String)
-      self.merge!(self.parse(value, remote_contexts: remote_contexts.dup))
+      self.merge!(self.parse(value, protected: protected, remote_contexts: remote_contexts.dup))
     end
 
     # Create an Evaluation Context
@@ -454,20 +454,20 @@ module JSON::LD
     #
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [Array<String>] remote_contexts
-    # @param [Boolean] from_property
-    #   Context is created from a scoped context for a property. Sealed terms may not be cleared unless from a context associated with a term used as a property.
+    # @param [Boolean] protected Make defined terms protected (as if `@protected` were used).
+    # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
-    #   Retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
     # @param [RDF::Resource] context_id from context IRI, for sealing terms
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
-    def parse(local_context, remote_contexts: [], from_property: false, from_type: false)
+    def parse(local_context, remote_contexts: [], protected: false, override_protected: false, propagate: true)
       result = self.dup
       result.provided_context = local_context if self.empty?
       # Early check for @propagate, which can only appear in a local context
-      propagate = local_context.is_a?(Hash) ? local_context.fetch('@propagate', !from_type) : !from_type
+      propagate = local_context.is_a?(Hash) ? local_context.fetch('@propagate', propagate) : propagate
       result.previous_context ||= result.dup unless propagate
 
       local_context = as_array(local_context)
@@ -475,10 +475,10 @@ module JSON::LD
       local_context.each do |context|
         case context
         when nil
-          # 3.1 If the `from_property` is  not null, and the active context contains protected terms, an error is raised.
-          if from_property || result.term_definitions.values.none?(&:protected?)
+          # 3.1 If the `override_protected` is  false, and the active context contains protected terms, an error is raised.
+          if override_protected || result.term_definitions.values.none?(&:protected?)
             null_context = Context.new(options)
-            null_context.previous_context = result if from_type
+            null_context.previous_context = result unless propagate
             result = null_context
           else
             raise JSON::LD::JsonLdError::InvalidContextNullification,
@@ -552,7 +552,7 @@ module JSON::LD
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, from_property: from_property, from_type: from_type)
+            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, protected: protected, override_protected: override_protected, propagate: propagate)
             PRELOADED[context_canon.to_s] = context
             context.provided_context = result.provided_context
           end
@@ -572,7 +572,7 @@ module JSON::LD
             '@vocab'      => :vocab=,
           }.each do |key, setter|
             next unless context.has_key?(key)
-            result.send(setter, context[key], remote_contexts: remote_contexts)
+            result.send(setter, context[key], remote_contexts: remote_contexts, protected: context.fetch('@protected', protected))
             context.delete(key)
           end
 
@@ -582,9 +582,9 @@ module JSON::LD
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
-                                          from_property: from_property,
-                                          from_type: from_type,
-                                          protected: context['@protected']) unless NON_TERMDEF_KEYS.include?(key)
+                                          override_protected: override_protected,
+                                          propagate: propagate,
+                                          protected: context.fetch('@protected', protected)) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -641,15 +641,14 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
-    # @param [Boolean] from_property
-    #   Context is created from a scoped context for a property. Sealed terms may not be cleared unless from a context associated with a term used as a property.
-    # @param [Boolean] from_type
-    #   Context is created from a scoped context for a type.
     # @param [Boolean] protected if true, causes all terms to be marked protected
+    # @param [Boolean] override_protected Protected terms may be cleared.
+    # @param [Boolean] propagate
+    #   Context is propagated across node objects.
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, from_property: false, from_type: false, protected: false)
+    def create_term_definition(local_context, term, defined, override_protected: false, propagate: true, protected: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -680,7 +679,7 @@ module JSON::LD
 
       # Remove any existing term definition for term in active context.
       previous_definition = term_definitions[term]
-      if previous_definition && previous_definition.protected? && !from_property
+      if previous_definition && previous_definition.protected? && !override_protected
         # Check later to detect identical redefinition
       else
         term_definitions.delete(term) if previous_definition
@@ -823,7 +822,7 @@ module JSON::LD
 
       if value.has_key?('@context')
         begin
-          self.parse(value['@context'], from_property: true)
+          self.parse(value['@context'], override_protected: true)
           # Record null context in array form
           definition.context = value['@context'] ? value['@context'] : [nil]
         rescue JsonLdError => e
@@ -857,7 +856,7 @@ module JSON::LD
         end
       end
 
-      if previous_definition && previous_definition.protected? && definition != previous_definition && !from_property
+      if previous_definition && previous_definition.protected? && definition != previous_definition && !override_protected
         definition = previous_definition
         raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
       end

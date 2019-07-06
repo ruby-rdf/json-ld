@@ -72,7 +72,7 @@ module JSON::LD
         end
 
         # Apply property-scoped context after reverting term-scoped context
-        context = property_scoped_context ? context.parse(property_scoped_context, from_property: true) : context
+        context = property_scoped_context ? context.parse(property_scoped_context, override_protected: true) : context
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
@@ -90,7 +90,7 @@ module JSON::LD
         if type_key
           Array(input[type_key]).sort.each do |term|
             term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
-            context = term_context ? context.parse(term_context, from_type: true) : context
+            context = term_context ? context.parse(term_context, propagate: false) : context
           end
         end
 
@@ -169,7 +169,7 @@ module JSON::LD
         return nil if input.nil? || active_property.nil? || expanded_active_property == '@graph'
 
         # Apply property-scoped context
-        context = property_scoped_context ? context.parse(property_scoped_context, from_property: true) : context
+        context = property_scoped_context ? context.parse(property_scoped_context, override_protected: true) : context
 
         context.expand_value(active_property, input, log_depth: @options[:log_depth])
       end
@@ -451,7 +451,7 @@ module JSON::LD
           keys.each do |k|
             # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
             map_context = container_context.term_definitions[k].context if container.include?('@type') && container_context.term_definitions[k]
-            map_context = container_context.parse(map_context, from_type: true) if map_context
+            map_context = container_context.parse(map_context, propagate: false) if map_context
             map_context ||= container_context
 
             expanded_k = container_context.expand_iri(k, vocab: true, quiet: true).to_s
