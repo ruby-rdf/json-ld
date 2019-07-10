@@ -433,16 +433,6 @@ module JSON::LD
       value
     end
 
-    # Process the referenced remote context and merge into the current context
-    #
-    # @param [String] value
-    # @return [self]
-    def source=(value, remote_contexts:, protected:)
-      raise JsonLdError::InvalidContextMember, "@source may only be used in 1.1 mode}" if (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
-      raise JsonLdError::InvalidSourceValue, "@source must be a string: #{value.inspect}" unless value.is_a?(String)
-      self.merge!(self.parse(value, protected: protected, remote_contexts: remote_contexts.dup))
-    end
-
     # Create an Evaluation Context
     #
     # When processing a JSON-LD data structure, each processing rule is applied using information provided by the active context. This section describes how to produce an active context.
@@ -565,14 +555,42 @@ module JSON::LD
           # This counts on hash elements being processed in order
           {
             '@version'    => :version=,
-            '@source'     => :source=,
+            '@source'     => nil,
             '@base'       => :base=,
             '@language'   => :default_language=,
             '@propagate'  => :propagate=,
             '@vocab'      => :vocab=,
           }.each do |key, setter|
             next unless context.has_key?(key)
-            result.send(setter, context[key], remote_contexts: remote_contexts, protected: context.fetch('@protected', protected))
+            if key == '@source'
+              # Retrieve remote context and merge the remaining context object into the result.
+              raise JsonLdError::InvalidContextMember, "@source may only be used in 1.1 mode}" if (result.processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+              raise JsonLdError::InvalidSourceValue, "@source must be a string: #{context['@source'].inspect}" unless context['@source'].is_a?(String)
+              source = RDF::URI(result.context_base || result.base).join(context['@source'])
+              begin
+                context_opts = @options.merge(
+                  profile: 'http://www.w3.org/ns/json-ld#context',
+                  requestProfile: 'http://www.w3.org/ns/json-ld#context',
+                  base: nil)
+                context_opts.delete(:headers)
+                JSON::LD::API.loadRemoteDocument(source, context_opts) do |remote_doc|
+                  # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
+                  raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
+                  source_context = remote_doc.document['@context']
+                  raise JsonLdError::InvalidContextMember, "#{source_context.to_json} must not include @source entry" if source_context.has_key?('@source')
+                  context.delete(key)
+                  context = source_context.merge(context)
+                end
+              rescue JsonLdError::LoadingDocumentFailed => e
+                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
+              rescue JsonLdError
+                raise
+              rescue StandardError => e
+                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
+              end
+            else
+              result.send(setter, context[key], remote_contexts: remote_contexts, protected: context.fetch('@protected', protected))
+            end
             context.delete(key)
           end
 
