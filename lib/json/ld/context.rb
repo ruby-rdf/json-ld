@@ -577,6 +577,7 @@ module JSON::LD
                   # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   source_context = remote_doc.document['@context']
+                  raise JsonLdError::InvalidRemoteContext, "#{source_context.to_json} must be an object" unless source_context.is_a?(Hash)
                   raise JsonLdError::InvalidContextMember, "#{source_context.to_json} must not include @source entry" if source_context.has_key?('@source')
                   context.delete(key)
                   context = source_context.merge(context)
