@@ -555,18 +555,18 @@ module JSON::LD
           # This counts on hash elements being processed in order
           {
             '@version'    => :version=,
-            '@source'     => nil,
+            '@import'     => nil,
             '@base'       => :base=,
             '@language'   => :default_language=,
             '@propagate'  => :propagate=,
             '@vocab'      => :vocab=,
           }.each do |key, setter|
             next unless context.has_key?(key)
-            if key == '@source'
+            if key == '@import'
               # Retrieve remote context and merge the remaining context object into the result.
-              raise JsonLdError::InvalidContextMember, "@source may only be used in 1.1 mode}" if (result.processingMode || 'json-ld-1.0') < 'json-ld-1.1'
-              raise JsonLdError::InvalidSourceValue, "@source must be a string: #{context['@source'].inspect}" unless context['@source'].is_a?(String)
-              source = RDF::URI(result.context_base || result.base).join(context['@source'])
+              raise JsonLdError::InvalidContextMember, "@import may only be used in 1.1 mode}" if (result.processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+              raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
+              source = RDF::URI(result.context_base || result.base).join(context['@import'])
               begin
                 context_opts = @options.merge(
                   profile: 'http://www.w3.org/ns/json-ld#context',
@@ -576,11 +576,11 @@ module JSON::LD
                 JSON::LD::API.loadRemoteDocument(source, context_opts) do |remote_doc|
                   # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
-                  source_context = remote_doc.document['@context']
-                  raise JsonLdError::InvalidRemoteContext, "#{source_context.to_json} must be an object" unless source_context.is_a?(Hash)
-                  raise JsonLdError::InvalidContextMember, "#{source_context.to_json} must not include @source entry" if source_context.has_key?('@source')
+                  import_context = remote_doc.document['@context']
+                  raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
+                  raise JsonLdError::InvalidContextMember, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
                   context.delete(key)
-                  context = source_context.merge(context)
+                  context = import_context.merge(context)
                 end
               rescue JsonLdError::LoadingDocumentFailed => e
                 raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace

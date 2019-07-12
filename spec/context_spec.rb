@@ -447,17 +447,17 @@ describe JSON::LD::Context do
         end
       end
 
-      context "@source" do
+      context "@import" do
         before(:each) {JSON::LD::Context::PRELOADED.clear}
-        it "generates an InvalidSourceValue error if not a string" do
-          expect {subject.parse({'@version' => 1.1, '@source' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidSourceValue)
+        it "generates an InvalidImportValue error if not a string" do
+          expect {subject.parse({'@version' => 1.1, '@import' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
         end
 
         it "retrieves remote context" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           ec = subject.parse(JSON.parse %({
             "@version": 1.1,
-            "@source": "http://example.com/context"
+            "@import": "http://example.com/context"
           }))
           expect(ec.term_definitions).to include("avatar")
         end
@@ -528,8 +528,8 @@ describe JSON::LD::Context do
           expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
         end
 
-        it "generates InvalidContextMember if using @source" do
-          expect {context.parse({'@source' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
+        it "generates InvalidContextMember if using @import" do
+          expect {context.parse({'@import' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
         end
 
         (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|
@@ -542,7 +542,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @source @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @import @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
