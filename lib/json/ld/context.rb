@@ -525,7 +525,7 @@ module JSON::LD
                 profile: 'http://www.w3.org/ns/json-ld#context',
                 requestProfile: 'http://www.w3.org/ns/json-ld#context',
                 base: nil)
-              context_opts.delete(:headers)
+              #context_opts.delete(:headers)
               JSON::LD::API.loadRemoteDocument(context.to_s, context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
