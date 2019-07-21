@@ -830,6 +830,16 @@ module JSON::LD
       if value.has_key?('@container')
         #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
         definition.container_mapping = check_container(value['@container'], local_context, defined, term)
+
+        # If @container includes @type
+        if definition.container_mapping.include?('@type')
+          # If definition does not have @type, set @type to @id
+          definition.type_mapping ||= '@id'
+          # If definition includes @type with a value other than @id or @vocab, an illegal type mapping error has been detected
+          if !CONTEXT_TYPE_ID_VOCAB.include?(definition.type_mapping)
+            raise JsonLdError::InvalidTypeMapping, "@container: @type requires @type to be @id or @vocab"
+          end
+        end
       end
 
       if value.has_key?('@index')
@@ -1677,6 +1687,7 @@ module JSON::LD
     CONTEXT_CONTAINER_ID_GRAPH = %w(@id @graph).freeze
     CONTEXT_CONTAINER_INDEX_GRAPH = %w(@index @graph).freeze
     CONTEXT_BASE_FRAG_OR_QUERY = %w(? #).freeze
+    CONTEXT_TYPE_ID_VOCAB = %w(@id @vocab).freeze
 
     def uri(value)
       case value.to_s

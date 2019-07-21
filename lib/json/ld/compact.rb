@@ -297,6 +297,11 @@ module JSON::LD
                 when 1 then compacted_item[container_key] = types.first
                 else        compacted_item[container_key] = types
                 end
+
+                # if compacted_item contains a single entry who's key maps to @id, then recompact the item without @type
+                if compacted_item.keys.length == 1 && expanded_item.keys.include?('@id')
+                  compacted_item = compact({'@id' => expanded_item['@id']}, property: item_active_property)
+                end
                 compacted_item
               end
               map_key ||= context.compact_iri('@none', vocab: true, quiet: true)
