@@ -86,9 +86,13 @@ module JSON::LD
         output_object = {}
 
         # See if keys mapping to @type have terms with a local context
-        type_key = input.keys.detect {|k| context.expand_iri(k, vocab: true, quite: true) == '@type'}
-        if type_key
-          Array(input[type_key]).sort.each do |term|
+        type_key = nil
+        input.keys.sort.
+          select {|k| context.expand_iri(k, vocab: true, quite: true) == '@type'}.
+          each do |tk|
+
+          type_key ||= tk # Side effect saves the first found key mapping to @type
+          Array(input[tk]).sort.each do |term|
             term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
             context = term_context ? context.parse(term_context, propagate: false) : context
           end
@@ -215,9 +219,9 @@ module JSON::LD
           raise JsonLdError::InvalidReversePropertyMap,
                 "@reverse not appropriate at this point" if expanded_active_property == '@reverse'
 
-          # If result has already an expanded property member, an colliding keywords error has been detected and processing is aborted.
+          # If result has already an expanded property member (other than @type), an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
-                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property)
+                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && expanded_property != '@type'
 
           expanded_value = case expanded_property
           when '@id'
@@ -276,12 +280,9 @@ module JSON::LD
                     "@type value must be a string or array of strings: #{value.inspect}"
             end
 
+            e_type = Array(output_object['@type']) + Array(e_type)
             # Use array form if framing
-            if framing
-              as_array(e_type)
-            else
-              e_type
-            end
+            framing || e_type.length > 1 ? e_type : e_type.first
           when '@graph'
             # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
             value = expand(value, '@graph', context, ordered: ordered, framing: framing)
