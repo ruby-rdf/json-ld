@@ -53,6 +53,7 @@ module JSON
       @explicit
       @json
       @id
+      @included
       @index
       @first
       @graph
@@ -120,6 +121,7 @@ module JSON
       class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
       class InvalidVersionValue < JsonLdError; @code = "invalid @version value"; end
       class InvalidImportValue < JsonLdError; @code = "invalid @import value"; end
+      class InvalidIncludedValue < JsonLdError; @code = "invalid @included value"; end
       class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
       class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
       class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
@@ -150,6 +152,7 @@ module JSON
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class ContextOverflow < JsonLdError; @code = "maximum number of @context URLs exceeded"; end
+      class MissingIncludedReferent < JsonLdError; @code = "missing @included referent"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
       class ProtectedTermRedefinition < JsonLdError; @code = "protected term redefinition"; end
       class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end

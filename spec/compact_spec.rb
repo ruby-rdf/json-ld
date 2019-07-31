@@ -1832,6 +1832,116 @@ describe JSON::LD::API do
       end
     end
 
+    context "@included" do
+      {
+        "Basic Included array": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included": {"@id": "@included", "@container": "@set"}
+            },
+            "prop": "value",
+            "included": [{
+              "prop": "value2"
+            }]
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "Basic Included object": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2"
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "Multiple properties mapping to @included are folded together": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included1": "@included",
+              "included2": "@included"
+            },
+            "included1": [
+              {"prop": "value1"},
+              {"prop": "value2"}
+            ]
+          }),
+          input: %([{
+            "@included": [
+              {"http://example.org/prop": [{"@value": "value1"}]},
+              {"http://example.org/prop": [{"@value": "value2"}]}
+            ]
+          }])
+        },
+        "Included containing @included": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2",
+              "@included": {
+                "prop": "value3"
+              }
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}],
+              "@included": [{
+                "http://example.org/prop": [{"@value": "value3"}]
+              }]
+            }]
+          }])
+        },
+        "Property value with @included": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": {
+              "@type": "Foo",
+              "@included": {
+                "@type": "Bar"
+              }
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{
+              "@type": ["http://example.org/Foo"],
+              "@included": [{
+                "@type": ["http://example.org/Bar"]
+              }]
+            }]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_compact(params)}
+      end
+    end
+
     context "@nest" do
       {
         "Indexes to @nest for property with @nest" => {

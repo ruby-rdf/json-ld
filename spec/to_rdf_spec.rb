@@ -795,6 +795,223 @@ describe JSON::LD::API do
       end
     end
 
+    context "@included" do
+      {
+        "Basic Included array": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": [{
+              "prop": "value2"
+            }]
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Basic Included object": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2"
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Multiple properties mapping to @included are folded together": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included1": "@included",
+              "included2": "@included"
+            },
+            "included1": {"prop": "value1"},
+            "included2": {"prop": "value2"}
+          }),
+          output: %(
+            [<http://example.org/prop> "value1"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Included containing @included": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2",
+              "@included": {
+                "prop": "value3"
+              }
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+
+            [<http://example.org/prop> "value2"] .
+
+            [<http://example.org/prop> "value3"] .
+          )
+        },
+        "Property value with @included": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": {
+              "@type": "Foo",
+              "@included": {
+                "@type": "Bar"
+              }
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> [a <http://example.org/Foo>]] .
+            [a <http://example.org/Bar>] .
+          )
+        },
+        "json.api example": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/vocab#",
+              "@base": "http://example.org/base/",
+              "id": "@id",
+              "type": "@type",
+              "data": "@nest",
+              "attributes": "@nest",
+              "links": "@nest",
+              "relationships": "@nest",
+              "included": "@included",
+              "self": {"@type": "@id"},
+              "related": {"@type": "@id"},
+              "comments": {
+                "@context": {
+                  "data": null
+                }
+              }
+            },
+            "data": [{
+              "type": "articles",
+              "id": "1",
+              "attributes": {
+                "title": "JSON:API paints my bikeshed!"
+              },
+              "links": {
+                "self": "http://example.com/articles/1"
+              },
+              "relationships": {
+                "author": {
+                  "links": {
+                    "self": "http://example.com/articles/1/relationships/author",
+                    "related": "http://example.com/articles/1/author"
+                  },
+                  "data": { "type": "people", "id": "9" }
+                },
+                "comments": {
+                  "links": {
+                    "self": "http://example.com/articles/1/relationships/comments",
+                    "related": "http://example.com/articles/1/comments"
+                  },
+                  "data": [
+                    { "type": "comments", "id": "5" },
+                    { "type": "comments", "id": "12" }
+                  ]
+                }
+              }
+            }],
+            "included": [{
+              "type": "people",
+              "id": "9",
+              "attributes": {
+                "first-name": "Dan",
+                "last-name": "Gebhardt",
+                "twitter": "dgeb"
+              },
+              "links": {
+                "self": "http://example.com/people/9"
+              }
+            }, {
+              "type": "comments",
+              "id": "5",
+              "attributes": {
+                "body": "First!"
+              },
+              "relationships": {
+                "author": {
+                  "data": { "type": "people", "id": "2" }
+                }
+              },
+              "links": {
+                "self": "http://example.com/comments/5"
+              }
+            }, {
+              "type": "comments",
+              "id": "12",
+              "attributes": {
+                "body": "I like XML better"
+              },
+              "relationships": {
+                "author": {
+                  "data": { "type": "people", "id": "9" }
+                }
+              },
+              "links": {
+                "self": "http://example.com/comments/12"
+              }
+            }]
+          }),
+          output: %(
+          <http://example.org/base/1> a <http://example.org/vocab#articles>;
+            <http://example.org/vocab#author> <http://example.org/base/9>;
+            <http://example.org/vocab#comments> [
+              <http://example.org/vocab#related> <http://example.com/articles/1/comments>;
+              <http://example.org/vocab#self> <http://example.com/articles/1/relationships/comments>
+            ];
+            <http://example.org/vocab#self> <http://example.com/articles/1>;
+            <http://example.org/vocab#title> "JSON:API paints my bikeshed!" .
+
+          <http://example.org/base/12> a <http://example.org/vocab#comments>;
+            <http://example.org/vocab#author> <http://example.org/base/9>;
+            <http://example.org/vocab#body> "I like XML better";
+            <http://example.org/vocab#self> <http://example.com/comments/12> .
+
+          <http://example.org/base/5> a <http://example.org/vocab#comments>;
+            <http://example.org/vocab#author> <http://example.org/base/2>;
+            <http://example.org/vocab#body> "First!";
+            <http://example.org/vocab#self> <http://example.com/comments/5> .
+
+          <http://example.org/base/2> a <http://example.org/vocab#people> .
+
+          <http://example.org/base/9> a <http://example.org/vocab#people>;
+            <http://example.org/vocab#first-name> "Dan";
+            <http://example.org/vocab#last-name> "Gebhardt";
+            <http://example.org/vocab#related> <http://example.com/articles/1/author>;
+            <http://example.org/vocab#self> <http://example.com/articles/1/relationships/author>,
+              <http://example.com/people/9>;
+            <http://example.org/vocab#twitter> "dgeb" .
+          )
+        },
+      }.each do |title, params|
+        it(title) {run_to_rdf params}
+      end
+    end
+
     context "advanced features" do
       {
         "number syntax (decimal)" =>

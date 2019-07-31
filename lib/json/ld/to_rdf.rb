@@ -84,6 +84,10 @@ module JSON::LD
               yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
             end
           end
+        when '@included'
+          values.each do |v|
+            item_to_rdf(v, graph_name: graph_name, &block)
+          end
         when /^@/
           # Otherwise, if @type is any other keyword, skip to the next property-values pair
         else

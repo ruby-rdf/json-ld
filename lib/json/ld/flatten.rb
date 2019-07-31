@@ -112,6 +112,11 @@ module JSON::LD
                             active_graph: id)
           end
 
+          if element['@included']
+            create_node_map(element.delete('@included'), graph_map,
+                            active_graph: active_graph)
+          end
+
           element.keys.each do |property|
             value = element[property]
 

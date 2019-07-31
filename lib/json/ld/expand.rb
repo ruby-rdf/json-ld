@@ -18,6 +18,7 @@ module JSON::LD
     CONTAINER_GRAPH_ID = %w(@graph @id).freeze
     KEYS_VALUE_LANGUAGE_TYPE_INDEX = %w(@value @language @type @index).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
+    KEYS_INCLUDED_TYPE = %w(@included @type).freeze
 
     ##
     # Expand an Array or Object given an active context and performing local context expansion.
@@ -124,7 +125,7 @@ module JSON::LD
           ary = Array(output_object['@value'])
           return nil if ary.empty?
 
-          if context.processingMode == 'json-ld-1.1' && output_object['@type'] == '@json'
+          if (context.processingMode || 'json-ld-1.0') > 'json-ld-1.0' && output_object['@type'] == '@json'
             # Any value of @value is okay if @type: @json
           elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
@@ -221,7 +222,7 @@ module JSON::LD
 
           # If result has already an expanded property member (other than @type), an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
-                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && expanded_property != '@type'
+                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && !KEYS_INCLUDED_TYPE.include?(expanded_property)
 
           expanded_value = case expanded_property
           when '@id'
@@ -257,6 +258,15 @@ module JSON::LD
             else
               e_id
             end
+          when '@included'
+            # Included blocks are treated as an array of separate object nodes sharing the same referencing active_property. For 1.0, it is skipped as are other unknown keywords
+            next if context.processingMode == 'json-ld-1.0'
+            included_result = as_array(expand(value, active_property, context, ordered: ordered, framing: framing))
+
+            # Expanded values must be node objects
+            raise JsonLdError::InvalidIncludedValue, "values of @included must expand to node objects" unless included_result.all? {|e| node?(e)}
+            # As other properties may alias to @included, add this to any other previously expanded values
+            Array(output_object['@included']) + included_result
           when '@type'
             # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
             #log_debug("@type") {"value: #{value.inspect}"}
@@ -292,7 +302,7 @@ module JSON::LD
             # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. (In 1.1, @value can have any JSON value of @type is @json or the property coerces to @json).
             # Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
             # If framing, always use array form, unless null
-            if context.processingMode == 'json-ld-1.1' && input_type == '@json'
+            if (context.processingMode || 'json-ld-1.0') > 'json-ld-1.0' && input_type == '@json'
               value
             else
               case value
@@ -338,7 +348,7 @@ module JSON::LD
                   "Value of @index is not a string: #{value.inspect}" unless value.is_a?(String)
             value
           when '@list'
-            # If expanded property is @list:
+            # If expanded property is @graph:
 
             # If active property is null or @graph, continue with the next key from element to remove the free-floating list.
             next if (expanded_active_property || '@graph') == '@graph'
