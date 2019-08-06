@@ -410,7 +410,7 @@ module JSON::LD
       @vocab = case value
       when /_:/
         # BNode vocab is deprecated
-        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1"
+        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1"
         value
       when String, RDF::URI
         v = expand_iri(value.to_s, vocab: true, documentRelative: true)

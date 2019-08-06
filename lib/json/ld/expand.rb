@@ -208,6 +208,8 @@ module JSON::LD
         next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
         expanded_property = expanded_property.to_s if expanded_property.is_a?(RDF::Resource)
 
+        warn "[DEPRECATION] Blank Node properties deprecated in JSON-LD 1.1." if (context.processingMode || "json-ld-1.1") >= "json-ld-1.1" && expanded_property.to_s.start_with?("_:")
+
         #log_debug("expand property") {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
 
         if expanded_property.nil?

@@ -13,6 +13,7 @@ describe JSON::LD do
         end
 
         specify "#{t.property('@id')}: #{t.name} ordered#{' (negative test)' unless t.positiveTest?}" do
+          pending "Ordered version of in03" if %w(#tin03).include?(t.property('@id'))
           t.options[:ordered] = true
           t.run self
         end

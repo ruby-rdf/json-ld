@@ -120,6 +120,11 @@ module JSON::LD
           end
         end
 
+        # If frame has `@included`, recurse over it's sub-frame
+        if frame['@included']
+          frame(state, subjects, frame['@included'], parent: output, property: '@included', **options)
+        end
+
         # iterate over subject properties in order
         subject.keys.opt_sort(ordered: ordered).each do |prop|
           objects = subject[prop]

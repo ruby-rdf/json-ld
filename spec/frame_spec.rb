@@ -968,19 +968,206 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it title do
-          begin
-            input, frame, output = params[:input], params[:frame], params[:output]
-            input = ::JSON.parse(input) if input.is_a?(String)
-            frame = ::JSON.parse(frame) if frame.is_a?(String)
-            output = ::JSON.parse(output) if output.is_a?(String)
-            jld = JSON::LD::API.frame(input, frame, logger: logger)
-            expect(jld).to produce_jsonld(output, logger)
-          rescue JSON::LD::JsonLdError => e
-            fail("#{e.class}: #{e.message}\n" +
-              "#{logger}\n" +
-              "Backtrace:\n#{e.backtrace.join("\n")}")
-          end
+          do_frame(params)
         end
+      end
+    end
+
+    context "@included" do
+      {
+        "Basic Included array": {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }, {
+            "http://example.org/prop": [{"@value": "value2"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included": {"@id": "@included", "@container": "@set"}
+            },
+            "@requireAll": true,
+            "foo": "bar",
+            "prop": "value",
+            "@included": [{
+              "@requireAll": true,
+              "foo": "bar",
+              "prop": "value2"
+            }]
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included": {"@id": "@included", "@container": "@set"}
+            },
+            "foo": "bar",
+            "included": [{
+              "foo": "bar",
+              "prop": "value2"
+            }],
+            "prop": "value"
+          })
+        },
+        "Basic Included object": {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }, {
+            "http://example.org/prop": [{"@value": "value2"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "@requireAll": true,
+            "foo": "bar",
+            "prop": "value",
+            "@included": [{
+              "@requireAll": true,
+              "foo": "bar",
+              "prop": "value2"
+            }]
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "foo": "bar",
+            "prop": "value",
+            "@included": {
+              "prop": "value2",
+              "foo": "bar"
+            }
+          })
+        },
+        "json.api example": {
+          input: %([{
+            "@id": "http://example.org/base/1",
+            "@type": ["http://example.org/vocab#articles"],
+            "http://example.org/vocab#title": [{"@value": "JSON:API paints my bikeshed!"}],
+            "http://example.org/vocab#self": [{"@id": "http://example.com/articles/1"}],
+            "http://example.org/vocab#author": [{
+              "@id": "http://example.org/base/9",
+              "@type": ["http://example.org/vocab#people"],
+              "http://example.org/vocab#self": [{"@id": "http://example.com/articles/1/relationships/author"}],
+              "http://example.org/vocab#related": [{"@id": "http://example.com/articles/1/author"}]
+            }],
+            "http://example.org/vocab#comments": [{
+              "http://example.org/vocab#self": [{"@id": "http://example.com/articles/1/relationships/comments"}],
+              "http://example.org/vocab#related": [{"@id": "http://example.com/articles/1/comments"}]
+            }],
+            "@included": [{
+              "@id": "http://example.org/base/9",
+              "@type": ["http://example.org/vocab#people"],
+              "http://example.org/vocab#first-name": [{"@value": "Dan"}],
+              "http://example.org/vocab#last-name": [{"@value": "Gebhardt"}],
+              "http://example.org/vocab#twitter": [{"@value": "dgeb"}],
+              "http://example.org/vocab#self": [{"@id": "http://example.com/people/9"}]
+            }, {
+              "@id": "http://example.org/base/5",
+              "@type": ["http://example.org/vocab#comments"],
+              "http://example.org/vocab#body": [{"@value": "First!"}],
+              "http://example.org/vocab#author": [{
+                "@id": "http://example.org/base/2",
+                "@type": ["http://example.org/vocab#people"]
+              }],
+              "http://example.org/vocab#self": [{"@id": "http://example.com/comments/5"}]
+            }, {
+              "@id": "http://example.org/base/12",
+              "@type": ["http://example.org/vocab#comments"],
+              "http://example.org/vocab#body": [{"@value": "I like XML better"}],
+              "http://example.org/vocab#author": [{
+                "@id": "http://example.org/base/9",
+                "@type": ["http://example.org/vocab#people"]
+              }],
+              "http://example.org/vocab#self": [{"@id": "http://example.com/comments/12"}]
+            }]
+          }]),
+          frame: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/vocab#",
+              "@base": "http://example.org/base/",
+              "id": "@id",
+              "type": "@type",
+              "data": "@nest",
+              "attributes": "@nest",
+              "links": "@nest",
+              "relationships": "@nest",
+              "included": "@included",
+              "author": {"@type": "@id"},
+              "self": {"@type": "@id"},
+              "related": {"@type": "@id"},
+              "comments": {"@context": {"data": null}}
+            },
+            "data": {"type": "articles"},
+            "included": {
+              "@requireAll": true,
+              "type": ["comments", "people"],
+              "self": {}
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/vocab#",
+              "@base": "http://example.org/base/",
+              "id": "@id",
+              "type": "@type",
+              "data": "@nest",
+              "attributes": "@nest",
+              "links": "@nest",
+              "relationships": "@nest",
+              "included": "@included",
+              "author": {"@type": "@id"},
+              "self": {"@type": "@id"},
+              "related": {"@type": "@id"},
+              "comments": {"@context": {"data": null}}
+            },
+            "id": "1",
+            "type": "articles",
+            "title": "JSON:API paints my bikeshed!",
+            "self": "http://example.com/articles/1",
+            "author": "9",
+            "comments": {
+              "self": "http://example.com/articles/1/relationships/comments",
+              "related": "http://example.com/articles/1/comments"
+            },
+            "included": [{
+              "id": "5",
+              "type": "comments",
+              "body": "First!",
+              "author": {"id": "2", "type": "people"},
+              "self": "http://example.com/comments/5"
+            }, {
+              "id": "9",
+              "type": "people",
+              "first-name": "Dan",
+              "last-name": "Gebhardt",
+              "twitter": "dgeb",
+              "self": [
+                "http://example.com/people/9",
+                "http://example.com/articles/1/relationships/author"
+              ],
+              "related": "http://example.com/articles/1/author"
+            }, {
+              "id": "12",
+              "type": "comments",
+              "body": "I like XML better",
+              "author": "9",
+              "self": "http://example.com/comments/12"
+            }]
+          }),
+        },
+      }.each do |title, params|
+        it(title) {do_frame(params.merge(processingMode: 'json-ld-1.1'))}
       end
     end
 
