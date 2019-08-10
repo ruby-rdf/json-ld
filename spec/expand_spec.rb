@@ -3467,6 +3467,27 @@ describe JSON::LD::API do
       end
     end
 
+    context "deprectaions" do
+      {
+        "blank node property": {
+          input: %({"_:bn": "value"}),
+          output: %([{"_:bn": [{"@value": "value"}]}])
+        }
+      }.each do |name, params|
+        it "deprecation on #{name} when validating" do
+          expect do
+            run_expand(params.merge(validate: true))
+          end.to write("[DEPRECATION]").to(:error)
+        end
+
+        it "no deprecation on #{name} when not validating" do
+          expect do
+            run_expand(params.merge(validate: false))
+          end.not_to write("[DEPRECATION]").to(:error)
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "non-null @value and null @type": {

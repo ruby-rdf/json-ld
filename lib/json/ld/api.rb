@@ -130,7 +130,6 @@ module JSON::LD
 
       # If not set explicitly, the context figures out the processing mode
       @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
-      @options[:validate] ||= JSON_LD_PROCESSING_MODES.include?(@options[:processingMode])
 
       if block_given?
         case block.arity

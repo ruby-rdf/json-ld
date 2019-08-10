@@ -785,13 +785,17 @@ describe JSON::LD::API do
       subject {%q({"@id": "http://example/subj", "_:foo": "bar"})}
 
       it "outputs statements with blank node predicates if :produceGeneralizedRdf is true" do
-        graph = parse(subject, produceGeneralizedRdf: true)
-        expect(graph.count).to eq 1
+        expect do
+          graph = parse(subject, produceGeneralizedRdf: true)
+          expect(graph.count).to eq 1
+        end.to write("[DEPRECATION]").to(:error)
       end
 
       it "rejects statements with blank node predicates if :produceGeneralizedRdf is false" do
-        graph = parse(subject, produceGeneralizedRdf: false)
-        expect(graph.count).to eq 0
+        expect do
+          graph = parse(subject, produceGeneralizedRdf: false)
+          expect(graph.count).to eq 0
+        end.to write("[DEPRECATION]").to(:error)
       end
     end
 

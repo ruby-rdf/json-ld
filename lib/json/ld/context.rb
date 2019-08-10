@@ -768,7 +768,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 
         # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
         if value.has_key?('@container')
@@ -796,7 +796,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
 
         # If id ends with a gen-delim, it may be used as a prefix for simple terms
         definition.prefix = true if !term.include?(':') &&

@@ -11,7 +11,13 @@ describe JSON::LD do
           skip "Native value fidelity" if %w(toRdf/0035-in.jsonld).include?(t.property('input'))
           pending "Generalized RDF" if %w(toRdf/0118-in.jsonld toRdf/e075-in.jsonld).include?(t.property('input'))
           pending "Non-heirarchical IRI joining" if %w(toRdf/0130-in.jsonld).include?(t.property('input'))
-          t.run self
+          if %w(#t0118).include?(t.property('@id'))
+            expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
+          elsif %w(#te068).include?(t.property('@id'))
+            expect {t.run self}.to write("[DEPRECATION]").to(:error)
+          else
+            t.run self
+          end
         end
       end
     end
