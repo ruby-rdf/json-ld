@@ -49,7 +49,7 @@ module JSON::LD
     ##
     # Is value an expaned @graph?
     #
-    # Note: A value is a simple graph if all of these hold true:
+    # Note: A value is a graph if all of these hold true:
     # 1. It is an object.
     # 2. It has an `@graph` key.
     # 3. It may have '@context', '@id' or '@index'
@@ -59,8 +59,10 @@ module JSON::LD
     def graph?(value)
       value.is_a?(Hash) && (value.keys - UTIL_GRAPH_KEYS) == ['@graph']
     end
+
     ##
-    # Is value a simple @graph (lacking @id)?
+    # Is value a simple graph (lacking @id)?
+    #
     # @param [Object] value
     # @return [Boolean]
     def simple_graph?(value)
