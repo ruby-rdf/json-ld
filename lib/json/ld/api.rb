@@ -40,6 +40,8 @@ module JSON::LD
 
     # The following constants are used to reduce object allocations
     LINK_REL_CONTEXT = %w(rel http://www.w3.org/ns/json-ld#context).freeze
+    LINK_REL_ALTERNATE = %w(rel alternate).freeze
+    LINK_TYPE_JSONLD = %w(type application/ld+json).freeze
     JSON_LD_PROCESSING_MODES = %w(json-ld-1.0 json-ld-1.1).freeze
 
     # Current input
@@ -566,10 +568,27 @@ module JSON::LD
             Array(links.first).first
           end
 
-          remote_doc = RemoteDocument.new(remote_doc.read,
-            documentUrl: remote_doc.base_uri,
-            contentType: remote_doc.content_type,
-            contextUrl: context_url)
+          # If content-type is not application/ld+json, nor any other +json and a link with rel=alternate and type='application/ld+json' is found, use that instead
+          alternate = !remote_doc.content_type.match?(%r(application/(\w*\+)?json)) && remote_doc.links.links.detect do |link|
+            link.attr_pairs.include?(LINK_REL_ALTERNATE) &&
+            link.attr_pairs.include?(LINK_TYPE_JSONLD)
+          end
+
+          remote_doc = if alternate
+            # Load alternate relative to URL
+            loadRemoteDocument(RDF::URI(url).join(alternate.href),
+                extractAllScripts: extractAllScripts,
+                profile: profile,
+                requestProfile: requestProfile,
+                validate: validate,
+                base: base || url,
+                **options)
+          else
+            RemoteDocument.new(remote_doc.read,
+              documentUrl: remote_doc.base_uri,
+              contentType: remote_doc.content_type,
+              contextUrl: context_url)
+          end
         when RemoteDocument
           # Pass through
         else
