@@ -417,6 +417,11 @@ module JSON::LD
 
         # Initalize context from frame
         @context = @context.parse(frame['@context'])
+
+        # Replace values with `@preserve` with the content of its entry.
+        # @replace `@null` with nil, compacting arrays
+        result = cleanup_preserve(result)
+
         # Compact result
         compacted = compact(result, ordered: @options[:ordered])
         compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
@@ -429,7 +434,7 @@ module JSON::LD
           context.serialize.merge({kwgraph => compacted})
         end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = cleanup_preserve(result)
+        result
       end
 
       block_given? ? yield(result) : result

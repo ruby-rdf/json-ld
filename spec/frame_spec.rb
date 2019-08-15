@@ -191,7 +191,7 @@ describe JSON::LD::API do
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
             "@id": "ex:Sub1",
-            "ex:p": null,
+            "ex:p": [],
             "ex:q": "bar"
           }]
         })
@@ -219,10 +219,10 @@ describe JSON::LD::API do
           "@graph": [{
             "@id": "ex:Sub1",
             "ex:p": "foo",
-            "ex:q": null
+            "ex:q": []
           }, {
             "@id": "ex:Sub2",
-            "ex:p": null,
+            "ex:p": [],
             "ex:q": "bar"
           }]
         })
@@ -507,7 +507,7 @@ describe JSON::LD::API do
             "ex:prop2": {
               "@id": "ex:Obj1"
             },
-            "ex:null": null
+            "ex:null": []
           }]
         })
       },
@@ -1956,11 +1956,11 @@ describe JSON::LD::API do
               {
                 "@id": "Juliet",
                 "@type": "Person",
-                "loves": null
+                "loves": []
               }, {
                 "@id": "Romeo",
                 "@type": "Person",
-                "loves": null
+                "loves": []
               }
             ]
           }]
@@ -2059,6 +2059,64 @@ describe JSON::LD::API do
             "eg:sameAs": "https://example.org/what"
           }]
         })
+      },
+      "issue json-ld-framing#64": {
+        input: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#"
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "_label": "Top Production",
+            "part": {
+              "@type": "Production",
+              "_label": "Test Part"
+            }
+          }
+        }),
+        frame: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#",
+            "Production": {
+              "@context": {
+                "part": {
+                  "@type": "@id", 
+                  "@container": "@set"
+                }
+              }
+            }
+          },
+          "@id": "http://example.org/1"
+        }),
+        output: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#",
+            "Production": {
+              "@context": {
+                "part": {
+                  "@type": "@id", 
+                  "@container": "@set"
+                }
+              }
+            }
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "part": [{
+              "@type": "Production",
+              "_label": "Test Part"
+            }],
+            "_label": "Top Production"
+          }
+        }),
+        processingMode: "json-ld-1.1"
       }
     }.each do |title, params|
       it title do

@@ -2772,6 +2772,71 @@ describe JSON::LD::API do
     end
   end
 
+
+  context "problem cases" do
+    {
+      "issue json-ld-framing#64": {
+        input: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#"
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "_label": "Top Production",
+            "part": {
+              "@type": "Production",
+              "_label": "Test Part"
+            }
+          }
+        }),
+        context: %({
+          "@version": 1.1,
+          "@vocab": "http://example.org/vocab#",
+          "Production": {
+            "@context": {
+              "part": {
+                "@type": "@id", 
+                "@container": "@set"
+              }
+            }
+          }
+        }),
+        output: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#",
+            "Production": {
+              "@context": {
+                "part": {
+                  "@type": "@id", 
+                  "@container": "@set"
+                }
+              }
+            }
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "part": [{
+              "@type": "Production",
+              "_label": "Test Part"
+            }],
+            "_label": "Top Production"
+          }
+        }),
+        processingMode: "json-ld-1.1"
+      }
+    }.each do |title, params|
+      it title do
+        run_compact(params)
+      end
+    end
+  end
+
   def run_compact(params)
     input, output, context = params[:input], params[:output], params[:context]
     params[:base] ||= nil

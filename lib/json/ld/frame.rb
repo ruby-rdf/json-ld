@@ -257,8 +257,6 @@ module JSON::LD
     ##
     # Replace @preserve keys with the values, also replace @null with null.
     #
-    # Optionally, remove BNode identifiers only used once.
-    #
     # @param [Array, Hash] input
     # @return [Array, Hash]
     def cleanup_preserve(input)
@@ -276,16 +274,12 @@ module JSON::LD
             # replace all key-value pairs where the key is @preserve with the value from the key-pair
             output = cleanup_preserve(value)
           else
-            v = cleanup_preserve(value)
-
-            # Because we may have added a null value to an array, we need to clean that up, if we possible
-            v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)
-            output[key] = v
+            output[key] = cleanup_preserve(value)
           end
         end
         output
       when '@null'
-        # If the value from the key-pair is @null, replace the value with nul
+        # If the value from the key-pair is @null, replace the value with null
         nil
       else
         input
