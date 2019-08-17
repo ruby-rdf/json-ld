@@ -419,11 +419,14 @@ module JSON::LD
         @context = @context.parse(frame['@context'])
 
         # Replace values with `@preserve` with the content of its entry.
-        # @replace `@null` with nil, compacting arrays
         result = cleanup_preserve(result)
+        log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
         compacted = compact(result, ordered: @options[:ordered])
+
+        # @replace `@null` with nil, compacting arrays
+        compacted = cleanup_null(compacted)
         compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
 
         # Add the given context to the output

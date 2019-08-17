@@ -191,7 +191,7 @@ describe JSON::LD::API do
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
             "@id": "ex:Sub1",
-            "ex:p": [],
+            "ex:p": null,
             "ex:q": "bar"
           }]
         })
@@ -219,10 +219,10 @@ describe JSON::LD::API do
           "@graph": [{
             "@id": "ex:Sub1",
             "ex:p": "foo",
-            "ex:q": []
+            "ex:q": null
           }, {
             "@id": "ex:Sub2",
-            "ex:p": [],
+            "ex:p": null,
             "ex:q": "bar"
           }]
         })
@@ -507,7 +507,7 @@ describe JSON::LD::API do
             "ex:prop2": {
               "@id": "ex:Obj1"
             },
-            "ex:null": []
+            "ex:null": null
           }]
         })
       },
@@ -1956,11 +1956,11 @@ describe JSON::LD::API do
               {
                 "@id": "Juliet",
                 "@type": "Person",
-                "loves": []
+                "loves": null
               }, {
                 "@id": "Romeo",
                 "@type": "Person",
-                "loves": []
+                "loves": null
               }
             ]
           }]

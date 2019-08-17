@@ -260,24 +260,38 @@ module JSON::LD
     # @param [Array, Hash] input
     # @return [Array, Hash]
     def cleanup_preserve(input)
+      case input
+      when Array
+        # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
+        input.map {|o| cleanup_preserve(o)}
+      when Hash
+        if input.has_key?('@preserve')
+          # Replace with the content of `@preserve`
+          cleanup_preserve(input['@preserve'].first)
+        else
+          input.inject({}) do |memo, (k,v)|
+            memo.merge(k => cleanup_preserve(v))
+          end
+        end
+      else
+        input
+      end
+    end
+
+    ##
+    # Replace `@null` with `null`, removing it from arrays.
+    #
+    # @param [Array, Hash] input
+    # @return [Array, Hash]
+    def cleanup_null(input)
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        v = input.map {|o| cleanup_preserve(o)}.compact
-
-        # If the array contains a single member, which is itself an array, use that value as the result
-        (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
+        input.map {|o| cleanup_null(o)}.compact
       when Hash
-        output = Hash.new
-        input.each do |key, value|
-          if key == '@preserve'
-            # replace all key-value pairs where the key is @preserve with the value from the key-pair
-            output = cleanup_preserve(value)
-          else
-            output[key] = cleanup_preserve(value)
-          end
+        input.inject({}) do |memo, (k,v)|
+          memo.merge(k => cleanup_null(v))
         end
-        output
       when '@null'
         # If the value from the key-pair is @null, replace the value with null
         nil
