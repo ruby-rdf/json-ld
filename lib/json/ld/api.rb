@@ -589,7 +589,7 @@ module JSON::LD
                 profile: profile,
                 requestProfile: requestProfile,
                 validate: validate,
-                base: base || url,
+                base: base,
                 **options)
           else
             RemoteDocument.new(remote_doc.read,
