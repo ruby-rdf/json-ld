@@ -25,7 +25,6 @@ module JSON::LD
                         active_subject: nil,
                         active_property: nil,
                         list: nil)
-      log_debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}, active_subject: #{active_subject}"}
       if element.is_a?(Array)
         # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
         element.map do |o|

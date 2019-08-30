@@ -1649,7 +1649,103 @@ describe JSON::LD::API do
             }
           }),
           processingMode: 'json-ld-1.1'
-        }
+        },
+        "named graph with @embed: @never": {
+          input: %({
+            "@id": "ex:cred",
+            "ex:subject": {
+              "@id": "ex:Subject",
+              "ex:name": "the subject"
+            },
+            "ex:proof": {
+              "@graph": {
+                "@type": "ex:Proof",
+                "ex:name": "the proof",
+                "ex:signer": [{
+                  "@id": "ex:Subject",
+                  "ex:name": "something different"
+                }]
+              }
+            }
+          }),
+          frame: %({
+            "@context": {
+              "@version": 1.1,
+              "proof": {"@id": "ex:proof", "@container": "@graph"}
+            },
+            "@graph": {
+              "proof": {"@embed": "@never"}
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "proof": {"@id": "ex:proof", "@container": "@graph"}
+            },
+            "@id": "ex:cred",
+            "ex:subject": {
+              "@id": "ex:Subject",
+              "ex:name": "the subject"
+            },
+            "proof": [{
+              "@type": "ex:Proof",
+              "ex:name": "the proof",
+              "ex:signer": {"@id": "ex:Subject"}
+            }, {
+              "@id": "ex:Subject",
+              "ex:name": "something different"
+            }]
+          }),
+          processingMode: 'json-ld-1.1'
+        },
+        "named graph with @embed: @never": {
+          input: %({
+            "@id": "ex:cred",
+            "ex:subject": {
+              "@id": "ex:Subject",
+              "ex:name": "the subject"
+            },
+            "ex:proof": {
+              "@graph": {
+                "@type": "ex:Proof",
+                "ex:name": "the proof",
+                "ex:signer": [{
+                  "@id": "ex:Subject",
+                  "ex:name": "something different"
+                }]
+              }
+            }
+          }),
+          frame: %({
+            "@context": {
+              "@version": 1.1,
+              "proof": {"@id": "ex:proof", "@container": "@graph"}
+            },
+            "@graph": {
+              "proof": {"@embed": "@never"}
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "proof": {"@id": "ex:proof", "@container": "@graph"}
+            },
+            "@id": "ex:cred",
+            "ex:subject": {
+              "@id": "ex:Subject",
+              "ex:name": "the subject"
+            },
+            "proof": [{
+              "@type": "ex:Proof",
+              "ex:name": "the proof",
+              "ex:signer": {"@id": "ex:Subject"}
+            }, {
+              "@id": "ex:Subject",
+              "ex:name": "something different"
+            }]
+          }),
+          processingMode: 'json-ld-1.1'
+        },
       }.each do |title, params|
         it title do
           do_frame(params)
@@ -2114,6 +2210,66 @@ describe JSON::LD::API do
               "_label": "Test Part"
             }],
             "_label": "Top Production"
+          }
+        }),
+        processingMode: "json-ld-1.1"
+      },
+      "issue json-ld-framing#27": {
+        input: %({
+          "@id": "ex:cred",
+          "ex:subject": {
+            "@id": "ex:Subject",
+            "ex:name": "the subject",
+            "ex:knows": {
+              "@id": "ex:issuer",
+              "ex:name": "Someone else"
+            }
+          },
+          "ex:proof": {
+            "@graph": {
+              "@type": "ex:Proof",
+              "ex:name": "the proof",
+              "ex:signer": [{
+                "@id": "ex:Subject",
+                "ex:name": "something different"
+              }]
+            }
+          }
+        }),
+        frame: %({
+          "@context": {
+            "@version": 1.1,
+            "proof": {"@id": "ex:proof", "@container": "@graph"}
+          },
+          "@graph": {
+            "subject": {},
+            "proof": {}
+          }
+        }),
+        output: %({
+          "@context": {
+            "@version": 1.1,
+            "proof": {
+              "@id": "ex:proof",
+              "@container": "@graph"
+            }
+          },
+          "@id": "ex:cred",
+          "ex:subject": {
+            "@id": "ex:Subject",
+            "ex:name": "the subject",
+            "ex:knows": {
+              "@id": "ex:issuer",
+              "ex:name": "Someone else"
+            }
+          },
+          "proof": {
+            "@type": "ex:Proof",
+            "ex:name": "the proof",
+            "ex:signer": {
+              "@id": "ex:Subject",
+              "ex:name": "something different"
+            }
           }
         }),
         processingMode: "json-ld-1.1"

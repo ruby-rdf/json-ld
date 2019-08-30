@@ -23,11 +23,6 @@ module JSON::LD
     # @param [Hash{Symbol => Object}] options ({})
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, parent: nil, property: nil, ordered: false, **options)
-      #log_depth do
-      #log_debug("frame") {"subjects: #{subjects.inspect}"}
-      #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-      #log_debug("frame") {"property: #{property.inspect}"}
-
       # Validate the frame
       validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
@@ -71,11 +66,18 @@ module JSON::LD
           warn "[DEPRECATION] #{flags[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
         end
 
-        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
+        if !state[:embedded] && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+          # Skip adding this node object to the top-level, as it was included in another node object
+          next
+        elsif state[:embedded] &&
+          (flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack]))
           # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
           add_frame_output(parent, property, output)
           next
-        elsif %w(@first @once).include?(flags[:embed]) && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+        elsif state[:embedded] &&
+          %w(@first @once).include?(flags[:embed]) &&
+          state[:uniqueEmbeds][state[:graph]].has_key?(id)
+
           # if only the first match should be embedded
           # Embed unless already embedded
           add_frame_output(parent, property, output)
@@ -96,7 +98,6 @@ module JSON::LD
 
         # Subject is also the name of a graph
         if state[:graphMap].has_key?(id)
-          log_debug("frame") {"#{id} in graphMap"}
           # check frame's "@graph" to see what to do next
           # 1. if it doesn't exist and state.graph === "@merged", don't recurse
           # 2. if it doesn't exist and state.graph !== "@merged", recurse
@@ -114,15 +115,13 @@ module JSON::LD
 
           if recurse
             state[:graphStack].push(state[:graph])
-            state[:graph] = id
-            frame(state, state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
-            state[:graph] = state[:graphStack].pop
+            frame(state.merge(graph: id, embedded: false), state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
           end
         end
 
         # If frame has `@included`, recurse over it's sub-frame
         if frame['@included']
-          frame(state, subjects, frame['@included'], parent: output, property: '@included', **options)
+          frame(state.merge(embedded: true), subjects, frame['@included'], parent: output, property: '@included', **options)
         end
 
         # iterate over subject properties in order
@@ -153,14 +152,14 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  frame(state, [oo['@id']], subframe, parent: list, property: '@list', **options)
+                  frame(state.merge(embedded: true), [oo['@id']], subframe, parent: list, property: '@list', **options)
                 else
                   add_frame_output(list, '@list', oo.dup)
                 end
               end
             when node_reference?(o)
               # recurse into subject reference
-              frame(state, [o['@id']], subframe, parent: output, property: prop, **options)
+              frame(state.merge(embedded: true), [o['@id']], subframe, parent: output, property: prop, **options)
             when value_match?(subframe, o)
               # Include values if they match
               add_frame_output(output, prop, o.dup)
@@ -188,7 +187,7 @@ module JSON::LD
               # Node has property referencing this subject
               # recurse into  reference
               (output['@reverse'] ||= {})[reverse_prop] ||= []
-              frame(state, [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
+              frame(state.merge(embedded: true), [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
             end
           end
         end
