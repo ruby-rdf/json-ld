@@ -528,7 +528,7 @@ module JSON::LD
         if container.first == '@graph' && container.length == 1
           #log_debug(" => ") { "convert #{expanded_value.inspect} to list"}
           expanded_value = as_array(expanded_value).map do |v|
-            graph?(v) ? v : {'@graph' => as_array(v)}
+            {'@graph' => as_array(v)}
           end
         end
 

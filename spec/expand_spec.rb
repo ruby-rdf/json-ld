@@ -1824,7 +1824,7 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "Does not create an graph object if value is a graph": {
+        "Creates an graph object if value is a graph": {
           input: %({
             "@context": {
               "@vocab": "http://example.org/",
@@ -1839,7 +1839,9 @@ describe JSON::LD::API do
           output: %([{
             "http://example.org/input": [{
               "@graph": [{
-                "http://example.org/value": [{"@value": "x"}]
+                "@graph": [{
+                  "http://example.org/value": [{"@value": "x"}]
+                }]
               }]
             }]
           }])
