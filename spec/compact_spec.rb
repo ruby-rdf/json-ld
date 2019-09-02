@@ -1454,6 +1454,35 @@ describe JSON::LD::API do
             }
           })
         },
+        "Compacts simple graph with @index and multiple nodes" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }, {
+                "http://example.org/value": [{"@value": "y"}]
+              }],
+              "@index": "ndx"
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": "@graph"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "@included": [{
+                "value": "x"
+              }, {
+                "value": "y"
+              }]
+            }
+          })
+        },
         "Does not compact graph with @id" => {
           input: %([{
             "http://example.org/input": [{

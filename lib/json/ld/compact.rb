@@ -240,6 +240,11 @@ module JSON::LD
                   property_is_array: as_array)
               elsif container.include?('@graph') && simple_graph?(expanded_item)
                 # container includes @graph but not @id or @index and value is a simple graph object
+                if compacted_item.is_a?(Array) && compacted_item.length > 1
+                  # Mutple objects in the same graph can't be represented directly, as they would be interpreted as two different graphs. Need to wrap in @included.
+                  included_key = context.compact_iri('@included', vocab: true).to_s
+                  compacted_item = {included_key => compacted_item}
+                end
                 # Drop through, where compacted_item will be added
                 add_value(nest_result, item_active_property, compacted_item,
                   property_is_array: as_array)
