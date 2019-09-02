@@ -349,7 +349,7 @@ module JSON::LD
         graphStack:   [],
         subjectStack: [],
         link:         {},
-        embedded:     false # True at the top-level
+        embedded:     false # False at the top-level
       }
 
       # de-reference frame to create the framing object
