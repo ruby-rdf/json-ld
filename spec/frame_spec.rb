@@ -1680,69 +1680,31 @@ describe JSON::LD::API do
           output: %({
             "@context": {
               "@version": 1.1,
-              "proof": {"@id": "ex:proof", "@container": "@graph"}
+              "proof": {
+                "@id": "ex:proof",
+                "@container": "@graph"
+              }
             },
             "@id": "ex:cred",
             "ex:subject": {
               "@id": "ex:Subject",
               "ex:name": "the subject"
             },
-            "proof": [{
-              "@type": "ex:Proof",
-              "ex:name": "the proof",
-              "ex:signer": {"@id": "ex:Subject"}
-            }, {
-              "@id": "ex:Subject",
-              "ex:name": "something different"
-            }]
-          }),
-          processingMode: 'json-ld-1.1'
-        },
-        "named graph with @embed: @never": {
-          input: %({
-            "@id": "ex:cred",
-            "ex:subject": {
-              "@id": "ex:Subject",
-              "ex:name": "the subject"
-            },
-            "ex:proof": {
-              "@graph": {
-                "@type": "ex:Proof",
-                "ex:name": "the proof",
-                "ex:signer": [{
+            "proof": {
+              "@included": [
+                {
+                  "@type": "ex:Proof",
+                  "ex:name": "the proof",
+                  "ex:signer": {
+                    "@id": "ex:Subject"
+                  }
+                },
+                {
                   "@id": "ex:Subject",
                   "ex:name": "something different"
-                }]
-              }
+                }
+              ]
             }
-          }),
-          frame: %({
-            "@context": {
-              "@version": 1.1,
-              "proof": {"@id": "ex:proof", "@container": "@graph"}
-            },
-            "@graph": {
-              "proof": {"@embed": "@never"}
-            }
-          }),
-          output: %({
-            "@context": {
-              "@version": 1.1,
-              "proof": {"@id": "ex:proof", "@container": "@graph"}
-            },
-            "@id": "ex:cred",
-            "ex:subject": {
-              "@id": "ex:Subject",
-              "ex:name": "the subject"
-            },
-            "proof": [{
-              "@type": "ex:Proof",
-              "ex:name": "the proof",
-              "ex:signer": {"@id": "ex:Subject"}
-            }, {
-              "@id": "ex:Subject",
-              "ex:name": "something different"
-            }]
           }),
           processingMode: 'json-ld-1.1'
         },
