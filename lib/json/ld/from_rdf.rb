@@ -101,18 +101,6 @@ module JSON::LD
             node, property, head = node_usage[:node], node_usage[:property], node_usage[:value]
           end
 
-          # If property equals rdf:first, i.e., the detected list is nested inside another list
-          #if property == RDF.first.to_s
-          #  # and the value of the @id of node equals rdf:nil, i.e., the detected list is empty, continue with the next usage item. The rdf:nil node cannot be converted to a list object as it would result in a list of lists, which isn't supported.
-          #  next if node['@id'] == RDF.nil.to_s
-          #
-          #  # Otherwise, the list consists of at least one item. We preserve the head node and transform the rest of the linked list to a list object
-          #  head_id = head['@id']
-          #  head = graph_object[head_id]
-          #  head = Array(head[RDF.rest.to_s]).first
-          #  list.pop; list_nodes.pop
-          #end
-
           head.delete('@id')
           head['@list'] = list.reverse
           list_nodes.each {|node_id| graph_object.delete(node_id)}
