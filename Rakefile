@@ -41,6 +41,7 @@ file "etc/manifests.nt" do
         https://w3c.github.io/json-ld-api/tests/expand-manifest.jsonld
         https://w3c.github.io/json-ld-api/tests/flatten-manifest.jsonld
         https://w3c.github.io/json-ld-api/tests/fromRdf-manifest.jsonld
+        https://w3c.github.io/json-ld-api/tests/html-manifest.jsonld
         https://w3c.github.io/json-ld-api/tests/remote-doc-manifest.jsonld
         https://w3c.github.io/json-ld-api/tests/toRdf-manifest.jsonld
         https://w3c.github.io/json-ld-framing/tests/frame-manifest.jsonld
