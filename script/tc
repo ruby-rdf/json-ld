@@ -16,6 +16,11 @@ RUN_TIME = Time.now
 def earl_preamble(options)
   options[:output].write File.read(File.expand_path("../../etc/doap.ttl", __FILE__))
   options[:output].puts %(
+<https://rubygems.org/gems/json-ld> doap:release [
+  doap:name "json-ld-#{JSON::LD::VERSION}";
+  doap:revision "#{JSON::LD::VERSION}";
+  doap:created "#{File.mtime(File.expand_path('../../VERSION', __FILE__)).strftime('%Y-%m-%d')}"^^xsd:date;
+] .
 <> foaf:primaryTopic <https://rubygems.org/gems/json-ld>;
   dc:issued "#{RUN_TIME.xmlschema}"^^xsd:dateTime;
   foaf:maker <#{ASSERTOR}> .
@@ -218,7 +223,7 @@ opts.each do |opt, arg|
   end
 end
 
-manifests = %w(expand compact flatten fromRdf remote-doc toRdf).map do |man|
+manifests = %w(expand compact flatten fromRdf html remote-doc toRdf).map do |man|
   "#{Fixtures::SuiteTest::SUITE}#{man}-manifest.jsonld"
 end + ["#{Fixtures::SuiteTest::FRAME_SUITE}frame-manifest.jsonld"]
 
