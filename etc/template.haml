@@ -81,6 +81,13 @@
                 %dt= "Description"
                 %dd{property: "doap:description", lang: 'en'}<
                   ~ CGI.escapeHTML subject['doapDesc'].to_s
+              - if subject['release']
+                - subject['release'] = subject['release'].first if subject['release'].is_a?(Array)
+                - subject['release']['revision'] = subject['release']['revision']['@value'] if subject['release']['revision'].is_a?(Hash)
+                %dt= "Release"
+                %dd{property: "doap:release"}<
+                  %span{property: "doap:revision"}<
+                    ~ CGI.escapeHTML subject['release']['revision'].to_s
               - if subject['language']
                 %dt= "Programming Language"
                 %dd{property: "doap:programming-language"}<
