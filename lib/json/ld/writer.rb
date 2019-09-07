@@ -178,7 +178,7 @@ module JSON::LD
 
       ##
       # Sets default context used for compacted profile without an explicit context URL
-      # @url [String]
+      # @param [String] url
       def default_context=(url); @default_context = url; end
     end
 

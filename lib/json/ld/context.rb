@@ -27,7 +27,7 @@ module JSON::LD
 
       ##
       # Alias a previousliy loaded context
-      # @param [String, RDF::URI] alias
+      # @param [String, RDF::URI] a
       # @param [String, RDF::URI] url
       def alias_preloaded(a, url)
         PRELOADED[a.to_s.freeze] = PRELOADED[url.to_s.freeze]
@@ -46,7 +46,7 @@ module JSON::LD
       attr_accessor :type_mapping
 
       # Base container mapping, without @set
-      # @return Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'> Container mapping
+      # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] Container mapping
       attr_reader :container_mapping
 
       # @return [String] Term used for nest properties
@@ -391,7 +391,7 @@ module JSON::LD
 
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
     # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
-    # @param [Number] vaule must be a decimal number
+    # @param [Number] value must be a decimal number
     def version=(value, **options)
       case value
       when 1.1
@@ -448,7 +448,6 @@ module JSON::LD
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
-    # @param [RDF::Resource] context_id from context IRI, for sealing terms
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
@@ -1054,8 +1053,6 @@ module JSON::LD
 
     ##
     # Retrieve term coercion
-    #
-    # @param [String] property in unexpanded form
     #
     # @param [Term, #to_s] term in unexpanded form
     # @return [RDF::URI, '@id']

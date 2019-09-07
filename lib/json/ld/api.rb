@@ -801,7 +801,15 @@ module JSON::LD
       # @return [String]
       attr_accessor :profile
 
-      # @param [RDF::Util::File::RemoteDocument] remote_doc
+      # @param [RDF::Util::File::RemoteDocument] document
+      # @param [String] documentUrl
+      #   The final URL of the loaded document. This is important to handle HTTP redirects properly.
+      # @param [String] contentType
+      #   The Content-Type of the loaded document, exclusive of any optional parameters.
+      # @param [String] contextUrl
+      #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
+      # @param [String] profile
+      #   The value of any profile parameter retrieved as part of the original contentType.
       # @option options [Hash{Symbol => Object}] options
       def initialize(document, documentUrl: nil, contentType: nil, contextUrl: nil, profile: nil, **options)
         @document = document
