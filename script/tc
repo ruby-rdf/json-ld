@@ -54,6 +54,7 @@ end
 
 def run_tc(man, tc, options)
   tc.options[:logger] = options[:logger]
+  tc.options[:documentLoader] ||= Fixtures::SuiteTest.method(:documentLoader)
 
   if tc.options[:specVersion] == "json-ld-1.0"
     STDERR.puts "skip #{tc.property('input')} (1.0 test)"
@@ -233,7 +234,7 @@ manifests.each do |man|
   Fixtures::SuiteTest::Manifest.open(man) do |m|
     m.entries.each do |tc|
       next unless ARGV.empty? || ARGV.any? {|n| tc.property('@id').match(/#{n}/) || tc.property('input').match(/#{n}/)}
-      run_tc(man, tc, options)
+      run_tc(man.sub(".jsonld", ""), tc, options)
     end
   end
 end

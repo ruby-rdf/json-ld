@@ -116,7 +116,7 @@ module Fixtures
         super
       end
 
-      # Base is expanded input file
+      # Base is expanded input if not specified
       def base
         options.fetch('base', manifest_url.join(property('input')).to_s)
       end
