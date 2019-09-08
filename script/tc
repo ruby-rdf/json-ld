@@ -94,9 +94,7 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect) if tc.evaluationTest?
       compare_results(tc, output, expected)
     when 'jld:FromRDFTest'
-      repo = RDF::NQuads::Reader.open(tc.input_loc) do |reader|
-        reader.each_statement.to_a
-      end.extend(RDF::Enumerable)
+      repo = RDF::Repository.load(tc.input_loc, format: :nquads)
       output = JSON::LD::API.fromRdf(repo, tc.options.merge(validate: true))
       expected = JSON.load(tc.expect) if tc.evaluationTest?
       compare_results(tc, output, expected)
