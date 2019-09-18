@@ -213,6 +213,34 @@ describe JSON::LD::API do
               ex:id ex:integer "123"^^rdf:JSON .
             )
           },
+          "string": {
+            output: %([{
+              "@id": "http://example.org/vocab#id",
+              "http://example.org/vocab#string": [{
+                "@value": "string",
+                "@type": "@json"
+              }]
+            }]),
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:string "\\"string\\""^^rdf:JSON .
+            )
+          },
+          "null": {
+            output: %([{
+              "@id": "http://example.org/vocab#id",
+              "http://example.org/vocab#null": [{
+                "@value": null,
+                "@type": "@json"
+              }]
+            }]),
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:null "null"^^rdf:JSON .
+            )
+          },
           "object": {
             output: %([{
                "@id": "http://example.org/vocab#id",

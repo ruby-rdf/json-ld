@@ -43,6 +43,9 @@ module JSON::LD
         else
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
+          if datatype == RDF::URI(RDF.to_uri + "JSON")
+            value = value.to_json_c14n
+          end
         end
         datatype = RDF::URI(datatype) if datatype && !datatype.is_a?(RDF::URI)
                   
