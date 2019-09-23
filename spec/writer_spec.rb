@@ -201,13 +201,13 @@ describe JSON::LD::Writer do
           t.logger = logger
           pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
           repo = RDF::Repository.load(t.input_loc, format: :nquads)
-          jsonld = JSON::LD::Writer.buffer(logger: t.logger) do |writer|
+          jsonld = JSON::LD::Writer.buffer(logger: t.logger, **t.options) do |writer|
             writer << repo
           end
 
           # And then, re-generate jsonld as RDF
           
-          expect(parse(jsonld, format: :jsonld)).to be_equivalent_graph(repo, t)
+          expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
         end
       end
     end

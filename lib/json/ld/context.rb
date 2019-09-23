@@ -1517,6 +1517,8 @@ module JSON::LD
 
       #log_debug("") {"=> #{result.inspect}"}
       result
+    rescue ::JSON::ParserError => e
+      raise JSON::LD::JsonLdError::InvalidJsonLiteral, e.message
     end
 
     ##

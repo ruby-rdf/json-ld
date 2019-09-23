@@ -60,6 +60,8 @@ module JSON::LD
 
         pd << if statement.object.resource?
           {'@id' => statement.object.to_s}
+        elsif statement.object.datatype == RDF::URI(RDF.to_uri + "JSON")
+          {"@value" => MultiJson.load(statement.object.to_s), "@type" => "@json"}
         else
           lit = {"@value" => statement.object.to_s}
           lit["@type"] = statement.object.datatype.to_s if statement.object.has_datatype?
@@ -110,7 +112,7 @@ module JSON::LD
       @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
       if @current_node_def
         node_def = if context
-          compacted = JSON::LD::API.compact(@current_node_def, context, rename_bnodes: false)
+          compacted = JSON::LD::API.compact(@current_node_def, context, rename_bnodes: false, **@options)
           compacted.delete('@context')
           compacted
         else

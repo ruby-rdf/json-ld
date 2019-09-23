@@ -45,6 +45,7 @@ module RDF::Util
         #puts "use #{filename_or_url} locally"
         document_options[:headers][:content_type] = case localpath
         when /\.ttl$/    then 'text/turtle'
+        when /\.nq$/     then 'application/n-quads'
         when /\.nt$/     then 'application/n-triples'
         when /\.html$/   then 'text/html'
         when /\.jsonld$/ then 'application/ld+json'
@@ -287,7 +288,7 @@ module Fixtures
                   JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  #logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
                 when "jld:HttpTest"
                   rspec_example.instance_eval do

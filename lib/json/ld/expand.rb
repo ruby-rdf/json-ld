@@ -119,11 +119,12 @@ module JSON::LD
           end
 
           output_object.delete('@language') if output_object.key?('@language') && Array(output_object['@language']).empty?
+          type_is_json = output_object['@type'] == '@json'
           output_object.delete('@type') if output_object.key?('@type') && Array(output_object['@type']).empty?
 
-          # If the value of result's @value key is null, then set result to null.
+          # If the value of result's @value key is null, then set result to null and @type is not @json.
           ary = Array(output_object['@value'])
-          return nil if ary.empty?
+          return nil if ary.empty? && !type_is_json
 
           if (context.processingMode || 'json-ld-1.0') > 'json-ld-1.0' && output_object['@type'] == '@json'
             # Any value of @value is okay if @type: @json
@@ -136,7 +137,7 @@ module JSON::LD
                   t.is_a?(Hash) && t.empty?}
             # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
             raise JsonLdError::InvalidTypedValue,
-                  "value of @type must be an IRI: #{output_object.inspect}"
+                  "value of @type must be an IRI or '@json': #{output_object.inspect}"
           end
         elsif !output_object.fetch('@type', []).is_a?(Array)
           # Otherwise, if result contains the key @type and its associated value is not an array, set it to an array containing only the associated value.
@@ -418,7 +419,7 @@ module JSON::LD
 
           # Unless expanded value is null, set the expanded property member of result to expanded value.
           #log_debug("expand #{expanded_property}") { expanded_value.inspect}
-          output_object[expanded_property] = expanded_value unless expanded_value.nil?
+          output_object[expanded_property] = expanded_value unless expanded_value.nil? && input_type != '@json'
           next
         end
 

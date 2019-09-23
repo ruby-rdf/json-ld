@@ -123,6 +123,7 @@ module JSON
       class InvalidImportValue < JsonLdError; @code = "invalid @import value"; end
       class InvalidIncludedValue < JsonLdError; @code = "invalid @included value"; end
       class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
+      class InvalidJsonLiteral < JsonLdError; @code = "invalid JSON literal"; end
       class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
       class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
       class InvalidLanguageMapValue < JsonLdError; @code = "invalid language map value"; end

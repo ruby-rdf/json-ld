@@ -687,6 +687,36 @@ describe JSON::LD::API do
             "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
           }]),
         },
+        "string": {
+          input: %([{
+            "http://example.org/vocab#string": [{
+              "@value": "string",
+              "@type": "@json"
+            }]
+          }]),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#string", "@type": "@json"}
+            },
+            "e": "string"
+          })
+        },
+        "null": {
+          input: %([{
+            "http://example.org/vocab#null": [{
+              "@value": null,
+              "@type": "@json"
+            }]
+          }]),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#null", "@type": "@json"}
+            },
+            "e": null
+          })
+        },
         "object": {
           output: %({
             "@context": {
