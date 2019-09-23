@@ -211,7 +211,7 @@ module Fixtures
               repo = RDF::NQuads::Reader.open(input_loc) do |reader|
                 reader.each_statement.to_a
               end.to_a.uniq.extend(RDF::Enumerable)
-              logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              logger.info "repo: #{repo.dump(self.id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, logger: logger, **options)
             when "jld:ToRDFTest"
               repo = RDF::Repository.new
@@ -288,7 +288,7 @@ module Fixtures
                   JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  #logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
+                  logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
                 when "jld:HttpTest"
                   rspec_example.instance_eval do
