@@ -419,7 +419,7 @@ module JSON::LD
 
           # Unless expanded value is null, set the expanded property member of result to expanded value.
           #log_debug("expand #{expanded_property}") { expanded_value.inspect}
-          output_object[expanded_property] = expanded_value unless expanded_value.nil? && input_type != '@json'
+          output_object[expanded_property] = expanded_value unless expanded_value.nil? && expanded_property == '@value' && input_type != '@json'
           next
         end
 
