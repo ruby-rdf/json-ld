@@ -219,7 +219,8 @@ module JSON::LD
         simple == other.simple &&
         index == other.index &&
         context == other.context &&
-        prefix? == other.prefix?
+        prefix? == other.prefix? &&
+        as_set? == other.as_set?
       end
 
       def inspect
@@ -413,6 +414,9 @@ module JSON::LD
         warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1"
         value
       when String, RDF::URI
+        if (RDF::URI(value.to_s).relative? && processingMode == 'json-ld-1.0')
+          raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode: #{value.inspect}"
+        end
         v = expand_iri(value.to_s, vocab: true, documentRelative: true)
         raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
         v
@@ -684,9 +688,11 @@ module JSON::LD
       simple_term = value.is_a?(String) || value.nil?
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if processingMode == 'json-ld-1.1' &&  term == '@type' && value == {'@container' => '@set'}
-        # this is the only case were redefining a keyword is allowed
-      elsif KEYWORDS.include?(term)
+      if processingMode == 'json-ld-1.1' && term == '@type' &&
+         (value.keys - %w(@container @protected)).empty? &&
+         value.fetch('@container', '@set') == '@set'
+        # thes are the only cases were redefining a keyword is allowed
+      elsif KEYWORDS.include?(term) # TODO anything that looks like a keyword
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
       elsif !term_valid?(term) && @options[:validate]
