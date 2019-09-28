@@ -458,7 +458,14 @@ module JSON::LD
           index_key = context.term_definitions[key].index || '@index'
 
           # While processing index keys, if container includes @type, clear type-scoped term definitions
-          container_context = container.include?('@type') && context.previous_context ? context.previous_context : context 
+          container_context = if container.include?('@type') && context.previous_context
+            context.previous_context
+          elsif container.include?('@id') && context.term_definitions[key]
+            id_context = context.term_definitions[key].context if context.term_definitions[key]
+            id_context ? context.parse(id_context, propagate: false) : context
+          else
+            context
+          end
 
           # For each key-value in the object:
           keys = ordered ? value.keys.sort : value.keys

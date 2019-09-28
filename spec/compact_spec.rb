@@ -2370,6 +2370,55 @@ describe JSON::LD::API do
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
+        "Scoped on id map": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "schema": "http://schema.org/",
+              "name": "schema:name",
+              "body": "schema:articleBody",
+              "words": "schema:wordCount",
+              "post": {
+                "@id": "schema:blogPost",
+                "@container": "@id",
+                "@context": {
+                  "@base": "http://example.com/posts/"
+                }
+              }
+            },
+            "@id": "http://example.com/",
+            "@type": "schema:Blog",
+            "name": "World Financial News",
+            "post": {
+              "1/en": {
+                "body": "World commodities were up today with heavy trading of crude oil...",
+                "words": 1539
+              },
+              "1/de": {
+                "body": "Die Werte an Warenbörsen stiegen im Sog eines starken Handels von Rohöl...",
+                "words": 1204
+              }
+            }
+          }),
+          input: %([{
+            "@id": "http://example.com/",
+            "@type": ["http://schema.org/Blog"],
+            "http://schema.org/name": [{"@value": "World Financial News"}],
+            "http://schema.org/blogPost": [{
+              "@id": "http://example.com/posts/1/en",
+              "http://schema.org/articleBody": [
+                {"@value": "World commodities were up today with heavy trading of crude oil..."}
+              ],
+              "http://schema.org/wordCount": [{"@value": 1539}]
+            }, {
+              "@id": "http://example.com/posts/1/de",
+              "http://schema.org/articleBody": [
+                {"@value": "Die Werte an Warenbörsen stiegen im Sog eines starken Handels von Rohöl..."}
+              ],
+              "http://schema.org/wordCount": [{"@value": 1204}]
+            }]
+          }])
+        },
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end

@@ -689,6 +689,7 @@ module JSON::LD
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if processingMode == 'json-ld-1.1' && term == '@type' &&
+         value.is_a?(Hash) &&
          (value.keys - %w(@container @protected)).empty? &&
          value.fetch('@container', '@set') == '@set'
         # thes are the only cases were redefining a keyword is allowed
