@@ -696,6 +696,9 @@ module JSON::LD
       elsif KEYWORDS.include?(term) # TODO anything that looks like a keyword
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
+      elsif term.to_s.start_with?('@') && @options[:validate]
+        warn "Terms beginning with '@' are reserved for future use and ignored."
+        return
       elsif !term_valid?(term) && @options[:validate]
         raise JsonLdError::InvalidTermDefinition, "term is invalid: #{term.inspect}"
       end
@@ -716,7 +719,7 @@ module JSON::LD
       definition = TermDefinition.new(term)
       definition.simple = simple_term
 
-      if options[:validate]
+      if @options[:validate]
         expected_keys = case processingMode
         when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
         else JSON_LD_EXPECTED_KEYS
@@ -770,11 +773,16 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
           definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
+        if value['@reverse'].to_s.start_with?('@') && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored."
+          return
+        end
+
         if term.include?(':') && (term_iri = expand_iri(term)) != definition.id
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.to_s.start_with?("_:")
 
         # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
         if value.has_key?('@container')
@@ -790,6 +798,12 @@ module JSON::LD
       elsif value.has_key?('@id') && value['@id'] != term
         raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
           value['@id'].is_a?(String)
+
+        if !KEYWORDS.include?(value['@id'].to_s) && value['@id'].to_s.start_with?('@') && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored."
+          return
+        end
+
         definition.id = expand_iri(value['@id'],
           vocab: true,
           documentRelative: true,
@@ -802,7 +816,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.to_s.start_with?("_:")
 
         # If id ends with a gen-delim, it may be used as a prefix for simple terms
         definition.prefix = true if !term.include?(':') &&
@@ -889,6 +903,8 @@ module JSON::LD
         else
           raise JsonLdError::InvalidPrefixValue, "unknown value for '@prefix': #{pfx.inspect} on term #{term.inspect}"
         end
+
+        raise JsonLdError::InvalidTermDefinition, "keywords may not be used as prefixes" if pfx && KEYWORDS.include?(definition.id.to_s)
       end
 
       if previous_definition && previous_definition.protected? && definition != previous_definition && !override_protected

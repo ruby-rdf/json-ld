@@ -2957,8 +2957,12 @@ describe JSON::LD::API do
     if params[:exception]
       expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))
-      expect(jld).to produce_jsonld(output, logger)
+      jld = nil
+      if params[:write]
+        expect{jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to write(params[:write]).to(:error)
+      else
+        expect{jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))}.not_to write.to(:error)
+      end
 
       # Compare expanded jld/output too to make sure list values remain ordered
       exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
