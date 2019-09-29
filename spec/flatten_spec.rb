@@ -675,7 +675,12 @@ describe JSON::LD::API do
     if params[:exception]
       expect {JSON::LD::API.flatten(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.flatten(input, context, params.merge(logger: logger))
+      jld = nil
+      if params[:write]
+        expect{jld = JSON::LD::API.flatten(input, context, params.merge(logger: logger))}.to write(params[:write]).to(:error)
+      else
+        expect{jld = JSON::LD::API.flatten(input, context, params.merge(logger: logger))}.not_to write.to(:error)
+      end
       expect(jld).to produce_jsonld(output, logger)
     end
   end

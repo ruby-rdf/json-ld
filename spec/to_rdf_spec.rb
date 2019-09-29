@@ -1264,7 +1264,11 @@ describe JSON::LD::API do
     if params[:exception]
       expect {JSON::LD::API.toRdf(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
     else
-      JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}
+      if params[:write]
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
+      else
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}}.not_to write.to(:error)
+      end
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end
   end

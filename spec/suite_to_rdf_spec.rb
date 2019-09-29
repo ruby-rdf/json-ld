@@ -8,15 +8,19 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          skip "Native value fidelity" if %w(toRdf/0035-in.jsonld).include?(t.property('input'))
-          pending "Generalized RDF" if %w(toRdf/0118-in.jsonld toRdf/e075-in.jsonld).include?(t.property('input'))
-          pending "Non-heirarchical IRI joining" if %w(toRdf/0130-in.jsonld).include?(t.property('input'))
+          skip "Native value fidelity" if %w(#t0035).include?(t.property('@id'))
+          pending "Generalized RDF" if %w(#t0118 #te075).include?(t.property('@id'))
+          pending "Non-heirarchical IRI joining" if %w(#t0130).include?(t.property('@id'))
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
+          elsif %w(#te075).include?(t.property('@id'))
+            expect {t.run self}.to write(/is invalid/).to(:error)
+          elsif %w(#te005).include?(t.property('@id'))
+            expect {t.run self}.to write("Terms beginning with '@' are reserved for future use").to(:error)
           elsif %w(#te068).include?(t.property('@id'))
             expect {t.run self}.to write("[DEPRECATION]").to(:error)
           else
-            t.run self
+            expect {t.run self}.not_to write.to(:error)
           end
         end
       end

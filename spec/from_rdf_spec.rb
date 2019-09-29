@@ -626,7 +626,12 @@ describe JSON::LD::API do
     begin
       input, output = params[:input], params[:output]
       output = ::JSON.parse(output) if output.is_a?(String)
-      jld = serialize(input, **params)
+      jld = nil
+      if params[:write]
+        expect{jld = serialize(input, **params)}.to write(params[:write]).to(:error)
+      else
+        expect{jld = serialize(input, **params)}.not_to write.to(:error)
+      end
       expect(jld).to produce_jsonld(output, logger)
     rescue JSON::LD::JsonLdError => e
       fail("#{e.class}: #{e.message}\n" +

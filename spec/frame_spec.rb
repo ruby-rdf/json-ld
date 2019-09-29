@@ -2249,7 +2249,12 @@ describe JSON::LD::API do
       input = ::JSON.parse(input) if input.is_a?(String)
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
-      jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)
+      jld = nil
+      if params[:write]
+        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)}.to write(params[:write]).to(:error)
+      else
+        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)}.not_to write.to(:error)
+      end
       expect(jld).to produce_jsonld(output, logger)
 
       # Compare expanded jld/output too to make sure list values remain ordered

@@ -3556,15 +3556,11 @@ describe JSON::LD::API do
         }
       }.each do |name, params|
         it "deprecation on #{name} when validating" do
-          expect do
-            run_expand(params.merge(validate: true))
-          end.to write("[DEPRECATION]").to(:error)
+          run_expand(params.merge(validate: true, write: "[DEPRECATION]"))
         end
 
         it "no deprecation on #{name} when not validating" do
-          expect do
-            run_expand(params.merge(validate: false))
-          end.not_to write("[DEPRECATION]").to(:error)
+          run_expand(params.merge(validate: false))
         end
       end
     end
@@ -3612,7 +3608,12 @@ describe JSON::LD::API do
     if params[:exception]
       expect {JSON::LD::API.expand(input, params)}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))
+      jld = nil
+      if params[:write]
+        expect{jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))}.to write(params[:write]).to(:error)
+      else
+        expect{jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))}.not_to write.to(:error)
+      end
       expect(jld).to produce_jsonld(output, logger)
     end
   end

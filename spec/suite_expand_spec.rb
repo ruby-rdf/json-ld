@@ -11,8 +11,10 @@ describe JSON::LD do
           t.options[:ordered] = false
           if %w(#t0068).include?(t.property('@id'))
             expect{t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#t0005).include?(t.property('@id'))
+            expect{t.run self}.to write("Terms beginning with '@' are reserved for future use").to(:error)
           else
-            expect{t.run self}.not_to write.to(:error)
+            expect {t.run self}.not_to write.to(:error)
           end
         end
 
@@ -20,8 +22,10 @@ describe JSON::LD do
           t.options[:ordered] = true
           if %w(#t0068).include?(t.property('@id'))
             expect{t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#t0005).include?(t.property('@id'))
+            expect{t.run self}.to write("Terms beginning with '@' are reserved for future use").to(:error)
           else
-            expect{t.run self}.not_to write.to(:error)
+            expect {t.run self}.not_to write.to(:error)
           end
         end
       end
