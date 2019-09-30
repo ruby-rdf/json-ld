@@ -1190,6 +1190,7 @@ module JSON::LD
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
+      return nil if value.start_with?('@')
       #log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
 
       defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.
