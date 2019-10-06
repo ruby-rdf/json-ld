@@ -853,6 +853,33 @@ describe JSON::LD::API do
       end
     end
 
+    context "default direction" do
+      {
+        "value with coerced null direction": {
+          input: %({
+            "@context": {
+              "@direction": "rtl",
+              "ex": "http://example.org/vocab#",
+              "ex:ltr": { "@direction": "ltr" },
+              "ex:none": { "@direction": null }
+            },
+            "ex:rtl": "rtl",
+            "ex:ltr": "ltr",
+            "ex:none": "no direction"
+          }),
+          output: %([
+            {
+              "http://example.org/vocab#rtl": [{"@value": "rtl", "@direction": "rtl"}],
+              "http://example.org/vocab#ltr": [{"@value": "ltr", "@direction": "ltr"}],
+              "http://example.org/vocab#none": [{"@value": "no direction"}]
+            }
+          ])
+        }
+      }.each_pair do |title, params|
+        it(title) {run_expand params}
+      end
+    end
+
     context "default language" do
       {
         "value with coerced null language": {
@@ -875,6 +902,52 @@ describe JSON::LD::API do
         },
       }.each do |title, params|
         it(title) {run_expand params}
+      end
+
+      context "and default direction" do
+        {
+          "value with coerced null direction": {
+            input: %({
+              "@context": {
+                "@language": "en",
+                "@direction": "rtl",
+                "ex": "http://example.org/vocab#",
+                "ex:ltr": { "@direction": "ltr" },
+                "ex:none": { "@direction": null },
+                "ex:german": { "@language": "de" },
+                "ex:nolang": { "@language": null },
+                "ex:german_ltr": { "@language": "de", "@direction": "ltr" },
+                "ex:nolang_ltr": { "@language": null, "@direction": "ltr" },
+                "ex:none_none": { "@language": null, "@direction": null },
+                "ex:german_none": { "@language": "de", "@direction": null }
+              },
+              "ex:rtl": "rtl en",
+              "ex:ltr": "ltr en",
+              "ex:none": "no direction en",
+              "ex:german": "german rtl",
+              "ex:nolang": "no language rtl",
+              "ex:german_ltr": "german ltr",
+              "ex:nolang_ltr": "no language ltr",
+              "ex:none_none": "no language or direction",
+              "ex:german_none": "german no direction"
+            }),
+            output: %([
+              {
+                "http://example.org/vocab#rtl": [{"@value": "rtl en", "@language": "en", "@direction": "rtl"}],
+                "http://example.org/vocab#ltr": [{"@value": "ltr en", "@language": "en", "@direction": "ltr"}],
+                "http://example.org/vocab#none": [{"@value": "no direction en", "@language": "en"}],
+                "http://example.org/vocab#german": [{"@value": "german rtl", "@language": "de", "@direction": "rtl"}],
+                "http://example.org/vocab#nolang": [{"@value": "no language rtl", "@direction": "rtl"}],
+                "http://example.org/vocab#german_ltr": [{"@value": "german ltr", "@language": "de", "@direction": "ltr"}],
+                "http://example.org/vocab#nolang_ltr": [{"@value": "no language ltr", "@direction": "ltr"}],
+                "http://example.org/vocab#none_none": [{"@value": "no language or direction"}],
+                "http://example.org/vocab#german_none": [{"@value": "german no direction", "@language": "de"}]
+              }
+            ])
+          }
+        }.each_pair do |title, params|
+          it(title) {run_expand params}
+        end
       end
     end
 
@@ -1567,6 +1640,116 @@ describe JSON::LD::API do
                 {"@value": "Ihre Majestät", "@language": "de"},
                 {"@value": "The Queen", "@language": "en"},
                 {"@value": "The Queen"}
+              ]
+            }
+          ])
+        },
+        "simple map with default direction": {
+          input: %({
+            "@context": {
+              "@direction": "ltr",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          output: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ])
+        },
+        "simple map with term direction": {
+          input: %({
+            "@context": {
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          output: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ])
+        },
+        "simple map with overriding term direction": {
+          input: %({
+            "@context": {
+              "vocab": "http://example.com/vocab/",
+              "@direction": "rtl",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          output: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ])
+        },
+        "simple map with overriding null direction": {
+          input: %({
+            "@context": {
+              "vocab": "http://example.com/vocab/",
+              "@direction": "rtl",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": null,
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          output: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät", "@language": "de"},
+                {"@value": "The Queen", "@language": "en"}
               ]
             }
           ])
@@ -3615,6 +3798,9 @@ describe JSON::LD::API do
         expect{jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))}.not_to write.to(:error)
       end
       expect(jld).to produce_jsonld(output, logger)
+
+      # Also expect result to produce itself
+      expect(output).to produce_jsonld(output, logger)
     end
   end
 end

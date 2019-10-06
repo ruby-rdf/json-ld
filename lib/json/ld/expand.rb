@@ -16,7 +16,7 @@ module JSON::LD
     CONTAINER_LIST = %w(@list).freeze
     CONTAINER_TYPE = %w(@type).freeze
     CONTAINER_GRAPH_ID = %w(@graph @id).freeze
-    KEYS_VALUE_LANGUAGE_TYPE_INDEX = %w(@value @language @type @index).freeze
+    KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
     KEYS_INCLUDED_TYPE = %w(@included @type).freeze
 
@@ -111,7 +111,7 @@ module JSON::LD
 
         # If result contains the key @value:
         if value?(output_object)
-          unless (output_object.keys - KEYS_VALUE_LANGUAGE_TYPE_INDEX).empty? &&
+          unless (output_object.keys - KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION).empty? &&
                  !(output_object.key?('@language') && output_object.key?('@type'))
             # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
             raise JsonLdError::InvalidValueObject,
@@ -345,6 +345,26 @@ module JSON::LD
               raise JsonLdError::InvalidLanguageTaggedString,
                     "Value of #{expanded_property} must be a string: #{value.inspect}"
             end
+          when '@direction'
+            # If expanded property is @direction and value is not either 'ltr' or 'rtl', an invalid base direction error has been detected and processing is aborted. Otherwise, set expanded value to value.
+            # If framing, always use array form, unless null
+            case value
+            when 'ltr', 'rtl' then (framing ? [value] : value)
+            when Array
+              raise JsonLdError::InvalidBaseDirection,
+                    "@direction value may not be an array unless framing: #{value.inspect}" unless framing
+              raise JsonLdError::InvalidBaseDirection,
+                    "@direction must be one of 'ltr', 'rtl', or an array of those if framing #{value.inspect}" unless value.all? {|v| %w(ltr rtl).include?(v) || v.is_a?(Hash) && v.empty?}
+              value
+            when Hash
+              raise JsonLdError::InvalidBaseDirection,
+                    "@direction value must be a an empty object for framing: #{value.inspect}" unless
+                    value.empty? && framing
+              [value]
+            else
+              raise JsonLdError::InvalidBaseDirection,
+                    "Value of #{expanded_property} must be one of 'ltr' or 'rtl': #{value.inspect}"
+            end
           when '@index'
             # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
             raise JsonLdError::InvalidIndexValue,
@@ -445,6 +465,7 @@ module JSON::LD
               # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
               v = {'@value' => item}
               v['@language'] = k.downcase unless expanded_k == '@none'
+              v['@direction'] = context.direction(key) if context.direction(key)
               ary << v if item
             end
           end

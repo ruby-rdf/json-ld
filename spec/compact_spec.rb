@@ -1140,6 +1140,173 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
+        "simple map with term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with overriding term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with overriding null direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät", "@language": "de"},
+                {"@value": "The Queen", "@language": "en"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": null,
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": null,
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with mismatching term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "rtl"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "rtl",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "rtl",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen"
+            },
+            "vocab:label": [
+              {"@value": "Die Königin", "@language": "de"},
+              {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"}
+            ]
+          }),
+          processingMode: "json-ld-1.1"
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
@@ -2963,6 +3130,8 @@ describe JSON::LD::API do
       else
         expect{jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))}.not_to write.to(:error)
       end
+
+      expect(jld).to produce_jsonld(output, logger)
 
       # Compare expanded jld/output too to make sure list values remain ordered
       exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')

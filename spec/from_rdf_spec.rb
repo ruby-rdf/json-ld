@@ -583,7 +583,189 @@ describe JSON::LD::API do
         end
       end
     end
-  
+
+    context "@direction" do
+      context "rdfDirection: null" do
+        {
+          "no language rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "no language", "@type": "https://w3.org/ns/i18n#_rtl"}]
+            }]),
+          },
+          "no language rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "no language";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@id": "_:cl1"}]
+            }, {
+              "@id": "_:cl1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "no language"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
+            }]),
+          },
+          "en-US rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#en-us_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "no language", "@type": "https://w3.org/ns/i18n#en-us_rtl"}]
+            }]),
+          },
+          "en-US rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "en-US";
+                rdf:language "en-us";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@id": "_:cl1"}]
+            }, {
+              "@id": "_:cl1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "en-US"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-us"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
+            }]),
+          }
+        }.each_pair do |name, params|
+          it name do
+            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: nil))
+          end
+        end
+      end
+
+      context "rdfDirection: i18n-datatype" do
+        {
+          "no language rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "no language", "@direction": "rtl"}]
+            }]),
+          },
+          "no language rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "no language";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@id": "_:cl1"}]
+            }, {
+              "@id": "_:cl1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "no language"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
+            }]),
+          },
+          "en-US rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "en-US", "@language": "en-us", "@direction": "rtl"}]
+            }]),
+          },
+          "en-US rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "en-US";
+                rdf:language "en-us";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@id": "_:cl1"}]
+            }, {
+              "@id": "_:cl1",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "en-US"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-us"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
+            }]),
+          }
+        }.each_pair do |name, params|
+          it name do
+            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'i18n-datatype', processingMode: 'json-ld-1.1'))
+          end
+        end
+      end
+
+      context "rdfDirection: compound-literal" do
+        {
+          "no language rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "no language", "@type": "https://w3.org/ns/i18n#_rtl"}]
+            }]),
+          },
+          "no language rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "no language";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "no language", "@direction": "rtl"}]
+            }]),
+          },
+          "en-US rtl datatype": {
+            input: %q(
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "en-US", "@type": "https://w3.org/ns/i18n#en-us_rtl"}]
+            }]),
+          },
+          "en-US rtl compound-literal": {
+            input: %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              <http://example.com/a> <http://example.org/label> _:cl1 .
+
+              _:cl1 rdf:value "en-US";
+                rdf:language "en-us";
+                rdf:direction "rtl" .
+            ),
+            output: %q([{
+              "@id": "http://example.com/a",
+              "http://example.org/label": [{"@value": "en-US", "@language": "en-us", "@direction": "rtl"}]
+            }]),
+          }
+        }.each_pair do |name, params|
+          it name do
+            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'compound-literal', processingMode: 'json-ld-1.1'))
+          end
+        end
+      end
+    end
+
     context "problems" do
       {
         "xsd:boolean as value" => {

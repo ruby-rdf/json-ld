@@ -25,6 +25,9 @@ module JSON::LD
       value = nil
       ec = @context
 
+      # Create an entry for compound-literal node detection
+      compound_literal_subjects = {}
+
       # Create a map for node to object representation
 
       # For each statement in dataset
@@ -35,10 +38,17 @@ module JSON::LD
 
         # Create a graph entry as needed
         node_map = graph_map[name] ||= {}
+        compound_literal_subjects[name] ||= {}
+
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
         subject = ec.expand_iri(statement.subject).to_s
         node = node_map[subject] ||= {'@id' => subject}
+
+        # If predicate is rdf:datatype, note subject in compound literal subjects map
+        if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF.to_uri + 'direction'
+          compound_literal_subjects[name][subject] ||= true
+        end
 
         # If object is an IRI or blank node identifier, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
         node_map[statement.object.to_s] ||= {'@id' => statement.object.to_s} unless
@@ -50,8 +60,12 @@ module JSON::LD
           next
         end
 
-        # Set value to the result of using the RDF to Object Conversion algorithm, passing object and use native types.
-        value = ec.expand_value(nil, statement.object, useNativeTypes: useNativeTypes, log_depth: @options[:log_depth])
+        # Set value to the result of using the RDF to Object Conversion algorithm, passing object, rdfDirection, and use native types.
+        value = ec.expand_value(nil,
+                                statement.object,
+                                rdfDirection: @options[:rdfDirection],
+                                useNativeTypes: useNativeTypes,
+                                log_depth: @options[:log_depth])
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -77,6 +91,25 @@ module JSON::LD
 
       # For each name and graph object in graph map:
       graph_map.each do |name, graph_object|
+
+        # If rdfDirection is compound-literal, check referenced_once for entries from compound_literal_subjects
+        compound_literal_subjects.fetch(name, {}).keys.each do |cl|
+          node = referenced_once[cl][:node]
+          next unless node.is_a?(Hash)
+          property = referenced_once[cl][:property]
+          value = referenced_once[cl][:value]
+          cl_node = graph_map[name].delete(cl)
+          next unless cl_node.is_a?(Hash)
+          node[property].select do |v|
+            next unless v['@id'] == cl
+            v.delete('@id')
+            v['@value'] = cl_node[RDF.value.to_s].first['@value']
+            v['@language'] = cl_node[RDF.to_uri.to_s + 'language'].first['@value'] if cl_node[RDF.to_uri.to_s + 'language']
+            v['@direction'] = cl_node[RDF.to_uri.to_s + 'direction'].first['@value']
+          end
+        end
+
+        # Skip to next graph, unless this one has lists
         next unless nil_var = graph_object[RDF.nil.to_s]
 
         # For each item usage in the usages member of nil, perform the following steps:

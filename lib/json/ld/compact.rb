@@ -11,6 +11,7 @@ module JSON::LD
     CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE = Set.new(%w(@language @index @id @type)).freeze
     CONTAINER_MAPPING_LIST = %w(@list).freeze
     CONTAINER_MAPPING_TYPE = %w(@type).freeze
+    EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE = %w(@direction @index @language @value).freeze
 
     ##
     # This algorithm compacts a JSON-LD document, such that the given context is applied. This must result in shortening any applicable IRIs to terms or compact IRIs, any applicable keywords to keyword aliases, and any applicable JSON-LD values expressed in expanded form to simple values such as strings or numbers.
@@ -150,8 +151,8 @@ module JSON::LD
             next
           end
 
-          # Otherwise, if expanded property is @index, @value, or @language:
-          if expanded_property == '@index' || expanded_property == '@value' || expanded_property == '@language'
+          # Otherwise, if expanded property is @direction, @index, @value, or @language:
+          if EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE.include?(expanded_property)
             al = context.compact_iri(expanded_property, vocab: true, quiet: true)
             #log_debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value

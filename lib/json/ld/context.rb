@@ -52,9 +52,13 @@ module JSON::LD
       # @return [String] Term used for nest properties
       attr_accessor :nest
 
-      # Language mapping of term, `false` is used if there is explicitly no language mapping for this term.
+      # Language mapping of term, `false` is used if there is an explicit language mapping for this term.
       # @return [String] Language mapping
       attr_accessor :language_mapping
+
+      # Direction of term, `false` is used if there is explicit direction mapping mapping for this term.
+      # @return ["ltr", "rtl"] direction_mapping
+      attr_accessor :direction_mapping
 
       # @return [Boolean] Reverse Property
       attr_accessor :reverse_property
@@ -92,7 +96,9 @@ module JSON::LD
       # @param [String] type_mapping Type mapping
       # @param [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
       # @param [String] language_mapping
-      #   Language mapping of term, `false` is used if there is explicitly no language mapping for this term
+      #   Language mapping of term, `false` is used if there is an explicit language mapping for this term
+      # @param ["ltr", "rtl"] direction_mapping
+      #   Direction mapping of term, `false` is used if there is an explicit direction mapping for this term
       # @param [Boolean] reverse_property
       # @param [Boolean] protected
       # @param [String] nest term used for nest properties
@@ -106,6 +112,7 @@ module JSON::LD
                     type_mapping: nil,
                     container_mapping: nil,
                     language_mapping: nil,
+                    direction_mapping: nil,
                     reverse_property: false,
                     nest: nil,
                     protected: false,
@@ -118,6 +125,7 @@ module JSON::LD
         @type_mapping           = type_mapping.to_s unless type_mapping.nil?
         self.container_mapping  = container_mapping
         @language_mapping       = language_mapping  unless language_mapping.nil?
+        @direction_mapping      = direction_mapping unless direction_mapping.nil?
         @reverse_property       = reverse_property
         @protected              = protected
         @nest                   = nest              unless nest.nil?
@@ -189,7 +197,7 @@ module JSON::LD
       # @return [String]
       def to_rb
         defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id index type_mapping container_mapping language_mapping reverse_property nest simple prefix context protected).each do |acc|
+        %w(id index type_mapping container_mapping language_mapping direction_mapping reverse_property nest simple prefix context protected).each do |acc|
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping'
@@ -215,6 +223,7 @@ module JSON::LD
         container_mapping == other.container_mapping &&
         nest == other.nest &&
         language_mapping == other.language_mapping &&
+        direction_mapping == other.direction_mapping &&
         reverse_property == other.reverse_property &&
         simple == other.simple &&
         index == other.index &&
@@ -232,6 +241,7 @@ module JSON::LD
         v << "container=#{container_mapping}" if container_mapping
         v << "as_set=#{as_set?.inspect}"
         v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
+        v << "dir=#{direction_mapping.inspect}" unless direction_mapping.nil?
         v << "type=#{type_mapping}" unless type_mapping.nil?
         v << "nest=#{nest.inspect}" unless nest.nil?
         v << "simple=true" if @simple
@@ -272,10 +282,15 @@ module JSON::LD
 
     # Default language
     #
-    #
     # This adds a language to plain strings that aren't otherwise coerced
     # @return [String]
     attr_reader :default_language
+
+    # Default direction
+    #
+    # This adds a direction to plain strings that aren't otherwise coerced
+    # @return ["lrt", "rtl"]
+    attr_reader :default_direction
 
     # Default vocabulary
     #
@@ -385,6 +400,16 @@ module JSON::LD
       @default_language = if value
         raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
         value.downcase
+      else
+        nil
+      end
+    end
+
+    # @param [String] value
+    def default_direction=(value, **options)
+      @default_direction = if value
+        raise JsonLdError::InvalidBaseDirection, "@direction must be one or 'ltr', or 'rtl': #{value.inspect}" unless %w(ltr rtl).include?(value)
+        value
       else
         nil
       end
@@ -560,6 +585,7 @@ module JSON::LD
             '@version'    => :version=,
             '@import'     => nil,
             '@base'       => :base=,
+            '@direction'   => :default_direction=,
             '@language'   => :default_language=,
             '@propagate'  => :propagate=,
             '@vocab'      => :vocab=,
@@ -646,9 +672,9 @@ module JSON::LD
 
     # The following constants are used to reduce object allocations in #create_term_definition below
     ID_NULL_OBJECT = { '@id' => nil }.freeze
-    NON_TERMDEF_KEYS = Set.new(%w(@base @vocab @language @protected @version)).freeze
+    NON_TERMDEF_KEYS = Set.new(%w(@base @direction @language @protected @version @vocab)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
-    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @id @index @language @nest @prefix @reverse @protected @type)).freeze
+    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @direction @id @index @language @nest @prefix @reverse @protected @type)).freeze
     JSON_LD_10_TYPE_VALUES = Set.new(%w(@id @vocab)).freeze
     JSON_LD_11_TYPE_VALUES = Set.new(%w(@json @none)).freeze
     PREFIX_URI_ENDINGS = Set.new(%w(: / ? # [ ] @)).freeze
@@ -887,6 +913,13 @@ module JSON::LD
         definition.language_mapping = language || false
       end
 
+      if value.has_key?('@direction')
+        direction = value['@direction']
+        raise JsonLdError::InvalidBaseDirection, "direction must be null, 'ltr', or 'rtl', was #{language.inspect}} on term #{term.inspect}" unless direction.nil? || %w(ltr rtl).include?(direction)
+        #log_debug("") {"direction_mapping: #{direction.inspect}"}
+        definition.direction_mapping = direction || false
+      end
+
       if value.has_key?('@nest')
         nest = value['@nest']
         raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
@@ -941,6 +974,7 @@ module JSON::LD
         #log_debug("") {"=> context: #{inspect}"}
         ctx = {}
         ctx['@base'] = base.to_s if base && base != doc_base
+        ctx['@direction'] = default_direction.to_s if default_direction
         ctx['@language'] = default_language.to_s if default_language
         ctx['@vocab'] = vocab.to_s if vocab
 
@@ -1019,6 +1053,7 @@ module JSON::LD
             if self.default_language
               td.language_mapping = false
             end
+            # FIXME: text direction
           when RDF::XSD.boolean, RDF::SCHEMA.Boolean, RDF::XSD.date, RDF::SCHEMA.Date,
             RDF::XSD.dateTime, RDF::SCHEMA.DateTime, RDF::XSD.time, RDF::SCHEMA.Time,
             RDF::XSD.duration, RDF::SCHEMA.Duration, RDF::XSD.decimal, RDF::SCHEMA.Number,
@@ -1137,6 +1172,16 @@ module JSON::LD
       term = find_definition(term)
       lang = term && term.language_mapping
       lang.nil? ? @default_language : lang
+    end
+
+    ##
+    # Retrieve the text direction associated with a term, or the default direction otherwise
+    # @param [Term, #to_s] term in unexpanded form
+    # @return [String]
+    def direction(term)
+      term = find_definition(term)
+      dir = term && term.direction_mapping
+      dir.nil? ? @default_direction : dir
     end
 
     ##
@@ -1289,7 +1334,11 @@ module JSON::LD
 
       if vocab && inverse_context.has_key?(iri)
         #log_debug("") {"vocab and key in inverse context"} unless quiet
-        default_language = self.default_language || "@none"
+        default_language = if self.default_direction
+          "#{self.default_language}_#{self.default_direction}"
+        else
+          self.default_language || "@none"
+        end
         containers = []
         tl, tl_value = "@language", "@null"
         containers.concat(CONTAINERS_INDEX_SET) if index?(value) && !graph?(value)
@@ -1310,7 +1359,9 @@ module JSON::LD
           list.each do |item|
             item_language, item_type = "@none", "@none"
             if value?(item)
-              if item.has_key?('@language')
+              if item.has_key?('@direction')
+                item_language = "#{item['@language']}_#{item['@direction']}"
+              elsif item.has_key?('@language')
                 item_language = item['@language']
               elsif item.has_key?('@type')
                 item_type = item['@type']
@@ -1361,7 +1412,10 @@ module JSON::LD
             # In 1.1, an language map can be used to index values using @none
             if value.has_key?('@language') && !index?(value)
               tl_value = value['@language']
+              tl_value += "_#{value['@direction']}" if value['@direction']
               containers.concat(CONTAINERS_LANGUAGE)
+            elsif value.has_key?('@direction') && !index?(value)
+              tl_value = "_#{value['@direction']}"
             elsif value.has_key?('@type')
               tl_value = value['@type']
               tl = '@type'
@@ -1398,6 +1452,12 @@ module JSON::LD
         end
         #log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless quiet
         preferred_values << '@any'
+
+        # if containers included `@language` and preferred_values includes something of the form language-tag_direction, add just the _direction part, to select terms that have that direction.
+        if lang_dir = preferred_values.detect {|v| v.include?('_')}
+          preferred_values << '_' + lang_dir.split('_').last
+        end
+
         if p_term = select_term(iri, containers, tl, preferred_values)
           #log_debug("") {"=> term: #{p_term.inspect}"} unless quiet
           return p_term
@@ -1470,12 +1530,13 @@ module JSON::LD
     # @param [Hash, String] value
     #   Value (literal or IRI) to be expanded
     # @param [Boolean] useNativeTypes (false) use native representations
+    # @param [Boolean] rdfDirection (nil) decode i18n datatype if i18n-datatype
     # @param  [Hash{Symbol => Object}] options
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see https://www.w3.org/TR/json-ld11-api/#value-expansion
-    def expand_value(property, value, useNativeTypes: false, **options)
+    def expand_value(property, value, useNativeTypes: false, rdfDirection: nil, **options)
       #log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
       td = term_definitions.fetch(property, TermDefinition.new(property))
@@ -1509,6 +1570,11 @@ module JSON::LD
           # FIXME: MultiJson
           res['@value'] = ::JSON.parse(value.object)
           res['@type'] = '@json'
+        elsif processingMode == 'json-ld-1.1' && value.datatype.start_with?("https://w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype'
+          lang, dir = value.datatype.fragment.split('_')
+          res['@value'] = value.to_s
+          res['@language'] = lang unless lang.empty?
+          res['@direction'] = dir
         elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
           res['@value'] = value.object
           res['@type'] = uri(coerce(property)) if coerce(property)
@@ -1521,6 +1587,7 @@ module JSON::LD
             res['@type'] = uri(value.datatype).to_s
           elsif value.has_language? || language(property)
             res['@language'] = (value.language || language(property)).to_s
+            # FIXME: direction
           end
         end
         res
@@ -1530,10 +1597,18 @@ module JSON::LD
 
         if td.type_mapping && !CONTAINERS_ID_VOCAB.include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
+        elsif value.is_a?(String) && td.language_mapping && td.direction_mapping
+          res['@language'] = td.language_mapping
+          res['@direction'] = td.direction_mapping
         elsif value.is_a?(String) && td.language_mapping
           res['@language'] = td.language_mapping
-        elsif value.is_a?(String) && default_language && td.language_mapping.nil?
-          res['@language'] = default_language
+          res['@direction'] = default_direction if default_direction && td.direction_mapping.nil?
+        elsif value.is_a?(String) && td.direction_mapping
+          res['@language'] = default_language if default_language && td.language_mapping.nil?
+          res['@direction'] = td.direction_mapping
+        elsif value.is_a?(String)
+          res['@language'] = default_language if default_language && td.language_mapping.nil?
+          res['@direction'] = default_direction if default_direction && td.direction_mapping.nil?
         end
 
         res
@@ -1589,17 +1664,25 @@ module JSON::LD
         # Compact common datatype
         #log_debug("") {" (@type & coerce) == #{coerce(property)}"}
         value['@value']
-      when value['@language'] && (value['@language'] == language(property))
+      when value['@language'] && (value['@language'] == language(property)) && value['@direction'] && (value['@direction'] == direction(property))
+        # Compact language and direction
+        value['@value']
+      when value['@language'] && (value['@language'] == language(property)) && (!value['@direction'] || (value['@direction'] == direction(property)))
         # Compact language
         #log_debug("") {" (@language) == #{language(property).inspect}"}
+        value['@value']
+      when value['@direction'] && (value['@direction'] == direction(property)) && (!value['@language'] || (value['@language'] == language(property)))
+        # Compact  direction
         value['@value']
       when num_members == 1 && !value['@value'].is_a?(String)
         #log_debug("") {" (native)"}
         value['@value']
-      when num_members == 1 && default_language.nil? || language(property) == false
-        #log_debug("") {" (!@language)"}
+      when num_members == 1 && (default_language.nil? || language(property) == false) && (default_direction.nil? || direction(property) == false)
         value['@value']
       else
+        value = value.dup
+        value.delete('@language') if value['@language'] && (value['@language'] == language(property))
+        value.delete('@direction') if value['@direction'] && (value['@direction'] == direction(property))
         # Otherwise, use original value
         #log_debug("") {" (no change)"}
         value
@@ -1663,6 +1746,7 @@ module JSON::LD
       v << "vocab=#{vocab}" if vocab
       v << "processingMode=#{processingMode}" if processingMode
       v << "default_language=#{default_language}" if default_language
+      v << "default_direction=#{default_direction}" if default_direction
       v << "previous_context" if previous_context
       v << "term_definitions[#{term_definitions.length}]=#{term_definitions}"
       v.join(" ") + "]"
@@ -1758,7 +1842,8 @@ module JSON::LD
     #         "@language": {
     #           "@null": "term",
     #           "@none": "term",
-    #           "en": "term"
+    #           "en": "term",
+    #           "ar_rtl": "term"
     #         },
     #         "@type": {
     #           "@reverse": "term",
@@ -1800,9 +1885,27 @@ module JSON::LD
             any_map['@any'] ||= term
           elsif td.type_mapping
             type_map[td.type_mapping.to_s] ||= term
+          elsif !td.language_mapping.nil? && !td.direction_mapping.nil?
+            lang_dir = if td.language_mapping && td.direction_mapping
+              "#{td.language_mapping}_#{td.direction_mapping}"
+            elsif td.language_mapping
+              td.language_mapping
+            elsif td.direction_mapping
+              "_#{td.direction_mapping}"
+            else
+              "@null"
+            end
+            language_map[lang_dir] ||= term
           elsif !td.language_mapping.nil?
-            language = td.language_mapping || '@null'
-            language_map[language] ||= term
+            lang_dir = td.language_mapping || '@null'
+            language_map[lang_dir] ||= term
+          elsif !td.direction_mapping.nil?
+            lang_dir = td.direction_mapping ? "_#{td.direction_mapping}" : '@none'
+            language_map[lang_dir] ||= term
+          elsif default_direction
+            language_map["#{td.language_mapping}_#{default_direction}"] ||= term
+            language_map['@none'] ||= term
+            type_map['@none'] ||= term
           else
             language_map[default_language] ||= term
             language_map['@none'] ||= term

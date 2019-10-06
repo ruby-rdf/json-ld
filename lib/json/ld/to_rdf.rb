@@ -41,6 +41,20 @@ module JSON::LD
           # Only valid for rdf:JSON
           value = value.to_json_c14n
         else
+          if item.has_key?('@direction') && @options[:rdfDirection]
+            # Either serialize using a datatype, or a compound-literal
+            case @options[:rdfDirection]
+            when 'i18n-datatype'
+              datatype = RDF::URI("https://w3.org/ns/i18n##{item.fetch('@language', '').downcase}_#{item['@direction']}")
+            when 'compound-literal'
+              cl = RDF::Node.new
+              yield RDF::Statement(cl, RDF.value, item['@value'].to_s)
+              yield RDF::Statement(cl, RDF.to_uri + 'language', item['@language'].downcase) if item['@language']
+              yield RDF::Statement(cl, RDF.to_uri + 'direction', item['@direction'])
+              return cl
+            end
+          end
+
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
           if datatype == RDF::URI(RDF.to_uri + "JSON")
@@ -50,7 +64,7 @@ module JSON::LD
         datatype = RDF::URI(datatype) if datatype && !datatype.is_a?(RDF::URI)
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
-        language = item.fetch('@language', nil)
+        language = item.fetch('@language', nil) if datatype == RDF.langString
         return RDF::Literal.new(value, datatype: datatype, language: language)
       elsif list?(item)
         # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.

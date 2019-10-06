@@ -1110,6 +1110,75 @@ describe JSON::LD::API do
       end
     end
 
+    context "@direction" do
+      context "rdfDirection: null" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "no language" .)
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "en-US"@en-us .)
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: nil)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+
+      context "rdfDirection: i18n-datatype" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .)
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .)
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: 'i18n-datatype')).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+
+      context "rdfDirection: compound-literal" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              _:a <http://example.org/label> [
+                rdf:value "no language";
+                rdf:direction "rtl"
+              ] .
+            )
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              _:a <http://example.org/label> [
+                rdf:value "en-US";
+                rdf:language "en-us";
+                rdf:direction "rtl"
+              ] .
+            )
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: 'compound-literal')).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "Invalid subject" => {

@@ -482,6 +482,7 @@ describe JSON::LD::Context do
         "@container as string" => {"foo" => {"@container" => "true"}},
         "@context which is invalid" => {"foo" => {"@context" => {"bar" => []}}},
         "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
+        "@direction as foo" => {"@direction" => "foo"},
         "@vocab as @id" => {"@vocab" => {"@id" => "http://example.com/"}},
         "@prefix string" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => "str"}},
         "@prefix array" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => []}},
@@ -542,7 +543,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @language @protected @propagate @import @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @direction @language @protected @propagate @import @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
@@ -1270,6 +1271,8 @@ describe JSON::LD::Context do
           "xsd" => RDF::XSD.to_s,
           "plain" => "http://example.com/plain",
           "lang" => {"@id" => "http://example.com/lang", "@language" => "en"},
+          "dir" => {"@id" => "http://example.com/dir", "@direction" => "ltr"},
+          "langdir" => {"@id" => "http://example.com/langdir", "@language" => "en", "@direction" => "ltr"},
           "bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean"},
           "integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer"},
           "double" => {"@id" => "http://example.com/double", "@type" => "xsd:double"},
@@ -1312,7 +1315,9 @@ describe JSON::LD::Context do
         "set_integer" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
         "set_id" => [{"@id" => "http://example.org/id"}],
         "graph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
-        'json' => [{"@value" => {"some" => "json"}, "@type" => "@json"}]
+        'json' => [{"@value" => {"some" => "json"}, "@type" => "@json"}],
+        'dir' => [{"@value" => "dir", "@direction" => "ltr"}],
+        'langdir' => [{"@value" => "lang dir", "@language" => "en", "@direction" => "ltr"}],
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|

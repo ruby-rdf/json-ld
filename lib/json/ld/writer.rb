@@ -96,11 +96,11 @@ module JSON::LD
           description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :embed,
-          datatype: %w(@always @first @last @never),
-          default: '@first',
+          datatype: %w(@always @once @never),
+          default: '@once',
           control: :select,
           on: ["--embed EMBED"],
-          description: "How to embed matched objects (@first).") {|arg| RDF::URI(arg)},
+          description: "How to embed matched objects (@once).") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :explicit,
           datatype: TrueClass,
@@ -126,6 +126,13 @@ module JSON::LD
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
           description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
         RDF::CLI::Option.new(
+          symbol: :rdfDirection,
+          datatype: %w(i18n-datatype compound-literal),
+          default: 'null',
+          control: :select,
+          on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
+          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
           symbol: :requireAll,
           datatype: TrueClass,
           default: true,
@@ -138,6 +145,12 @@ module JSON::LD
           control: :checkbox,
           on: ["--[no-]stream"],
           description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {|arg| arg},
+        RDF::CLI::Option.new(
+          symbol: :useNativeTypes,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]use-native-types"],
+          description: "Use native JSON values in value objects.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :useRdfType,
           datatype: TrueClass,

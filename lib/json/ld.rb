@@ -49,6 +49,7 @@ module JSON
       @container
       @context
       @default
+      @direction
       @embed
       @explicit
       @json
@@ -142,6 +143,7 @@ module JSON
       class InvalidScriptElement < JsonLdError; @code = "invalid script element"; end
       class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
       class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
+      class InvalidBaseDirection < JsonLdError; @code = "invalid base direction"; end
       class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
       class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
       class InvalidTypeValue < JsonLdError; @code = "invalid type value"; end

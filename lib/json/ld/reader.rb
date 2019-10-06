@@ -21,11 +21,25 @@ module JSON::LD
           on: ["--expand-context CONTEXT"],
           description: "Context to use when expanding.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
+          symbol: :extractAllScripts,
+          datatype: TrueClass,
+          default: false,
+          control: :checkbox,
+          on: ["--[no-]extract-all-scripts"],
+          description: "If set to true, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
           symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
           description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
+        RDF::CLI::Option.new(
+          symbol: :rdfDirection,
+          datatype: %w(i18n-datatype compound-literal),
+          default: 'null',
+          control: :select,
+          on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
+          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
       ]
     end
 
@@ -76,7 +90,7 @@ module JSON::LD
     def each_triple(&block)
       if block_given?
         JSON::LD::API.toRdf(@doc, @options) do |statement|
-          yield *statement.to_triple
+          yield(*statement.to_triple)
         end
       end
       enum_for(:each_triple)
