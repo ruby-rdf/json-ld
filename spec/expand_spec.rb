@@ -853,7 +853,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "default direction" do
+    context "@direction" do
       {
         "value with coerced null direction": {
           input: %({
@@ -3775,7 +3775,29 @@ describe JSON::LD::API do
             "ID": "http://example/bar"
           }),
           exception: JSON::LD::JsonLdError::CollidingKeywords,
-        }
+        },
+        "@language and @type": {
+          input: %({
+            "ex:p": {
+              "@value": "v",
+              "@type": "ex:t",
+              "@language": "en"
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidValueObject,
+          processingMode: 'json-ld-1.1'
+        },
+        "@direction and @type": {
+          input: %({
+            "ex:p": {
+              "@value": "v",
+              "@type": "ex:t",
+              "@direction": "rtl"
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidValueObject,
+          processingMode: 'json-ld-1.1'
+        },
       }.each do |title, params|
         it(title) {run_expand params}
       end

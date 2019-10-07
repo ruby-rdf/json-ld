@@ -188,6 +188,25 @@ describe JSON::LD::API do
           "term5": [ "v5", "plain literal" ]
         })
       },
+      "default direction" => {
+        input: %({
+          "http://example.com/term": [
+            "v5",
+            {"@value": "plain literal"}
+          ]
+        }),
+        context: %({
+          "term5": {"@id": "http://example.com/term", "@direction": null},
+          "@direction": "ltr"
+        }),
+        output: %({
+          "@context": {
+            "term5": {"@id": "http://example.com/term", "@direction": null},
+            "@direction": "ltr"
+          },
+          "term5": [ "v5", "plain literal" ]
+        })
+      },
     }.each_pair do |title, params|
       it(title) {run_compact(params)}
     end
@@ -241,6 +260,16 @@ describe JSON::LD::API do
             "http://example.org/foo": {"@value": "bar", "language": "baz"}
           })
         },
+        "@direction" => {
+          input: %({
+            "http://example.org/foo": {"@value": "bar", "@direction": "ltr"}
+          }),
+          context: %({"direction": "@direction"}),
+          output: %({
+            "@context": {"direction": "@direction"},
+            "http://example.org/foo": {"@value": "bar", "direction": "ltr"}
+          })
+        },
         "@value" => {
           input: %({
             "http://example.org/foo": {"@value": "bar", "@language": "baz"}
@@ -280,6 +309,22 @@ describe JSON::LD::API do
             "@context": {
               "term5": {"@id": "http://example.com/term","@language": null},
               "@language": "de"
+            },
+            "term5": "v1"
+          })
+        },
+        "Uses term with null direction when two terms conflict on direction" => {
+          input: %([{
+            "http://example.com/term": {"@value": "v1"}
+          }]),
+          context: %({
+            "term5": {"@id": "http://example.com/term","@direction": null},
+            "@direction": "ltr"
+          }),
+          output: %({
+            "@context": {
+              "term5": {"@id": "http://example.com/term","@direction": null},
+              "@direction": "ltr"
             },
             "term5": "v1"
           })
@@ -552,6 +597,26 @@ describe JSON::LD::API do
             },
             "foo_en": ["en"],
             "foo_de": ["de"]
+          })
+        },
+        "1 term 2 lists 2 directions" => {
+          input: %([{
+            "http://example.com/foo": [
+              {"@list": [{"@value": "en", "@direction": "ltr"}]},
+              {"@list": [{"@value": "ar", "@direction": "rtl"}]}
+            ]
+          }]),
+          context: %({
+            "foo_ltr": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "ltr"},
+            "foo_rtl": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "rtl"}
+          }),
+          output: %({
+            "@context": {
+              "foo_ltr": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "ltr"},
+              "foo_rtl": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "rtl"}
+            },
+            "foo_ltr": ["en"],
+            "foo_rtl": ["ar"]
           })
         },
         "coerced @list containing an empty list" => {

@@ -111,11 +111,17 @@ module JSON::LD
 
         # If result contains the key @value:
         if value?(output_object)
-          unless (output_object.keys - KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION).empty? &&
-                 !(output_object.key?('@language') && output_object.key?('@type'))
-            # The result must not contain any keys other than @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
+          keys = output_object.keys
+          unless (keys - KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION).empty?
+            # The result must not contain any keys other than @direction, @value, @language, @type, and @index. It must not contain both the @language key and the @type key. Otherwise, an invalid value object error has been detected and processing is aborted.
             raise JsonLdError::InvalidValueObject,
             "value object has unknown keys: #{output_object.inspect}"
+          end
+
+          if keys.include?('@type') && !(keys & %w(@language @direction)).empty?
+            # @type is inconsistent with either @language or @direction
+            raise JsonLdError::InvalidValueObject,
+            "value object must not include @type with either @language or @direction: #{output_object.inspect}"
           end
 
           output_object.delete('@language') if output_object.key?('@language') && Array(output_object['@language']).empty?
