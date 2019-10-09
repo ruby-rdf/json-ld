@@ -1171,7 +1171,7 @@ module JSON::LD
     def language(term)
       term = find_definition(term)
       lang = term && term.language_mapping
-      lang.nil? ? @default_language : lang
+      lang.nil? ? @default_language : (lang == false ? nil : lang)
     end
 
     ##
@@ -1181,7 +1181,7 @@ module JSON::LD
     def direction(term)
       term = find_definition(term)
       dir = term && term.direction_mapping
-      dir.nil? ? @default_direction : dir
+      dir.nil? ? @default_direction : (dir == false ? nil : dir)
     end
 
     ##
@@ -1597,18 +1597,11 @@ module JSON::LD
 
         if td.type_mapping && !CONTAINERS_ID_VOCAB.include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
-        elsif value.is_a?(String) && td.language_mapping && td.direction_mapping
-          res['@language'] = td.language_mapping
-          res['@direction'] = td.direction_mapping
-        elsif value.is_a?(String) && td.language_mapping
-          res['@language'] = td.language_mapping
-          res['@direction'] = default_direction if default_direction && td.direction_mapping.nil?
-        elsif value.is_a?(String) && td.direction_mapping
-          res['@language'] = default_language if default_language && td.language_mapping.nil?
-          res['@direction'] = td.direction_mapping
         elsif value.is_a?(String)
-          res['@language'] = default_language if default_language && td.language_mapping.nil?
-          res['@direction'] = default_direction if default_direction && td.direction_mapping.nil?
+          language = language(property)
+          direction = direction(property)
+          res['@language'] = language if language
+          res['@direction'] = direction if direction
         end
 
         res
@@ -1636,23 +1629,16 @@ module JSON::LD
     def compact_value(property, value, **options)
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
-      num_members = value.length
-
-      num_members -= 1 if index?(value) && container(property).include?('@index')
-      if num_members > 2
-        #log_debug("") {"can't compact value with # members > 2"}
-        return value
-      end
+      indexing = index?(value) && container(property).include?('@index')
+      language = language(property)
+      direction = direction(property)
 
       result = case
-      when coerce(property) == '@none'
-        # use original expanded value
-        value
-      when coerce(property) == '@id' && value.has_key?('@id') && num_members == 1
+      when coerce(property) == '@id' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce)"}
         compact_iri(value['@id'])
-      when coerce(property) == '@vocab' && value.has_key?('@id') && num_members == 1
+      when coerce(property) == '@vocab' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce & vocab)"}
         compact_iri(value['@id'], vocab: true)
@@ -1664,27 +1650,16 @@ module JSON::LD
         # Compact common datatype
         #log_debug("") {" (@type & coerce) == #{coerce(property)}"}
         value['@value']
-      when value['@language'] && (value['@language'] == language(property)) && value['@direction'] && (value['@direction'] == direction(property))
-        # Compact language and direction
-        value['@value']
-      when value['@language'] && (value['@language'] == language(property)) && (!value['@direction'] || (value['@direction'] == direction(property)))
-        # Compact language
-        #log_debug("") {" (@language) == #{language(property).inspect}"}
-        value['@value']
-      when value['@direction'] && (value['@direction'] == direction(property)) && (!value['@language'] || (value['@language'] == language(property)))
-        # Compact  direction
-        value['@value']
-      when num_members == 1 && !value['@value'].is_a?(String)
+      when coerce(property) == '@none' || value['@type']
+        # use original expanded value
+        value
+      when !value['@value'].is_a?(String)
         #log_debug("") {" (native)"}
-        value['@value']
-      when num_members == 1 && (default_language.nil? || language(property) == false) && (default_direction.nil? || direction(property) == false)
-        value['@value']
+        indexing || !index?(value) ? value['@value'] : value
+      when value['@language'] == language && value['@direction'] == direction
+        # Compact language and direction
+        indexing || !index?(value) ? value['@value'] : value
       else
-        value = value.dup
-        value.delete('@language') if value['@language'] && (value['@language'] == language(property))
-        value.delete('@direction') if value['@direction'] && (value['@direction'] == direction(property))
-        # Otherwise, use original value
-        #log_debug("") {" (no change)"}
         value
       end
 
