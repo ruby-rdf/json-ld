@@ -1570,7 +1570,7 @@ module JSON::LD
           # FIXME: MultiJson
           res['@value'] = ::JSON.parse(value.object)
           res['@type'] = '@json'
-        elsif processingMode == 'json-ld-1.1' && value.datatype.start_with?("https://w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype'
+        elsif processingMode == 'json-ld-1.1' && value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype'
           lang, dir = value.datatype.fragment.split('_')
           res['@value'] = value.to_s
           res['@language'] = lang unless lang.empty?

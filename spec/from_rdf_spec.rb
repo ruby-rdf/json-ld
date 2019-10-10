@@ -589,11 +589,11 @@ describe JSON::LD::API do
         {
           "no language rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
-              "http://example.org/label": [{"@value": "no language", "@type": "https://w3.org/ns/i18n#_rtl"}]
+              "http://example.org/label": [{"@value": "no language", "@type": "https://www.w3.org/ns/i18n#_rtl"}]
             }]),
           },
           "no language rtl compound-literal": {
@@ -615,11 +615,11 @@ describe JSON::LD::API do
           },
           "en-US rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
-              "http://example.org/label": [{"@value": "en-US", "@type": "https://w3.org/ns/i18n#en-us_rtl"}]
+              "http://example.org/label": [{"@value": "en-US", "@type": "https://www.w3.org/ns/i18n#en-us_rtl"}]
             }]),
           },
           "en-US rtl compound-literal": {
@@ -652,7 +652,7 @@ describe JSON::LD::API do
         {
           "no language rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
@@ -678,7 +678,7 @@ describe JSON::LD::API do
           },
           "en-US rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
@@ -715,11 +715,11 @@ describe JSON::LD::API do
         {
           "no language rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .
+              <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
-              "http://example.org/label": [{"@value": "no language", "@type": "https://w3.org/ns/i18n#_rtl"}]
+              "http://example.org/label": [{"@value": "no language", "@type": "https://www.w3.org/ns/i18n#_rtl"}]
             }]),
           },
           "no language rtl compound-literal": {
@@ -737,11 +737,11 @@ describe JSON::LD::API do
           },
           "en-US rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
-              "http://example.org/label": [{"@value": "en-US", "@type": "https://w3.org/ns/i18n#en-us_rtl"}]
+              "http://example.org/label": [{"@value": "en-US", "@type": "https://www.w3.org/ns/i18n#en-us_rtl"}]
             }]),
           },
           "en-US rtl compound-literal": {

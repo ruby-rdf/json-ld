@@ -1133,11 +1133,11 @@ describe JSON::LD::API do
         {
           "no language rtl": [
             %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
-            %q(_:a <http://example.org/label> "no language"^^<https://w3.org/ns/i18n#_rtl> .)
+            %q(_:a <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .)
           ],
           "en-US rtl": [
             %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
-            %q(_:a <http://example.org/label> "en-US"^^<https://w3.org/ns/i18n#en-us_rtl> .)
+            %q(_:a <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .)
           ]
         }.each do |title, (js, ttl)|
           it title do

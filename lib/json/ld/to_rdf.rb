@@ -45,7 +45,7 @@ module JSON::LD
             # Either serialize using a datatype, or a compound-literal
             case @options[:rdfDirection]
             when 'i18n-datatype'
-              datatype = RDF::URI("https://w3.org/ns/i18n##{item.fetch('@language', '').downcase}_#{item['@direction']}")
+              datatype = RDF::URI("https://www.w3.org/ns/i18n##{item.fetch('@language', '').downcase}_#{item['@direction']}")
             when 'compound-literal'
               cl = RDF::Node.new
               yield RDF::Statement(cl, RDF.value, item['@value'].to_s)
