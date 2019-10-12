@@ -104,7 +104,13 @@ module JSON::LD
             next unless v['@id'] == cl
             v.delete('@id')
             v['@value'] = cl_node[RDF.value.to_s].first['@value']
-            v['@language'] = cl_node[RDF.to_uri.to_s + 'language'].first['@value'] if cl_node[RDF.to_uri.to_s + 'language']
+            if cl_node[RDF.to_uri.to_s + 'language']
+              lang = cl_node[RDF.to_uri.to_s + 'language'].first['@value']
+              if lang !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+                warn "i18n datatype language must be valid BCP47: #{lang.inspect}"
+              end
+              v['@language'] = lang
+            end
             v['@direction'] = cl_node[RDF.to_uri.to_s + 'direction'].first['@value']
           end
         end

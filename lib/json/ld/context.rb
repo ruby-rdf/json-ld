@@ -363,7 +363,7 @@ module JSON::LD
       end
 
       self.vocab = options[:vocab] if options[:vocab]
-      self.default_language = options[:language] if options[:language]
+      self.default_language = options[:language] if options[:language] =~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
       @term_definitions = options[:term_definitions] if options[:term_definitions]
 
       #log_debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
@@ -397,11 +397,17 @@ module JSON::LD
 
     # @param [String] value
     def default_language=(value, **options)
-      @default_language = if value
-        raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}" unless value.is_a?(String)
-        value.downcase
-      else
+      @default_language = case value
+      when String
+        # Warn on an invalid language tag, unless :validate is true, in which case it's an error
+        if value !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+          warn "@language must be valid BCP47: #{value.inspect}"
+        end
+        options[:lowercaseLanguage] ? value.downcase : value
+      when nil
         nil
+      else
+        raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}"
       end
     end
 
@@ -907,8 +913,18 @@ module JSON::LD
 
       if value.has_key?('@language')
         language = value['@language']
-        raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{language.inspect}} on term #{term.inspect}" unless language.nil? || (language || "").is_a?(String)
-        language = language.downcase if language.is_a?(String)
+        language = case value['@language']
+        when String
+          # Warn on an invalid language tag, unless :validate is true, in which case it's an error
+          if value['@language'] !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+            warn "@language must be valid BCP47: #{value['@language'].inspect}"
+          end
+          options[:lowercaseLanguage] ? value['@language'].downcase : value['@language']
+        when nil
+          nil
+        else
+          raise JsonLdError::InvalidLanguageMapping, "language must be null or a string, was #{value['@language'].inspect}} on term #{term.inspect}"
+        end
         #log_debug("") {"language_mapping: #{language.inspect}"}
         definition.language_mapping = language || false
       end
@@ -1335,9 +1351,9 @@ module JSON::LD
       if vocab && inverse_context.has_key?(iri)
         #log_debug("") {"vocab and key in inverse context"} unless quiet
         default_language = if self.default_direction
-          "#{self.default_language}_#{self.default_direction}"
+          "#{self.default_language}_#{self.default_direction}".downcase
         else
-          self.default_language || "@none"
+          (self.default_language || "@none").downcase
         end
         containers = []
         tl, tl_value = "@language", "@null"
@@ -1360,9 +1376,9 @@ module JSON::LD
             item_language, item_type = "@none", "@none"
             if value?(item)
               if item.has_key?('@direction')
-                item_language = "#{item['@language']}_#{item['@direction']}"
+                item_language = "#{item['@language']}_#{item['@direction']}".downcase
               elsif item.has_key?('@language')
-                item_language = item['@language']
+                item_language = item['@language'].downcase
               elsif item.has_key?('@type')
                 item_type = item['@type']
               else
@@ -1411,7 +1427,7 @@ module JSON::LD
           if value?(value)
             # In 1.1, an language map can be used to index values using @none
             if value.has_key?('@language') && !index?(value)
-              tl_value = value['@language']
+              tl_value = value['@language'].downcase
               tl_value += "_#{value['@direction']}" if value['@direction']
               containers.concat(CONTAINERS_LANGUAGE)
             elsif value.has_key?('@direction') && !index?(value)
@@ -1573,7 +1589,16 @@ module JSON::LD
         elsif processingMode == 'json-ld-1.1' && value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype'
           lang, dir = value.datatype.fragment.split('_')
           res['@value'] = value.to_s
-          res['@language'] = lang unless lang.empty?
+          unless lang.empty?
+            if lang !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+              if options[:validate]
+                raise JsonLdError::InvalidLanguageMapping, "rdf:language must be valid BCP47: #{lang.inspect}"
+              else
+                warn "rdf:language must be valid BCP47: #{lang.inspect}"
+              end
+            end
+            res['@language'] = lang
+          end
           res['@direction'] = dir
         elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
           res['@value'] = value.object
@@ -1835,7 +1860,7 @@ module JSON::LD
     def inverse_context
       @inverse_context ||= begin
         result = {}
-        default_language = self.default_language || '@none'
+        default_language = (self.default_language || '@none').downcase
         term_definitions.keys.sort do |a, b|
           a.length == b.length ? (a <=> b) : (a.length <=> b.length)
         end.each do |term|
@@ -1862,9 +1887,9 @@ module JSON::LD
             type_map[td.type_mapping.to_s] ||= term
           elsif !td.language_mapping.nil? && !td.direction_mapping.nil?
             lang_dir = if td.language_mapping && td.direction_mapping
-              "#{td.language_mapping}_#{td.direction_mapping}"
+              "#{td.language_mapping}_#{td.direction_mapping}".downcase
             elsif td.language_mapping
-              td.language_mapping
+              td.language_mapping.downcase
             elsif td.direction_mapping
               "_#{td.direction_mapping}"
             else
@@ -1872,13 +1897,13 @@ module JSON::LD
             end
             language_map[lang_dir] ||= term
           elsif !td.language_mapping.nil?
-            lang_dir = td.language_mapping || '@null'
+            lang_dir = (td.language_mapping || '@null').downcase
             language_map[lang_dir] ||= term
           elsif !td.direction_mapping.nil?
             lang_dir = td.direction_mapping ? "_#{td.direction_mapping}" : '@none'
             language_map[lang_dir] ||= term
           elsif default_direction
-            language_map["#{td.language_mapping}_#{default_direction}"] ||= term
+            language_map[("#{td.language_mapping}_#{default_direction}").downcase] ||= term
             language_map['@none'] ||= term
             type_map['@none'] ||= term
           else

@@ -1404,13 +1404,13 @@ describe JSON::LD::API do
           input: %({
             "@context": {"ex": "http://example.org/"},
             "@id": "ex:Sub1",
-            "ex:r": {"@value": "R", "@language": "r"}
+            "ex:r": {"@value": "R", "@language": "R"}
           }),
           output: %({
             "@context": {"ex": "http://example.org/"},
             "@graph": [{
               "@id": "ex:Sub1",
-              "ex:r": {"@value": "R", "@language": "r"}
+              "ex:r": {"@value": "R", "@language": "R"}
             }]
           })
         },
@@ -1434,7 +1434,7 @@ describe JSON::LD::API do
               "@id": "ex:Sub1",
               "ex:p": "P",
               "ex:q": {"@value": "Q", "@type": "ex:q"},
-              "ex:r": {"@value": "R", "@language": "r"}
+              "ex:r": {"@value": "R", "@language": "R"}
             }]
           })
         },

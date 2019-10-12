@@ -678,11 +678,11 @@ describe JSON::LD::API do
           },
           "en-US rtl datatype": {
             input: %q(
-              <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
+              <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-US_rtl> .
             ),
             output: %q([{
               "@id": "http://example.com/a",
-              "http://example.org/label": [{"@value": "en-US", "@language": "en-us", "@direction": "rtl"}]
+              "http://example.org/label": [{"@value": "en-US", "@language": "en-US", "@direction": "rtl"}]
             }]),
           },
           "en-US rtl compound-literal": {
@@ -691,7 +691,7 @@ describe JSON::LD::API do
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "en-US";
-                rdf:language "en-us";
+                rdf:language "en-US";
                 rdf:direction "rtl" .
             ),
             output: %q([{
@@ -700,7 +700,7 @@ describe JSON::LD::API do
             }, {
               "@id": "_:cl1",
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "en-US"}],
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-us"}],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-US"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
             }]),
           }

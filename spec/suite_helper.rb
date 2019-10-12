@@ -124,8 +124,11 @@ module Fixtures
 
       def options
         @options ||= begin
-          opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          opts = {}
+          opts = {
+            documentLoader: Fixtures::SuiteTest.method(:documentLoader),
+            lowercaseLanguage: true,
+            validate: true
+          }
           {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
@@ -186,9 +189,7 @@ module Fixtures
         logger.info "options: #{options.inspect}" unless options.empty?
         logger.info "frame: #{frame}" if frame_loc
 
-        options = self.options.merge(documentLoader: Fixtures::SuiteTest.method(:documentLoader))
-        options = {validate: true}.merge(options)
-
+        options = self.options
         unless options[:specVersion] == "json-ld-1.1"
           skip "not a 1.1 test" 
           return

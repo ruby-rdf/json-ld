@@ -580,11 +580,11 @@ module JSON::LD
     # * @languages are the same or `value[@language]` is not null and `pattern[@language]` is `{}`, or `value[@language]` is null and `pattern[@language]` is null or `[]`.
     def value_match?(pattern, value)
       v1, t1, l1 = value['@value'], value['@type'], value['@language']
-      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
+      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language']).map {|v| v.is_a?(String) ? v.downcase : v}
       return true if (v2 + t2 + l2).empty?
       return false unless v2.include?(v1) || v2 == [{}]
       return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []).empty?
-      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
+      return false unless l2.include?(l1.to_s.downcase) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
       true
     end
 

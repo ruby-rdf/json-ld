@@ -74,6 +74,8 @@ module JSON::LD
     #   Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [Boolean] :lowercaseLanguage
+    #   By default, language tags are left as is. To normalize to lowercase, set this option to `true`.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
     # @option options [Boolean] :extractAllScripts

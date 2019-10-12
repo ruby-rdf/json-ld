@@ -1137,7 +1137,7 @@ describe JSON::LD::API do
           ],
           "en-US rtl": [
             %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
-            %q(_:a <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .)
+            %q(_:a <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-US_rtl> .)
           ]
         }.each do |title, (js, ttl)|
           it title do
@@ -1165,7 +1165,7 @@ describe JSON::LD::API do
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               _:a <http://example.org/label> [
                 rdf:value "en-US";
-                rdf:language "en-us";
+                rdf:language "en-US";
                 rdf:direction "rtl"
               ] .
             )
@@ -1214,7 +1214,8 @@ describe JSON::LD::API do
             "@id": "http://example.com/foo",
             "http://example.com/bar": {"@value": "bar", "@language": "a b"}
           }),
-          output: %()
+          output: %(),
+          write: "@language must be valid BCP47"
         },
         "Invalid datatype" => {
           input: %({

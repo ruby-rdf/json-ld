@@ -337,11 +337,24 @@ module JSON::LD
             # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
             # If framing, always use array form, unless null
             case value
-            when String then (framing ? [value.downcase] : value.downcase)
+            when String
+              if value !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+                warn "@language must be valid BCP47: #{value.inspect}"
+              end
+              if @options[:lowercaseLanguage]
+                (framing ? [value.downcase] : value.downcase)
+              else
+                (framing ? [value] : value)
+              end
             when Array
               raise JsonLdError::InvalidLanguageTaggedString,
                     "@language value may not be an array unless framing: #{value.inspect}" unless framing
-              value.map(&:downcase)
+              value.each do |v|
+                if v !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+                  warn "@language must be valid BCP47: #{v.inspect}"
+                end
+              end
+              @options[:lowercaseLanguage] ? value.map(&:downcase) : value
             when Hash
               raise JsonLdError::InvalidLanguageTaggedString,
                     "@language value must be a an empty object for framing: #{value.inspect}" unless
@@ -463,6 +476,11 @@ module JSON::LD
           keys = ordered ? value.keys.sort : value.keys
           keys.each do |k|
             expanded_k = context.expand_iri(k, vocab: true, quiet: true).to_s
+
+            if k !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/ && expanded_k != '@none'
+              warn "@language must be valid BCP47: #{k.inspect}"
+            end
+
             [value[k]].flatten.each do |item|
               # item must be a string, otherwise an invalid language map value error has been detected and processing is aborted.
               raise JsonLdError::InvalidLanguageMapValue,
@@ -470,7 +488,7 @@ module JSON::LD
 
               # Append a JSON object to expanded value that consists of two key-value pairs: (@value-item) and (@language-lowercased language).
               v = {'@value' => item}
-              v['@language'] = k.downcase unless expanded_k == '@none'
+              v['@language'] = (@options[:lowercaseLanguage] ? k.downcase : k) unless expanded_k == '@none'
               v['@direction'] = context.direction(key) if context.direction(key)
               ary << v if item
             end

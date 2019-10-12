@@ -19,6 +19,8 @@ describe JSON::LD do
             expect {t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
           elsif %w(#te068).include?(t.property('@id'))
             expect {t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#twf05).include?(t.property('@id'))
+            expect {t.run self}.to write("@language must be valid BCP47").to(:error)
           else
             expect {t.run self}.not_to write.to(:error)
           end
