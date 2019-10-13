@@ -126,7 +126,6 @@ module Fixtures
         @options ||= begin
           opts = {
             documentLoader: Fixtures::SuiteTest.method(:documentLoader),
-            #lowercaseLanguage: true,
             validate: true
           }
           {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
