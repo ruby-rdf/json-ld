@@ -28,6 +28,12 @@ module JSON::LD
           on: ["--[no-]extract-all-scripts"],
           description: "If set to true, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
+          symbol: :lowercaseLanguage,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]lowercase-language"],
+          description: "By default, language tags are left as is. To normalize to lowercase, set this option to `true`."),
+        RDF::CLI::Option.new(
           symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,

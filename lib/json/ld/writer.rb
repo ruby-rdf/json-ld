@@ -108,6 +108,12 @@ module JSON::LD
           on: ["--[no-]explicit"],
           description: "Only include explicitly declared properties in output (false)") {|arg| arg},
         RDF::CLI::Option.new(
+          symbol: :lowercaseLanguage,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]lowercase-language"],
+          description: "By default, language tags are left as is. To normalize to lowercase, set this option to `true`."),
+        RDF::CLI::Option.new(
           symbol: :omitDefault,
           datatype: TrueClass,
           control: :checkbox,
