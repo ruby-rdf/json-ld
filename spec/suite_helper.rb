@@ -126,7 +126,7 @@ module Fixtures
         @options ||= begin
           opts = {
             documentLoader: Fixtures::SuiteTest.method(:documentLoader),
-            lowercaseLanguage: true,
+            #lowercaseLanguage: true,
             validate: true
           }
           {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
@@ -195,6 +195,9 @@ module Fixtures
           return
         end
 
+        # Because we're doing exact comparisons when ordered.
+        options[:lowercaseLanguage] = true if options[:ordered]
+
         if positiveTest?
           logger.info "expected: #{expect rescue nil}" if expect_loc
           begin
@@ -217,6 +220,12 @@ module Fixtures
             when "jld:ToRDFTest"
               repo = RDF::Repository.new
               JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
+                # To properly compare values of rdf:language and i18n datatypes, normalize to lower case
+                if statement.predicate == RDF.to_uri + 'language'
+                  statement.object = RDF::Literal(statement.object.to_s.downcase) if statement.object.literal?
+                elsif statement.object.literal? && statement.object.datatype.to_s.start_with?('https://www.w3.org/ns/i18n#')
+                  statement.object.datatype = RDF::URI(statement.object.datatype.to_s.downcase)
+                end
                 repo << statement
               end
               logger.info "nq: #{repo.to_nquads}"

@@ -1681,7 +1681,7 @@ module JSON::LD
       when !value['@value'].is_a?(String)
         #log_debug("") {" (native)"}
         indexing || !index?(value) ? value['@value'] : value
-      when value['@language'] == language && value['@direction'] == direction
+      when value['@language'].to_s.downcase == language.to_s.downcase && value['@direction'] == direction
         # Compact language and direction
         indexing || !index?(value) ? value['@value'] : value
       else

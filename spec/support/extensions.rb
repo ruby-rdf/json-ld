@@ -9,7 +9,11 @@ class Hash
     return false unless other.is_a?(Hash) && other.length == length
     all? do |key, value|
       # List values are still ordered
-      value.equivalent_jsonld?(other[key], ordered: key == '@list')
+      if key == '@language' && value.is_a?(String)
+        value.downcase.equivalent_jsonld?(other[key].to_s.downcase, ordered: key == '@list')
+      else
+        value.equivalent_jsonld?(other[key], ordered: key == '@list')
+      end
     end
   end
 
