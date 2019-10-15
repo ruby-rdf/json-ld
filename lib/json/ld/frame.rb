@@ -61,7 +61,7 @@ module JSON::LD
         output = {'@id' => id}
         link[id] = output
 
-        if context.processingMode == 'json-ld-1.1' && %w(@first @last).include?(flags[:embed])
+        if %w(@first @last).include?(flags[:embed]) && context.processingMode('json-ld-1.1')
           raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{flags[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
           warn "[DEPRECATION] #{flags[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
         end

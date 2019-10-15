@@ -186,7 +186,7 @@ module JSON::LD
           defn['@context'] = @context if @context
           defn['@nest'] = @nest if @nest
           defn['@index'] = @index if @index
-          defn['@prefix'] = @prefix unless @prefix.nil? || (context.processingMode || 'json-ld-1.0') == 'json-ld-1.0'
+          defn['@prefix'] = @prefix unless @prefix.nil?
           defn
         end
       end
@@ -308,9 +308,6 @@ module JSON::LD
     # @return [BlankNodeNamer]
     attr_accessor :namer
 
-    # @return [String]
-    attr_accessor :processingMode
-
     ##
     # Create a new context by parsing a context.
     #
@@ -345,7 +342,7 @@ module JSON::LD
         @base = @doc_base = RDF::URI(options[:base]).dup
         @doc_base.canonicalize! if options[:canonicalize]
       end
-      @processingMode ||= options[:processingMode]
+      self.processingMode = options[:processingMode] if options.has_key?(:processingMode)
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -421,18 +418,50 @@ module JSON::LD
       end
     end
 
+    ##
+    # Retrieve, or check processing mode.
+    #
+    # * With no arguments, retrieves the current set processingMode.
+    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
+    # * If expecting 1.1, and not set, it has the side-effect of setting mode to json-ld-1.1.
+    #
+    # @param [String, Number] expected (nil)
+    # @return [String]
+    def processingMode(expected = nil)
+      case expected
+      when 1.0, 'json-ld-1.0'
+        @processingMode == 'json-ld-1.0'
+      when 1.1, 'json-ld-1.1'
+        @processingMode ||= 'json-ld-1.1'
+        @processingMode == 'json-ld-1.1'
+      when nil
+        @processingMode
+      else
+        false
+      end
+    end
+
+    ##
+    # Set processing mode.
+    #
+    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
+    #
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
     # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
-    # @param [Number] value must be a decimal number
-    def version=(value, **options)
+    #
+    # @param [String, Number] expected
+    # @return [String]
+    # @raise [JsonLdError::ProcessingModeConflict]
+    def processingMode=(value = nil, **options)
+      value = "json-ld-1.1" if value == 1.1
       case value
-      when 1.1
-        if processingMode && processingMode < "json-ld-1.1"
-          raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{processingMode}"
+      when "json-ld-1.0", "json-ld-1.1"
+        if @processingMode && @processingMode != value
+          raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{@processingMode}"
         end
-        @processingMode = "json-ld-1.1"
+        @processingMode = value
       else
-        raise JsonLdError::InvalidVersionValue, value
+        raise JsonLdError::InvalidVersionValue, value.inspect
       end
     end
 
@@ -442,10 +471,10 @@ module JSON::LD
       @vocab = case value
       when /_:/
         # BNode vocab is deprecated
-        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1"
+        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && processingMode("json-ld-1.1")
         value
       when String, RDF::URI
-        if (RDF::URI(value.to_s).relative? && processingMode == 'json-ld-1.0')
+        if (RDF::URI(value.to_s).relative? && processingMode("json-ld-1.0"))
           raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode: #{value.inspect}"
         end
         v = expand_iri(value.to_s, vocab: true, documentRelative: true)
@@ -463,7 +492,7 @@ module JSON::LD
     #
     # @param [Boolean] value
     def propagate=(value, **options)
-      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode}" if (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode}" if processingMode("json-ld-1.0")
       raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
       value
     end
@@ -588,7 +617,7 @@ module JSON::LD
 
           # This counts on hash elements being processed in order
           {
-            '@version'    => :version=,
+            '@version'    => :processingMode=,
             '@import'     => nil,
             '@base'       => :base=,
             '@direction'   => :default_direction=,
@@ -599,7 +628,7 @@ module JSON::LD
             next unless context.has_key?(key)
             if key == '@import'
               # Retrieve remote context and merge the remaining context object into the result.
-              raise JsonLdError::InvalidContextMember, "@import may only be used in 1.1 mode}" if (result.processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+              raise JsonLdError::InvalidContextMember, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
               raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
               source = RDF::URI(result.context_base || result.base).join(context['@import'])
               begin
@@ -720,8 +749,9 @@ module JSON::LD
       simple_term = value.is_a?(String) || value.nil?
 
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
-      if processingMode == 'json-ld-1.1' && term == '@type' &&
+      if term == '@type' &&
          value.is_a?(Hash) &&
+         processingMode("json-ld-1.1") &&
          (value.keys - %w(@container @protected)).empty? &&
          value.fetch('@container', '@set') == '@set'
         # thes are the only cases were redefining a keyword is allowed
@@ -781,7 +811,7 @@ module JSON::LD
         else
           :error
         end
-        if JSON_LD_11_TYPE_VALUES.include?(type) && processingMode == 'json-ld-1.1'
+        if JSON_LD_11_TYPE_VALUES.include?(type) && processingMode('json-ld-1.1')
           # This is okay and used in compaction in 1.1
         elsif !JSON_LD_10_TYPE_VALUES.include?(type) && !(type.is_a?(RDF::URI) && type.absolute?)
           raise JsonLdError::InvalidTypeMapping, "unknown mapping for '@type': #{type.inspect} on term #{term.inspect}"
@@ -814,7 +844,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.to_s.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
 
         # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
         if value.has_key?('@container')
@@ -848,7 +878,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && (processingMode || "json-ld-1.1") >= "json-ld-1.1" && definition.id.to_s.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
 
         # If id ends with a gen-delim, it may be used as a prefix for simple terms
         definition.prefix = true if !term.include?(':') &&
@@ -1581,12 +1611,12 @@ module JSON::LD
       when RDF::Literal
         #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
-        if processingMode == 'json-ld-1.1' && value.datatype == RDF::URI(RDF.to_uri + "JSON")
+        if value.datatype == RDF::URI(RDF.to_uri + "JSON") && processingMode('json-ld-1.1')
           # Value parsed as JSON
           # FIXME: MultiJson
           res['@value'] = ::JSON.parse(value.object)
           res['@type'] = '@json'
-        elsif processingMode == 'json-ld-1.1' && value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype'
+        elsif value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype' && processingMode('json-ld-1.1')
           lang, dir = value.datatype.fragment.split('_')
           res['@value'] = value.to_s
           unless lang.empty?
@@ -2013,7 +2043,7 @@ module JSON::LD
     # Ensure @container mapping is appropriate
     # The result is the original container definition. For IRI containers, this is necessary to be able to determine the @type mapping for string values
     def check_container(container, local_context, defined, term)
-      if container.is_a?(Array) &&  (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+      if container.is_a?(Array) &&  processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
               "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
       end
@@ -2029,7 +2059,7 @@ module JSON::LD
       elsif val.include?('@language')
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-               has_set && (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+               has_set && processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @language cannot have any values other than @set, found  #{container.inspect}" unless
           val.length == 1
@@ -2037,7 +2067,7 @@ module JSON::LD
       elsif val.include?('@index')
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-               has_set && (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+               has_set && processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @index cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
           (val - CONTEXT_CONTAINER_INDEX_GRAPH).empty?
@@ -2045,7 +2075,7 @@ module JSON::LD
       elsif val.include?('@id')
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-               (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+               processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @id cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
           (val - CONTEXT_CONTAINER_ID_GRAPH).empty?
@@ -2053,7 +2083,7 @@ module JSON::LD
       elsif val.include?('@type') || val.include?('@graph')
         raise JsonLdError::InvalidContainerMapping,
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" if
-               (processingMode || 'json-ld-1.0') < 'json-ld-1.1'
+               processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @language cannot have any values other than @set, found  #{container.inspect}" unless
           val.length == 1

@@ -507,7 +507,7 @@ describe JSON::LD::Context do
       end
 
       context "1.0" do
-        let(:context) {JSON::LD::Context.new(logger: logger, validate: true)}
+        let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: 'json-ld-1.0')}
         {
           "@context" => {"foo" => {"@id" => 'http://example.org/', "@context" => {}}},
           "@container @id" => {"foo" => {"@container" => "@id"}},

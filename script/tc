@@ -63,14 +63,7 @@ def run_tc(man, tc, options)
 
   STDERR.write "run #{tc.property('input')}"
 
-  if options[:verbose]
-    puts "\nTestCase: #{tc.inspect}"
-    puts "\nPurpose:\n" + tc.purpose
-    puts "\nInput:\n" + tc.input
-    puts "\nContext:\n" + tc.context if tc.context
-    puts "\nFrame:\n" + tc.frame if tc.frame
-    puts "\nExpected:\n" + tc.expect if tc.positiveTest?
-  end
+  puts "\nTestCase: #{tc.inspect}" if options[:verbose]
 
   output = ""
   begin

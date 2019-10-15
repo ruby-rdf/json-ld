@@ -106,10 +106,10 @@ module JSON::LD
             compacted_value = Array(expanded_value).map {|expanded_type| input_context.compact_iri(expanded_type, vocab: true)}
 
             kw_alias = context.compact_iri('@type', vocab: true)
-            as_array = (context.processingMode == 'json-ld-1.1' &&
-                        context.as_array?(kw_alias) &&
-                        !value?(element)) ||
-                       compacted_value.length > 1
+            as_array = compacted_value.length > 1 ||
+                       (context.as_array?(kw_alias) &&
+                        !value?(element) &&
+                        context.processingMode('json-ld-1.1'))
             compacted_value = compacted_value.first unless as_array
             result[kw_alias] = compacted_value
             next

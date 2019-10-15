@@ -226,22 +226,18 @@ LIBRARY_FRAMED = JSON.parse(%({
     "dc": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#"
   },
-  "@graph": [
-    {
-      "@id": "http://example.org/library",
-      "@type": "ex:Library",
-      "ex:contains": {
-        "@id": "http://example.org/library/the-republic",
-        "@type": "ex:Book",
-        "dc:creator": "Plato",
-        "dc:title": "The Republic",
-        "ex:contains": {
-          "@id": "http://example.org/library/the-republic#introduction",
-          "@type": "ex:Chapter",
-          "dc:description": "An introductory chapter on The Republic.",
-          "dc:title": "The Introduction"
-        }
-      }
+  "@id": "http://example.org/library",
+  "@type": "ex:Library",
+  "ex:contains": {
+    "@id": "http://example.org/library/the-republic",
+    "@type": "ex:Book",
+    "dc:creator": "Plato",
+    "dc:title": "The Republic",
+    "ex:contains": {
+      "@id": "http://example.org/library/the-republic#introduction",
+      "@type": "ex:Chapter",
+      "dc:description": "An introductory chapter on The Republic.",
+      "dc:title": "The Introduction"
     }
-  ]
+  }
 }))

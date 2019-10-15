@@ -132,9 +132,6 @@ module JSON::LD
       context ||= context_ref || {}
       @context = Context.parse(context || {}, @options)
 
-      # If not set explicitly, the context figures out the processing mode
-      @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
-
       if block_given?
         case block.arity
           when 0, -1 then instance_eval(&block)
@@ -383,14 +380,14 @@ module JSON::LD
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
-        if context.processingMode == 'json-ld-1.1' && %w(@first @last).include?(options[:embed])
+        if %w(@first @last).include?(options[:embed]) && context.processingMode('json-ld-1.1')
           raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{options[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
           warn "[DEPRECATION] #{options[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
         end
 
         # Set omitGraph option, if not present, based on processingMode
         unless options.has_key?(:omitGraph)
-          options[:omitGraph] = @options[:processingMode] != 'json-ld-1.0'
+          options[:omitGraph] = context.processingMode('json-ld-1.1')
         end
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
@@ -413,13 +410,10 @@ module JSON::LD
         frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
         # Count blank node identifiers used in the document, if pruning
-        unless @options[:processingMode] == 'json-ld-1.0'
+        unless context.processingMode('json-ld-1.0')
           bnodes_to_clear = count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
           result = prune_bnodes(result, bnodes_to_clear)
         end
-
-        # Initalize context from frame
-        @context = @context.parse(frame['@context'])
 
         # Replace values with `@preserve` with the content of its entry.
         result = cleanup_preserve(result)

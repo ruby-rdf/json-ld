@@ -2590,7 +2590,7 @@ describe JSON::LD::API do
             "c": "C in example"
           }),
         },
-        "Raises InvalidTermDefinition if processingMode is not specified" => {
+        "Raises InvalidTermDefinition if processingMode is 1.0" => {
           input: %([{
             "http://example/foo": [{"http://example.org/bar": [{"@value": "baz"}]}]
           }]),
@@ -2598,7 +2598,7 @@ describe JSON::LD::API do
             "@vocab": "http://example/",
             "foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
-          processingMode: nil,
+          processingMode: 'json-ld-1.0',
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
@@ -2817,7 +2817,7 @@ describe JSON::LD::API do
             }
           })
         },
-        "Raises InvalidTermDefinition if processingMode is not specified" => {
+        "Raises InvalidTermDefinition if processingMode is 1.0" => {
           input: %([
             {
               "http://example/a": [{
@@ -2830,7 +2830,7 @@ describe JSON::LD::API do
             "@vocab": "http://example/",
             "Foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
-          processingMode: nil,
+          processingMode: 'json-ld-1.0',
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },

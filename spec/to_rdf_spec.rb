@@ -1327,17 +1327,17 @@ describe JSON::LD::API do
   end
 
   def run_to_rdf(params)
-    input, output, processingMode = params[:input], params[:output], params[:processingMode]
+    input, output = params[:input], params[:output]
     graph = params[:graph] || RDF::Graph.new
     input = StringIO.new(input) if input.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.toRdf(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
+      expect {JSON::LD::API.toRdf(input, **params)}.to raise_error(params[:exception])
     else
       if params[:write]
-        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
       else
-        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode, **params) {|st| graph << st}}.not_to write.to(:error)
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.not_to write.to(:error)
       end
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end

@@ -132,7 +132,7 @@ module JSON::LD
           ary = Array(output_object['@value'])
           return nil if ary.empty? && !type_is_json
 
-          if (context.processingMode || 'json-ld-1.0') > 'json-ld-1.0' && output_object['@type'] == '@json'
+          if output_object['@type'] == '@json' && context.processingMode('json-ld-1.1')
             # Any value of @value is okay if @type: @json
           elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
@@ -215,7 +215,10 @@ module JSON::LD
         next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
         expanded_property = expanded_property.to_s if expanded_property.is_a?(RDF::Resource)
 
-        warn "[DEPRECATION] Blank Node properties deprecated in JSON-LD 1.1." if @options[:validate] && (context.processingMode || "json-ld-1.1") >= "json-ld-1.1" && expanded_property.to_s.start_with?("_:")
+        warn "[DEPRECATION] Blank Node properties deprecated in JSON-LD 1.1." if
+          @options[:validate] &&
+          expanded_property.to_s.start_with?("_:") &&
+          context.processingMode('json-ld-1.1')
 
         #log_debug("expand property") {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
 
@@ -269,7 +272,7 @@ module JSON::LD
             end
           when '@included'
             # Included blocks are treated as an array of separate object nodes sharing the same referencing active_property. For 1.0, it is skipped as are other unknown keywords
-            next if context.processingMode == 'json-ld-1.0'
+            next if context.processingMode('json-ld-1.0')
             included_result = as_array(expand(value, active_property, context, ordered: ordered, framing: framing))
 
             # Expanded values must be node objects
@@ -311,7 +314,7 @@ module JSON::LD
             # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. (In 1.1, @value can have any JSON value of @type is @json or the property coerces to @json).
             # Otherwise, set expanded value to value. If expanded value is null, set the @value member of result to null and continue with the next key from element. Null values need to be preserved in this case as the meaning of an @type member depends on the existence of an @value member.
             # If framing, always use array form, unless null
-            if (context.processingMode || 'json-ld-1.0') > 'json-ld-1.0' && input_type == '@json'
+            if input_type == '@json' && context.processingMode('json-ld-1.1')
               value
             else
               case value
