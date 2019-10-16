@@ -57,13 +57,19 @@ def run_tc(man, tc, options)
   tc.options[:documentLoader] ||= Fixtures::SuiteTest.method(:documentLoader)
 
   if tc.options[:specVersion] == "json-ld-1.0"
-    STDERR.puts "skip #{tc.property('input')} (1.0 test)"
+    STDERR.puts "skip #{tc.property('input')} (1.0 test)" if options[:verbose]
     return
   end
 
   STDERR.write "run #{tc.property('input')}"
 
-  puts "\nTestCase: #{tc.inspect}" if options[:verbose]
+  if options[:verbose]
+    puts "\nTestCase: #{tc.inspect}"
+    puts "\nInput:\n" + tc.input
+    puts "\nContext:\n" + tc.context if tc.context
+    puts "\nFrame:\n" + tc.frame if tc.frame
+    puts "\nExpected:\n" + tc.expect if tc.positiveTest?
+  end
 
   output = ""
   begin

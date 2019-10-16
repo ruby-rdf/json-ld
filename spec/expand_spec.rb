@@ -1093,7 +1093,7 @@ describe JSON::LD::API do
 
       context "@index: property" do
         {
-          "error if @version is not json-ld-1.1": {
+          "error if @version is json-ld-1.0": {
             input: %({
               "@context": {
                 "@vocab": "http://example.com/",
@@ -1105,7 +1105,8 @@ describe JSON::LD::API do
                 "de": [ "Die Königin", "Ihre Majestät" ]
               }
             }),
-            exception: JSON::LD::JsonLdError::InvalidTermDefinition
+            exception: JSON::LD::JsonLdError::InvalidTermDefinition,
+            processingMode: 'json-ld-1.0'
           },
           "error if @container does not include @index": {
             input: %({

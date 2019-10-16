@@ -709,7 +709,8 @@ module JSON::LD
     ID_NULL_OBJECT = { '@id' => nil }.freeze
     NON_TERMDEF_KEYS = Set.new(%w(@base @direction @language @protected @version @vocab)).freeze
     JSON_LD_10_EXPECTED_KEYS = Set.new(%w(@container @id @language @reverse @type)).freeze
-    JSON_LD_EXPECTED_KEYS = Set.new(%w(@container @context @direction @id @index @language @nest @prefix @reverse @protected @type)).freeze
+    JSON_LD_11_EXPECTED_KEYS = Set.new(%w(@context @direction @index @nest @prefix @protected)).freeze
+    JSON_LD_EXPECTED_KEYS = (JSON_LD_10_EXPECTED_KEYS + JSON_LD_11_EXPECTED_KEYS).freeze
     JSON_LD_10_TYPE_VALUES = Set.new(%w(@id @vocab)).freeze
     JSON_LD_11_TYPE_VALUES = Set.new(%w(@json @none)).freeze
     PREFIX_URI_ENDINGS = Set.new(%w(: / ? # [ ] @)).freeze
@@ -781,16 +782,19 @@ module JSON::LD
       definition = TermDefinition.new(term)
       definition.simple = simple_term
 
-      if @options[:validate]
-        expected_keys = case processingMode
-        when "json-ld-1.0", nil then JSON_LD_10_EXPECTED_KEYS
-        else JSON_LD_EXPECTED_KEYS
-        end
+      expected_keys = case processingMode
+      when "json-ld-1.0" then JSON_LD_10_EXPECTED_KEYS
+      else JSON_LD_EXPECTED_KEYS
+      end
 
-        if value.any? { |key, _| !expected_keys.include?(key) }
-          extra_keys = value.keys - expected_keys.to_a
-          raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
-        end
+      # Any of these keys cause us to process as json-ld-1.1, unless otherwise set
+      if processingMode.nil? && value.any? { |key, _| !JSON_LD_11_EXPECTED_KEYS.include?(key) }
+        processingMode('json-ld-11')
+      end
+
+      if value.any? { |key, _| !expected_keys.include?(key) }
+        extra_keys = value.keys - expected_keys.to_a
+        raise JsonLdError::InvalidTermDefinition, "Term definition for #{term.inspect} has unexpected keys: #{extra_keys.join(', ')}"
       end
 
       # Potentially note that the term is protected
