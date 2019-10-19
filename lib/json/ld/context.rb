@@ -872,13 +872,12 @@ module JSON::LD
 
         definition.id = expand_iri(value['@id'],
           vocab: true,
-          documentRelative: true,
           local_context: local_context,
           defined: defined)
         raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
           definition.id == '@context'
 
-        if term.match?(/:[^:]/) && (term_iri = expand_iri(term)) != definition.id
+        if term.match?(/(?::[^:])|\//) && (term_iri = expand_iri(term)) != definition.id
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
@@ -901,6 +900,11 @@ module JSON::LD
           term
         end
         #log_debug("") {"=> #{definition.id}"}
+      elsif term.include?('/')
+        # If term is a relative IRI
+        definition.id = expand_iri(term, vocab: true)
+        raise JsonLdError::InvalidKeywordAlias, "expected term to expand to an absolute IRI #{term.inspect}" unless
+          definition.id.absolute?
       elsif KEYWORDS.include?(term)
         # This should only happen for @type when @container is @set
         definition.id = term
@@ -979,7 +983,7 @@ module JSON::LD
       end
 
       if value.has_key?('@prefix')
-        raise JsonLdError::InvalidTermDefinition, "@prefix used on compact IRI term #{term.inspect}" if term.include?(':')
+        raise JsonLdError::InvalidTermDefinition, "@prefix used on compact or relative IRI term #{term.inspect}" if term.match?(%r{:|/})
         case pfx = value['@prefix']
         when TrueClass, FalseClass
           definition.prefix = pfx
