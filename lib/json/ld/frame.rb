@@ -169,7 +169,11 @@ module JSON::LD
 
         # handle defaults in order
         frame.keys.opt_sort(ordered: ordered).each do |prop|
-          next if prop.start_with?('@')
+          if prop == '@type' && frame[prop].first.is_a?(Hash) && frame[prop].first.keys == %w(@default)
+            # Treat this as a default
+          elsif prop.start_with?('@')
+            next
+          end
 
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
           n = frame[prop].first || {}
@@ -357,7 +361,7 @@ module JSON::LD
         when '@type'
           # No longer a wildcard pattern
           wildcard = false
-
+          
           match_this = case v
           when []
             # Don't match with any @type
@@ -367,9 +371,15 @@ module JSON::LD
             # Match with any @type
             !node_values.empty?
           else
-            # Match on specific @type
-            return false if (v & node_values).empty?
-            true
+            # Treat a map with @default like an empty map
+            if v.first.is_a?(Hash) && v.first.keys == %w(@default)
+              true
+            elsif (v & node_values).empty?
+              # Match on specific @type
+              false
+            else
+              true
+            end
           end
           return match_this if !flags[:requireAll]
         when /@/
@@ -450,7 +460,7 @@ module JSON::LD
             Array(frame['@id']) == [{}] || Array(frame['@id']).all?{|v| RDF::URI(v).valid?}
       raise JsonLdError::InvalidFrame,
             "Invalid JSON-LD frame syntax; invalid value of @type: #{frame['@type']}" unless
-            Array(frame['@type']) == [{}] || Array(frame['@type']).all?{|v| RDF::URI(v).valid?}
+            Array(frame['@type']).all?{|v| RDF::URI(v).valid? || v.is_a?(Hash) && (v.keys - %w(@default)).empty?}
     end
 
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.

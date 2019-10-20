@@ -539,8 +539,27 @@ describe JSON::LD::API do
             "ex:prop2": {"@id": "ex:Obj1"},
             "ex:null": ["foo"]
           }]
-        }
-        )
+        })
+      },
+      "default value for @type": {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "@type": {"@default": "ex:Foo"},
+          "ex:foo": "bar"
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:foo": "bar"
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@graph": [{
+            "@id": "ex:Sub1",
+            "@type": "ex:Foo",
+            "ex:foo": "bar"
+          }]
+        })
       },
       "mixed content": {
         frame: %({

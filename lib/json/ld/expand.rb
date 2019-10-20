@@ -292,11 +292,23 @@ module JSON::LD
             when String
               type_scoped_context.expand_iri(value, vocab: true, documentRelative: true, quiet: true).to_s
             when Hash
-              # For framing
-              raise JsonLdError::InvalidTypeValue,
-                    "@type value must be a an empty object for framing: #{value.inspect}" unless
-                    value.empty? && framing
-              [{}]
+              if !framing
+                raise JsonLdError::InvalidTypeValue,
+                      "@type value must be a string or array of strings: #{value.inspect}"
+              elsif value.keys.length == 1 &&
+                 type_scoped_context.expand_iri(value.keys.first, vocab: true, quiet: true).to_s == '@default'
+                # Expand values of @default, which must be a string, or array of strings expanding to IRIs
+                [{'@default' => Array(value['@default']).map do |v|
+                  raise JsonLdError::InvalidTypeValue,
+                        "@type default value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
+                  type_scoped_context.expand_iri(v, vocab: true, documentRelative: true, quiet: true).to_s
+                end}]
+              elsif !value.empty?
+                raise JsonLdError::InvalidTypeValue,
+                      "@type value must be a an empty object for framing: #{value.inspect}"
+              else
+                [{}]
+              end
             else
               raise JsonLdError::InvalidTypeValue,
                     "@type value must be a string or array of strings: #{value.inspect}"
