@@ -307,14 +307,14 @@ module Fixtures
                     expect(last_response.status).to eq t.property('expect')
                     expect(last_response.content_type).to eq options.fetch(:contentType, "")
                     raise "406" if t.property('expect') == 406
-                    raise "Expected status #{t.property('expect')}, not #{last_response.status}"
+                    raise "Expected status #{t.property('expectErrorCode')}, not #{last_response.status}"
                   end
                 when "jld:ToRDFTest"
                   JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
                 else
                   success("Unknown test type: #{testType}")
                 end
-              end.to raise_error(/#{t.property('expect')}/)
+              end.to raise_error(/#{t.property('expectErrorCode')}/)
             else
               fail("No support for NegativeSyntaxTest")
             end

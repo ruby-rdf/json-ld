@@ -69,6 +69,7 @@ def run_tc(man, tc, options)
     puts "\nContext:\n" + tc.context if tc.context
     puts "\nFrame:\n" + tc.frame if tc.frame
     puts "\nExpected:\n" + tc.expect if tc.positiveTest?
+    puts "\nExpected:\n" + tc.expectErrorCode if tc.negativeTest?
   end
 
   output = ""
@@ -143,12 +144,12 @@ def run_tc(man, tc, options)
       end
       "failed"
     else
-      if e.message.include?(tc.property('expect'))
+      if e.message.include?(tc.property('expectErrorCode'))
         options[:results]['passed'] ||= 0
         options[:results]['passed'] += 1
         "passed"
       else
-        STDERR.puts("Expected exception: #{tc.property('expect')} not #{e}") unless options[:quiet]
+        STDERR.puts("Expected exception: #{tc.property('expectErrorCode')} not #{e}") unless options[:quiet]
         "failed"
       end
     end
