@@ -10,7 +10,6 @@ describe JSON::LD do
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
           skip "Native value fidelity" if %w(#t0035).include?(t.property('@id'))
           pending "Generalized RDF" if %w(#t0118 #te075).include?(t.property('@id'))
-          pending "Non-heirarchical IRI joining" if %w(#t0130).include?(t.property('@id'))
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
           elsif %w(#te075).include?(t.property('@id'))
