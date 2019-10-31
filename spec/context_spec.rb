@@ -1577,7 +1577,7 @@ describe JSON::LD::Context do
       "native integer" => ["foo", 1,                              {"@value" => 1}],
       "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
       "native date" =>    ["foo", Date.parse("2011-12-27"),       {"@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s}],
-      "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.time.to_s}],
+      "native time" =>    ["foo", Time.parse("10:11:12Z"),        {"@value" => "10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
       "rdf boolean" =>    ["foo", RDF::Literal(true),             {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
       "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
