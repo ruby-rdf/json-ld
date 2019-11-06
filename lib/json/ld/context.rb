@@ -837,14 +837,14 @@ module JSON::LD
                                     local_context: local_context,
                                     defined: defined)
         raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
-          definition.id.is_a?(RDF::URI) && definition.id.absolute?
+          definition.id.is_a?(RDF::Node) || definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
         if value['@reverse'].to_s.start_with?('@') && @options[:validate]
           warn "Values beginning with '@' are reserved for future use and ignored."
           return
         end
 
-        if term.include?(':') && (term_iri = expand_iri(term)) != definition.id
+        if term[1..-1].to_s.include?(':') && (term_iri = expand_iri(term)) != definition.id
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
@@ -1340,7 +1340,7 @@ module JSON::LD
       result = if vocab && self.vocab
         # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
         self.vocab + value
-      elsif (documentRelative || self.vocab == '') && (base ||= self.base)
+      elsif documentRelative && (base ||= self.base)
         # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
         value = RDF::URI(value)
         value.absolute? ? value : RDF::URI(base).join(value)
