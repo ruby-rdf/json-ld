@@ -413,10 +413,6 @@ describe JSON::LD::API do
 
     context "prefixes" do
       {
-        "empty prefix" => [
-          %q({"@context": {"": "http://example.com/default#"}, ":foo": "bar"}),
-          %q(_:a <http://example.com/default#foo> "bar"^^xsd:string .)
-        ],
         "empty suffix" => [
           %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:": "bar"}),
           %q(_:a <http://example.com/default#> "bar"^^xsd:string .)

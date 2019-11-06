@@ -1,10 +1,10 @@
 {
   "@context": {
-    "":       "http://manu.sporny.org/",
+    "foo":       "http://manu.sporny.org/",
     "foaf":   "http://xmlns.com/foaf/0.1/"
   },
-  "@id":       ":#me",
+  "@id":       "foo:#me",
   "@type":          "foaf:Person",
   "foaf:name":      "Manu Sporny",
-  "foaf:homepage":  { "@id": ":" }
+  "foaf:homepage":  { "@id": "foo:" }
 }

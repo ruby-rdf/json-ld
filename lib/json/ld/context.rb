@@ -887,7 +887,7 @@ module JSON::LD
         definition.prefix = true if !term.include?(':') &&
           definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') &&
           simple_term
-      elsif term.include?(':')
+      elsif term[1..-1].include?(':')
         # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
         prefix, suffix = term.split(':', 2)
         create_term_definition(local_context, prefix, defined, protected: protected) if local_context.has_key?(prefix)
@@ -1312,7 +1312,7 @@ module JSON::LD
       end
 
       # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
-      if value.include?(':')
+      if value[1..-1].to_s.include?(':')
         prefix, suffix = value.split(':', 2)
         #log_debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{self.vocab.inspect}"} unless quiet
 
