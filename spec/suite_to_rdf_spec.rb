@@ -14,7 +14,7 @@ describe JSON::LD do
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
           elsif %w(#te075).include?(t.property('@id'))
             expect {t.run self}.to write(/is invalid/).to(:error)
-          elsif %w(#te005 #tpr34 #tpr35 #tpr36 #tpr37).include?(t.property('@id'))
+          elsif %w(#te005 #tpr34 #tpr35 #tpr36 #tpr37 #te119 #te120).include?(t.property('@id'))
             expect {t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
           elsif %w(#te068).include?(t.property('@id'))
             expect {t.run self}.to write("[DEPRECATION]").to(:error)

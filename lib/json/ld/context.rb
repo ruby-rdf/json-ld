@@ -759,8 +759,8 @@ module JSON::LD
       elsif KEYWORDS.include?(term) # TODO anything that looks like a keyword
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
           @options[:validate]
-      elsif term.to_s.start_with?('@') && @options[:validate]
-        warn "Terms beginning with '@' are reserved for future use and ignored."
+      elsif term.to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+        warn "Terms beginning with '@' are reserved for future use and ignored: #{term}."
         return
       elsif !term_valid?(term) && @options[:validate]
         raise JsonLdError::InvalidTermDefinition, "term is invalid: #{term.inspect}"
@@ -833,14 +833,13 @@ module JSON::LD
         # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
         definition.id =  expand_iri(value['@reverse'],
                                     vocab: true,
-                                    documentRelative: true,
                                     local_context: local_context,
                                     defined: defined)
         raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
           definition.id.is_a?(RDF::Node) || definition.id.is_a?(RDF::URI) && definition.id.absolute?
 
-        if value['@reverse'].to_s.start_with?('@') && @options[:validate]
-          warn "Values beginning with '@' are reserved for future use and ignored."
+        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
           return
         end
 
@@ -865,8 +864,8 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
           value['@id'].is_a?(String)
 
-        if !KEYWORDS.include?(value['@id'].to_s) && value['@id'].to_s.start_with?('@') && @options[:validate]
-          warn "Values beginning with '@' are reserved for future use and ignored."
+        if !KEYWORDS.include?(value['@id'].to_s) && value['@id'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@id']}."
           return
         end
 
@@ -977,7 +976,7 @@ module JSON::LD
       if value.has_key?('@nest')
         nest = value['@nest']
         raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
-        raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.start_with?('@') && nest != '@nest'
+        raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.match?(/^@[a-zA-Z]+$/) && nest != '@nest'
         #log_debug("") {"nest: #{nest.inspect}"}
         definition.nest = nest
       end
@@ -1289,7 +1288,7 @@ module JSON::LD
       return value unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
-      return nil if value.start_with?('@')
+      return nil if value.match?(/^@[a-zA-Z]+$/)
       #log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
 
       defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.

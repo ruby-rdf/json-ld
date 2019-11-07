@@ -316,6 +316,34 @@ describe JSON::LD::Context do
         end.to write("[DEPRECATION]").to(:error)
       end
 
+      it "warns and ignores keyword-like term" do
+        expect do
+          expect(subject.parse({
+            "@foo" => {"@id" => "http://example.org/foo"}
+          }).send(:mappings)).to produce({}, logger)
+        end.to write("Terms beginning with '@' are reserved").to(:error)
+      end
+
+      it "maps '@' as a term" do
+        expect do
+          expect(subject.parse({
+            "@" => {"@id" => "http://example.org/@"}
+          }).send(:mappings)).to produce({
+            "@" => "http://example.org/@"
+          }, logger)
+        end.not_to write.to(:error)
+      end
+
+      it "maps '@foo.bar' as a term" do
+        expect do
+          expect(subject.parse({
+            "@foo.bar" => {"@id" => "http://example.org/foo.bar"}
+          }).send(:mappings)).to produce({
+            "@foo.bar" => "http://example.org/foo.bar"
+          }, logger)
+        end.not_to write.to(:error)
+      end
+
       it "associates @list container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
@@ -1047,6 +1075,7 @@ describe JSON::LD::Context do
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("_")],
+          "@" =>             ["@",                   RDF::URI("@")],
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input)).to produce(result, logger)
@@ -1071,6 +1100,7 @@ describe JSON::LD::Context do
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("http://base/_")],
+          "@" =>             ["@",                   RDF::URI("http://base/@")],
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, documentRelative: true)).to produce(result, logger)
@@ -1095,6 +1125,7 @@ describe JSON::LD::Context do
                              ["foo:bar",             RDF::URI("foo:bar")],
           "bnode" =>         ["_:t0",                RDF::Node("t0")],
           "_" =>             ["_",                   RDF::URI("http://underscore/")],
+          "@" =>             ["@",                   RDF::URI("http://vocab/@")],
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
