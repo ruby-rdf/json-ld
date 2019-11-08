@@ -1788,6 +1788,57 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.0'
       },
+      "preserves single-use bnode identifiers if pruneBlankNodeIdentifiers=false": {
+        frame: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@id": "http://example.com/asset",
+          "@type": "ps:Asset",
+          "dc:creator": {}
+        }),
+        input: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@id": "http://example.com/asset",
+          "@type": "ps:Asset",
+          "dc:creator": {
+            "foaf:name": "John Doe"
+          }
+        }),
+        output: %({
+          "@context": {
+            "dc": "http://purl.org/dc/terms/",
+            "dc:creator": {
+              "@type": "@id"
+            },
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "ps": "http://purl.org/payswarm#"
+          },
+          "@graph": [
+            {
+              "@id": "http://example.com/asset",
+              "@type": "ps:Asset",
+              "dc:creator": {
+                "@id": "_:b0",
+                "foaf:name": "John Doe"
+              }
+            }
+          ]
+        }),
+        pruneBlankNodeIdentiers: false
+      },
       "framing with @version: 1.1 prunes identifiers": {
         frame: %({
           "@context": {

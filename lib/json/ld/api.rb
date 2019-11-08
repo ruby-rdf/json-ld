@@ -322,6 +322,7 @@ module JSON::LD
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
+    # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
     # @option options [Boolean] :omitGraph does not use `@graph` at top level unless necessary to describe multiple objects, defaults to `true` if processingMode is 1.1, otherwise `false`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
@@ -409,8 +410,13 @@ module JSON::LD
         result = []
         frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
+        # Default to based on processinMode
+        if !options.has_key?(:pruneBlankNodeIdentifiers)
+          options[:pruneBlankNodeIdentifiers] = context.processingMode('json-ld-1.1')
+        end
+
         # Count blank node identifiers used in the document, if pruning
-        unless context.processingMode('json-ld-1.0')
+        if options[:pruneBlankNodeIdentifiers]
           bnodes_to_clear = count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
           result = prune_bnodes(result, bnodes_to_clear)
         end
