@@ -8,7 +8,6 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          skip "Native value fidelity" if %w(#t0035).include?(t.property('@id'))
           pending "Generalized RDF" if %w(#t0118 #te075).include?(t.property('@id'))
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)

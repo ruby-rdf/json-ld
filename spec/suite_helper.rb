@@ -227,7 +227,7 @@ module Fixtures
                 end
                 repo << statement
               end
-              logger.info "nq: #{repo.to_nquads}"
+              logger.info "nq: #{repo.map(&:to_nquads)}"
               repo
             when "jld:HttpTest"
               res = input_json
