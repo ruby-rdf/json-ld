@@ -3803,6 +3803,22 @@ describe JSON::LD::API do
         it(title) {run_expand params}
       end
     end
+
+    context "problem cases" do
+      {
+        "toRdf/0118": {
+          input: %({
+            "@context": {"term": "_:term", "termId": { "@id": "term", "@type": "@id" }},
+            "termId": "term:AppendedToBlankNode"
+          }),
+          output: %([{
+            "_:term": [{"@id": "_:termAppendedToBlankNode"}]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+    end
   end
 
   def run_expand(params)

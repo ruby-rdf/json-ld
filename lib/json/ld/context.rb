@@ -884,8 +884,8 @@ module JSON::LD
 
         # If id ends with a gen-delim, it may be used as a prefix for simple terms
         definition.prefix = true if !term.include?(':') &&
-          definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') &&
-          simple_term
+          simple_term &&
+          (definition.id.to_s.end_with?(':', '/', '?', '#', '[', ']', '@') || definition.id.to_s.start_with?('_:'))
       elsif term[1..-1].include?(':')
         # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
         prefix, suffix = term.split(':', 2)
