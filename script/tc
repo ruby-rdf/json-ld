@@ -106,8 +106,17 @@ def run_tc(man, tc, options)
 
       if tc.evaluationTest? && tc.positiveTest?
         begin
-          expected = RDF::Repository.new << RDF::NQuads::Reader.new(tc.expect, validate: false, logger: [])
-          output.isomorphic?(expected) ? 'passed' : 'failed'
+          if tc.options[:produceGeneralizedRdf]
+            quads = JSON::LD::API.toRdf(tc.input_loc, tc.options.merge(validate: false)).map do |statement|
+              # Not really RDF, try different test method
+              tc.to_quad(statement)
+            end
+            output = quads.sort.uniq.join("")
+            output == tc.expect ? 'passed' : 'failed'
+          else
+            expected = RDF::Repository.new << RDF::NQuads::Reader.new(tc.expect, validate: false, logger: [])
+            output.isomorphic?(expected) ? 'passed' : 'failed'
+          end
         rescue RDF::ReaderError
           quads = JSON::LD::API.toRdf(tc.input_loc, tc.options.merge(validate: false)).map do |statement|
             # Not really RDF, try different test method

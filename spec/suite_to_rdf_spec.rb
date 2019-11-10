@@ -8,7 +8,7 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          pending "Generalized RDF" if %w(#t0118 #te075).include?(t.property('@id'))
+          pending "Generalized RDF" if t.options[:produceGeneralizedRdf]
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
           elsif %w(#te075).include?(t.property('@id'))
