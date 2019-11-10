@@ -55,6 +55,7 @@ end
 def run_tc(man, tc, options)
   tc.options[:logger] = options[:logger]
   tc.options[:documentLoader] ||= Fixtures::SuiteTest.method(:documentLoader)
+  tc.options[:lowercaseLanguage] = true
 
   if tc.options[:specVersion] == "json-ld-1.0"
     STDERR.puts "skip #{tc.property('input')} (1.0 test)" if options[:verbose]
