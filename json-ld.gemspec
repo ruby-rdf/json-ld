@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby -rubygems
 # -*- encoding: utf-8 -*-
 
+is_java = RUBY_PLATFORM == 'java'
+ruby_version = RUBY_VERSION
+
 Gem::Specification.new do |gem|
   gem.version               = File.read('VERSION').chomp
   gem.date                  = File.mtime('VERSION').strftime('%Y-%m-%d')
@@ -23,17 +26,17 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 2.2.2'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '~> 3.0', '>= 3.0.8'
-  gem.add_runtime_dependency     'multi_json',      '~> 1.13'
-  gem.add_runtime_dependency     'i18n',            '<= 1.5.1' if RUBY_VERSION < "2.3"
+  gem.add_runtime_dependency     'rdf',             '~> 3.0', '>= 3.0.13'
+  gem.add_runtime_dependency     'multi_json',      '~> 1.14'
+  gem.add_runtime_dependency     'i18n',            '<= 1.5.1' if ruby_version < "2.3"
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
   gem.add_runtime_dependency     'json-canonicalization', '~> 0.1'
   gem.add_runtime_dependency     'htmlentities',     '~> 4.3'
-  gem.add_development_dependency 'sinatra-linkeddata','~> 3.0'
-  gem.add_development_dependency 'jsonlint',        '~> 0.3'  unless RUBY_ENGINE == "jruby"
-  gem.add_development_dependency 'oj',              '~> 3.8'  unless RUBY_ENGINE == "jruby" || RUBY_VERSION < "2.3"
-  gem.add_development_dependency 'yajl-ruby',       '~> 1.4'  unless RUBY_ENGINE == "jruby"
   gem.add_runtime_dependency     'rack',            '>= 1.6', '< 3.0'
+  gem.add_development_dependency 'sinatra-linkeddata','~> 3.0'
+  gem.add_development_dependency 'jsonlint',        '~> 0.3'  unless is_java
+  gem.add_development_dependency 'oj',              '~> 3.9'  unless is_java || ruby_version < "2.3"
+  gem.add_development_dependency 'yajl-ruby',       '~> 1.4'  unless is_java
   gem.add_development_dependency 'rack-test',       '~> 1.1'
   gem.add_development_dependency 'rdf-isomorphic',  '~> 3.0'
   gem.add_development_dependency 'rdf-spec',        '~> 3.0'
@@ -41,8 +44,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-turtle',      '~> 3.0'
   gem.add_development_dependency 'rdf-vocab',       '~> 3.0'
   gem.add_development_dependency 'rdf-xsd',         '~> 3.0'
-  gem.add_development_dependency 'rspec',           '~> 3.8'
-  gem.add_development_dependency 'rspec-its',       '~> 1.2'
+  gem.add_development_dependency 'rspec',           '~> 3.9'
+  gem.add_development_dependency 'rspec-its',       '~> 1.3'
   gem.add_development_dependency 'yard' ,           '~> 0.9'
 
   gem.post_install_message  = nil

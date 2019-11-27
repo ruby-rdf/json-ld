@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-gem "nokogiri",       '~> 1.8'
+gem "nokogiri",       '~> 1.10'
 gem "nokogumbo"
 
 gemspec
