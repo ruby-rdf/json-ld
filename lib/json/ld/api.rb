@@ -632,7 +632,7 @@ module JSON::LD
         end
         block_given? ? yield(remote_doc) : remote_doc
       end
-    rescue IOError => e
+    rescue IOError, MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
     end
 
