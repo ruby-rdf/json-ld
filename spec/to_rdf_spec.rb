@@ -1225,10 +1225,14 @@ describe JSON::LD::API do
             "@id": "http://foo/> <http://bar/> <http://baz> .\n<data:little> <data:bobby> <data:tables> .\n<data:in-ur-base",
             "http://killin/#yer": "dudes"
           }),
-          output: %()
+          output: %(),
+          pending: "jruby"
         },
       }.each do |title, params|
-        it(title) {run_to_rdf params}
+        it(title) do
+          pending params[:pending] if params[:pending] == RUBY_ENGINE
+          run_to_rdf params
+        end
       end
     end
   end
