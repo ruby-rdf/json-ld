@@ -140,7 +140,7 @@ module JSON::LD
             input = input.read if input.respond_to?(:read)
             ::Nokogiri::HTML5(input.dup.force_encoding('utf-8'), max_parse_errors: 1000)
           rescue LoadError
-            ::Nokogiri::HTML.parse(input, base_uri.to_s, 'utf-8')
+            ::Nokogiri::HTML.parse(input, 'utf-8')
           end
         end
 
