@@ -933,8 +933,8 @@ module JSON::LD
 
       if value.has_key?('@index')
         # property-based indexing
-        raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{term} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
-        raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{term} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
+        raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{value['@index']} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
+        raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{value['@index']} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
         definition.index = value['@index'].to_s
       end
 
