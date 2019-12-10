@@ -24,9 +24,9 @@ Gem::Specification.new do |gem|
   gem.require_paths         = %w(lib)
   gem.test_files            = Dir.glob('spec/**/*.rb') + Dir.glob('spec/test-files/*')
 
-  gem.required_ruby_version = '>= 2.2.2'
+  gem.required_ruby_version = '>= 2.4'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '~> 3.0', '>= 3.0.13'
+  gem.add_runtime_dependency     'rdf',             '~> 3.1'
   gem.add_runtime_dependency     'multi_json',      '~> 1.14'
   gem.add_runtime_dependency     'i18n',            '<= 1.5.1' if ruby_version < "2.3"
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
@@ -39,9 +39,9 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'yajl-ruby',       '~> 1.4'  unless is_java
   gem.add_development_dependency 'rack-test',       '~> 1.1'
   gem.add_development_dependency 'rdf-isomorphic',  '~> 3.0'
-  gem.add_development_dependency 'rdf-spec',        '~> 3.0'
-  gem.add_development_dependency 'rdf-trig',        '~> 3.0'
-  gem.add_development_dependency 'rdf-turtle',      '~> 3.0'
+  gem.add_development_dependency 'rdf-spec',        '~> 3.1'
+  gem.add_development_dependency 'rdf-trig',        '~> 3.1'
+  gem.add_development_dependency 'rdf-turtle',      '~> 3.1'
   gem.add_development_dependency 'rdf-vocab',       '~> 3.0'
   gem.add_development_dependency 'rdf-xsd',         '~> 3.0'
   gem.add_development_dependency 'rspec',           '~> 3.9'

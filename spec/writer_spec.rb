@@ -215,12 +215,12 @@ describe JSON::LD::Writer do
 
   def parse(input, format: :trig, **options)
     reader = RDF::Reader.for(format)
-    RDF::Repository.new << reader.new(input, options)
+    RDF::Repository.new << reader.new(input, **options)
   end
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, **options)
-    g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
+    g = ntstr.is_a?(String) ? parse(ntstr, **options) : ntstr
     #logger.info g.dump(:ttl)
     result = JSON::LD::Writer.buffer(logger: logger, **options) do |writer|
       writer << g

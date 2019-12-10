@@ -121,7 +121,7 @@ module JSON::LD
 
         case remote_doc.document
         when String
-          MultiJson.load(remote_doc.document, options)
+          MultiJson.load(remote_doc.document, **options)
         else
           # Already parsed
           remote_doc.document
@@ -130,7 +130,7 @@ module JSON::LD
 
       # If not provided, first use context from document, or from a Link header
       context ||= context_ref || {}
-      @context = Context.parse(context || {}, @options)
+      @context = Context.parse(context || {}, **@options)
 
       if block_given?
         case block.arity
@@ -164,7 +164,7 @@ module JSON::LD
     # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
     def self.expand(input, framing: false, **options, &block)
       result, doc_base = nil
-      API.new(input, options[:expandContext], options) do
+      API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
           ordered: @options[:ordered],
           framing: framing)
@@ -217,7 +217,7 @@ module JSON::LD
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
@@ -264,7 +264,7 @@ module JSON::LD
       }.merge(options)
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options) do |result, base_iri|
+      expanded_input = expanded ? input : API.expand(input, **options) do |result, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
@@ -368,13 +368,13 @@ module JSON::LD
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(framing: true, ordered: false))
+      expanded_frame = API.expand(frame, framing: true, ordered: false, **options)
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
@@ -463,7 +463,7 @@ module JSON::LD
       unless block_given?
         results = []
         results.extend(RDF::Enumerable)
-        self.toRdf(input, options) do |stmt|
+        self.toRdf(input, **options) do |stmt|
           results << stmt
         end
         return results
@@ -474,9 +474,9 @@ module JSON::LD
       }.merge(options)
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false))
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
 
-      API.new(expanded_input, nil, options) do
+      API.new(expanded_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
         log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -518,7 +518,7 @@ module JSON::LD
     def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
       result = nil
 
-      API.new(nil, nil, options) do
+      API.new(nil, nil, **options) do
         result = from_statements(input,
           useRdfType: useRdfType,
           useNativeTypes: useNativeTypes,
@@ -622,7 +622,7 @@ module JSON::LD
             end
           else
             validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
-            MultiJson.load(remote_doc.document, options)
+            MultiJson.load(remote_doc.document, **options)
           end
         end
 
@@ -667,7 +667,7 @@ module JSON::LD
           contentType: content_type,
           contextUrl: context_url))
       else
-        RDF::Util::File.open_file(url, options, &block)
+        RDF::Util::File.open_file(url, **options, &block)
       end
     end
 
@@ -710,7 +710,7 @@ module JSON::LD
         self.extend(@implementation)
 
         input = begin
-          initialize_html(input, options)
+          initialize_html(input, **options)
         rescue
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
         end
@@ -733,7 +733,7 @@ module JSON::LD
         raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, options)
+        MultiJson.load(content, **options)
       elsif extractAllScripts
         res = []
         elements = if profile
@@ -747,7 +747,7 @@ module JSON::LD
         elements.each do |element|
           content = element.inner_html
           validate_input(content, url: url) if options[:validate]
-          r = MultiJson.load(content, options)
+          r = MultiJson.load(content, **options)
           if r.is_a?(Hash)
             res << r
           elsif r.is_a?(Array)
@@ -761,7 +761,7 @@ module JSON::LD
         element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
         content = element ? element.inner_html : "[]"
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, options)
+        MultiJson.load(content, **options)
       end
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed, MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message

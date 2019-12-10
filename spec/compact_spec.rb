@@ -3187,13 +3187,13 @@ describe JSON::LD::API do
     context = context['@context'] if context.has_key?('@context')
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
+      expect {JSON::LD::API.compact(input, context, logger: logger, **params)}.to raise_error(params[:exception])
     else
       jld = nil
       if params[:write]
-        expect{jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to write(params[:write]).to(:error)
+        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.to write(params[:write]).to(:error)
       else
-        expect{jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))}.not_to write.to(:error)
+        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.not_to write.to(:error)
       end
 
       expect(jld).to produce_jsonld(output, logger)

@@ -59,7 +59,7 @@ describe JSON::LD::API do
             it "expands" do
               options = {logger: logger, adapter: adapter}
               options[:expandContext] = File.open(context) if context
-              jld = described_class.expand(File.open(filename), options)
+              jld = described_class.expand(File.open(filename), **options)
               expect(jld).to produce_jsonld(JSON.load(File.open(expanded)), logger)
             end if File.exist?(expanded)
         

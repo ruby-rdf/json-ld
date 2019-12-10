@@ -12,6 +12,7 @@ group :development do
   gem 'rack-linkeddata',    git: "https://github.com/ruby-rdf/rack-linkeddata",     branch: "develop"
   gem 'rdf-spec',           git: "https://github.com/ruby-rdf/rdf-spec",            branch: "develop"
   gem 'rdf-isomorphic',     git: "https://github.com/ruby-rdf/rdf-isomorphic",      branch: "develop"
+  gem 'rdf-turtle',           git: "https://github.com/ruby-rdf/rdf-turtle",            branch: "develop"
   gem 'rdf-trig',           git: "https://github.com/ruby-rdf/rdf-trig",            branch: "develop"
   gem 'rdf-vocab',          git: "https://github.com/ruby-rdf/rdf-vocab",           branch: "develop"
   gem 'rdf-xsd',            git: "https://github.com/ruby-rdf/rdf-xsd",             branch: "develop"

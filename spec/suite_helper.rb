@@ -57,7 +57,7 @@ module RDF::Util
         # For overriding content type from test data
         document_options[:headers][:content_type] = options[:contentType] if options[:contentType]
 
-        remote_document = RDF::Util::File::RemoteDocument.new(response.read, document_options)
+        remote_document = RDF::Util::File::RemoteDocument.new(response.read, **document_options)
         if block_given?
           return yield remote_document
         else
@@ -65,7 +65,7 @@ module RDF::Util
         end
       end
 
-      original_open_file(filename_or_url, options, &block)
+      original_open_file(filename_or_url, **options, &block)
     end
   end
 end
@@ -144,7 +144,7 @@ module Fixtures
           file = self.send("#{m}_loc".to_sym)
 
           dl_opts = {safe: true}
-          RDF::Util::File.open_file(file, dl_opts) do |remote_doc|
+          RDF::Util::File.open_file(file, **dl_opts) do |remote_doc|
             res = remote_doc.read
           end
           res
@@ -379,7 +379,7 @@ module Fixtures
       options[:headers][:link] = Array(options[:httpLink]).join(',') if options[:httpLink]
     
       url = url.to_s[5..-1] if url.to_s.start_with?("file:")
-      JSON::LD::API.documentLoader(url, options, &block)
+      JSON::LD::API.documentLoader(url, **options, &block)
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
       raise unless options[:safe]
       "don't raise error"

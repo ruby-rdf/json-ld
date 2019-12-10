@@ -318,7 +318,7 @@ module JSON::LD
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     def self.parse(local_context, protected: false, override_protected: false, propagate: true, **options)
-      self.new(options).parse(local_context, protected: false, override_protected: override_protected, propagate: propagate)
+      self.new(**options).parse(local_context, protected: false, override_protected: override_protected, propagate: propagate)
     end
 
     ##
@@ -492,7 +492,7 @@ module JSON::LD
     #
     # @param [Boolean] value
     def propagate=(value, **options)
-      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode}" if processingMode("json-ld-1.0")
+      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
       raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
       value
     end
@@ -530,7 +530,7 @@ module JSON::LD
         when nil
           # 3.1 If the `override_protected` is  false, and the active context contains protected terms, an error is raised.
           if override_protected || result.term_definitions.values.none?(&:protected?)
-            null_context = Context.new(options)
+            null_context = Context.new(**options)
             null_context.previous_context = result unless propagate
             result = null_context
           else
@@ -559,10 +559,8 @@ module JSON::LD
 
           # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           context = RDF::URI(result.context_base || options[:base]).join(context)
-          context_canon = RDF::URI(context).canonicalize
-          if context_canon.scheme == 'https'
-            context_canon = RDF::URI(context_canon.to_h.merge(scheme: 'http'))
-          end
+          context_canon = context.canonicalize
+          context_canon.scheme == 'http' if context_canon.scheme == 'https'
 
           remote_contexts << context.to_s
           raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
@@ -589,7 +587,7 @@ module JSON::LD
                 requestProfile: 'http://www.w3.org/ns/json-ld#context',
                 base: nil)
               #context_opts.delete(:headers)
-              JSON::LD::API.loadRemoteDocument(context.to_s, context_opts) do |remote_doc|
+              JSON::LD::API.loadRemoteDocument(context.to_s, **context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                 context = remote_doc.document['@context']
@@ -637,7 +635,7 @@ module JSON::LD
                   requestProfile: 'http://www.w3.org/ns/json-ld#context',
                   base: nil)
                 context_opts.delete(:headers)
-                JSON::LD::API.loadRemoteDocument(source, context_opts) do |remote_doc|
+                JSON::LD::API.loadRemoteDocument(source, **context_opts) do |remote_doc|
                   # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   import_context = remote_doc.document['@context']
@@ -666,7 +664,6 @@ module JSON::LD
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
                                           override_protected: override_protected,
-                                          propagate: propagate,
                                           protected: context.fetch('@protected', protected)) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
@@ -732,7 +729,7 @@ module JSON::LD
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, override_protected: false, propagate: true, protected: false)
+    def create_term_definition(local_context, term, defined, override_protected: false, protected: false)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 

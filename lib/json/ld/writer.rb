@@ -293,7 +293,7 @@ module JSON::LD
       else
 
         log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-        result = API.fromRdf(@repo, @options)
+        result = API.fromRdf(@repo, **@options)
 
         # Some options may be indicated from accept parameters
         profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
@@ -305,7 +305,7 @@ module JSON::LD
         # If we were provided a context, or prefixes, use them to compact the output
         context = @options[:context]
         context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
-          ctx = Context.new(@options)
+          ctx = Context.new(**@options)
           ctx.language = @options[:language] if @options[:language]
           @options[:prefixes].each do |prefix, iri|
             ctx.set_mapping(prefix, iri) if prefix && iri
@@ -315,17 +315,17 @@ module JSON::LD
 
         # Rename BNodes to uniquify them, if necessary
         if options[:unique_bnodes]
-          result = API.flatten(result, context, @options)
+          result = API.flatten(result, context, **@options)
         end
 
         if frame = @options[:frame]
           # Perform framing, if given a frame
           log_debug("writer") { "frame result"}
-          result = API.frame(result, frame, @options)
+          result = API.frame(result, frame, **@options)
         elsif context
           # Perform compaction, if we have a context
           log_debug("writer") { "compact result"}
-          result = API.compact(result, context,  @options)
+          result = API.compact(result, context,  **@options)
         end
 
         @output.write(result.to_json(JSON_STATE))

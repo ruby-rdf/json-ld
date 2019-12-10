@@ -1319,10 +1319,10 @@ describe JSON::LD::API do
     end
   end
 
-  def parse(input, options = {})
+  def parse(input, **options)
     graph = options[:graph] || RDF::Graph.new
     options = {logger: logger, validate: true, canonicalize: false}.merge(options)
-    JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
+    JSON::LD::API.toRdf(StringIO.new(input), **options) {|st| graph << st}
     graph
   end
 

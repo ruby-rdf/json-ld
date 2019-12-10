@@ -33,7 +33,7 @@ module JSON::LD
     # @return [void]
     def self.registered(app)
       options = {}
-      app.use(JSON::LD::Rack, options)
+      app.use(JSON::LD::Rack, **options)
     end
 
     def initialize(app)

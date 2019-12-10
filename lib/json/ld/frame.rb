@@ -460,7 +460,7 @@ module JSON::LD
             Array(frame['@id']) == [{}] || Array(frame['@id']).all?{|v| RDF::URI(v).valid?}
       raise JsonLdError::InvalidFrame,
             "Invalid JSON-LD frame syntax; invalid value of @type: #{frame['@type']}" unless
-            Array(frame['@type']).all?{|v| RDF::URI(v).valid? || v.is_a?(Hash) && (v.keys - %w(@default)).empty?}
+            Array(frame['@type']).all?{|v| v.is_a?(Hash) && (v.keys - %w(@default)).empty? || RDF::URI(v).valid?}
     end
 
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.

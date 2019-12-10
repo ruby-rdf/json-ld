@@ -59,7 +59,7 @@ module JSON::LD
     # @yieldparam  [RDF::Reader] reader
     # @yieldreturn [void] ignored
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
-    def initialize(input = $stdin, options = {}, &block)
+    def initialize(input = $stdin, **options, &block)
       options[:base_uri] ||= options[:base]
       super do
         @options[:base] ||= base_uri.to_s if base_uri
@@ -85,7 +85,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRdf(@doc, @options, &block)
+      JSON::LD::API.toRdf(@doc, **@options, &block)
     rescue ::JSON::ParserError, ::JSON::LD::JsonLdError => e
       log_fatal("Failed to parse input document: #{e.message}", exception: RDF::ReaderError)
     end
@@ -95,7 +95,7 @@ module JSON::LD
     # @see   RDF::Reader#each_triple
     def each_triple(&block)
       if block_given?
-        JSON::LD::API.toRdf(@doc, @options) do |statement|
+        JSON::LD::API.toRdf(@doc, **@options) do |statement|
           yield(*statement.to_triple)
         end
       end

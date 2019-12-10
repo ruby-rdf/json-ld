@@ -54,7 +54,7 @@ module JSON::LD
           parse: false,
           help: "expand [--context <context-file>] files ...",
           filter: {output_format: :jsonld},  # Only shows output format set
-          lambda: ->(files, options) do
+          lambda: ->(files, **options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
             options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
@@ -75,7 +75,7 @@ module JSON::LD
               end
             else
               # Turn RDF into JSON-LD first
-              RDF::CLI.parse(files, options) do |reader|
+              RDF::CLI.parse(files, **options) do |reader|
                 JSON::LD::API.fromRdf(reader) do |expanded|
                   out.puts expanded.to_json(JSON::LD::JSON_STATE)
                 end
@@ -89,7 +89,7 @@ module JSON::LD
           parse: false,
           filter: {output_format: :jsonld},  # Only shows output format set
           help: "compact --context <context-file> files ...",
-          lambda: ->(files, options) do
+          lambda: ->(files, **options) do
             raise ArgumentError, "Compacting requires a context" unless options[:context]
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
@@ -98,21 +98,21 @@ module JSON::LD
                 # If files are empty, either use options[:execute]
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
-                JSON::LD::API.compact(input, options[:context], options) do |compacted|
+                JSON::LD::API.compact(input, options[:context], **options) do |compacted|
                   out.puts compacted.to_json(JSON::LD::JSON_STATE)
                 end
               else
                 files.each do |file|
-                  JSON::LD::API.compact(file, options[:context], options) do |compacted|
+                  JSON::LD::API.compact(file, options[:context], **options) do |compacted|
                     out.puts compacted.to_json(JSON::LD::JSON_STATE)
                   end
                 end
               end
             else
               # Turn RDF into JSON-LD first
-              RDF::CLI.parse(files, options) do |reader|
+              RDF::CLI.parse(files, **options) do |reader|
                 JSON::LD::API.fromRdf(reader) do |expanded|
-                  JSON::LD::API.compact(expanded, options[:context], options) do |compacted|
+                  JSON::LD::API.compact(expanded, options[:context], **options) do |compacted|
                     out.puts compacted.to_json(JSON::LD::JSON_STATE)
                   end
                 end
@@ -134,7 +134,7 @@ module JSON::LD
           parse: false,
           help: "flatten [--context <context-file>] files ...",
           filter: {output_format: :jsonld},  # Only shows output format set
-          lambda: ->(files, options) do
+          lambda: ->(files, **options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
             if options[:format] == :jsonld
@@ -142,21 +142,21 @@ module JSON::LD
                 # If files are empty, either use options[:execute]
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
-                JSON::LD::API.flatten(input, options[:context], options) do |flattened|
+                JSON::LD::API.flatten(input, options[:context], **options) do |flattened|
                   out.puts flattened.to_json(JSON::LD::JSON_STATE)
                 end
               else
                 files.each do |file|
-                  JSON::LD::API.flatten(file, options[:context], options) do |flattened|
+                  JSON::LD::API.flatten(file, options[:context], **options) do |flattened|
                     out.puts flattened.to_json(JSON::LD::JSON_STATE)
                   end
                 end
               end
             else
               # Turn RDF into JSON-LD first
-              RDF::CLI.parse(files, options) do |reader|
+              RDF::CLI.parse(files, **options) do |reader|
                 JSON::LD::API.fromRdf(reader) do |expanded|
-                  JSON::LD::API.flatten(expanded, options[:context], options) do |flattened|
+                  JSON::LD::API.flatten(expanded, options[:context], **options) do |flattened|
                     out.puts flattened.to_json(JSON::LD::JSON_STATE)
                   end
                 end
@@ -169,7 +169,7 @@ module JSON::LD
           parse: false,
           help: "frame --frame <frame-file>  files ...",
           filter: {output_format: :jsonld},  # Only shows output format set
-          lambda: ->(files, options) do
+          lambda: ->(files, **options) do
             raise ArgumentError, "Framing requires a frame" unless options[:frame]
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
@@ -178,21 +178,21 @@ module JSON::LD
                 # If files are empty, either use options[:execute]
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
-                JSON::LD::API.frame(input, options[:frame], options) do |framed|
+                JSON::LD::API.frame(input, options[:frame], **options) do |framed|
                   out.puts framed.to_json(JSON::LD::JSON_STATE)
                 end
               else
                 files.each do |file|
-                  JSON::LD::API.frame(file, options[:frame], options) do |framed|
+                  JSON::LD::API.frame(file, options[:frame], **options) do |framed|
                     out.puts framed.to_json(JSON::LD::JSON_STATE)
                   end
                 end
               end
             else
               # Turn RDF into JSON-LD first
-              RDF::CLI.parse(files, options) do |reader|
+              RDF::CLI.parse(files, **options) do |reader|
                 JSON::LD::API.fromRdf(reader) do |expanded|
-                  JSON::LD::API.frame(expanded, options[:frame], options) do |framed|
+                  JSON::LD::API.frame(expanded, options[:frame], **options) do |framed|
                     out.puts framed.to_json(JSON::LD::JSON_STATE)
                   end
                 end

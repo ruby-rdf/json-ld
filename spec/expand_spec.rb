@@ -3828,13 +3828,13 @@ describe JSON::LD::API do
     output = ::JSON.parse(output) if output.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.expand(input, params)}.to raise_error(params[:exception])
+      expect {JSON::LD::API.expand(input, **params)}.to raise_error(params[:exception])
     else
       jld = nil
       if params[:write]
-        expect{jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))}.to write(params[:write]).to(:error)
+        expect{jld = JSON::LD::API.expand(input, logger: logger, **params)}.to write(params[:write]).to(:error)
       else
-        expect{jld = JSON::LD::API.expand(input, {logger: logger}.merge(params))}.not_to write.to(:error)
+        expect{jld = JSON::LD::API.expand(input, logger: logger, **params)}.not_to write.to(:error)
       end
       expect(jld).to produce_jsonld(output, logger)
 
