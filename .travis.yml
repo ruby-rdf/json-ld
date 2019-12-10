@@ -3,7 +3,6 @@ script: "bundle exec rspec spec"
 env:
   global:
     - CI=true
-    - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
 rvm:
   - 2.4
   - 2.5
