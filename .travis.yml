@@ -5,16 +5,14 @@ env:
     - CI=true
     - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
 rvm:
-  - 2.2.2
-  - 2.3
   - 2.4
   - 2.5
   - 2.6
   - 2.7
-  - jruby-9
+  - jruby
 cache: bundler
 sudo: false
 matrix:
   allow_failures:
-    - rvm: jruby-9
+    - rvm: jruby
 dist: trusty
