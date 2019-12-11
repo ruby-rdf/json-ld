@@ -9,9 +9,9 @@ rvm:
   - 2.6
   - 2.7
   - jruby
-cache: bundler
+#cache: bundler
 sudo: false
 matrix:
   allow_failures:
     - rvm: jruby
-dist: trusty
+#dist: trusty
