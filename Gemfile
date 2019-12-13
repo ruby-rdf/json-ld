@@ -10,6 +10,7 @@ group :development do
   gem 'sxp',                git: "https://github.com/dryruby/sxp.rb",               branch: "develop"
   gem 'linkeddata',         git: "https://github.com/ruby-rdf/linkeddata",          branch: "develop"
   gem 'rack-linkeddata',    git: "https://github.com/ruby-rdf/rack-linkeddata",     branch: "develop"
+  gem 'rdf-aggregate-repo', git: "https://github.com/ruby-rdf/rdf-aggregate-repo",  branch: "develop"
   gem 'rdf-spec',           git: "https://github.com/ruby-rdf/rdf-spec",            branch: "develop"
   gem 'rdf-isomorphic',     git: "https://github.com/ruby-rdf/rdf-isomorphic",      branch: "develop"
   gem 'rdf-turtle',         git: "https://github.com/ruby-rdf/rdf-turtle",          branch: "develop"
