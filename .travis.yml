@@ -14,4 +14,3 @@ sudo: false
 matrix:
   allow_failures:
     - rvm: jruby
-    - rvm: 2.7
