@@ -873,8 +873,14 @@ module JSON::LD
         raise JsonLdError::InvalidKeywordAlias, "expected value of @id to not be @context on term #{term.inspect}" if
           definition.id == '@context'
 
-        if term.match?(/(?::[^:])|\//) && (term_iri = expand_iri(term)) != definition.id
-          raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+        if term.match?(/(?::[^:])|\//)
+          term_iri = expand_iri(term,
+                                vocab: true,
+                                local_context: local_context,
+                                defined: defined.merge(term => true))
+          if term_iri != definition.id
+            raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
+          end
         end
 
         warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
