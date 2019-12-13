@@ -24,8 +24,8 @@ group :development do
 end
 
 group :development, :test do
-  gem 'simplecov',  require: false, platform: :mri
-  gem 'coveralls',  require: false, platform: :mri
+  gem 'simplecov',  platforms: :mri
+  gem 'coveralls',  '~> 0.8', platforms: :mri
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'
   gem 'rake'
