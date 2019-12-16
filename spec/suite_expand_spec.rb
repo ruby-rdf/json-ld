@@ -9,12 +9,24 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = false
-          t.run self
+          if %w(#t0068).include?(t.property('@id'))
+            expect{t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#t0005 #tpr34 #tpr35 #tpr36 #tpr37 #t0119 #t0120).include?(t.property('@id'))
+            expect{t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
+          else
+            expect {t.run self}.not_to write.to(:error)
+          end
         end
 
         specify "#{t.property('@id')}: #{t.name} ordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = true
-          t.run self
+          if %w(#t0068).include?(t.property('@id'))
+            expect{t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#t0005 #tpr34 #tpr35 #tpr36 #tpr37 #t0119 #t0120).include?(t.property('@id'))
+            expect{t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
+          else
+            expect {t.run self}.not_to write.to(:error)
+          end
         end
       end
     end

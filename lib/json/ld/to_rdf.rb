@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 require 'rdf'
 require 'rdf/nquads'
+require 'json/canonicalization'
 
 module JSON::LD
   module ToRDF
@@ -18,6 +19,8 @@ module JSON::LD
       if value?(item)
         value, datatype = item.fetch('@value'), item.fetch('@type', nil)
 
+        datatype = RDF::URI(RDF.to_uri + "JSON") if datatype == '@json'
+
         case value
         when TrueClass, FalseClass
           # If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
@@ -25,17 +28,48 @@ module JSON::LD
           datatype ||= RDF::XSD.boolean.to_s
         when Numeric
           # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
-          lit = RDF::Literal.new(value, canonicalize: true)
-          value = lit.to_s
-          datatype ||= lit.datatype
+          value = if datatype == RDF::URI(RDF.to_uri + "JSON")
+            value.to_json_c14n
+          else
+            # Don't serialize as double if there are no fractional bits
+            as_double = value.ceil != value || value >= 1e21 || datatype == RDF::XSD.double
+            lit = if as_double
+              RDF::Literal::Double.new(value, canonicalize: true)
+            else
+              RDF::Literal.new(value.numerator, canonicalize: true)
+            end
+
+            datatype ||= lit.datatype
+            lit.to_s.sub("E+", "E")
+          end
+        when Array, Hash
+          # Only valid for rdf:JSON
+          value = value.to_json_c14n
         else
+          if item.has_key?('@direction') && @options[:rdfDirection]
+            # Either serialize using a datatype, or a compound-literal
+            case @options[:rdfDirection]
+            when 'i18n-datatype'
+              datatype = RDF::URI("https://www.w3.org/ns/i18n##{item.fetch('@language', '')}_#{item['@direction']}")
+            when 'compound-literal'
+              cl = RDF::Node.new
+              yield RDF::Statement(cl, RDF.value, item['@value'].to_s)
+              yield RDF::Statement(cl, RDF.to_uri + 'language', item['@language']) if item['@language']
+              yield RDF::Statement(cl, RDF.to_uri + 'direction', item['@direction'])
+              return cl
+            end
+          end
+
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
           datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
+          if datatype == RDF::URI(RDF.to_uri + "JSON")
+            value = value.to_json_c14n
+          end
         end
         datatype = RDF::URI(datatype) if datatype && !datatype.is_a?(RDF::URI)
                   
         # Initialize literal as an RDF literal using value and datatype. If element has the key @language and datatype is xsd:string, then add the value associated with the @language key as the language of the object.
-        language = item.fetch('@language', nil)
+        language = item.fetch('@language', nil) if datatype == RDF.langString
         return RDF::Literal.new(value, datatype: datatype, language: language)
       elsif list?(item)
         # If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
@@ -65,20 +99,16 @@ module JSON::LD
             #log_debug("item_to_rdf")  {"@reverse predicate: #{predicate.to_ntriples rescue 'malformed rdf'}"}
             # For each item in values
             vv.each do |v|
-              if list?(v)
-                #log_debug("item_to_rdf")  {"list: #{v.inspect}"}
-                object = item_to_rdf(v, graph_name: graph_name, &block)
-
-                # Append a triple composed of object, prediate, and object to results and add all triples from list_results to results.
-                yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
-              else
-                # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
-                object = item_to_rdf(v, graph_name: graph_name, &block)
-                #log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
-                # yield subject, prediate, and literal to results.
-                yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
-              end
+              # Item is a node definition. Generate object as the result of the Object Converstion algorithm passing item.
+              object = item_to_rdf(v, graph_name: graph_name, &block)
+              #log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
+              # yield subject, prediate, and literal to results.
+              yield RDF::Statement(object, predicate, subject, graph_name: graph_name)
             end
+          end
+        when '@included'
+          values.each do |v|
+            item_to_rdf(v, graph_name: graph_name, &block)
           end
         when /^@/
           # Otherwise, if @type is any other keyword, skip to the next property-values pair

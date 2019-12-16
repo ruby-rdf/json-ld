@@ -125,6 +125,18 @@ describe JSON::LD::API do
           "b": ["c"]
         })
       },
+      "@set coercion on @type" => {
+        input: %({
+          "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+          "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+        }),
+        context: %({"@version": 1.1, "@type": {"@container": "@set"}}),
+        output: %({
+          "@context": {"@version": 1.1, "@type": {"@container": "@set"}},
+          "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
+          "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+        })
+      },
       "empty @set coercion" => {
         input: %({
           "http://example.com/b": []
@@ -176,6 +188,25 @@ describe JSON::LD::API do
           "term5": [ "v5", "plain literal" ]
         })
       },
+      "default direction" => {
+        input: %({
+          "http://example.com/term": [
+            "v5",
+            {"@value": "plain literal"}
+          ]
+        }),
+        context: %({
+          "term5": {"@id": "http://example.com/term", "@direction": null},
+          "@direction": "ltr"
+        }),
+        output: %({
+          "@context": {
+            "term5": {"@id": "http://example.com/term", "@direction": null},
+            "@direction": "ltr"
+          },
+          "term5": [ "v5", "plain literal" ]
+        })
+      },
     }.each_pair do |title, params|
       it(title) {run_compact(params)}
     end
@@ -206,6 +237,19 @@ describe JSON::LD::API do
             "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
           })
         },
+        "@type with @container: @set": {
+          input: %({
+            "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
+            "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
+          }),
+          context: %({"type": {"@id": "@type", "@container": "@set"}}),
+          output: %({
+            "@context": {"type": {"@id": "@type", "@container": "@set"}},
+            "type": ["http://www.w3.org/2000/01/rdf-schema#Resource"],
+            "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
+          }),
+          processingMode: 'json-ld-1.1'
+        },
         "@language" => {
           input: %({
             "http://example.org/foo": {"@value": "bar", "@language": "baz"}
@@ -214,6 +258,16 @@ describe JSON::LD::API do
           output: %({
             "@context": {"language": "@language"},
             "http://example.org/foo": {"@value": "bar", "language": "baz"}
+          })
+        },
+        "@direction" => {
+          input: %({
+            "http://example.org/foo": {"@value": "bar", "@direction": "ltr"}
+          }),
+          context: %({"direction": "@direction"}),
+          output: %({
+            "@context": {"direction": "@direction"},
+            "http://example.org/foo": {"@value": "bar", "direction": "ltr"}
           })
         },
         "@value" => {
@@ -255,6 +309,22 @@ describe JSON::LD::API do
             "@context": {
               "term5": {"@id": "http://example.com/term","@language": null},
               "@language": "de"
+            },
+            "term5": "v1"
+          })
+        },
+        "Uses term with null direction when two terms conflict on direction" => {
+          input: %([{
+            "http://example.com/term": {"@value": "v1"}
+          }]),
+          context: %({
+            "term5": {"@id": "http://example.com/term","@direction": null},
+            "@direction": "ltr"
+          }),
+          output: %({
+            "@context": {
+              "term5": {"@id": "http://example.com/term","@direction": null},
+              "@direction": "ltr"
             },
             "term5": "v1"
           })
@@ -489,7 +559,9 @@ describe JSON::LD::API do
 
     context "context as reference" do
       let(:remote_doc) do
-        JSON::LD::API::RemoteDocument.new("http://example.com/context", %q({"@context": {"b": "http://example.com/b"}}))
+        JSON::LD::API::RemoteDocument.new(
+          %q({"@context": {"b": "http://example.com/b"}}),
+          documentUrl: "http://example.com/context")
       end
       it "uses referenced context" do
         input = ::JSON.parse %({
@@ -525,6 +597,26 @@ describe JSON::LD::API do
             },
             "foo_en": ["en"],
             "foo_de": ["de"]
+          })
+        },
+        "1 term 2 lists 2 directions" => {
+          input: %([{
+            "http://example.com/foo": [
+              {"@list": [{"@value": "en", "@direction": "ltr"}]},
+              {"@list": [{"@value": "ar", "@direction": "rtl"}]}
+            ]
+          }]),
+          context: %({
+            "foo_ltr": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "ltr"},
+            "foo_rtl": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "rtl"}
+          }),
+          output: %({
+            "@context": {
+              "foo_ltr": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "ltr"},
+              "foo_rtl": {"@id": "http://example.com/foo", "@container": "@list", "@direction": "rtl"}
+            },
+            "foo_ltr": ["en"],
+            "foo_rtl": ["ar"]
           })
         },
         "coerced @list containing an empty list" => {
@@ -595,6 +687,145 @@ describe JSON::LD::API do
         },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
+      end
+    end
+
+    context "with @type: @json" do
+      {
+        "true": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": true
+          }),
+          input:%( [{
+            "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
+          }]),
+        },
+        "false": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+            },
+            "e": false
+          }),
+          input: %([{
+            "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
+          }]),
+        },
+        "double": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 1.23
+          }),
+          input: %([{
+            "http://example.org/vocab#double": [{"@value": 1.23, "@type": "@json"}]
+          }]),
+        },
+        "double-zero": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+            },
+            "e": 0.0e0
+          }),
+          input: %([{
+            "http://example.org/vocab#double": [{"@value": 0.0e0, "@type": "@json"}]
+          }]),
+        },
+        "integer": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#integer", "@type": "@json"}
+            },
+            "e": 123
+          }),
+          input: %([{
+            "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
+          }]),
+        },
+        "string": {
+          input: %([{
+            "http://example.org/vocab#string": [{
+              "@value": "string",
+              "@type": "@json"
+            }]
+          }]),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#string", "@type": "@json"}
+            },
+            "e": "string"
+          })
+        },
+        "null": {
+          input: %([{
+            "http://example.org/vocab#null": [{
+              "@value": null,
+              "@type": "@json"
+            }]
+          }]),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#null", "@type": "@json"}
+            },
+            "e": null
+          })
+        },
+        "object": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#object", "@type": "@json"}
+            },
+            "e": {"foo": "bar"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }]),
+        },
+        "array": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "e": {"@id": "http://example.org/vocab#array", "@type": "@json", "@container": "@set"}
+            },
+            "e": [{"foo": "bar"}]
+          }),
+          input: %([{
+            "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
+          }]),
+        },
+        "Already expanded object": {
+          output: %({
+            "@context": {"@version": 1.1},
+            "http://example.org/vocab#object": {"@value": {"foo": "bar"}, "@type": "@json"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }]),
+        },
+        "Already expanded object with aliased keys": {
+          output: %({
+            "@context": {"@version": 1.1, "value": "@value", "type": "@type", "json": "@json"},
+            "http://example.org/vocab#object": {"value": {"foo": "bar"}, "type": "json"}
+          }),
+          input: %([{
+            "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_compact(processingMode: 'json-ld-1.1', **params)}
       end
     end
 
@@ -725,6 +956,164 @@ describe JSON::LD::API do
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end
+
+      context "@index: property" do
+        {
+          "property-valued index indexes property value, instead of property (value)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1"},
+                "guest": [{"@id": "person/2"}, {"@id": "person/3"}]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@value": "regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@value": "guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@value": "guest"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes property value, instead of @index (multiple values)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1", "prop": "foo"},
+                "guest": [
+                  {"@id": "person/2", "prop": "foo"},
+                  {"@id": "person/3", "prop": "foo"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@value": "regular"}, {"@value": "foo"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@value": "guest"}, {"@value": "foo"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@value": "guest"}, {"@value": "foo"}]}
+              ]
+            }])
+          },
+          "property-valued index extracts property value, instead of @index (node)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@vocab", "@container": "@index", "@index": "prop"},
+                "prop": {"@type": "@id"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1"},
+                "guest": [
+                  {"@id": "person/2"},
+                  {"@id": "person/3"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes property value, instead of property (multimple nodes)": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@vocab", "@container": "@index", "@index": "prop"},
+                "prop": {"@type": "@id"}
+              },
+              "@id": "article",
+              "author": {
+                "regular": {"@id": "person/1", "prop": "foo"},
+                "guest": [
+                  {"@id": "person/2", "prop": "foo"},
+                  {"@id": "person/3", "prop": "foo"}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}, {"@id": "http://example.com/foo"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}, {"@id": "http://example.com/foo"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}, {"@id": "http://example.com/foo"}]}
+              ]
+            }])
+          },
+          "property-valued index indexes using @none if no property value exists": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "@none": ["person/1", "person/2", "person/3"]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1"},
+                {"@id": "http://example.com/person/2"},
+                {"@id": "http://example.com/person/3"}
+              ]
+            }])
+          },
+          "property-valued index indexes using @none if no property value does not compact to string": {
+            output: %({
+              "@context": {
+                "@version": 1.1,
+                "@base": "http://example.com/",
+                "@vocab": "http://example.com/",
+                "author": {"@type": "@id", "@container": "@index", "@index": "prop"}
+              },
+              "@id": "article",
+              "author": {
+                "@none": [
+                  {"@id": "person/1", "prop": {"@id": "regular"}},
+                  {"@id": "person/2", "prop": {"@id": "guest"}},
+                  {"@id": "person/3", "prop": {"@id": "guest"}}
+                ]
+              }
+            }),
+            input: %([{
+              "@id": "http://example.com/article",
+              "http://example.com/author": [
+                {"@id": "http://example.com/person/1", "http://example.com/prop": [{"@id": "http://example.com/regular"}]},
+                {"@id": "http://example.com/person/2", "http://example.com/prop": [{"@id": "http://example.com/guest"}]},
+                {"@id": "http://example.com/person/3", "http://example.com/prop": [{"@id": "http://example.com/guest"}]}
+              ]
+            }])
+          }
+        }.each do |title, params|
+          it(title) {run_compact(**params)}
+        end
+      end
     end
 
     context "@container: @language" do
@@ -813,6 +1202,173 @@ describe JSON::LD::API do
               "de": "Die Königin",
               "none": "Ihre Majestät"
             }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with overriding term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de", "@direction": "ltr"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "ltr"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "ltr",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with overriding null direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät", "@language": "de"},
+                {"@value": "The Queen", "@language": "en"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": null,
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@direction": "rtl",
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": null,
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen",
+              "de": [ "Die Königin", "Ihre Majestät" ]
+            }
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "simple map with mismatching term direction": {
+          input: %([
+            {
+              "@id": "http://example.com/queen",
+              "http://example.com/vocab/label": [
+                {"@value": "Die Königin", "@language": "de"},
+                {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"},
+                {"@value": "The Queen", "@language": "en", "@direction": "rtl"}
+              ]
+            }
+          ]),
+          context: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "rtl",
+                "@container": "@language"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "vocab": "http://example.com/vocab/",
+              "label": {
+                "@id": "vocab:label",
+                "@direction": "rtl",
+                "@container": "@language"
+              }
+            },
+            "@id": "http://example.com/queen",
+            "label": {
+              "en": "The Queen"
+            },
+            "vocab:label": [
+              {"@value": "Die Königin", "@language": "de"},
+              {"@value": "Ihre Majestät", "@language": "de", "@direction": "ltr"}
+            ]
           }),
           processingMode: "json-ld-1.1"
         },
@@ -1160,6 +1716,35 @@ describe JSON::LD::API do
             }
           })
         },
+        "Compacts simple graph with @index and multiple nodes" => {
+          input: %([{
+            "http://example.org/input": [{
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }, {
+                "http://example.org/value": [{"@value": "y"}]
+              }],
+              "@index": "ndx"
+            }]
+          }]),
+          context: %({
+            "@vocab": "http://example.org/",
+            "input": {"@container": "@graph"}
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/",
+              "input": {"@container": "@graph"}
+            },
+            "input": {
+              "@included": [{
+                "value": "x"
+              }, {
+                "value": "y"
+              }]
+            }
+          })
+        },
         "Does not compact graph with @id" => {
           input: %([{
             "http://example.org/input": [{
@@ -1498,6 +2083,116 @@ describe JSON::LD::API do
         }.each_pair do |title, params|
           it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
         end
+      end
+    end
+
+    context "@included" do
+      {
+        "Basic Included array": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included": {"@id": "@included", "@container": "@set"}
+            },
+            "prop": "value",
+            "included": [{
+              "prop": "value2"
+            }]
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "Basic Included object": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2"
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "Multiple properties mapping to @included are folded together": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included1": "@included",
+              "included2": "@included"
+            },
+            "included1": [
+              {"prop": "value1"},
+              {"prop": "value2"}
+            ]
+          }),
+          input: %([{
+            "@included": [
+              {"http://example.org/prop": [{"@value": "value1"}]},
+              {"http://example.org/prop": [{"@value": "value2"}]}
+            ]
+          }])
+        },
+        "Included containing @included": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2",
+              "@included": {
+                "prop": "value3"
+              }
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "@included": [{
+              "http://example.org/prop": [{"@value": "value2"}],
+              "@included": [{
+                "http://example.org/prop": [{"@value": "value3"}]
+              }]
+            }]
+          }])
+        },
+        "Property value with @included": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": {
+              "@type": "Foo",
+              "@included": {
+                "@type": "Bar"
+              }
+            }
+          }),
+          input: %([{
+            "http://example.org/prop": [{
+              "@type": ["http://example.org/Foo"],
+              "@included": [{
+                "@type": ["http://example.org/Bar"]
+              }]
+            }]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_compact(params)}
       end
     end
 
@@ -1895,7 +2590,7 @@ describe JSON::LD::API do
             "c": "C in example"
           }),
         },
-        "Raises InvalidTermDefinition if processingMode is not specified" => {
+        "Raises InvalidTermDefinition if processingMode is 1.0" => {
           input: %([{
             "http://example/foo": [{"http://example.org/bar": [{"@value": "baz"}]}]
           }]),
@@ -1903,9 +2598,58 @@ describe JSON::LD::API do
             "@vocab": "http://example/",
             "foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
-          processingMode: nil,
+          processingMode: 'json-ld-1.0',
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
+        },
+        "Scoped on id map": {
+          output: %({
+            "@context": {
+              "@version": 1.1,
+              "schema": "http://schema.org/",
+              "name": "schema:name",
+              "body": "schema:articleBody",
+              "words": "schema:wordCount",
+              "post": {
+                "@id": "schema:blogPost",
+                "@container": "@id",
+                "@context": {
+                  "@base": "http://example.com/posts/"
+                }
+              }
+            },
+            "@id": "http://example.com/",
+            "@type": "schema:Blog",
+            "name": "World Financial News",
+            "post": {
+              "1/en": {
+                "body": "World commodities were up today with heavy trading of crude oil...",
+                "words": 1539
+              },
+              "1/de": {
+                "body": "Die Werte an Warenbörsen stiegen im Sog eines starken Handels von Rohöl...",
+                "words": 1204
+              }
+            }
+          }),
+          input: %([{
+            "@id": "http://example.com/",
+            "@type": ["http://schema.org/Blog"],
+            "http://schema.org/name": [{"@value": "World Financial News"}],
+            "http://schema.org/blogPost": [{
+              "@id": "http://example.com/posts/1/en",
+              "http://schema.org/articleBody": [
+                {"@value": "World commodities were up today with heavy trading of crude oil..."}
+              ],
+              "http://schema.org/wordCount": [{"@value": 1539}]
+            }, {
+              "@id": "http://example.com/posts/1/de",
+              "http://schema.org/articleBody": [
+                {"@value": "Die Werte an Warenbörsen stiegen im Sog eines starken Handels von Rohöl..."}
+              ],
+              "http://schema.org/wordCount": [{"@value": 1204}]
+            }]
+          }])
         },
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
@@ -1981,7 +2725,7 @@ describe JSON::LD::API do
             "a": {"type": "Foo", "bar": "baz"}
           }),
         },
-        "deep @context affects nested nodes" => {
+        "deep @context does not affect nested nodes" => {
           input: %([
             {
               "@type": ["http://example/Foo"],
@@ -2000,7 +2744,7 @@ describe JSON::LD::API do
               "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
             },
             "@type": "Foo",
-            "bar": {"baz": "buzz"}
+            "bar": {"baz": {"@id": "http://example/buzz"}}
           }),
         },
         "scoped context layers on intemediate contexts" => {
@@ -2073,7 +2817,7 @@ describe JSON::LD::API do
             }
           })
         },
-        "Raises InvalidTermDefinition if processingMode is not specified" => {
+        "Raises InvalidTermDefinition if processingMode is 1.0" => {
           input: %([
             {
               "http://example/a": [{
@@ -2086,7 +2830,7 @@ describe JSON::LD::API do
             "@vocab": "http://example/",
             "Foo": {"@context": {"bar": "http://example.org/bar"}}
           }),
-          processingMode: nil,
+          processingMode: 'json-ld-1.0',
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
@@ -2227,16 +2971,231 @@ describe JSON::LD::API do
     end
   end
 
+  context "html" do
+    {
+      "Compacts embedded JSON-LD script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "foo": ["bar"]
+        })
+      },
+      "Compacts first script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "foo": ["bar"]
+        })
+      },
+      "Compacts targeted script element": {
+        input: %(
+        <html>
+          <head>
+            <script id="first" type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script id="second" type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"ex": "http://example.com/"}),
+        output: %({
+          "@context": {"ex": "http://example.com/"},
+          "@graph": [
+            {"ex:foo": "foo"},
+            {"ex:bar": "bar"}
+          ]
+        }),
+        base: "http://example.org/doc#second"
+      },
+      "Compacts all script elements with extractAllScripts option": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({
+          "ex": "http://example.com/",
+          "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.com/",
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [
+            {"foo": ["bar"]},
+            {
+              "@graph": [
+                {"ex:foo": "foo"},
+                {"ex:bar": "bar"}
+              ]
+            }
+          ]
+        }),
+        extractAllScripts: true
+      },
+    }.each do |title, params|
+      it(title) do
+        params[:input] = StringIO.new(params[:input])
+        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        run_compact params.merge(validate: true)
+      end
+    end
+  end
+
+
+  context "problem cases" do
+    {
+      "issue json-ld-framing#64": {
+        input: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#"
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "_label": "Top Production",
+            "part": {
+              "@type": "Production",
+              "_label": "Test Part"
+            }
+          }
+        }),
+        context: %({
+          "@version": 1.1,
+          "@vocab": "http://example.org/vocab#",
+          "Production": {
+            "@context": {
+              "part": {
+                "@type": "@id", 
+                "@container": "@set"
+              }
+            }
+          }
+        }),
+        output: %({
+          "@context": {
+            "@version": 1.1,
+            "@vocab": "http://example.org/vocab#",
+            "Production": {
+              "@context": {
+                "part": {
+                  "@type": "@id", 
+                  "@container": "@set"
+                }
+              }
+            }
+          },
+          "@id": "http://example.org/1",
+          "@type": "HumanMadeObject",
+          "produced_by": {
+            "@type": "Production",
+            "part": [{
+              "@type": "Production",
+              "_label": "Test Part"
+            }],
+            "_label": "Top Production"
+          }
+        }),
+        processingMode: "json-ld-1.1"
+      }
+    }.each do |title, params|
+      it title do
+        run_compact(params)
+      end
+    end
+  end
+
   def run_compact(params)
     input, output, context = params[:input], params[:output], params[:context]
+    params[:base] ||= nil
+    context ||= output  # Since it will have the context
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
+    context = context['@context'] if context.has_key?('@context')
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.compact(input, context, params.merge(logger: logger))}.to raise_error(params[:exception])
+      expect {JSON::LD::API.compact(input, context, logger: logger, **params)}.to raise_error(params[:exception])
     else
-      jld = JSON::LD::API.compact(input, context, params.merge(logger: logger))
+      jld = nil
+      if params[:write]
+        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.to write(params[:write]).to(:error)
+      else
+        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.not_to write.to(:error)
+      end
+
       expect(jld).to produce_jsonld(output, logger)
 
       # Compare expanded jld/output too to make sure list values remain ordered

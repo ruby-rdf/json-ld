@@ -2,17 +2,18 @@
 
 [JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD API][] processor. Additionally this gem implements [JSON-LD Framing][].
 
-[![Gem Version](https://badge.fury.io/rb/json-ld.png)](http://badge.fury.io/rb/json-ld)
-[![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](http://travis-ci.org/ruby-rdf/json-ld)
+[![Gem Version](https://badge.fury.io/rb/json-ld.png)](https://badge.fury.io/rb/json-ld)
+[![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](https://travis-ci.org/ruby-rdf/json-ld)
 [![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/r/ruby-rdf/json-ld)
 
 ## Features
 
-JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces.
+JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion, compaction and framing API interfaces. It also extracts JSON-LD from HTML.
 
 JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the `script/gen_context` script.
 
-If the [jsonlint][] gem is installed, it will be used when validating an input document.
+* If the [jsonlint][] gem is installed, it will be used when validating an input document.
+* If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
 
 [Implementation Report](file.earl.html)
 
@@ -48,16 +49,16 @@ require 'json/ld'
     
     [{
         "http://xmlns.com/foaf/0.1/name": [{"@value"=>"Manu Sporny"}],
-        "http://xmlns.com/foaf/0.1/homepage": [{"@value"=>"http://manu.sporny.org/"}], 
-        "http://xmlns.com/foaf/0.1/avatar": [{"@value": "http://twitter.com/account/profile_image/manusporny"}]
+        "http://xmlns.com/foaf/0.1/homepage": [{"@value"=>"https://manu.sporny.org/"}], 
+        "http://xmlns.com/foaf/0.1/avatar": [{"@value": "https://twitter.com/account/profile_image/manusporny"}]
     }]
 ```
 ### Compact a Document
 ```ruby
     input = JSON.parse %([{
         "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
-        "http://xmlns.com/foaf/0.1/homepage": [{"@id": "http://manu.sporny.org/"}],
-        "http://xmlns.com/foaf/0.1/avatar": [{"@id": "http://twitter.com/account/profile_image/manusporny"}]
+        "http://xmlns.com/foaf/0.1/homepage": [{"@id": "https://manu.sporny.org/"}],
+        "http://xmlns.com/foaf/0.1/avatar": [{"@id": "https://twitter.com/account/profile_image/manusporny"}]
     }])
     
     context = JSON.parse(%({
@@ -75,8 +76,8 @@ require 'json/ld'
           "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
           "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
         },
-        "avatar": "http://twitter.com/account/profile_image/manusporny",
-        "homepage": "http://manu.sporny.org/",
+        "avatar": "https://twitter.com/account/profile_image/manusporny",
+        "homepage": "https://manu.sporny.org/",
         "name": "Manu Sporny"
     }
 ```
@@ -167,7 +168,7 @@ require 'json/ld'
 ```ruby
     input = JSON.parse %({
       "@context": {
-        "":       "http://manu.sporny.org/",
+        "":       "https://manu.sporny.org/",
         "foaf":   "http://xmlns.com/foaf/0.1/"
       },
       "@id":       "http://example.org/people#joebob",
@@ -192,7 +193,7 @@ require 'json/ld'
     input = RDF::Graph.new << RDF::Turtle::Reader.new(%(
       @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
-      <http://manu.sporny.org/#me> a foaf:Person;
+      <https://manu.sporny.org/#me> a foaf:Person;
          foaf:knows [ a foaf:Person;
            foaf:name "Gregg Kellogg"];
          foaf:name "Manu Sporny" .
@@ -200,7 +201,7 @@ require 'json/ld'
     
     context = JSON.parse %({
       "@context": {
-        "":       "http://manu.sporny.org/",
+        "":       "https://manu.sporny.org/",
         "foaf":   "http://xmlns.com/foaf/0.1/"
       }
     })
@@ -217,7 +218,7 @@ require 'json/ld'
           "http://xmlns.com/foaf/0.1/name": [{"@value": "Gregg Kellogg"}]
         },
         {
-          "@id": "http://manu.sporny.org/#me",
+          "@id": "https://manu.sporny.org/#me",
           "@type": ["http://xmlns.com/foaf/0.1/Person"],
           "http://xmlns.com/foaf/0.1/knows": [{"@id": "_:g70265766605380"}],
           "http://xmlns.com/foaf/0.1/name": [{"@value": "Manu Sporny"}]
@@ -225,22 +226,22 @@ require 'json/ld'
       ]
 ```
 ## Use a custom Document Loader
-In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time.
+In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time (however, see [json-ld-preloaded](https://rubygems.org/gems/json-ld-preloaded)).
 
 All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
 ```ruby
-    def load_document_local(url, options={}, &block)
-      if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
-        remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
-        return block_given? ? yield(remote_document) : remote_document
-      else
-        JSON::LD::API.documentLoader(url, options, &block)
-      end
-    end
+def load_document_local(url, options={}, &block)
+  if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
+    remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
+    return block_given? ? yield(remote_document) : remote_document
+  else
+    JSON::LD::API.documentLoader(url, options, &block)
+  end
+end
 ```
 Then, when performing something like expansion:
 ```ruby
-    JSON::LD::API.expand(input, documentLoader: load_document_local)
+JSON::LD::API.expand(input, documentLoader: load_document_local)
 ```
 
 ## Preloading contexts
@@ -433,19 +434,52 @@ Many JSON APIs separate properties from their entities using an intermediate obj
 ```
 In this way, nesting survives round-tripping through expansion, and framed output can include nested properties.
 
-### Framing Updates
-The [JSON-LD Framing 1.1 Specification]() improves on previous un-released versions.
+## Sinatra/Rack support
+JSON-LD 1.1 describes support for the _profile_ parameter to a media type in an HTTP ACCEPT header. This allows an HTTP request to specify the format (expanded/compacted/flattened/framed) along with a reference to a context or frame to use to format the returned document.
 
-* [More Specific Frame matching](https://github.com/json-ld/json-ld.org/issues/110) – Allows framing to extend to elements of value objects, and objects are matched through recursive frame matching. `{}` is used as a wildcard, and `[]` as matching nothing.
-* [Graph framing](https://github.com/json-ld/json-ld.org/issues/118) – previously, only the merged graph can be framed, this update allows arbitrary graphs to be framed.
-  * Use `@graph` in frame, matches the default graph, not the merged graph.
-  * Use `@graph` in property value, causes the apropriatly named graph to be used for filling in values.
-* [Reverse properties](https://github.com/json-ld/json-ld.org/issues/311) – `@reverse` (or a property defined with `@reverse`) can cause matching values to be included, allowing a matched object to include reverse references to any objects referencing it.
-* [@omitDefault behavior](https://github.com/json-ld/json-ld.org/issues/389) – In addition to `true` and `false`, `@omitDefault` can take `@last`, `@always`, `@never`, and `@link`.
-* [multiple `@id` matching](https://github.com/json-ld/json-ld.org/issues/424) – A frame can match based on one or more specific object `@id` values.
+An HTTP header may be constructed as follows:
+
+    GET /ordinary-json-document.json HTTP/1.1
+    Host: example.com
+    Accept: application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context", application/ld+json
+
+This tells a server that the top priority is to return JSON-LD compacted using a context at `http://conneg.example.com/context`, and if not available, to just return any form of JSON-LD.
+
+The {JSON::LD::ContentNegotiation} class provides a [Rack][Rack] `call` method, and [Sinatra][Sinatra] `registered` class method to allow content-negotiation using such profile parameters. For example:
+
+    #!/usr/bin/env rackup
+    require 'sinatra/base'
+    require 'json/ld'
+    
+    module My
+      class Application < Sinatra::Base
+        register JSON::LD::ContentNegotiation
+    
+        get '/hello' do
+          [{
+            "http://example.org/input": [{
+              "@id": "http://example.com/g1",
+              "@graph": [{
+                "http://example.org/value": [{"@value": "x"}]
+              }]
+            }]
+          }])
+        end
+      end
+    end
+    
+    run My::Application
+
+The {JSON::LD::ContentNegotiation#call} method looks for a result which includes an object, with an acceptable `Accept` header and formats the result as JSON-LD, considering the profile parameters. This can be tested using something like the following:
+
+    $ rackup config.ru
+    
+    $ curl -iH 'Accept: application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context"' http://localhost:9292/hello
+
+See [Rack::LinkedData][] to do the same thing with an RDF Graph or Dataset as the source, rather than Ruby objects.
 
 ## Documentation
-Full documentation available on [RubyDoc](http://rubydoc.info/gems/json-ld/file/README.md)
+Full documentation available on [RubyDoc](https://rubydoc.info/gems/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
 The specified JSON-LD API is based on a WebIDL definition implementing [Promises][] intended for use within a browser.
@@ -468,12 +502,12 @@ Note, the API method signatures differed in versions before 1.0, in that they al
   * {JSON::LD::Writer}
 
 ## Dependencies
-* [Ruby](http://ruby-lang.org/) (>= 2.2.2)
-* [RDF.rb](http://rubygems.org/gems/rdf) (~> 3.0)
-* [JSON](https://rubygems.org/gems/json) (>= 2.1)
+* [Ruby](https://ruby-lang.org/) (>= 2.4)
+* [RDF.rb](https://rubygems.org/gems/rdf) (~> 3.1)
+* [JSON](https://rubygems.org/gems/json) (>= 2.2)
 
 ## Installation
-The recommended installation method is via [RubyGems](http://rubygems.org/).
+The recommended installation method is via [RubyGems](https://rubygems.org/).
 To install the latest official release of the `JSON-LD` gem, do:
 ```bash
  % [sudo] gem install json-ld
@@ -484,10 +518,10 @@ To get a local working copy of the development repository, do:
  % git clone git://github.com/ruby-rdf/json-ld.git
 ```
 ## Mailing List
-* <http://lists.w3.org/Archives/Public/public-rdf-ruby/>
+* <https://lists.w3.org/Archives/Public/public-rdf-ruby/>
 
 ## Author
-* [Gregg Kellogg](http://github.com/gkellogg) - <http://kellogg-assoc.com/>
+* [Gregg Kellogg](https://github.com/gkellogg) - <https://greggkellogg.net/>
 
 ## Contributing
 * Do your best to adhere to the existing coding conventions and idioms.
@@ -506,17 +540,20 @@ License
 -------
 
 This is free and unencumbered public domain software. For more information,
-see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
+see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 
-[Ruby]:             http://ruby-lang.org/
-[RDF]:              http://www.w3.org/RDF/
-[YARD]:             http://yardoc.org/
-[YARD-GS]:          http://rubydoc.info/docs/yard/file/docs/GettingStarted.md
-[PDD]:              http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
-[RDF.rb]:           http://rubygems.org/gems/rdf
-[Backports]:        http://rubygems.org/gems/backports
-[JSON-LD]:          http://www.w3.org/TR/json-ld/ "JSON-LD 1.0"
-[JSON-LD API]:      http://www.w3.org/TR/json-ld-api/ "JSON-LD 1.0 Processing Algorithms and API"
-[JSON-LD Framing]:  http://json-ld.org/spec/latest/json-ld-framing/ "JSON-LD Framing 1.0"
-[Promises]:         http://dom.spec.whatwg.org/#promises
+[Ruby]:             https://ruby-lang.org/
+[RDF]:              https://www.w3.org/RDF/
+[YARD]:             https://yardoc.org/
+[YARD-GS]:          https://rubydoc.info/docs/yard/file/docs/GettingStarted.md
+[PDD]:              https://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html
+[RDF.rb]:           https://rubygems.org/gems/rdf
+[Rack::LinkedData]: https://rubygems.org/gems/rack-linkeddata
+[Backports]:        https://rubygems.org/gems/backports
+[JSON-LD]:          https://www.w3.org/TR/json-ld11/ "JSON-LD 1.1"
+[JSON-LD API]:      https://www.w3.org/TR/json-ld11-api/ "JSON-LD 1.1 Processing Algorithms and API"
+[JSON-LD Framing]:  https://www.w3.org/TR/json-ld11-framing/ "JSON-LD Framing 1.1"
+[Promises]:         https://dom.spec.whatwg.org/#promises
 [jsonlint]:         https://rubygems.org/gems/jsonlint
+[Sinatra]:          https://www.sinatrarb.com/
+[Rack]:             https://rack.github.com/

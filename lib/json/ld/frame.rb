@@ -23,11 +23,6 @@ module JSON::LD
     # @param [Hash{Symbol => Object}] options ({})
     # @raise [JSON::LD::InvalidFrame]
     def frame(state, subjects, frame, parent: nil, property: nil, ordered: false, **options)
-      #log_depth do
-      #log_debug("frame") {"subjects: #{subjects.inspect}"}
-      #log_debug("frame") {"frame: #{frame.to_json(JSON_STATE)}"}
-      #log_debug("frame") {"property: #{property.inspect}"}
-
       # Validate the frame
       validate_frame(frame)
       frame = frame.first if frame.is_a?(Array)
@@ -66,28 +61,43 @@ module JSON::LD
         output = {'@id' => id}
         link[id] = output
 
-        # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
-        if flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack])
-          add_frame_output(parent, property, output)
-          next
+        if %w(@first @last).include?(flags[:embed]) && context.processingMode('json-ld-1.1')
+          raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{flags[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
+          warn "[DEPRECATION] #{flags[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
         end
 
-        # if only the last match should be embedded
-        if flags[:embed] == '@last'
+        if !state[:embedded] && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+          # Skip adding this node object to the top-level, as it was included in another node object
+          next
+        elsif state[:embedded] &&
+          (flags[:embed] == '@never' || creates_circular_reference(subject, state[:graph], state[:subjectStack]))
+          # if embed is @never or if a circular reference would be created by an embed, the subject cannot be embedded, just add the reference; note that a circular reference won't occur when the embed flag is `@link` as the above check will short-circuit before reaching this point
+          add_frame_output(parent, property, output)
+          next
+        elsif state[:embedded] &&
+          %w(@first @once).include?(flags[:embed]) &&
+          state[:uniqueEmbeds][state[:graph]].has_key?(id)
+
+          # if only the first match should be embedded
+          # Embed unless already embedded
+          add_frame_output(parent, property, output)
+          next
+        elsif flags[:embed] == '@last'
+          # if only the last match should be embedded
           # remove any existing embed
           remove_embed(state, id) if state[:uniqueEmbeds][state[:graph]].include?(id)
-          state[:uniqueEmbeds][state[:graph]][id] = {
-            parent: parent,
-            property: property
-          }
         end
+
+        state[:uniqueEmbeds][state[:graph]][id] = {
+          parent: parent,
+          property: property
+        }
 
         # push matching subject onto stack to enable circular embed checks
         state[:subjectStack] << {subject: subject, graph: state[:graph]}
 
         # Subject is also the name of a graph
         if state[:graphMap].has_key?(id)
-          log_debug("frame") {"#{id} in graphMap"}
           # check frame's "@graph" to see what to do next
           # 1. if it doesn't exist and state.graph === "@merged", don't recurse
           # 2. if it doesn't exist and state.graph !== "@merged", recurse
@@ -105,10 +115,13 @@ module JSON::LD
 
           if recurse
             state[:graphStack].push(state[:graph])
-            state[:graph] = id
-            frame(state, state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
-            state[:graph] = state[:graphStack].pop
+            frame(state.merge(graph: id, embedded: false), state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
           end
+        end
+
+        # If frame has `@included`, recurse over it's sub-frame
+        if frame['@included']
+          frame(state.merge(embedded: false), subjects, frame['@included'], parent: output, property: '@included', **options)
         end
 
         # iterate over subject properties in order
@@ -139,14 +152,14 @@ module JSON::LD
               src = o['@list']
               src.each do |oo|
                 if node_reference?(oo)
-                  frame(state, [oo['@id']], subframe, parent: list, property: '@list', **options)
+                  frame(state.merge(embedded: true), [oo['@id']], subframe, parent: list, property: '@list', **options)
                 else
                   add_frame_output(list, '@list', oo.dup)
                 end
               end
             when node_reference?(o)
               # recurse into subject reference
-              frame(state, [o['@id']], subframe, parent: output, property: prop, **options)
+              frame(state.merge(embedded: true), [o['@id']], subframe, parent: output, property: prop, **options)
             when value_match?(subframe, o)
               # Include values if they match
               add_frame_output(output, prop, o.dup)
@@ -156,7 +169,11 @@ module JSON::LD
 
         # handle defaults in order
         frame.keys.opt_sort(ordered: ordered).each do |prop|
-          next if prop.start_with?('@')
+          if prop == '@type' && frame[prop].first.is_a?(Hash) && frame[prop].first.keys == %w(@default)
+            # Treat this as a default
+          elsif prop.start_with?('@')
+            next
+          end
 
           # if omit default is off, then include default values for properties that appear in the next frame but are not in the matching subject
           n = frame[prop].first || {}
@@ -174,7 +191,7 @@ module JSON::LD
               # Node has property referencing this subject
               # recurse into  reference
               (output['@reverse'] ||= {})[reverse_prop] ||= []
-              frame(state, [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
+              frame(state.merge(embedded: true), [r_id], subframe, parent: output['@reverse'][reverse_prop], property: property, **options)
             end
           end
         end
@@ -243,35 +260,43 @@ module JSON::LD
     ##
     # Replace @preserve keys with the values, also replace @null with null.
     #
-    # Optionally, remove BNode identifiers only used once.
-    #
     # @param [Array, Hash] input
     # @return [Array, Hash]
     def cleanup_preserve(input)
+      case input
+      when Array
+        # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
+        input.map {|o| cleanup_preserve(o)}
+      when Hash
+        if input.has_key?('@preserve')
+          # Replace with the content of `@preserve`
+          cleanup_preserve(input['@preserve'].first)
+        else
+          input.inject({}) do |memo, (k,v)|
+            memo.merge(k => cleanup_preserve(v))
+          end
+        end
+      else
+        input
+      end
+    end
+
+    ##
+    # Replace `@null` with `null`, removing it from arrays.
+    #
+    # @param [Array, Hash] input
+    # @return [Array, Hash]
+    def cleanup_null(input)
       result = case input
       when Array
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-        v = input.map {|o| cleanup_preserve(o)}.compact
-
-        # If the array contains a single member, which is itself an array, use that value as the result
-        (v.length == 1 && v.first.is_a?(Array)) ? v.first : v
+        input.map {|o| cleanup_null(o)}.compact
       when Hash
-        output = Hash.new
-        input.each do |key, value|
-          if key == '@preserve'
-            # replace all key-value pairs where the key is @preserve with the value from the key-pair
-            output = cleanup_preserve(value)
-          else
-            v = cleanup_preserve(value)
-
-            # Because we may have added a null value to an array, we need to clean that up, if we possible
-            v = v.first if v.is_a?(Array) && v.length == 1 && !context.as_array?(key)
-            output[key] = v
-          end
+        input.inject({}) do |memo, (k,v)|
+          memo.merge(k => cleanup_null(v))
         end
-        output
       when '@null'
-        # If the value from the key-pair is @null, replace the value with nul
+        # If the value from the key-pair is @null, replace the value with null
         nil
       else
         input
@@ -304,7 +329,7 @@ module JSON::LD
     #
     # Matches either based on explicit type inclusion where the node has any type listed in the frame. If the frame has empty types defined matches nodes not having a @type. If the frame has a type of {} defined matches nodes having any type defined.
     #
-    # Otherwise, does duck typing, where the node must have all of the properties defined in the frame.
+    # Otherwise, does duck typing, where the node must have any or all of the properties defined in the frame, depending on the `requireAll` flag.
     #
     # @param [Hash{String => Object}] subject the subject to check.
     # @param [Hash{String => Object}] frame the frame to check.
@@ -324,24 +349,39 @@ module JSON::LD
           ids = v || []
 
           # Match on specific @id.
-          return ids.include?(subject['@id']) if !ids.empty? && ids != [{}]
-          match_this = true
+          match_this = case ids
+          when [], [{}]
+            # Match on no @id or any @id
+            true
+          else
+            # Match on specific @id
+            ids.include?(subject['@id'])
+          end
+          return match_this if !flags[:requireAll]
         when '@type'
           # No longer a wildcard pattern
           wildcard = false
-
+          
           match_this = case v
           when []
-            # Don't Match on no @type
+            # Don't match with any @type
             return false if !node_values.empty?
             true
           when [{}]
-            # Match on wildcard @type
+            # Match with any @type
             !node_values.empty?
           else
-            # Match on specific @type
-            return !(v & node_values).empty?
+            # Treat a map with @default like an empty map
+            if v.first.is_a?(Hash) && v.first.keys == %w(@default)
+              true
+            elsif (v & node_values).empty?
+              # Match on specific @type
+              false
+            else
+              true
+            end
           end
+          return match_this if !flags[:requireAll]
         when /@/
           # Skip other keywords
           next
@@ -352,7 +392,6 @@ module JSON::LD
             has_default = v.has_key?('@default')
           end
 
-
           # No longer a wildcard pattern if frame has any non-keyword properties
           wildcard = false
 
@@ -362,42 +401,40 @@ module JSON::LD
           # If frame value is empty, don't match if subject has any value
           return false if !node_values.empty? && is_empty
 
-          match_this = case v
-          when nil
+          match_this = case
+          when v.nil?
             # node does not match if values is not empty and the value of property in frame is match none.
             return false unless node_values.empty?
             true
-          when Hash # Empty other than framing keywords
-            # node matches if values is not empty and the value of property in frame is wildcard
+          when v.is_a?(Hash) && (v.keys - FRAMING_KEYWORDS).empty?
+            # node matches if values is not empty and the value of property in frame is wildcard (frame with properties other than framing keywords)
             !node_values.empty?
-          else
-            if value?(v)
+          when value?(v)
+            # Match on any matching value
+            node_values.any? {|nv| value_match?(v, nv)}
+          when node?(v) || node_reference?(v)
+            node_values.any? do |nv|
+              node_match?(v, nv, state, flags)
+            end
+          when list?(v)
+            vv = v['@list'].first
+            node_values = list?(node_values.first) ?
+              node_values.first['@list'] :
+              false
+            if !node_values
+              false # Lists match Lists
+            elsif value?(vv)
               # Match on any matching value
-              node_values.any? {|nv| value_match?(v, nv)}
-            elsif node?(v) || node_reference?(v)
+              node_values.any? {|nv| value_match?(vv, nv)}
+            elsif node?(vv) || node_reference?(vv)
               node_values.any? do |nv|
-                node_match?(v, nv, state, flags)
-              end
-            elsif list?(v)
-              vv = v['@list'].first
-              node_values = list?(node_values.first) ?
-                node_values.first['@list'] :
-                false
-              if !node_values
-                false # Lists match Lists
-              elsif value?(vv)
-                # Match on any matching value
-                node_values.any? {|nv| value_match?(vv, nv)}
-              elsif node?(vv) || node_reference?(vv)
-                node_values.any? do |nv|
-                  node_match?(vv, nv, state, flags)
-                end
-              else
-                false
+                node_match?(vv, nv, state, flags)
               end
             else
-              false # No matching on non-value or node values
+              false
             end
+          else
+            false # No matching on non-value or node values
           end
         end
 
@@ -412,9 +449,18 @@ module JSON::LD
     end
 
     def validate_frame(frame)
-      raise InvalidFrame::Syntax,
-            "Invalid JSON-LD syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; a JSON-LD frame must be an object: #{frame.inspect}" unless
         frame.is_a?(Hash) || (frame.is_a?(Array) && frame.first.is_a?(Hash) && frame.length == 1)
+      frame = frame.first if frame.is_a?(Array)
+
+      # Check values of @id and @type
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; invalid value of @id: #{frame['@id']}" unless
+            Array(frame['@id']) == [{}] || Array(frame['@id']).all?{|v| RDF::URI(v).valid?}
+      raise JsonLdError::InvalidFrame,
+            "Invalid JSON-LD frame syntax; invalid value of @type: #{frame['@type']}" unless
+            Array(frame['@type']).all?{|v| v.is_a?(Hash) && (v.keys - %w(@default)).empty? || RDF::URI(v).valid?}
     end
 
     # Checks the current subject stack to see if embedding the given subject would cause a circular reference.
@@ -443,10 +489,12 @@ module JSON::LD
       rval = rval.values.first if value?(rval)
       if name == :embed
         rval = case rval
-        when true then '@last'
+        when true then '@once'
         when false then '@never'
-        when '@always', '@never', '@link' then rval
-        else '@last'
+        when '@always', '@first', '@last', '@link', '@once', '@never' then rval
+        else
+          raise JsonLdError::InvalidEmbedValue,
+                "Invalid JSON-LD frame syntax; invalid value of @embed: #{rval}"
         end
       end
       rval
@@ -542,12 +590,14 @@ module JSON::LD
     # * @languages are the same or `value[@language]` is not null and `pattern[@language]` is `{}`, or `value[@language]` is null and `pattern[@language]` is null or `[]`.
     def value_match?(pattern, value)
       v1, t1, l1 = value['@value'], value['@type'], value['@language']
-      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language'])
+      v2, t2, l2 = Array(pattern['@value']), Array(pattern['@type']), Array(pattern['@language']).map {|v| v.is_a?(String) ? v.downcase : v}
       return true if (v2 + t2 + l2).empty?
       return false unless v2.include?(v1) || v2 == [{}]
       return false unless t2.include?(t1) || t1 && t2 == [{}] || t1.nil? && (t2 || []).empty?
-      return false unless l2.include?(l1) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
+      return false unless l2.include?(l1.to_s.downcase) || l1 && l2 == [{}] || l1.nil? && (l2 || []).empty?
       true
     end
+
+    FRAMING_KEYWORDS = %w(@default @embed @explicit @omitDefault @requireAll).freeze
   end
 end

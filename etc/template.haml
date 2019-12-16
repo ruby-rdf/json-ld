@@ -64,10 +64,11 @@
     - tests['entries'].each {|m| m['title'] ||= m['rdfs:label'] || m['description']}
     %section{about: tests['@id'], typeof: Array(tests['@type']).join(" ")}
       %h2
-        Ruby ShEx gem test results
+        Ruby JSON-LD gem test results
       %p
         This document reports conformance for for
-        %a{property: "doap:name", href: "http://json-ld.org/spec/latest/json-ld-api/"}="JSON-LD 1.1 Processing Algorithms and API"
+        %a{property: "doap:name", href: "https://www.w3.org/TR/json-ld11-api/"}="JSON-LD 1.1 Processing Algorithms and API"
+        %a{property: "doap:name", href: "https://www.w3.org/TR/json-ld11-framing/"}="JSON-LD 1.1 Framing"
       %dl
         - subjects.each_with_index do |subject, index|
           - subject_refs[subject['@id']] = "subj_#{index}"
@@ -80,6 +81,13 @@
                 %dt= "Description"
                 %dd{property: "doap:description", lang: 'en'}<
                   ~ CGI.escapeHTML subject['doapDesc'].to_s
+              - if subject['release']
+                - subject['release'] = subject['release'].first if subject['release'].is_a?(Array)
+                - subject['release']['revision'] = subject['release']['revision']['@value'] if subject['release']['revision'].is_a?(Hash)
+                %dt= "Release"
+                %dd{property: "doap:release"}<
+                  %span{property: "doap:revision"}<
+                    ~ CGI.escapeHTML subject['release']['revision'].to_s
               - if subject['language']
                 %dt= "Programming Language"
                 %dd{property: "doap:programming-language"}<
@@ -116,7 +124,7 @@
                       - cls = (pct == 100.0 ? 'passed-all' : (pct >= 85.0) ? 'passed-most' : (pct == 0.0 ? 'passed-none' : 'passed-some'))
                       %tr
                         %td
-                          %a{href: "##{manifest['rdfs:comment']}"}
+                          %a{href: "##{manifest['rdfs:comment'].gsub(' ', '-')}"}
                             ~ manifest['rdfs:comment']
                         %td{class: cls}
                           = pct == 0.0 ? "Untested" : "#{passed}/#{total} (#{'%.1f' % pct}%)"
@@ -125,7 +133,7 @@
         Individual Test Results
       - tests['entries'].sort_by {|m| m['title'].to_s.downcase}.each do |manifest|
         - test_cases = manifest['entries']
-        %section{id: manifest['rdfs:label'], typeof: manifest['@type'].join(" "), resource: manifest['@id']}
+        %section{id: manifest['rdfs:comment'].gsub(' ', '-'), typeof: manifest['@type'].join(" "), resource: manifest['@id']}
           %h2{property: "rdfs:comment mf:name"}<=(manifest['rdfs:comment'])
           - Array(manifest['description']).each do |desc|
             %p{property: "rdfs:comment"}<

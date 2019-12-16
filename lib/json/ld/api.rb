@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 require 'openssl'
+require 'cgi'
 require 'json/ld/expand'
 require 'json/ld/compact'
 require 'json/ld/flatten'
@@ -21,7 +22,7 @@ module JSON::LD
   #
   # Note that the API method signatures are somewhat different than what is specified, as the use of Futures and explicit callback parameters is not as relevant for Ruby-based interfaces.
   #
-  # @see http://json-ld.org/spec/latest/json-ld-api/#the-application-programming-interface
+  # @see https://www.w3.org/TR/json-ld11-api/#the-application-programming-interface
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class API
     include Expand
@@ -34,8 +35,14 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      headers: {"Accept" => "application/ld+json, application/json"}
+      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/json;q=0.5"}
     }
+
+    # The following constants are used to reduce object allocations
+    LINK_REL_CONTEXT = %w(rel http://www.w3.org/ns/json-ld#context).freeze
+    LINK_REL_ALTERNATE = %w(rel alternate).freeze
+    LINK_TYPE_JSONLD = %w(type application/ld+json).freeze
+    JSON_LD_PROCESSING_MODES = %w(json-ld-1.0 json-ld-1.1).freeze
 
     # Current input
     # @!attribute [rw] input
@@ -67,12 +74,18 @@ module JSON::LD
     #   Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
+    # @option options [Boolean] :lowercaseLanguage
+    #   By default, language tags are left as is. To normalize to lowercase, set this option to `true`.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean] :extractAllScripts
+    #   If set, when given an HTML input without a fragment identifier, extracts all `script` elements with type `application/ld+json` into an array during expansion.
     # @option options [Boolean, String, RDF::URI] :flatten
     #   If set to a value that is not `false`, the JSON-LD processor must modify the output of the Compaction Algorithm or the Expansion Algorithm by coalescing all properties associated with each subject via the Flattening Algorithm. The value of `flatten must` be either an _IRI_ value representing the name of the graph to flatten, or `true`. If the value is `true`, then the first graph encountered in the input document is selected and flattened.
     # @option options [String] :language
     #   When set, this has the effect of inserting a context definition with `@language` set to the associated value, creating a default language for interpreting string values.
+    # @option options [Symbol] :library
+    #   One of :nokogiri or :rexml. If nil/unspecified uses :nokogiri if available, :rexml otherwise.
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
@@ -91,7 +104,7 @@ module JSON::LD
       @options = {
         compactArrays:      true,
         ordered:            false,
-        documentLoader:     self.class.method(:documentLoader)
+        extractAllScripts:  false,
       }.merge(options)
       @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
@@ -100,41 +113,24 @@ module JSON::LD
 
       @value = case input
       when Array, Hash then input.dup
-      when IO, StringIO
-        @options = {base: input.base_uri}.merge(@options) if input.respond_to?(:base_uri)
-
-        # if input impelements #links, attempt to get a contextUrl from that link
-        content_type = input.respond_to?(:content_type) ? input.content_type : "application/json"
-        context_ref = if content_type.start_with?('application/json') && input.respond_to?(:links)
-          link = input.links.find_link(%w(rel http://www.w3.org/ns/json-ld#context))
-          link.href if link
-        end
-
-        validate_input(input) if options[:validate]
-
-        MultiJson.load(input.read, options)
-      when String
-        remote_doc = @options[:documentLoader].call(input, @options)
+      when IO, StringIO, String
+        remote_doc = self.class.loadRemoteDocument(input, **@options)
 
         context_ref = remote_doc.contextUrl
-        @options = {base: remote_doc.documentUrl}.merge(@options) unless @options[:no_default_base]
+        @options[:base] = remote_doc.documentUrl if remote_doc.documentUrl && !@options[:no_default_base]
 
         case remote_doc.document
         when String
-          validate_input(remote_doc.document) if options[:validate]
-          MultiJson.load(remote_doc.document, options)
+          MultiJson.load(remote_doc.document, **options)
         else
+          # Already parsed
           remote_doc.document
         end
       end
 
       # If not provided, first use context from document, or from a Link header
-      context ||= (@value['@context'] if @value.is_a?(Hash)) || context_ref
-      @context = Context.parse(context || {}, @options)
-
-      # If not set explicitly, the context figures out the processing mode
-      @options[:processingMode] ||= @context.processingMode || "json-ld-1.0"
-      @options[:validate] ||= %w(json-ld-1.0 json-ld-1.1).include?(@options[:processingMode])
+      context ||= context_ref || {}
+      @context = Context.parse(context || {}, **@options)
 
       if block_given?
         case block.arity
@@ -165,10 +161,10 @@ module JSON::LD
     # @yieldreturn [Object] returned object
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
-    # @see http://json-ld.org/spec/latest/json-ld-api/#expansion-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
     def self.expand(input, framing: false, **options, &block)
       result, doc_base = nil
-      API.new(input, options[:expandContext], options) do
+      API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
           ordered: @options[:ordered],
           framing: framing)
@@ -214,14 +210,14 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
-    # @see http://json-ld.org/spec/latest/json-ld-api/#compaction-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#compaction-algorithm
     def self.compact(input, context, expanded: false, **options)
       result = nil
       options = {compactToRelative:  true}.merge(options)
 
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
@@ -259,13 +255,16 @@ module JSON::LD
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
-    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
     def self.flatten(input, context, expanded: false, **options)
       flattened = []
-      options = {compactToRelative:  true}.merge(options)
+      options = {
+        compactToRelative:  true,
+        extractAllScripts:  true,
+      }.merge(options)
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options) do |result, base_iri|
+      expanded_input = expanded ? input : API.expand(input, **options) do |result, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         result
       end
@@ -314,7 +313,7 @@ module JSON::LD
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
-    # @option options ['@last', '@always', '@never', '@link'] :embed ('@last')
+    # @option options ['@always', '@first', '@last', '@link', '@once', '@never'] :embed ('@last')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.
@@ -323,6 +322,7 @@ module JSON::LD
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
     # @option options [Boolean] :expanded Input is already expanded
+    # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
     # @option options [Boolean] :omitGraph does not use `@graph` at top level unless necessary to describe multiple objects, defaults to `true` if processingMode is 1.1, otherwise `false`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
@@ -331,18 +331,17 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
-    # @see http://json-ld.org/spec/latest/json-ld-api/#framing-algorithm
+    # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
     def self.frame(input, frame, expanded: false, **options)
       result = nil
       options = {
         base:                       (input if input.is_a?(String)),
         compactArrays:              true,
         compactToRelative:          true,
-        embed:                      '@last',
+        embed:                      '@once',
         explicit:                   false,
-        requireAll:                 true,
+        requireAll:                 false,
         omitDefault:                false,
-        documentLoader:             method(:documentLoader)
       }.merge(options)
 
       framing_state = {
@@ -350,37 +349,46 @@ module JSON::LD
         graphStack:   [],
         subjectStack: [],
         link:         {},
+        embedded:     false # False at the top-level
       }
 
       # de-reference frame to create the framing object
       frame = case frame
       when Hash then frame.dup
-      when IO, StringIO then MultiJson.load(frame.read)
-      when String
-        remote_doc = options[:documentLoader].call(frame)
-        case remote_doc.document
-        when String then MultiJson.load(remote_doc.document)
-        else remote_doc.document
+      when IO, StringIO, String
+        remote_doc = loadRemoteDocument(frame,
+                                        profile: 'http://www.w3.org/ns/json-ld#frame',
+                                        requestProfile: 'http://www.w3.org/ns/json-ld#frame',
+                                        **options)
+        if remote_doc.document.is_a?(String)
+          MultiJson.load(remote_doc.document)
+        else
+          remote_doc.document
         end
       end
 
       # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false)) do |res, base_iri|
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
         options[:base] ||= base_iri if options[:compactToRelative]
         res
       end
 
       # Expand frame to simplify processing
-      expanded_frame = API.expand(frame, options.merge(framing: true, ordered: false))
+      expanded_frame = API.expand(frame, framing: true, ordered: false, **options)
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
         log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
+        if %w(@first @last).include?(options[:embed]) && context.processingMode('json-ld-1.1')
+          raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{options[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
+          warn "[DEPRECATION] #{options[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
+        end
+
         # Set omitGraph option, if not present, based on processingMode
         unless options.has_key?(:omitGraph)
-          options[:omitGraph] = @options[:processingMode] != 'json-ld-1.0'
+          options[:omitGraph] = context.processingMode('json-ld-1.1')
         end
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
@@ -402,16 +410,26 @@ module JSON::LD
         result = []
         frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
+        # Default to based on processinMode
+        if !options.has_key?(:pruneBlankNodeIdentifiers)
+          options[:pruneBlankNodeIdentifiers] = context.processingMode('json-ld-1.1')
+        end
+
         # Count blank node identifiers used in the document, if pruning
-        unless @options[:processingMode] == 'json-ld-1.0'
+        if options[:pruneBlankNodeIdentifiers]
           bnodes_to_clear = count_blank_node_identifiers(result).collect {|k, v| k if v == 1}.compact
           result = prune_bnodes(result, bnodes_to_clear)
         end
 
-        # Initalize context from frame
-        @context = @context.parse(frame['@context'])
+        # Replace values with `@preserve` with the content of its entry.
+        result = cleanup_preserve(result)
+        log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+
         # Compact result
         compacted = compact(result, ordered: @options[:ordered])
+
+        # @replace `@null` with nil, compacting arrays
+        compacted = cleanup_null(compacted)
         compacted = [compacted] unless options[:omitGraph] || compacted.is_a?(Array)
 
         # Add the given context to the output
@@ -422,7 +440,7 @@ module JSON::LD
           context.serialize.merge({kwgraph => compacted})
         end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = cleanup_preserve(result)
+        result
       end
 
       block_given? ? yield(result) : result
@@ -445,16 +463,20 @@ module JSON::LD
       unless block_given?
         results = []
         results.extend(RDF::Enumerable)
-        self.toRdf(input, options) do |stmt|
+        self.toRdf(input, **options) do |stmt|
           results << stmt
         end
         return results
       end
 
-      # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, options.merge(ordered: false))
+      options = {
+        extractAllScripts:  true,
+      }.merge(options)
 
-      API.new(expanded_input, nil, options) do
+      # Expand input to simplify processing
+      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
+
+      API.new(expanded_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
         log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -496,7 +518,7 @@ module JSON::LD
     def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
       result = nil
 
-      API.new(nil, nil, options) do
+      API.new(nil, nil, **options) do
         result = from_statements(input,
           useRdfType: useRdfType,
           useNativeTypes: useNativeTypes,
@@ -507,47 +529,146 @@ module JSON::LD
     end
 
     ##
-    # Default document loader.
+    # Uses built-in or provided documentLoader to retrieve a parsed document.
+    #
     # @param [RDF::URI, String] url
-    # @param [Hash<Symbol => Object>] options
-    # @option options [Boolean] :validate
+    # @param [Boolean] extractAllScripts
+    #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
+    # @param [String] profile
+    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    # @param [String] requestProfile
+    #   One or more IRIs to use in the request as a profile parameter.
+    # @param [Boolean] validate
     #   Allow only appropriate content types
+    # @param [String, RDF::URI] base
+    #   Location to use as documentUrl instead of `url`.
+    # @param [Hash<Symbol => Object>] options
     # @yield remote_document
-    # @yieldparam [RemoteDocument] remote_document
+    # @yieldparam [RemoteDocumentRemoteDocument, RDF::Util::File::RemoteDocument] remote_document
     # @yieldreturn [Object] returned object
     # @return [Object, RemoteDocument]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
-    def self.documentLoader(url, validate: false, **options)
+    def self.loadRemoteDocument(url,
+                                extractAllScripts: false,
+                                profile: nil,
+                                requestProfile: nil,
+                                validate: false,
+                                base: nil,
+                                **options)
+      documentLoader = options.fetch(:documentLoader, self.method(:documentLoader))
       options = OPEN_OPTS.merge(options)
-      RDF::Util::File.open_file(url, options) do |remote_doc|
-        content_type = remote_doc.content_type if remote_doc.respond_to?(:content_type)
-        # If the passed input is a DOMString representing the IRI of a remote document, dereference it. If the retrieved document's content type is neither application/json, nor application/ld+json, nor any other media type using a +json suffix as defined in [RFC6839], reject the promise passing an loading document failed error.
-        if content_type && validate
-          main, sub = content_type.split("/")
-          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "url: #{url}, content_type: #{content_type}" if
-            main != 'application' ||
-            sub !~ /^(.*\+)?json$/
-        end
-
-        # If the input has been retrieved, the response has an HTTP Link Header [RFC5988] using the http://www.w3.org/ns/json-ld#context link relation and a content type of application/json or any media type with a +json suffix as defined in [RFC6839] except application/ld+json, update the active context using the Context Processing algorithm, passing the context referenced in the HTTP Link Header as local context. The HTTP Link Header is ignored for documents served as application/ld+json If multiple HTTP Link Headers using the http://www.w3.org/ns/json-ld#context link relation are found, the promise is rejected with a JsonLdError whose code is set to multiple context link headers and processing is terminated.
-        contextUrl = unless content_type.nil? || content_type.start_with?("application/ld+json")
-          # Get context link(s)
-          # Note, we can't simply use #find_link, as we need to detect multiple
-          links = remote_doc.links.links.select do |link|
-            link.attr_pairs.include?(%w(rel http://www.w3.org/ns/json-ld#context))
-          end
-          raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
-            "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1
-          Array(links.first).first
-        end
-
-        doc_uri = remote_doc.base_uri rescue url
-        doc = RemoteDocument.new(doc_uri, remote_doc.read, contextUrl)
-        block_given? ? yield(doc) : doc
+      if requestProfile
+        # Add any request profile
+        options[:headers]['Accept'] = options[:headers]['Accept'].sub('application/ld+json,', "application/ld+json;profile=#{requestProfile}, application/ld+json;q=0.9,")
       end
-    rescue IOError => e
+      documentLoader.call(url, **options) do |remote_doc|
+        case remote_doc
+        when RDF::Util::File::RemoteDocument
+          # Convert to RemoteDocument
+          context_url = if remote_doc.content_type != 'application/ld+json' &&
+                           (remote_doc.content_type == 'application/json' ||
+                            remote_doc.content_type.to_s.match?(%r(application/\w+\+json)))
+            # Get context link(s)
+            # Note, we can't simply use #find_link, as we need to detect multiple
+            links = remote_doc.links.links.select do |link|
+              link.attr_pairs.include?(LINK_REL_CONTEXT)
+            end
+            raise JSON::LD::JsonLdError::MultipleContextLinkHeaders,
+              "expected at most 1 Link header with rel=jsonld:context, got #{links.length}" if links.length > 1
+            Array(links.first).first
+          end
+
+          # If content-type is not application/ld+json, nor any other +json and a link with rel=alternate and type='application/ld+json' is found, use that instead
+          alternate = !remote_doc.content_type.match?(%r(application/(\w*\+)?json)) && remote_doc.links.links.detect do |link|
+            link.attr_pairs.include?(LINK_REL_ALTERNATE) &&
+            link.attr_pairs.include?(LINK_TYPE_JSONLD)
+          end
+
+          remote_doc = if alternate
+            # Load alternate relative to URL
+            loadRemoteDocument(RDF::URI(url).join(alternate.href),
+                extractAllScripts: extractAllScripts,
+                profile: profile,
+                requestProfile: requestProfile,
+                validate: validate,
+                base: base,
+                **options)
+          else
+            RemoteDocument.new(remote_doc.read,
+              documentUrl: remote_doc.base_uri,
+              contentType: remote_doc.content_type,
+              contextUrl: context_url)
+          end
+        when RemoteDocument
+          # Pass through
+        else
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "unknown result from documentLoader: #{remote_doc.class}"
+        end
+
+        # Use specified document location
+        remote_doc.documentUrl = base if base
+
+        # Parse any HTML
+        if remote_doc.document.is_a?(String)
+          remote_doc.document = case remote_doc.contentType
+          when 'text/html'
+            load_html(remote_doc.document,
+                      url: remote_doc.documentUrl,
+                      extractAllScripts: extractAllScripts,
+                      profile: profile,
+                      **options) do |base|
+              remote_doc.documentUrl = base
+            end
+          else
+            validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
+            MultiJson.load(remote_doc.document, **options)
+          end
+        end
+
+        if remote_doc.contentType && validate
+          raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html/)
+        end
+        block_given? ? yield(remote_doc) : remote_doc
+      end
+    rescue IOError, MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
+    end
+
+    ##
+    # Default document loader.
+    # @param [RDF::URI, String] url
+    # @param [Boolean] extractAllScripts
+    #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
+    # @param [String] profile
+    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    # @param [String] requestProfile
+    #   One or more IRIs to use in the request as a profile parameter.
+    # @param [Hash<Symbol => Object>] options
+    # @yield remote_document
+    # @yieldparam [RemoteDocument, RDF::Util::File::RemoteDocument] remote_document
+    # @raise [IOError]
+    def self.documentLoader(url, extractAllScripts: false, profile: nil, requestProfile: nil, **options, &block)
+      case url
+      when IO, StringIO
+        base_uri = options[:base]
+        base_uri ||= url.base_uri if url.respond_to?(:base_uri)
+        content_type = options[:content_type]
+        content_type ||= url.content_type if url.respond_to?(:content_type)
+        context_url = if url.respond_to?(:links) && url.links
+         (content_type == 'appliaction/json' || content_type.match?(%r(application/(^ld)+json)))
+          link = url.links.find_link(LINK_REL_CONTEXT)
+          link.href if link
+        end
+
+        block.call(RemoteDocument.new(url.read,
+          documentUrl: base_uri,
+          contentType: content_type,
+          contextUrl: context_url))
+      else
+        RDF::Util::File.open_file(url, **options, &block)
+      end
     end
 
     # Add class method aliases for backwards compatibility
@@ -556,13 +677,105 @@ module JSON::LD
       alias :fromRDF :fromRdf
     end
 
+    ##
+    # Load one or more script tags from an HTML source.
+    # Unescapes and uncomments input, returns the internal representation
+    # Yields document base
+    # @param [String] input
+    # @param [String] url   Original URL
+    # @param [:nokogiri, :rexml] library (nil)
+    # @param [Boolean] extractAllScripts (false)
+    # @param [Boolean] profile (nil) Optional priortized profile when loading a single script by type.
+    # @param [Hash{Symbol => Object}] options
+    def self.load_html(input, url:,
+                         library: nil,
+                         extractAllScripts: false,
+                         profile: nil,
+                         **options)
+
+      if input.is_a?(String)
+        library ||= begin
+          require 'nokogiri'
+          :nokogiri
+        rescue LoadError
+          :rexml
+        end
+        require "json/ld/html/#{library}"
+
+        # Parse HTML using the appropriate library
+        @implementation = case library
+        when :nokogiri then Nokogiri
+        when :rexml then REXML
+        end
+        self.extend(@implementation)
+
+        input = begin
+          initialize_html(input, **options)
+        rescue
+          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
+        end
+
+        # Potentially update options[:base]
+        if html_base = input.at_xpath("/html/head/base/@href")
+          base = RDF::URI(url) if url
+          html_base = RDF::URI(html_base)
+          html_base = base.join(html_base) if base
+          yield html_base
+        end
+      end
+
+      url = RDF::URI.parse(url)
+      if url.fragment
+        id = CGI.unescape(url.fragment)
+        # Find script with an ID based on that fragment.
+        element = input.at_xpath("//script[@id='#{id}']")
+        raise JSON::LD::JsonLdError::InvalidScriptElement, "No script tag found with id=#{id}" unless element
+        raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
+        content = element.inner_html
+        validate_input(content, url: url) if options[:validate]
+        MultiJson.load(content, **options)
+      elsif extractAllScripts
+        res = []
+        elements = if profile
+          es = input.xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]")
+          # If no profile script, just take a single script without profile
+          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")] if es.empty?
+          es
+        else
+          input.xpath("//script[starts-with(@type, 'application/ld+json')]")
+        end
+        elements.each do |element|
+          content = element.inner_html
+          validate_input(content, url: url) if options[:validate]
+          r = MultiJson.load(content, **options)
+          if r.is_a?(Hash)
+            res << r
+          elsif r.is_a?(Array)
+            res = res.concat(r)
+          end
+        end
+        res
+      else
+        # Find the first script with type application/ld+json.
+        element = input.at_xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]") if profile
+        element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
+        content = element ? element.inner_html : "[]"
+        validate_input(content, url: url) if options[:validate]
+        MultiJson.load(content, **options)
+      end
+    rescue JSON::LD::JsonLdError::LoadingDocumentFailed, MultiJson::ParseError => e
+      raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
+    end
+
+    ##
+    # Validate JSON using JsonLint, if loaded
     private
-    def validate_input(input)
+    def self.validate_input(input, url:)
       return unless defined?(JsonLint)
       jsonlint = JsonLint::Linter.new
       input = StringIO.new(input) unless input.respond_to?(:read)
       unless jsonlint.check_stream(input)
-        raise JsonLdError::LoadingDocumentFailed, jsonlint.errors[''].join("\n")
+        raise JsonLdError::LoadingDocumentFailed, "url: #{url}\n" + jsonlint.errors[''].join("\n")
       end
       input.rewind
     end
@@ -570,26 +783,42 @@ module JSON::LD
     ##
     # A {RemoteDocument} is returned from a {documentLoader}.
     class RemoteDocument
-      # @return [String] URL of the loaded document, after redirects
-      attr_reader :documentUrl
+      # The final URL of the loaded document. This is important to handle HTTP redirects properly.
+      # @return [String]
+      attr_accessor :documentUrl
 
-      # @return [String, Array<Hash>, Hash]
-      #   The retrieved document, either as raw text or parsed JSON
-      attr_reader :document
+      # The Content-Type of the loaded document, exclusive of any optional parameters.
+      # @return [String]
+      attr_reader :contentType
 
       # @return [String]
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
       attr_accessor :contextUrl
 
-      # @param [String] url URL of the loaded document, after redirects
-      # @param [String, Array<Hash>, Hash] document
-      #   The retrieved document, either as raw text or parsed JSON
-      # @param [String] context_url (nil)
+      # The parsed retrieved document.
+      # @return [Array<Hash>, Hash]
+      attr_accessor :document
+
+      # The value of any profile parameter retrieved as part of the original contentType.
+      # @return [String]
+      attr_accessor :profile
+
+      # @param [RDF::Util::File::RemoteDocument] document
+      # @param [String] documentUrl
+      #   The final URL of the loaded document. This is important to handle HTTP redirects properly.
+      # @param [String] contentType
+      #   The Content-Type of the loaded document, exclusive of any optional parameters.
+      # @param [String] contextUrl
       #   The URL of a remote context as specified by an HTTP Link header with rel=`http://www.w3.org/ns/json-ld#context`
-      def initialize(url, document, context_url = nil)
-        @documentUrl = url
+      # @param [String] profile
+      #   The value of any profile parameter retrieved as part of the original contentType.
+      # @option options [Hash{Symbol => Object}] options
+      def initialize(document, documentUrl: nil, contentType: nil, contextUrl: nil, profile: nil, **options)
         @document = document
-        @contextUrl = context_url
+        @documentUrl = documentUrl || options[:base_uri]
+        @contentType = contentType || options[:content_type]
+        @contextUrl = contextUrl
+        @profile = profile
       end
     end
   end

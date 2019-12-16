@@ -12,7 +12,7 @@ describe JSON::LD::Writer do
   end
 
   describe ".for" do
-    formats = [
+    [
       :jsonld,
       "etc/doap.jsonld",
       {file_name:      'etc/doap.jsonld'},
@@ -201,13 +201,13 @@ describe JSON::LD::Writer do
           t.logger = logger
           pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
           repo = RDF::Repository.load(t.input_loc, format: :nquads)
-          jsonld = JSON::LD::Writer.buffer(logger: t.logger) do |writer|
+          jsonld = JSON::LD::Writer.buffer(logger: t.logger, **t.options) do |writer|
             writer << repo
           end
 
           # And then, re-generate jsonld as RDF
           
-          expect(parse(jsonld, format: :jsonld)).to be_equivalent_graph(repo, t)
+          expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
         end
       end
     end
@@ -215,12 +215,12 @@ describe JSON::LD::Writer do
 
   def parse(input, format: :trig, **options)
     reader = RDF::Reader.for(format)
-    RDF::Repository.new << reader.new(input, options)
+    RDF::Repository.new << reader.new(input, **options)
   end
 
   # Serialize ntstr to a string and compare against regexps
   def serialize(ntstr, **options)
-    g = ntstr.is_a?(String) ? parse(ntstr, options) : ntstr
+    g = ntstr.is_a?(String) ? parse(ntstr, **options) : ntstr
     #logger.info g.dump(:ttl)
     result = JSON::LD::Writer.buffer(logger: logger, **options) do |writer|
       writer << g

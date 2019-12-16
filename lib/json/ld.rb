@@ -29,6 +29,7 @@ module JSON
     require 'json/ld/format'
     require 'json/ld/utils'
     autoload :API,                'json/ld/api'
+    autoload :ContentNegotiation, 'json/ld/conneg'
     autoload :Context,            'json/ld/context'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
@@ -36,27 +37,35 @@ module JSON
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
 
-    # Initial context
-    # @see http://json-ld.org/spec/latest/json-ld-api/#appendix-b
-    INITIAL_CONTEXT = {
-      RDF.type.to_s => {"@type" => "@id"}
-    }.freeze
+    # JSON-LD profiles
+    JSON_LD_NS = "http://www.w3.org/ns/json-ld#"
+    PROFILES = %w(expanded compacted flattened framed).map {|p| JSON_LD_NS + p}.freeze
+
+    # Default context when compacting without one being specified
+    DEFAULT_CONTEXT = "http://schema.org"
 
     KEYWORDS = Set.new(%w(
       @base
       @container
       @context
       @default
+      @direction
       @embed
       @explicit
+      @json
       @id
+      @included
       @index
+      @first
       @graph
+      @import
       @language
       @list
       @nest
       @none
       @omitDefault
+      @propagate
+      @protected
       @requireAll
       @reverse
       @set
@@ -106,11 +115,16 @@ module JSON
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
+      class InvalidContextMember < JsonLdError; @code = "invalid context member"; end
+      class InvalidContextNullification < JsonLdError; @code = "invalid context nullification"; end
       class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
       class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end
       class InvalidIndexValue < JsonLdError; @code = "invalid @index value"; end
       class InvalidVersionValue < JsonLdError; @code = "invalid @version value"; end
+      class InvalidImportValue < JsonLdError; @code = "invalid @import value"; end
+      class InvalidIncludedValue < JsonLdError; @code = "invalid @included value"; end
       class InvalidIRIMapping < JsonLdError; @code = "invalid IRI mapping"; end
+      class InvalidJsonLiteral < JsonLdError; @code = "invalid JSON literal"; end
       class InvalidKeywordAlias < JsonLdError; @code = "invalid keyword alias"; end
       class InvalidLanguageMapping < JsonLdError; @code = "invalid language mapping"; end
       class InvalidLanguageMapValue < JsonLdError; @code = "invalid language map value"; end
@@ -119,31 +133,34 @@ module JSON
       class InvalidLocalContext < JsonLdError; @code = "invalid local context"; end
       class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
       class InvalidPrefixValue < JsonLdError; @code = "invalid @prefix value"; end
+      class InvalidPropagateValue < JsonLdError; @code = "invalid @propagate value"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end
       class InvalidReversePropertyValue < JsonLdError; @code = "invalid reverse property value"; end
       class InvalidReverseValue < JsonLdError; @code = "invalid @reverse value"; end
       class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
+      class InvalidScriptElement < JsonLdError; @code = "invalid script element"; end
       class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
       class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
+      class InvalidBaseDirection < JsonLdError; @code = "invalid base direction"; end
       class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end
       class InvalidTypeMapping < JsonLdError; @code = "invalid type mapping"; end
       class InvalidTypeValue < JsonLdError; @code = "invalid type value"; end
       class InvalidValueObject < JsonLdError; @code = "invalid value object"; end
       class InvalidValueObjectValue < JsonLdError; @code = "invalid value object value"; end
       class InvalidVocabMapping < JsonLdError; @code = "invalid vocab mapping"; end
+      class IRIConfusedWithPrefix < JsonLdError; @code = "IRI confused with prefix"; end
       class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
       class ContextOverflow < JsonLdError; @code = "maximum number of @context URLs exceeded"; end
+      class MissingIncludedReferent < JsonLdError; @code = "missing @included referent"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
+      class ProtectedTermRedefinition < JsonLdError; @code = "protected term redefinition"; end
       class ProcessingModeConflict < JsonLdError; @code = "processing mode conflict"; end
-      class RecursiveContextInclusion < JsonLdError; @code = "recursive context inclusion"; end
-      class InvalidFrame < JsonLdError
-        class MultipleEmbeds < InvalidFrame; end
-        class Syntax < InvalidFrame; end
-      end
+      class InvalidFrame < JsonLdError; @code = "invalid frame"; end
+      class InvalidEmbedValue < InvalidFrame; @code = "invalid @embed value"; end
     end
   end
 end

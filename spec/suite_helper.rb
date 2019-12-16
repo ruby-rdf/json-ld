@@ -26,7 +26,10 @@ module RDF::Util
       LOCAL_PATHS.each do |r, l|
         next unless Dir.exist?(l) && filename_or_url.start_with?(r)
         #puts "attempt to open #{filename_or_url} locally"
-        localpath = filename_or_url.to_s.sub(r, l)
+        url_no_frag_or_query = RDF::URI(filename_or_url).dup
+        url_no_frag_or_query.query = nil
+        url_no_frag_or_query.fragment = nil
+        localpath = url_no_frag_or_query.to_s.sub(r, l)
         response = begin
           ::File.open(localpath)
         rescue Errno::ENOENT => e
@@ -40,9 +43,11 @@ module RDF::Util
           headers:      options.fetch(:headers, {})
         }
         #puts "use #{filename_or_url} locally"
-        document_options[:headers][:content_type] = case filename_or_url.to_s
+        document_options[:headers][:content_type] = case localpath
         when /\.ttl$/    then 'text/turtle'
+        when /\.nq$/     then 'application/n-quads'
         when /\.nt$/     then 'application/n-triples'
+        when /\.html$/   then 'text/html'
         when /\.jsonld$/ then 'application/ld+json'
         when /\.json$/   then 'application/json'
         else                  'unknown'
@@ -52,7 +57,7 @@ module RDF::Util
         # For overriding content type from test data
         document_options[:headers][:content_type] = options[:contentType] if options[:contentType]
 
-        remote_document = RDF::Util::File::RemoteDocument.new(response.read, document_options)
+        remote_document = RDF::Util::File::RemoteDocument.new(response.read, **document_options)
         if block_given?
           return yield remote_document
         else
@@ -60,7 +65,7 @@ module RDF::Util
         end
       end
 
-      original_open_file(filename_or_url, options, &block)
+      original_open_file(filename_or_url, **options, &block)
     end
   end
 end
@@ -112,15 +117,18 @@ module Fixtures
         super
       end
 
-      # Base is expanded input file
+      # Base is expanded input if not specified
       def base
         options.fetch('base', manifest_url.join(property('input')).to_s)
       end
 
       def options
         @options ||= begin
-          opts = {documentLoader: Fixtures::SuiteTest.method(:documentLoader)}
-          opts = {}
+          opts = {
+            documentLoader: Fixtures::SuiteTest.method(:documentLoader),
+            validate: true,
+            lowercaseLanguage: true,
+          }
           {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
@@ -136,7 +144,7 @@ module Fixtures
           file = self.send("#{m}_loc".to_sym)
 
           dl_opts = {safe: true}
-          RDF::Util::File.open_file(file, dl_opts) do |remote_doc|
+          RDF::Util::File.open_file(file, **dl_opts) do |remote_doc|
             res = remote_doc.read
           end
           res
@@ -181,13 +189,14 @@ module Fixtures
         logger.info "options: #{options.inspect}" unless options.empty?
         logger.info "frame: #{frame}" if frame_loc
 
-        options = self.options.merge(documentLoader: Fixtures::SuiteTest.method(:documentLoader))
-        options = {validate: true}.merge(options)
-
+        options = self.options
         unless options[:specVersion] == "json-ld-1.1"
           skip "not a 1.1 test" 
           return
         end
+
+        # Because we're doing exact comparisons when ordered.
+        options[:lowercaseLanguage] = true if options[:ordered]
 
         if positiveTest?
           logger.info "expected: #{expect rescue nil}" if expect_loc
@@ -205,16 +214,32 @@ module Fixtures
               # Use an array, to preserve input order
               repo = RDF::NQuads::Reader.open(input_loc) do |reader|
                 reader.each_statement.to_a
-              end.uniq.extend(RDF::Enumerable)
-              logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+              end.to_a.uniq.extend(RDF::Enumerable)
+              logger.info "repo: #{repo.dump(self.id == '#t0012' ? :nquads : :trig)}"
               JSON::LD::API.fromRdf(repo, logger: logger, **options)
             when "jld:ToRDFTest"
               repo = RDF::Repository.new
               JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
+                # To properly compare values of rdf:language and i18n datatypes, normalize to lower case
+                if statement.predicate == RDF.to_uri + 'language'
+                  statement.object = RDF::Literal(statement.object.to_s.downcase) if statement.object.literal?
+                elsif statement.object.literal? && statement.object.datatype.to_s.start_with?('https://www.w3.org/ns/i18n#')
+                  statement.object.datatype = RDF::URI(statement.object.datatype.to_s.downcase)
+                end
                 repo << statement
               end
-              logger.info "nq: #{repo.to_nquads}"
+              logger.info "nq: #{repo.map(&:to_nquads)}"
               repo
+            when "jld:HttpTest"
+              res = input_json
+              rspec_example.instance_eval do
+                # use the parsed input file as @result for Rack Test application
+                @results = res
+                get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, ""), "HTTP_LINK" => options.fetch(:httpLink, nil)
+                expect(last_response.status).to eq 200
+                expect(last_response.content_type).to eq options.fetch(:contentType, "")
+                JSON.parse(last_response.body)
+              end
             else
               fail("Unknown test type: #{testType}")
             end
@@ -273,14 +298,24 @@ module Fixtures
                   JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
                   repo = RDF::Repository.load(t.input_loc)
-                  logger.info "repo: #{repo.dump(id == '#t0012' ? :nquads : :trig)}"
+                  logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
+                when "jld:HttpTest"
+                  rspec_example.instance_eval do
+                    # use the parsed input file as @result for Rack Test application
+                    @results = t.input_json
+                    get "/", {}, "HTTP_ACCEPT" => options.fetch(:httpAccept, "")
+                    expect(last_response.status).to eq t.property('expect')
+                    expect(last_response.content_type).to eq options.fetch(:contentType, "")
+                    raise "406" if t.property('expect') == 406
+                    raise "Expected status #{t.property('expectErrorCode')}, not #{last_response.status}"
+                  end
                 when "jld:ToRDFTest"
                   JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
                 else
                   success("Unknown test type: #{testType}")
                 end
-              end.to raise_error(/#{t.property('expect')}/)
+              end.to raise_error(/#{t.property('expectErrorCode')}/)
             else
               fail("No support for NegativeSyntaxTest")
             end
@@ -335,16 +370,16 @@ module Fixtures
     # @param [Hash<Symbol => Object>] options
     # @option options [Boolean] :validate
     #   Allow only appropriate content types
-    # @return [RemoteDocument] retrieved remote document and context information unless block given
+    # @return [RDF::Util::File::RemoteDocument] retrieved remote document and context information unless block given
     # @yield remote_document
-    # @yieldparam [RemoteDocument] remote_document
+    # @yieldparam [RDF::Util::File::RemoteDocument] remote_document
     # @raise [JsonLdError]
     def documentLoader(url, **options, &block)
-      options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers]
+      options[:headers] ||= JSON::LD::API::OPEN_OPTS[:headers].dup
       options[:headers][:link] = Array(options[:httpLink]).join(',') if options[:httpLink]
     
       url = url.to_s[5..-1] if url.to_s.start_with?("file:")
-      JSON::LD::API.documentLoader(url, options, &block)
+      JSON::LD::API.documentLoader(url, **options, &block)
     rescue JSON::LD::JsonLdError::LoadingDocumentFailed, JSON::LD::JsonLdError::MultipleContextLinkHeaders
       raise unless options[:safe]
       "don't raise error"

@@ -142,8 +142,8 @@ module JSON::LD
     #
     # @param [Hash] options
     # @return [String] serizlied JSON representation of resource
-    def to_json(options = nil)
-      deresolve.to_json(options)
+    def to_json(**options)
+      deresolve.to_json(**options)
     end
 
     ##

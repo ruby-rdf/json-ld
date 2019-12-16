@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 require 'json/ld/streaming_writer'
+require 'link_header'
+
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.
@@ -50,8 +52,8 @@ module JSON::LD
   #
   # Select the :expand option to output JSON-LD in expanded form
   #
-  # @see http://json-ld.org/spec/ED/20110507/
-  # @see http://json-ld.org/spec/ED/20110507/#the-normalization-algorithm
+  # @see https://www.w3.org/TR/json-ld11-api/
+  # @see https://www.w3.org/TR/json-ld11-api/#the-normalization-algorithm
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Writer < RDF::Writer
     include StreamingWriter
@@ -94,17 +96,23 @@ module JSON::LD
           description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :embed,
-          datatype: %w(@always @last @never),
-          default: '@last',
+          datatype: %w(@always @once @never),
+          default: '@once',
           control: :select,
           on: ["--embed EMBED"],
-          description: "How to embed matched objects (@last).") {|arg| RDF::URI(arg)},
+          description: "How to embed matched objects (@once).") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
           symbol: :explicit,
           datatype: TrueClass,
           control: :checkbox,
           on: ["--[no-]explicit"],
           description: "Only include explicitly declared properties in output (false)") {|arg| arg},
+        RDF::CLI::Option.new(
+          symbol: :lowercaseLanguage,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]lowercase-language"],
+          description: "By default, language tags are left as is. To normalize to lowercase, set this option to `true`."),
         RDF::CLI::Option.new(
           symbol: :omitDefault,
           datatype: TrueClass,
@@ -124,6 +132,13 @@ module JSON::LD
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
           description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
         RDF::CLI::Option.new(
+          symbol: :rdfDirection,
+          datatype: %w(i18n-datatype compound-literal),
+          default: 'null',
+          control: :select,
+          on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
+          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
           symbol: :requireAll,
           datatype: TrueClass,
           default: true,
@@ -137,12 +152,53 @@ module JSON::LD
           on: ["--[no-]stream"],
           description: "Do not attempt to optimize graph presentation, suitable for streaming large graphs.") {|arg| arg},
         RDF::CLI::Option.new(
+          symbol: :useNativeTypes,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]use-native-types"],
+          description: "Use native JSON values in value objects.") {|arg| arg},
+        RDF::CLI::Option.new(
           symbol: :useRdfType,
           datatype: TrueClass,
           control: :checkbox,
           on: ["--[no-]use-rdf-type"],
           description: "Treat `rdf:type` like a normal property instead of using `@type`.") {|arg| arg},
       ]
+    end
+
+    class << self
+      attr_reader :white_list
+      attr_reader :black_list
+
+      ##
+      # Use parameters from accept-params to determine if the parameters are acceptable to invoke this writer. The `accept_params` will subsequently be provided to the writer instance.
+      #
+      # @param [Hash{Symbol => String}] accept_params
+      # @yield [accept_params] if a block is given, returns the result of evaluating that block
+      # @yieldparam [Hash{Symbol => String}] accept_params
+      # @return [Boolean]
+      # @see    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
+      def accept?(accept_params)
+        # Profiles that aren't specific IANA relations represent the URL
+        # of a context or frame that may be subject to black- or white-listing
+        profile = accept_params[:profile].to_s.split(/\s+/)
+
+        if block_given?
+          yield(accept_params)
+        else
+          true
+        end
+      end
+
+      ##
+      # Returns default context used for compacted profile without an explicit context URL
+      # @return [String]
+      def default_context; @default_context || JSON::LD::DEFAULT_CONTEXT; end
+
+      ##
+      # Sets default context used for compacted profile without an explicit context URL
+      # @param [String] url
+      def default_context=(url); @default_context = url; end
     end
 
     ##
@@ -237,13 +293,19 @@ module JSON::LD
       else
 
         log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-        result = API.fromRdf(@repo, @options)
+        result = API.fromRdf(@repo, **@options)
+
+        # Some options may be indicated from accept parameters
+        profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
+        links = LinkHeader.parse(@options[:link])
+        @options[:context] ||= links.find_link(['rel', JSON_LD_NS+"context"]).href rescue nil
+        @options[:context] ||= Writer.default_context if profile.include?(JSON_LD_NS+"compacted")
+        @options[:frame] ||= links.find_link(['rel', JSON_LD_NS+"frame"]).href rescue nil
 
         # If we were provided a context, or prefixes, use them to compact the output
-        context = RDF::Util::File.open_file(@options[:context]) if @options[:context].is_a?(String)
-        context ||= @options[:context]
+        context = @options[:context]
         context ||= if @options[:prefixes] || @options[:language] || @options[:standard_prefixes]
-          ctx = Context.new(@options)
+          ctx = Context.new(**@options)
           ctx.language = @options[:language] if @options[:language]
           @options[:prefixes].each do |prefix, iri|
             ctx.set_mapping(prefix, iri) if prefix && iri
@@ -253,18 +315,17 @@ module JSON::LD
 
         # Rename BNodes to uniquify them, if necessary
         if options[:unique_bnodes]
-          result = API.flatten(result, context, @options)
+          result = API.flatten(result, context, **@options)
         end
 
-        frame = RDF::Util::File.open_file(@options[:frame]) if @options[:frame].is_a?(String)
-        if frame ||= @options[:frame]
+        if frame = @options[:frame]
           # Perform framing, if given a frame
           log_debug("writer") { "frame result"}
-          result = API.frame(result, frame, @options)
+          result = API.frame(result, frame, **@options)
         elsif context
           # Perform compaction, if we have a context
           log_debug("writer") { "compact result"}
-          result = API.compact(result, context,  @options)
+          result = API.compact(result, context,  **@options)
         end
 
         @output.write(result.to_json(JSON_STATE))

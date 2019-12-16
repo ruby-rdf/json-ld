@@ -4,7 +4,7 @@ module JSON::LD
   ##
   # A JSON-LD parser in Ruby.
   #
-  # @see http://json-ld.org/spec/ED/20110507/
+  # @see https://www.w3.org/TR/json-ld11-api
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Reader < RDF::Reader
     format Format
@@ -21,11 +21,31 @@ module JSON::LD
           on: ["--expand-context CONTEXT"],
           description: "Context to use when expanding.") {|arg| RDF::URI(arg)},
         RDF::CLI::Option.new(
+          symbol: :extractAllScripts,
+          datatype: TrueClass,
+          default: false,
+          control: :checkbox,
+          on: ["--[no-]extract-all-scripts"],
+          description: "If set to true, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :lowercaseLanguage,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]lowercase-language"],
+          description: "By default, language tags are left as is. To normalize to lowercase, set this option to `true`."),
+        RDF::CLI::Option.new(
           symbol: :processingMode,
           datatype: %w(json-ld-1.0 json-ld-1.1),
           control: :radio,
           on: ["--processingMode MODE", %w(json-ld-1.0 json-ld-1.1)],
           description: "Set Processing Mode (json-ld-1.0 or json-ld-1.1)"),
+        RDF::CLI::Option.new(
+          symbol: :rdfDirection,
+          datatype: %w(i18n-datatype compound-literal),
+          default: 'null',
+          control: :select,
+          on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
+          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
       ]
     end
 
@@ -39,7 +59,7 @@ module JSON::LD
     # @yieldparam  [RDF::Reader] reader
     # @yieldreturn [void] ignored
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
-    def initialize(input = $stdin, options = {}, &block)
+    def initialize(input = $stdin, **options, &block)
       options[:base_uri] ||= options[:base]
       super do
         @options[:base] ||= base_uri.to_s if base_uri
@@ -65,7 +85,7 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRdf(@doc, @options, &block)
+      JSON::LD::API.toRdf(@doc, **@options, &block)
     rescue ::JSON::ParserError, ::JSON::LD::JsonLdError => e
       log_fatal("Failed to parse input document: #{e.message}", exception: RDF::ReaderError)
     end
@@ -75,8 +95,8 @@ module JSON::LD
     # @see   RDF::Reader#each_triple
     def each_triple(&block)
       if block_given?
-        JSON::LD::API.toRdf(@doc, @options) do |statement|
-          yield *statement.to_triple
+        JSON::LD::API.toRdf(@doc, **@options) do |statement|
+          yield(*statement.to_triple)
         end
       end
       enum_for(:each_triple)

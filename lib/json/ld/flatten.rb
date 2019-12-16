@@ -18,14 +18,11 @@ module JSON::LD
     #   Property within current node
     # @param [Array] list (nil)
     #   Used when property value is a list
-    # @param [Boolean] ordered (true)
-    #   Ensure output objects have keys ordered properly
     def create_node_map(element, graph_map,
                         active_graph: '@default',
                         active_subject: nil,
                         active_property: nil,
                         list: nil)
-      log_debug("node_map") {"active_graph: #{active_graph}, element: #{element.inspect}, active_subject: #{active_subject}"}
       if element.is_a?(Array)
         # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
         element.map do |o|
@@ -110,6 +107,11 @@ module JSON::LD
           if element['@graph']
             create_node_map(element.delete('@graph'), graph_map,
                             active_graph: id)
+          end
+
+          if element['@included']
+            create_node_map(element.delete('@included'), graph_map,
+                            active_graph: active_graph)
           end
 
           element.keys.each do |property|

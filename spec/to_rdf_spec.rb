@@ -196,14 +196,223 @@ describe JSON::LD::API do
           expect(parse(js)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
         end
       end
+
+      context "with @type: @json" do
+        {
+          "true": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+              },
+              "e": true
+            }),
+            output:%(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:bool "true"^^rdf:JSON] .
+            )
+          },
+          "false": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#bool", "@type": "@json"}
+              },
+              "e": false
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:bool "false"^^rdf:JSON] .
+            )
+          },
+          "double": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+              },
+              "e": 1.23
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:double "1.23"^^rdf:JSON] .
+            )
+          },
+          "double-zero": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#double", "@type": "@json"}
+              },
+              "e": 0
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:double "0"^^rdf:JSON] .
+            )
+          },
+          "integer": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#integer", "@type": "@json"}
+              },
+              "e": 123
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:integer "123"^^rdf:JSON] .
+            )
+          },
+          "string": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#string", "@type": "@json"}
+              },
+              "e": "string"
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:string "\\"string\\""^^rdf:JSON] .
+            )
+          },
+          "null": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#null", "@type": "@json"}
+              },
+              "e": null
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:null "null"^^rdf:JSON] .
+            )
+          },
+          "object": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#object", "@type": "@json"}
+              },
+              "e": {"foo": "bar"}
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:object """{"foo":"bar"}"""^^rdf:JSON] .
+            )
+          },
+          "array": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#array", "@type": "@json"}
+              },
+              "e": [{"foo": "bar"}]
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:array """[{"foo":"bar"}]"""^^rdf:JSON] .
+            )
+          },
+          "c14n-arrays": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": [
+                56,
+                {
+                  "d": true,
+                  "10": null,
+                  "1": [ ]
+                }
+              ]
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """[56,{"1":[],"10":null,"d":true}]"""^^rdf:JSON] .
+            )
+          },
+          "c14n-french": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "peach": "This sorting order",
+                "péché": "is wrong according to French",
+                "pêche": "but canonicalization MUST",
+                "sin":   "ignore locale"
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"peach":"This sorting order","péché":"is wrong according to French","pêche":"but canonicalization MUST","sin":"ignore locale"}"""^^rdf:JSON] .
+            )
+          },
+          "c14n-structures": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "1": {"f": {"f": "hi","F": 5} ," ": 56.0},
+                "10": { },
+                "": "empty",
+                "a": { },
+                "111": [ {"e": "yes","E": "no" } ],
+                "A": { }
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"":"empty","1":{" ":56,"f":{"F":5,"f":"hi"}},"10":{},"111":[{"E":"no","e":"yes"}],"A":{},"a":{}}"""^^rdf:JSON] .
+            )
+          },
+          "c14n-unicode": {
+            input: %({
+              "@context": {
+                "@version": 1.1,
+                "e": {"@id": "http://example.org/vocab#c14n", "@type": "@json"}
+              },
+              "e": {
+                "Unnormalized Unicode":"A\u030a"
+              }
+            }),
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:c14n """{"Unnormalized Unicode":"Å"}"""^^rdf:JSON] .
+            )
+          },
+        }.each do |title, params|
+          it title do
+            params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
+            run_to_rdf params
+          end
+        end
+      end
     end
 
     context "prefixes" do
       {
-        "empty prefix" => [
-          %q({"@context": {"": "http://example.com/default#"}, ":foo": "bar"}),
-          %q(_:a <http://example.com/default#foo> "bar"^^xsd:string .)
-        ],
         "empty suffix" => [
           %q({"@context": {"prefix": "http://example.com/default#"}, "prefix:": "bar"}),
           %q(_:a <http://example.com/default#> "bar"^^xsd:string .)
@@ -600,13 +809,234 @@ describe JSON::LD::API do
       subject {%q({"@id": "http://example/subj", "_:foo": "bar"})}
 
       it "outputs statements with blank node predicates if :produceGeneralizedRdf is true" do
-        graph = parse(subject, produceGeneralizedRdf: true)
-        expect(graph.count).to eq 1
+        expect do
+          graph = parse(subject, produceGeneralizedRdf: true)
+          expect(graph.count).to eq 1
+        end.to write("[DEPRECATION]").to(:error)
       end
 
       it "rejects statements with blank node predicates if :produceGeneralizedRdf is false" do
-        graph = parse(subject, produceGeneralizedRdf: false)
-        expect(graph.count).to eq 0
+        expect do
+          graph = parse(subject, produceGeneralizedRdf: false)
+          expect(graph.count).to eq 0
+        end.to write("[DEPRECATION]").to(:error)
+      end
+    end
+
+    context "@included" do
+      {
+        "Basic Included array": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": [{
+              "prop": "value2"
+            }]
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Basic Included object": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2"
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Multiple properties mapping to @included are folded together": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "included1": "@included",
+              "included2": "@included"
+            },
+            "included1": {"prop": "value1"},
+            "included2": {"prop": "value2"}
+          }),
+          output: %(
+            [<http://example.org/prop> "value1"] .
+            [<http://example.org/prop> "value2"] .
+          )
+        },
+        "Included containing @included": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": "value",
+            "@included": {
+              "prop": "value2",
+              "@included": {
+                "prop": "value3"
+              }
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> "value"] .
+
+            [<http://example.org/prop> "value2"] .
+
+            [<http://example.org/prop> "value3"] .
+          )
+        },
+        "Property value with @included": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/"
+            },
+            "prop": {
+              "@type": "Foo",
+              "@included": {
+                "@type": "Bar"
+              }
+            }
+          }),
+          output: %(
+            [<http://example.org/prop> [a <http://example.org/Foo>]] .
+            [a <http://example.org/Bar>] .
+          )
+        },
+        "json.api example": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/vocab#",
+              "@base": "http://example.org/base/",
+              "id": "@id",
+              "type": "@type",
+              "data": "@nest",
+              "attributes": "@nest",
+              "links": "@nest",
+              "relationships": "@nest",
+              "included": "@included",
+              "self": {"@type": "@id"},
+              "related": {"@type": "@id"},
+              "comments": {
+                "@context": {
+                  "data": null
+                }
+              }
+            },
+            "data": [{
+              "type": "articles",
+              "id": "1",
+              "attributes": {
+                "title": "JSON:API paints my bikeshed!"
+              },
+              "links": {
+                "self": "http://example.com/articles/1"
+              },
+              "relationships": {
+                "author": {
+                  "links": {
+                    "self": "http://example.com/articles/1/relationships/author",
+                    "related": "http://example.com/articles/1/author"
+                  },
+                  "data": { "type": "people", "id": "9" }
+                },
+                "comments": {
+                  "links": {
+                    "self": "http://example.com/articles/1/relationships/comments",
+                    "related": "http://example.com/articles/1/comments"
+                  },
+                  "data": [
+                    { "type": "comments", "id": "5" },
+                    { "type": "comments", "id": "12" }
+                  ]
+                }
+              }
+            }],
+            "included": [{
+              "type": "people",
+              "id": "9",
+              "attributes": {
+                "first-name": "Dan",
+                "last-name": "Gebhardt",
+                "twitter": "dgeb"
+              },
+              "links": {
+                "self": "http://example.com/people/9"
+              }
+            }, {
+              "type": "comments",
+              "id": "5",
+              "attributes": {
+                "body": "First!"
+              },
+              "relationships": {
+                "author": {
+                  "data": { "type": "people", "id": "2" }
+                }
+              },
+              "links": {
+                "self": "http://example.com/comments/5"
+              }
+            }, {
+              "type": "comments",
+              "id": "12",
+              "attributes": {
+                "body": "I like XML better"
+              },
+              "relationships": {
+                "author": {
+                  "data": { "type": "people", "id": "9" }
+                }
+              },
+              "links": {
+                "self": "http://example.com/comments/12"
+              }
+            }]
+          }),
+          output: %(
+          <http://example.org/base/1> a <http://example.org/vocab#articles>;
+            <http://example.org/vocab#author> <http://example.org/base/9>;
+            <http://example.org/vocab#comments> [
+              <http://example.org/vocab#related> <http://example.com/articles/1/comments>;
+              <http://example.org/vocab#self> <http://example.com/articles/1/relationships/comments>
+            ];
+            <http://example.org/vocab#self> <http://example.com/articles/1>;
+            <http://example.org/vocab#title> "JSON:API paints my bikeshed!" .
+
+          <http://example.org/base/12> a <http://example.org/vocab#comments>;
+            <http://example.org/vocab#author> <http://example.org/base/9>;
+            <http://example.org/vocab#body> "I like XML better";
+            <http://example.org/vocab#self> <http://example.com/comments/12> .
+
+          <http://example.org/base/5> a <http://example.org/vocab#comments>;
+            <http://example.org/vocab#author> <http://example.org/base/2>;
+            <http://example.org/vocab#body> "First!";
+            <http://example.org/vocab#self> <http://example.com/comments/5> .
+
+          <http://example.org/base/2> a <http://example.org/vocab#people> .
+
+          <http://example.org/base/9> a <http://example.org/vocab#people>;
+            <http://example.org/vocab#first-name> "Dan";
+            <http://example.org/vocab#last-name> "Gebhardt";
+            <http://example.org/vocab#related> <http://example.com/articles/1/author>;
+            <http://example.org/vocab#self> <http://example.com/articles/1/relationships/author>,
+              <http://example.com/people/9>;
+            <http://example.org/vocab#twitter> "dgeb" .
+          )
+        },
+      }.each do |title, params|
+        it(title) {run_to_rdf params}
       end
     end
 
@@ -676,6 +1106,75 @@ describe JSON::LD::API do
       end
     end
 
+    context "@direction" do
+      context "rdfDirection: null" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "no language" .)
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "en-US"@en-us .)
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: nil)).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+
+      context "rdfDirection: i18n-datatype" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .)
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(_:a <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-US_rtl> .)
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: 'i18n-datatype')).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+
+      context "rdfDirection: compound-literal" do
+        {
+          "no language rtl": [
+            %q({"http://example.org/label": {"@value": "no language", "@direction": "rtl"}}),
+            %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              _:a <http://example.org/label> [
+                rdf:value "no language";
+                rdf:direction "rtl"
+              ] .
+            )
+          ],
+          "en-US rtl": [
+            %q({"http://example.org/label": {"@value": "en-US", "@language": "en-US", "@direction": "rtl"}}),
+            %q(
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              _:a <http://example.org/label> [
+                rdf:value "en-US";
+                rdf:language "en-US";
+                rdf:direction "rtl"
+              ] .
+            )
+          ]
+        }.each do |title, (js, ttl)|
+          it title do
+            ttl = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . #{ttl}"
+            expect(parse(js, rdfDirection: 'compound-literal')).to be_equivalent_graph(ttl, logger: logger, inputDocument: js)
+          end
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "Invalid subject" => {
@@ -711,7 +1210,8 @@ describe JSON::LD::API do
             "@id": "http://example.com/foo",
             "http://example.com/bar": {"@value": "bar", "@language": "a b"}
           }),
-          output: %()
+          output: %(),
+          write: "@language must be valid BCP47"
         },
         "Invalid datatype" => {
           input: %({
@@ -725,30 +1225,120 @@ describe JSON::LD::API do
             "@id": "http://foo/> <http://bar/> <http://baz> .\n<data:little> <data:bobby> <data:tables> .\n<data:in-ur-base",
             "http://killin/#yer": "dudes"
           }),
-          output: %()
+          output: %(),
+          pending: "jruby"
         },
       }.each do |title, params|
-        it(title) {run_to_rdf params}
+        it(title) do
+          pending params[:pending] if params[:pending] == RUBY_ENGINE
+          run_to_rdf params
+        end
       end
     end
   end
 
-  def parse(input, options = {})
+  context "html" do
+    {
+      "Transforms embedded JSON-LD script element": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %([ <http://example.com/foo> ( "bar")] .)
+      },
+      "Transforms first script element with extractAllScripts: false": {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %([ <http://example.com/foo> ( "bar")] .),
+        extractAllScripts: false
+      },
+      "Transforms targeted script element": {
+        input: %(
+        <html>
+          <head>
+            <script id="first" type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script id="second" type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        output: %(
+          [ <http://example.com/foo> "foo"] .
+          [ <http://example.com/bar> "bar"] .
+        ),
+        base: "http://example.org/doc#second"
+      },
+    }.each do |title, params|
+      it(title) do
+        params[:input] = StringIO.new(params[:input])
+        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        run_to_rdf params.merge(validate: true)
+      end
+    end
+  end
+
+  def parse(input, **options)
     graph = options[:graph] || RDF::Graph.new
     options = {logger: logger, validate: true, canonicalize: false}.merge(options)
-    JSON::LD::API.toRdf(StringIO.new(input), options) {|st| graph << st}
+    JSON::LD::API.toRdf(StringIO.new(input), **options) {|st| graph << st}
     graph
   end
 
   def run_to_rdf(params)
-    input, output, processingMode = params[:input], params[:output], params[:processingMode]
+    input, output = params[:input], params[:output]
     graph = params[:graph] || RDF::Graph.new
     input = StringIO.new(input) if input.is_a?(String)
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.toRdf(input, {processingMode: processingMode}.merge(params))}.to raise_error(params[:exception])
+      expect {JSON::LD::API.toRdf(input, **params)}.to raise_error(params[:exception])
     else
-      JSON::LD::API.toRdf(input, base: params[:base], logger: logger, processingMode: processingMode) {|st| graph << st}
+      if params[:write]
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
+      else
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.not_to write.to(:error)
+      end
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end
   end

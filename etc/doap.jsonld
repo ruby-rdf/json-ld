@@ -22,30 +22,32 @@
       "foaf:made": {"@type": "@id"},
       "rdfs:isDefinedBy": {"@type": "@id"}
     },
-    "@id":                "http://rubygems.org/gems/json-ld",
+    "@id":                "https://rubygems.org/gems/json-ld",
     "@type":              "doap:Project",
     "doap:name":          "JSON::LD",
-    "doap:homepage":      "http://github.com/ruby-rdf/json-ld/",
-    "doap:license":       "http://creativecommons.org/licenses/publicdomain/",
+    "doap:homepage":      "https://github.com/ruby-rdf/json-ld/",
+    "doap:license":       "https://creativecommons.org/licenses/publicdomain/",
     "doap:shortdesc":     "JSON-LD support for RDF.rb.",
     "doap:description":   "RDF.rb extension for parsing/serializing JSON-LD data.",
     "doap:created":       "2011-05-07",
     "doap:platform":      "Ruby",
     "doap:implements":    [
-                            "http://json-ld.org/spec/latest/json-ld-api/",
-                            "http://json-ld.org/spec/latest/json-ld-syntax/"
+                            "https://www.w3.org/TR/json-ld11/",
+                            "https://www.w3.org/TR/json-ld11-api/",
+                            "https://www.w3.org/TR/json-ld11-framing/"
     ],
-    "doap:bug-database":  "http://github.com/ruby-rdf/json-ld/issues",
-    "doap:blog":          "http://greggkellogg.net/",
-    "doap:developer":     "http://greggkellogg.net/foaf#me",
-    "doap:maintainer":    "http://greggkellogg.net/foaf#me",
-    "doap:documenter":    "http://greggkellogg.net/foaf#me",
-    "foaf:maker":         "http://greggkellogg.net/foaf#me",
+    "doap:bug-database":  "https://github.com/ruby-rdf/json-ld/issues",
+    "doap:blog":          "https://greggkellogg.net/",
+    "doap:developer":     "https://greggkellogg.net/foaf#me",
+    "doap:maintainer":    "https://greggkellogg.net/foaf#me",
+    "doap:documenter":    "https://greggkellogg.net/foaf#me",
+    "foaf:maker":         "https://greggkellogg.net/foaf#me",
     "dc:creator":         {
-        "@id":              "http://greggkellogg.net/foaf#me",
+        "@id":              "https://greggkellogg.net/foaf#me",
+        "@type":            "foaf:Person",
         "foaf:name":        "Gregg Kellogg",
         "foaf:mbox":        "mailto:gregg@greggkellogg.net",
-        "foaf:made":        "http://rubygems.org/gems/json-ld",
-        "rdfs:isDefinedBy": "http://greggkellogg.net/foaf"
+        "foaf:made":        "https://rubygems.org/gems/json-ld",
+        "rdfs:isDefinedBy": "https://greggkellogg.net/foaf"
     }
 }

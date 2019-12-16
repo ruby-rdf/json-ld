@@ -8,9 +8,20 @@ describe JSON::LD do
     describe m.name do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          skip "Native value fidelity" if %w(toRdf/0035-in.jsonld).include?(t.property('input'))
-          pending "Generalized RDF" if %w(toRdf/0118-in.jsonld).include?(t.property('input'))
-          t.run self
+          pending "Generalized RDF" if t.options[:produceGeneralizedRdf]
+          if %w(#t0118).include?(t.property('@id'))
+            expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
+          elsif %w(#te075).include?(t.property('@id'))
+            expect {t.run self}.to write(/is invalid/).to(:error)
+          elsif %w(#te005 #tpr34 #tpr35 #tpr36 #tpr37 #te119 #te120).include?(t.property('@id'))
+            expect {t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
+          elsif %w(#te068).include?(t.property('@id'))
+            expect {t.run self}.to write("[DEPRECATION]").to(:error)
+          elsif %w(#twf05).include?(t.property('@id'))
+            expect {t.run self}.to write("@language must be valid BCP47").to(:error)
+          else
+            expect {t.run self}.not_to write.to(:error)
+          end
         end
       end
     end
