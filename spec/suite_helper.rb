@@ -144,6 +144,7 @@ module Fixtures
           file = self.send("#{m}_loc".to_sym)
 
           dl_opts = {safe: true}
+          dl_opts[:contentType] = options[:contentType] if m == 'input' && options[:contentType]
           RDF::Util::File.open_file(file, **dl_opts) do |remote_doc|
             res = remote_doc.read
           end

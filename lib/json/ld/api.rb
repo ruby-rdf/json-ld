@@ -35,7 +35,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/json;q=0.5"}
+      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/xhtml+xml;q=0.8, application/json;q=0.5"}
     }
 
     # The following constants are used to reduce object allocations
@@ -535,7 +535,7 @@ module JSON::LD
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
-    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
     # @param [Boolean] validate
@@ -612,7 +612,7 @@ module JSON::LD
         # Parse any HTML
         if remote_doc.document.is_a?(String)
           remote_doc.document = case remote_doc.contentType
-          when 'text/html'
+          when 'text/html', 'application/xhtml+xml'
             load_html(remote_doc.document,
                       url: remote_doc.documentUrl,
                       extractAllScripts: extractAllScripts,
@@ -628,7 +628,7 @@ module JSON::LD
 
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
-            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html/)
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)
         end
         block_given? ? yield(remote_doc) : remote_doc
       end
@@ -642,7 +642,7 @@ module JSON::LD
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
-    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
     # @param [Hash<Symbol => Object>] options
