@@ -13,6 +13,8 @@ require 'getoptlong'
 ASSERTOR = "http://greggkellogg.net/foaf#me"
 RUN_TIME = Time.now
 
+MultiJson.use(:json_gem) # because of differences in parsing with OJ
+
 def earl_preamble(options)
   options[:output].write File.read(File.expand_path("../../etc/doap.ttl", __FILE__))
   options[:output].puts %(
@@ -83,6 +85,7 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ExpandTest'
+      # MultiJson use OJ, by default, which doesn't handle native numbers the same as the JSON gem.
       output = JSON::LD::API.expand(tc.input_loc, tc.options.merge(validate: true))
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)

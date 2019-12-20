@@ -7,6 +7,8 @@ describe JSON::LD do
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}expand-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
+        # MultiJson use OJ, by default, which doesn't handle native numbers the same as the JSON gem.
+        t.options[:adapter] = :json_gem if %w(#tjs12).include?(t.property('@id'))
         specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = false
           if %w(#t0068).include?(t.property('@id'))
