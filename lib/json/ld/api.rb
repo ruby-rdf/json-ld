@@ -229,7 +229,7 @@ module JSON::LD
         # xxx) Add the given context to the output
         ctx = self.context.serialize
         if result.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', vocab: true, quiet: true)
+          kwgraph = self.context.compact_iri('@graph', vocab: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
         result = ctx.merge(result) unless ctx.empty?
@@ -295,7 +295,7 @@ module JSON::LD
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(compact(flattened, ordered: @options[:ordered]))
-          kwgraph = self.context.compact_iri('@graph', quiet: true)
+          kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.serialize.merge(kwgraph => compacted)
         end
       end
@@ -394,7 +394,7 @@ module JSON::LD
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')
 
-        frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true, quiet: true)}
+        frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true)}
         if frame_keys.include?('@graph')
           # If frame contains @graph, it matches the default graph.
           framing_state[:graph] = '@default'
@@ -436,7 +436,7 @@ module JSON::LD
         result = if !compacted.is_a?(Array)
           context.serialize.merge(compacted)
         else
-          kwgraph = context.compact_iri('@graph', quiet: true)
+          kwgraph = context.compact_iri('@graph')
           context.serialize.merge({kwgraph => compacted})
         end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}

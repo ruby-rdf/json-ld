@@ -76,7 +76,13 @@ module JSON::LD
         return parse_list(item['@list'], graph_name: graph_name, &block)
       end
 
-      subject = item['@id'] ? as_resource(item['@id']) : node
+      # Skip if '@id' is nil
+      subject = if item.has_key?('@id')
+        item['@id'].nil? ? nil : as_resource(item['@id'])
+      else
+        node
+      end
+
       #log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
       item.each do |property, values|
         case property

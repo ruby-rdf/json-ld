@@ -42,7 +42,7 @@ module JSON::LD
 
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
-        subject = ec.expand_iri(statement.subject).to_s
+        subject = ec.expand_iri(statement.subject, as_string: true)
         node = node_map[subject] ||= {'@id' => subject}
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
