@@ -81,25 +81,25 @@ def run_tc(man, tc, options)
 
     result = case tc.testType
     when 'jld:CompactTest'
-      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], tc.options.merge(validate: true))
+      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ExpandTest'
       # MultiJson use OJ, by default, which doesn't handle native numbers the same as the JSON gem.
-      output = JSON::LD::API.expand(tc.input_loc, tc.options.merge(validate: true))
+      output = JSON::LD::API.expand(tc.input_loc, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FlattenTest'
-      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), tc.options.merge(validate: true))
+      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FrameTest'
-      output = JSON::LD::API.frame(tc.input_loc, tc.frame_loc, tc.options.merge(validate: true))
+      output = JSON::LD::API.frame(tc.input_loc, tc.frame_loc, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FromRDFTest'
       repo = RDF::Repository.load(tc.input_loc, format: :nquads)
-      output = JSON::LD::API.fromRdf(repo, tc.options.merge(validate: true))
+      output = JSON::LD::API.fromRdf(repo, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ToRDFTest'
