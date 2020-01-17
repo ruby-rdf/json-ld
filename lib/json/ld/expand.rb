@@ -9,13 +9,8 @@ module JSON::LD
     include Utils
 
     # The following constant is used to reduce object allocations
-    CONTAINER_INDEX_ID_TYPE = Set.new(%w(@index @id @type)).freeze
-    CONTAINER_GRAPH_INDEX = %w(@graph @index).freeze
-    CONTAINER_INDEX = %w(@index).freeze
-    CONTAINER_ID = %w(@id).freeze
-    CONTAINER_LIST = %w(@list).freeze
-    CONTAINER_TYPE = %w(@type).freeze
-    CONTAINER_GRAPH_ID = %w(@graph @id).freeze
+    CONTAINER_INDEX_ID_TYPE = Set['@index', '@id', '@type'].freeze
+    KEY_ID = %w(@id).freeze
     KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
     KEYS_INCLUDED_TYPE = %w(@included @type).freeze
@@ -44,7 +39,7 @@ module JSON::LD
       result = case input
       when Array
         # If element is an array,
-        is_list = context.container(active_property) == CONTAINER_LIST
+        is_list = context.container(active_property).include?('@list')
         value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context, ordered: ordered, framing: framing, from_map: from_map)
@@ -165,7 +160,7 @@ module JSON::LD
         # If active property is null or @graph, drop free-floating values as follows:
         if (expanded_active_property || '@graph') == '@graph' &&
            (output_object.key?('@value') || output_object.key?('@list') ||
-           (output_object.keys - CONTAINER_ID).empty? && !framing)
+           (output_object.keys - KEY_ID).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil
         end
@@ -478,10 +473,11 @@ module JSON::LD
         end
 
         container = context.container(key)
+        require 'byebug'; byebug if container.is_a?(Array)
         expanded_value = if context.coerce(key) == '@json'
           # In JSON-LD 1.1, values can be native JSON
           {"@value" => value, "@type" => "@json"}
-        elsif container.length == 1 && container.first == '@language' && value.is_a?(Hash)
+        elsif container.include?('@language') && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context is @language and value is a JSON object then value is expanded from a language map as follows:
           
           # Set multilingual array to an empty array.
@@ -510,7 +506,7 @@ module JSON::LD
           end
 
           ary
-        elsif container.any? { |key| CONTAINER_INDEX_ID_TYPE.include?(key) } && value.is_a?(Hash)
+        elsif container.intersect?(CONTAINER_INDEX_ID_TYPE) && value.is_a?(Hash)
           # Otherwise, if key's container mapping in active context contains @index, @id, @type and value is a JSON object then value is expanded from an index map as follows:
           
           # Set ary to an empty array.
@@ -540,8 +536,9 @@ module JSON::LD
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered, framing: framing, from_map: true)
             index_value.each do |item|
-              case container
-              when CONTAINER_GRAPH_INDEX, CONTAINER_INDEX
+              require 'byebug'; byebug
+              case
+              when container.include?('@index')
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
                   item = {'@graph' => as_array(item)}
@@ -556,7 +553,7 @@ module JSON::LD
                   index_property = container_context.expand_iri(index_key, vocab: true, as_string: true)
                   item[index_property] = [expanded_k].concat(Array(item[index_property])) unless expanded_k == '@none'
                 end
-              when CONTAINER_GRAPH_ID, CONTAINER_ID
+              when container.include?('@id')
                 # Indexed graph by graph name
                 if !graph?(item) && container.include?('@graph')
                   item = {'@graph' => as_array(item)}
@@ -564,7 +561,7 @@ module JSON::LD
                 # Expand k document relative
                 expanded_k = container_context.expand_iri(k, documentRelative: true, as_string: true) unless expanded_k == '@none'
                 item['@id'] ||= expanded_k unless expanded_k == '@none'
-              when CONTAINER_TYPE
+              when container.include?('@type')
                 item['@type'] = [expanded_k].concat(Array(item['@type'])) unless expanded_k == '@none'
               end
 

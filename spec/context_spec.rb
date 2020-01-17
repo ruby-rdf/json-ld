@@ -348,7 +348,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
         }).containers).to produce({
-          "foo" => %w(@list)
+          "foo" => Set["@list"]
         }, logger)
       end
 
@@ -356,7 +356,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
         }).containers).to produce({
-          "foo" => %w(@type)
+          "foo" => Set["@type"]
         }, logger)
       end
 
@@ -364,7 +364,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@id"}
         }).containers).to produce({
-          "foo" => %w(@id)
+          "foo" => Set["@id"]
         }, logger)
       end
 
@@ -1796,23 +1796,23 @@ describe JSON::LD::Context do
 
     it "uses TermDefinition" do
       {
-        "ex"          => [],
-        "graph"       => %w(@graph),
-        "graphSet"    => %w(@graph),
-        "graphId"     => %w(@graph @id),
-        "graphIdSet"  => %w(@graph @id),
-        "graphNdx"    => %w(@graph @index),
-        "graphNdxSet" => %w(@graph @index),
-        "id"          => %w(@id),
-        "idSet"       => %w(@id),
-        "language"    => %w(@language),
-        "langSet"     => %w(@language),
-        "list"        => %w(@list),
-        "ndx"         => %w(@index),
-        "ndxSet"      => %w(@index),
-        "set"         => [],
-        "type"        => %w(@type),
-        "typeSet"     => %w(@type),
+        "ex"          => Set.new,
+        "graph"       => Set["@graph"],
+        "graphSet"    => Set["@graph"],
+        "graphId"     => Set["@graph", "@id"],
+        "graphIdSet"  => Set["@graph", "@id"],
+        "graphNdx"    => Set["@graph", "@index"],
+        "graphNdxSet" => Set["@graph", "@index"],
+        "id"          => Set['@id'],
+        "idSet"       => Set['@id'],
+        "language"    => Set['@language'],
+        "langSet"     => Set['@language'],
+        "list"        => Set['@list'],
+        "ndx"         => Set['@index'],
+        "ndxSet"      => Set['@index'],
+        "set"         => Set.new,
+        "type"        => Set['@type'],
+        "typeSet"     => Set['@type'],
       }.each do |defn, container|
         expect(subject.container(subject.term_definitions[defn])).to eq container
       end
@@ -1844,23 +1844,23 @@ describe JSON::LD::Context do
 
     it "uses array" do
       {
-        "ex"          => [],
-        "graph"       => %w(@graph),
-        "graphSet"    => %w(@graph),
-        "graphId"     => %w(@graph @id),
-        "graphIdSet"  => %w(@graph @id),
-        "graphNdx"    => %w(@graph @index),
-        "graphNdxSet" => %w(@graph @index),
-        "id"          => %w(@id),
-        "idSet"       => %w(@id),
-        "language"    => %w(@language),
-        "langSet"     => %w(@language),
-        "list"        => %w(@list),
-        "ndx"         => %w(@index),
-        "ndxSet"      => %w(@index),
-        "set"         => [],
-        "type"        => %w(@type),
-        "typeSet"     => %w(@type),
+        "ex"          => Set.new,
+        "graph"       => Set["@graph"],
+        "graphSet"    => Set["@graph"],
+        "graphId"     => Set["@graph", "@id"],
+        "graphIdSet"  => Set["@graph", "@id"],
+        "graphNdx"    => Set["@graph", "@index"],
+        "graphNdxSet" => Set["@graph", "@index"],
+        "id"          => Set['@id'],
+        "idSet"       => Set['@id'],
+        "language"    => Set['@language'],
+        "langSet"     => Set['@language'],
+        "list"        => Set['@list'],
+        "ndx"         => Set['@index'],
+        "ndxSet"      => Set['@index'],
+        "set"         => Set.new,
+        "type"        => Set['@type'],
+        "typeSet"     => Set['@type'],
       }.each do |defn, container|
         expect(subject.container(defn)).to eq container
       end
@@ -2053,13 +2053,13 @@ describe JSON::LD::Context do
 
     context "with container_mapping @id @set" do
       subject {described_class.new("term", container_mapping: %w(@id @set))}
-      its(:container_mapping) {is_expected.to eq %w(@id)}
+      its(:container_mapping) {is_expected.to eq Set['@id']}
       its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: ["@id", "@set"]))}
     end
 
     context "with container_mapping @list" do
       subject {described_class.new("term", container_mapping: "@list")}
-      its(:container_mapping) {is_expected.to eq %w(@list)}
+      its(:container_mapping) {is_expected.to eq Set['@list']}
       its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@list"))}
     end
 

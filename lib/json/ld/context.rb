@@ -94,7 +94,7 @@ module JSON::LD
       # @param [String] term
       # @param [String] id
       # @param [String] type_mapping Type mapping
-      # @param [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
+      # @param [Set<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is an explicit language mapping for this term
       # @param ["ltr", "rtl"] direction_mapping
@@ -140,12 +140,19 @@ module JSON::LD
 
       # Set container mapping, from an array which may include @set
       def container_mapping=(mapping)
-        mapping = Array(mapping)
+        mapping = case mapping
+        when Set then mapping
+        when Array then Set.new(mapping)
+        when String then Set[mapping]
+        when nil then Set.new
+        else
+          raise "Shouldn't happen with #{mapping.inspect}"
+        end
         if @as_set = mapping.include?('@set')
           mapping = mapping.dup
           mapping.delete('@set')
         end
-        @container_mapping = mapping.sort
+        @container_mapping = mapping
         @index ||= '@index' if mapping.include?('@index')
       end
 
@@ -201,7 +208,8 @@ module JSON::LD
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping'
-            v.concat(%w(@set)) if as_set?
+            v = v.to_a
+            v << '@set' if as_set?
             v = v.first if v.length <= 1
           end
           defn << "#{acc}: #{v.inspect}" if v
@@ -1162,7 +1170,7 @@ module JSON::LD
     def container(term)
       return [term] if term == '@list'
       term = find_definition(term)
-      term ? term.container_mapping : []
+      term ? term.container_mapping : Set.new
     end
 
     ##
@@ -1823,9 +1831,9 @@ module JSON::LD
 
   private
 
-    CONTEXT_CONTAINER_ARRAY_TERMS = %w(@set @list @graph).freeze
-    CONTEXT_CONTAINER_ID_GRAPH = %w(@id @graph).freeze
-    CONTEXT_CONTAINER_INDEX_GRAPH = %w(@index @graph).freeze
+    CONTEXT_CONTAINER_ARRAY_TERMS = Set.new(%w(@set @list @graph)).freeze
+    CONTEXT_CONTAINER_ID_GRAPH = Set.new(%w(@id @graph)).freeze
+    CONTEXT_CONTAINER_INDEX_GRAPH = Set.new(%w(@index @graph)).freeze
     CONTEXT_BASE_FRAG_OR_QUERY = %w(? #).freeze
     CONTEXT_TYPE_ID_VOCAB = %w(@id @vocab).freeze
 
@@ -1899,7 +1907,7 @@ module JSON::LD
         end.each do |term|
           next unless td = term_definitions[term]
 
-          container = td.container_mapping.join('')
+          container = td.container_mapping.to_a.join('')
           if container.empty?
             container = td.as_set? ? %(@set) : %(@none)
           end
@@ -2051,7 +2059,7 @@ module JSON::LD
               "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
       end
 
-      val = Array(container).dup
+      val = Set.new(Array(container))
       val.delete('@set') if has_set = val.include?('@set')
 
       if val.include?('@list')
@@ -2081,7 +2089,7 @@ module JSON::LD
                processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @id cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
-          (val - CONTEXT_CONTAINER_ID_GRAPH).empty?
+          val.subset?(CONTEXT_CONTAINER_ID_GRAPH)
         # Okay
       elsif val.include?('@type') || val.include?('@graph')
         raise JsonLdError::InvalidContainerMapping,

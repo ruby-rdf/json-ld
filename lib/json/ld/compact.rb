@@ -5,12 +5,7 @@ module JSON::LD
     include Utils
 
     # The following constant is used to reduce object allocations in #compact below
-    CONTAINER_MAPPING_ID = %w(@id).freeze
-    CONTAINER_MAPPING_INDEX = %w(@index).freeze
-    CONTAINER_MAPPING_LANGUAGE = %w(@language).freeze
     CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE = Set.new(%w(@language @index @id @type)).freeze
-    CONTAINER_MAPPING_LIST = %w(@list).freeze
-    CONTAINER_MAPPING_TYPE = %w(@type).freeze
     EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE = %w(@direction @index @language @value).freeze
 
     ##
@@ -71,7 +66,7 @@ module JSON::LD
         end
 
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
-        if list?(element) && context.container(property) == CONTAINER_MAPPING_LIST
+        if list?(element) && context.container(property).include?('@list')
           return compact(element['@list'], property: property, ordered: ordered)
         end
 
@@ -146,7 +141,7 @@ module JSON::LD
             next
           end
 
-          if expanded_property == '@index' && context.container(property) == CONTAINER_MAPPING_INDEX
+          if expanded_property == '@index' && context.container(property).include?('@index')
             #log_debug("@index") {"drop @index"}
             next
           end
@@ -209,7 +204,7 @@ module JSON::LD
             # handle @list
             if list?(expanded_item)
               compacted_item = as_array(compacted_item)
-              unless container == CONTAINER_MAPPING_LIST
+              unless container.include?('@list')
                 al = context.compact_iri('@list', vocab: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
@@ -264,16 +259,16 @@ module JSON::LD
                 add_value(nest_result, item_active_property, compacted_item,
                   property_is_array: as_array)
               end
-            elsif container.any? { |key| CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE.include?(key) } && !container.include?('@graph')
+            elsif container.intersect?(CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE) && !container.include?('@graph')
               map_object = nest_result[item_active_property] ||= {}
               c = container.first
               container_key = context.compact_iri(c, vocab: true)
-              compacted_item = case container
-              when CONTAINER_MAPPING_ID
+              compacted_item = case
+              when container.include?('@id')
                 map_key = compacted_item[container_key]
                 compacted_item.delete(container_key)
                 compacted_item
-              when CONTAINER_MAPPING_INDEX
+              when container.include?('@index')
                 index_key = context.term_definitions[item_active_property].index || '@index'
                 if index_key == '@index'
                   map_key = expanded_item['@index']
@@ -293,10 +288,10 @@ module JSON::LD
                 end
                 # Note, if compacted_item is a node reference and key is @id-valued, then this could be compacted further.
                 compacted_item
-              when CONTAINER_MAPPING_LANGUAGE
+              when container.include?('@language')
                 map_key = expanded_item['@language']
                 value?(expanded_item) ? expanded_item['@value'] : compacted_item
-              when CONTAINER_MAPPING_TYPE
+              when container.include?('@type')
                 map_key, *types = Array(compacted_item[container_key])
                 case types.length
                 when 0 then compacted_item.delete(container_key)
