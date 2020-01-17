@@ -139,7 +139,7 @@ module JSON::LD
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
           elsif !Array(output_object['@type']).all? {|t|
-                  t.is_a?(String) && RDF::URI(t).absolute? && !t.start_with?('_:') ||
+                  t.is_a?(String) && RDF::URI(t).valid? && !t.start_with?('_:') ||
                   t.is_a?(Hash) && t.empty?}
             # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
             raise JsonLdError::InvalidTypedValue,
@@ -164,7 +164,7 @@ module JSON::LD
 
         # If active property is null or @graph, drop free-floating values as follows:
         if (expanded_active_property || '@graph') == '@graph' &&
-          (output_object.key?('@value') || output_object.key?('@list') ||
+           (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - CONTAINER_ID).empty? && !framing)
           #log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil

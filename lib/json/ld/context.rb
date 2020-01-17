@@ -1936,7 +1936,7 @@ module JSON::LD
             lang_dir = td.direction_mapping ? "_#{td.direction_mapping}" : '@none'
             language_map[lang_dir] ||= term
           elsif default_direction
-            language_map[("#{td.language_mapping}_#{default_direction}").downcase] ||= term
+            language_map["_#{default_direction}"] ||= term
             language_map['@none'] ||= term
             type_map['@none'] ||= term
           else

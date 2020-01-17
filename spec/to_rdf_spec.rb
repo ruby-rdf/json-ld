@@ -1218,7 +1218,7 @@ describe JSON::LD::API do
             "@id": "http://example.com/foo",
             "http://example.com/bar": {"@value": "bar", "@type": "http://example.com/baz z"}
           }),
-          output: %()
+          exception: JSON::LD::JsonLdError::InvalidTypedValue
         },
         "Injected IRIs check" => {
           input: %({
