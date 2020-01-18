@@ -473,7 +473,6 @@ module JSON::LD
         end
 
         container = context.container(key)
-        require 'byebug'; byebug if container.is_a?(Array)
         expanded_value = if context.coerce(key) == '@json'
           # In JSON-LD 1.1, values can be native JSON
           {"@value" => value, "@type" => "@json"}
@@ -536,7 +535,6 @@ module JSON::LD
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, map_context, ordered: ordered, framing: framing, from_map: true)
             index_value.each do |item|
-              require 'byebug'; byebug
               case
               when container.include?('@index')
                 # Indexed graph by graph name
