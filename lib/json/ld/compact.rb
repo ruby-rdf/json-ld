@@ -105,8 +105,7 @@ module JSON::LD
                        (context.as_array?(kw_alias) &&
                         !value?(element) &&
                         context.processingMode('json-ld-1.1'))
-            compacted_value = compacted_value.first unless as_array
-            result[kw_alias] = compacted_value
+            add_value(result, kw_alias, compacted_value, property_is_array: as_array)
             next
           end
 
@@ -272,7 +271,6 @@ module JSON::LD
                 index_key = context.term_definitions[item_active_property].index || '@index'
                 if index_key == '@index'
                   map_key = expanded_item['@index']
-                  compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                 else
                   container_key = context.compact_iri(index_key, vocab: true)
                   map_key, *others = Array(compacted_item[container_key])
