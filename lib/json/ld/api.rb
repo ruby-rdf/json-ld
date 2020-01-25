@@ -313,11 +313,11 @@ module JSON::LD
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
-    # @option options ['@always', '@first', '@last', '@link', '@once', '@never'] :embed ('@last')
+    # @option options ['@always', '@link', '@once', '@never'] :embed ('@once')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.
-    # @option options [Boolean] :requireAll (true)
+    # @option options [Boolean] :requireAll (false)
     #   A flag specifying that all properties present in the input frame must either have a default value or be present in the JSON-LD input for the frame to match.
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
