@@ -553,12 +553,12 @@ describe JSON::LD::Context do
           end
         end
 
-        it "generates InvalidContextMember if using @propagate" do
-          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
+        it "generates InvalidContextEntry if using @propagate" do
+          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
-        it "generates InvalidContextMember if using @import" do
-          expect {context.parse({'@import' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextMember)
+        it "generates InvalidContextEntry if using @import" do
+          expect {context.parse({'@import' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
         (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|

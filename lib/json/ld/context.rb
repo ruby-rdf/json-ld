@@ -500,7 +500,7 @@ module JSON::LD
     #
     # @param [Boolean] value
     def propagate=(value, **options)
-      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
+      raise JsonLdError::InvalidContextEntry, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
       raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
       value
     end
@@ -634,7 +634,7 @@ module JSON::LD
             next unless context.has_key?(key)
             if key == '@import'
               # Retrieve remote context and merge the remaining context object into the result.
-              raise JsonLdError::InvalidContextMember, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
+              raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
               raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
               source = RDF::URI(result.context_base || result.base).join(context['@import'])
               begin
@@ -648,7 +648,7 @@ module JSON::LD
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   import_context = remote_doc.document['@context']
                   raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
-                  raise JsonLdError::InvalidContextMember, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
+                  raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
                   context.delete(key)
                   context = import_context.merge(context)
                 end
