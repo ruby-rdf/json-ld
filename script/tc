@@ -104,14 +104,14 @@ def run_tc(man, tc, options)
       compare_results(tc, output, expected)
     when 'jld:ToRDFTest'
       output = RDF::Repository.new.extend(RDF::Isomorphic)
-      JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
+      JSON::LD::API.toRdf(tc.input_loc, **tc.options).map do |statement|
         output << statement
       end
 
       if tc.evaluationTest? && tc.positiveTest?
         begin
           if tc.options[:produceGeneralizedRdf]
-            quads = JSON::LD::API.toRdf(tc.input_loc, tc.options.merge(validate: false)).map do |statement|
+            quads = JSON::LD::API.toRdf(tc.input_loc, **tc.options.merge(validate: false)).map do |statement|
               # Not really RDF, try different test method
               tc.to_quad(statement)
             end
