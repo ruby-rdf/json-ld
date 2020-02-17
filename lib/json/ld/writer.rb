@@ -143,8 +143,8 @@ module JSON::LD
           datatype: TrueClass,
           default: true,
           control: :checkbox,
-          on: ["--[no-]requireAll"],
-          description: "Require all properties to match (true). Default is `true` use --no-compact-to-relative to disable.") {|arg| arg},
+          on: ["--[no-]require-all"],
+          description: "Require all properties to match (true). Default is `true` use --no-require-all to disable.") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :stream,
           datatype: TrueClass,
