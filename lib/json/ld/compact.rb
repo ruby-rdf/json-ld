@@ -5,12 +5,7 @@ module JSON::LD
     include Utils
 
     # The following constant is used to reduce object allocations in #compact below
-    CONTAINER_MAPPING_ID = %w(@id).freeze
-    CONTAINER_MAPPING_INDEX = %w(@index).freeze
-    CONTAINER_MAPPING_LANGUAGE = %w(@language).freeze
     CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE = Set.new(%w(@language @index @id @type)).freeze
-    CONTAINER_MAPPING_LIST = %w(@list).freeze
-    CONTAINER_MAPPING_TYPE = %w(@type).freeze
     EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE = %w(@direction @index @language @value).freeze
 
     ##
@@ -71,7 +66,7 @@ module JSON::LD
         end
 
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
-        if list?(element) && context.container(property) == CONTAINER_MAPPING_LIST
+        if list?(element) && context.container(property).include?('@list')
           return compact(element['@list'], property: property, ordered: ordered)
         end
 
@@ -110,8 +105,7 @@ module JSON::LD
                        (context.as_array?(kw_alias) &&
                         !value?(element) &&
                         context.processingMode('json-ld-1.1'))
-            compacted_value = compacted_value.first unless as_array
-            result[kw_alias] = compacted_value
+            add_value(result, kw_alias, compacted_value, property_is_array: as_array)
             next
           end
 
@@ -128,7 +122,7 @@ module JSON::LD
             end
 
             unless compacted_value.empty?
-              al = context.compact_iri('@reverse', quiet: true)
+              al = context.compact_iri('@reverse')
               #log_debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
             end
@@ -146,14 +140,14 @@ module JSON::LD
             next
           end
 
-          if expanded_property == '@index' && context.container(property) == CONTAINER_MAPPING_INDEX
+          if expanded_property == '@index' && context.container(property).include?('@index')
             #log_debug("@index") {"drop @index"}
             next
           end
 
           # Otherwise, if expanded property is @direction, @index, @value, or @language:
           if EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE.include?(expanded_property)
-            al = context.compact_iri(expanded_property, vocab: true, quiet: true)
+            al = context.compact_iri(expanded_property, vocab: true)
             #log_debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value
             next
@@ -209,11 +203,11 @@ module JSON::LD
             # handle @list
             if list?(expanded_item)
               compacted_item = as_array(compacted_item)
-              unless container == CONTAINER_MAPPING_LIST
-                al = context.compact_iri('@list', vocab: true, quiet: true)
+              unless container.include?('@list')
+                al = context.compact_iri('@list', vocab: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item.has_key?('@index')
-                  key = context.compact_iri('@index', vocab: true, quiet: true)
+                  key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end
               else
@@ -231,11 +225,11 @@ module JSON::LD
                 map_object = nest_result[item_active_property] ||= {}
                 # If there is no @id, create a blank node identifier to use as an index
                 map_key = if container.include?('@id') && expanded_item['@id']
-                  context.compact_iri(expanded_item['@id'], quiet: true)
+                  context.compact_iri(expanded_item['@id'])
                 elsif container.include?('@index') && expanded_item['@index']
-                  context.compact_iri(expanded_item['@index'], quiet: true)
+                  context.compact_iri(expanded_item['@index'])
                 else
-                  context.compact_iri('@none', vocab: true, quiet: true)
+                  context.compact_iri('@none', vocab: true)
                 end
                 add_value(map_object, map_key, compacted_item,
                   property_is_array: as_array)
@@ -243,7 +237,7 @@ module JSON::LD
                 # container includes @graph but not @id or @index and value is a simple graph object
                 if compacted_item.is_a?(Array) && compacted_item.length > 1
                   # Mutple objects in the same graph can't be represented directly, as they would be interpreted as two different graphs. Need to wrap in @included.
-                  included_key = context.compact_iri('@included', vocab: true).to_s
+                  included_key = context.compact_iri('@included', vocab: true)
                   compacted_item = {included_key => compacted_item}
                 end
                 # Drop through, where compacted_item will be added
@@ -251,35 +245,34 @@ module JSON::LD
                   property_is_array: as_array)
               else
                 # container does not include @graph or otherwise does not match one of the previous cases, redo compacted_item
-                al = context.compact_iri('@graph', vocab: true, quiet: true)
+                al = context.compact_iri('@graph', vocab: true)
                 compacted_item = {al => compacted_item}
                 if expanded_item['@id']
-                  al = context.compact_iri('@id', vocab: true, quiet: true)
-                  compacted_item[al] = context.compact_iri(expanded_item['@id'], vocab: false, quiet: true).to_s
+                  al = context.compact_iri('@id', vocab: true)
+                  compacted_item[al] = context.compact_iri(expanded_item['@id'], vocab: false)
                 end
                 if expanded_item.has_key?('@index')
-                  key = context.compact_iri('@index', vocab: true, quiet: true)
+                  key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end
                 add_value(nest_result, item_active_property, compacted_item,
                   property_is_array: as_array)
               end
-            elsif container.any? { |key| CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE.include?(key) } && !container.include?('@graph')
+            elsif container.intersect?(CONTAINER_MAPPING_LANGUAGE_INDEX_ID_TYPE) && !container.include?('@graph')
               map_object = nest_result[item_active_property] ||= {}
               c = container.first
-              container_key = context.compact_iri(c, vocab: true, quiet: true)
-              compacted_item = case container
-              when CONTAINER_MAPPING_ID
+              container_key = context.compact_iri(c, vocab: true)
+              compacted_item = case
+              when container.include?('@id')
                 map_key = compacted_item[container_key]
                 compacted_item.delete(container_key)
                 compacted_item
-              when CONTAINER_MAPPING_INDEX
+              when container.include?('@index')
                 index_key = context.term_definitions[item_active_property].index || '@index'
                 if index_key == '@index'
                   map_key = expanded_item['@index']
-                  compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                 else
-                  container_key = context.compact_iri(index_key, vocab: true, quiet: true)
+                  container_key = context.compact_iri(index_key, vocab: true)
                   map_key, *others = Array(compacted_item[container_key])
                   if map_key.is_a?(String)
                     case others.length
@@ -288,15 +281,15 @@ module JSON::LD
                     else        compacted_item[container_key] = others
                     end
                   else
-                    map_key = context.compact_iri('@none', vocab: true, quiet: true)
+                    map_key = context.compact_iri('@none', vocab: true)
                   end
                 end
                 # Note, if compacted_item is a node reference and key is @id-valued, then this could be compacted further.
                 compacted_item
-              when CONTAINER_MAPPING_LANGUAGE
+              when container.include?('@language')
                 map_key = expanded_item['@language']
                 value?(expanded_item) ? expanded_item['@value'] : compacted_item
-              when CONTAINER_MAPPING_TYPE
+              when container.include?('@type')
                 map_key, *types = Array(compacted_item[container_key])
                 case types.length
                 when 0 then compacted_item.delete(container_key)
@@ -310,7 +303,7 @@ module JSON::LD
                 end
                 compacted_item
               end
-              map_key ||= context.compact_iri('@none', vocab: true, quiet: true)
+              map_key ||= context.compact_iri('@none', vocab: true)
               add_value(map_object, map_key, compacted_item,
                 property_is_array: as_array)
             else

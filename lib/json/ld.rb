@@ -115,7 +115,7 @@ module JSON
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
-      class InvalidContextMember < JsonLdError; @code = "invalid context member"; end
+      class InvalidContextEntry < JsonLdError; @code = "invalid context entry"; end
       class InvalidContextNullification < JsonLdError; @code = "invalid context nullification"; end
       class InvalidDefaultLanguage < JsonLdError; @code = "invalid default language"; end
       class InvalidIdValue < JsonLdError; @code = "invalid @id value"; end

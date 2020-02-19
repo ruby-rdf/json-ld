@@ -3,6 +3,12 @@
 require 'json'
 require 'bigdecimal'
 require 'set'
+begin
+  # Attempt to load this to avoid unnecessary context fetches
+  require 'json-ld-preloaded'
+rescue LoadError
+  # Silently allow this to fail
+end
 
 module JSON::LD
   class Context
@@ -94,7 +100,7 @@ module JSON::LD
       # @param [String] term
       # @param [String] id
       # @param [String] type_mapping Type mapping
-      # @param [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
+      # @param [Set<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
       # @param [String] language_mapping
       #   Language mapping of term, `false` is used if there is an explicit language mapping for this term
       # @param ["ltr", "rtl"] direction_mapping
@@ -140,12 +146,19 @@ module JSON::LD
 
       # Set container mapping, from an array which may include @set
       def container_mapping=(mapping)
-        mapping = Array(mapping)
+        mapping = case mapping
+        when Set then mapping
+        when Array then Set.new(mapping)
+        when String then Set[mapping]
+        when nil then Set.new
+        else
+          raise "Shouldn't happen with #{mapping.inspect}"
+        end
         if @as_set = mapping.include?('@set')
           mapping = mapping.dup
           mapping.delete('@set')
         end
-        @container_mapping = mapping.sort
+        @container_mapping = mapping
         @index ||= '@index' if mapping.include?('@index')
       end
 
@@ -201,7 +214,8 @@ module JSON::LD
           v = instance_variable_get("@#{acc}".to_sym)
           v = v.to_s if v.is_a?(RDF::Term)
           if acc == 'container_mapping'
-            v.concat(%w(@set)) if as_set?
+            v = v.to_a
+            v << '@set' if as_set?
             v = v.first if v.length <= 1
           end
           defn << "#{acc}: #{v.inspect}" if v
@@ -492,7 +506,7 @@ module JSON::LD
     #
     # @param [Boolean] value
     def propagate=(value, **options)
-      raise JsonLdError::InvalidContextMember, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
+      raise JsonLdError::InvalidContextEntry, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
       raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
       value
     end
@@ -626,7 +640,7 @@ module JSON::LD
             next unless context.has_key?(key)
             if key == '@import'
               # Retrieve remote context and merge the remaining context object into the result.
-              raise JsonLdError::InvalidContextMember, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
+              raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
               raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
               source = RDF::URI(result.context_base || result.base).join(context['@import'])
               begin
@@ -640,7 +654,7 @@ module JSON::LD
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   import_context = remote_doc.document['@context']
                   raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
-                  raise JsonLdError::InvalidContextMember, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
+                  raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
                   context.delete(key)
                   context = import_context.merge(context)
                 end
@@ -1162,7 +1176,7 @@ module JSON::LD
     def container(term)
       return [term] if term == '@list'
       term = find_definition(term)
-      term ? term.container_mapping : []
+      term ? term.container_mapping : Set.new
     end
 
     ##
@@ -1281,18 +1295,24 @@ module JSON::LD
     #   Used during Context Processing.
     # @param [Hash] defined
     #   Used during Context Processing.
-    # @param [Boolean] quiet (false)
+    # @param [Boolean] as_string (false) transform RDF::Resource values to string
     # @param  [Hash{Symbol => Object}] options
-    # @return [RDF::URI, String]
+    # @return [RDF::Resource, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see https://www.w3.org/TR/json-ld11-api/#iri-expansion
-    def expand_iri(value, documentRelative: false, vocab: false, local_context: nil, defined: nil, quiet: false, **options)
-      return value unless value.is_a?(String)
+    def expand_iri(value,
+      documentRelative: false,
+      vocab: false,
+      local_context: nil,
+      defined: nil,
+      as_string: false,
+      **options
+    )
+      return (value && as_string ? value.to_s : value) unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
       return nil if value.match?(/^@[a-zA-Z]+$/)
-      #log_debug("expand_iri") {"value: #{value.inspect}"} unless quiet
 
       defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.
 
@@ -1302,25 +1322,28 @@ module JSON::LD
       end
 
       if (v_td = term_definitions[value]) && KEYWORDS.include?(v_td.id)
-        #log_debug("") {"match with #{v_td.id}"} unless quiet
-        return v_td.id
+        return (as_string ? v_td.id.to_s : v_td.id)
       end
 
       # If active context has a term definition for value, and the associated mapping is a keyword, return that keyword.
       # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
       if (v_td = term_definitions[value]) && (vocab || KEYWORDS.include?(v_td.id))
-        #log_debug("") {"match with #{v_td.id}"} unless quiet
-        return v_td.id
+        return (as_string ? v_td.id.to_s : v_td.id)
       end
 
       # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
       if value[1..-1].to_s.include?(':')
         prefix, suffix = value.split(':', 2)
-        #log_debug("") {"prefix: #{prefix.inspect}, suffix: #{suffix.inspect}, vocab: #{self.vocab.inspect}"} unless quiet
 
         # If prefix is underscore (_) or suffix begins with double-forward-slash (//), return value as it is already an absolute IRI or a blank node identifier.
-        return RDF::Node.new(namer.get_sym(suffix)) if prefix == '_'
-        return RDF::URI(value) if suffix.start_with?('//')
+        if prefix == '_'
+          v = RDF::Node.new(namer.get_sym(suffix))
+          return (as_string ? v.to_s : v)
+        end
+        if suffix.start_with?('//')
+          v = RDF::URI(value)
+          return (as_string ? v.to_s : v)
+        end
 
         # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
         if local_context && local_context.has_key?(prefix) && !defined[prefix]
@@ -1329,15 +1352,14 @@ module JSON::LD
 
         # If active context contains a term definition for prefix, return the result of concatenating the IRI mapping associated with prefix and suffix.
         if (td = term_definitions[prefix]) && !td.id.nil? && td.prefix?
-          return td.id + suffix
+          return (as_string ? td.id.to_s : td.id) + suffix
         elsif RDF::URI(value).absolute?
           # Otherwise, if the value has the form of an absolute IRI, return it
-          return RDF::URI(value)
+          return (as_string ? value.to_s : RDF::URI(value))
         else
           # Otherwise, it is a relative IRI
         end
       end
-      #log_debug("") {"=> #{result.inspect}"} unless quiet
 
       result = if vocab && self.vocab
         # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
@@ -1352,8 +1374,7 @@ module JSON::LD
       else
         RDF::URI(value)
       end
-      #log_debug("") {"=> #{result}"} unless quiet
-      result
+      result && as_string ? result.to_s : result
     end
 
     # The following constants are used to reduce object allocations in #compact_iri below
@@ -1378,18 +1399,15 @@ module JSON::LD
     #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     # @param [Boolean] reverse
     #   specifies whether a reverse property is being compacted
-    # @param [Boolean] quiet (false)
     # @param  [Hash{Symbol => Object}] options ({})
     #
     # @return [String] compacted form of IRI
     # @see https://www.w3.org/TR/json-ld11-api/#iri-compaction
-    def compact_iri(iri, value: nil, vocab: nil, reverse: false, quiet: false, **options)
+    def compact_iri(iri, value: nil, vocab: nil, reverse: false, **options)
       return if iri.nil?
       iri = iri.to_s
-      #log_debug("compact_iri(#{iri.inspect}", options) {[value, vocab, reverse].inspect} unless quiet
 
       if vocab && inverse_context.has_key?(iri)
-        #log_debug("") {"vocab and key in inverse context"} unless quiet
         default_language = if self.default_direction
           "#{self.default_language}_#{self.default_direction}".downcase
         else
@@ -1406,7 +1424,6 @@ module JSON::LD
           tl, tl_value = "@type", "@reverse"
           containers << '@set'
         elsif list?(value)
-          #log_debug("") {"list(#{value.inspect})"} unless quiet
           # if value is a list object, then set type/language and type/language value to the most specific values that work for all items in the list as follows:
           containers << "@list" unless index?(value)
           list = value['@list']
@@ -1429,25 +1446,21 @@ module JSON::LD
             end
             common_language ||= item_language
             if item_language != common_language && value?(item)
-              #log_debug("") {"-- #{item_language} conflicts with #{common_language}, use @none"} unless quiet
               common_language = '@none'
             end
             common_type ||= item_type
             if item_type != common_type
               common_type = '@none'
-              #log_debug("") {"#{item_type} conflicts with #{common_type}, use @none"} unless quiet
             end
           end
 
           common_language ||= '@none'
           common_type ||= '@none'
-          #log_debug("") {"common type: #{common_type}, common language: #{common_language}"} unless quiet
           if common_type != '@none'
             tl, tl_value = '@type', common_type
           else
             tl_value = common_language
           end
-          #log_debug("") {"list: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         elsif graph?(value)
           # Prefer @index and @id containers, then @graph, then @index
           containers.concat(CONTAINERS_GRAPH_INDEX_INDEX) if index?(value)
@@ -1482,7 +1495,6 @@ module JSON::LD
             tl, tl_value = '@type', '@id'
           end
           containers << '@set'
-          #log_debug("") {"value: containers: #{containers.inspect}, type/language: #{tl.inspect}, type/language value: #{tl_value.inspect}"} unless quiet
         end
 
         containers << '@none'
@@ -1506,7 +1518,6 @@ module JSON::LD
           tl = '@any' if list?(value) && value['@list'].empty?
           preferred_values.concat([tl_value, '@none'].compact)
         end
-        #log_debug("") {"preferred_values: #{preferred_values.inspect}"} unless quiet
         preferred_values << '@any'
 
         # if containers included `@language` and preferred_values includes something of the form language-tag_direction, add just the _direction part, to select terms that have that direction.
@@ -1515,7 +1526,6 @@ module JSON::LD
         end
 
         if p_term = select_term(iri, containers, tl, preferred_values)
-          #log_debug("") {"=> term: #{p_term.inspect}"} unless quiet
           return p_term
         end
       end
@@ -1523,7 +1533,6 @@ module JSON::LD
       # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
       if vocab && self.vocab && iri.start_with?(self.vocab) && iri.length > self.vocab.length
         suffix = iri[self.vocab.length..-1]
-        #log_debug("") {"=> vocab suffix: #{suffix.inspect}"} unless quiet
         return suffix unless term_definitions.has_key?(suffix)
       end
 
@@ -1566,10 +1575,8 @@ module JSON::LD
       if !vocab
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(iri)
-        #log_debug("") {"=> relative iri: #{iri.inspect}"} unless quiet
         return iri
       else
-        #log_debug("") {"=> absolute iri: #{iri.inspect}"} unless quiet
         return iri
       end
     end
@@ -1830,9 +1837,9 @@ module JSON::LD
 
   private
 
-    CONTEXT_CONTAINER_ARRAY_TERMS = %w(@set @list @graph).freeze
-    CONTEXT_CONTAINER_ID_GRAPH = %w(@id @graph).freeze
-    CONTEXT_CONTAINER_INDEX_GRAPH = %w(@index @graph).freeze
+    CONTEXT_CONTAINER_ARRAY_TERMS = Set.new(%w(@set @list @graph)).freeze
+    CONTEXT_CONTAINER_ID_GRAPH = Set.new(%w(@id @graph)).freeze
+    CONTEXT_CONTAINER_INDEX_GRAPH = Set.new(%w(@index @graph)).freeze
     CONTEXT_BASE_FRAG_OR_QUERY = %w(? #).freeze
     CONTEXT_TYPE_ID_VOCAB = %w(@id @vocab).freeze
 
@@ -1906,7 +1913,7 @@ module JSON::LD
         end.each do |term|
           next unless td = term_definitions[term]
 
-          container = td.container_mapping.join('')
+          container = td.container_mapping.to_a.join('')
           if container.empty?
             container = td.as_set? ? %(@set) : %(@none)
           end
@@ -1943,7 +1950,7 @@ module JSON::LD
             lang_dir = td.direction_mapping ? "_#{td.direction_mapping}" : '@none'
             language_map[lang_dir] ||= term
           elsif default_direction
-            language_map[("#{td.language_mapping}_#{default_direction}").downcase] ||= term
+            language_map["_#{default_direction}"] ||= term
             language_map['@none'] ||= term
             type_map['@none'] ||= term
           else
@@ -2058,7 +2065,7 @@ module JSON::LD
               "'@container' on term #{term.inspect} must be a string: #{container.inspect}"
       end
 
-      val = Array(container).dup
+      val = Set.new(Array(container))
       val.delete('@set') if has_set = val.include?('@set')
 
       if val.include?('@list')
@@ -2088,7 +2095,7 @@ module JSON::LD
                processingMode('json-ld-1.0')
         raise JsonLdError::InvalidContainerMapping,
           "'@container' on term #{term.inspect} using @id cannot have any values other than @set and/or @graph, found  #{container.inspect}" unless
-          (val - CONTEXT_CONTAINER_ID_GRAPH).empty?
+          val.subset?(CONTEXT_CONTAINER_ID_GRAPH)
         # Okay
       elsif val.include?('@type') || val.include?('@graph')
         raise JsonLdError::InvalidContainerMapping,

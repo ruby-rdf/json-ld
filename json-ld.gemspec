@@ -28,7 +28,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'rdf',             '~> 3.1'
   gem.add_runtime_dependency     'multi_json',      '~> 1.14'
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
-  gem.add_runtime_dependency     'json-canonicalization', '~> 0.1'
+  gem.add_runtime_dependency     'json-canonicalization', '~> 0.2'
   gem.add_runtime_dependency     'htmlentities',     '~> 4.3'
   gem.add_runtime_dependency     'rack',            '~> 2.0'
   gem.add_development_dependency 'sinatra-linkeddata','~> 3.1'

@@ -119,7 +119,7 @@ module JSON::LD
           end
         end
 
-        # If frame has `@included`, recurse over it's sub-frame
+        # If frame has `@included`, recurse over its sub-frame
         if frame['@included']
           frame(state.merge(embedded: false), subjects, frame['@included'], parent: output, property: '@included', **options)
         end

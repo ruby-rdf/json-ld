@@ -132,6 +132,10 @@ module Fixtures
           {'specVersion' => "json-ld-1.1"}.merge(property('option') || {}).each do |k, v|
             opts[k.to_sym] = v
           end
+          if opts[:expandContext] && !RDF::URI(opts[:expandContext]).absolute?
+            # Resolve relative to manifest location
+            opts[:expandContext] = manifest_url.join(opts[:expandContext]).to_s
+          end
           opts
         end
       end
@@ -144,6 +148,7 @@ module Fixtures
           file = self.send("#{m}_loc".to_sym)
 
           dl_opts = {safe: true}
+          dl_opts[:contentType] = options[:contentType] if m == 'input' && options[:contentType]
           RDF::Util::File.open_file(file, **dl_opts) do |remote_doc|
             res = remote_doc.read
           end

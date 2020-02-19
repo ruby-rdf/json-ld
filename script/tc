@@ -13,6 +13,8 @@ require 'getoptlong'
 ASSERTOR = "http://greggkellogg.net/foaf#me"
 RUN_TIME = Time.now
 
+MultiJson.use(:json_gem) # because of differences in parsing with OJ
+
 def earl_preamble(options)
   options[:output].write File.read(File.expand_path("../../etc/doap.ttl", __FILE__))
   options[:output].puts %(
@@ -79,36 +81,37 @@ def run_tc(man, tc, options)
 
     result = case tc.testType
     when 'jld:CompactTest'
-      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], tc.options.merge(validate: true))
+      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ExpandTest'
-      output = JSON::LD::API.expand(tc.input_loc, tc.options.merge(validate: true))
+      # MultiJson use OJ, by default, which doesn't handle native numbers the same as the JSON gem.
+      output = JSON::LD::API.expand(tc.input_loc, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FlattenTest'
-      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), tc.options.merge(validate: true))
+      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FrameTest'
-      output = JSON::LD::API.frame(tc.input_loc, tc.frame_loc, tc.options.merge(validate: true))
+      output = JSON::LD::API.frame(tc.input_loc, tc.frame_loc, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FromRDFTest'
       repo = RDF::Repository.load(tc.input_loc, format: :nquads)
-      output = JSON::LD::API.fromRdf(repo, tc.options.merge(validate: true))
+      output = JSON::LD::API.fromRdf(repo, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ToRDFTest'
       output = RDF::Repository.new.extend(RDF::Isomorphic)
-      JSON::LD::API.toRdf(tc.input_loc, tc.options).map do |statement|
+      JSON::LD::API.toRdf(tc.input_loc, **tc.options).map do |statement|
         output << statement
       end
 
       if tc.evaluationTest? && tc.positiveTest?
         begin
           if tc.options[:produceGeneralizedRdf]
-            quads = JSON::LD::API.toRdf(tc.input_loc, tc.options.merge(validate: false)).map do |statement|
+            quads = JSON::LD::API.toRdf(tc.input_loc, **tc.options.merge(validate: false)).map do |statement|
               # Not really RDF, try different test method
               tc.to_quad(statement)
             end

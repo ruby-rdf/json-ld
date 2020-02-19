@@ -35,7 +35,7 @@ module JSON::LD
 
     # Options used for open_file
     OPEN_OPTS = {
-      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/json;q=0.5"}
+      headers: {"Accept" => "application/ld+json, text/html;q=0.8, application/xhtml+xml;q=0.8, application/json;q=0.5"}
     }
 
     # The following constants are used to reduce object allocations
@@ -229,7 +229,7 @@ module JSON::LD
         # xxx) Add the given context to the output
         ctx = self.context.serialize
         if result.is_a?(Array)
-          kwgraph = self.context.compact_iri('@graph', vocab: true, quiet: true)
+          kwgraph = self.context.compact_iri('@graph', vocab: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
         result = ctx.merge(result) unless ctx.empty?
@@ -295,7 +295,7 @@ module JSON::LD
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(compact(flattened, ordered: @options[:ordered]))
-          kwgraph = self.context.compact_iri('@graph', quiet: true)
+          kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.serialize.merge(kwgraph => compacted)
         end
       end
@@ -313,11 +313,11 @@ module JSON::LD
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
     # @option options (see #initialize)
-    # @option options ['@always', '@first', '@last', '@link', '@once', '@never'] :embed ('@last')
+    # @option options ['@always', '@link', '@once', '@never'] :embed ('@once')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
     # @option options [Boolean] :explicit (false)
     #   a flag specifying that for properties to be included in the output, they must be explicitly declared in the framing context.
-    # @option options [Boolean] :requireAll (true)
+    # @option options [Boolean] :requireAll (false)
     #   A flag specifying that all properties present in the input frame must either have a default value or be present in the JSON-LD input for the frame to match.
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
@@ -394,7 +394,7 @@ module JSON::LD
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')
 
-        frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true, quiet: true)}
+        frame_keys = frame.keys.map {|k| context.expand_iri(k, vocab: true)}
         if frame_keys.include?('@graph')
           # If frame contains @graph, it matches the default graph.
           framing_state[:graph] = '@default'
@@ -436,7 +436,7 @@ module JSON::LD
         result = if !compacted.is_a?(Array)
           context.serialize.merge(compacted)
         else
-          kwgraph = context.compact_iri('@graph', quiet: true)
+          kwgraph = context.compact_iri('@graph')
           context.serialize.merge({kwgraph => compacted})
         end
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
@@ -535,7 +535,7 @@ module JSON::LD
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
-    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
     # @param [Boolean] validate
@@ -612,7 +612,7 @@ module JSON::LD
         # Parse any HTML
         if remote_doc.document.is_a?(String)
           remote_doc.document = case remote_doc.contentType
-          when 'text/html'
+          when 'text/html', 'application/xhtml+xml'
             load_html(remote_doc.document,
                       url: remote_doc.documentUrl,
                       extractAllScripts: extractAllScripts,
@@ -628,7 +628,7 @@ module JSON::LD
 
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
-            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html/)
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)
         end
         block_given? ? yield(remote_doc) : remote_doc
       end
@@ -642,7 +642,7 @@ module JSON::LD
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
-    #   When the resulting `contentType` is `text/html`, this option determines the profile to use for selecting a JSON-LD script elements.
+    #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
     # @param [Hash<Symbol => Object>] options
@@ -739,7 +739,7 @@ module JSON::LD
         elements = if profile
           es = input.xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]")
           # If no profile script, just take a single script without profile
-          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")] if es.empty?
+          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")].compact if es.empty?
           es
         else
           input.xpath("//script[starts-with(@type, 'application/ld+json')]")

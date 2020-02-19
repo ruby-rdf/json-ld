@@ -50,11 +50,11 @@ module JSON::LD
             # Either serialize using a datatype, or a compound-literal
             case @options[:rdfDirection]
             when 'i18n-datatype'
-              datatype = RDF::URI("https://www.w3.org/ns/i18n##{item.fetch('@language', '')}_#{item['@direction']}")
+              datatype = RDF::URI("https://www.w3.org/ns/i18n##{item.fetch('@language', '').downcase}_#{item['@direction']}")
             when 'compound-literal'
               cl = RDF::Node.new
               yield RDF::Statement(cl, RDF.value, item['@value'].to_s)
-              yield RDF::Statement(cl, RDF.to_uri + 'language', item['@language']) if item['@language']
+              yield RDF::Statement(cl, RDF.to_uri + 'language', item['@language'].downcase) if item['@language']
               yield RDF::Statement(cl, RDF.to_uri + 'direction', item['@direction'])
               return cl
             end
@@ -76,7 +76,13 @@ module JSON::LD
         return parse_list(item['@list'], graph_name: graph_name, &block)
       end
 
-      subject = item['@id'] ? as_resource(item['@id']) : node
+      # Skip if '@id' is nil
+      subject = if item.has_key?('@id')
+        item['@id'].nil? ? nil : as_resource(item['@id'])
+      else
+        node
+      end
+
       #log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
       item.each do |property, values|
         case property
