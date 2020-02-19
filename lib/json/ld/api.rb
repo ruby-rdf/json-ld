@@ -739,7 +739,7 @@ module JSON::LD
         elements = if profile
           es = input.xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]")
           # If no profile script, just take a single script without profile
-          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")] if es.empty?
+          es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")].compact if es.empty?
           es
         else
           input.xpath("//script[starts-with(@type, 'application/ld+json')]")
