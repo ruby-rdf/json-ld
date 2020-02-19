@@ -32,28 +32,28 @@ def run(input, options)
   prefixes = {}
   start = Time.new
   if options[:flatten]
-    output = JSON::LD::API.flatten(input, options.delete(:context), options)
+    output = JSON::LD::API.flatten(input, options.delete(:context), **options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Flattened in #{secs} seconds."
   elsif options[:expand]
     options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
-    output = JSON::LD::API.expand(input, options)
+    output = JSON::LD::API.expand(input, **options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Expanded in #{secs} seconds."
   elsif options[:compact]
-    output = JSON::LD::API.compact(input, options[:context], options)
+    output = JSON::LD::API.compact(input, options[:context], **options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Compacted in #{secs} seconds."
   elsif options[:frame]
-    output = JSON::LD::API.frame(input, options[:frame], options)
+    output = JSON::LD::API.frame(input, options[:frame], **options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Framed in #{secs} seconds."
   else
-    r = reader_class.new(input, options[:parser_options])
+    r = reader_class.new(input, **options[:parser_options])
     if options[:output_format] == :none
       num = 0
       r.each_statement { num += 1 } # Eat statements
@@ -63,7 +63,7 @@ def run(input, options)
       secs = Time.new - start
       num = g.count
       parser_options = options[:parser_options].merge(prefixes: r.prefixes, standard_prefixes: true)
-      options[:output].puts g.dump(options[:output_format], parser_options)
+      options[:output].puts g.dump(options[:output_format], **parser_options)
       puts
     end
     puts "Parsed #{num} statements in #{secs} seconds @ #{num/secs} statements/second."

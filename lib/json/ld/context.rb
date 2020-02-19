@@ -3,6 +3,12 @@
 require 'json'
 require 'bigdecimal'
 require 'set'
+begin
+  # Attempt to load this to avoid unnecessary context fetches
+  require 'json-ld-preloaded'
+rescue LoadError
+  # Silently allow this to fail
+end
 
 module JSON::LD
   class Context
