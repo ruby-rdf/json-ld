@@ -954,11 +954,13 @@ describe JSON::LD::Context do
       }, logger)
     end
 
-    context "extra keys or values" do
+    context "invalid term definitions" do
       {
-        "extra key" => {
-          input: {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}},
-          result: {"@context" => {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}}
+        "empty term": {
+          input: {"" => "http://blank-term/"}
+        },
+        "extra key": {
+          input: {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}
         }
       }.each do |title, params|
         it title do
@@ -975,7 +977,6 @@ describe JSON::LD::Context do
         '@base' => 'http://base/',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
-        '' => 'http://empty/',
         '_' => 'http://underscore/'
       })
     }
@@ -1039,7 +1040,6 @@ describe JSON::LD::Context do
         '@base' => 'http://base/base',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
-        '' => 'http://empty/',
         '_' => 'http://underscore/'
       })
     }
@@ -1119,7 +1119,6 @@ describe JSON::LD::Context do
           "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],
           "relative" =>      ["foo/bar",             RDF::URI("http://vocab/foo/bar")],
           "dotseg" =>        ["../foo/bar",          RDF::URI("http://vocab/../foo/bar")],
-          "empty term" =>    ["",                    RDF::URI("http://empty/")],
           "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
           "absolute IRI looking like a compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
@@ -1138,7 +1137,6 @@ describe JSON::LD::Context do
               '@base' => 'http://base/base',
               '@vocab' => '',
               'ex' => 'http://example.org/',
-              '' => 'http://empty/',
               '_' => 'http://underscore/'
             })
           }
@@ -1153,7 +1151,6 @@ describe JSON::LD::Context do
             "unmapped" =>      ["foo",                 RDF::URI("http://base/basefoo")],
             "relative" =>      ["foo/bar",             RDF::URI("http://base/basefoo/bar")],
             "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/base../foo/bar")],
-            "empty term" =>    ["",                    RDF::URI("http://empty/")],
             "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
             "absolute IRI looking like a compact IRI" =>
                                ["foo:bar",             RDF::URI("foo:bar")],
@@ -1183,7 +1180,6 @@ describe JSON::LD::Context do
         '@base'   => 'http://base/',
         "xsd"     => "http://www.w3.org/2001/XMLSchema#",
         'ex'      => 'http://example.org/',
-        ''        => 'http://empty/',
         '_'       => 'http://underscore/',
         'rex'     => {'@reverse' => "ex"},
         'lex'     => {'@id' => 'ex', '@language' => 'en'},
@@ -1390,7 +1386,6 @@ describe JSON::LD::Context do
         "absolute IRI"  => ["http://example.com/", "http://example.com/"],
         "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
         "keyword"       => ["@type",               "@type"],
-        "empty"         => [":suffix",             "http://empty/suffix"],
         "unmapped"      => ["foo",                 "foo"],
         "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
         "relative"      => ["foo/bar",             "http://base/foo/bar"],
@@ -1412,7 +1407,6 @@ describe JSON::LD::Context do
           "absolute IRI"  => ["http://example.com/", "http://example.com/"],
           "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
           "keyword"       => ["@type",               "@type"],
-          "empty"         => [":suffix",             "http://empty/suffix"],
           "unmapped"      => ["foo",                 "foo"],
           "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
           "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],

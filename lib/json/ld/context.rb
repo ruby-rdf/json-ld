@@ -1819,7 +1819,7 @@ module JSON::LD
     # @param [String] term
     # @return [Boolean]
     def term_valid?(term)
-      term.is_a?(String)
+      term.is_a?(String) && !term.empty?
     end
 
     # Reverse term mapping, typically used for finding aliases for keys.

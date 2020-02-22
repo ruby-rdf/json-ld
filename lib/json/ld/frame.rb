@@ -116,6 +116,7 @@ module JSON::LD
           if recurse
             state[:graphStack].push(state[:graph])
             frame(state.merge(graph: id, embedded: false), state[:graphMap][id].keys, [subframe], parent: output, property: '@graph', **options)
+            state[:graphStack].pop
           end
         end
 
