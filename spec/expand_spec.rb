@@ -2909,6 +2909,26 @@ describe JSON::LD::API do
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
+        "Applies property scoped contexts which are aliases of @nest": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "nest": {
+                "@id": "@nest",
+                "@context": {
+                  "@vocab": "http://example.org/nest/"
+                }
+              }
+            },
+            "nest": {
+              "property": "should be in /nest"
+            }
+          }),
+          output: %([{
+            "http://example.org/nest/property": [{"@value": "should be in /nest"}]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end

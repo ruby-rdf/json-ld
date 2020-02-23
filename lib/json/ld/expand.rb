@@ -625,11 +625,13 @@ module JSON::LD
 
       # For each key in nests, recusively expand content
       nests.each do |key|
+        nest_context = context.term_definitions[key].context if context.term_definitions[key]
+        nest_context = nest_context ? context.parse(nest_context, override_protected: true) : context
         nested_values = as_array(input[key])
         nested_values.each do |nv|
           raise JsonLdError::InvalidNestValue, nv.inspect unless
-            nv.is_a?(Hash) && nv.keys.none? {|k| context.expand_iri(k, vocab: true) == '@value'}
-          expand_object(nv, active_property, context, output_object,
+            nv.is_a?(Hash) && nv.keys.none? {|k| nest_context.expand_iri(k, vocab: true) == '@value'}
+          expand_object(nv, active_property, nest_context, output_object,
                         expanded_active_property: expanded_active_property,
                         type_scoped_context: type_scoped_context,
                         type_key: type_key,
