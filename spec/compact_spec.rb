@@ -2442,42 +2442,6 @@ describe JSON::LD::API do
           }),
           exception: JSON::LD::JsonLdError::InvalidNestValue
         },
-        "Applies property scoped contexts which are aliases of @nest": {
-          input: %([{
-            "http://example.org/nest/property": [{"@value": "should have language en", "@language": "en"}]
-          }]),
-          context: %({
-            "@context": {
-              "@version": 1.1,
-              "@vocab": "http://example.org/",
-              "@language": "de",
-              "nest": {
-                "@id": "@nest",
-                "@context": {
-                  "@language": "en"
-                }
-              },
-              "property": {"@nest": "nest"}
-            }
-          }),
-          output: %({
-            "@context": {
-              "@version": 1.1,
-              "@vocab": "http://example.org/",
-              "@language": "de",
-              "nest": {
-                "@id": "@nest",
-                "@context": {
-                  "@language": "en"
-                }
-              },
-              "property": {"@nest": "nest"}
-            },
-            "nest": {
-              "property": "should have language en"
-            }
-          })
-        }
       }.each_pair do |title, params|
         it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
       end
