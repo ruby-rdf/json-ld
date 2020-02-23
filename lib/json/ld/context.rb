@@ -763,6 +763,7 @@ module JSON::LD
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if term == '@type' &&
          value.is_a?(Hash) &&
+         !value.empty? &&
          processingMode("json-ld-1.1") &&
          (value.keys - %w(@container @protected)).empty? &&
          value.fetch('@container', '@set') == '@set'
@@ -841,6 +842,11 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
           value['@reverse'].is_a?(String)
 
+        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
+          return
+        end
+
         # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
         definition.id =  expand_iri(value['@reverse'],
                                     vocab: true,
@@ -848,11 +854,6 @@ module JSON::LD
                                     defined: defined)
         raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
           definition.id.is_a?(RDF::Node) || definition.id.is_a?(RDF::URI) && definition.id.absolute?
-
-        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
-          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
-          return
-        end
 
         if term[1..-1].to_s.include?(':') && (term_iri = expand_iri(term)) != definition.id
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
