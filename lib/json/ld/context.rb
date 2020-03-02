@@ -1229,7 +1229,7 @@ module JSON::LD
           term.nest
         else
           nest_term = find_definition(term.nest)
-          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
+          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.id == '@nest'
           term.nest
         end
       end
