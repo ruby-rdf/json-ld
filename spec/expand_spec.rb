@@ -3639,7 +3639,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#third",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if targeted element is not a script element": {
               input: %(
@@ -3656,7 +3656,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#first",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if targeted element does not have type application/ld+json": {
               input: %(
@@ -3673,7 +3673,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#first",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if uncommented script text contains comment": {
               input: %(

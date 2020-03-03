@@ -729,8 +729,8 @@ module JSON::LD
         id = CGI.unescape(url.fragment)
         # Find script with an ID based on that fragment.
         element = input.at_xpath("//script[@id='#{id}']")
-        raise JSON::LD::JsonLdError::InvalidScriptElement, "No script tag found with id=#{id}" unless element
-        raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found with id=#{id}" unless element
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, **options)
@@ -763,7 +763,7 @@ module JSON::LD
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, **options)
       end
-    rescue JSON::LD::JsonLdError::LoadingDocumentFailed, MultiJson::ParseError => e
+    rescue MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
     end
 

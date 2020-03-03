@@ -162,7 +162,9 @@ def run_tc(man, tc, options)
         options[:results]['passed'] += 1
         "passed"
       else
-        STDERR.puts("Expected exception: #{tc.property('expectErrorCode')} not #{e}") unless options[:quiet]
+        STDERR.puts("Expected exception: '#{tc.property('expectErrorCode')}' not '#{e}'") unless options[:quiet]
+        options[:results]['failed'] ||= 0
+        options[:results]['failed'] += 1
         "failed"
       end
     end
