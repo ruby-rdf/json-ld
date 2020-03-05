@@ -759,7 +759,8 @@ module JSON::LD
         # Find the first script with type application/ld+json.
         element = input.at_xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]") if profile
         element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
-        content = element ? element.inner_html : "[]"
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
+        content = element.inner_html
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, **options)
       end
