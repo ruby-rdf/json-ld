@@ -503,7 +503,7 @@ describe JSON::LD::Context do
         "@type as object" => {"foo" => {"@type" => {}}},
         "@type as array" => {"foo" => {"@type" => []}},
         "@type as @list" => {"foo" => {"@type" => "@list"}},
-        "@type as @none" => {"@version": 1.1, "foo" => {"@type" => "@none"}},
+        "@type as @none" => {"@version" => 1.1, "foo" => {"@type" => "@none"}},
         "@type as @set" => {"foo" => {"@type" => "@set"}},
         "@container as object" => {"foo" => {"@container" => {}}},
         "@container as empty array" => {"foo" => {"@container" => []}},

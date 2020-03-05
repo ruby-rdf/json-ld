@@ -3386,7 +3386,7 @@ describe JSON::LD::API do
       %w(Nokogiri REXML).each do |impl|
         next unless Module.constants.map(&:to_s).include?(impl)
         context impl do
-          before(:all) {@library = impl.downcase.to_s.to_sym}
+          let(:library) {impl.downcase.to_s.to_sym}
 
           {
             "Expands embedded JSON-LD script element": {
@@ -3525,9 +3525,9 @@ describe JSON::LD::API do
               ]),
               extractAllScripts: true
             },
-            "Expands as empty with no script element": {
+            "Errors no script element": {
               input: %(<html><head></head></html>),
-              output: %([])
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Expands as empty with no script element and extractAllScripts": {
               input: %(<html><head></head></html>),
@@ -3742,10 +3742,10 @@ describe JSON::LD::API do
             },
           }.each do |title, params|
             it(title) do
-              skip "rexml" if params[:not] == @library
-              params[:input] = StringIO.new(params[:input])
+              skip "rexml" if params[:not] == library
+              params = params.merge(input: StringIO.new(params[:input]))
               params[:input].send(:define_singleton_method, :content_type) {"text/html"}
-              run_expand params.merge(validate: true, library: @library)
+              run_expand params.merge(validate: true, library: library)
             end
           end
         end

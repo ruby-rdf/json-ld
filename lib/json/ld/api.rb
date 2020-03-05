@@ -703,14 +703,14 @@ module JSON::LD
         require "json/ld/html/#{library}"
 
         # Parse HTML using the appropriate library
-        @implementation = case library
+        implementation = case library
         when :nokogiri then Nokogiri
         when :rexml then REXML
         end
-        self.extend(@implementation)
+        self.extend(implementation)
 
         input = begin
-          initialize_html(input, **options)
+          self.send("initialize_html_#{library}".to_sym, input, **options)
         rescue
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
         end
