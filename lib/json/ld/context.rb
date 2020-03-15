@@ -526,11 +526,19 @@ module JSON::LD
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    # @param [Boolean] validate_scoped (true).
+    #   Validate scoped context, loading if necessary.
+    #   If false, do not load scoped contexts.
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
-    def parse(local_context, remote_contexts: [], protected: false, override_protected: false, propagate: true)
+    def parse(local_context,
+              remote_contexts: [],
+              protected: false,
+              override_protected: false,
+              propagate: true,
+              validate_scoped: true)
       result = self.dup
       result.provided_context = local_context if self.empty?
       # Early check for @propagate, which can only appear in a local context
@@ -616,6 +624,9 @@ module JSON::LD
               raise JsonLdError::LoadingRemoteContextFailed, "#{context_no_base.context_base}: #{e.message}", e.backtrace
             end
 
+            # If not validating scoped contexts, simply return the current context to avoid recusion loops.
+            next unless validate_scoped
+
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
             context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, protected: protected, override_protected: override_protected, propagate: propagate)
             PRELOADED[context_canon.to_s] = context.dup
@@ -678,7 +689,9 @@ module JSON::LD
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
                                           override_protected: override_protected,
-                                          protected: context.fetch('@protected', protected)) unless NON_TERMDEF_KEYS.include?(key)
+                                          protected: context.fetch('@protected', protected),
+                                          validate_scoped: validate_scoped
+                                          ) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -740,10 +753,16 @@ module JSON::LD
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   Context is propagated across node objects.
+    # @param [Boolean] validate_scoped (true).
+    #   Validate scoped context, loading if necessary.
+    #   If false, do not load scoped contexts.
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, override_protected: false, protected: false)
+    def create_term_definition(local_context, term, defined,
+        override_protected: false,
+        protected: false,
+        validate_scoped: true)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -958,7 +977,7 @@ module JSON::LD
 
       if value.has_key?('@context')
         begin
-          self.parse(value['@context'], override_protected: true)
+          self.parse(value['@context'], override_protected: true, validate_scoped: false)
           # Record null context in array form
           definition.context = value['@context'] ? value['@context'] : [nil]
         rescue JsonLdError => e
