@@ -52,13 +52,13 @@ module JSON
       @direction
       @embed
       @explicit
-      @json
-      @id
-      @included
-      @index
       @first
       @graph
+      @id
       @import
+      @included
+      @index
+      @json
       @language
       @list
       @nest
@@ -66,6 +66,7 @@ module JSON
       @omitDefault
       @propagate
       @protected
+      @preserve
       @requireAll
       @reverse
       @set
@@ -154,7 +155,7 @@ module JSON
       class KeywordRedefinition < JsonLdError; @code = "keyword redefinition"; end
       class LoadingDocumentFailed < JsonLdError; @code = "loading document failed"; end
       class LoadingRemoteContextFailed < JsonLdError; @code = "loading remote context failed"; end
-      class ContextOverflow < JsonLdError; @code = "maximum number of @context URLs exceeded"; end
+      class ContextOverflow < JsonLdError; @code = "context overflow"; end
       class MissingIncludedReferent < JsonLdError; @code = "missing @included referent"; end
       class MultipleContextLinkHeaders < JsonLdError; @code = "multiple context link headers"; end
       class ProtectedTermRedefinition < JsonLdError; @code = "protected term redefinition"; end
