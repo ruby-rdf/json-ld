@@ -2305,6 +2305,50 @@ describe JSON::LD::API do
           }
         }),
         processingMode: "json-ld-1.1"
+      },
+      "missing types": {
+        input: %({
+            "@context": {
+              "ex": "http://example.com#",
+              "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+            },
+            "@graph": [{
+              "@id": "ex:graph1",
+              "@graph": [{
+                "@id": "ex:entity1",
+                "@type": ["ex:Type1","ex:Type2"],
+                "ex:title": "some title",
+                "ex:multipleValues": "ex:One"
+            }]
+          }, {
+            "@id": "ex:graph2",
+            "@graph": [{
+              "@id": "ex:entity1",
+              "@type": "ex:Type3",
+              "ex:tags": "tag1 tag2",
+              "ex:multipleValues": ["ex:Two","ex:Three"]
+            }]
+          }]
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.com#",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+          },
+          "@id": "ex:entity1",
+          "@type": ["ex:Type1", "ex:Type2", "ex:Type3"],
+          "ex:multipleValues": ["ex:One", "ex:Two","ex:Three"],
+          "ex:tags": "tag1 tag2",
+          "ex:title": "some title"
+        }),
+        frame: %({
+          "@context": {
+            "ex": "http://example.com#",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+          },
+          "@id": "ex:entity1"
+        }),
+        processingMode: "json-ld-1.1"
       }
     }.each do |title, params|
       it title do

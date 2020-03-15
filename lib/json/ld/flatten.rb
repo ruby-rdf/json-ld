@@ -142,7 +142,7 @@ module JSON::LD
 
           # Iterate over node properties
           node.each do |property, values|
-            if property.start_with?('@')
+            if property != '@type' && property.start_with?('@')
               # Copy keywords
               merged_node[property] = node[property].dup
             else
