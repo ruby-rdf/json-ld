@@ -182,6 +182,10 @@ module Fixtures
       def positiveTest?
         property('@type').to_s.include?('Positive')
       end
+
+      def syntaxTest?
+        property('@type').to_s.include?('Syntax')
+      end
       
 
       # Execute the test

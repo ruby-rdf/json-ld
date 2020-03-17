@@ -71,7 +71,7 @@ def run_tc(man, tc, options)
     puts "\nInput:\n" + tc.input
     puts "\nContext:\n" + tc.context if tc.context
     puts "\nFrame:\n" + tc.frame if tc.frame
-    puts "\nExpected:\n" + tc.expect if tc.positiveTest?
+    puts "\nExpected:\n" + tc.expect if tc.expect && tc.positiveTest?
     puts "\nExpected:\n" + tc.expectErrorCode if tc.negativeTest?
   end
 
@@ -139,7 +139,7 @@ def run_tc(man, tc, options)
       end
     end || "untested"
 
-    puts "\nOutput:\n" + (tc.testType == 'jld:ToRDFTest' ? output : output.to_json(JSON::LD::JSON_STATE)) if options[:verbose]
+    puts "\nOutput:\n" + (tc.testType == 'jld:ToRDFTest' ? output : output.to_json(JSON::LD::JSON_STATE)) if !tc.syntaxTest? && options[:verbose]
 
     result = result ? 'failed' : 'passed' unless tc.positiveTest?
     options[:results][result] ||= 0
