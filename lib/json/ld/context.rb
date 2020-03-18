@@ -526,11 +526,19 @@ module JSON::LD
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    # @param [Boolean] validate_scoped (true).
+    #   Validate scoped context, loading if necessary.
+    #   If false, do not load scoped contexts.
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
-    def parse(local_context, remote_contexts: [], protected: false, override_protected: false, propagate: true)
+    def parse(local_context,
+              remote_contexts: [],
+              protected: false,
+              override_protected: false,
+              propagate: true,
+              validate_scoped: true)
       result = self.dup
       result.provided_context = local_context if self.empty?
       # Early check for @propagate, which can only appear in a local context
@@ -576,6 +584,9 @@ module JSON::LD
           context_canon = context.canonicalize
           context_canon.scheme == 'http' if context_canon.scheme == 'https'
 
+          # If validating a scoped context which has already been loaded, skip to the next one
+          next if !validate_scoped && remote_contexts.include?(context.to_s)
+
           remote_contexts << context.to_s
           raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
 
@@ -617,7 +628,12 @@ module JSON::LD
             end
 
             # 3.2.6) Set context to the result of recursively calling this algorithm, passing context no base for active context, context for local context, and remote contexts.
-            context = context_no_base.parse(context, remote_contexts: remote_contexts.dup, protected: protected, override_protected: override_protected, propagate: propagate)
+            context = context_no_base.parse(context,
+                remote_contexts: remote_contexts.dup,
+                protected: protected,
+                override_protected: override_protected,
+                propagate: propagate,
+                validate_scoped: validate_scoped)
             PRELOADED[context_canon.to_s] = context.dup
             context.provided_context = result.provided_context
           end
@@ -678,7 +694,10 @@ module JSON::LD
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
                                           override_protected: override_protected,
-                                          protected: context.fetch('@protected', protected)) unless NON_TERMDEF_KEYS.include?(key)
+                                          protected: context.fetch('@protected', protected),
+                                          remote_contexts: remote_contexts.dup,
+                                          validate_scoped: validate_scoped
+                                          ) unless NON_TERMDEF_KEYS.include?(key)
           end
         else
           # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
@@ -740,10 +759,18 @@ module JSON::LD
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   Context is propagated across node objects.
+    # @param [Array<String>] remote_contexts
+    # @param [Boolean] validate_scoped (true).
+    #   Validate scoped context, loading if necessary.
+    #   If false, do not load scoped contexts.
     # @raise [JsonLdError]
     #   Represents a cyclical term dependency
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
-    def create_term_definition(local_context, term, defined, override_protected: false, protected: false)
+    def create_term_definition(local_context, term, defined,
+        override_protected: false,
+        protected: false,
+        remote_contexts: [],
+        validate_scoped: true)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
 
@@ -763,6 +790,7 @@ module JSON::LD
       # Since keywords cannot be overridden, term must not be a keyword. Otherwise, an invalid value has been detected, which is an error.
       if term == '@type' &&
          value.is_a?(Hash) &&
+         !value.empty? &&
          processingMode("json-ld-1.1") &&
          (value.keys - %w(@container @protected)).empty? &&
          value.fetch('@container', '@set') == '@set'
@@ -841,6 +869,11 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
           value['@reverse'].is_a?(String)
 
+        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
+          return
+        end
+
         # Otherwise, set the IRI mapping of definition to the result of using the IRI Expansion algorithm, passing active context, the value associated with the @reverse key for value, true for vocab, true for document relative, local context, and defined. If the result is not an absolute IRI, i.e., it contains no colon (:), an invalid IRI mapping error has been detected and processing is aborted.
         definition.id =  expand_iri(value['@reverse'],
                                     vocab: true,
@@ -848,11 +881,6 @@ module JSON::LD
                                     defined: defined)
         raise JsonLdError::InvalidIRIMapping, "non-absolute @reverse IRI: #{definition.id} on term #{term.inspect}" unless
           definition.id.is_a?(RDF::Node) || definition.id.is_a?(RDF::URI) && definition.id.absolute?
-
-        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
-          warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
-          return
-        end
 
         if term[1..-1].to_s.include?(':') && (term_iri = expand_iri(term)) != definition.id
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
@@ -957,7 +985,7 @@ module JSON::LD
 
       if value.has_key?('@context')
         begin
-          self.parse(value['@context'], override_protected: true)
+          self.parse(value['@context'], override_protected: true, remote_contexts: remote_contexts, validate_scoped: false)
           # Record null context in array form
           definition.context = value['@context'] ? value['@context'] : [nil]
         rescue JsonLdError => e
@@ -1228,7 +1256,7 @@ module JSON::LD
           term.nest
         else
           nest_term = find_definition(term.nest)
-          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.simple? && nest_term.id == '@nest'
+          raise JsonLdError::InvalidNestValue, "nest must a term resolving to @nest, was #{nest_term.inspect}" unless nest_term && nest_term.id == '@nest'
           term.nest
         end
       end
@@ -1819,7 +1847,7 @@ module JSON::LD
     # @param [String] term
     # @return [Boolean]
     def term_valid?(term)
-      term.is_a?(String)
+      term.is_a?(String) && !term.empty?
     end
 
     # Reverse term mapping, typically used for finding aliases for keys.

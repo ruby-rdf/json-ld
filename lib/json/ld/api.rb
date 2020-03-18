@@ -703,14 +703,14 @@ module JSON::LD
         require "json/ld/html/#{library}"
 
         # Parse HTML using the appropriate library
-        @implementation = case library
+        implementation = case library
         when :nokogiri then Nokogiri
         when :rexml then REXML
         end
-        self.extend(@implementation)
+        self.extend(implementation)
 
         input = begin
-          initialize_html(input, **options)
+          self.send("initialize_html_#{library}".to_sym, input, **options)
         rescue
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Malformed HTML document: #{$!.message}"
         end
@@ -729,8 +729,8 @@ module JSON::LD
         id = CGI.unescape(url.fragment)
         # Find script with an ID based on that fragment.
         element = input.at_xpath("//script[@id='#{id}']")
-        raise JSON::LD::JsonLdError::InvalidScriptElement, "No script tag found with id=#{id}" unless element
-        raise JSON::LD::JsonLdError::InvalidScriptElement, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found with id=#{id}" unless element
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, **options)
@@ -759,11 +759,12 @@ module JSON::LD
         # Find the first script with type application/ld+json.
         element = input.at_xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]") if profile
         element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
-        content = element ? element.inner_html : "[]"
+        raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
+        content = element.inner_html
         validate_input(content, url: url) if options[:validate]
         MultiJson.load(content, **options)
       end
-    rescue JSON::LD::JsonLdError::LoadingDocumentFailed, MultiJson::ParseError => e
+    rescue MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
     end
 

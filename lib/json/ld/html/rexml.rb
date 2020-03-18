@@ -169,7 +169,7 @@ module JSON::LD
       #
       # @param  [Hash{Symbol => Object}] options
       # @return [NodeProxy] of document root
-      def initialize_html(input, options = {})
+      def initialize_html_rexml(input, options = {})
         require 'rexml/document' unless defined?(::REXML)
         doc = case input
         when ::REXML::Document
@@ -181,6 +181,7 @@ module JSON::LD
 
         NodeProxy.new(doc.root) if doc && doc.root
       end
+      alias_method :initialize_html, :initialize_html_rexml
     end
   end
 end

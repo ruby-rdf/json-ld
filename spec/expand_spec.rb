@@ -2909,6 +2909,26 @@ describe JSON::LD::API do
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
+        "Applies property scoped contexts which are aliases of @nest": {
+          input: %({
+            "@context": {
+              "@version": 1.1,
+              "@vocab": "http://example.org/",
+              "nest": {
+                "@id": "@nest",
+                "@context": {
+                  "@vocab": "http://example.org/nest/"
+                }
+              }
+            },
+            "nest": {
+              "property": "should be in /nest"
+            }
+          }),
+          output: %([{
+            "http://example.org/nest/property": [{"@value": "should be in /nest"}]
+          }])
+        }
       }.each do |title, params|
         it(title) {run_expand({processingMode: "json-ld-1.1"}.merge(params))}
       end
@@ -3366,7 +3386,7 @@ describe JSON::LD::API do
       %w(Nokogiri REXML).each do |impl|
         next unless Module.constants.map(&:to_s).include?(impl)
         context impl do
-          before(:all) {@library = impl.downcase.to_s.to_sym}
+          let(:library) {impl.downcase.to_s.to_sym}
 
           {
             "Expands embedded JSON-LD script element": {
@@ -3505,9 +3525,9 @@ describe JSON::LD::API do
               ]),
               extractAllScripts: true
             },
-            "Expands as empty with no script element": {
+            "Errors no script element": {
               input: %(<html><head></head></html>),
-              output: %([])
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Expands as empty with no script element and extractAllScripts": {
               input: %(<html><head></head></html>),
@@ -3619,7 +3639,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#third",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if targeted element is not a script element": {
               input: %(
@@ -3636,7 +3656,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#first",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if targeted element does not have type application/ld+json": {
               input: %(
@@ -3653,7 +3673,7 @@ describe JSON::LD::API do
                 </head>
               </html>),
               base: "http://example.org/doc#first",
-              exception: JSON::LD::JsonLdError::InvalidScriptElement
+              exception: JSON::LD::JsonLdError::LoadingDocumentFailed
             },
             "Errors if uncommented script text contains comment": {
               input: %(
@@ -3722,10 +3742,10 @@ describe JSON::LD::API do
             },
           }.each do |title, params|
             it(title) do
-              skip "rexml" if params[:not] == @library
-              params[:input] = StringIO.new(params[:input])
+              skip "rexml" if params[:not] == library
+              params = params.merge(input: StringIO.new(params[:input]))
               params[:input].send(:define_singleton_method, :content_type) {"text/html"}
-              run_expand params.merge(validate: true, library: @library)
+              run_expand params.merge(validate: true, library: library)
             end
           end
         end

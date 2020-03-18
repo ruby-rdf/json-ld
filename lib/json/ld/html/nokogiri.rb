@@ -129,7 +129,7 @@ module JSON::LD
       #
       # @param  [Hash{Symbol => Object}] options
       # @return [NodeProxy] of root element
-      def initialize_html(input, options = {})
+      def initialize_html_nokogiri(input, options = {})
         require 'nokogiri' unless defined?(::Nokogiri)
         doc = case input
         when ::Nokogiri::HTML::Document, ::Nokogiri::XML::Document
@@ -146,6 +146,7 @@ module JSON::LD
 
         NodeProxy.new(doc.root) if doc && doc.root
       end
+      alias_method :initialize_html, :initialize_html_nokogiri
     end
   end
 end
