@@ -985,9 +985,13 @@ module JSON::LD
 
       if value.has_key?('@context')
         begin
-          self.parse(value['@context'], override_protected: true, remote_contexts: remote_contexts, validate_scoped: false)
+          new_ctx = self.parse(value['@context'], override_protected: true, remote_contexts: remote_contexts, validate_scoped: false)
           # Record null context in array form
-          definition.context = value['@context'] ? value['@context'] : [nil]
+          definition.context = case value['@context']
+          when String then new_ctx.context_base
+          when nil then [nil]
+          else value['@context']
+          end
         rescue JsonLdError => e
           raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
         end
