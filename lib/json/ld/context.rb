@@ -126,7 +126,7 @@ module JSON::LD
                     direction_mapping: nil,
                     reverse_property: false,
                     nest: nil,
-                    protected: false,
+                    protected: nil,
                     simple: false,
                     prefix: nil,
                     context: nil)
@@ -336,8 +336,8 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, protected: false, override_protected: false, propagate: true, **options)
-      self.new(**options).parse(local_context, protected: false, override_protected: override_protected, propagate: propagate)
+    def self.parse(local_context, protected: nil, override_protected: false, propagate: true, **options)
+      self.new(**options).parse(local_context, protected: protected, override_protected: override_protected, propagate: propagate)
     end
 
     ##
@@ -550,7 +550,7 @@ module JSON::LD
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
     def parse(local_context,
               remote_contexts: [],
-              protected: false,
+              protected: nil,
               override_protected: false,
               propagate: true,
               validate_scoped: true)
@@ -643,9 +643,8 @@ module JSON::LD
           end.dup()
 
           # if `protected` is true, update term definitions to be protected
-          # FIXME: if they were explicitly marked not protected, then this will fail
           if protected
-            cached_context.term_definitions.each {|td| td.protected = true}
+            cached_context.term_definitions.each {|td| td.protected = true if td.protected.nil?}
           end
 
           # Merge loaded context noting protected term overriding
@@ -785,7 +784,7 @@ module JSON::LD
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
     def create_term_definition(local_context, term, defined,
         override_protected: false,
-        protected: false,
+        protected: nil,
         remote_contexts: [],
         validate_scoped: true)
       # Expand a string value, unless it matches a keyword
