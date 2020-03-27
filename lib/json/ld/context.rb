@@ -638,12 +638,12 @@ module JSON::LD
               #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
               raise JsonLdError::LoadingRemoteContextFailed, "#{context}: #{e.message}", e.backtrace
             end
-          end.dup()
+          end
 
           # Merge loaded context noting protected term overriding
           context = result.merge(cached_context, override_protected: override_protected)
 
-          context.previous_context = result unless propagate
+          context.previous_context = self unless propagate
           result = context
           #log_debug("parse") {"=> provided_context: #{context.inspect}"}
         when Hash
@@ -722,12 +722,13 @@ module JSON::LD
     # @param [Boolean]
     # @return [Context]
     def merge(context, override_protected: false)
-      ctx = self.dup
-      ctx.context_base = context.context_base if context.context_base
-      ctx.default_language = context.default_language if context.default_language
-      ctx.default_direction = context.default_direction if context.default_direction
-      ctx.vocab = context.vocab if context.vocab
-      ctx.base = context.base if context.base
+      ctx = Context.new(term_definitions: self.term_definitions.dup(), standard_prefixes: options[:standard_prefixes])
+      ctx.context_base = context.context_base || self.context_base
+      ctx.default_language = context.default_language || self.default_language
+      ctx.default_direction = context.default_direction || self.default_direction
+      ctx.vocab = context.vocab || self.vocab
+      ctx.base = context.base || self.base
+      ctx.provided_context = self.provided_context
       if !override_protected
         ctx.term_definitions.each do |term, definition|
           next unless definition.protected? && (other = context.term_definitions[term])
