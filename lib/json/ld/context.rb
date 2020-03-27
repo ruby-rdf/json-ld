@@ -1848,7 +1848,9 @@ module JSON::LD
       that = self
       ec = super
       ec.instance_eval do
-        @term_definitions = that.term_definitions.dup
+        @term_definitions = that.term_definitions.inject({}) do |memo, (term, defn)|
+          memo.merge(term => defn.dup())
+        end
         @iri_to_term = that.iri_to_term.dup
         @inverse_context = nil
       end
