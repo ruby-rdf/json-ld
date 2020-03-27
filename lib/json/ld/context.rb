@@ -336,8 +336,8 @@ module JSON::LD
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, protected: nil, override_protected: false, propagate: true, **options)
-      self.new(**options).parse(local_context, protected: protected, override_protected: override_protected, propagate: propagate)
+    def self.parse(local_context, override_protected: false, propagate: true, **options)
+      self.new(**options).parse(local_context, override_protected: override_protected, propagate: propagate)
     end
 
     ##
@@ -537,7 +537,6 @@ module JSON::LD
     #
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [Array<String>] remote_contexts
-    # @param [Boolean] protected Make defined terms protected (as if `@protected` were used).
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
@@ -550,7 +549,6 @@ module JSON::LD
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
     def parse(local_context,
               remote_contexts: [],
-              protected: nil,
               override_protected: false,
               propagate: true,
               validate_scoped: true)
@@ -642,11 +640,6 @@ module JSON::LD
             end
           end.dup()
 
-          # if `protected` is true, update term definitions to be protected
-          if protected
-            cached_context.term_definitions.each {|td| td.protected = true if td.protected.nil?}
-          end
-
           # Merge loaded context noting protected term overriding
           context = result.merge(cached_context, override_protected: override_protected)
 
@@ -695,7 +688,7 @@ module JSON::LD
                 raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
               end
             else
-              result.send(setter, context[key], remote_contexts: remote_contexts, protected: context.fetch('@protected', protected))
+              result.send(setter, context[key], remote_contexts: remote_contexts)
             end
             context.delete(key)
           end
@@ -707,7 +700,7 @@ module JSON::LD
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
                                           override_protected: override_protected,
-                                          protected: context.fetch('@protected', protected),
+                                          protected: context['@protected'],
                                           remote_contexts: remote_contexts.dup,
                                           validate_scoped: validate_scoped
                                           ) unless NON_TERMDEF_KEYS.include?(key)
