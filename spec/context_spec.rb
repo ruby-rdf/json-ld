@@ -57,14 +57,14 @@ describe JSON::LD::Context do
     context "remote" do
 
       it "retrieves and parses a remote context document" do
-        JSON::LD::Context::PRELOADED.clear
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.provided_context).to produce("http://example.com/context", logger)
       end
 
       it "fails given a missing remote @context" do
-        JSON::LD::Context::PRELOADED.clear
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
         expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
@@ -116,7 +116,7 @@ describe JSON::LD::Context do
             documentUrl: "http://example.com/context",
             contentType: "text/html")
 
-        JSON::LD::Context::PRELOADED.clear
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
@@ -154,7 +154,7 @@ describe JSON::LD::Context do
             ),
             documentUrl: "http://example.com/context",
             contentType: "text/html")
-          JSON::LD::Context::PRELOADED.clear
+          JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
@@ -170,7 +170,7 @@ describe JSON::LD::Context do
       end
 
       it "parses a referenced context at a relative URI" do
-        JSON::LD::Context::PRELOADED.clear
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         rd1 = JSON::LD::API::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
@@ -185,7 +185,7 @@ describe JSON::LD::Context do
 
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
-        before {JSON::LD::Context::PRELOADED.clear}
+        before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           subject.parse(ctx)
@@ -206,7 +206,7 @@ describe JSON::LD::Context do
           )
           JSON::LD::Context.alias_preloaded("https://example.com/preloaded", "http://example.com/preloaded")
         }
-        after(:all) {JSON::LD::Context::PRELOADED.clear}
+        after(:all) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
 
         it "does not load referenced context" do
           expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
@@ -249,6 +249,7 @@ describe JSON::LD::Context do
       end
 
       it "merges definitions from remote contexts" do
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
         rd2 = JSON::LD::API::RemoteDocument.new(%q({
           "@context": {
@@ -476,7 +477,7 @@ describe JSON::LD::Context do
       end
 
       context "@import" do
-        before(:each) {JSON::LD::Context::PRELOADED.clear}
+        before(:each) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
         it "generates an InvalidImportValue error if not a string" do
           expect {subject.parse({'@version' => 1.1, '@import' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
         end
@@ -642,18 +643,8 @@ describe JSON::LD::Context do
     end
   end
 
-  describe "#merge!" do
-    it "updates context with components from new" do
-      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"})
-      cm = context.merge!(c2)
-      expect(cm).to equal context
-      expect(cm).not_to equal c2
-      expect(cm.term_definitions).to eq c2.term_definitions
-    end
-  end
-
   describe "#serialize" do
-    before {JSON::LD::Context::PRELOADED.clear}
+    before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
     it "context document" do
       expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
       ec = subject.parse("http://example.com/context")

@@ -564,6 +564,7 @@ describe JSON::LD::API do
           documentUrl: "http://example.com/context")
       end
       it "uses referenced context" do
+        JSON::LD::Context.instance_variable_set(:@cache, nil)
         input = ::JSON.parse %({
           "http://example.com/b": "c"
         })

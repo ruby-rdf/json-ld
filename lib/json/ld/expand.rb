@@ -29,7 +29,7 @@ module JSON::LD
     #   Expanding from a map, which could be an `@type` map, so don't clear out context term definitions
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context, ordered: false, framing: false, from_map: false)
-      #log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
+      log_debug("expand") {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
       expanded_active_property = context.expand_iri(active_property, vocab: true, as_string: true) if active_property
 
@@ -73,7 +73,7 @@ module JSON::LD
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
           context = context.parse(input.delete('@context'))
-          #log_debug("expand") {"context: #{context.inspect}"}
+          log_debug("expand") {"context: #{context.inspect}"}
         end
 
         # Set the type-scoped context to the context on input, for use later
@@ -102,7 +102,7 @@ module JSON::LD
                       ordered: ordered,
                       framing: framing)
 
-        #log_debug("output object") {output_object.inspect}
+        log_debug("output object") {output_object.inspect}
 
         # If result contains the key @value:
         if value?(output_object)
@@ -161,7 +161,7 @@ module JSON::LD
         if (expanded_active_property || '@graph') == '@graph' &&
            (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - KEY_ID).empty? && !framing)
-          #log_debug(" =>") { "empty top-level: " + output_object.inspect}
+          log_debug(" =>") { "empty top-level: " + output_object.inspect}
           return nil
         end
 
@@ -181,7 +181,7 @@ module JSON::LD
         context.expand_value(active_property, input, log_depth: @options[:log_depth])
       end
 
-      #log_debug {" => #{result.inspect}"}
+      log_debug {" => #{result.inspect}"}
       result
     end
 
