@@ -627,7 +627,9 @@ module JSON::LD
                 # Parse stand-alone
                 ctx = Context.new(**options)
                 ctx.context_base = context.to_s
-                ctx.parse(remote_doc.document['@context'], remote_contexts: remote_contexts.dup)
+                ctx = ctx.parse(remote_doc.document['@context'], remote_contexts: remote_contexts.dup)
+                ctx.base = nil
+                ctx
               end
             rescue JsonLdError::LoadingDocumentFailed => e
               #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
@@ -671,10 +673,12 @@ module JSON::LD
                   requestProfile: 'http://www.w3.org/ns/json-ld#context',
                   base: nil)
                 context_opts.delete(:headers)
+                # FIXME: should cache this, but ContextCache is for parsed contexts
                 JSON::LD::API.loadRemoteDocument(source, **context_opts) do |remote_doc|
                   # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
                   raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   import_context = remote_doc.document['@context']
+                  import_context.delete('@base')
                   raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
                   raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
                   context.delete(key)
