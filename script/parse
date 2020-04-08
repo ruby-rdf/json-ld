@@ -11,15 +11,22 @@ require 'logger'
 require 'json/ld'
 require 'getoptlong'
 require 'open-uri'
+require 'ruby-prof'
 
 def run(input, options)
   if options[:profile]
     output_dir = File.expand_path("../../doc/profiles/#{File.basename __FILE__, ".rb"}", __FILE__)
     FileUtils.mkdir_p(output_dir)
-    result = RubyProf.profile do
-      run(input, profile: false, **options)
-    end
-    result.eliminate_methods!([/Hash#each/, /JSON::LD::Utils#debug/, /Array#map/, /JSON::LD::Utils#depth/])
+    profile = RubyProf::Profile.new
+    profile.exclude_methods!(Array, :each, :map)
+    profile.exclude_method!(Hash, :each)
+    profile.exclude_method!(Kernel, :require)
+    profile.exclude_method!(Object, :run)
+    profile.exclude_common_methods!
+    profile.start
+    run(input, **options.merge(profile: false))
+    result = profile.stop
+    
     # Print a graph profile to text
     printer = RubyProf::MultiPrinter.new(result)
     printer.print(path: output_dir, profile: "profile")
@@ -29,7 +36,6 @@ def run(input, options)
   reader_class = RDF::Reader.for(options[:input_format].to_sym)
   raise "Reader not found for #{options[:input_format]}" unless reader_class
 
-  prefixes = {}
   start = Time.new
   if options[:flatten]
     output = JSON::LD::API.flatten(input, options.delete(:context), **options)
@@ -95,25 +101,42 @@ options = {
 }
 input = nil
 
-opts = GetoptLong.new(
-  ["--debug", GetoptLong::NO_ARGUMENT],
-  ["--automatic", GetoptLong::NO_ARGUMENT],
-  ["--compact", GetoptLong::NO_ARGUMENT],
-  ["--context", GetoptLong::REQUIRED_ARGUMENT],
-  ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT],
-  ["--expand", GetoptLong::NO_ARGUMENT],
-  ["--expanded", GetoptLong::NO_ARGUMENT],
-  ["--flatten", GetoptLong::NO_ARGUMENT],
-  ["--format", GetoptLong::REQUIRED_ARGUMENT],
-  ["--frame", GetoptLong::REQUIRED_ARGUMENT],
-  ["--input-format", GetoptLong::REQUIRED_ARGUMENT],
-  ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
-  ["--profile", GetoptLong::NO_ARGUMENT],
-  ["--parse-only", GetoptLong::NO_ARGUMENT],
-  ["--quiet", GetoptLong::NO_ARGUMENT],
-  ["--uri", GetoptLong::REQUIRED_ARGUMENT],
-  ["--validate", GetoptLong::NO_ARGUMENT]
-)
+OPT_ARGS = [
+  ["--debug", GetoptLong::NO_ARGUMENT,                "Debug output"],
+  ["--compact", GetoptLong::NO_ARGUMENT,              "Compact input, using context"],
+  ["--context", GetoptLong::REQUIRED_ARGUMENT,        "Context used for compaction"],
+  ["--execute", "-e", GetoptLong::REQUIRED_ARGUMENT,  "Use option argument as the patch input"],
+  ["--expand", GetoptLong::NO_ARGUMENT,               "Expand input"],
+  ["--expanded", GetoptLong::NO_ARGUMENT,             "Input is already expanded"],
+  ["--flatten", GetoptLong::NO_ARGUMENT,              "Flatten input"],
+  ["--format", GetoptLong::REQUIRED_ARGUMENT,         "Output format, for RDF output"],
+  ["--frame", GetoptLong::REQUIRED_ARGUMENT,          "Frame input, option value is frame to use"],
+  ["--help", "-?", GetoptLong::NO_ARGUMENT,           "This message"],
+  ["--input-format", GetoptLong::REQUIRED_ARGUMENT,   "Format of input, if not JSON-LD"],
+  ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT,   "Where to store output (default STDOUT)"],
+  ["--profile", GetoptLong::NO_ARGUMENT,              "Run profiler with output to doc/profiles/"],
+  ["--quiet", GetoptLong::NO_ARGUMENT,                "Reduce output"],
+  ["--uri", GetoptLong::REQUIRED_ARGUMENT,            "Run with argument value as base"],
+  ["--validate", GetoptLong::NO_ARGUMENT,             "Validate input"],
+]
+
+opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
+
+def usage
+  STDERR.puts %{Usage: #{$0} [options] file ...}
+  width = OPT_ARGS.map do |o|
+    l = o.first.length
+    l += o[1].length + 2 if o[1].is_a?(String)
+    l
+  end.max
+  OPT_ARGS.each do |o|
+    s = "  %-*s  " % [width, (o[1].is_a?(String) ? "#{o[0,2].join(', ')}" : o[0])]
+    s += o.last
+    STDERR.puts s
+  end
+  exit(1)
+end
+
 opts.each do |opt, arg|
   case opt
   when '--debug'        then logger.level = Logger::DEBUG
@@ -125,9 +148,9 @@ opts.each do |opt, arg|
   when '--flatten'      then options[:flatten] = true
   when '--format'       then options[:output_format] = arg.to_sym
   when '--frame'        then options[:frame] = arg
+  when "--help"         then usage
   when '--input-format' then options[:input_format] = arg.to_sym
   when '--output'       then options[:output] = File.open(arg, "w")
-  when '--parse-only'   then options[:parse_only] = true
   when '--profile'      then options[:profile] = true
   when '--quiet'
     options[:quiet] = true
