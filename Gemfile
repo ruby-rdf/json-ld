@@ -34,6 +34,7 @@ group :development do
   gem 'sxp',                git: "https://github.com/dryruby/sxp.rb",               branch: "develop"
   gem 'fasterer'
   gem 'earl-report'
+  gem 'ruby-prof'
 end
 
 group :development, :test do

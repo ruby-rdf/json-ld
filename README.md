@@ -230,7 +230,7 @@ In some cases, the built-in document loader {JSON::LD::API.documentLoader} is in
 
 All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
 ```ruby
-def load_document_local(url, options={}, &block)
+load_document_local = Proc.new do |url, **options, &block|
   if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
     remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
     return block_given? ? yield(remote_document) : remote_document

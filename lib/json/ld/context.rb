@@ -46,232 +46,6 @@ module JSON::LD
       end
     end
 
-    # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
-    class TermDefinition
-      # @return [RDF::URI] IRI map
-      attr_accessor :id
-
-      # @return [String] term name
-      attr_accessor :term
-
-      # @return [String] Type mapping
-      attr_accessor :type_mapping
-
-      # Base container mapping, without @set
-      # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] Container mapping
-      attr_reader :container_mapping
-
-      # @return [String] Term used for nest properties
-      attr_accessor :nest
-
-      # Language mapping of term, `false` is used if there is an explicit language mapping for this term.
-      # @return [String] Language mapping
-      attr_accessor :language_mapping
-
-      # Direction of term, `false` is used if there is explicit direction mapping mapping for this term.
-      # @return ["ltr", "rtl"] direction_mapping
-      attr_accessor :direction_mapping
-
-      # @return [Boolean] Reverse Property
-      attr_accessor :reverse_property
-
-      # This is a simple term definition, not an expanded term definition
-      # @return [Boolean]
-      attr_accessor :simple
-
-      # Property used for data indexing; defaults to @index
-      # @return [Boolean]
-      attr_accessor :index
-
-      # Indicate that term may be used as a prefix
-      attr_writer :prefix
-
-      # Term-specific context
-      # @return [Hash{String => Object}]
-      attr_accessor :context
-
-      # Term is protected.
-      # @return [Boolean]
-      attr_writer :protected
-
-      # This is a simple term definition, not an expanded term definition
-      # @return [Boolean] simple
-      def simple?; simple; end
-
-      # This is an appropriate term to use as the prefix of a compact IRI
-      # @return [Boolean] simple
-      def prefix?; @prefix; end
-
-      # Create a new Term Mapping with an ID
-      # @param [String] term
-      # @param [String] id
-      # @param [String] type_mapping Type mapping
-      # @param [Set<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
-      # @param [String] language_mapping
-      #   Language mapping of term, `false` is used if there is an explicit language mapping for this term
-      # @param ["ltr", "rtl"] direction_mapping
-      #   Direction mapping of term, `false` is used if there is an explicit direction mapping for this term
-      # @param [Boolean] reverse_property
-      # @param [Boolean] protected
-      # @param [String] nest term used for nest properties
-      # @param [Boolean] simple
-      #   This is a simple term definition, not an expanded term definition
-      # @param [Boolean] prefix
-      #   Term may be used as a prefix
-      def initialize(term,
-                    id: nil,
-                    index: nil,
-                    type_mapping: nil,
-                    container_mapping: nil,
-                    language_mapping: nil,
-                    direction_mapping: nil,
-                    reverse_property: false,
-                    nest: nil,
-                    protected: nil,
-                    simple: false,
-                    prefix: nil,
-                    context: nil)
-        @term                   = term
-        @id                     = id.to_s           unless id.nil?
-        @index                  = index.to_s        unless index.nil?
-        @type_mapping           = type_mapping.to_s unless type_mapping.nil?
-        self.container_mapping  = container_mapping
-        @language_mapping       = language_mapping  unless language_mapping.nil?
-        @direction_mapping      = direction_mapping unless direction_mapping.nil?
-        @reverse_property       = reverse_property
-        @protected              = protected
-        @nest                   = nest              unless nest.nil?
-        @simple                 = simple
-        @prefix                 = prefix            unless prefix.nil?
-        @context                = context           unless context.nil?
-      end
-
-      # Term is protected.
-      # @return [Boolean]
-      def protected?; !!@protected; end
-
-      # Set container mapping, from an array which may include @set
-      def container_mapping=(mapping)
-        mapping = case mapping
-        when Set then mapping
-        when Array then Set.new(mapping)
-        when String then Set[mapping]
-        when nil then Set.new
-        else
-          raise "Shouldn't happen with #{mapping.inspect}"
-        end
-        if @as_set = mapping.include?('@set')
-          mapping = mapping.dup
-          mapping.delete('@set')
-        end
-        @container_mapping = mapping
-        @index ||= '@index' if mapping.include?('@index')
-      end
-
-      ##
-      # Output Hash or String definition for this definition considering @language and @vocab
-      #
-      # @param [Context] context
-      # @return [String, Hash{String => Array[String], String}]
-      def to_context_definition(context)
-        cid = if context.vocab && id.start_with?(context.vocab)
-          # Nothing to return unless it's the same as the vocab
-          id == context.vocab ? context.vocab : id.to_s[context.vocab.length..-1]
-        else
-          # Find a term to act as a prefix
-          iri, prefix = context.iri_to_term.detect {|i,p| id.to_s.start_with?(i.to_s)}
-          iri && iri != id ? "#{prefix}:#{id.to_s[iri.length..-1]}" : id
-        end
-
-        if simple?
-           cid.to_s unless cid == term && context.vocab
-        else
-          defn = {}
-          defn[reverse_property ? '@reverse' : '@id'] = cid.to_s unless cid == term && !reverse_property
-          if type_mapping
-            defn['@type'] = if KEYWORDS.include?(type_mapping)
-              type_mapping
-            else
-              context.compact_iri(type_mapping, vocab: true)
-            end
-          end
-
-          cm = Array(container_mapping)
-          cm << "@set" if as_set? && !cm.include?("@set")
-          cm = cm.first if cm.length == 1
-          defn['@container'] = cm unless cm.empty?
-          # Language set as false to be output as null
-          defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
-          defn['@context'] = @context if @context
-          defn['@nest'] = @nest if @nest
-          defn['@index'] = @index if @index
-          defn['@prefix'] = @prefix unless @prefix.nil?
-          defn
-        end
-      end
-
-      ##
-      # Turn this into a source for a new instantiation
-      # FIXME: context serialization
-      # @return [String]
-      def to_rb
-        defn = [%(TermDefinition.new\(#{term.inspect})]
-        %w(id index type_mapping container_mapping language_mapping direction_mapping reverse_property nest simple prefix context protected).each do |acc|
-          v = instance_variable_get("@#{acc}".to_sym)
-          v = v.to_s if v.is_a?(RDF::Term)
-          if acc == 'container_mapping'
-            v = v.to_a
-            v << '@set' if as_set?
-            v = v.first if v.length <= 1
-          end
-          defn << "#{acc}: #{v.inspect}" if v
-        end
-        defn.join(', ') + ")"
-      end
-
-      # If container mapping was defined along with @set
-      # @return [Boolean]
-      def as_set?; @as_set || false; end
-
-      # Check if term definitions are identical, modulo @protected
-      # @return [Boolean]
-      def ==(other)
-        other.is_a?(TermDefinition) &&
-        id == other.id &&
-        term == other.term &&
-        type_mapping == other.type_mapping &&
-        container_mapping == other.container_mapping &&
-        nest == other.nest &&
-        language_mapping == other.language_mapping &&
-        direction_mapping == other.direction_mapping &&
-        reverse_property == other.reverse_property &&
-        simple == other.simple &&
-        index == other.index &&
-        context == other.context &&
-        prefix? == other.prefix? &&
-        as_set? == other.as_set?
-      end
-
-      def inspect
-        v = %w([TD)
-        v << "id=#{@id}"
-        v << "index=#{index.inspect}" unless index.nil?
-        v << "term=#{@term}"
-        v << "rev" if reverse_property
-        v << "container=#{container_mapping}" if container_mapping
-        v << "as_set=#{as_set?.inspect}"
-        v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
-        v << "dir=#{direction_mapping.inspect}" unless direction_mapping.nil?
-        v << "type=#{type_mapping}" unless type_mapping.nil?
-        v << "nest=#{nest.inspect}" unless nest.nil?
-        v << "simple=true" if @simple
-        v << "protected=true" if @protected
-        v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
-        v << "has-context" unless context.nil?
-        v.join(" ") + "]"
-      end
-    end
-
     # The base.
     #
     # @return [RDF::URI] Current base IRI, used for expanding relative IRIs.
@@ -377,7 +151,7 @@ module JSON::LD
     # @return [Context]
     def initialize(**options)
       if options[:base]
-        @base = @doc_base = RDF::URI(options[:base]).dup
+        @base = @doc_base = RDF::URI(options[:base])
         @doc_base.canonicalize! if options[:canonicalize]
       end
       self.processingMode = options[:processingMode] if options.has_key?(:processingMode)
@@ -404,135 +178,6 @@ module JSON::LD
       #log_debug("init") {"iri_to_term: #{iri_to_term.inspect}"}
 
       yield(self) if block_given?
-    end
-
-    ##
-    # Initial context, without mappings, vocab or default language
-    #
-    # @return [Boolean]
-    def empty?
-      @term_definitions.empty? && self.vocab.nil? && self.default_language.nil?
-    end
-
-    # @param [String] value must be an absolute IRI
-    def base=(value, **options)
-      if value
-        raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
-        value = RDF::URI(value).dup
-        value = @base.join(value) if @base && value.relative?
-        @base = value
-        @base.canonicalize! if @options[:canonicalize]
-        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
-        @base
-      else
-        @base = nil
-      end
-
-    end
-
-    # @param [String] value
-    def default_language=(value, **options)
-      @default_language = case value
-      when String
-        # Warn on an invalid language tag, unless :validate is true, in which case it's an error
-        if value !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
-          warn "@language must be valid BCP47: #{value.inspect}"
-        end
-        options[:lowercaseLanguage] ? value.downcase : value
-      when nil
-        nil
-      else
-        raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}"
-      end
-    end
-
-    # @param [String] value
-    def default_direction=(value, **options)
-      @default_direction = if value
-        raise JsonLdError::InvalidBaseDirection, "@direction must be one or 'ltr', or 'rtl': #{value.inspect}" unless %w(ltr rtl).include?(value)
-        value
-      else
-        nil
-      end
-    end
-
-    ##
-    # Retrieve, or check processing mode.
-    #
-    # * With no arguments, retrieves the current set processingMode.
-    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
-    # * If expecting 1.1, and not set, it has the side-effect of setting mode to json-ld-1.1.
-    #
-    # @param [String, Number] expected (nil)
-    # @return [String]
-    def processingMode(expected = nil)
-      case expected
-      when 1.0, 'json-ld-1.0'
-        @processingMode == 'json-ld-1.0'
-      when 1.1, 'json-ld-1.1'
-        @processingMode ||= 'json-ld-1.1'
-        @processingMode == 'json-ld-1.1'
-      when nil
-        @processingMode
-      else
-        false
-      end
-    end
-
-    ##
-    # Set processing mode.
-    #
-    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
-    #
-    # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
-    # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
-    #
-    # @param [String, Number] expected
-    # @return [String]
-    # @raise [JsonLdError::ProcessingModeConflict]
-    def processingMode=(value = nil, **options)
-      value = "json-ld-1.1" if value == 1.1
-      case value
-      when "json-ld-1.0", "json-ld-1.1"
-        if @processingMode && @processingMode != value
-          raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{@processingMode}"
-        end
-        @processingMode = value
-      else
-        raise JsonLdError::InvalidVersionValue, value.inspect
-      end
-    end
-
-    # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
-    # @param [String] value must be an absolute IRI
-    def vocab=(value, **options)
-      @vocab = case value
-      when /_:/
-        # BNode vocab is deprecated
-        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && processingMode("json-ld-1.1")
-        value
-      when String, RDF::URI
-        if (RDF::URI(value.to_s).relative? && processingMode("json-ld-1.0"))
-          raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode: #{value.inspect}"
-        end
-        v = expand_iri(value.to_s, vocab: true, documentRelative: true)
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
-        v
-      when nil
-        nil
-      else
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}"
-      end
-    end
-
-    # Set propagation
-    # @note: by the time this is called, the work has already been done.
-    #
-    # @param [Boolean] value
-    def propagate=(value, **options)
-      raise JsonLdError::InvalidContextEntry, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
-      raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
-      value
     end
 
     # Create an Evaluation Context
@@ -590,12 +235,12 @@ module JSON::LD
           begin
             ctx = JSON.load(context)
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
-            result = result.dup.parse(ctx["@context"] ? ctx["@context"].dup : {})
+            result = result.parse(ctx["@context"] ? ctx["@context"] : {})
             result.provided_context = ctx["@context"] if [context] == local_context
           rescue JSON::ParserError => e
             #log_debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
-            self.dup
+            self
           end
         when String, RDF::URI
           #log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
@@ -735,7 +380,7 @@ module JSON::LD
     # @param [Boolean]
     # @return [Context]
     def merge(context, override_protected: false)
-      ctx = Context.new(term_definitions: self.term_definitions.dup(), standard_prefixes: options[:standard_prefixes])
+      ctx = Context.new(term_definitions: self.term_definitions, standard_prefixes: options[:standard_prefixes])
       ctx.context_base = context.context_base || self.context_base
       ctx.default_language = context.default_language || self.default_language
       ctx.default_direction = context.default_direction || self.default_direction
@@ -1075,6 +720,135 @@ module JSON::LD
 
       term_definitions[term] = definition
       defined[term] = true
+    end
+
+    ##
+    # Initial context, without mappings, vocab or default language
+    #
+    # @return [Boolean]
+    def empty?
+      @term_definitions.empty? && self.vocab.nil? && self.default_language.nil?
+    end
+
+    # @param [String] value must be an absolute IRI
+    def base=(value, **options)
+      if value
+        raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
+        value = RDF::URI(value)
+        value = @base.join(value) if @base && value.relative?
+        @base = value
+        @base.canonicalize! if @options[:canonicalize]
+        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
+        @base
+      else
+        @base = nil
+      end
+
+    end
+
+    # @param [String] value
+    def default_language=(value, **options)
+      @default_language = case value
+      when String
+        # Warn on an invalid language tag, unless :validate is true, in which case it's an error
+        if value !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+          warn "@language must be valid BCP47: #{value.inspect}"
+        end
+        options[:lowercaseLanguage] ? value.downcase : value
+      when nil
+        nil
+      else
+        raise JsonLdError::InvalidDefaultLanguage, "@language must be a string: #{value.inspect}"
+      end
+    end
+
+    # @param [String] value
+    def default_direction=(value, **options)
+      @default_direction = if value
+        raise JsonLdError::InvalidBaseDirection, "@direction must be one or 'ltr', or 'rtl': #{value.inspect}" unless %w(ltr rtl).include?(value)
+        value
+      else
+        nil
+      end
+    end
+
+    ##
+    # Retrieve, or check processing mode.
+    #
+    # * With no arguments, retrieves the current set processingMode.
+    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
+    # * If expecting 1.1, and not set, it has the side-effect of setting mode to json-ld-1.1.
+    #
+    # @param [String, Number] expected (nil)
+    # @return [String]
+    def processingMode(expected = nil)
+      case expected
+      when 1.0, 'json-ld-1.0'
+        @processingMode == 'json-ld-1.0'
+      when 1.1, 'json-ld-1.1'
+        @processingMode ||= 'json-ld-1.1'
+        @processingMode == 'json-ld-1.1'
+      when nil
+        @processingMode
+      else
+        false
+      end
+    end
+
+    ##
+    # Set processing mode.
+    #
+    # * With an argument, verifies that the processingMode is at least that provided, either as an integer, or a string of the form "json-ld-1.x"
+    #
+    # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
+    # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
+    #
+    # @param [String, Number] expected
+    # @return [String]
+    # @raise [JsonLdError::ProcessingModeConflict]
+    def processingMode=(value = nil, **options)
+      value = "json-ld-1.1" if value == 1.1
+      case value
+      when "json-ld-1.0", "json-ld-1.1"
+        if @processingMode && @processingMode != value
+          raise JsonLdError::ProcessingModeConflict, "#{value} not compatible with #{@processingMode}"
+        end
+        @processingMode = value
+      else
+        raise JsonLdError::InvalidVersionValue, value.inspect
+      end
+    end
+
+    # If context has a @vocab member: if its value is not a valid absolute IRI or null trigger an INVALID_VOCAB_MAPPING error; otherwise set the active context's vocabulary mapping to its value and remove the @vocab member from context.
+    # @param [String] value must be an absolute IRI
+    def vocab=(value, **options)
+      @vocab = case value
+      when /_:/
+        # BNode vocab is deprecated
+        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && processingMode("json-ld-1.1")
+        value
+      when String, RDF::URI
+        if (RDF::URI(value.to_s).relative? && processingMode("json-ld-1.0"))
+          raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode: #{value.inspect}"
+        end
+        v = expand_iri(value.to_s, vocab: true, documentRelative: true)
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
+        v
+      when nil
+        nil
+      else
+        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}"
+      end
+    end
+
+    # Set propagation
+    # @note: by the time this is called, the work has already been done.
+    #
+    # @param [Boolean] value
+    def propagate=(value, **options)
+      raise JsonLdError::InvalidContextEntry, "@propagate may only be set in 1.1 mode" if processingMode("json-ld-1.0")
+      raise JsonLdError::InvalidPropagateValue, "@propagate must be boolean valued: #{value.inspect}" unless value.is_a?(TrueClass) || value.is_a?(FalseClass)
+      value
     end
 
     ##
@@ -1854,15 +1628,21 @@ module JSON::LD
       v.join(" ") + "]"
     end
 
+    # Duplicate an active context, allowing it to be modified.
     def dup
-      # Also duplicate mappings, coerce and list
       that = self
-      ec = super
+      ec = Context.new(**@options)
+      ec.context_base = that.context_base
+      ec.base = that.base
+      ec.default_direction = that.default_direction
+      ec.default_language = that.default_language
+      ec.previous_context = that.previous_context
+      ec.processingMode = that.processingMode if that.processingMode
+      ec.vocab = that.vocab = that.vocab
+
       ec.instance_eval do
-        @term_definitions = that.term_definitions.inject({}) do |memo, (term, defn)|
-          memo.merge(term => defn.dup())
-        end
-        @iri_to_term = that.iri_to_term.dup
+        @term_definitions = that.term_definitions.dup
+        @iri_to_term = that.iri_to_term
       end
       ec
     end
@@ -2169,6 +1949,232 @@ module JSON::LD
               "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}"
       end
       Array(container)
+    end
+
+    # Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language
+    class TermDefinition
+      # @return [RDF::URI] IRI map
+      attr_accessor :id
+
+      # @return [String] term name
+      attr_accessor :term
+
+      # @return [String] Type mapping
+      attr_accessor :type_mapping
+
+      # Base container mapping, without @set
+      # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] Container mapping
+      attr_reader :container_mapping
+
+      # @return [String] Term used for nest properties
+      attr_accessor :nest
+
+      # Language mapping of term, `false` is used if there is an explicit language mapping for this term.
+      # @return [String] Language mapping
+      attr_accessor :language_mapping
+
+      # Direction of term, `false` is used if there is explicit direction mapping mapping for this term.
+      # @return ["ltr", "rtl"] direction_mapping
+      attr_accessor :direction_mapping
+
+      # @return [Boolean] Reverse Property
+      attr_accessor :reverse_property
+
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean]
+      attr_accessor :simple
+
+      # Property used for data indexing; defaults to @index
+      # @return [Boolean]
+      attr_accessor :index
+
+      # Indicate that term may be used as a prefix
+      attr_writer :prefix
+
+      # Term-specific context
+      # @return [Hash{String => Object}]
+      attr_accessor :context
+
+      # Term is protected.
+      # @return [Boolean]
+      attr_writer :protected
+
+      # This is a simple term definition, not an expanded term definition
+      # @return [Boolean] simple
+      def simple?; simple; end
+
+      # This is an appropriate term to use as the prefix of a compact IRI
+      # @return [Boolean] simple
+      def prefix?; @prefix; end
+
+      # Create a new Term Mapping with an ID
+      # @param [String] term
+      # @param [String] id
+      # @param [String] type_mapping Type mapping
+      # @param [Set<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>] container_mapping
+      # @param [String] language_mapping
+      #   Language mapping of term, `false` is used if there is an explicit language mapping for this term
+      # @param ["ltr", "rtl"] direction_mapping
+      #   Direction mapping of term, `false` is used if there is an explicit direction mapping for this term
+      # @param [Boolean] reverse_property
+      # @param [Boolean] protected
+      # @param [String] nest term used for nest properties
+      # @param [Boolean] simple
+      #   This is a simple term definition, not an expanded term definition
+      # @param [Boolean] prefix
+      #   Term may be used as a prefix
+      def initialize(term,
+                    id: nil,
+                    index: nil,
+                    type_mapping: nil,
+                    container_mapping: nil,
+                    language_mapping: nil,
+                    direction_mapping: nil,
+                    reverse_property: false,
+                    nest: nil,
+                    protected: nil,
+                    simple: false,
+                    prefix: nil,
+                    context: nil)
+        @term                   = term
+        @id                     = id.to_s           unless id.nil?
+        @index                  = index.to_s        unless index.nil?
+        @type_mapping           = type_mapping.to_s unless type_mapping.nil?
+        self.container_mapping  = container_mapping
+        @language_mapping       = language_mapping  unless language_mapping.nil?
+        @direction_mapping      = direction_mapping unless direction_mapping.nil?
+        @reverse_property       = reverse_property
+        @protected              = protected
+        @nest                   = nest              unless nest.nil?
+        @simple                 = simple
+        @prefix                 = prefix            unless prefix.nil?
+        @context                = context           unless context.nil?
+      end
+
+      # Term is protected.
+      # @return [Boolean]
+      def protected?; !!@protected; end
+
+      # Set container mapping, from an array which may include @set
+      def container_mapping=(mapping)
+        mapping = case mapping
+        when Set then mapping
+        when Array then Set.new(mapping)
+        when String then Set[mapping]
+        when nil then Set.new
+        else
+          raise "Shouldn't happen with #{mapping.inspect}"
+        end
+        if @as_set = mapping.include?('@set')
+          mapping = mapping.dup
+          mapping.delete('@set')
+        end
+        @container_mapping = mapping
+        @index ||= '@index' if mapping.include?('@index')
+      end
+
+      ##
+      # Output Hash or String definition for this definition considering @language and @vocab
+      #
+      # @param [Context] context
+      # @return [String, Hash{String => Array[String], String}]
+      def to_context_definition(context)
+        cid = if context.vocab && id.start_with?(context.vocab)
+          # Nothing to return unless it's the same as the vocab
+          id == context.vocab ? context.vocab : id.to_s[context.vocab.length..-1]
+        else
+          # Find a term to act as a prefix
+          iri, prefix = context.iri_to_term.detect {|i,p| id.to_s.start_with?(i.to_s)}
+          iri && iri != id ? "#{prefix}:#{id.to_s[iri.length..-1]}" : id
+        end
+
+        if simple?
+           cid.to_s unless cid == term && context.vocab
+        else
+          defn = {}
+          defn[reverse_property ? '@reverse' : '@id'] = cid.to_s unless cid == term && !reverse_property
+          if type_mapping
+            defn['@type'] = if KEYWORDS.include?(type_mapping)
+              type_mapping
+            else
+              context.compact_iri(type_mapping, vocab: true)
+            end
+          end
+
+          cm = Array(container_mapping)
+          cm << "@set" if as_set? && !cm.include?("@set")
+          cm = cm.first if cm.length == 1
+          defn['@container'] = cm unless cm.empty?
+          # Language set as false to be output as null
+          defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
+          defn['@context'] = @context if @context
+          defn['@nest'] = @nest if @nest
+          defn['@index'] = @index if @index
+          defn['@prefix'] = @prefix unless @prefix.nil?
+          defn
+        end
+      end
+
+      ##
+      # Turn this into a source for a new instantiation
+      # FIXME: context serialization
+      # @return [String]
+      def to_rb
+        defn = [%(TermDefinition.new\(#{term.inspect})]
+        %w(id index type_mapping container_mapping language_mapping direction_mapping reverse_property nest simple prefix context protected).each do |acc|
+          v = instance_variable_get("@#{acc}".to_sym)
+          v = v.to_s if v.is_a?(RDF::Term)
+          if acc == 'container_mapping'
+            v = v.to_a
+            v << '@set' if as_set?
+            v = v.first if v.length <= 1
+          end
+          defn << "#{acc}: #{v.inspect}" if v
+        end
+        defn.join(', ') + ")"
+      end
+
+      # If container mapping was defined along with @set
+      # @return [Boolean]
+      def as_set?; @as_set || false; end
+
+      # Check if term definitions are identical, modulo @protected
+      # @return [Boolean]
+      def ==(other)
+        other.is_a?(TermDefinition) &&
+        id == other.id &&
+        term == other.term &&
+        type_mapping == other.type_mapping &&
+        container_mapping == other.container_mapping &&
+        nest == other.nest &&
+        language_mapping == other.language_mapping &&
+        direction_mapping == other.direction_mapping &&
+        reverse_property == other.reverse_property &&
+        simple == other.simple &&
+        index == other.index &&
+        context == other.context &&
+        prefix? == other.prefix? &&
+        as_set? == other.as_set?
+      end
+
+      def inspect
+        v = %w([TD)
+        v << "id=#{@id}"
+        v << "index=#{index.inspect}" unless index.nil?
+        v << "term=#{@term}"
+        v << "rev" if reverse_property
+        v << "container=#{container_mapping}" if container_mapping
+        v << "as_set=#{as_set?.inspect}"
+        v << "lang=#{language_mapping.inspect}" unless language_mapping.nil?
+        v << "dir=#{direction_mapping.inspect}" unless direction_mapping.nil?
+        v << "type=#{type_mapping}" unless type_mapping.nil?
+        v << "nest=#{nest.inspect}" unless nest.nil?
+        v << "simple=true" if @simple
+        v << "protected=true" if @protected
+        v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
+        v << "has-context" unless context.nil?
+        v.join(" ") + "]"
+      end
     end
   end
 end
