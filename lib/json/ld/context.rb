@@ -3,6 +3,7 @@
 require 'json'
 require 'bigdecimal'
 require 'set'
+require 'rdf/util/cache'
 begin
   # Attempt to load this to avoid unnecessary context fetches
   require 'json-ld-preloaded'
@@ -24,7 +25,7 @@ module JSON::LD
     ##
     # Defines the maximum number of interned URI references that can be held
     # cached in memory at any one time.
-    CACHE_SIZE = -1 # unlimited by default
+    CACHE_SIZE = 100 # unlimited by default
 
     class << self
       ##
@@ -346,8 +347,16 @@ module JSON::LD
     # @return [RDF::Util::Cache]
     # @private
     def self.cache
-      require 'rdf/util/cache' unless defined?(::RDF::Util::Cache)
       @cache ||= RDF::Util::Cache.new(CACHE_SIZE)
+    end
+
+    ##
+    # Class-level cache inverse contexts.
+    #
+    # @return [RDF::Util::Cache]
+    # @private
+    def self.inverse_cache
+      @inverse_cache ||= RDF::Util::Cache.new(CACHE_SIZE)
     end
 
     ##
@@ -1066,9 +1075,6 @@ module JSON::LD
 
       term_definitions[term] = definition
       defined[term] = true
-    ensure
-      # Re-build after term definitions set
-      @inverse_context = nil
     end
 
     ##
@@ -1857,7 +1863,6 @@ module JSON::LD
           memo.merge(term => defn.dup())
         end
         @iri_to_term = that.iri_to_term.dup
-        @inverse_context = nil
       end
       ec
     end
@@ -1957,7 +1962,7 @@ module JSON::LD
     # @return [Hash{String => Hash{String => String}}]
     # @todo May want to include @set along with container to allow selecting terms using @set over those without @set. May require adding some notion of value cardinality to compact_iri
     def inverse_context
-      @inverse_context ||= begin
+      Context.inverse_cache[self.object_id] ||= begin
         result = {}
         default_language = (self.default_language || '@none').downcase
         term_definitions.keys.sort do |a, b|
