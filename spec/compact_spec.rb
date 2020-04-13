@@ -573,7 +573,7 @@ describe JSON::LD::API do
           "b": "c"
         })
         allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", logger: logger, validate: true)
+        jld = JSON::LD::API.compact(input, "http://example.com/context", logger: logger, validate: true, context_resolver: nil)
         expect(jld).to produce_jsonld(expected, logger)
       end
     end

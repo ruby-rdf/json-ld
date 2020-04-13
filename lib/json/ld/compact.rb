@@ -55,7 +55,7 @@ module JSON::LD
 
         # Look up term definintions from property using the original type-scoped context, if it exists, but apply them to the now current previous context
         td = input_context.term_definitions[property] if property
-        self.context = context.parse(td.context, override_protected: true) if td && td.context
+        self.context = context.parse(td.context, override_protected: true) if td && !td.context.nil?
 
         if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, log_depth: @options[:log_depth])
@@ -80,7 +80,7 @@ module JSON::LD
           sort.
           each do |term|
           term_context = input_context.term_definitions[term].context if input_context.term_definitions[term]
-          self.context = context.parse(term_context, propagate: false) if term_context
+          self.context = context.parse(term_context, propagate: false) unless term_context.nil?
         end
 
         element.keys.opt_sort(ordered: ordered).each do |expanded_property|

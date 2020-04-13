@@ -32,6 +32,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'json-canonicalization', '~> 0.2'
   gem.add_runtime_dependency     'htmlentities',     '~> 4.3'
   gem.add_runtime_dependency     'rack',            '~> 2.0'
+  gem.add_runtime_dependency     'uuid',            '~> 2.3'
   gem.add_development_dependency 'sinatra-linkeddata','~> 3.1'
   gem.add_development_dependency 'jsonlint',        '~> 0.3'  unless is_java
   gem.add_development_dependency 'oj',              '~> 3.9'  unless is_java

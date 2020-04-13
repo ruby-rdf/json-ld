@@ -38,6 +38,7 @@ group :development do
 end
 
 group :development, :test do
+  gem 'awesome_print', github: "akshaymohite/awesome_print", branch: "ruby-2-7-0-warnings-fix"
   gem 'simplecov',  platforms: :mri
   gem 'coveralls',  '~> 0.8', platforms: :mri
   gem 'psych',      platforms: [:mri, :rbx]

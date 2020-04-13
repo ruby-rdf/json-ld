@@ -31,6 +31,7 @@ module JSON
     autoload :API,                'json/ld/api'
     autoload :ContentNegotiation, 'json/ld/conneg'
     autoload :Context,            'json/ld/context'
+    autoload :ContextResolver,    'json/ld/context_resolver'
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'

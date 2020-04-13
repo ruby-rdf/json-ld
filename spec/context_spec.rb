@@ -23,7 +23,14 @@ end
 
 describe JSON::LD::Context do
   let(:logger) {RDF::Spec.logger}
-  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
+  let(:context) {
+    JSON::LD::Context.new(
+      logger: logger,
+      validate: true,
+      processingMode: "json-ld-1.1",
+      compactToRelative: true,
+      context_resolver: nil)
+  }
   let(:remote_doc) do
     JSON::LD::API::RemoteDocument.new(%q({
       "@context": {
@@ -45,7 +52,7 @@ describe JSON::LD::Context do
     ]}
 
     it "merges definitions from each context" do
-      ec = described_class.parse(ctx)
+      ec = described_class.parse(ctx, context_resolver: nil)
       expect(ec.send(:mappings)).to produce({
         "foo" => "http://example.com/foo",
         "bar" => "http://example.com/foo"
@@ -55,13 +62,6 @@ describe JSON::LD::Context do
 
   describe "#parse" do
     context "remote" do
-
-      it "retrieves and parses a remote context document" do
-        JSON::LD::Context.instance_variable_set(:@cache, nil)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        ec = subject.parse("http://example.com/context")
-        expect(ec.provided_context).to produce("http://example.com/context", logger)
-      end
 
       it "fails given a missing remote @context" do
         JSON::LD::Context.instance_variable_set(:@cache, nil)
@@ -189,12 +189,6 @@ describe JSON::LD::Context do
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
           subject.parse(ctx)
-        end
-
-        it "does not use passed context as provided_context" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-          ec = subject.parse(ctx)
-          expect(ec.provided_context).to produce(ctx, logger)
         end
       end
 
@@ -572,7 +566,7 @@ describe JSON::LD::Context do
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @direction @language @protected @propagate @import @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w(@base @context @direction @language @protected @propagate @import @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
             ec = subject.parse({kw => "http://example.com/"})
@@ -645,14 +639,6 @@ describe JSON::LD::Context do
 
   describe "#serialize" do
     before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
-    it "context document" do
-      expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-      ec = subject.parse("http://example.com/context")
-      expect(ec.serialize).to produce({
-        "@context" => "http://example.com/context"
-      }, logger)
-    end
-
     it "context hash" do
       ctx = {"foo" => "http://example.com/"}
 
@@ -683,8 +669,7 @@ describe JSON::LD::Context do
     end
 
     it "term mappings" do
-      c = subject.
-        parse({'foo' => "http://example.com/"}).send(:clear_provided_context)
+      c = subject.parse({'foo' => "http://example.com/"})
       expect(c.serialize).to produce({
         "@context" => {
           "foo" => "http://example.com/"
@@ -696,7 +681,7 @@ describe JSON::LD::Context do
     it "@context" do
       expect(subject.parse({
         "foo" => {"@id" => "http://example.com/", "@context" => {"bar" => "http://example.com/baz"}}
-      }).send(:clear_provided_context).
+      }).
       serialize).to produce({
         "@context" => {
           "foo" => {
@@ -712,7 +697,6 @@ describe JSON::LD::Context do
         'xsd' => "http://www.w3.org/2001/XMLSchema#",
         'homepage' => {'@id' => RDF::Vocab::FOAF.homepage.to_s, '@type' => '@id'}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri.to_s,
@@ -725,7 +709,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         'knows' => {'@id' => RDF::Vocab::FOAF.knows.to_s, '@container' => '@list'}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
@@ -737,7 +720,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
@@ -749,7 +731,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
@@ -762,7 +743,6 @@ describe JSON::LD::Context do
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -776,7 +756,6 @@ describe JSON::LD::Context do
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -790,7 +769,6 @@ describe JSON::LD::Context do
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -803,7 +781,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
@@ -815,7 +792,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
@@ -827,7 +803,6 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
@@ -842,7 +817,6 @@ describe JSON::LD::Context do
           "@container" => "@list"
         }
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -858,7 +832,6 @@ describe JSON::LD::Context do
         "id" => "@id",
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "id" => "@id",
@@ -875,7 +848,6 @@ describe JSON::LD::Context do
           "@type" => "@id"
         }
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -893,7 +865,6 @@ describe JSON::LD::Context do
         "type" => "@type",
         "foaf:homepage" => {"@type" => "@id"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -908,7 +879,6 @@ describe JSON::LD::Context do
         "container" => "@container",
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "container" => "@container",
@@ -922,7 +892,6 @@ describe JSON::LD::Context do
         "ex" => 'http://example.org/',
         "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "ex" => 'http://example.org/',
@@ -936,7 +905,6 @@ describe JSON::LD::Context do
         "@vocab" => 'http://example.org/',
         "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
       }).
-      send(:clear_provided_context).
       serialize).to produce({
         "@context" => {
           "@vocab" => 'http://example.org/',

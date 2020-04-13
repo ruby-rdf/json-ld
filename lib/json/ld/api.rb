@@ -72,6 +72,7 @@ module JSON::LD
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
     # @option options [Boolean] :compactToRelative (true)
     #   Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded.
+    # @option options [ContextResolver] :context_resolver for using a specific `ContextResolver` with a custom `shared_cache`.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
     # @option options [Boolean] :lowercaseLanguage
@@ -130,7 +131,7 @@ module JSON::LD
 
       # If not provided, first use context from document, or from a Link header
       context ||= context_ref || {}
-      @context = Context.parse(context || {}, **@options)
+      @context = Context.parse(context, **@options)
 
       if block_given?
         case block.arity
@@ -227,12 +228,12 @@ module JSON::LD
         result = compact(value, ordered: @options[:ordered])
 
         # xxx) Add the given context to the output
-        ctx = self.context.serialize
+        ctx = self.context.serialize(provided_context: context)
         if result.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', vocab: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
-        result = ctx.merge(result) unless ctx.empty?
+        result = ctx.merge(result) unless ctx.fetch('@context', {}).empty?
       end
       block_given? ? yield(result) : result
     end
@@ -296,7 +297,9 @@ module JSON::LD
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(compact(flattened, ordered: @options[:ordered]))
           kwgraph = self.context.compact_iri('@graph')
-          flattened = self.context.serialize.merge(kwgraph => compacted)
+          flattened = self.context.
+            serialize(provided_context: context).
+            merge(kwgraph => compacted)
         end
       end
 
@@ -434,11 +437,14 @@ module JSON::LD
 
         # Add the given context to the output
         result = if !compacted.is_a?(Array)
-          context.serialize.merge(compacted)
+          compacted
         else
           kwgraph = context.compact_iri('@graph')
-          context.serialize.merge({kwgraph => compacted})
+          {kwgraph => compacted}
         end
+        # Only add context if one was provided
+        result = context.serialize(provided_context: frame).merge(result) if frame['@context']
+        
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result
       end
@@ -803,6 +809,10 @@ module JSON::LD
       # The value of any profile parameter retrieved as part of the original contentType.
       # @return [String]
       attr_accessor :profile
+
+      # A tag that can be associated with the returned document
+      # @return [String]
+      attr_accessor :tag
 
       # @param [RDF::Util::File::RemoteDocument] document
       # @param [String] documentUrl

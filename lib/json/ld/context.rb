@@ -4,6 +4,8 @@ require 'json'
 require 'bigdecimal'
 require 'set'
 require 'lru_redux'
+require 'uuid'
+
 begin
   # Attempt to load this to avoid unnecessary context fetches
   require 'json-ld-preloaded'
@@ -43,6 +45,12 @@ module JSON::LD
       # @param [String, RDF::URI] url
       def alias_preloaded(a, url)
         PRELOADED[a.to_s.freeze] = PRELOADED[url.to_s.freeze]
+      end
+
+      # Context resolver associated with the class, as it is long living
+      attr_reader :context_resolver
+      def context_resolver=(resolver)
+        @context_resolver = resolver
       end
     end
 
@@ -96,11 +104,12 @@ module JSON::LD
     # @return [Hash{Symbol => Object}] Global options used in generating IRIs
     attr_accessor :options
 
-    # @return [Context] A context provided to us that we can use without re-serializing XXX
-    attr_accessor :provided_context
-
     # @return [BlankNodeNamer]
     attr_accessor :namer
+
+    # UUID used for caching
+    # @return [String]
+    attr_accessor :uuid
 
     ##
     # Create a new context by parsing a context.
@@ -113,15 +122,6 @@ module JSON::LD
     # @return [Context]
     def self.parse(local_context, override_protected: false, propagate: true, **options)
       self.new(**options).parse(local_context, override_protected: override_protected, propagate: propagate)
-    end
-
-    ##
-    # Class-level cache used for retaining parsed remote contexts.
-    #
-    # @return [RDF::Util::Cache]
-    # @private
-    def self.cache
-      @cache ||= LruRedux::Cache.new(CACHE_SIZE)
     end
 
     ##
@@ -138,6 +138,7 @@ module JSON::LD
     # @param [Hash] options
     # @option options [String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @option options [ContextResolver] :context_resolver internal use only.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
@@ -154,7 +155,16 @@ module JSON::LD
         @base = @doc_base = RDF::URI(options[:base])
         @doc_base.canonicalize! if options[:canonicalize]
       end
-      self.processingMode = options[:processingMode] if options.has_key?(:processingMode)
+      # One-time initialize context resolver
+      if options.has_key?(:context_resolver)
+        # Could be passed as `nil`, to cause a new resolver to be created
+        Context.context_resolver = options[:context_resolver] || ContextResolver.new(**options)
+      else
+        Context.context_resolver ||= ContextResolver.new(**options)
+      end
+      if options[:processingMode] == 'json-ld-1.0'
+        @processingMode = 'json-ld-1.0'
+      end
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -206,169 +216,160 @@ module JSON::LD
               override_protected: false,
               propagate: true,
               validate_scoped: true)
-      result = self.dup
-      result.provided_context = local_context if self.empty?
+      active_ctx = self
+
+      local_context = local_context.fetch('@context', local_context) if local_context.is_a?(Hash)
+
       # Early check for @propagate, which can only appear in a local context
       propagate = local_context.is_a?(Hash) ? local_context.fetch('@propagate', propagate) : propagate
-      result.previous_context ||= result.dup unless propagate
 
       local_context = as_array(local_context)
 
-      local_context.each do |context|
-        case context
-        when nil
+      # no contexts in array, clone existing context
+      return active_ctx if local_context.empty?
+
+      # Resolve contexts
+      resolved = Context.context_resolver.resolve(self, local_context, self.context_base || options[:base])
+
+      # process each context in order, update active context on each
+      # iteration to ensure proper caching
+      rval = active_ctx
+
+      # track the previous context
+      # if not propagating, make sure rval has a previous context
+      unless propagate
+        rval = rval.dup
+        rval.previous_context ||= active_ctx
+      end
+
+      resolved.each do |resolved_context|
+        ctx = resolved_context.document
+
+        active_ctx = rval
+
+        active_ctx.uuid ||= UUID.new.generate
+
+        # get processed context from cache if available
+        if processed = resolved_context.get_processed(active_ctx)
+          rval = processed
+          next
+        end
+
+        case ctx
+        when nil, false
           # 3.1 If the `override_protected` is  false, and the active context contains protected terms, an error is raised.
-          if override_protected || result.term_definitions.values.none?(&:protected?)
+          if override_protected || rval.term_definitions.values.none?(&:protected?)
             null_context = Context.new(**options)
-            null_context.previous_context = result unless propagate
-            result = null_context
+            null_context.previous_context = rval unless propagate
+            rval = null_context
           else
             raise JSON::LD::JsonLdError::InvalidContextNullification,
                   "Attempt to clear a context with protected terms"
           end
+          next
         when Context
-           #log_debug("parse") {"context: #{context.inspect}"}
-           result = result.merge(context)
-        when IO, StringIO
-          #log_debug("parse") {"io: #{context}"}
-          # Load context document, if it is an open file
-          begin
-            ctx = JSON.load(context)
-            raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
-            result = result.parse(ctx["@context"] ? ctx["@context"] : {})
-            result.provided_context = ctx["@context"] if [context] == local_context
-          rescue JSON::ParserError => e
-            #log_debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
-            raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
-            self
-          end
-        when String, RDF::URI
-          #log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
-
-          # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-          context = RDF::URI(result.context_base || options[:base]).join(context)
-          context_canon = context.canonicalize
-          context_canon.scheme = 'http' if context_canon.scheme == 'https'
-
-          # If validating a scoped context which has already been loaded, skip to the next one
-          next if !validate_scoped && remote_contexts.include?(context.to_s)
-
-          remote_contexts << context.to_s
-          raise JsonLdError::ContextOverflow, "#{context}" if remote_contexts.length >= MAX_CONTEXTS_LOADED
-
-          cached_context = if PRELOADED[context_canon.to_s]
-            # If we have a cached context, merge it into the current context (result) and use as the new context
-            #log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
-
-            # If this is a Proc, then replace the entry with the result of running the Proc
-            if PRELOADED[context_canon.to_s].respond_to?(:call)
-              #log_debug("parse") {"=> (call)"}
-              PRELOADED[context_canon.to_s] = PRELOADED[context_canon.to_s].call
-            end
-            PRELOADED[context_canon.to_s]
-          else
-            # Load context document, if it is a string
-            Context.cache[context_canon.to_s] ||= begin
-              context_opts = @options.merge(
-                profile: 'http://www.w3.org/ns/json-ld#context',
-                requestProfile: 'http://www.w3.org/ns/json-ld#context',
-                base: nil)
-              #context_opts.delete(:headers)
-              JSON::LD::API.loadRemoteDocument(context.to_s, **context_opts) do |remote_doc|
-                # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
-
-                # Parse stand-alone
-                ctx = Context.new(**options)
-                ctx.context_base = context.to_s
-                ctx = ctx.parse(remote_doc.document['@context'], remote_contexts: remote_contexts.dup)
-                ctx.base = nil
-                ctx
-              end
-            rescue JsonLdError::LoadingDocumentFailed => e
-              #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context}: #{e.message}", e.backtrace
-            rescue JsonLdError
-              raise
-            rescue StandardError => e
-              #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
-              raise JsonLdError::LoadingRemoteContextFailed, "#{context}: #{e.message}", e.backtrace
-            end
-          end
-
-          # Merge loaded context noting protected term overriding
-          context = result.merge(cached_context, override_protected: override_protected)
-
-          context.previous_context = self unless propagate
-          result = context
-          #log_debug("parse") {"=> provided_context: #{context.inspect}"}
-        when Hash
-          context = context.dup # keep from modifying a hash passed as a param
-
-          # This counts on hash elements being processed in order
-          {
-            '@version'    => :processingMode=,
-            '@import'     => nil,
-            '@base'       => :base=,
-            '@direction'   => :default_direction=,
-            '@language'   => :default_language=,
-            '@propagate'  => :propagate=,
-            '@vocab'      => :vocab=,
-          }.each do |key, setter|
-            next unless context.has_key?(key)
-            if key == '@import'
-              # Retrieve remote context and merge the remaining context object into the result.
-              raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
-              raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
-              source = RDF::URI(result.context_base || result.base).join(context['@import'])
-              begin
-                context_opts = @options.merge(
-                  profile: 'http://www.w3.org/ns/json-ld#context',
-                  requestProfile: 'http://www.w3.org/ns/json-ld#context',
-                  base: nil)
-                context_opts.delete(:headers)
-                # FIXME: should cache this, but ContextCache is for parsed contexts
-                JSON::LD::API.loadRemoteDocument(source, **context_opts) do |remote_doc|
-                  # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                  raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
-                  import_context = remote_doc.document['@context']
-                  import_context.delete('@base')
-                  raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
-                  raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
-                  context.delete(key)
-                  context = import_context.merge(context)
-                end
-              rescue JsonLdError::LoadingDocumentFailed => e
-                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
-              rescue JsonLdError
-                raise
-              rescue StandardError => e
-                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
-              end
-            else
-              result.send(setter, context[key], remote_contexts: remote_contexts)
-            end
-            context.delete(key)
-          end
-
-          defined = {}
-
-          # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing result for active context, context for local context, key, and defined
-          context.each_key do |key|
-            # ... where key is not @base, @vocab, @language, or @version
-            result.create_term_definition(context, key, defined,
-                                          override_protected: override_protected,
-                                          protected: context['@protected'],
-                                          remote_contexts: remote_contexts.dup,
-                                          validate_scoped: validate_scoped
-                                          ) unless NON_TERMDEF_KEYS.include?(key)
-          end
-        else
-          # 3.3) If context is not a JSON object, an invalid local context error has been detected and processing is aborted.
-          raise JsonLdError::InvalidLocalContext, "must be a URL, JSON object or array of same: #{context.inspect}"
+          #log_debug("parse") {"context: #{context.inspect}"}
+          rval = rval.merge(ctx)
+          resolved_context.set_processed(active_ctx, rval)
+          next
         end
+
+        if !ctx.is_a?(Hash)
+          raise JSON::LD::JsonLdError::InvalidLocalContext, 'Invalid JSON-LD syntax; invalid remote context.'
+        end
+
+        ctx = ctx.dup # keep from modifying a hash passed as a param
+        rval = rval.dup
+        defined = {}
+
+        # This counts on hash elements being processed in order
+        {
+          '@version'    => :processingMode=,
+          '@import'     => nil,
+          '@base'       => :base=,
+          '@direction'   => :default_direction=,
+          '@language'   => :default_language=,
+          '@propagate'  => :propagate=,
+          '@vocab'      => :vocab=,
+        }.each do |key, setter|
+          next unless ctx.has_key?(key)
+          if key == '@import'
+            # Retrieve remote context and merge the remaining context object into the rval.
+            raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if rval.processingMode("json-ld-1.0")
+            raise JsonLdError::InvalidImportValue, "@import must be a string: #{ctx['@import'].inspect}" unless ctx['@import'].is_a?(String)
+            source = ctx['@import']
+
+            resolved_import = Context.context_resolver.resolve(active_ctx, source, rval.context_base || options[:base])
+            if resolved_import.length != 1
+              raise JsonLdError::InvalidRemoteContext, "#{resolved_import.map(&:document).to_json} must be an object"
+            end
+
+            resolved_import = resolved_import.first
+            processed_import = resolved_import.get_processed(active_ctx)
+            if processed_import.is_a?(Hash)
+              # Note: if the same context were used in this active context
+              # as a reference context, then processed_input might not
+              # be a dict.
+              ctx = processed_import
+            else
+              import_ctx = resolved_import.document.dup
+              raise JsonLdError::InvalidRemoteContext, "#{source}" unless import_ctx.is_a?(Hash)
+              raise JsonLdError::InvalidContextEntry, "#{import_ctx.to_json} must not include @import entry" if import_ctx.has_key?('@import')
+              import_ctx.delete('@base')
+              import_ctx = import_ctx.merge(ctx)
+              ctx = import_ctx
+              ctx.delete('@import')
+
+              # cache processed result
+              # Note: this could potenially conflict if the import
+              # were used in the same active context as a referenced
+              # context and an import. In this case, we
+              # could override the cached result, but seems unlikely.
+              resolved_import.set_processed(active_ctx, ctx)
+            end
+          else
+            rval.send(setter, ctx[key], remote_contexts: remote_contexts)
+          end
+          ctx.delete(key)
+        end
+
+        # For each key-value pair in context invoke the Create Term Definition subalgorithm, passing rval for active context, context for local context, key, and defined
+        ctx.each do |key, value|
+          # ... where key is not @base, @vocab, @language, or @version
+          rval.create_term_definition(ctx, key, defined,
+                                      override_protected: override_protected,
+                                      protected: ctx['@protected'],
+                                      remote_contexts: remote_contexts.dup,
+                                      validate_scoped: validate_scoped
+                                      ) unless NON_TERMDEF_KEYS.include?(key)
+
+          if value.is_a?(Hash) && value.has_key?('@context')
+            # Validate scoped contexts
+            key_ctx = value['@context']
+            process = true
+            if key_ctx.is_a?(String)
+              url = options[:base].join(key_ctx)
+              if remote_contexts.include?(url)
+                process = false
+              else
+                remote_contexts << url
+              end
+            end
+
+            if process
+              begin
+                rval.parse(key_ctx, override_protected: true, remote_contexts: remote_contexts, validate_scoped: false)
+              rescue
+                raise JsonLdError::InvalidScopedContext, "Term definition for #{key.inspect} contains illegal value for @context: #{$!.message}"
+              end
+            end
+          end
+        end
+
+        # cache processed result
+        resolved_context.set_processed(active_ctx, rval)
       end
-      result
+      rval
     end
 
     ##
@@ -386,7 +387,6 @@ module JSON::LD
       ctx.default_direction = context.default_direction || self.default_direction
       ctx.vocab = context.vocab || self.vocab
       ctx.base = context.base || self.base
-      ctx.provided_context = self.provided_context
       if !override_protected
         ctx.term_definitions.each do |term, definition|
           next unless definition.protected? && (other = context.term_definitions[term])
@@ -652,20 +652,7 @@ module JSON::LD
       end
 
       if value.has_key?('@context')
-        begin
-          new_ctx = self.parse(value['@context'],
-                               override_protected: true,
-                               remote_contexts: remote_contexts,
-                               validate_scoped: false)
-          # Record null context in array form
-          definition.context = case value['@context']
-          when String then new_ctx.context_base
-          when nil then [nil]
-          else value['@context']
-          end
-        rescue JsonLdError => e
-          raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
-        end
+        definition.context = value['@context'] || false
       end
 
       if value.has_key?('@language')
@@ -786,10 +773,9 @@ module JSON::LD
       when 1.0, 'json-ld-1.0'
         @processingMode == 'json-ld-1.0'
       when 1.1, 'json-ld-1.1'
-        @processingMode ||= 'json-ld-1.1'
-        @processingMode == 'json-ld-1.1'
+        @processingMode.nil? || @processingMode == 'json-ld-1.1'
       when nil
-        @processingMode
+        @processingMode || 'json-ld-1.1'
       else
         false
       end
@@ -857,40 +843,44 @@ module JSON::LD
     # If a context was supplied in global options, use that, otherwise, generate one
     # from this representation.
     #
+    # @param [Array, Hash, Context, IO, StringIO] provided_context (nil)
+    #   Original context to use, if available
     # @param  [Hash{Symbol => Object}] options ({})
     # @return [Hash]
-    def serialize(**options)
-      # FIXME: not setting provided_context now
+    def serialize(provided_context: nil, **options)
+      #log_debug("serlialize: generate context")
+      #log_debug("") {"=> context: #{inspect}"}
       use_context = case provided_context
       when String, RDF::URI
         #log_debug "serlialize: reuse context: #{provided_context.inspect}"
         provided_context.to_s
-      when Hash, Array
+      when Hash
+        #log_debug "serlialize: reuse context: #{provided_context.inspect}"
+        # If it has an @context entry use it, otherwise it is assumed to be the body of a context
+        provided_context.fetch('@context', provided_context)
+      when Array
         #log_debug "serlialize: reuse context: #{provided_context.inspect}"
         provided_context
+      when IO, StringIO
+        provided_context.rewind
+        JSON.load(provided_context).fetch('@context', {})
       else
-        #log_debug("serlialize: generate context")
-        #log_debug("") {"=> context: #{inspect}"}
         ctx = {}
+        ctx['@version'] = 1.1 if @processingMode == 'json-ld-1.1'
         ctx['@base'] = base.to_s if base && base != doc_base
         ctx['@direction'] = default_direction.to_s if default_direction
         ctx['@language'] = default_language.to_s if default_language
         ctx['@vocab'] = vocab.to_s if vocab
 
         # Term Definitions
-        term_definitions.keys.each do |term|
-          defn = term_definitions[term].to_context_definition(self)
-          ctx[term] = defn if defn
+        term_definitions.each do |term, defn|
+          ctx[term] = defn.to_context_definition(self)
         end
-
-        #log_debug("") {"start_doc: context=#{ctx.inspect}"}
         ctx
       end
 
       # Return hash with @context, or empty
-      r = {}
-      r['@context'] = use_context unless use_context.nil? || use_context.empty?
-      r
+      use_context.nil? || use_context.empty? ? {} : {'@context' => use_context}
     end
 
     ##
@@ -1637,7 +1627,7 @@ module JSON::LD
       ec.default_direction = that.default_direction
       ec.default_language = that.default_language
       ec.previous_context = that.previous_context
-      ec.processingMode = that.processingMode if that.processingMode
+      ec.processingMode = that.processingMode if that.instance_variable_get(:@processingModee)
       ec.vocab = that.vocab = that.vocab
 
       ec.instance_eval do
@@ -1693,13 +1683,6 @@ module JSON::LD
         value = RDF::URI.intern(value, {}) if @options[:intern]
         value
       end
-    end
-
-    # Clear the provided context, used for testing
-    # @return [Context] self
-    def clear_provided_context
-      @provided_context = nil
-      self
     end
 
     # Keep track of allocated BNodes
@@ -2107,6 +2090,7 @@ module JSON::LD
           defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
           defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
+          defn['@direction'] = (@direction_mapping ? @direction_mapping : nil) unless @direction_mapping.nil?
           defn['@context'] = @context if @context
           defn['@nest'] = @nest if @nest
           defn['@index'] = @index if @index

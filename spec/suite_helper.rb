@@ -214,9 +214,9 @@ module Fixtures
             when "jld:ExpandTest"
               JSON::LD::API.expand(input_loc, logger: logger, **options)
             when "jld:CompactTest"
-              JSON::LD::API.compact(input_loc, context_json['@context'], logger: logger, **options)
+              JSON::LD::API.compact(input_loc, context_json, logger: logger, **options)
             when "jld:FlattenTest"
-              JSON::LD::API.flatten(input_loc, (context_json['@context'] if context_loc), logger: logger, **options)
+              JSON::LD::API.flatten(input_loc, (context_json if context_loc), logger: logger, **options)
             when "jld:FrameTest"
               JSON::LD::API.frame(input_loc, frame_loc, logger: logger, **options)
             when "jld:FromRDFTest"

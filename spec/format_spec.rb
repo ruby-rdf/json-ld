@@ -3,6 +3,10 @@ require_relative 'spec_helper'
 require 'rdf/spec/format'
 
 describe JSON::LD::Format do
+  before(:all) {
+    # Clear out context cache
+    JSON::LD::Context.new(context_resolver: nil)
+  }
   it_behaves_like 'an RDF::Format' do
     let(:format_class) {JSON::LD::Format}
   end
