@@ -16,8 +16,10 @@ module JSON::LD
     # @param [Boolean] useNativeTypes (false) use native representations
     # @param [Boolean] ordered (true)
     #   Ensure output objects have keys ordered properly
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
+    #
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(dataset, useRdfType: false, useNativeTypes: false, ordered: false)
+    def from_statements(dataset, useRdfType: false, useNativeTypes: false, ordered: false, base: nil)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       referenced_once = {}
@@ -34,7 +36,7 @@ module JSON::LD
       dataset.each do |statement|
         #log_debug("statement") { statement.to_nquads.chomp}
 
-        name = statement.graph_name ? ec.expand_iri(statement.graph_name).to_s : '@default'
+        name = statement.graph_name ? ec.expand_iri(statement.graph_name, base: base).to_s : '@default'
 
         # Create a graph entry as needed
         node_map = graph_map[name] ||= {}
@@ -42,7 +44,7 @@ module JSON::LD
 
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
-        subject = ec.expand_iri(statement.subject, as_string: true)
+        subject = ec.expand_iri(statement.subject, as_string: true, base: base)
         node = node_map[subject] ||= {'@id' => subject}
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
@@ -65,7 +67,7 @@ module JSON::LD
                                 statement.object,
                                 rdfDirection: @options[:rdfDirection],
                                 useNativeTypes: useNativeTypes,
-                                log_depth: @options[:log_depth])
+                                base: base)
 
         merge_value(node, statement.predicate.to_s, value)
 

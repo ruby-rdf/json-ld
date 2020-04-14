@@ -187,7 +187,7 @@ def run_tc(man, tc, options)
 }
   end
 
-  puts "#{"test result:" unless options[:quiet]} #{result}"
+  puts "#{" test result:" unless options[:quiet]} #{result}"
 end
 
 logger = Logger.new(STDERR)

@@ -73,8 +73,8 @@ doc_cache["https://linked.art/ns/v1/linked-art.json"] =
     contentType: "application/ld+json")
 
 options[:documentLoader] = Proc.new do |url, **options, &block|
-  raise "Context not pre-cached" unless doc_cache.has_key?(url)
-  block.call doc_cache[url]
+  raise "Context not pre-cached: #{url}" unless doc_cache.has_key?(url.to_s)
+  block.call doc_cache[url.to_s]
 end
 
 all_data = JSON.parse(File.read(File.expand_path("../all_data.json", __FILE__)))
@@ -89,6 +89,7 @@ profile.exclude_method!(Object, :run)
 profile.exclude_common_methods!
 profile.start
 all_data.each do |indata|
+  require 'byebug'; byebug
   if options[:flatten]
     JSON::LD::API.flatten(indata, options[:context], **options)
   elsif options[:compact]

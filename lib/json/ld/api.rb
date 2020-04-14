@@ -164,9 +164,10 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
     def self.expand(input, framing: false, **options, &block)
-      result, doc_base = nil
+      result = doc_base = nil
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
+          base: (RDF::URI(@options[:base]) if @options[:base]),
           ordered: @options[:ordered],
           framing: framing)
         doc_base = @options[:base]
@@ -225,7 +226,7 @@ module JSON::LD
 
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value, ordered: @options[:ordered])
+        result = compact(value, ordered: @options[:ordered], base: (RDF::URI(@options[:base]) if @options[:base]))
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize(provided_context: context)
@@ -295,7 +296,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = as_array(compact(flattened, ordered: @options[:ordered]))
+          compacted = as_array(compact(flattened, ordered: @options[:ordered], base: (RDF::URI(options[:base]) if options[:base])))
           kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.
             serialize(provided_context: context).
@@ -338,7 +339,7 @@ module JSON::LD
     def self.frame(input, frame, expanded: false, **options)
       result = nil
       options = {
-        base:                       (input if input.is_a?(String)),
+        base:                       (RDF::URI(input) if input.is_a?(String)),
         compactArrays:              true,
         compactToRelative:          true,
         embed:                      '@once',
@@ -429,7 +430,7 @@ module JSON::LD
         log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
-        compacted = compact(result, ordered: @options[:ordered])
+        compacted = compact(result, ordered: @options[:ordered], base: (RDF::URI(options[:base]) if options[:base]))
 
         # @replace `@null` with nil, compacting arrays
         compacted = cleanup_null(compacted)
@@ -526,9 +527,10 @@ module JSON::LD
 
       API.new(nil, nil, **options) do
         result = from_statements(input,
+          base: (RDF::URI(options[:base]) if options[:base]),
+          ordered: @options[:ordered],
           useRdfType: useRdfType,
-          useNativeTypes: useNativeTypes,
-          ordered: @options[:ordered])
+          useNativeTypes: useNativeTypes)
       end
 
       block_given? ? yield(result) : result

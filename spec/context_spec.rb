@@ -1213,7 +1213,7 @@ describe JSON::LD::Context do
       it "does not use @vocab if it would collide with a term" do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
-        expect(subject.compact_iri("http://example.org/name", position: :predicate)).
+        expect(subject.compact_iri("http://example.org/name", vocab: true)).
           not_to produce("name", logger)
       end
 
@@ -1496,7 +1496,7 @@ describe JSON::LD::Context do
         })
       end
       it "Compact @id that is a property IRI when @container is @list" do
-        expect(ctx.compact_iri("http://example.org/ns#property", position: :subject)).
+        expect(ctx.compact_iri("http://example.org/ns#property", vocab: false)).
           to produce("ex:property", logger)
       end
     end
