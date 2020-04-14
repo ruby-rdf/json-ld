@@ -222,7 +222,7 @@ module JSON::LD
       return active_ctx if local_context.empty?
 
       # Resolve contexts
-      resolved = Context.context_resolver.resolve(self, local_context, self.context_base || base)
+      resolved = Context.context_resolver.resolve(self, local_context, base)
 
       # process each context in order, update active context on each
       # iteration to ensure proper caching
@@ -269,6 +269,7 @@ module JSON::LD
 
         ctx = ctx.dup # keep from modifying a hash passed as a param
         rval = rval.dup
+        rval.context_base ||= resolved_context.location
         defined = {}
 
         # This counts on hash elements being processed in order
@@ -288,7 +289,7 @@ module JSON::LD
             raise JsonLdError::InvalidImportValue, "@import must be a string: #{ctx['@import'].inspect}" unless ctx['@import'].is_a?(String)
             import_loc = ctx['@import']
 
-            resolved_import = Context.context_resolver.resolve(active_ctx, import_loc, rval.context_base || base)
+            resolved_import = Context.context_resolver.resolve(active_ctx, import_loc, base)
             if resolved_import.length != 1
               raise JsonLdError::InvalidRemoteContext, "#{resolved_import.map(&:document).to_json} must be an object"
             end
@@ -371,7 +372,6 @@ module JSON::LD
     # @return [Context]
     def merge(context, override_protected: false)
       ctx = Context.new(term_definitions: self.term_definitions, standard_prefixes: options[:standard_prefixes])
-      ctx.context_base = context.context_base || self.context_base
       ctx.default_language = context.default_language || self.default_language
       ctx.default_direction = context.default_direction || self.default_direction
       ctx.vocab = context.vocab || self.vocab
@@ -1620,7 +1620,6 @@ module JSON::LD
     def dup
       that = self
       ec = Context.new(**@options)
-      ec.context_base = that.context_base
       ec.base = that.base unless that.base.nil?
       ec.default_direction = that.default_direction
       ec.default_language = that.default_language

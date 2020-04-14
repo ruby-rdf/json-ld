@@ -69,13 +69,11 @@ module JSON::LD
         case ctx
         when String
           resolved = get(ctx) || resolve_remote_context(active_ctx, ctx, base, cycles)
+          # Add document location for future reference
+          resolved.each {|r| r.location ||= base.join(ctx)}
 
           # add to output and continue
-          if resolved.is_a?(Array)
-            all_resolved.push(*resolved)
-          else
-            all_resolved.push(resolved)
-          end
+          all_resolved.push(*resolved)
         when nil, false
           all_resolved.push(ResolvedContext.new(false))
         when Context
@@ -110,7 +108,7 @@ module JSON::LD
     end
 
     def cache_resolved_context(key, resolved, tag)
-      @per_op_cache[key.to_s] = resolved.freeze
+      @per_op_cache[key.to_s] = resolved
       if tag
         tag_map = shared_cache[key.to_s] ||= {}
         tag_map[tag] = resolved
@@ -221,6 +219,7 @@ module JSON::LD
     MAX_ACTIVE_CONTEXTS = 10
 
     attr_reader :document
+    attr_accessor :location
 
     def initialize(document)
       @document = document
