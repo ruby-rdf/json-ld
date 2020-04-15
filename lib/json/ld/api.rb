@@ -644,7 +644,6 @@ module JSON::LD
           end
         end
 
-        require 'byebug'; byebug if url.to_s.include?('test-1-context.json')
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
             remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)
