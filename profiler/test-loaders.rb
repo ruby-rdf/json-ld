@@ -89,7 +89,6 @@ profile.exclude_method!(Object, :run)
 profile.exclude_common_methods!
 profile.start
 all_data.each do |indata|
-  require 'byebug'; byebug
   if options[:flatten]
     JSON::LD::API.flatten(indata, options[:context], **options)
   elsif options[:compact]

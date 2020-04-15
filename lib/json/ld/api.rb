@@ -226,7 +226,9 @@ module JSON::LD
 
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value, ordered: @options[:ordered], base: (RDF::URI(@options[:base]) if @options[:base]))
+        result = compact(value,
+                         base: (RDF::URI(@options[:base]) if @options[:base]),
+                         ordered: options[:ordered])
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize(provided_context: context)
@@ -296,7 +298,10 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = as_array(compact(flattened, ordered: @options[:ordered], base: (RDF::URI(options[:base]) if options[:base])))
+          compacted = as_array(
+            compact(flattened,
+                    base: (RDF::URI(options[:base]) if options[:base]),
+                    ordered: options[:ordered]))
           kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.
             serialize(provided_context: context).
@@ -430,7 +435,9 @@ module JSON::LD
         log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
-        compacted = compact(result, ordered: @options[:ordered], base: (RDF::URI(options[:base]) if options[:base]))
+        compacted = compact(result,
+          base: (RDF::URI(options[:base]) if options[:base]),
+          ordered: options[:ordered])
 
         # @replace `@null` with nil, compacting arrays
         compacted = cleanup_null(compacted)
@@ -540,16 +547,18 @@ module JSON::LD
     # Uses built-in or provided documentLoader to retrieve a parsed document.
     #
     # @param [RDF::URI, String] url
+    # @param [String, RDF::URI] base
+    #   Location to use as documentUrl instead of `url`.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts.
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
     #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
-    # @param [Boolean] validate
+    # @param [Boolean] validate (false)
     #   Allow only appropriate content types
-    # @param [String, RDF::URI] base
-    #   Location to use as documentUrl instead of `url`.
     # @param [Hash<Symbol => Object>] options
     # @yield remote_document
     # @yieldparam [RemoteDocumentRemoteDocument, RDF::Util::File::RemoteDocument] remote_document
@@ -558,13 +567,14 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.loadRemoteDocument(url,
+                                base: nil,
+                                documentLoader: nil,
                                 extractAllScripts: false,
                                 profile: nil,
                                 requestProfile: nil,
                                 validate: false,
-                                base: nil,
                                 **options)
-      documentLoader = options.fetch(:documentLoader, self.method(:documentLoader))
+      documentLoader ||= self.method(:documentLoader)
       options = OPEN_OPTS.merge(options)
       if requestProfile
         # Add any request profile
@@ -634,6 +644,7 @@ module JSON::LD
           end
         end
 
+        require 'byebug'; byebug if url.to_s.include?('test-1-context.json')
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
             remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)

@@ -48,4 +48,5 @@ end
 
 group :debug do
   gem "byebug", platforms: :mri
+  gem "pry"
 end

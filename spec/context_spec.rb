@@ -26,7 +26,6 @@ describe JSON::LD::Context do
   let(:context) {
     JSON::LD::Context.new(
       logger: logger,
-      validate: true,
       processingMode: "json-ld-1.1",
       compactToRelative: true,
       context_resolver: nil)
@@ -52,7 +51,7 @@ describe JSON::LD::Context do
     ]}
 
     it "merges definitions from each context" do
-      ec = described_class.parse(ctx, context_resolver: nil)
+      ec = described_class.parse(ctx, context_resolver: nil, validate: true)
       expect(ec.send(:mappings)).to produce({
         "foo" => "http://example.com/foo",
         "bar" => "http://example.com/foo"
@@ -66,12 +65,12 @@ describe JSON::LD::Context do
       it "fails given a missing remote @context" do
         JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
-        expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
+        expect {subject.parse("http://example.com/context", validate: true)}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
-
+      
       it "creates mappings" do
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        ec = subject.parse("http://example.com/context")
+        ec = subject.parse("http://example.com/context", validate: true)
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -79,7 +78,7 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
-
+      
       it "retrieves and parses a remote context document in HTML using the context profile" do
         remote_doc =
           JSON::LD::API::RemoteDocument.new(%q(
@@ -115,10 +114,10 @@ describe JSON::LD::Context do
             ),
             documentUrl: "http://example.com/context",
             contentType: "text/html")
-
+      
         JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        ec = subject.parse("http://example.com/context")
+        ec = subject.parse("http://example.com/context", validate: true)
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -126,7 +125,7 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
-
+      
       it "retrieves and parses a remote context document in HTML" do
         remote_doc =
           JSON::LD::API::RemoteDocument.new(%q(
@@ -156,7 +155,7 @@ describe JSON::LD::Context do
             contentType: "text/html")
           JSON::LD::Context.instance_variable_set(:@cache, nil)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        ec = subject.parse("http://example.com/context")
+        ec = subject.parse("http://example.com/context", validate: true)
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -164,17 +163,17 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
-
+      
       it "notes non-existing @context" do
-        expect {subject.parse(StringIO.new("{}"))}.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
+        expect {subject.parse(StringIO.new("{}"), validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
       end
-
+      
       it "parses a referenced context at a relative URI" do
         JSON::LD::Context.instance_variable_set(:@cache, nil)
         rd1 = JSON::LD::API::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        ec = subject.parse("http://example.com/c1")
+        ec = subject.parse("http://example.com/c1", validate: true)
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -182,13 +181,13 @@ describe JSON::LD::Context do
           "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
-
+      
       context "remote with local mappings" do
         let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
         before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-          subject.parse(ctx)
+          subject.parse(ctx, validate: true)
         end
       end
 
@@ -196,7 +195,7 @@ describe JSON::LD::Context do
         let(:ctx) {"http://example.com/preloaded"}
         before(:all) {
           JSON::LD::Context.add_preloaded("http://example.com/preloaded",
-            JSON::LD::Context.parse({'foo' => "http://example.com/"})
+            JSON::LD::Context.parse({'foo' => "http://example.com/"}, validate: true)
           )
           JSON::LD::Context.alias_preloaded("https://example.com/preloaded", "http://example.com/preloaded")
         }
@@ -204,23 +203,23 @@ describe JSON::LD::Context do
 
         it "does not load referenced context" do
           expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
-          subject.parse(ctx)
+          subject.parse(ctx, validate: true)
         end
-
+        
         it "does not load aliased context" do
           expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx.sub('http', 'https'), anything)
-          subject.parse(ctx.sub('http', 'https'))
+          subject.parse(ctx.sub('http', 'https'), validate: true)
         end
 
         it "uses loaded context" do
-          ec = subject.parse(ctx)
+          ec = subject.parse(ctx, validate: true)
           expect(ec.send(:mappings)).to produce({
             "foo"   => "http://example.com/"
           }, logger)
         end
 
         it "uses aliased context" do
-          ec = subject.parse(ctx.sub('http', 'https'))
+          ec = subject.parse(ctx.sub('http', 'https'), validate: true)
           expect(ec.send(:mappings)).to produce({
             "foo"   => "http://example.com/"
           }, logger)
@@ -235,7 +234,7 @@ describe JSON::LD::Context do
       ]}
 
       it "merges definitions from each context" do
-        ec = subject.parse(ctx)
+        ec = subject.parse(ctx, validate: true)
         expect(ec.send(:mappings)).to produce({
           "foo" => "http://example.com/foo",
           "bar" => "http://example.com/foo"
@@ -251,7 +250,7 @@ describe JSON::LD::Context do
           }
         }), base_uri: "http://example.com/c2")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c2", anything).and_yield(rd2)
-        ec = subject.parse(%w(http://example.com/context http://example.com/c2))
+        ec = subject.parse(%w(http://example.com/context http://example.com/c2), validate: true)
         expect(ec.send(:mappings)).to produce({
           "xsd"      => "http://www.w3.org/2001/XMLSchema#",
           "name"     => "http://xmlns.com/foaf/0.1/name",
@@ -266,19 +265,19 @@ describe JSON::LD::Context do
       it "extracts @language" do
         expect(subject.parse({
           "@language" => "en"
-        }).default_language).to produce("en", logger)
+        }, validate: true).default_language).to produce("en", logger)
       end
 
       it "extracts @vocab" do
         expect(subject.parse({
           "@vocab" => "http://schema.org/"
-        }).vocab).to produce("http://schema.org/", logger)
+        }, validate: true).vocab).to produce("http://schema.org/", logger)
       end
 
       it "maps term with IRI value" do
         expect(subject.parse({
           "foo" => "http://example.com/"
-        }).send(:mappings)).to produce({
+        }, validate: true).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, logger)
       end
@@ -287,7 +286,7 @@ describe JSON::LD::Context do
         expect do
           expect(subject.parse({
             "foo" => "_:bn"
-          }).send(:mappings)).to produce({
+          }, validate: true).send(:mappings)).to produce({
             "foo" => RDF::Node("bn")
           }, logger)
         end.to write("[DEPRECATION]").to(:error)
@@ -296,7 +295,7 @@ describe JSON::LD::Context do
       it "maps term with @id" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/"}
-        }).send(:mappings)).to produce({
+        }, validate: true).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, logger)
       end
@@ -305,7 +304,7 @@ describe JSON::LD::Context do
         expect do
           expect(subject.parse({
             "foo" => {"@id" => "_:bn"}
-          }).send(:mappings)).to produce({
+          }, validate: true).send(:mappings)).to produce({
             "foo" => RDF::Node("bn")
           }, logger)
         end.to write("[DEPRECATION]").to(:error)
@@ -315,7 +314,7 @@ describe JSON::LD::Context do
         expect do
           expect(subject.parse({
             "@foo" => {"@id" => "http://example.org/foo"}
-          }).send(:mappings)).to produce({}, logger)
+          }, validate: true).send(:mappings)).to produce({}, logger)
         end.to write("Terms beginning with '@' are reserved").to(:error)
       end
 
@@ -323,7 +322,7 @@ describe JSON::LD::Context do
         expect do
           expect(subject.parse({
             "@" => {"@id" => "http://example.org/@"}
-          }).send(:mappings)).to produce({
+          }, validate: true).send(:mappings)).to produce({
             "@" => "http://example.org/@"
           }, logger)
         end.not_to write.to(:error)
@@ -333,7 +332,7 @@ describe JSON::LD::Context do
         expect do
           expect(subject.parse({
             "@foo.bar" => {"@id" => "http://example.org/foo.bar"}
-          }).send(:mappings)).to produce({
+          }, validate: true).send(:mappings)).to produce({
             "@foo.bar" => "http://example.org/foo.bar"
           }, logger)
         end.not_to write.to(:error)
@@ -342,7 +341,7 @@ describe JSON::LD::Context do
       it "associates @list container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
-        }).containers).to produce({
+        }, validate: true).containers).to produce({
           "foo" => Set["@list"]
         }, logger)
       end
@@ -350,7 +349,7 @@ describe JSON::LD::Context do
       it "associates @type container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
-        }).containers).to produce({
+        }, validate: true).containers).to produce({
           "foo" => Set["@type"]
         }, logger)
       end
@@ -358,7 +357,7 @@ describe JSON::LD::Context do
       it "associates @id container mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@container" => "@id"}
-        }).containers).to produce({
+        }, validate: true).containers).to produce({
           "foo" => Set["@id"]
         }, logger)
       end
@@ -366,7 +365,7 @@ describe JSON::LD::Context do
       it "associates @id type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
-        }).coercions).to produce({
+        }, validate: true).coercions).to produce({
           "foo" => "@id"
         }, logger)
       end
@@ -374,7 +373,7 @@ describe JSON::LD::Context do
       it "associates @json type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => "@json"}
-        }).coercions).to produce({
+        }, validate: true).coercions).to produce({
           "foo" => "@json"
         }, logger)
       end
@@ -382,7 +381,7 @@ describe JSON::LD::Context do
       it "associates type mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
-        }).coercions).to produce({
+        }, validate: true).coercions).to produce({
           "foo" => RDF::XSD.string
         }, logger)
       end
@@ -390,7 +389,7 @@ describe JSON::LD::Context do
       it "associates language mapping with term" do
         expect(subject.parse({
           "foo" => {"@id" => "http://example.com/", "@language" => "en"}
-        }).send(:languages)).to produce({
+        }, validate: true).send(:languages)).to produce({
           "foo" => "en"
         }, logger)
       end
@@ -400,7 +399,7 @@ describe JSON::LD::Context do
           "foo" => "bar",
           "bar" => "baz",
           "baz" => "http://example.com/"
-        }).send(:mappings)).to produce({
+        }, validate: true).send(:mappings)).to produce({
           "foo" => "http://example.com/",
           "bar" => "http://example.com/",
           "baz" => "http://example.com/"
@@ -411,7 +410,7 @@ describe JSON::LD::Context do
         expect(subject.parse({
           "foo" => "bar",
           "@vocab" => "http://example.com/"
-        }).send(:mappings)).to produce({
+        }, validate: true).send(:mappings)).to produce({
           "foo" => "http://example.com/bar"
         }, logger)
       end
@@ -425,7 +424,7 @@ describe JSON::LD::Context do
             {
               "@language" => nil
             }
-          ]).default_language).to produce(nil, logger)
+          ], validate: true).default_language).to produce(nil, logger)
         end
 
         it "removes @vocab if set to null" do
@@ -436,7 +435,7 @@ describe JSON::LD::Context do
             {
               "@vocab" => nil
             }
-          ]).vocab).to produce(nil, logger)
+          ], validate: true).vocab).to produce(nil, logger)
         end
 
         it "removes term if set to null with @vocab" do
@@ -445,12 +444,12 @@ describe JSON::LD::Context do
               "@vocab" => "http://schema.org/",
               "term" => nil
             }
-          ]).send(:mappings)).to produce({"term" => nil}, logger)
+          ], validate: true).send(:mappings)).to produce({"term" => nil}, logger)
         end
 
         it "loads initial context" do
           init_ec = JSON::LD::Context.new
-          nil_ec = subject.parse(nil)
+          nil_ec = subject.parse(nil, validate: true)
           expect(nil_ec.default_language).to eq init_ec.default_language
           expect(nil_ec.send(:languages)).to eq init_ec.send(:languages)
           expect(nil_ec.send(:mappings)).to eq init_ec.send(:mappings)
@@ -459,21 +458,21 @@ describe JSON::LD::Context do
         end
 
         it "removes a term definition" do
-          expect(subject.parse({"name" => nil}).send(:mapping, "name")).to be_nil
+          expect(subject.parse({"name" => nil}, validate: true).send(:mapping, "name")).to be_nil
         end
       end
 
 
       context "@propagate" do
         it "generates an InvalidPropagateValue error if not a boolean" do
-          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"})}.to raise_error(JSON::LD::JsonLdError::InvalidPropagateValue)
+          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"}, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidPropagateValue)
         end
       end
 
       context "@import" do
         before(:each) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
         it "generates an InvalidImportValue error if not a string" do
-          expect {subject.parse({'@version' => 1.1, '@import' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
+          expect {subject.parse({'@version' => 1.1, '@import' => true}, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
         end
 
         it "retrieves remote context" do
@@ -481,7 +480,7 @@ describe JSON::LD::Context do
           ec = subject.parse(JSON.parse %({
             "@version": 1.1,
             "@import": "http://example.com/context"
-          }))
+          }), validate: true)
           expect(ec.term_definitions).to include("avatar")
         end
       end
@@ -523,14 +522,14 @@ describe JSON::LD::Context do
       }.each do |title, context|
         it title do
           expect {
-            ec = subject.parse(context)
+            ec = subject.parse(context, validate: true)
             expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
       end
 
       context "1.0" do
-        let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: 'json-ld-1.0')}
+        let(:context) {JSON::LD::Context.new(logger: logger, processingMode: 'json-ld-1.0')}
         {
           "@context" => {"foo" => {"@id" => 'http://example.org/', "@context" => {}}},
           "@container @id" => {"foo" => {"@container" => "@id"}},
@@ -542,24 +541,24 @@ describe JSON::LD::Context do
         }.each do |title, context|
           it title do
             expect {
-              ec = subject.parse(context)
+              ec = subject.parse(context, validate: true)
               expect(ec.serialize).to produce({}, logger)
             }.to raise_error(JSON::LD::JsonLdError)
           end
         end
 
         it "generates InvalidContextEntry if using @propagate" do
-          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
+          expect {context.parse({'@propagate' => true}, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
         it "generates InvalidContextEntry if using @import" do
-          expect {context.parse({'@import' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
+          expect {context.parse({'@import' => "location"}, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
         (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|
           it "does not redefine #{kw} with an @container" do
             expect {
-              ec = subject.parse({kw => {"@container" => "@set"}})
+              ec = subject.parse({kw => {"@container" => "@set"}}, validate: true)
               expect(ec.serialize).to produce({}, logger)
             }.to raise_error(JSON::LD::JsonLdError)
           end
@@ -569,27 +568,27 @@ describe JSON::LD::Context do
       (JSON::LD::KEYWORDS - %w(@base @context @direction @language @protected @propagate @import @version @vocab)).each do |kw|
         it "does not redefine #{kw} as a string" do
           expect {
-            ec = subject.parse({kw => "http://example.com/"})
+            ec = subject.parse({kw => "http://example.com/"}, validate: true)
             expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @id" do
           expect {
-            ec = subject.parse({kw => {"@id" => "http://example.com/"}})
+            ec = subject.parse({kw => {"@id" => "http://example.com/"}}, validate: true)
             expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @container" do
           expect {
-            ec = subject.parse({"@version" => 1.1, kw => {"@container" => "@set"}})
+            ec = subject.parse({"@version" => 1.1, kw => {"@container" => "@set"}}, validate: true)
             expect(ec.serialize).to produce({}, logger)
           }.to raise_error(JSON::LD::JsonLdError)
         end unless kw == '@type'
 
         it "redefines #{kw} with an @container" do
-          ec = subject.parse({kw => {"@container" => "@set"}})
+          ec = subject.parse({kw => {"@container" => "@set"}}, validate: true)
           expect(ec.as_array('@type')).to be_truthy
         end if kw == '@type'
       end
@@ -602,7 +601,7 @@ describe JSON::LD::Context do
         %({"@version": 1.1}),
         %([{"@version": 1.1}]),
       ].each do |str|
-        ctx = JSON::LD::Context.parse(::JSON.parse(str))
+        ctx = JSON::LD::Context.parse(::JSON.parse(str), validate: true)
         expect(ctx.processingMode).to eql "json-ld-1.1"
       end
     end
@@ -614,22 +613,22 @@ describe JSON::LD::Context do
         1.0,
         "foo"
       ].each do |vers|
-        expect {JSON::LD::Context.parse({"@version" => vers})}.to raise_error(JSON::LD::JsonLdError::InvalidVersionValue)
+        expect {JSON::LD::Context.parse({"@version" => vers}, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidVersionValue)
       end
     end
 
     it "raises ProcessingModeConflict if provided processing mode conflicts with context" do
-      expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0")}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+      expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0", validate: true)}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
     end
 
     it "does not raise ProcessingModeConflict nested context is different from starting context" do
-      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.not_to raise_error
+      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}], validate: true)}.not_to raise_error
     end
   end
 
   describe "#merge" do
     it "creates a new context with components of each" do
-      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"})
+      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"}, validate: true)
       cm = context.merge(c2)
       expect(cm).not_to equal context
       expect(cm).not_to equal c2
@@ -642,7 +641,7 @@ describe JSON::LD::Context do
     it "context hash" do
       ctx = {"foo" => "http://example.com/"}
 
-      ec = subject.parse(ctx)
+      ec = subject.parse(ctx, validate: true)
       expect(ec.serialize).to produce({
         "@context" => ctx
       }, logger)
@@ -669,7 +668,7 @@ describe JSON::LD::Context do
     end
 
     it "term mappings" do
-      c = subject.parse({'foo' => "http://example.com/"})
+      c = subject.parse({'foo' => "http://example.com/"}, validate: true)
       expect(c.serialize).to produce({
         "@context" => {
           "foo" => "http://example.com/"
@@ -681,7 +680,7 @@ describe JSON::LD::Context do
     it "@context" do
       expect(subject.parse({
         "foo" => {"@id" => "http://example.com/", "@context" => {"bar" => "http://example.com/baz"}}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "foo" => {
@@ -696,7 +695,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         'xsd' => "http://www.w3.org/2001/XMLSchema#",
         'homepage' => {'@id' => RDF::Vocab::FOAF.homepage.to_s, '@type' => '@id'}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri.to_s,
@@ -708,7 +707,7 @@ describe JSON::LD::Context do
     it "@list with @id definition in a single context" do
       expect(subject.parse({
         'knows' => {'@id' => RDF::Vocab::FOAF.knows.to_s, '@container' => '@list'}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
@@ -719,7 +718,7 @@ describe JSON::LD::Context do
     it "@set with @id definition in a single context" do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
@@ -730,7 +729,7 @@ describe JSON::LD::Context do
     it "@language with @id definition in a single context" do
       expect(subject.parse({
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
@@ -742,7 +741,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -755,7 +754,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -768,7 +767,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "@language" => 'en',
         "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "@language" => 'en',
@@ -780,7 +779,7 @@ describe JSON::LD::Context do
     it "prefix with @type and @list" do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
@@ -791,7 +790,7 @@ describe JSON::LD::Context do
     it "prefix with @type and @set" do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
@@ -802,7 +801,7 @@ describe JSON::LD::Context do
     it "prefix with @type @json" do
       expect(subject.parse({
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
@@ -816,7 +815,7 @@ describe JSON::LD::Context do
         "foaf:knows" => {
           "@container" => "@list"
         }
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -831,7 +830,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "id" => "@id",
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "id" => "@id",
@@ -847,7 +846,7 @@ describe JSON::LD::Context do
         "foaf:homepage" => {
           "@type" => "@id"
         }
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -864,7 +863,7 @@ describe JSON::LD::Context do
         "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "type" => "@type",
         "foaf:homepage" => {"@type" => "@id"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
@@ -878,7 +877,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "container" => "@container",
         "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "container" => "@container",
@@ -891,7 +890,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "ex" => 'http://example.org/',
         "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "ex" => 'http://example.org/',
@@ -904,7 +903,7 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "@vocab" => 'http://example.org/',
         "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
-      }).
+      }, validate: true).
       serialize).to produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
@@ -923,7 +922,7 @@ describe JSON::LD::Context do
         }
       }.each do |title, params|
         it title do
-          expect {subject.parse(params[:input])}.to raise_error(JSON::LD::JsonLdError::InvalidTermDefinition)
+          expect {subject.parse(params[:input], validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidTermDefinition)
         end
       end
     end
@@ -937,7 +936,7 @@ describe JSON::LD::Context do
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '_' => 'http://underscore/'
-      })
+      }, validate: true)
     }
 
     it "sets new base uri given an absolute uri" do
@@ -955,7 +954,7 @@ describe JSON::LD::Context do
     subject {
       context.parse({
         '@base' => 'http://base/resource',
-      })
+      }, validate: true)
     }
 
     it "sets vocab from absolute iri" do
@@ -970,7 +969,7 @@ describe JSON::LD::Context do
 
     it "sets vocab to blank node (with deprecation)" do
       expect do
-        subject.vocab = "_:bn"
+        subject.send(:vocab=, "_:bn", validate: true)
       end.to write("[DEPRECATION]").to(:error)
       expect(subject.vocab).to eql "_:bn"
     end
@@ -1000,7 +999,7 @@ describe JSON::LD::Context do
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '_' => 'http://underscore/'
-      })
+      }, validate: true)
     }
 
     it "bnode" do
@@ -1097,7 +1096,7 @@ describe JSON::LD::Context do
               '@vocab' => '',
               'ex' => 'http://example.org/',
               '_' => 'http://underscore/'
-            })
+            }, validate: true)
           }
 
           {
@@ -1126,7 +1125,7 @@ describe JSON::LD::Context do
           ctx = JSON::LD::Context.parse({
             "@base" => "http://example.com/some/deep/directory/and/file/",
             "@vocab" => "/relative"
-          })
+          }, validate: true)
           expect(ctx.expand_iri("#fragment-works", vocab: true)).to produce("http://example.com/relative#fragment-works", logger)
         end
       end
@@ -1145,7 +1144,7 @@ describe JSON::LD::Context do
         'tex'     => {'@id' => 'ex', '@type' => 'xsd:string'},
         'exp'     => {'@id' => 'ex:pert'},
         'experts' => {'@id' => 'ex:perts'},
-      })
+      }, validate: true)
       logger.clear
       c
     }
@@ -1280,7 +1279,7 @@ describe JSON::LD::Context do
           "map_lang" => {"@id" => "http://example.com/lang", "@container" => "@language"},
 
           "set_map_lang" => {"@id" => "http://example.com/lang", "@container" => ["@language", "@set"]},
-        })
+        }, validate: true)
         logger.clear
         c
       end
@@ -1416,7 +1415,7 @@ describe JSON::LD::Context do
             "@container": "@list",
             "@type": "type2"
           }
-        }))
+        }), validate: true)
       end
 
       {
@@ -1481,7 +1480,7 @@ describe JSON::LD::Context do
       }.each do |term, value|
         [value].flatten.each do |v|
           it "Uses #{term} for #{v}" do
-            expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v), vocab: true)).
+            expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v, validate: true), vocab: true)).
               to produce(term, logger)
           end
         end
@@ -1493,7 +1492,7 @@ describe JSON::LD::Context do
         subject.parse({
           "ex" => "http://example.org/ns#",
           "ex:property" => {"@container" => "@list"}
-        })
+        }, validate: true)
       end
       it "Compact @id that is a property IRI when @container is @list" do
         expect(ctx.compact_iri("http://example.org/ns#property", vocab: false)).
@@ -1503,7 +1502,7 @@ describe JSON::LD::Context do
 
     context "compact-0041" do
       let(:ctx) do
-        subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
+        subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}}, validate: true)
       end
       it "Does not use @list with @index" do
         expect(ctx.compact_iri("http://example.com/property", value: {
@@ -1529,7 +1528,7 @@ describe JSON::LD::Context do
         "ex:boolean" => {"@type" => "xsd:boolean"},
         "ex:none" => {"@type" => "@none"},
         "ex:json" => {"@type" => "@json"}
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1636,7 +1635,7 @@ describe JSON::LD::Context do
         "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
         "foaf:knows" => {"@type" => "@id"},
         "ex:none"    => {"@type" => "@none"},
-      })
+      }, validate: true)
       logger.clear
       c
     end
@@ -1742,7 +1741,7 @@ describe JSON::LD::Context do
         "set"         => {"@id" => "ex:set", "@container" => "@set"},
         "type"        => {"@id" => "ex:type", "@container" => "@type"},
         "typeSet"     => {"@id" => "ex:typeSet", "@container" => ["@type", "@set"]},
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1826,7 +1825,7 @@ describe JSON::LD::Context do
         "ex" => "http://example.org/",
         "nil" => {"@id" => "ex:nil", "@language" => nil},
         "en" => {"@id" => "ex:en", "@language" => "en"},
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1848,7 +1847,7 @@ describe JSON::LD::Context do
       ctx = context.parse({
         "ex" => "http://example.org/",
         "reverse" => {"@reverse" => "ex:reverse"},
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1870,7 +1869,7 @@ describe JSON::LD::Context do
         "nest"        => {"@id" => "ex:nest", "@nest" => "@nest"},
         "nest2"       => {"@id" => "ex:nest2", "@nest" => "nest-alias"},
         "nest-alias"  => "@nest"
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1889,13 +1888,13 @@ describe JSON::LD::Context do
     context "detects error" do
       it "does not allow a keyword other than @nest for the value of @nest" do
         expect {
-          context.parse({"no-keyword-nest" => {"@id" => "http://example/f", "@nest" => "@id"}})
+          context.parse({"no-keyword-nest" => {"@id" => "http://example/f", "@nest" => "@id"}}, validate: true)
         }.to raise_error JSON::LD::JsonLdError::InvalidNestValue
       end
 
       it "does not allow @nest with @reverse" do
         expect {
-          context.parse({"no-reverse-nest" => {"@reverse" => "http://example/f", "@nest" => "@nest"}})
+          context.parse({"no-reverse-nest" => {"@reverse" => "http://example/f", "@nest" => "@nest"}}, validate: true)
         }.to raise_error JSON::LD::JsonLdError::InvalidReverseProperty
       end
     end
@@ -1906,7 +1905,7 @@ describe JSON::LD::Context do
       ctx = context.parse({
         "ex" => "http://example.org/",
         "reverse" => {"@reverse" => "ex"},
-      })
+      }, validate: true)
       logger.clear
       ctx
     }
@@ -1926,7 +1925,7 @@ describe JSON::LD::Context do
       ctx = context.parse({
         "protected" => {"@id" => "http://example.com/protected", "@protected" => true},
         "unprotected" => {"@id" => "http://example.com/unprotected"},
-      })
+      }, validate: true)
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
     end
@@ -1936,7 +1935,7 @@ describe JSON::LD::Context do
         "@protected" => true,
         "protected" => {"@id" => "http://example.com/protected"},
         "protected2" => {"@id" => "http://example.com/protected2"},
-      })
+      }, validate: true)
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["protected2"]).to be_protected
     end
@@ -1946,7 +1945,7 @@ describe JSON::LD::Context do
         "@protected" => true,
         "protected" => {"@id" => "http://example.com/protected"},
         "unprotected" => {"@id" => "http://example.com/unprotected", "@protected" => false},
-      })
+      }, validate: true)
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
     end
@@ -1955,7 +1954,7 @@ describe JSON::LD::Context do
       c = {
         "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
       }
-      ctx = context.parse(c)
+      ctx = context.parse(c, validate: true)
 
       expect {ctx.parse(c)}.not_to raise_error
     end
@@ -1963,7 +1962,7 @@ describe JSON::LD::Context do
     it "errors when redefining a protected term" do
       ctx = context.parse({
         "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
-      })
+      }, validate: true)
 
       expect {ctx.parse({"protected" => "http://example.com/different"})}.to raise_error(JSON::LD::JsonLdError::ProtectedTermRedefinition)
     end
@@ -1971,9 +1970,9 @@ describe JSON::LD::Context do
     it "errors when clearing a context having protected terms" do
       ctx = context.parse({
         "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
-      })
+      }, validate: true)
 
-      expect {ctx.parse(nil)}.to raise_error(JSON::LD::JsonLdError::InvalidContextNullification)
+      expect {ctx.parse(nil, validate: true)}.to raise_error(JSON::LD::JsonLdError::InvalidContextNullification)
     end
   end
 

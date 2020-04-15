@@ -27,11 +27,9 @@ module JSON::LD
     #
     # @param [Object] shared_cache (LruRedux::Cache)
     #   A shared cache that may be configured for storing cached context documents.
-    # @param [Hash] options API options
-    def initialize(shared_cache: LruRedux::Cache.new(CACHE_SIZE), **options)
+    def initialize(shared_cache: nil)
       @per_op_cache = {}
-      @shared_cache = shared_cache
-      @options = options
+      @shared_cache = shared_cache || LruRedux::Cache.new(CACHE_SIZE)
     end
 
     ##
@@ -41,7 +39,7 @@ module JSON::LD
     # @param context the context to resolve.
     # @param base the absolute URL to use for making url absolute.
     # @param cycles A set for holding contexts.
-    def resolve(active_ctx, context, base, cycles=Set.new)
+    def resolve(active_ctx, context, base, cycles=Set.new, documentLoader:, validate:)
       base = RDF::URI(base) unless base.is_a?(RDF::URI)
 
       # process `@context`
@@ -68,7 +66,10 @@ module JSON::LD
 
         case ctx
         when String
-          resolved = get(ctx) || resolve_remote_context(active_ctx, ctx, base, cycles)
+          resolved = get(ctx) ||
+            resolve_remote_context(active_ctx, ctx, base, cycles,
+                                   documentLoader: documentLoader,
+                                   validate: validate)
           # Add document location for future reference
           resolved.each {|r| r.location ||= base.join(ctx)}
 
@@ -116,21 +117,26 @@ module JSON::LD
       resolved
     end
 
-    def resolve_remote_context(active_ctx, url, base, cycles)
+    def resolve_remote_context(active_ctx, url, base, cycles,  documentLoader:, validate:)
       url = base.join(url) if base
-      context, remote_doc = fetch_context(active_ctx, url, cycles)
+      context, remote_doc =
+        fetch_context(active_ctx, url, cycles,
+        documentLoader: documentLoader,
+        validate: validate)
 
       # update base according to remote document and resolve any relative URLs
       base = remote_doc.documentUrl || url
       resolve_context_urls(context, base)
 
       # resolve, cache, and return context
-      resolved = resolve(active_ctx, context, base, cycles)
+      resolved = resolve(active_ctx, context, base, cycles,
+                         documentLoader: documentLoader,
+                         validate: validate)
       cache_resolved_context(url, resolved, remote_doc.tag)
       resolved
     end
 
-    def fetch_context(active_ctx, url, cycles)
+    def fetch_context(active_ctx, url, cycles,  documentLoader:, validate:)
       if cycles.size > MAX_CONTEXT_URLS
         raise JSON::LD::JsonLdError::LoadingRemoteContextFailed, 'Maximum number of @context URLs exceeded.'
       end
@@ -160,7 +166,8 @@ module JSON::LD
           remote_doc = JSON::LD::API.loadRemoteDocument(url,
             profile: 'http://www.w3.org/ns/json-ld#context',
             requestProfile: 'http://www.w3.org/ns/json-ld#context',
-            **@options.merge(base: nil))
+            documentLoader: documentLoader,
+            validate: validate)
           context = remote_doc.document || url
         rescue JsonLdError::LoadingDocumentFailed => e
           raise JsonLdError::LoadingRemoteContextFailed, "#{url}: #{e.message}", e.backtrace

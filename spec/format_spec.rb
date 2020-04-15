@@ -1,6 +1,7 @@
 # coding: utf-8
 require_relative 'spec_helper'
 require 'rdf/spec/format'
+require_relative 'suite_helper'
 
 describe JSON::LD::Format do
   before(:all) {

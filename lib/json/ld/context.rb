@@ -24,6 +24,9 @@ module JSON::LD
     # @return [Hash{Symbol => Context}]
     PRELOADED = {}
 
+    # Initial contexts, defined on first access
+    INITIAL_CONTEXTS = {}
+
     ##
     # Defines the maximum number of interned URI references that can be held
     # cached in memory at any one time.
@@ -112,11 +115,37 @@ module JSON::LD
     # @see #initialize
     # @see #parse
     # @param [String, #read, Array, Hash, Context] local_context
+    # @param [String, #to_s] :base (nil)
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @param [Proc] :documentLoader (nil)
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
+    # @param [Boolean] override_protected (false)
+    #   Protected terms may be cleared.
+    # @param [Boolean] propagate (true)
+    #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    # @param [Boolean] validate (false)
+    #   Extra validatation
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, base: nil, override_protected: false, propagate: true, **options)
-      self.new(**options).parse(local_context, base: base, override_protected: override_protected, propagate: propagate)
+    def self.parse(local_context,
+                   base: nil,
+                   documentLoader: nil,
+                   override_protected: false,
+                   propagate: true,
+                   validate: false,
+                   **options)
+      c = self.new(**options)
+      if local_context.respond_to?(:empty?) && local_context.empty?
+        c
+      else
+        c.parse(local_context,
+                base: base,
+                documentLoader: documentLoader,
+                override_protected: override_protected,
+                propagate: propagate,
+                validate: validate)
+      end
     end
 
     ##
@@ -129,11 +158,37 @@ module JSON::LD
     end
 
     ##
+    # @private
+    # Allow caching of well-known contexts
+    def self.new(**options)
+      if (options.keys - [
+          :context_resolver,
+          :processingMode,
+          :compactArrays,
+          :ordered,
+          :extractAllScripts
+          ]).empty?
+        # allow caching
+        key = options.to_json
+        INITIAL_CONTEXTS[key] ||= begin
+          context = JSON::LD::Context.allocate
+          context.send(:initialize, **options)
+          context.freeze
+          context.term_definitions.freeze
+          context
+        end
+      else
+        # Don't try to cache
+        context = JSON::LD::Context.allocate
+        context.send(:initialize, **options)
+        context
+      end
+    end
+
+    ##
     # Create new evaluation context
     # @param [Hash] options
     # @option options [ContextResolver] :context_resolver internal use only.
-    # @option options [Proc] :documentLoader
-    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
     # @option options [String, #to_s] :vocab
@@ -147,9 +202,9 @@ module JSON::LD
       # One-time initialize context resolver
       if options.has_key?(:context_resolver)
         # Could be passed as `nil`, to cause a new resolver to be created
-        Context.context_resolver = options[:context_resolver] || ContextResolver.new(**options)
+        Context.context_resolver = options[:context_resolver] || ContextResolver.new(shared_cache: options[:shared_cache])
       else
-        Context.context_resolver ||= ContextResolver.new(**options)
+        Context.context_resolver ||= ContextResolver.new(shared_cache: options[:shared_cache])
       end
       if options[:processingMode] == 'json-ld-1.0'
         @processingMode = 'json-ld-1.0'
@@ -192,10 +247,14 @@ module JSON::LD
     # @param [String, #read, Array, Hash, Context] local_context
     # @param [String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @param [Proc] :documentLoader (nil)
+    #   The callback of the loader to be used to retrieve remote documents and contexts.
     # @param [Boolean] override_protected Protected terms may be cleared.
-    # @param [Boolean] propagate
+    # @param [Boolean] propagate (true)
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
-    # @param [Array<String>] remote_contexts
+    # @param [Array<String>] remote_contexts ([])
+    # @param [Boolean] validate (false)
+    #   Extra validatation
     # @param [Boolean] validate_scoped (true).
     #   Validate scoped context, loading if necessary.
     #   If false, do not load scoped contexts.
@@ -205,9 +264,11 @@ module JSON::LD
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
     def parse(local_context,
               base: nil,
+              documentLoader: nil,
               override_protected: false,
               propagate: true,
               remote_contexts: [],
+              validate: false,
               validate_scoped: true)
       active_ctx = self
 
@@ -222,7 +283,10 @@ module JSON::LD
       return active_ctx if local_context.empty?
 
       # Resolve contexts
-      resolved = Context.context_resolver.resolve(self, local_context, base)
+      resolved = Context.context_resolver.
+        resolve(self, local_context, base,
+                documentLoader: documentLoader,
+                validate: validate)
 
       # process each context in order, update active context on each
       # iteration to ensure proper caching
@@ -242,15 +306,17 @@ module JSON::LD
 
         # get processed context from cache if available
         if processed = resolved_context.get_processed(active_ctx)
+          #STDERR.puts "hit"
           rval = processed
           next
         end
+        #STDERR.puts "missed"
 
         case ctx
         when nil, false
           # 3.1 If the `override_protected` is  false, and the active context contains protected terms, an error is raised.
           if override_protected || rval.term_definitions.values.none?(&:protected?)
-            rval = Context.new(**options)
+            rval = Context.new(processingMode: processingMode)
           else
             raise JSON::LD::JsonLdError::InvalidContextNullification,
                   "Attempt to clear a context with protected terms"
@@ -289,7 +355,10 @@ module JSON::LD
             raise JsonLdError::InvalidImportValue, "@import must be a string: #{ctx['@import'].inspect}" unless ctx['@import'].is_a?(String)
             import_loc = ctx['@import']
 
-            resolved_import = Context.context_resolver.resolve(active_ctx, import_loc, base)
+            resolved_import = Context.context_resolver.
+              resolve(active_ctx, import_loc, base,
+                      documentLoader: documentLoader,
+                      validate: validate)
             if resolved_import.length != 1
               raise JsonLdError::InvalidRemoteContext, "#{resolved_import.map(&:document).to_json} must be an object"
             end
@@ -318,7 +387,7 @@ module JSON::LD
               resolved_import.set_processed(active_ctx, ctx)
             end
           else
-            rval.send(setter, ctx[key], remote_contexts: remote_contexts)
+            rval.send(setter, ctx[key], remote_contexts: remote_contexts, validate: validate)
           end
           ctx.delete(key)
         end
@@ -330,6 +399,7 @@ module JSON::LD
                                       override_protected: override_protected,
                                       protected: ctx['@protected'],
                                       remote_contexts: remote_contexts.dup,
+                                      validate: validate,
                                       validate_scoped: validate_scoped
                                       ) unless NON_TERMDEF_KEYS.include?(key)
 
@@ -348,7 +418,13 @@ module JSON::LD
 
             if process
               begin
-                rval.parse(key_ctx, base: (url || base), override_protected: true, remote_contexts: remote_contexts, validate_scoped: false)
+                rval.parse(key_ctx,
+                           base: (url || base),
+                           documentLoader: documentLoader,
+                           override_protected: true,
+                           remote_contexts: remote_contexts,
+                           validate: validate,
+                           validate_scoped: false)
               rescue
                 raise JsonLdError::InvalidScopedContext, "Term definition for #{key.inspect} contains illegal value for @context: #{$!.message}"
               end
@@ -371,7 +447,7 @@ module JSON::LD
     # @param [Boolean]
     # @return [Context]
     def merge(context, override_protected: false)
-      ctx = Context.new(term_definitions: self.term_definitions, standard_prefixes: options[:standard_prefixes])
+      ctx = Context.new(term_definitions: self.term_definitions.dup, standard_prefixes: options[:standard_prefixes])
       ctx.default_language = context.default_language || self.default_language
       ctx.default_direction = context.default_direction || self.default_direction
       ctx.vocab = context.vocab || self.vocab
@@ -417,6 +493,8 @@ module JSON::LD
     # @param [Boolean] propagate
     #   Context is propagated across node objects.
     # @param [Array<String>] remote_contexts
+    # @param [Boolean] validate
+    #   Extra validatation
     # @param [Boolean] validate_scoped (true).
     #   Validate scoped context, loading if necessary.
     #   If false, do not load scoped contexts.
@@ -427,6 +505,7 @@ module JSON::LD
         override_protected: false,
         protected: nil,
         remote_contexts: [],
+        validate: false,
         validate_scoped: true)
       # Expand a string value, unless it matches a keyword
       #log_debug("create_term_definition") {"term = #{term.inspect}"}
@@ -454,11 +533,11 @@ module JSON::LD
         # thes are the only cases were redefining a keyword is allowed
       elsif KEYWORDS.include?(term) # TODO anything that looks like a keyword
         raise JsonLdError::KeywordRedefinition, "term must not be a keyword: #{term.inspect}" if
-          @options[:validate]
-      elsif term.to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+          validate
+      elsif term.to_s.match?(/^@[a-zA-Z]+$/) && validate
         warn "Terms beginning with '@' are reserved for future use and ignored: #{term}."
         return
-      elsif !term_valid?(term) && @options[:validate]
+      elsif !term_valid?(term) && validate
         raise JsonLdError::InvalidTermDefinition, "term is invalid: #{term.inspect}"
       end
 
@@ -526,7 +605,7 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
           value['@reverse'].is_a?(String)
 
-        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+        if value['@reverse'].to_s.match?(/^@[a-zA-Z]+$/) && validate
           warn "Values beginning with '@' are reserved for future use and ignored: #{value['@reverse']}."
           return
         end
@@ -543,7 +622,7 @@ module JSON::LD
           raise JsonLdError::InvalidIRIMapping, "term #{term} expands to #{definition.id}, not #{term_iri}"
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if validate && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
 
         # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
         if value.has_key?('@container')
@@ -560,7 +639,7 @@ module JSON::LD
         raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
           value['@id'].is_a?(String)
 
-        if !KEYWORDS.include?(value['@id'].to_s) && value['@id'].to_s.match?(/^@[a-zA-Z]+$/) && @options[:validate]
+        if !KEYWORDS.include?(value['@id'].to_s) && value['@id'].to_s.match?(/^@[a-zA-Z]+$/) && validate
           warn "Values beginning with '@' are reserved for future use and ignored: #{value['@id']}."
           return
         end
@@ -582,7 +661,7 @@ module JSON::LD
           end
         end
 
-        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
+        warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if validate && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
 
         # If id ends with a gen-delim, it may be used as a prefix for simple terms
         definition.prefix = true if !term.include?(':') &&
@@ -799,7 +878,7 @@ module JSON::LD
       @vocab = case value
       when /_:/
         # BNode vocab is deprecated
-        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if @options[:validate] && processingMode("json-ld-1.1")
+        warn "[DEPRECATION] Blank Node vocabularies deprecated in JSON-LD 1.1." if options[:validate] && processingMode("json-ld-1.1")
         value
       when String, RDF::URI
         if (RDF::URI(value.to_s).relative? && processingMode("json-ld-1.0"))
@@ -1619,13 +1698,13 @@ module JSON::LD
     # Duplicate an active context, allowing it to be modified.
     def dup
       that = self
-      ec = Context.new(**@options)
+      ec = Context.new(unfrozen: true, **@options) # uses an unfrozen context
       ec.base = that.base unless that.base.nil?
       ec.default_direction = that.default_direction
       ec.default_language = that.default_language
       ec.previous_context = that.previous_context
       ec.processingMode = that.processingMode if that.instance_variable_get(:@processingModee)
-      ec.vocab = that.vocab = that.vocab
+      ec.vocab = that.vocab if that.vocab
 
       ec.instance_eval do
         @term_definitions = that.term_definitions.dup
@@ -1675,8 +1754,7 @@ module JSON::LD
         bnode(namer.get_sym($1))
       else
         value = RDF::URI(value)
-        value.validate! if @options[:validate]
-        value = RDF::URI.intern(value, {}) if @options[:intern]
+        #value.validate! if options[:validate]
         value
       end
     end
