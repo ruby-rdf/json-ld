@@ -81,7 +81,7 @@ module JSON::LD
           all_resolved.push(ResolvedContext.new(ctx))
         when IO, StringIO
         when Hash
-          key = ctx.to_json_c14n.hash
+          key = ctx.hash
           if !(resolved = get(key))
             resolved = ResolvedContext.new(ctx)
             cache_resolved_context(key, resolved, 'static')
@@ -104,6 +104,7 @@ module JSON::LD
             @per_op_cache[key.to_s] = resolved
           end
         end
+      else
       end
       resolved
     end
@@ -234,12 +235,11 @@ module JSON::LD
     end
 
     def get_processed(active_ctx)
-      raise "active_ctx has no uuid!" unless active_ctx.uuid
-      @cache[active_ctx.uuid]
+      @cache[active_ctx.hash]
     end
 
     def set_processed(active_ctx, processed_ctx)
-      @cache[active_ctx.uuid] = processed_ctx
+      @cache[active_ctx.hash] = processed_ctx
     end
 
     def inspect

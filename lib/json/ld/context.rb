@@ -4,7 +4,6 @@ require 'json'
 require 'bigdecimal'
 require 'set'
 require 'lru_redux'
-require 'uuid'
 
 begin
   # Attempt to load this to avoid unnecessary context fetches
@@ -28,9 +27,8 @@ module JSON::LD
     INITIAL_CONTEXTS = {}
 
     ##
-    # Defines the maximum number of interned URI references that can be held
-    # cached in memory at any one time.
-    CACHE_SIZE = 100 # unlimited by default
+    # Defines the maximum number of inverse contexts.
+    INVERSE_CACHE_SIZE = 100 # unlimited by default
 
     class << self
       ##
@@ -105,10 +103,6 @@ module JSON::LD
     # @return [BlankNodeNamer]
     attr_accessor :namer
 
-    # UUID used for caching
-    # @return [String]
-    attr_accessor :uuid
-
     ##
     # Create a new context by parsing a context.
     #
@@ -154,7 +148,7 @@ module JSON::LD
     # @return [RDF::Util::Cache]
     # @private
     def self.inverse_cache
-      @inverse_cache ||= LruRedux::Cache.new(CACHE_SIZE)
+      @inverse_cache ||= LruRedux::Cache.new(INVERSE_CACHE_SIZE)
     end
 
     ##
@@ -215,7 +209,6 @@ module JSON::LD
         RDF::XSD.to_uri.to_s => "xsd"
       }
       @namer = BlankNodeMapper.new("t")
-      self.uuid = UUID.new.generate
 
       @options = options
 
@@ -306,11 +299,11 @@ module JSON::LD
 
         # get processed context from cache if available
         if processed = resolved_context.get_processed(active_ctx)
-          #STDERR.puts "hit"
+          #STDERR.puts "rc hit: ac=#{active_ctx.hash}, doc=#{resolved_context.document.hash}"
           rval = processed
           next
         end
-        #STDERR.puts "missed"
+        #STDERR.puts "rc missed: ac=#{active_ctx.hash}, doc hash=#{resolved_context.document.hash}, doc=#{resolved_context.document.to_s[0..100]}"
 
         case ctx
         when nil, false
