@@ -81,7 +81,7 @@ def run_tc(man, tc, options)
 
     result = case tc.testType
     when 'jld:CompactTest'
-      output = JSON::LD::API.compact(tc.input_loc, tc.context_json['@context'], validate: true, **tc.options)
+      output = JSON::LD::API.compact(tc.input_loc, tc.context_json, validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:ExpandTest'
@@ -90,7 +90,7 @@ def run_tc(man, tc, options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FlattenTest'
-      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json['@context'] if tc.context_loc), validate: true, **tc.options)
+      output = JSON::LD::API.flatten(tc.input_loc, (tc.context_json if tc.context_loc), validate: true, **tc.options)
       expected = JSON.load(tc.expect) if tc.evaluationTest? && tc.positiveTest?
       compare_results(tc, output, expected)
     when 'jld:FrameTest'
@@ -187,7 +187,7 @@ def run_tc(man, tc, options)
 }
   end
 
-  puts "#{"test result:" unless options[:quiet]} #{result}"
+  puts "#{" test result:" unless options[:quiet]} #{result}"
 end
 
 logger = Logger.new(STDERR)

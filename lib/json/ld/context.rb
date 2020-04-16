@@ -4,6 +4,7 @@ require 'json'
 require 'bigdecimal'
 require 'set'
 require 'lru_redux'
+
 begin
   # Attempt to load this to avoid unnecessary context fetches
   require 'json-ld-preloaded'
@@ -21,6 +22,9 @@ module JSON::LD
     # To avoid runtime context parsing and downloading, contexts may be pre-loaded by implementations.
     # @return [Hash{Symbol => Context}]
     PRELOADED = {}
+
+    # Initial contexts, defined on first access
+    INITIAL_CONTEXTS = {}
 
     ##
     # Defines the maximum number of interned URI references that can be held
@@ -50,11 +54,6 @@ module JSON::LD
     #
     # @return [RDF::URI] Current base IRI, used for expanding relative IRIs.
     attr_reader :base
-
-    # The base.
-    #
-    # @return [RDF::URI] Document base IRI, to initialize `base`.
-    attr_reader :doc_base
 
     # @return [RDF::URI] base IRI of the context, if loaded remotely.
     attr_accessor :context_base
@@ -96,9 +95,6 @@ module JSON::LD
     # @return [Hash{Symbol => Object}] Global options used in generating IRIs
     attr_accessor :options
 
-    # @return [Context] A context provided to us that we can use without re-serializing XXX
-    attr_accessor :provided_context
-
     # @return [BlankNodeNamer]
     attr_accessor :namer
 
@@ -108,11 +104,33 @@ module JSON::LD
     # @see #initialize
     # @see #parse
     # @param [String, #read, Array, Hash, Context] local_context
+    # @param [String, #to_s] :base (nil)
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
+    # @param [Proc] :documentLoader (nil)
+    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
+    # @param [Boolean] override_protected (false)
+    #   Protected terms may be cleared.
+    # @param [Boolean] propagate (true)
+    #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    # @param [Boolean] validate (false)
+    #   Extra validatation
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
-    def self.parse(local_context, override_protected: false, propagate: true, **options)
-      self.new(**options).parse(local_context, override_protected: override_protected, propagate: propagate)
+    def self.parse(local_context,
+                   base: nil,
+                   override_protected: false,
+                   propagate: true,
+                   **options)
+      c = self.new(**options)
+      if local_context.respond_to?(:empty?) && local_context.empty?
+        c
+      else
+        c.parse(local_context,
+                base: base,
+                override_protected: override_protected,
+                propagate: propagate)
+      end
     end
 
     ##
@@ -134,12 +152,37 @@ module JSON::LD
     end
 
     ##
+    # @private
+    # Allow caching of well-known contexts
+    def self.new(**options)
+      if (options.keys - [
+          :compactArrays,
+          :documentLoader,
+          :extractAllScripts,
+          :ordered,
+          :processingMode,
+          :validate
+          ]).empty?
+        # allow caching
+        key = options.hash
+        INITIAL_CONTEXTS[key] ||= begin
+          context = JSON::LD::Context.allocate
+          context.send(:initialize, **options)
+          context.freeze
+          context.term_definitions.freeze
+          context
+        end
+      else
+        # Don't try to cache
+        context = JSON::LD::Context.allocate
+        context.send(:initialize, **options)
+        context
+      end
+    end
+
+    ##
     # Create new evaluation context
     # @param [Hash] options
-    # @option options [String, #to_s] :base
-    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
-    # @option options [Proc] :documentLoader
-    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @option options [Hash{Symbol => String}] :prefixes
     #   See `RDF::Reader#initialize`
     # @option options [String, #to_s] :vocab
@@ -150,11 +193,9 @@ module JSON::LD
     # @yieldparam [Context]
     # @return [Context]
     def initialize(**options)
-      if options[:base]
-        @base = @doc_base = RDF::URI(options[:base])
-        @doc_base.canonicalize! if options[:canonicalize]
+      if options[:processingMode] == 'json-ld-1.0'
+        @processingMode = 'json-ld-1.0'
       end
-      self.processingMode = options[:processingMode] if options.has_key?(:processingMode)
       @term_definitions = {}
       @iri_to_term = {
         RDF.to_uri.to_s => "rdf",
@@ -190,10 +231,14 @@ module JSON::LD
     #
     #
     # @param [String, #read, Array, Hash, Context] local_context
-    # @param [Array<String>] remote_contexts
+    # @param [String, #to_s] :base
+    #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
     # @param [Boolean] override_protected Protected terms may be cleared.
-    # @param [Boolean] propagate
+    # @param [Boolean] propagate (true)
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
+    # @param [Array<String>] remote_contexts ([])
+    # @param [Boolean] validate (false)
+    #   Extra validatation
     # @param [Boolean] validate_scoped (true).
     #   Validate scoped context, loading if necessary.
     #   If false, do not load scoped contexts.
@@ -202,12 +247,12 @@ module JSON::LD
     # @return [Context]
     # @see https://www.w3.org/TR/json-ld11-api/index.html#context-processing-algorithm
     def parse(local_context,
-              remote_contexts: [],
+              base: nil,
               override_protected: false,
               propagate: true,
+              remote_contexts: [],
               validate_scoped: true)
       result = self.dup
-      result.provided_context = local_context if self.empty?
       # Early check for @propagate, which can only appear in a local context
       propagate = local_context.is_a?(Hash) ? local_context.fetch('@propagate', propagate) : propagate
       result.previous_context ||= result.dup unless propagate
@@ -216,7 +261,7 @@ module JSON::LD
 
       local_context.each do |context|
         case context
-        when nil
+        when nil,false
           # 3.1 If the `override_protected` is  false, and the active context contains protected terms, an error is raised.
           if override_protected || result.term_definitions.values.none?(&:protected?)
             null_context = Context.new(**options)
@@ -236,7 +281,6 @@ module JSON::LD
             ctx = JSON.load(context)
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
             result = result.parse(ctx["@context"] ? ctx["@context"] : {})
-            result.provided_context = ctx["@context"] if [context] == local_context
           rescue JSON::ParserError => e
             #log_debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
@@ -246,7 +290,7 @@ module JSON::LD
           #log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
 
           # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-          context = RDF::URI(result.context_base || options[:base]).join(context)
+          context = RDF::URI(result.context_base || base).join(context)
           context_canon = context.canonicalize
           context_canon.scheme = 'http' if context_canon.scheme == 'https'
 
@@ -279,10 +323,10 @@ module JSON::LD
                 raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
 
                 # Parse stand-alone
-                ctx = Context.new(**options)
+                ctx = Context.new(unfrozen: true, **options).dup
                 ctx.context_base = context.to_s
                 ctx = ctx.parse(remote_doc.document['@context'], remote_contexts: remote_contexts.dup)
-                ctx.base = nil
+                ctx.instance_variable_set(:@base, nil)
                 ctx
               end
             rescue JsonLdError::LoadingDocumentFailed => e
@@ -301,7 +345,6 @@ module JSON::LD
 
           context.previous_context = self unless propagate
           result = context
-          #log_debug("parse") {"=> provided_context: #{context.inspect}"}
         when Hash
           context = context.dup # keep from modifying a hash passed as a param
 
@@ -320,7 +363,7 @@ module JSON::LD
               # Retrieve remote context and merge the remaining context object into the result.
               raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
               raise JsonLdError::InvalidImportValue, "@import must be a string: #{context['@import'].inspect}" unless context['@import'].is_a?(String)
-              source = RDF::URI(result.context_base || result.base).join(context['@import'])
+              import_loc = RDF::URI(result.context_base || base).join(context['@import'])
               begin
                 context_opts = @options.merge(
                   profile: 'http://www.w3.org/ns/json-ld#context',
@@ -328,9 +371,9 @@ module JSON::LD
                   base: nil)
                 context_opts.delete(:headers)
                 # FIXME: should cache this, but ContextCache is for parsed contexts
-                JSON::LD::API.loadRemoteDocument(source, **context_opts) do |remote_doc|
-                  # Dereference source. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                  raise JsonLdError::InvalidRemoteContext, "#{source}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
+                JSON::LD::API.loadRemoteDocument(import_loc, **context_opts) do |remote_doc|
+                  # Dereference import_loc. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
+                  raise JsonLdError::InvalidRemoteContext, "#{import_loc}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
                   import_context = remote_doc.document['@context']
                   import_context.delete('@base')
                   raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
@@ -339,11 +382,11 @@ module JSON::LD
                   context = import_context.merge(context)
                 end
               rescue JsonLdError::LoadingDocumentFailed => e
-                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
+                raise JsonLdError::LoadingRemoteContextFailed, "#{import_loc}: #{e.message}", e.backtrace
               rescue JsonLdError
                 raise
               rescue StandardError => e
-                raise JsonLdError::LoadingRemoteContextFailed, "#{source}: #{e.message}", e.backtrace
+                raise JsonLdError::LoadingRemoteContextFailed, "#{import_loc}: #{e.message}", e.backtrace
               end
             else
               result.send(setter, context[key], remote_contexts: remote_contexts)
@@ -357,6 +400,7 @@ module JSON::LD
           context.each_key do |key|
             # ... where key is not @base, @vocab, @language, or @version
             result.create_term_definition(context, key, defined,
+                                          base: base,
                                           override_protected: override_protected,
                                           protected: context['@protected'],
                                           remote_contexts: remote_contexts.dup,
@@ -385,8 +429,7 @@ module JSON::LD
       ctx.default_language = context.default_language || self.default_language
       ctx.default_direction = context.default_direction || self.default_direction
       ctx.vocab = context.vocab || self.vocab
-      ctx.base = context.base || self.base
-      ctx.provided_context = self.provided_context
+      ctx.base = self.base unless self.base.nil?
       if !override_protected
         ctx.term_definitions.each do |term, definition|
           next unless definition.protected? && (other = context.term_definitions[term])
@@ -423,6 +466,7 @@ module JSON::LD
     # @param [Hash] local_context
     # @param [String] term
     # @param [Hash] defined
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
     # @param [Boolean] protected if true, causes all terms to be marked protected
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate
@@ -435,6 +479,7 @@ module JSON::LD
     #   Represents a cyclical term dependency
     # @see https://www.w3.org/TR/json-ld11-api/index.html#create-term-definition
     def create_term_definition(local_context, term, defined,
+        base: nil,
         override_protected: false,
         protected: nil,
         remote_contexts: [],
@@ -654,6 +699,7 @@ module JSON::LD
       if value.has_key?('@context')
         begin
           new_ctx = self.parse(value['@context'],
+                               base: base,
                                override_protected: true,
                                remote_contexts: remote_contexts,
                                validate_scoped: false)
@@ -736,12 +782,10 @@ module JSON::LD
         raise JsonLdError::InvalidBaseIRI, "@base must be a string: #{value.inspect}" unless value.is_a?(String) || value.is_a?(RDF::URI)
         value = RDF::URI(value)
         value = @base.join(value) if @base && value.relative?
+        # still might be relative to document
         @base = value
-        @base.canonicalize! if @options[:canonicalize]
-        raise JsonLdError::InvalidBaseIRI, "@base must be an absolute IRI: #{value.inspect}" unless @base.absolute? || !@options[:validate]
-        @base
       else
-        @base = nil
+        @base = false
       end
 
     end
@@ -786,10 +830,9 @@ module JSON::LD
       when 1.0, 'json-ld-1.0'
         @processingMode == 'json-ld-1.0'
       when 1.1, 'json-ld-1.1'
-        @processingMode ||= 'json-ld-1.1'
-        @processingMode == 'json-ld-1.1'
+        @processingMode.nil? || @processingMode == 'json-ld-1.1'
       when nil
-        @processingMode
+        @processingMode || 'json-ld-1.1'
       else
         false
       end
@@ -831,9 +874,7 @@ module JSON::LD
         if (RDF::URI(value.to_s).relative? && processingMode("json-ld-1.0"))
           raise JsonLdError::InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode: #{value.inspect}"
         end
-        v = expand_iri(value.to_s, vocab: true, documentRelative: true)
-        raise JsonLdError::InvalidVocabMapping, "@vocab must be an IRI: #{value.inspect}" if !v.valid? && @options[:validate]
-        v
+        expand_iri(value.to_s, vocab: true, documentRelative: true)
       when nil
         nil
       else
@@ -857,40 +898,44 @@ module JSON::LD
     # If a context was supplied in global options, use that, otherwise, generate one
     # from this representation.
     #
+    # @param [Array, Hash, Context, IO, StringIO] provided_context (nil)
+    #   Original context to use, if available
     # @param  [Hash{Symbol => Object}] options ({})
     # @return [Hash]
-    def serialize(**options)
-      # FIXME: not setting provided_context now
+    def serialize(provided_context: nil, **options)
+      #log_debug("serlialize: generate context")
+      #log_debug("") {"=> context: #{inspect}"}
       use_context = case provided_context
       when String, RDF::URI
         #log_debug "serlialize: reuse context: #{provided_context.inspect}"
         provided_context.to_s
-      when Hash, Array
+      when Hash
+        #log_debug "serlialize: reuse context: #{provided_context.inspect}"
+        # If it has an @context entry use it, otherwise it is assumed to be the body of a context
+        provided_context.fetch('@context', provided_context)
+      when Array
         #log_debug "serlialize: reuse context: #{provided_context.inspect}"
         provided_context
+      when IO, StringIO
+        provided_context.rewind
+        JSON.load(provided_context).fetch('@context', {})
       else
-        #log_debug("serlialize: generate context")
-        #log_debug("") {"=> context: #{inspect}"}
         ctx = {}
-        ctx['@base'] = base.to_s if base && base != doc_base
+        ctx['@version'] = 1.1 if @processingMode == 'json-ld-1.1'
+        ctx['@base'] = base.to_s if base
         ctx['@direction'] = default_direction.to_s if default_direction
         ctx['@language'] = default_language.to_s if default_language
         ctx['@vocab'] = vocab.to_s if vocab
 
         # Term Definitions
-        term_definitions.keys.each do |term|
-          defn = term_definitions[term].to_context_definition(self)
-          ctx[term] = defn if defn
+        term_definitions.each do |term, defn|
+          ctx[term] = defn.to_context_definition(self)
         end
-
-        #log_debug("") {"start_doc: context=#{ctx.inspect}"}
         ctx
       end
 
       # Return hash with @context, or empty
-      r = {}
-      r['@context'] = use_context unless use_context.nil? || use_context.empty?
-      r
+      use_context.nil? || use_context.empty? ? {} : {'@context' => use_context}
     end
 
     ##
@@ -1118,26 +1163,27 @@ module JSON::LD
     #
     # @param [String] value
     #   A keyword, term, prefix:suffix or possibly relative IRI
-    # @param [Boolean] documentRelative (false)
-    # @param [Boolean] vocab (false)
-    # @param [Hash] local_context
-    #   Used during Context Processing.
+    # @param [Boolean] as_string (false) transform RDF::Resource values to string
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
     # @param [Hash] defined
     #   Used during Context Processing.
-    # @param [Boolean] as_string (false) transform RDF::Resource values to string
+    # @param [Boolean] documentRelative (false)
+    # @param [Hash] local_context
+    #   Used during Context Processing.
+    # @param [Boolean] vocab (false)
     # @param  [Hash{Symbol => Object}] options
     # @return [RDF::Resource, String]
     #   IRI or String, if it's a keyword
     # @raise [JSON::LD::JsonLdError::InvalidIRIMapping] if the value cannot be expanded
     # @see https://www.w3.org/TR/json-ld11-api/#iri-expansion
     def expand_iri(value,
-      documentRelative: false,
-      vocab: false,
-      local_context: nil,
-      defined: nil,
       as_string: false,
-      **options
-    )
+      base: nil,
+      defined: nil,
+      documentRelative: false,
+      local_context: nil,
+      vocab: false,
+      **options)
       return (value && as_string ? value.to_s : value) unless value.is_a?(String)
 
       return value if KEYWORDS.include?(value)
@@ -1157,7 +1203,8 @@ module JSON::LD
       # If active context has a term definition for value, and the associated mapping is a keyword, return that keyword.
       # If vocab is true and the active context has a term definition for value, return the associated IRI mapping.
       if (v_td = term_definitions[value]) && (vocab || KEYWORDS.include?(v_td.id))
-        return (as_string ? v_td.id.to_s : v_td.id)
+        iri = base && v_td.id ? base.join(v_td.id) : v_td.id # vocab might be doc relative
+        return (as_string ? iri.to_s : iri)
       end
 
       # If value contains a colon (:), it is either an absolute IRI or a compact IRI:
@@ -1190,18 +1237,32 @@ module JSON::LD
         end
       end
 
+      iri = value.is_a?(RDF::URI) ? value : RDF::URI(value)
       result = if vocab && self.vocab
         # If vocab is true, and active context has a vocabulary mapping, return the result of concatenating the vocabulary mapping with value.
-        self.vocab + value
-      elsif documentRelative && (base ||= self.base)
-        # Otherwise, if document relative is true, set value to the result of resolving value against the base IRI. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
-        value = RDF::URI(value)
-        value.absolute? ? value : RDF::URI(base).join(value)
-      elsif local_context && RDF::URI(value).relative?
+        # Note that @vocab could still be relative to a document base
+        (base && self.vocab.is_a?(RDF::URI) && self.vocab.relative? ? base.join(self.vocab) : self.vocab) + value
+      elsif documentRelative
+        if iri.absolute?
+          iri
+        elsif self.base.is_a?(RDF::URI) && self.base.absolute?
+          self.base.join(iri)
+        elsif self.base == false
+          # No resollution of `@base: null`
+          iri
+        elsif base && self.base
+          base.join(self.base).join(iri)
+        elsif base
+          base.join(iri)
+        else
+          # Returns a relative IRI in an odd case.
+          iri
+        end
+      elsif local_context && iri.relative?
         # If local context is not null and value is not an absolute IRI, an invalid IRI mapping error has been detected and processing is aborted.
         raise JSON::LD::JsonLdError::InvalidIRIMapping, "not an absolute IRI: #{value}"
       else
-        RDF::URI(value)
+        iri
       end
       result && as_string ? result.to_s : result
     end
@@ -1222,17 +1283,17 @@ module JSON::LD
     # Compacts an absolute IRI to the shortest matching term or compact IRI
     #
     # @param [RDF::URI] iri
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
     # @param [Object] value
     #   Value, used to select among various maps for the same IRI
-    # @param [Boolean] vocab
-    #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     # @param [Boolean] reverse
     #   specifies whether a reverse property is being compacted
-    # @param  [Hash{Symbol => Object}] options ({})
+    # @param [Boolean] vocab
+    #   specifies whether the passed iri should be compacted using the active context's vocabulary mapping
     #
     # @return [String] compacted form of IRI
     # @see https://www.w3.org/TR/json-ld11-api/#iri-compaction
-    def compact_iri(iri, value: nil, vocab: nil, reverse: false, **options)
+    def compact_iri(iri, base: nil, reverse: false, value: nil, vocab: nil)
       return if iri.nil?
       iri = iri.to_s
 
@@ -1337,7 +1398,7 @@ module JSON::LD
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
         if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.has_key?('@id')
-          t_iri = compact_iri(value['@id'], vocab: true, document_relative: true)
+          t_iri = compact_iri(value['@id'], vocab: true, base: base)
           if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
             preferred_values.concat(CONTAINERS_VOCAB_ID)
           else
@@ -1403,7 +1464,7 @@ module JSON::LD
 
       if !vocab
         # transform iri to a relative IRI using the document's base IRI
-        iri = remove_base(iri)
+        iri = remove_base(self.base || base, iri)
         return iri
       else
         return iri
@@ -1423,26 +1484,24 @@ module JSON::LD
     #   Value (literal or IRI) to be expanded
     # @param [Boolean] useNativeTypes (false) use native representations
     # @param [Boolean] rdfDirection (nil) decode i18n datatype if i18n-datatype
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
     # @param  [Hash{Symbol => Object}] options
     #
     # @return [Hash] Object representation of value
     # @raise [RDF::ReaderError] if the iri cannot be expanded
     # @see https://www.w3.org/TR/json-ld11-api/#value-expansion
-    def expand_value(property, value, useNativeTypes: false, rdfDirection: nil, **options)
-      #log_debug("expand_value") {"property: #{property.inspect}, value: #{value.inspect}"}
-
+    def expand_value(property, value, useNativeTypes: false, rdfDirection: nil, base: nil, **options)
       td = term_definitions.fetch(property, TermDefinition.new(property))
 
       # If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
       if value.is_a?(String) && td.type_mapping == '@id'
         #log_debug("") {"as relative IRI: #{value.inspect}"}
-        return {'@id' => expand_iri(value, documentRelative: true).to_s}
+        return {'@id' => expand_iri(value, documentRelative: true, base: base).to_s}
       end
 
       # If active property has a type mapping in active context that is @vocab, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
       if value.is_a?(String) && td.type_mapping == '@vocab'
-        #log_debug("") {"as vocab IRI: #{value.inspect}"}
-        return {'@id' => expand_iri(value, vocab: true, documentRelative: true).to_s}
+        return {'@id' => expand_iri(value, vocab: true, documentRelative: true, base: base).to_s}
       end
 
       value = RDF::Literal(value) if
@@ -1452,10 +1511,8 @@ module JSON::LD
 
       result = case value
       when RDF::URI, RDF::Node
-        #log_debug("URI | BNode") { value.to_s }
         {'@id' => value.to_s}
       when RDF::Literal
-        #log_debug("Literal") {"datatype: #{value.datatype.inspect}"}
         res = {}
         if value.datatype == RDF::URI(RDF.to_uri + "JSON") && processingMode('json-ld-1.1')
           # Value parsed as JSON
@@ -1508,7 +1565,6 @@ module JSON::LD
         res
       end
 
-      #log_debug("") {"=> #{result.inspect}"}
       result
     rescue ::JSON::ParserError => e
       raise JSON::LD::JsonLdError::InvalidJsonLiteral, e.message
@@ -1521,13 +1577,13 @@ module JSON::LD
     #   Associated property used to find coercion rules
     # @param [Hash] value
     #   Value (literal or IRI), in full object representation, to be compacted
-    # @param  [Hash{Symbol => Object}] options
+    # @param [String, RDF::URI] base for resolving document-relative IRIs
     #
     # @return [Hash] Object representation of value
     # @raise [JsonLdError] if the iri cannot be expanded
     # @see https://www.w3.org/TR/json-ld11-api/#value-compaction
     # FIXME: revisit the specification version of this.
-    def compact_value(property, value, **options)
+    def compact_value(property, value, base: nil)
       #log_debug("compact_value") {"property: #{property.inspect}, value: #{value.inspect}"}
 
       indexing = index?(value) && container(property).include?('@index')
@@ -1538,7 +1594,7 @@ module JSON::LD
       when coerce(property) == '@id' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce)"}
-        compact_iri(value['@id'])
+        compact_iri(value['@id'], base: base)
       when coerce(property) == '@vocab' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce & vocab)"}
@@ -1631,14 +1687,14 @@ module JSON::LD
     # Duplicate an active context, allowing it to be modified.
     def dup
       that = self
-      ec = Context.new(**@options)
+      ec = Context.new(unfrozen: true, **@options)
       ec.context_base = that.context_base
-      ec.base = that.base
+      ec.base = that.base unless that.base.nil?
       ec.default_direction = that.default_direction
       ec.default_language = that.default_language
       ec.previous_context = that.previous_context
-      ec.processingMode = that.processingMode if that.processingMode
-      ec.vocab = that.vocab = that.vocab
+      ec.processingMode = that.processingMode if that.instance_variable_get(:@processingModee)
+      ec.vocab = that.vocab if that.vocab
 
       ec.instance_eval do
         @term_definitions = that.term_definitions.dup
@@ -1688,18 +1744,9 @@ module JSON::LD
         bnode(namer.get_sym($1))
       else
         value = RDF::URI(value)
-        value.validate! if @options[:validate]
-        value.canonicalize! if @options[:canonicalize]
-        value = RDF::URI.intern(value, {}) if @options[:intern]
+        #value.validate! if options[:validate]
         value
       end
-    end
-
-    # Clear the provided context, used for testing
-    # @return [Context] self
-    def clear_provided_context
-      @provided_context = nil
-      self
     end
 
     # Keep track of allocated BNodes
@@ -1837,10 +1884,11 @@ module JSON::LD
     ##
     # Removes a base IRI from the given absolute IRI.
     #
+    # @param [String] base the base used for making `iri` relative
     # @param [String] iri the absolute IRI
     # @return [String]
     #   the relative IRI if relative to base, otherwise the absolute IRI.
-    def remove_base(iri)
+    def remove_base(base, iri)
       return iri unless base
       @base_and_parents ||= begin
         u = base
@@ -2107,6 +2155,7 @@ module JSON::LD
           defn['@container'] = cm unless cm.empty?
           # Language set as false to be output as null
           defn['@language'] = (@language_mapping ? @language_mapping : nil) unless @language_mapping.nil?
+          defn['@direction'] = (@direction_mapping ? @direction_mapping : nil) unless @direction_mapping.nil?
           defn['@context'] = @context if @context
           defn['@nest'] = @nest if @nest
           defn['@index'] = @index if @index

@@ -130,7 +130,7 @@ module JSON::LD
 
       # If not provided, first use context from document, or from a Link header
       context ||= context_ref || {}
-      @context = Context.parse(context || {}, **@options)
+      @context = Context.parse(context, **@options)
 
       if block_given?
         case block.arity
@@ -163,9 +163,10 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
     def self.expand(input, framing: false, **options, &block)
-      result, doc_base = nil
+      result = doc_base = nil
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
+          base: (RDF::URI(@options[:base]) if @options[:base]),
           ordered: @options[:ordered],
           framing: framing)
         doc_base = @options[:base]
@@ -224,15 +225,17 @@ module JSON::LD
 
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value, ordered: @options[:ordered])
+        result = compact(value,
+                         base: (RDF::URI(@options[:base]) if @options[:base]),
+                         ordered: options[:ordered])
 
         # xxx) Add the given context to the output
-        ctx = self.context.serialize
+        ctx = self.context.serialize(provided_context: context)
         if result.is_a?(Array)
           kwgraph = self.context.compact_iri('@graph', vocab: true)
           result = result.empty? ? {} : {kwgraph => result}
         end
-        result = ctx.merge(result) unless ctx.empty?
+        result = ctx.merge(result) unless ctx.fetch('@context', {}).empty?
       end
       block_given? ? yield(result) : result
     end
@@ -294,9 +297,14 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = as_array(compact(flattened, ordered: @options[:ordered]))
+          compacted = as_array(
+            compact(flattened,
+                    base: (RDF::URI(options[:base]) if options[:base]),
+                    ordered: options[:ordered]))
           kwgraph = self.context.compact_iri('@graph')
-          flattened = self.context.serialize.merge(kwgraph => compacted)
+          flattened = self.context.
+            serialize(provided_context: context).
+            merge(kwgraph => compacted)
         end
       end
 
@@ -335,7 +343,7 @@ module JSON::LD
     def self.frame(input, frame, expanded: false, **options)
       result = nil
       options = {
-        base:                       (input if input.is_a?(String)),
+        base:                       (RDF::URI(input) if input.is_a?(String)),
         compactArrays:              true,
         compactToRelative:          true,
         embed:                      '@once',
@@ -426,7 +434,9 @@ module JSON::LD
         log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
-        compacted = compact(result, ordered: @options[:ordered])
+        compacted = compact(result,
+          base: (RDF::URI(options[:base]) if options[:base]),
+          ordered: options[:ordered])
 
         # @replace `@null` with nil, compacting arrays
         compacted = cleanup_null(compacted)
@@ -434,11 +444,14 @@ module JSON::LD
 
         # Add the given context to the output
         result = if !compacted.is_a?(Array)
-          context.serialize.merge(compacted)
+          compacted
         else
           kwgraph = context.compact_iri('@graph')
-          context.serialize.merge({kwgraph => compacted})
+          {kwgraph => compacted}
         end
+        # Only add context if one was provided
+        result = context.serialize(provided_context: frame).merge(result) if frame['@context']
+        
         log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result
       end
@@ -520,9 +533,10 @@ module JSON::LD
 
       API.new(nil, nil, **options) do
         result = from_statements(input,
+          base: (RDF::URI(options[:base]) if options[:base]),
+          ordered: @options[:ordered],
           useRdfType: useRdfType,
-          useNativeTypes: useNativeTypes,
-          ordered: @options[:ordered])
+          useNativeTypes: useNativeTypes)
       end
 
       block_given? ? yield(result) : result
@@ -532,16 +546,18 @@ module JSON::LD
     # Uses built-in or provided documentLoader to retrieve a parsed document.
     #
     # @param [RDF::URI, String] url
+    # @param [String, RDF::URI] base
+    #   Location to use as documentUrl instead of `url`.
+    # @option options [Proc] :documentLoader
+    #   The callback of the loader to be used to retrieve remote documents and contexts.
     # @param [Boolean] extractAllScripts
     #   If set to `true`, when extracting JSON-LD script elements from HTML, unless a specific fragment identifier is targeted, extracts all encountered JSON-LD script elements using an array form, if necessary.
     # @param [String] profile
     #   When the resulting `contentType` is `text/html` or `application/xhtml+xml`, this option determines the profile to use for selecting a JSON-LD script elements.
     # @param [String] requestProfile
     #   One or more IRIs to use in the request as a profile parameter.
-    # @param [Boolean] validate
+    # @param [Boolean] validate (false)
     #   Allow only appropriate content types
-    # @param [String, RDF::URI] base
-    #   Location to use as documentUrl instead of `url`.
     # @param [Hash<Symbol => Object>] options
     # @yield remote_document
     # @yieldparam [RemoteDocumentRemoteDocument, RDF::Util::File::RemoteDocument] remote_document
@@ -550,13 +566,14 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.loadRemoteDocument(url,
+                                base: nil,
+                                documentLoader: nil,
                                 extractAllScripts: false,
                                 profile: nil,
                                 requestProfile: nil,
                                 validate: false,
-                                base: nil,
                                 **options)
-      documentLoader = options.fetch(:documentLoader, self.method(:documentLoader))
+      documentLoader ||= self.method(:documentLoader)
       options = OPEN_OPTS.merge(options)
       if requestProfile
         # Add any request profile
