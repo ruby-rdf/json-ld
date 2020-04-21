@@ -1789,7 +1789,7 @@ module JSON::LD
     # @return [Hash{String => Hash{String => String}}]
     # @todo May want to include @set along with container to allow selecting terms using @set over those without @set. May require adding some notion of value cardinality to compact_iri
     def inverse_context
-      Context.inverse_cache[self.object_id] ||= begin
+      Context.inverse_cache[self.hash] ||= begin
         result = {}
         default_language = (self.default_language || '@none').downcase
         term_definitions.keys.sort do |a, b|
