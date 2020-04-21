@@ -43,40 +43,39 @@ describe JSON::LD::Reader do
     {
       plain: %q({
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-         "@id": "_:bnode1",
-         "@type": "foaf:Person",
-         "foaf:homepage": "http://example.com/bob/",
-         "foaf:name": "Bob"
-       }),
-       leading_comment: %q(
-         // A comment before content
-         {
-           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@id": "_:bnode1",
-            "@type": "foaf:Person",
-            "foaf:homepage": "http://example.com/bob/",
-            "foaf:name": "Bob"
-          }
-         ),
-       script: %q(<script type="application/ld+json">
-         {
-           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@id": "_:bnode1",
-            "@type": "foaf:Person",
-            "foaf:homepage": "http://example.com/bob/",
-            "foaf:name": "Bob"
-          }
-         </script>),
-       script_comments: %q(<script type="application/ld+json">
-         // A comment before content
-         {
-           "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
-            "@id": "_:bnode1",
-            "@type": "foaf:Person",
-            "foaf:homepage": "http://example.com/bob/",
-            "foaf:name": "Bob"
-          }
-         </script>),
+        "@id": "_:bnode1",
+        "@type": "foaf:Person",
+        "foaf:homepage": "http://example.com/bob/",
+        "foaf:name": "Bob"
+      }),
+      leading_comment: %q(
+      // A comment before content
+      {
+        "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+        "@id": "_:bnode1",
+        "@type": "foaf:Person",
+        "foaf:homepage": "http://example.com/bob/",
+        "foaf:name": "Bob"
+      }),
+      script: %q(<script type="application/ld+json">
+      {
+        "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+        "@id": "_:bnode1",
+        "@type": "foaf:Person",
+        "foaf:homepage": "http://example.com/bob/",
+        "foaf:name": "Bob"
+      }
+      </script>),
+      script_comments: %q(<script type="application/ld+json">
+      // A comment before content
+      {
+        "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+        "@id": "_:bnode1",
+        "@type": "foaf:Person",
+        "foaf:homepage": "http://example.com/bob/",
+        "foaf:name": "Bob"
+       }
+      </script>),
     }.each do |variant, src|
       context variant do
         subject {src}
