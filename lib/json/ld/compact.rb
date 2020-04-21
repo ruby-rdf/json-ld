@@ -14,13 +14,11 @@ module JSON::LD
     # @param [Array, Hash] element
     # @param [String, RDF::URI] base (nil)
     #   Ensure output objects have keys ordered properly
-    # @param [Boolean] ordered (true)
     # @param [String] property (nil)
     #   Extra validatation
     # @return [Array, Hash]
     def compact(element,
                 base: nil,
-                ordered: false,
                 property: nil)
       #if property.nil?
       #  log_debug("compact") {"element: #{element.inspect}, ec: #{context.inspect}"}
@@ -35,7 +33,7 @@ module JSON::LD
       when Array
         #log_debug("") {"Array #{element.inspect}"}
         result = element.map do |item|
-          compact(item, base: base, ordered: ordered, property: property)
+          compact(item, base: base, property: property)
         end.compact
 
         # If element has a single member and the active property has no
@@ -78,7 +76,7 @@ module JSON::LD
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
         if list?(element) && context.container(property).include?('@list')
           return compact(element['@list'], base: base,
-                         ordered: ordered, property: property)
+                         property: property)
         end
 
         inside_reverse = property == '@reverse'
@@ -94,7 +92,7 @@ module JSON::LD
           self.context = context.parse(term_context, propagate: false) unless term_context.nil?
         end
 
-        element.keys.opt_sort(ordered: ordered).each do |expanded_property|
+        element.keys.opt_sort(ordered: @options[:ordered]).each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
@@ -126,7 +124,7 @@ module JSON::LD
 
           if expanded_property == '@reverse'
             compacted_value = compact(expanded_value, base: base,
-                                      ordered: ordered, property: '@reverse')
+                                      property: '@reverse')
             #log_debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
             # handle double-reversed properties
             compacted_value.each do |prop, value|
@@ -148,7 +146,7 @@ module JSON::LD
           if expanded_property == '@preserve'
             # Compact using `property`
             compacted_value = compact(expanded_value, base: base,
-                                      ordered: ordered, property: property)
+                                      property: property)
             #log_debug("@preserve") {"compacted_value: #{compacted_value.inspect}"}
 
             unless compacted_value.is_a?(Array) && compacted_value.empty?
@@ -213,7 +211,7 @@ module JSON::LD
             end
 
             compacted_item = compact(value, base: base,
-                                     ordered: ordered, property: item_active_property)
+                                     property: item_active_property)
             #log_debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
 
             # handle @list
@@ -317,7 +315,6 @@ module JSON::LD
                 if compacted_item.keys.length == 1 && expanded_item.keys.include?('@id')
                   compacted_item = compact({'@id' => expanded_item['@id']},
                                            base: base,
-                                           ordered: ordered,
                                            property: item_active_property)
                 end
                 compacted_item

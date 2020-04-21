@@ -167,7 +167,6 @@ module JSON::LD
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
           base: (RDF::URI(@options[:base]) if @options[:base]),
-          ordered: @options[:ordered],
           framing: framing)
         doc_base = @options[:base]
       end
@@ -226,8 +225,7 @@ module JSON::LD
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value,
-                         base: (RDF::URI(@options[:base]) if @options[:base]),
-                         ordered: options[:ordered])
+                         base: (RDF::URI(@options[:base]) if @options[:base]))
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize(provided_context: context)
@@ -299,8 +297,7 @@ module JSON::LD
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(
             compact(flattened,
-                    base: (RDF::URI(options[:base]) if options[:base]),
-                    ordered: options[:ordered]))
+                    base: (RDF::URI(options[:base]) if options[:base])))
           kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.
             serialize(provided_context: context).
@@ -435,8 +432,7 @@ module JSON::LD
 
         # Compact result
         compacted = compact(result,
-          base: (RDF::URI(options[:base]) if options[:base]),
-          ordered: options[:ordered])
+          base: (RDF::URI(options[:base]) if options[:base]))
 
         # @replace `@null` with nil, compacting arrays
         compacted = cleanup_null(compacted)

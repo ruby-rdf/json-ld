@@ -158,8 +158,8 @@ def run_tc(man, tc, options)
     exit 1
   rescue StandardError => e
     result = if tc.positiveTest?
-      STDERR.puts "#{"exception:" unless options[:quiet]}: #{e}"
-      if options[:quiet]
+      STDERR.puts "#{" exception" unless options[:quiet]}: #{e}"
+      if options[:quiet] || !options[:verbose]
         options[:results]['failed'] ||= 0
         options[:results]['failed'] += 1
       else
@@ -216,7 +216,6 @@ opts = GetoptLong.new(
   ["--quiet", "-q", GetoptLong::NO_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
   ["--stream",   GetoptLong::NO_ARGUMENT],
-  ["--validate", GetoptLong::NO_ARGUMENT],
   ["--verbose", "-v", GetoptLong::NO_ARGUMENT]
 )
 
@@ -228,7 +227,6 @@ def help(options)
   puts "      --quiet:              Minimal output"
   puts "      --output:             Output to specified file"
   puts "      --stream:             Use streaming RDF reader/writer"
-  puts "      --validate:           Validate input"
   puts "      --verbose:            Verbose processing"
   puts "      --help,-?:            This message"
   exit(0)
@@ -246,7 +244,6 @@ opts.each do |opt, arg|
     options[:quiet] = true
     logger.level = Logger::FATAL
   when '--stream'           then options[:stream] = true
-  when '--validate'         then options[:validate] = true
   when '--verbose'          then options[:verbose] = true
   end
 end

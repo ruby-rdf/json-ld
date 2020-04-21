@@ -27,13 +27,11 @@ module JSON::LD
     #   Special rules for expanding a frame
     # @param [Boolean] from_map
     #   Expanding from a map, which could be an `@type` map, so don't clear out context term definitions
-    # @param [Boolean] ordered (true)
-    #   Ensure output objects have keys ordered properly
     #
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context,
                base: nil, framing: false,
-               from_map: false, ordered: true, log_depth: nil)
+               from_map: false, log_depth: nil)
       log_debug("expand", depth: log_depth.to_i) {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
       expanded_active_property = context.expand_iri(active_property, vocab: true, as_string: true, base: base) if active_property
@@ -50,7 +48,6 @@ module JSON::LD
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context,
             base: base,
-            ordered: ordered,
             framing: framing,
             from_map: from_map,
             log_depth: log_depth.to_i + 1)
@@ -119,7 +116,6 @@ module JSON::LD
                       base: base,
                       expanded_active_property: expanded_active_property,
                       framing: framing,
-                      ordered: ordered,
                       type_key: type_key,
                       type_scoped_context: type_scoped_context,
                       log_depth: log_depth.to_i + 1)
@@ -188,7 +184,7 @@ module JSON::LD
         end
 
         # Re-order result keys if ordering
-        if ordered
+        if @options[:ordered]
           output_object.keys.sort.each_with_object({}) {|kk, memo| memo[kk] = output_object[kk]}
         else
           output_object
@@ -221,7 +217,6 @@ module JSON::LD
                       framing:,
                       type_key:,
                       type_scoped_context:,
-                      ordered:,
                       log_depth: nil)
       nests = []
 
@@ -229,7 +224,7 @@ module JSON::LD
       input_type = context.expand_iri(input_type, vocab: true, as_string: true, base: base) if input_type
 
       # Then, proceed and process each property and value in element as follows:
-      keys = ordered ? input.keys.sort : input.keys
+      keys = @options[:ordered] ? input.keys.sort : input.keys
       keys.each do |key|
         # For each key and value in element, ordered lexicographically by key:
         value = input[key]
@@ -300,7 +295,6 @@ module JSON::LD
             included_result = as_array(expand(value, active_property, context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1))
 
             # Expanded values must be node objects
@@ -362,7 +356,6 @@ module JSON::LD
             value = expand(value, '@graph', context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
             as_array(value)
           when '@value'
@@ -458,7 +451,6 @@ module JSON::LD
             value = expand(value, active_property, context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
 
             # Spec FIXME: need to be sure that result is an array
@@ -470,7 +462,6 @@ module JSON::LD
             expand(value, active_property, context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
           when '@reverse'
             # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
@@ -482,7 +473,6 @@ module JSON::LD
             value = expand(value, '@reverse', context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
 
             # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
@@ -519,7 +509,6 @@ module JSON::LD
             [expand(value, expanded_property, context,
               base: base,
               framing: framing,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
             ].flatten
           when '@nest'
@@ -549,7 +538,7 @@ module JSON::LD
           ary = []
 
           # For each key-value pair language-language value in value, ordered lexicographically by language
-          keys = ordered ? value.keys.sort : value.keys
+          keys = @options[:ordered] ? value.keys.sort : value.keys
           keys.each do |k|
             expanded_k = context.expand_iri(k, vocab: true, as_string: true, base: base)
 
@@ -594,7 +583,7 @@ module JSON::LD
           end
 
           # For each key-value in the object:
-          keys = ordered ? value.keys.sort : value.keys
+          keys = @options[:ordered] ? value.keys.sort : value.keys
           keys.each do |k|
             # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
             map_context = container_context.term_definitions[k].context if container.include?('@type') && container_context.term_definitions[k]
@@ -612,7 +601,6 @@ module JSON::LD
               base: base,
               framing: framing,
               from_map: true,
-              ordered: ordered,
               log_depth: log_depth.to_i + 1)
             index_value.each do |item|
               case
@@ -653,7 +641,6 @@ module JSON::LD
           expand(value, key, context,
             base: base,
             framing: framing,
-            ordered: ordered,
             log_depth: log_depth.to_i + 1)
         end
 
@@ -725,7 +712,6 @@ module JSON::LD
                         base: base,
                         framing: framing,
                         expanded_active_property: expanded_active_property,
-                        ordered: ordered,
                         type_key: type_key,
                         type_scoped_context: type_scoped_context,
                         log_depth: log_depth.to_i + 1)
