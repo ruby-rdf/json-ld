@@ -14,12 +14,9 @@ module JSON::LD
     # @param [Boolean] useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @param [Boolean] useNativeTypes (false) use native representations
-    # @param [Boolean] ordered (true)
-    #   Ensure output objects have keys ordered properly
-    # @param [String, RDF::URI] base for resolving document-relative IRIs
     #
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(dataset, useRdfType: false, useNativeTypes: false, ordered: false, base: nil)
+    def from_statements(dataset, useRdfType: false, useNativeTypes: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       referenced_once = {}
@@ -36,7 +33,7 @@ module JSON::LD
       dataset.each do |statement|
         #log_debug("statement") { statement.to_nquads.chomp}
 
-        name = statement.graph_name ? ec.expand_iri(statement.graph_name, base: base).to_s : '@default'
+        name = statement.graph_name ? ec.expand_iri(statement.graph_name, base: @options[:base]).to_s : '@default'
 
         # Create a graph entry as needed
         node_map = graph_map[name] ||= {}
@@ -44,7 +41,7 @@ module JSON::LD
 
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
-        subject = ec.expand_iri(statement.subject, as_string: true, base: base)
+        subject = ec.expand_iri(statement.subject, as_string: true, base: @options[:base])
         node = node_map[subject] ||= {'@id' => subject}
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
@@ -67,7 +64,7 @@ module JSON::LD
                                 statement.object,
                                 rdfDirection: @options[:rdfDirection],
                                 useNativeTypes: useNativeTypes,
-                                base: base)
+                                base: @options[:base])
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -149,11 +146,11 @@ module JSON::LD
       end
 
       result = []
-      default_graph.keys.opt_sort(ordered: ordered).each do |subject|
+      default_graph.keys.opt_sort(ordered: @options[:ordered]).each do |subject|
         node = default_graph[subject]
         if graph_map.has_key?(subject)
           node['@graph'] = []
-          graph_map[subject].keys.opt_sort(ordered: ordered).each do |s|
+          graph_map[subject].keys.opt_sort(ordered: @options[:ordered]).each do |s|
             n = graph_map[subject][s]
             n.delete(:usages)
             node['@graph'] << n unless node_reference?(n)

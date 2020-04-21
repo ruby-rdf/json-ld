@@ -66,7 +66,7 @@ module JSON::LD
         end
 
         if element.key?('@id') || element.key?('@value')
-          result = context.compact_value(property, element, base: base)
+          result = context.compact_value(property, element, base: @options[:base])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
             #log_debug("") {"=> scalar result: #{result.inspect}"}
             return result
@@ -98,7 +98,7 @@ module JSON::LD
 
           if expanded_property == '@id'
             compacted_value = Array(expanded_value).map do |expanded_id|
-              context.compact_iri(expanded_id, base: base)
+              context.compact_iri(expanded_id, base: @options[:base])
             end
 
             kw_alias = context.compact_iri('@id', vocab: true)
@@ -239,7 +239,7 @@ module JSON::LD
                 map_object = nest_result[item_active_property] ||= {}
                 # If there is no @id, create a blank node identifier to use as an index
                 map_key = if container.include?('@id') && expanded_item['@id']
-                  context.compact_iri(expanded_item['@id'], base: base)
+                  context.compact_iri(expanded_item['@id'], base: @options[:base])
                 elsif container.include?('@index') && expanded_item['@index']
                   context.compact_iri(expanded_item['@index'], vocab: true)
                 else

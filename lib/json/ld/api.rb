@@ -66,7 +66,7 @@ module JSON::LD
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
-    # @option options [String, #to_s] :base
+    # @option options [RDF::URI, String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context. If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
     #   If set to `true`, the JSON-LD processor replaces arrays with just one element with that element during compaction. If set to `false`, all arrays will remain arrays even if they have just one element.
@@ -108,6 +108,7 @@ module JSON::LD
       }.merge(options)
       @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
+      @options[:base] = RDF::URI(@options[:base]) if @options[:base] && !@options[:base].is_a?(RDF::URI)
       # For context via Link header
       _, context_ref = nil, nil
 
@@ -117,7 +118,7 @@ module JSON::LD
         remote_doc = self.class.loadRemoteDocument(input, **@options)
 
         context_ref = remote_doc.contextUrl
-        @options[:base] = remote_doc.documentUrl if remote_doc.documentUrl && !@options[:no_default_base]
+        @options[:base] = RDF::URI(remote_doc.documentUrl) if remote_doc.documentUrl && !@options[:no_default_base]
 
         case remote_doc.document
         when String
@@ -166,7 +167,6 @@ module JSON::LD
       result = doc_base = nil
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
-          base: (RDF::URI(@options[:base]) if @options[:base]),
           framing: framing)
         doc_base = @options[:base]
       end
@@ -218,14 +218,13 @@ module JSON::LD
       # 1) Perform the Expansion Algorithm on the JSON-LD input.
       #    This removes any existing context to allow the given context to be cleanly applied.
       expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
-        options[:base] ||= base_iri if options[:compactToRelative]
+        options[:base] ||= RDF::URI(base_iri) if base_iri && options[:compactToRelative]
         res
       end
 
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        result = compact(value,
-                         base: (RDF::URI(@options[:base]) if @options[:base]))
+        result = compact(value)
 
         # xxx) Add the given context to the output
         ctx = self.context.serialize(provided_context: context)
@@ -266,7 +265,7 @@ module JSON::LD
 
       # Expand input to simplify processing
       expanded_input = expanded ? input : API.expand(input, **options) do |result, base_iri|
-        options[:base] ||= base_iri if options[:compactToRelative]
+        options[:base] ||= RDF::URI(base_iri) if base_iri && options[:compactToRelative]
         result
       end
 
@@ -295,9 +294,7 @@ module JSON::LD
 
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
-          compacted = as_array(
-            compact(flattened,
-                    base: (RDF::URI(options[:base]) if options[:base])))
+          compacted = as_array(compact(flattened))
           kwgraph = self.context.compact_iri('@graph')
           flattened = self.context.
             serialize(provided_context: context).
@@ -374,7 +371,7 @@ module JSON::LD
 
       # Expand input to simplify processing
       expanded_input = expanded ? input : API.expand(input, ordered: false, **options) do |res, base_iri|
-        options[:base] ||= base_iri if options[:compactToRelative]
+        options[:base] ||= RDF::URI(base_iri) if base_iri && options[:compactToRelative]
         res
       end
 
@@ -431,8 +428,7 @@ module JSON::LD
         log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
-        compacted = compact(result,
-          base: (RDF::URI(options[:base]) if options[:base]))
+        compacted = compact(result)
 
         # @replace `@null` with nil, compacting arrays
         compacted = cleanup_null(compacted)
@@ -529,8 +525,6 @@ module JSON::LD
 
       API.new(nil, nil, **options) do
         result = from_statements(input,
-          base: (RDF::URI(options[:base]) if options[:base]),
-          ordered: @options[:ordered],
           useRdfType: useRdfType,
           useNativeTypes: useNativeTypes)
       end

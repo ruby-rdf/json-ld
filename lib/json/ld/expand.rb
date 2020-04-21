@@ -21,8 +21,6 @@ module JSON::LD
     # @param [Array, Hash] input
     # @param [String] active_property
     # @param [Context] context
-    # @param [String, RDF::URI] base (nil) for resolving document-relative IRIs
-    #   Ensure output objects have keys ordered properly
     # @param [Boolean] framing (false)
     #   Special rules for expanding a frame
     # @param [Boolean] from_map
@@ -30,11 +28,10 @@ module JSON::LD
     #
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context,
-               base: nil, framing: false,
-               from_map: false, log_depth: nil)
+               framing: false, from_map: false, log_depth: nil)
       log_debug("expand", depth: log_depth.to_i) {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
-      expanded_active_property = context.expand_iri(active_property, vocab: true, as_string: true, base: base) if active_property
+      expanded_active_property = context.expand_iri(active_property, vocab: true, as_string: true, base: @options[:base]) if active_property
 
       # Use a term-specific context, if defined, based on the non-type-scoped context.
       property_scoped_context = context.term_definitions[active_property].context if active_property && context.term_definitions[active_property]
@@ -47,7 +44,6 @@ module JSON::LD
         value = input.each_with_object([]) do |v, memo|
           # Initialize expanded item to the result of using this algorithm recursively, passing active context, active property, and item as element.
           v = expand(v, active_property, context,
-            base: base,
             framing: framing,
             from_map: from_map,
             log_depth: log_depth.to_i + 1)
@@ -66,7 +62,7 @@ module JSON::LD
       when Hash
         if context.previous_context
           expanded_key_map = input.keys.inject({}) do |memo, key|
-            memo.merge(key => context.expand_iri(key, vocab: true, as_string: true, base: base))
+            memo.merge(key => context.expand_iri(key, vocab: true, as_string: true, base: @options[:base]))
           end
           # Revert any previously type-scoped term definitions, unless this is from a map, a value object or a subject reference
           revert_context = !from_map &&
@@ -80,13 +76,13 @@ module JSON::LD
 
         # Apply property-scoped context after reverting term-scoped context
         unless property_scoped_context.nil?
-          context = context.parse(property_scoped_context, base: base, override_protected: true)
+          context = context.parse(property_scoped_context, base: @options[:base], override_protected: true)
         end
         log_debug("expand", depth: log_depth.to_i) {"after property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.has_key?('@context')
-          context = context.parse(input.delete('@context'), base: base)
+          context = context.parse(input.delete('@context'), base: @options[:base])
           log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
         end
 
@@ -98,7 +94,7 @@ module JSON::LD
         # See if keys mapping to @type have terms with a local context
         type_key = nil
         input.keys.sort.
-          select {|k| context.expand_iri(k, vocab: true, base: base) == '@type'}.
+          select {|k| context.expand_iri(k, vocab: true, base: @options[:base]) == '@type'}.
           each do |tk|
 
           type_key ||= tk # Side effect saves the first found key mapping to @type
@@ -106,14 +102,13 @@ module JSON::LD
             term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
             unless term_context.nil?
               log_debug("expand", depth: log_depth.to_i) {"term_context: #{term_context.inspect}"}
-              context = context.parse(term_context, base: base, propagate: false)
+              context = context.parse(term_context, base: @options[:base], propagate: false)
             end
           end
         end
 
         # Process each key and value in element. Ignores @nesting content
         expand_object(input, active_property, context, output_object,
-                      base: base,
                       expanded_active_property: expanded_active_property,
                       framing: framing,
                       type_key: type_key,
@@ -196,12 +191,12 @@ module JSON::LD
         # Apply property-scoped context
         unless property_scoped_context.nil?
           context = context.parse(property_scoped_context,
-                                  base: base,
+                                  base: @options[:base],
                                   override_protected: true)
         end
         log_debug("expand", depth: log_depth.to_i) {"property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
-        context.expand_value(active_property, input, base: base)
+        context.expand_value(active_property, input, base: @options[:base])
       end
 
       log_debug(depth: log_depth.to_i) {" => #{result.inspect}"}
@@ -212,7 +207,6 @@ module JSON::LD
 
     # Expand each key and value of element adding them to result
     def expand_object(input, active_property, context, output_object,
-                      base:,
                       expanded_active_property:,
                       framing:,
                       type_key:,
@@ -221,14 +215,14 @@ module JSON::LD
       nests = []
 
       input_type = Array(input[type_key]).last
-      input_type = context.expand_iri(input_type, vocab: true, as_string: true, base: base) if input_type
+      input_type = context.expand_iri(input_type, vocab: true, as_string: true, base: @options[:base]) if input_type
 
       # Then, proceed and process each property and value in element as follows:
       keys = @options[:ordered] ? input.keys.sort : input.keys
       keys.each do |key|
         # For each key and value in element, ordered lexicographically by key:
         value = input[key]
-        expanded_property = context.expand_iri(key, vocab: true, base: base)
+        expanded_property = context.expand_iri(key, vocab: true, base: @options[:base])
 
         # If expanded property is null or it neither contains a colon (:) nor it is a keyword, drop key by continuing to the next key.
         next if expanded_property.is_a?(RDF::URI) && expanded_property.relative?
@@ -260,16 +254,16 @@ module JSON::LD
             # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
             e_id = case value
             when String
-              context.expand_iri(value, as_string: true, base: base, documentRelative: true)
+              context.expand_iri(value, as_string: true, base: @options[:base], documentRelative: true)
             when Array
               # Framing allows an array of IRIs, and always puts values in an array
               raise JsonLdError::InvalidIdValue,
                     "value of @id must be a string unless framing: #{value.inspect}" unless framing
-              context.expand_iri(value, as_string: true, base: base, documentRelative: true)
+              context.expand_iri(value, as_string: true, base: @options[:base], documentRelative: true)
               value.map do |v|
                 raise JsonLdError::InvalidTypeValue,
                       "@id value must be a string or array of strings for framing: #{v.inspect}" unless v.is_a?(String)
-                context.expand_iri(v, as_string: true, base: base, documentRelative: true)
+                context.expand_iri(v, as_string: true, base: @options[:base], documentRelative: true)
               end
             when Hash
               raise JsonLdError::InvalidIdValue,
@@ -293,7 +287,6 @@ module JSON::LD
             # Included blocks are treated as an array of separate object nodes sharing the same referencing active_property. For 1.0, it is skipped as are other unknown keywords
             next if context.processingMode('json-ld-1.0')
             included_result = as_array(expand(value, active_property, context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1))
 
@@ -311,14 +304,14 @@ module JSON::LD
                       "@type value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
                 type_scoped_context.expand_iri(v,
                   as_string: true,
-                  base: base,
+                  base: @options[:base],
                   documentRelative: true,
                   vocab: true)
               end
             when String
               type_scoped_context.expand_iri(value,
                 as_string: true,
-                base: base,
+                base: @options[:base],
                 documentRelative: true,
                 vocab: true)
             when Hash
@@ -326,14 +319,14 @@ module JSON::LD
                 raise JsonLdError::InvalidTypeValue,
                       "@type value must be a string or array of strings: #{value.inspect}"
               elsif value.keys.length == 1 &&
-                 type_scoped_context.expand_iri(value.keys.first, vocab: true, base: base) == '@default'
+                 type_scoped_context.expand_iri(value.keys.first, vocab: true, base: @options[:base]) == '@default'
                 # Expand values of @default, which must be a string, or array of strings expanding to IRIs
                 [{'@default' => Array(value['@default']).map do |v|
                   raise JsonLdError::InvalidTypeValue,
                         "@type default value must be a string or array of strings: #{v.inspect}" unless v.is_a?(String)
                   type_scoped_context.expand_iri(v,
                     as_string: true,
-                    base: base,
+                    base: @options[:base],
                     documentRelative: true,
                     vocab: true)
                 end}]
@@ -354,7 +347,6 @@ module JSON::LD
           when '@graph'
             # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
             value = expand(value, '@graph', context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1)
             as_array(value)
@@ -449,7 +441,6 @@ module JSON::LD
 
             # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
             value = expand(value, active_property, context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1)
 
@@ -460,7 +451,6 @@ module JSON::LD
           when '@set'
             # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
             expand(value, active_property, context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1)
           when '@reverse'
@@ -471,7 +461,6 @@ module JSON::LD
             # Otherwise
             # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
             value = expand(value, '@reverse', context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1)
 
@@ -507,7 +496,6 @@ module JSON::LD
             next unless framing
             # Framing keywords
             [expand(value, expanded_property, context,
-              base: base,
               framing: framing,
               log_depth: log_depth.to_i + 1)
             ].flatten
@@ -540,7 +528,7 @@ module JSON::LD
           # For each key-value pair language-language value in value, ordered lexicographically by language
           keys = @options[:ordered] ? value.keys.sort : value.keys
           keys.each do |k|
-            expanded_k = context.expand_iri(k, vocab: true, as_string: true, base: base)
+            expanded_k = context.expand_iri(k, vocab: true, as_string: true, base: @options[:base])
 
             if k !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/ && expanded_k != '@none'
               warn "@language must be valid BCP47: #{k.inspect}"
@@ -576,7 +564,7 @@ module JSON::LD
               context
             else
               log_debug("expand", depth: log_depth.to_i) {"id_context: #{id_context.inspect}"}
-              context.parse(id_context, base: base, propagate: false)
+              context.parse(id_context, base: @options[:base], propagate: false)
             end
           else
             context
@@ -589,16 +577,15 @@ module JSON::LD
             map_context = container_context.term_definitions[k].context if container.include?('@type') && container_context.term_definitions[k]
             unless map_context.nil?
               log_debug("expand", depth: log_depth.to_i) {"map_context: #{map_context.inspect}"}
-              map_context = container_context.parse(map_context, base: base,
+              map_context = container_context.parse(map_context, base: @options[:base],
                                                     propagate: false)
             end
             map_context ||= container_context
 
-            expanded_k = container_context.expand_iri(k, vocab: true, as_string: true, base: base)
+            expanded_k = container_context.expand_iri(k, vocab: true, as_string: true, base: @options[:base])
 
             # Initialize index value to the result of using this algorithm recursively, passing active context, key as active property, and index value as element.
             index_value = expand([value[k]].flatten, key, map_context,
-              base: base,
               framing: framing,
               from_map: true,
               log_depth: log_depth.to_i + 1)
@@ -615,8 +602,8 @@ module JSON::LD
                   raise JsonLdError::InvalidValueObject, "Attempt to add illegal key to value object: #{index_key}"
                 else
                   # Expand key based on term
-                  expanded_k = k == '@none' ? '@none' : container_context.expand_value(index_key, k, base: base)
-                  index_property = container_context.expand_iri(index_key, vocab: true, as_string: true, base: base)
+                  expanded_k = k == '@none' ? '@none' : container_context.expand_value(index_key, k, base: @options[:base])
+                  index_property = container_context.expand_iri(index_key, vocab: true, as_string: true, base: @options[:base])
                   item[index_property] = [expanded_k].concat(Array(item[index_property])) unless expanded_k == '@none'
                 end
               when container.include?('@id')
@@ -625,7 +612,7 @@ module JSON::LD
                   item = {'@graph' => as_array(item)}
                 end
                 # Expand k document relative
-                expanded_k = container_context.expand_iri(k, as_string: true, base: base, documentRelative: true) unless expanded_k == '@none'
+                expanded_k = container_context.expand_iri(k, as_string: true, base: @options[:base], documentRelative: true) unless expanded_k == '@none'
                 item['@id'] ||= expanded_k unless expanded_k == '@none'
               when container.include?('@type')
                 item['@type'] = [expanded_k].concat(Array(item['@type'])) unless expanded_k == '@none'
@@ -639,7 +626,6 @@ module JSON::LD
         else
           # Otherwise, initialize expanded value to the result of using this algorithm recursively, passing active context, key for active property, and value for element.
           expand(value, key, context,
-            base: base,
             framing: framing,
             log_depth: log_depth.to_i + 1)
         end
@@ -701,15 +687,14 @@ module JSON::LD
           context
         else
           log_debug("expand", depth: log_depth.to_i) {"nest_context: #{nest_context.inspect}"}
-          context.parse(nest_context, base: base,
+          context.parse(nest_context, base: @options[:base],
                         override_protected: true)
         end
         nested_values = as_array(input[key])
         nested_values.each do |nv|
           raise JsonLdError::InvalidNestValue, nv.inspect unless
-            nv.is_a?(Hash) && nv.keys.none? {|k| nest_context.expand_iri(k, vocab: true, base: base) == '@value'}
+            nv.is_a?(Hash) && nv.keys.none? {|k| nest_context.expand_iri(k, vocab: true, base: @options[:base]) == '@value'}
           expand_object(nv, active_property, nest_context, output_object,
-                        base: base,
                         framing: framing,
                         expanded_active_property: expanded_active_property,
                         type_key: type_key,
