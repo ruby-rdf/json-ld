@@ -34,6 +34,8 @@ module JSON
     autoload :Normalize,          'json/ld/normalize'
     autoload :Reader,             'json/ld/reader'
     autoload :Resource,           'json/ld/resource'
+    autoload :StreamingReader,    'json/ld/streaming_reader'
+    autoload :StreamingWriter,    'json/ld/streaming_writer'
     autoload :VERSION,            'json/ld/version'
     autoload :Writer,             'json/ld/writer'
 
@@ -143,6 +145,7 @@ module JSON
       class InvalidScopedContext < JsonLdError; @code = "invalid scoped context"; end
       class InvalidScriptElement < JsonLdError; @code = "invalid script element"; end
       class InvalidSetOrListObject < JsonLdError; @code = "invalid set or list object"; end
+      class InvalidStreamingKeyOrder < JsonLdError; @code = 'invalid streaming key order' end
       class InvalidTermDefinition < JsonLdError; @code = "invalid term definition"; end
       class InvalidBaseDirection < JsonLdError; @code = "invalid base direction"; end
       class InvalidTypedValue < JsonLdError; @code = "invalid typed value"; end

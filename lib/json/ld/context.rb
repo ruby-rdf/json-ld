@@ -1517,8 +1517,8 @@ module JSON::LD
         if value.datatype == RDF::URI(RDF.to_uri + "JSON") && processingMode('json-ld-1.1')
           # Value parsed as JSON
           # FIXME: MultiJson
-          res['@value'] = ::JSON.parse(value.object)
           res['@type'] = '@json'
+          res['@value'] = ::JSON.parse(value.object)
         elsif value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype' && processingMode('json-ld-1.1')
           lang, dir = value.datatype.fragment.split('_')
           res['@value'] = value.to_s
@@ -1534,24 +1534,23 @@ module JSON::LD
           end
           res['@direction'] = dir
         elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
-          res['@value'] = value.object
           res['@type'] = uri(coerce(property)) if coerce(property)
+          res['@value'] = value.object
         else
           value.canonicalize! if value.datatype == RDF::XSD.double
-          res['@value'] = value.to_s
           if coerce(property)
             res['@type'] = uri(coerce(property)).to_s
           elsif value.has_datatype?
             res['@type'] = uri(value.datatype).to_s
           elsif value.has_language? || language(property)
             res['@language'] = (value.language || language(property)).to_s
-            # FIXME: direction
           end
+          res['@value'] = value.to_s
         end
         res
       else
         # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
-        res = {'@value' => value}
+        res = {}
 
         if td.type_mapping && !CONTAINERS_ID_VOCAB.include?(td.type_mapping.to_s)
           res['@type'] = td.type_mapping.to_s
@@ -1562,7 +1561,7 @@ module JSON::LD
           res['@direction'] = direction if direction
         end
 
-        res
+        res.merge('@value' => value)
       end
 
       result
