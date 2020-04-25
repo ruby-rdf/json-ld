@@ -187,8 +187,6 @@ describe JSON::LD::Reader do
           pending "graph map containing named graph" if %w(#te084 #te087 #te098 #te101 #te105 #te106).include?(t.property('@id'))
           pending "named graphs" if %w(#t0029 #te021).include?(t.property('@id'))
 
-          pending "scoped contexts" if %w(#tc023 #tc024 #tc032).include?(t.property('@id'))
-
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
           elsif %w(#twf07).include?(t.property('@id'))

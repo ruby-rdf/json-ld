@@ -80,8 +80,6 @@ module JSON::LD
         return
       end
 
-      input = context.expand_value(active_property, input, base: base) unless input.is_a?(Hash)
-
       # Note that we haven't parsed an @id key, so have no subject
       have_id, node_reference, is_list_or_set = false, false, false
       node_id ||= RDF::Node.new(@provisional_namer.get_sym)
@@ -94,7 +92,7 @@ module JSON::LD
 
       # Revert any previously type-scoped term definitions, unless this is from a map, a value object or a subject reference
       # FIXME
-      if context.previous_context
+      if input.is_a?(Hash) && context.previous_context
         expanded_key_map = input.keys.inject({}) do |memo, key|
           memo.merge(key => context.expand_iri(key, vocab: true, as_string: true, base: base))
         end
@@ -107,6 +105,11 @@ module JSON::LD
       # Apply property-scoped context after reverting term-scoped context
       context = context.parse(property_scoped_context, base: base, override_protected: true) unless
         property_scoped_context.nil?
+
+      # Otherwise, unless the value is a number, expand the value according to the Value Expansion rules, passing active property.
+      unless input.is_a?(Hash)
+        input = context.expand_value(active_property, input, base: base)
+      end
 
       # Output any type provided from a type map
       provisional_statements << RDF::Statement(node_id, RDF.type, extra_type) if
@@ -237,10 +240,16 @@ module JSON::LD
           end
           state = :properties
         when '@nest'
+          nest_context = context.term_definitions[active_property].context if context.term_definitions[active_property]
+          nest_context = if nest_context.nil?
+            context
+          else
+            context.parse(nest_context, base: base, override_protected: true)
+          end
           as_array(value).each do |v|
             raise JsonLdError::InvalidNestValue, v.inspect unless
-              v.is_a?(Hash) && v.keys.none? {|k| context.expand_iri(k, vocab: true, base: base) == '@value'}
-              parse_object(v, active_property, context, node_id: node_id) do |st|
+              v.is_a?(Hash) && v.keys.none? {|k| nest_context.expand_iri(k, vocab: true, base: base) == '@value'}
+              parse_object(v, active_property, nest_context, node_id: node_id) do |st|
                 add_statement.call(st)
               end
           end
@@ -271,9 +280,7 @@ module JSON::LD
                 "found #{key} in state #{state}" if
                 ![:await_context, :await_type, :await_id].include?(state)
           is_list_or_set = true
-          value = as_array(value).map do |item|
-            item.is_a?(Hash) ? item : context.expand_value(active_property, item, base: base)
-          end.compact
+          value = as_array(value).compact
           parse_object(value, active_property, context, subject: subject, predicate: predicate, &block)
           node_id = nil
           state = :properties
@@ -532,8 +539,6 @@ module JSON::LD
         end
       else
         as_array(input).flatten.each do |item|
-          # if item is not a Hash, expand it
-          item = context.expand_value(active_property, item, base: base) unless item.is_a?(Hash)
           # emit property/value
           parse_object(item, active_property, context,
                        subject: subject, predicate: predicate, **options, &block)
