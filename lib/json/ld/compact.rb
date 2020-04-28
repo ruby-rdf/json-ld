@@ -12,11 +12,14 @@ module JSON::LD
     # This algorithm compacts a JSON-LD document, such that the given context is applied. This must result in shortening any applicable IRIs to terms or compact IRIs, any applicable keywords to keyword aliases, and any applicable JSON-LD values expressed in expanded form to simple values such as strings or numbers.
     #
     # @param [Array, Hash] element
-    # @param [String] property (nil)
-    # @param [Boolean] ordered (true)
+    # @param [String, RDF::URI] base (nil)
     #   Ensure output objects have keys ordered properly
+    # @param [String] property (nil)
+    #   Extra validatation
     # @return [Array, Hash]
-    def compact(element, property: nil, ordered: false)
+    def compact(element,
+                base: nil,
+                property: nil)
       #if property.nil?
       #  log_debug("compact") {"element: #{element.inspect}, ec: #{context.inspect}"}
       #else
@@ -29,7 +32,9 @@ module JSON::LD
       case element
       when Array
         #log_debug("") {"Array #{element.inspect}"}
-        result = element.map {|item| compact(item, property: property, ordered: ordered)}.compact
+        result = element.map do |item|
+          compact(item, base: base, property: property)
+        end.compact
 
         # If element has a single member and the active property has no
         # @container mapping to @list or @set, the compacted value is that
@@ -55,10 +60,13 @@ module JSON::LD
 
         # Look up term definintions from property using the original type-scoped context, if it exists, but apply them to the now current previous context
         td = input_context.term_definitions[property] if property
-        self.context = context.parse(td.context, override_protected: true) if td && td.context
+        if td && !td.context.nil?
+          self.context = context.parse(td.context,
+            override_protected: true)
+        end
 
         if element.key?('@id') || element.key?('@value')
-          result = context.compact_value(property, element, log_depth: @options[:log_depth])
+          result = context.compact_value(property, element, base: @options[:base])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
             #log_debug("") {"=> scalar result: #{result.inspect}"}
             return result
@@ -67,7 +75,8 @@ module JSON::LD
 
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
         if list?(element) && context.container(property).include?('@list')
-          return compact(element['@list'], property: property, ordered: ordered)
+          return compact(element['@list'], base: base,
+                         property: property)
         end
 
         inside_reverse = property == '@reverse'
@@ -80,15 +89,17 @@ module JSON::LD
           sort.
           each do |term|
           term_context = input_context.term_definitions[term].context if input_context.term_definitions[term]
-          self.context = context.parse(term_context, propagate: false) if term_context
+          self.context = context.parse(term_context, propagate: false) unless term_context.nil?
         end
 
-        element.keys.opt_sort(ordered: ordered).each do |expanded_property|
+        element.keys.opt_sort(ordered: @options[:ordered]).each do |expanded_property|
           expanded_value = element[expanded_property]
           #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
 
           if expanded_property == '@id'
-            compacted_value = Array(expanded_value).map {|expanded_id| context.compact_iri(expanded_id)}
+            compacted_value = Array(expanded_value).map do |expanded_id|
+              context.compact_iri(expanded_id, base: @options[:base])
+            end
 
             kw_alias = context.compact_iri('@id', vocab: true)
             as_array = compacted_value.length > 1
@@ -98,7 +109,9 @@ module JSON::LD
           end
 
           if expanded_property == '@type'
-            compacted_value = Array(expanded_value).map {|expanded_type| input_context.compact_iri(expanded_type, vocab: true)}
+            compacted_value = Array(expanded_value).map do |expanded_type|
+              input_context.compact_iri(expanded_type, vocab: true)
+            end
 
             kw_alias = context.compact_iri('@type', vocab: true)
             as_array = compacted_value.length > 1 ||
@@ -110,7 +123,8 @@ module JSON::LD
           end
 
           if expanded_property == '@reverse'
-            compacted_value = compact(expanded_value, property: '@reverse', ordered: ordered)
+            compacted_value = compact(expanded_value, base: base,
+                                      property: '@reverse')
             #log_debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
             # handle double-reversed properties
             compacted_value.each do |prop, value|
@@ -131,7 +145,8 @@ module JSON::LD
 
           if expanded_property == '@preserve'
             # Compact using `property`
-            compacted_value = compact(expanded_value, property: property, ordered: ordered)
+            compacted_value = compact(expanded_value, base: base,
+                                      property: property)
             #log_debug("@preserve") {"compacted_value: #{compacted_value.inspect}"}
 
             unless compacted_value.is_a?(Array) && compacted_value.empty?
@@ -158,8 +173,7 @@ module JSON::LD
               context.compact_iri(expanded_property,
                                   value: expanded_value,
                                   vocab: true,
-                                  reverse: inside_reverse,
-                                  log_depth: @options[:log_depth])
+                                  reverse: inside_reverse)
 
             if nest_prop = context.nest(item_active_property)
               result[nest_prop] ||= {}
@@ -177,8 +191,7 @@ module JSON::LD
               context.compact_iri(expanded_property,
                                   value: expanded_item,
                                   vocab: true,
-                                  reverse: inside_reverse,
-                                  log_depth: @options[:log_depth])
+                                  reverse: inside_reverse)
 
 
             nest_result = if nest_prop = context.nest(item_active_property)
@@ -197,7 +210,8 @@ module JSON::LD
             else expanded_item
             end
 
-            compacted_item = compact(value, property: item_active_property, ordered: ordered)
+            compacted_item = compact(value, base: base,
+                                     property: item_active_property)
             #log_debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
 
             # handle @list
@@ -225,9 +239,9 @@ module JSON::LD
                 map_object = nest_result[item_active_property] ||= {}
                 # If there is no @id, create a blank node identifier to use as an index
                 map_key = if container.include?('@id') && expanded_item['@id']
-                  context.compact_iri(expanded_item['@id'])
+                  context.compact_iri(expanded_item['@id'], base: @options[:base])
                 elsif container.include?('@index') && expanded_item['@index']
-                  context.compact_iri(expanded_item['@index'])
+                  context.compact_iri(expanded_item['@index'], vocab: true)
                 else
                   context.compact_iri('@none', vocab: true)
                 end
@@ -299,7 +313,9 @@ module JSON::LD
 
                 # if compacted_item contains a single entry who's key maps to @id, then recompact the item without @type
                 if compacted_item.keys.length == 1 && expanded_item.keys.include?('@id')
-                  compacted_item = compact({'@id' => expanded_item['@id']}, property: item_active_property)
+                  compacted_item = compact({'@id' => expanded_item['@id']},
+                                           base: base,
+                                           property: item_active_property)
                 end
                 compacted_item
               end

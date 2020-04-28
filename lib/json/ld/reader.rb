@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-# frozen_string_literal: true
+
 module JSON::LD
   ##
   # A JSON-LD parser in Ruby.
@@ -7,6 +7,7 @@ module JSON::LD
   # @see https://www.w3.org/TR/json-ld11-api
   # @author [Gregg Kellogg](http://greggkellogg.net/)
   class Reader < RDF::Reader
+    include StreamingReader
     format Format
 
     ##
@@ -46,6 +47,12 @@ module JSON::LD
           control: :select,
           on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
           description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
+        RDF::CLI::Option.new(
+          symbol: :stream,
+          datatype: TrueClass,
+          control: :checkbox,
+          on: ["--[no-]stream"],
+          description: "Optimize for streaming JSON-LD to RDF.") {|arg| arg},
       ]
     end
 
@@ -63,13 +70,11 @@ module JSON::LD
       options[:base_uri] ||= options[:base]
       super do
         @options[:base] ||= base_uri.to_s if base_uri
-        begin
-          # Trim non-JSON stuff in script.
-          @doc = if input.respond_to?(:read)
-            input
-          else
-            StringIO.new(input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, ''))
-          end
+        # Trim non-JSON stuff in script.
+        @doc = if input.respond_to?(:read)
+          input
+        else
+          StringIO.new(input.to_s.sub(%r(\A[^{\[]*)m, '').sub(%r([^}\]]*\Z)m, ''))
         end
 
         if block_given?
@@ -85,7 +90,11 @@ module JSON::LD
     # @private
     # @see   RDF::Reader#each_statement
     def each_statement(&block)
-      JSON::LD::API.toRdf(@doc, **@options, &block)
+      if @options[:stream]
+        stream_statement(&block)
+      else
+        API.toRdf(@doc, **@options, &block)
+      end
     rescue ::JSON::ParserError, ::JSON::LD::JsonLdError => e
       log_fatal("Failed to parse input document: #{e.message}", exception: RDF::ReaderError)
     end
@@ -95,7 +104,7 @@ module JSON::LD
     # @see   RDF::Reader#each_triple
     def each_triple(&block)
       if block_given?
-        JSON::LD::API.toRdf(@doc, **@options) do |statement|
+        each_statement do |statement|
           yield(*statement.to_triple)
         end
       end

@@ -6,6 +6,7 @@ module RDF::Util
     LOCAL_PATHS = {
       "https://w3c.github.io/json-ld-api/tests/" => ::File.expand_path("../json-ld-api/tests", __FILE__) + '/',
       "https://w3c.github.io/json-ld-framing/tests/" => ::File.expand_path("../json-ld-framing/tests", __FILE__) + '/',
+      "https://w3c.github.io/json-ld-streaming/tests/" => ::File.expand_path("../json-ld-streaming/tests", __FILE__) + '/',
       "file:" => ""
     }
 
@@ -74,6 +75,7 @@ module Fixtures
   module SuiteTest
     SUITE = RDF::URI("https://w3c.github.io/json-ld-api/tests/")
     FRAME_SUITE = RDF::URI("https://w3c.github.io/json-ld-framing/tests/")
+    STREAM_SUITE = RDF::URI("https://w3c.github.io/json-ld-streaming/tests/")
 
     class Manifest < JSON::LD::Resource
       attr_accessor :manifest_url
@@ -228,14 +230,14 @@ module Fixtures
               JSON::LD::API.fromRdf(repo, logger: logger, **options)
             when "jld:ToRDFTest"
               repo = RDF::Repository.new
-              JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
-                # To properly compare values of rdf:language and i18n datatypes, normalize to lower case
-                if statement.predicate == RDF.to_uri + 'language'
-                  statement.object = RDF::Literal(statement.object.to_s.downcase) if statement.object.literal?
-                elsif statement.object.literal? && statement.object.datatype.to_s.start_with?('https://www.w3.org/ns/i18n#')
-                  statement.object.datatype = RDF::URI(statement.object.datatype.to_s.downcase)
+              if manifest_url.to_s.include?('stream')
+                JSON::LD::Reader.open(input_loc, stream: true, logger: logger, **options) do |statement|
+                  repo << statement
                 end
-                repo << statement
+              else
+                JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
+                  repo << statement
+                end
               end
               logger.info "nq: #{repo.map(&:to_nquads)}"
               repo
@@ -320,7 +322,11 @@ module Fixtures
                     raise "Expected status #{t.property('expectErrorCode')}, not #{last_response.status}"
                   end
                 when "jld:ToRDFTest"
-                  JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
+                  if t.manifest_url.to_s.include?('stream')
+                    JSON::LD::Reader.open(t.input_loc, stream: true, logger: logger, **options).each_statement {}
+                  else
+                    JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
+                  end
                 else
                   success("Unknown test type: #{testType}")
                 end

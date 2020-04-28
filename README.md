@@ -19,6 +19,12 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 Install with `gem install json-ld`
 
+### JSON-LD Streaming Profile
+This gem implements an optimized streaming reader used for generating RDF from large dataset dumps formatted as JSON-LD. Such documents must correspond to the [JSON-LD Streaming Profile](https://w3c.github.io/json-ld-streaming/):
+
+* Keys in JSON objects must be ordered with any of `@context`, and/or `@type` coming before any other keys, in that order. This includes aliases of those keys. It is strongly encouraged that `@id` be present, and come immediately after.
+* JSON-LD documents can be signaled or requested in [streaming document form](https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form). The profile URI identifying the [streaming document form](https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form) is `http://www.w3.org/ns/json-ld#streaming`.
+
 ### MultiJson parser
 The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
 
@@ -230,7 +236,7 @@ In some cases, the built-in document loader {JSON::LD::API.documentLoader} is in
 
 All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
 ```ruby
-def load_document_local(url, options={}, &block)
+load_document_local = Proc.new do |url, **options, &block|
   if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
     remote_document = JSON::LD::API::RemoteDocument.new(url, File.read("etc/schema.org.jsonld"))
     return block_given? ? yield(remote_document) : remote_document

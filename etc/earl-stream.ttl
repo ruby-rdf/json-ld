@@ -1,0 +1,4764 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix earl: <http://www.w3.org/ns/earl#> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://rubygems.org/gems/json-ld> a doap:Project;
+   dc:creator <https://greggkellogg.net/foaf#me>;
+   doap:blog <https://greggkellogg.net/>;
+   doap:bug-database <https://github.com/ruby-rdf/json-ld/issues>;
+   doap:created "2011-05-07"^^xsd:date;
+   doap:description "RDF.rb extension for parsing/serializing JSON-LD data."@en;
+   doap:developer <https://greggkellogg.net/foaf#me>;
+   doap:documenter <https://greggkellogg.net/foaf#me>;
+   doap:homepage <https://github.com/ruby-rdf/json-ld/>;
+   doap:implements <https://www.w3.org/TR/json-ld11/>,
+     <https://www.w3.org/TR/json-ld11-api/>,
+     <https://www.w3.org/TR/json-ld11-framing/>;
+   doap:license <https://creativecommons.org/licenses/publicdomain/>;
+   doap:maintainer <https://greggkellogg.net/foaf#me>;
+   doap:name "JSON::LD"^^xsd:string;
+   doap:platform "Ruby"^^xsd:string;
+   doap:shortdesc "JSON-LD support for RDF.rb."@en;
+   foaf:maker <https://greggkellogg.net/foaf#me> .
+
+<https://greggkellogg.net/foaf#me> a foaf:Person;
+   rdfs:isDefinedBy <https://greggkellogg.net/foaf>;
+   foaf:made <https://rubygems.org/gems/json-ld>;
+   foaf:mbox <mailto:gregg@greggkellogg.net>;
+   foaf:name "Gregg Kellogg"^^xsd:string .
+
+<https://rubygems.org/gems/json-ld> doap:release [
+  doap:name "json-ld-3.1.4";
+  doap:revision "3.1.4";
+  doap:created "2020-04-28"^^xsd:date;
+] .
+<> foaf:primaryTopic <https://rubygems.org/gems/json-ld>;
+  dc:issued "2020-04-28T14:47:11-07:00"^^xsd:dateTime;
+  foaf:maker <http://greggkellogg.net/foaf#me> .
+
+<http://greggkellogg.net/foaf#me> a earl:Assertor;
+  foaf:title "Implementor" .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0007>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0009>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0010>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0011>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0012>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0013>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0014>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0015>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0016>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0017>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0018>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0019>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0020>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0022>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0023>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0024>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0025>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0026>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0027>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0028>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0029>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0030>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0031>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0032>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0033>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0034>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0035>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0036>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0113>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0114>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0115>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0116>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0117>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0119>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0120>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0121>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0122>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0123>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0124>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0125>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0126>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0127>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0128>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0129>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0130>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0131>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0132>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc007>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc009>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc010>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc011>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc012>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc013>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc014>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc015>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc016>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc017>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc018>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc019>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc020>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc021>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc022>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc023>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc024>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc025>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc026>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc027>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc028>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc029>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc030>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc031>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc032>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc033>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc034>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tc035>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tdi12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te007>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te009>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te010>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te011>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te012>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te013>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te015>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te016>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te017>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te018>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te019>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te020>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te021>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te022>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te023>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te024>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te025>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te027>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te028>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te029>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te030>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te031>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te032>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te033>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te034>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te035>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te036>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te037>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te039>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te040>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te041>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te042>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te043>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te044>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te045>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te046>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te047>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te048>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te049>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te050>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te051>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te052>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te053>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te054>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te055>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te056>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te057>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te058>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te059>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te060>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te061>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te062>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te063>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te064>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te065>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te066>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te067>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te068>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te069>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te070>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te072>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te073>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te074>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te075>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te076>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te077>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te078>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te079>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te080>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te081>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te082>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te083>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te084>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te085>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te086>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te087>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te088>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te089>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te090>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te091>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te092>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te093>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te094>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te095>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te096>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te097>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te098>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te099>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te100>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te101>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te102>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te103>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te104>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te105>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te106>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te107>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te108>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te109>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te110>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te111>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te112>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te113>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te114>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te117>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te118>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te119>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te120>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te121>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te122>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te123>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0124>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#t0125>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te126>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te127>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te128>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te129>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#te130>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tec01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tec02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tem01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ten06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tep02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tep03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter13>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter14>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter15>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter17>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter18>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter19>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter20>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter21>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter22>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter23>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter25>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter26>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter27>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter28>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter29>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter30>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter31>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter33>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter34>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter35>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter36>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter37>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter38>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter39>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter40>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter41>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter42>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter43>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter44>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter48>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter49>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter50>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter51>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter52>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ter53>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:failed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tin09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs13>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs14>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs15>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs16>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs17>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs18>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs19>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs20>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs21>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs22>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tjs23>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tli10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm007>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm009>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm010>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm011>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm012>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm013>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm014>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm015>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm016>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm017>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm018>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm019>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tm020>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn007>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tn008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt13>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt14>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt15>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tnt16>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tp001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tp002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tp003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tp004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpi11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr13>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr14>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr15>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr16>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr17>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr18>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr19>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr20>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr21>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr22>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr23>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr24>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr25>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr26>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr27>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr28>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr29>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr30>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr31>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr32>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr33>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr34>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr35>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr36>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr37>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr38>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr39>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tpr40>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#trt01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tse09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso06>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso08>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso09>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso10>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso11>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso12>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tso13>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ttn01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#ttn02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv001>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv002>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv003>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv004>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv005>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv006>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv008>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv009>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv010>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv011>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv012>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv013>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv014>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv015>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv016>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv017>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv018>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv019>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv020>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv021>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#tv022>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf01>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf02>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf03>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf04>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf05>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
+
+[ a earl:Assertion;
+  earl:assertedBy <http://greggkellogg.net/foaf#me>;
+  earl:subject <https://rubygems.org/gems/json-ld>;
+  earl:test <https://w3c.github.io/json-ld-streaming/tests/stream-toRdf-manifest#twf07>;
+  earl:result [
+    a earl:TestResult;
+    earl:outcome earl:passed;
+    dc:date "2020-04-28T14:47:11-07:00"^^xsd:dateTime];
+  earl:mode earl:automatic ] .
