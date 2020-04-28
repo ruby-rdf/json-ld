@@ -2,7 +2,6 @@
 require 'json/ld'
 require 'json/ld/expand'
 require 'json/ld/to_rdf'
-require 'json/stream'
 
 module JSON::LD
   ##
@@ -42,7 +41,7 @@ module JSON::LD
           block.call(st)
         end
       end
-    rescue ::JSON::Stream::ParserError, ::JSON::ParserError, ::JSON::LD::JsonLdError => e
+    rescue ::JSON::ParserError, ::JSON::LD::JsonLdError => e
       log_fatal("Failed to parse input document: #{e.message}", exception: RDF::ReaderError)
     end
 
