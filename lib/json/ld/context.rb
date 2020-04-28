@@ -3,7 +3,7 @@
 require 'json'
 require 'bigdecimal'
 require 'set'
-require 'lru_redux'
+require 'rdf/util/cache'
 
 begin
   # Attempt to load this to avoid unnecessary context fetches
@@ -139,7 +139,7 @@ module JSON::LD
     # @return [RDF::Util::Cache]
     # @private
     def self.cache
-      @cache ||= LruRedux::Cache.new(CACHE_SIZE)
+      @cache ||= RDF::Util::Cache.new(CACHE_SIZE)
     end
 
     ##
@@ -148,7 +148,7 @@ module JSON::LD
     # @return [RDF::Util::Cache]
     # @private
     def self.inverse_cache
-      @inverse_cache ||= LruRedux::Cache.new(CACHE_SIZE)
+      @inverse_cache ||= RDF::Util::Cache.new(CACHE_SIZE)
     end
 
     ##
