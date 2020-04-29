@@ -1,12 +1,13 @@
-@prefix dc: <http://purl.org/dc/terms/> .
+@base         <https://rubygems.org/gems/json-ld> .
+@prefix dc:   <http://purl.org/dc/terms/> .
 @prefix earl: <http://www.w3.org/ns/earl#> .
 @prefix doap: <http://usefulinc.com/ns/doap#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
-<https://rubygems.org/gems/json-ld> a doap:Project;
+<> a doap:Project;
    dc:creator <https://greggkellogg.net/foaf#me>;
    doap:blog <https://greggkellogg.net/>;
    doap:bug-database <https://github.com/ruby-rdf/json-ld/issues>;
@@ -21,12 +22,12 @@
    doap:license <https://creativecommons.org/licenses/publicdomain/>;
    doap:maintainer <https://greggkellogg.net/foaf#me>;
    doap:name "JSON::LD"^^xsd:string;
-   doap:platform "Ruby"^^xsd:string;
+   doap:programming-language "Ruby";
    doap:shortdesc "JSON-LD support for RDF.rb."@en;
    foaf:maker <https://greggkellogg.net/foaf#me> .
 
 <https://greggkellogg.net/foaf#me> a foaf:Person;
    rdfs:isDefinedBy <https://greggkellogg.net/foaf>;
-   foaf:made <https://rubygems.org/gems/json-ld>;
+   foaf:made <>;
    foaf:mbox <mailto:gregg@greggkellogg.net>;
    foaf:name "Gregg Kellogg"^^xsd:string .

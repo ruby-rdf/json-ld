@@ -21,7 +21,7 @@
    doap:license <https://creativecommons.org/licenses/publicdomain/>;
    doap:maintainer <https://greggkellogg.net/foaf#me>;
    doap:name "JSON::LD"^^xsd:string;
-   doap:platform "Ruby"^^xsd:string;
+   doap:programming-language "Ruby"^^xsd:string;
    doap:shortdesc "JSON-LD support for RDF.rb."@en;
    foaf:maker <https://greggkellogg.net/foaf#me> .
 

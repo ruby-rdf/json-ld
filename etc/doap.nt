@@ -17,7 +17,7 @@
 <https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#license> <https://creativecommons.org/licenses/publicdomain/> .
 <https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#maintainer> <https://greggkellogg.net/foaf#me> .
 <https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#name> "JSON::LD" .
-<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#platform> "Ruby" .
+<https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#programming-language> "Ruby" .
 <https://rubygems.org/gems/json-ld> <http://usefulinc.com/ns/doap#shortdesc> "JSON-LD support for RDF.rb."@en .
 <https://rubygems.org/gems/json-ld> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://usefulinc.com/ns/doap#Project> .
 <https://rubygems.org/gems/json-ld> <http://xmlns.com/foaf/0.1/maker> <https://greggkellogg.net/foaf#me> .
