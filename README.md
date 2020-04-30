@@ -25,21 +25,25 @@ This gem implements an optimized streaming reader used for generating RDF from l
 * Keys in JSON objects must be ordered with any of `@context`, and/or `@type` coming before any other keys, in that order. This includes aliases of those keys. It is strongly encouraged that `@id` be present, and come immediately after.
 * JSON-LD documents can be signaled or requested in [streaming document form](https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form). The profile URI identifying the [streaming document form](https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form) is `http://www.w3.org/ns/json-ld#streaming`.
 
+This gem also implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
+
+* Each statement written as a separate node in expanded/flattened form.
+* `RDF List`s are written as separate nodes using `rdf:first` and `rdf:rest` properties.
+
+The order of triples retrieved from the `RDF::Enumerable` dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by _graph name_, _subect_, _predicate_ and _object_.
+
 ### MultiJson parser
 The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
 
-### JSON-LD Streaming Profile
-This gem implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:
-
-* Each statement written as a separate node in expanded/flattened form.
-* RDF Lists are written as separate nodes using `rdf:first` and `rdf:rest` properties.
-
 ## Examples
+
 ```ruby
 require 'rubygems'
 require 'json/ld'
  ```
+
 ### Expand a Document
+
 ```ruby
    input = JSON.parse %({
       "@context": {
@@ -59,8 +63,9 @@ require 'json/ld'
         "http://xmlns.com/foaf/0.1/avatar": [{"@value": "https://twitter.com/account/profile_image/manusporny"}]
     }]
 ```
+
 ### Compact a Document
-```ruby
+
     input = JSON.parse %([{
         "http://xmlns.com/foaf/0.1/name": ["Manu Sporny"],
         "http://xmlns.com/foaf/0.1/homepage": [{"@id": "https://manu.sporny.org/"}],
@@ -86,9 +91,9 @@ require 'json/ld'
         "homepage": "https://manu.sporny.org/",
         "name": "Manu Sporny"
     }
-```
+
 ### Frame a Document
-```ruby
+
     input = JSON.parse %({
       "@context": {
         "Book":         "http://example.org/vocab#Book",
@@ -169,9 +174,9 @@ require 'json/ld'
         }
       ]
     }
-```
+
 ### Turn JSON-LD into RDF (Turtle)
-```ruby
+
     input = JSON.parse %({
       "@context": {
         "":       "https://manu.sporny.org/",
@@ -192,9 +197,9 @@ require 'json/ld'
     <http://example.org/people#joebob> a foaf:Person;
        foaf:name "Joe Bob";
        foaf:nick ("joe" "bob" "jaybe") .
-```
+
 ### Turn RDF into JSON-LD
-```ruby
+
     require 'rdf/turtle'
     input = RDF::Graph.new << RDF::Turtle::Reader.new(%(
       @prefix foaf: <http://xmlns.com/foaf/0.1/> .
@@ -230,11 +235,12 @@ require 'json/ld'
           "http://xmlns.com/foaf/0.1/name": [{"@value": "Manu Sporny"}]
         }
       ]
-```
+
 ## Use a custom Document Loader
 In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using `http://schema.org` as a remote context, it will be re-loaded every time (however, see [json-ld-preloaded](https://rubygems.org/gems/json-ld-preloaded)).
 
 All entries into the {JSON::LD::API} accept a `:documentLoader` option, which can be used to provide an alternative method to use when loading remote documents. For example:
+
 ```ruby
 load_document_local = Proc.new do |url, **options, &block|
   if RDF::URI(url, canonicalize: true) == RDF::URI('http://schema.org/')
@@ -244,28 +250,34 @@ load_document_local = Proc.new do |url, **options, &block|
     JSON::LD::API.documentLoader(url, options, &block)
   end
 end
+
 ```
 Then, when performing something like expansion:
+
 ```ruby
 JSON::LD::API.expand(input, documentLoader: load_document_local)
 ```
 
 ## Preloading contexts
 In many cases, for small documents, processing time can be dominated by loading and parsing remote contexts. In particular, a small schema.org example may need to download a large context and turn it into an internal representation, before the actual document can be expanded for processing. Using {JSON::LD::Context.add_preloaded}, an implementation can perform this loading up-front, and make it available to the processor.
+
 ```ruby
     ctx = JSON::LD::Context.new().parse('http://schema.org/')
     JSON::LD::Context.add_preloaded('http://schema.org/', ctx)
  ```
+
 On lookup, URIs with an `https` prefix are normalized to `http`.
 
 A context may be serialized to Ruby to speed this process using `Context#to_rb`. When loaded, this generated file will add entries to the {JSON::LD::Context::PRELOADED}.
 
 ## RDF Reader and Writer
 {JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:
+
 ```ruby
     graph = RDF::Graph.load("etc/doap.jsonld", format: :jsonld)
     graph.dump(:jsonld, standard_prefixes: true)
 ```
+
 `RDF::GRAPH#dump` can also take a `:context` option to use a separately defined context
 
 As JSON-LD may come from many different sources, included as an embedded script tag within an HTML document, the RDF Reader will strip input before the leading `{` or `[` and after the trailing `}` or `]`.
@@ -275,7 +287,7 @@ This implementation is being used as a test-bed for features planned for an upco
 
 ### Scoped Contexts
 A term definition can include `@context`, which is applied to values of that object. This is also used when compacting. Taken together, this allows framing to effectively include context definitions more deeply within the framed structure.
-```ruby
+
     {
       "@context": {
         "ex": "http://example.com/",
@@ -290,10 +302,10 @@ A term definition can include `@context`, which is applied to values of that obj
       },
       "foo": "Bar"
     }
-```
+
 ### @id and @type maps
 The value of `@container` in a term definition can include `@id` or `@type`, in addition to `@set`, `@list`, `@language`, and `@index`. This allows value indexing based on either the `@id` or `@type` of associated objects.
-```ruby
+
     {
       "@context": {
         "@vocab": "http://example/",
@@ -304,10 +316,10 @@ The value of `@container` in a term definition can include `@id` or `@type`, in 
         "_:bar": {"label": "Object with @id _:bar"}
       }
     }
-```
+
 ### @graph containers and maps
 A term can have `@container` set to include `@graph` optionally including `@id` or `@index` and `@set`. In the first form, with `@container` set to `@graph`, the value of a property is treated as a _simple graph object_, meaning that values treated as if they were contained in an object with `@graph`, creating _named graph_ with an anonymous name.
-```ruby
+
     {
       "@context": {
         "@vocab": "http://example.org/",
@@ -317,9 +329,9 @@ A term can have `@container` set to include `@graph` optionally including `@id` 
         "value": "x"
       }
     }
-```
+
 which expands to the following:
-```ruby
+
     [{
       "http://example.org/input": [{
         "@graph": [{
@@ -327,18 +339,18 @@ which expands to the following:
         }]
       }]
     }]
-```
+
 Compaction reverses this process, optionally ensuring that a single value is contained within an array of `@container` also includes `@set`:
-```ruby
+
     {
       "@context": {
         "@vocab": "http://example.org/",
         "input": {"@container": ["@graph", "@set"]}
       }
     }
-```
+
 A graph map uses the map form already existing for `@index`, `@language`, `@type`, and `@id` where the index is either an index value or an id.
-```ruby
+
     {
       "@context": {
         "@vocab": "http://example.org/",
@@ -348,9 +360,9 @@ A graph map uses the map form already existing for `@index`, `@language`, `@type
         "g1": {"value": "x"}
       }
     }
-```
+
 treats "g1" as an index, and expands to the following:
-```ruby
+
     [{
       "http://example.org/input": [{
         "@index": "g1",
@@ -359,11 +371,11 @@ treats "g1" as an index, and expands to the following:
         }]
       }]
     }])
-```
+
 This can also include `@set` to ensure that, when compacting, a single value of an index will be in array form.
 
 The _id_ version is similar:
-```ruby
+
     {
       "@context": {
         "@vocab": "http://example.org/",
@@ -373,9 +385,9 @@ The _id_ version is similar:
         "http://example.com/g1": {"value": "x"}
       }
     }
-```
+
 which expands to:
-```ruby
+
     [{
       "http://example.org/input": [{
         "@id": "http://example.com/g1",
@@ -384,10 +396,10 @@ which expands to:
         }]
       }]
     }])
-```
+
 ### Transparent Nesting
 Many JSON APIs separate properties from their entities using an intermediate object. For example, a set of possible labels may be grouped under a common property:
-```json
+
     {
       "@context": {
         "skos": "http://www.w3.org/2004/02/skos/core#",
@@ -403,9 +415,9 @@ Many JSON APIs separate properties from their entities using an intermediate obj
          "other_label": "This is the other label"
       }
     }
- ```
+ 
  In this case, the `labels` property is semantically meaningless. Defining it as equivalent to `@nest` causes it to be ignored when expanding, making it equivalent to the following:
-```json
+
     {
       "@context": {
         "skos": "http://www.w3.org/2004/02/skos/core#",
@@ -419,9 +431,9 @@ Many JSON APIs separate properties from their entities using an intermediate obj
       "main_label": "This is the main label for my resource",
       "other_label": "This is the other label"
     }
- ```
+ 
  Similarly, properties may be marked with "@nest": "nest-term", to cause them to be nested. Note that the `@nest` keyword can also be aliased in the context.
-```json
+
      {
        "@context": {
          "skos": "http://www.w3.org/2004/02/skos/core#",
@@ -437,7 +449,7 @@ Many JSON APIs separate properties from their entities using an intermediate obj
           "other_label": "This is the other label"
        }
      }
-```
+
 In this way, nesting survives round-tripping through expansion, and framed output can include nested properties.
 
 ## Sinatra/Rack support
@@ -515,14 +527,14 @@ Note, the API method signatures differed in versions before 1.0, in that they al
 ## Installation
 The recommended installation method is via [RubyGems](https://rubygems.org/).
 To install the latest official release of the `JSON-LD` gem, do:
-```bash
- % [sudo] gem install json-ld
-```
+
+    % [sudo] gem install json-ld
+
 ## Download
 To get a local working copy of the development repository, do:
-```bash
- % git clone git://github.com/ruby-rdf/json-ld.git
-```
+
+    % git clone git://github.com/ruby-rdf/json-ld.git
+
 ## Mailing List
 * <https://lists.w3.org/Archives/Public/public-rdf-ruby/>
 
