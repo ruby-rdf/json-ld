@@ -146,9 +146,13 @@ module JSON::LD
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
-          elsif !Array(output_object['@type']).all? {|t|
+          elsif framing && !Array(output_object['@type']).all? {|t|
                   t.is_a?(String) && RDF::URI(t).valid? && !t.start_with?('_:') ||
                   t.is_a?(Hash) && t.empty?}
+            # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
+            raise JsonLdError::InvalidTypedValue,
+                  "value of @type must be an IRI or '@json': #{output_object.inspect}"
+          elsif !framing && !output_object.fetch('@type', '').is_a?(String)
             # Otherwise, if the result has a @type member and its value is not an IRI, an invalid typed value error has been detected and processing is aborted.
             raise JsonLdError::InvalidTypedValue,
                   "value of @type must be an IRI or '@json': #{output_object.inspect}"
