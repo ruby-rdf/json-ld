@@ -1,4 +1,4 @@
-require 'rspec/matchers' # @see http://rubygems.org/gems/rspec
+require 'rspec/matchers' # @see https://rubygems.org/gems/rspec
 require_relative 'support/extensions'
 
 RSpec::Matchers.define :produce_jsonld do |expected, logger|

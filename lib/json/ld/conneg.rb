@@ -46,7 +46,7 @@ module JSON::LD
     #
     # @param  [Hash{String => String}] env
     # @return [Array(Integer, Hash, #each)] Status, Headers and Body
-    # @see    http://rack.rubyforge.org/doc/SPEC.html
+    # @see    https://rubydoc.info/github/rack/rack/file/SPEC
     def call(env)
       response = app.call(env)
       body = response[2].respond_to?(:body) ? response[2].body : response[2]

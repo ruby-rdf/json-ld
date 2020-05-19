@@ -108,7 +108,7 @@
     "Software"
   ],
   "generatedBy": {
-    "@id": "http://rubygems.org/gems/earl-report",
+    "@id": "https://rubygems.org/gems/earl-report",
     "@type": [
       "doap:Project",
       "Software"

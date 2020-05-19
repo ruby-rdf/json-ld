@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
 $:.unshift(File.expand_path("../ld", __FILE__))
-require 'rdf' # @see http://rubygems.org/gems/rdf
+require 'rdf' # @see https://rubygems.org/gems/rdf
 require 'multi_json'
 require 'set'
 
@@ -19,7 +19,7 @@ module JSON
   #     end
   #   end
   #
-  # @see http://rubygems.org/gems/rdf
+  # @see https://rubygems.org/gems/rdf
   # @see http://www.w3.org/TR/REC-rdf-syntax/
   #
   # @author [Gregg Kellogg](http://greggkellogg.net/)
