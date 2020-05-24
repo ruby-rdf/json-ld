@@ -137,6 +137,7 @@ module JSON
       class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
       class InvalidPrefixValue < JsonLdError; @code = "invalid @prefix value"; end
       class InvalidPropagateValue < JsonLdError; @code = "invalid @propagate value"; end
+      class InvalidEmbeddedNode < JsonLdError; @code = "invalid reified node"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end

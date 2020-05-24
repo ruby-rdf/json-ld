@@ -3376,6 +3376,254 @@ describe JSON::LD::API do
       end
     end
 
+    context "JSON-LD*" do
+      {
+        "node with embedded subject without rdfstar option": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidIdValue
+        },
+      }.each do |title, params|
+        it(title) {run_expand params}
+      end
+
+      {
+        "node with embedded subject having no @id": {
+          input: %({
+            "@id": {
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "ex:prop": [{"@value": "value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with embedded subject having IRI @id": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with embedded subject having BNode @id": {
+          input: %({
+            "@id": {
+              "@id": "_:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "_:rei",
+              "ex:prop": [{"@value": "value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with embedded subject having a type": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": "ex:Type"
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "@type": ["ex:Type"]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with embedded subject having an IRI value": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "ex:value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with embedded subject having an BNode value": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "_:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "_:value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "node with recursive embedded subject": {
+          input: %({
+            "@id": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value3"
+              },
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value3"}]
+              },
+              "ex:prop": [{"@value": "value"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "illegal node with subject having no property": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei"
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having multiple properties": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": ["value1", "value2"]
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having multiple types": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": ["ex:Type1", "ex:Type2"]
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having type and property": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": "ex:Type",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "node with embedded object": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value"}]
+              }
+            }]
+          }])
+        },
+        "illegal node with embedded object having properties": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              },
+              "ex:prop": "value2"
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value"}]
+              },
+              "ex:prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "node with recursive embedded object": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": {
+                  "@id": "ex:rei",
+                  "ex:prop": "value3"
+                },
+                "ex:prop": "value"
+              },
+              "ex:prop": "value2"
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@id": {
+                "@id": {
+                  "@id": "ex:rei",
+                  "ex:prop": [{"@value": "value3"}]
+                },
+                "ex:prop":[{"@value": "value"}]
+              },
+              "ex:prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+      }.each do |title, params|
+        it(title) {run_expand params.merge(rdfstar: :SA)}
+      end
+    end
+
     begin
       require 'nokogiri'
     rescue LoadError
