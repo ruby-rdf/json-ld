@@ -766,6 +766,187 @@ describe JSON::LD::API do
       end
     end
 
+    context "RDF*" do
+      {
+        "subject-iii": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::URI('http://example/o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@id": "http://example/o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "subject-iib": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Node.new('o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@id": "_:o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "subject-iil": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Literal('o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@value": "o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "subject-bii": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::Node('s1'),
+              RDF::URI('http://example/p1'),
+              RDF::URI('http://example/o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "_:s1",
+              "http://example/p1": [{"@id": "http://example/o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "subject-bib": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::Node('s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Node.new('o1')),
+            RDF::URI('http://example/p'), RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "_:s1",
+              "http://example/p1": [{"@id": "_:o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "subject-bil": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::Node('s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Literal('o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": "_:s1",
+              "http://example/p1": [{"@value": "o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+        "object-iii":  {
+          input: RDF::Statement(
+            RDF::URI('http://example/s'),
+            RDF::URI('http://example/p'),
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::URI('http://example/o1'))),
+          output: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@id": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@id": "http://example/o1"}]
+              }
+            }]
+          }])
+        },
+        "object-iib":  {
+          input: RDF::Statement(
+            RDF::URI('http://example/s'),
+            RDF::URI('http://example/p'),
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Node.new('o1'))),
+          output: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@id": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@id": "_:o1"}]
+              }
+            }]
+          }])
+        },
+        "object-iil":  {
+          input: RDF::Statement(
+            RDF::URI('http://example/s'),
+            RDF::URI('http://example/p'),
+            RDF::Statement(
+              RDF::URI('http://example/s1'),
+              RDF::URI('http://example/p1'),
+              RDF::Literal('o1'))),
+          output: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@id": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@value": "o1"}]
+              }
+            }]
+          }])
+        },
+        "recursive-subject": {
+          input: RDF::Statement(
+            RDF::Statement(
+              RDF::Statement(
+                RDF::URI('http://example/s2'),
+                RDF::URI('http://example/p2'),
+                RDF::URI('http://example/o2')),
+              RDF::URI('http://example/p1'),
+              RDF::URI('http://example/o1')),
+            RDF::URI('http://example/p'),
+            RDF::URI('http://example/o')),
+          output: %([{
+            "@id": {
+              "@id": {
+                "@id": "http://example/s2",
+                "http://example/p2": [{"@id": "http://example/o2"}]
+              },
+              "http://example/p1": [{"@id": "http://example/o1"}]
+            },
+            "http://example/p": [{"@id": "http://example/o"}]
+          }])
+        },
+      }.each do |name, params|
+        it name do
+          graph = RDF::Graph.new {|g| g << params[:input]}
+          do_fromRdf(params.merge(input: graph, prefixes: {ex: 'http://example/'}))
+        end
+      end
+    end
+
     context "problems" do
       {
         "xsd:boolean as value" => {

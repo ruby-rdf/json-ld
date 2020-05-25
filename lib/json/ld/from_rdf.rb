@@ -22,7 +22,6 @@ module JSON::LD
       referenced_once = {}
 
       value = nil
-      ec = @context
 
       # Create an entry for compound-literal node detection
       compound_literal_subjects = {}
@@ -33,7 +32,7 @@ module JSON::LD
       dataset.each do |statement|
         #log_debug("statement") { statement.to_nquads.chomp}
 
-        name = statement.graph_name ? ec.expand_iri(statement.graph_name, base: @options[:base]).to_s : '@default'
+        name = statement.graph_name ? @context.expand_iri(statement.graph_name, base: @options[:base]).to_s : '@default'
 
         # Create a graph entry as needed
         node_map = graph_map[name] ||= {}
@@ -41,30 +40,29 @@ module JSON::LD
 
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
-        subject = ec.expand_iri(statement.subject, as_string: true, base: @options[:base])
-        node = node_map[subject] ||= {'@id' => subject}
+        subject = statement.subject.to_s
+        node = node_map[subject] ||= resource_representation(statement.subject,useNativeTypes)
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
         if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF.to_uri + 'direction'
           compound_literal_subjects[name][subject] ||= true
         end
 
-        # If object is an IRI or blank node identifier, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
-        node_map[statement.object.to_s] ||= {'@id' => statement.object.to_s} unless
-          statement.object.literal?
+        # If object is an IRI, blank node identifier, or statement, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
+        unless statement.object.literal?
+          node_map[statement.object.to_s] ||=
+            resource_representation(statement.object, useNativeTypes)
+        end
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
+        # XXX JSON-LD* does not support embedded value of @type
         if statement.predicate == RDF.type && statement.object.resource? && !useRdfType
           merge_value(node, '@type', statement.object.to_s)
           next
         end
 
         # Set value to the result of using the RDF to Object Conversion algorithm, passing object, rdfDirection, and use native types.
-        value = ec.expand_value(nil,
-                                statement.object,
-                                rdfDirection: @options[:rdfDirection],
-                                useNativeTypes: useNativeTypes,
-                                base: @options[:base])
+        value = resource_representation(statement.object, useNativeTypes)
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -161,6 +159,32 @@ module JSON::LD
       end
       #log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
       result
+    end
+
+    private
+    def resource_representation(resource, useNativeTypes)
+      case resource
+      when RDF::Statement
+        # Note, if either subject or object are a BNode which is used elsewhere,
+        # this might not work will with the BNode accounting from above.
+        rep = {'@id' => resource_representation(resource.subject, false)}
+        if resource.predicate == RDF.type
+          rep['@id'].merge!('@type' => resource.object.to_s)
+        else
+          rep['@id'].merge!(
+            resource.predicate.to_s =>
+            as_array(resource_representation(resource.object, useNativeTypes)))
+        end
+        rep
+      when RDF::Literal
+        @context.expand_value(nil,
+                              resource,
+                              rdfDirection: @options[:rdfDirection],
+                              useNativeTypes: useNativeTypes,
+                              base: @options[:base])
+      else
+        {'@id' => resource.to_s}
+      end
     end
   end
 end
