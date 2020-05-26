@@ -165,7 +165,16 @@ module JSON::LD
                 end
               end
             end
-          end
+          end,
+          options: [
+            RDF::CLI::Option.new(
+              symbol: :context,
+              datatype: RDF::URI,
+              control: :url2,
+              use: :required,
+              on: ["--context CONTEXT"],
+              description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
+          ]
         },
         frame: {
           description: "Frame JSON-LD or parsed RDF",

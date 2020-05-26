@@ -1301,11 +1301,11 @@ describe JSON::LD::API do
           sa: %(
             <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
           ),
-          #pg: %(
-          #  <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-          #  <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
-          #  <ex:rei> <ex:prop> "value3" .
-          #),
+          pg: %(
+            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
+            <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
+            <ex:rei> <ex:prop> "value3" .
+          ),
         },
         "illegal node with subject having no property": {
           input: %({
@@ -1404,12 +1404,12 @@ describe JSON::LD::API do
             <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
             <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
           ),
-          #pg: %(
-          #  <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
-          #  <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
-          #  <ex:rei> <ex:prop> "value3" .
-          #  <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-          #),
+          pg: %(
+            <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
+            <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
+            <ex:rei> <ex:prop> "value3" .
+            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
+          ),
         },
       }.each do |title, params|
         context(title) do

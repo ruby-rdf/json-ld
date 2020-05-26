@@ -84,14 +84,7 @@ module JSON::LD
       when Object
         # Embedded statement
         # (No error checking, as this is done in expansion)
-        embedded_statement = to_enum(:item_to_rdf, item['@id']).to_a.first
-
-        # If in Property Graph mode, emit this triple
-        # FIXME: this screws up the above assumptin; only :SA mode supported for now
-        yield RDF::Statement(*embedded_statement.to_a, graph_name: graph_name) if
-          @options[:rdfstar] == :PG
-
-        embedded_statement
+        to_enum(:item_to_rdf, item['@id']).to_a.first
       end
 
       #log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
@@ -187,6 +180,22 @@ module JSON::LD
         yield RDF::Statement(first_bnode, RDF.rest, RDF.nil, graph_name: graph_name)
       end
       result
+    end
+
+    ##
+    # Recursively emit embedded statements in Property Graph mode
+    #
+    # @param [RDF::Statement] statement
+    def each_pg_statement(statement, &block)
+      if statement.subject.statement?
+        block.call(statement.subject)
+        each_pg_statement(statement.subject, &block)
+      end
+
+      if statement.object.statement?
+        block.call(statement.object)
+        each_pg_statement(statement.object, &block)
+      end
     end
 
     ##

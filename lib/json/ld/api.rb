@@ -89,6 +89,10 @@ module JSON::LD
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
+    # @option options [:PG, :SA] rdfstar      (nil)
+    #   support parsing JSON-LD* statement resources.
+    #   If `:PG`, referenced statements are also emitted (toRdf).
+    #   If `:SA`, referenced statements are not emitted.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -498,6 +502,11 @@ module JSON::LD
             end
 
             yield statement
+
+            # If in Property Graph mode for RDF* and statement has an embedded triple, yield those embedded triples as well.
+            if options[:rdfstar] == :PG && statement.to_a.any?(&:statement?)
+              each_pg_statement(statement, &block)
+            end
           end
         end
       end

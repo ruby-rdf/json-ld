@@ -14,6 +14,7 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 * If the [jsonlint][] gem is installed, it will be used when validating an input document.
 * If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
+* Provisional support for [JSON-LD*][RDF*].
 
 [Implementation Report](file.earl.html)
 
@@ -34,6 +35,64 @@ The order of triples retrieved from the `RDF::Enumerable` dataset determines the
 
 ### MultiJson parser
 The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
+
+### JSON-LD* (RDFStar)
+
+The {JSON::LD::API.toRdf} and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD*][RDF*].
+
+Internally, an `RDF::Statement` is treated as another resource, along with `RDF::URI` and `RDF::Node`, which allows an `RDF::Statement` to have a `#subject` or `#object` which is also an `RDF::Statement`.
+
+In JSON-LD, with the `rdfstar` option set, the value of `@id`, in addition to an IRI or Blank Node Identifier, can be a JSON-LD node object having exactly one property with an optional `@id`, which may also be an embedded object. (It may also have `@context` and `@index` values).
+
+    {
+      "@id": {
+        "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+        "@index": "ignored",
+        "@id": "bob",
+        "foaf:age" 23
+      },
+      "ex:certainty": 0.9
+    }
+
+#### Serializing a Graph containing embedded statements
+
+    require 'json-ld'
+    statement = RDF::Statement(RDF::URI('bob'), RDF::Vocab::FOAF.age, RDF::Literal(23))
+    graph = RDF::Graph.new << [statement, RDF::URI("ex:certainty"), RDF::Literal(0.9)]
+    graph.dump(:jsonld, validate: false, standard_prefixes: true)
+    # => {"@id": {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
+
+Alternatively, using the {JSON::LD::API.fromRdf} method:
+
+    JSON::LD::API::fromRdf(graph)
+    # => {"@id": {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
+
+#### Reading a Graph containing embedded statements
+
+By default, {JSON::LD::API.toRdf} (and {JSON::LD::Reader}) will reject a document containing a subject resource.
+
+    jsonld = %({
+      "@id": {
+        "@id": "bob", "foaf:age" 23
+      },
+      "ex:certainty": 0.9
+    })
+    graph = RDF::Graph.new << JSON::LD::API.toRdf(input)
+    # => JSON::LD::JsonLdError::InvalidIdValue
+
+{JSON::LD::API.toRdf} (and {JSON::LD::Reader}) support a `rdfstar` option with either `:PG` (Property Graph) or `:SA` (Separate Assertions) modes. In `:PG` mode, statements that are used in the subject or object positions are also implicitly added to the graph:
+
+    graph = RDF::Graph.new do |graph|
+      JSON::LD::Reader.new(jsonld, rdfstar: :PG) {|reader| graph << reader}
+    end
+    graph.count #=> 2
+
+When using the `:SA` mode, only one statement is asserted, although the reified statement is contained within the graph.
+
+    graph = RDF::Graph.new do |graph|
+      JSON::LD::Reader.new(jsonld, rdfstar: :PG) {|reader| graph << reader}
+    end
+    graph.count #=> 1
 
 ## Examples
 
@@ -568,6 +627,7 @@ see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [YARD-GS]:          https://rubydoc.info/docs/yard/file/docs/GettingStarted.md
 [PDD]:              https://unlicense.org/#unlicensing-contributions
 [RDF.rb]:           https://rubygems.org/gems/rdf
+[RDF*]:             https://lists.w3.org/Archives/Public/public-rdf-star/
 [Rack::LinkedData]: https://rubygems.org/gems/rack-linkeddata
 [Backports]:        https://rubygems.org/gems/backports
 [JSON-LD]:          https://www.w3.org/TR/json-ld11/ "JSON-LD 1.1"
