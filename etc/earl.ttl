@@ -18,7 +18,7 @@
    doap:implements <https://www.w3.org/TR/json-ld11/>,
      <https://www.w3.org/TR/json-ld11-api/>,
      <https://www.w3.org/TR/json-ld11-framing/>;
-   doap:license <http://creativecommons.org/publicdomain/zero/1.0/>;
+   doap:license <https://unlicense.org/>;
    doap:maintainer <https://greggkellogg.net/foaf#me>;
    doap:name "JSON::LD"^^xsd:string;
    doap:programming-language "Ruby"^^xsd:string;
