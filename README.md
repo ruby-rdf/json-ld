@@ -54,6 +54,8 @@ In JSON-LD, with the `rdfstar` option set, the value of `@id`, in addition to an
       "ex:certainty": 0.9
     }
 
+**Note: This feature is subject to change or elimination as the standards process progresses.**
+
 #### Serializing a Graph containing embedded statements
 
     require 'json-ld'
