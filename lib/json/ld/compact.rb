@@ -19,12 +19,9 @@ module JSON::LD
     # @return [Array, Hash]
     def compact(element,
                 base: nil,
-                property: nil)
-      #if property.nil?
-      #  log_debug("compact") {"element: #{element.inspect}, ec: #{context.inspect}"}
-      #else
-      #  log_debug("compact") {"property: #{property.inspect}"}
-      #end
+                property: nil,
+                log_depth: nil)
+      log_debug("compact", depth: log_depth.to_i) {"element: #{element.inspect}, ec: #{context.inspect}"}
 
       # If the term definition for active property itself contains a context, use that for compacting values.
       input_context = self.context
@@ -33,7 +30,7 @@ module JSON::LD
       when Array
         #log_debug("") {"Array #{element.inspect}"}
         result = element.map do |item|
-          compact(item, base: base, property: property)
+          compact(item, base: base, property: property, log_depth: log_depth.to_i + 1)
         end.compact
 
         # If element has a single member and the active property has no
@@ -41,10 +38,10 @@ module JSON::LD
         # member; otherwise the compacted value is element
         if result.length == 1 &&
            !context.as_array?(property) && @options[:compactArrays]
-          #log_debug("=> extract single element: #{result.first.inspect}")
+          log_debug("=> extract single element", depth: log_depth.to_i) {result.first.inspect}
           result.first
         else
-          #log_debug("=> array result: #{result.inspect}")
+          log_debug("=> array result", depth: log_depth.to_i) {result.inspect}
           result
         end
       when Hash
@@ -55,6 +52,7 @@ module JSON::LD
 
         # Revert any previously type-scoped (non-preserved) context
         if context.previous_context && !element.key?('@value') && element.keys != %w(@id)
+          log_debug("revert ec", depth: log_depth.to_i) {"previous context: #{context.previous_context.inspect}"}
           self.context = context.previous_context
         end
 
@@ -63,12 +61,13 @@ module JSON::LD
         if td && !td.context.nil?
           self.context = context.parse(td.context,
             override_protected: true)
+          log_debug("prop-scoped", depth: log_depth.to_i) {"context: #{self.context.inspect}"}
         end
 
         if element.key?('@id') || element.key?('@value')
           result = context.compact_value(property, element, base: @options[:base])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
-            #log_debug("") {"=> scalar result: #{result.inspect}"}
+            log_debug("", depth: log_depth.to_i) {"=> scalar result: #{result.inspect}"}
             return result
           end
         end
@@ -76,7 +75,8 @@ module JSON::LD
         # If expanded property is @list and we're contained within a list container, recursively compact this item to an array
         if list?(element) && context.container(property).include?('@list')
           return compact(element['@list'], base: base,
-                         property: property)
+                         property: property,
+                         log_depth: log_depth.to_i + 1)
         end
 
         inside_reverse = property == '@reverse'
@@ -90,11 +90,12 @@ module JSON::LD
           each do |term|
           term_context = input_context.term_definitions[term].context if input_context.term_definitions[term]
           self.context = context.parse(term_context, propagate: false) unless term_context.nil?
+          log_debug("type-scoped", depth: log_depth.to_i) {"context: #{self.context.inspect}"}
         end
 
         element.keys.opt_sort(ordered: @options[:ordered]).each do |expanded_property|
           expanded_value = element[expanded_property]
-          #log_debug("") {"#{expanded_property}: #{expanded_value.inspect}"}
+          log_debug("", depth: log_depth.to_i) {"#{expanded_property}: #{expanded_value.inspect}"}
 
           if expanded_property == '@id'
             compacted_value = Array(expanded_value).map do |expanded_id|
@@ -124,8 +125,9 @@ module JSON::LD
 
           if expanded_property == '@reverse'
             compacted_value = compact(expanded_value, base: base,
-                                      property: '@reverse')
-            #log_debug("@reverse") {"compacted_value: #{compacted_value.inspect}"}
+                                      property: '@reverse',
+                                      log_depth: log_depth.to_i + 1)
+            log_debug("@reverse", depth: log_depth.to_i) {"compacted_value: #{compacted_value.inspect}"}
             # handle double-reversed properties
             compacted_value.each do |prop, value|
               if context.reverse?(prop)
@@ -137,7 +139,7 @@ module JSON::LD
 
             unless compacted_value.empty?
               al = context.compact_iri('@reverse')
-              #log_debug("") {"remainder: #{al} => #{compacted_value.inspect}"}
+              log_debug("", depth: log_depth.to_i) {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
             end
             next
@@ -146,8 +148,9 @@ module JSON::LD
           if expanded_property == '@preserve'
             # Compact using `property`
             compacted_value = compact(expanded_value, base: base,
-                                      property: property)
-            #log_debug("@preserve") {"compacted_value: #{compacted_value.inspect}"}
+                                      property: property,
+                                      log_depth: log_depth.to_i + 1)
+            log_debug("@preserve", depth: log_depth.to_i) {"compacted_value: #{compacted_value.inspect}"}
 
             unless compacted_value.is_a?(Array) && compacted_value.empty?
               result['@preserve'] = compacted_value
@@ -156,14 +159,14 @@ module JSON::LD
           end
 
           if expanded_property == '@index' && context.container(property).include?('@index')
-            #log_debug("@index") {"drop @index"}
+            log_debug("@index", depth: log_depth.to_i) {"drop @index"}
             next
           end
 
           # Otherwise, if expanded property is @direction, @index, @value, or @language:
           if EXPANDED_PROPERTY_DIRECTION_INDEX_LANGUAGE_VALUE.include?(expanded_property)
             al = context.compact_iri(expanded_property, vocab: true)
-            #log_debug(expanded_property) {"#{al} => #{expanded_value.inspect}"}
+            log_debug(expanded_property, depth: log_depth.to_i) {"#{al} => #{expanded_value.inspect}"}
             result[al] = expanded_value
             next
           end
@@ -211,8 +214,9 @@ module JSON::LD
             end
 
             compacted_item = compact(value, base: base,
-                                     property: item_active_property)
-            #log_debug("") {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
+                                     property: item_active_property,
+                                     log_depth: log_depth.to_i + 1)
+            log_debug("", depth: log_depth.to_i) {" => compacted key: #{item_active_property.inspect} for #{compacted_item.inspect}"}
 
             # handle @list
             if list?(expanded_item)
@@ -315,7 +319,8 @@ module JSON::LD
                 if compacted_item.keys.length == 1 && expanded_item.keys.include?('@id')
                   compacted_item = compact({'@id' => expanded_item['@id']},
                                            base: base,
-                                           property: item_active_property)
+                                           property: item_active_property,
+                                           log_depth: log_depth.to_i + 1)
                 end
                 compacted_item
               end
@@ -332,7 +337,7 @@ module JSON::LD
         result
       else
         # For other types, the compacted value is the element value
-        #log_debug("compact") {element.class.to_s}
+        log_debug("compact", depth: log_depth.to_i) {element.class.to_s}
         element
       end
 
