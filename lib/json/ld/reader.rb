@@ -20,7 +20,7 @@ module JSON::LD
           control: :url2,
           datatype: RDF::URI,
           on: ["--expand-context CONTEXT"],
-          description: "Context to use when expanding.") {|arg| RDF::URI(arg)},
+          description: "Context to use when expanding.") {|arg| RDF::URI(arg).absolute? ? RDF::URI(arg) : StringIO.new(File.read(arg))},
         RDF::CLI::Option.new(
           symbol: :extractAllScripts,
           datatype: TrueClass,

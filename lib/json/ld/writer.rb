@@ -93,7 +93,7 @@ module JSON::LD
           datatype: RDF::URI,
           control: :url2,
           on: ["--context CONTEXT"],
-          description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
+          description: "Context to use when compacting.") {|arg| RDF::URI(arg).absolute? ? RDF::URI(arg) : StringIO.new(File.read(arg))},
         RDF::CLI::Option.new(
           symbol: :embed,
           datatype: %w(@always @once @never),
@@ -107,6 +107,13 @@ module JSON::LD
           control: :checkbox,
           on: ["--[no-]explicit"],
           description: "Only include explicitly declared properties in output (false)") {|arg| arg},
+        RDF::CLI::Option.new(
+          symbol: :frame,
+          datatype: RDF::URI,
+          control: :url2,
+          use: :required,
+          on: ["--frame FRAME"],
+          description: "Frame to use when serializing.") {|arg| RDF::URI(arg).absolute? ? RDF::URI(arg) : StringIO.new(File.read(arg))},
         RDF::CLI::Option.new(
           symbol: :lowercaseLanguage,
           datatype: TrueClass,
@@ -137,7 +144,7 @@ module JSON::LD
           default: 'null',
           control: :select,
           on: ["--rdf-direction DIR", %w(i18n-datatype compound-literal)],
-          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| RDF::URI(arg)},
+          description: "How to serialize literal direction (i18n-datatype compound-literal)") {|arg| arg},
         RDF::CLI::Option.new(
           symbol: :requireAll,
           datatype: TrueClass,
@@ -202,7 +209,7 @@ module JSON::LD
     end
 
     ##
-    # Initializes the RDF-LD writer instance.
+    # Initializes the JSON-LD writer instance.
     #
     # @param  [IO, File] output
     #   the output stream
