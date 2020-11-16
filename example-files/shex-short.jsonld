@@ -6,7 +6,7 @@
         "@id": "https://www.npmjs.com/package/shex"
       },
       {
-        "@id": "http://rubygems.org/gems/shex"
+        "@id": "https://rubygems.org/gems/shex"
       }
     ],
     "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
@@ -51,7 +51,7 @@
     ],
     "http://www.w3.org/ns/earl#generatedBy": [
       {
-        "@id": "http://rubygems.org/gems/earl-report"
+        "@id": "https://rubygems.org/gems/earl-report"
       }
     ]
   },
@@ -73,7 +73,7 @@
     ]
   },
   {
-    "@id": "http://rubygems.org/gems/earl-report",
+    "@id": "https://rubygems.org/gems/earl-report",
     "http://usefulinc.com/ns/doap#name": [
       {
         "@value": "earl-report"
@@ -122,7 +122,7 @@
     ]
   },
   {
-    "@id": "http://rubygems.org/gems/shex",
+    "@id": "https://rubygems.org/gems/shex",
     "http://usefulinc.com/ns/doap#name": [
       {
         "@value": "ShEx"

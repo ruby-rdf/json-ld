@@ -58,9 +58,10 @@ module JSON::LD
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
             options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+            options[:base] ||= options[:base_uri]
             if options[:format] == :jsonld
               if files.empty?
-                # If files are empty, either use options[:execute]
+                # If files are empty, either use options[:evaluate] or STDIN
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
                 JSON::LD::API.expand(input, validate: false, **options) do |expanded|
@@ -93,9 +94,10 @@ module JSON::LD
             raise ArgumentError, "Compacting requires a context" unless options[:context]
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+            options[:base] ||= options[:base_uri]
             if options[:format] == :jsonld
               if files.empty?
-                # If files are empty, either use options[:execute]
+                # If files are empty, either use options[:evaluate] or STDIN
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
                 JSON::LD::API.compact(input, options[:context], **options) do |compacted|
@@ -126,7 +128,7 @@ module JSON::LD
               control: :url2,
               use: :required,
               on: ["--context CONTEXT"],
-              description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
+              description: "Context to use when compacting.") {|arg| RDF::URI(arg).absolute? ? RDF::URI(arg) : StringIO.new(File.read(arg))},
           ]
         },
         flatten: {
@@ -137,9 +139,10 @@ module JSON::LD
           lambda: ->(files, **options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+            options[:base] ||= options[:base_uri]
             if options[:format] == :jsonld
               if files.empty?
-                # If files are empty, either use options[:execute]
+                # If files are empty, either use options[:evaluate] or STDIN
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
                 JSON::LD::API.flatten(input, options[:context], **options) do |flattened|
@@ -173,9 +176,10 @@ module JSON::LD
             raise ArgumentError, "Framing requires a frame" unless options[:frame]
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
+            options[:base] ||= options[:base_uri]
             if options[:format] == :jsonld
               if files.empty?
-                # If files are empty, either use options[:execute]
+                # If files are empty, either use options[:evaluate] or STDIN
                 input = options[:evaluate] ? StringIO.new(options[:evaluate]) : STDIN
                 input.set_encoding(options.fetch(:encoding, Encoding::UTF_8))
                 JSON::LD::API.frame(input, options[:frame], **options) do |framed|
@@ -207,7 +211,7 @@ module JSON::LD
               control: :url2,
               use: :required,
               on: ["--frame FRAME"],
-              description: "Frame to use when serializing.") {|arg| RDF::URI(arg)}
+              description: "Frame to use when serializing.") {|arg| RDF::URI(arg).absolute? ? RDF::URI(arg) : StringIO.new(File.read(arg))}
           ]
         },
       }

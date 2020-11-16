@@ -1,0 +1,47 @@
+{
+    "@context": {
+        "ns": "http://example.org/ns/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "s": "http://schema.org/",
+
+        "id": "@id",
+        "actor": {
+            "@id": "s:actor",
+            "@context": {
+                "id": null,
+                "url": "@id",
+                "login": "s:accountId",
+                "avatar_url": "s:image"
+            }
+        },
+        "repo": {
+            "@id": "ns:onRepository",
+            "@context": {
+                "id": null,
+                "url": "@id",
+                "name": "s:name"
+            }
+        },
+        "created_at": {
+            "@id": "s:startDate",
+            "@type": "xsd:dateTimeStamp"
+        },
+        "payload": "@nest",
+        "issue": {
+            "@id": "ns:issue",
+            "@context": {
+                "id": null,
+                "url": "@id",
+                "title": "s:description",
+                "user": {
+                    "@id": "s:creator",
+                    "@context": {
+                        "login": "s:accountId",
+                        "avatar_url": "s:image"        
+                    }
+                }
+            }
+        },
+        "IssueCommentEvent": "ns:IssueComment"
+    }
+}

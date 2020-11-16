@@ -42,8 +42,8 @@ def compare_results(tc, result, expected)
       if !expected.equivalent_jsonld?(result)
         "failed"
       elsif result.to_s.include?('@context')
-        exp_expected = JSON::LD::API.expand(expected, **tc.options)
-        exp_result = JSON::LD::API.expand(result, **tc.options)
+        exp_expected = JSON::LD::API.expand(expected, **tc.options.merge(logger: false))
+        exp_result = JSON::LD::API.expand(result, **tc.options.merge(logger: false))
         exp_expected.equivalent_jsonld?(exp_result) ? "passed" : "failed"
       else
         "passed"

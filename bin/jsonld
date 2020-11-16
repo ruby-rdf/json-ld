@@ -10,7 +10,7 @@ require 'getoptlong'
 require 'open-uri'
 require 'logger'
 
-def run(input, options)
+def run(input, options, parser_options)
   reader_class = RDF::Reader.for(options[:input_format].to_sym)
   raise "Reader not found for #{options[:input_format]}" unless reader_class
 
@@ -19,38 +19,38 @@ def run(input, options)
 
   # If input format is not JSON-LD, transform input to JSON-LD first
   reader = if options[:input_format] != :jsonld
-    reader_class.new(input, options[:parser_options])
+    reader_class.new(input, parser_options)
   end
 
   start = Time.new
   if options[:expand]
-    options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.has_key?(:context)
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.expand(input, options)
+    output = JSON::LD::API.expand(input, parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Expanded in #{secs} seconds." unless options[:quiet]
   elsif options[:compact]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.compact(input, options[:context], options)
+    output = JSON::LD::API.compact(input, parser_options[:context], parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Compacted in #{secs} seconds." unless options[:quiet]
   elsif options[:flatten]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.flatten(input, options[:context], options)
+    output = JSON::LD::API.flatten(input, parser_options[:context], parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Flattened in #{secs} seconds." unless options[:quiet]
   elsif options[:frame]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.frame(input, options[:frame], options)
+    output = JSON::LD::API.frame(input, parser_options[:frame], parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
   else
-    options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
-    parser_options = options[:parser_options].merge(standard_prefixes: true)
+    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.has_key?(:context)
+    parser_options[:standard_prefixes] = true
     reader ||= JSON::LD::Reader.new(input, parser_options)
     num = 0
     RDF::Writer.for(options[:output_format]).new(options[:output], parser_options) do |w|
@@ -86,7 +86,6 @@ parser_options = {
 }
 
 options = {
-  parser_options: parser_options,
   output:         STDOUT,
   output_format:  :jsonld,
   input_format:   :jsonld,
@@ -141,49 +140,47 @@ opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 opts.each do |opt, arg|
   case opt
   when '--debug'          then logger.level = Logger::DEBUG
-  when '--compact'        then options[:compact] = true
-  when "--compactArrays"  then options[:compactArrays] = (arg || 'true') == 'true'
-  when '--context'        then options[:context] = arg
+  when '--compact'        then parser_options[:compact] = true
+  when "--compactArrays"  then parser_options[:compactArrays] = (arg || 'true') == 'true'
+  when '--context'        then parser_options[:context] = RDF::URI(arg).absolute? ? arg : File.open(arg)
   when '--evaluate'       then input = arg
   when '--expand'         then options[:expand] = true
-  when "--expanded"       then options[:expanded] = (arg || 'true') == 'true'
-  when "--explicit"       then options[:compactArrays] = (arg || 'true') == 'true'
+  when "--expanded"       then parser_options[:expanded] = (arg || 'true') == 'true'
+  when "--explicit"       then parser_options[:compactArrays] = (arg || 'true') == 'true'
   when '--format'         then options[:output_format] = arg.to_sym
   when '--flatten'        then options[:flatten] = arg
-  when '--frame'          then options[:frame] = arg
+  when '--frame'          then options[:frame] = parser_otpions[:frame] = RDF::URI(arg).absolute? ? arg : File.open(arg)
   when '--input-format'   then options[:input_format] = arg.to_sym
-  when "--omitDefault"    then options[:omitDefault] = (arg || 'true') == 'true'
+  when "--omitDefault"    then parser_options[:omitDefault] = (arg || 'true') == 'true'
   when '--output'         then options[:output] = File.open(arg, "w")
   when '--parse-only'     then options[:parse_only] = true
-  when '--processingMode' then options[:processingMode] = arg
+  when '--processingMode' then parser_options[:processingMode] = arg
   when '--quiet'
     options[:quiet] = true
     logger.level = Logger::FATAL
-  when "--rename_bnodes"  then options[:rename_bnodes] = (arg || 'true') == 'true'
-  when "--requireAll"     then options[:requireAll] = (arg || 'true') == 'true'
+  when "--rename_bnodes"  then parser_options[:rename_bnodes] = (arg || 'true') == 'true'
+  when "--requireAll"     then parser_options[:requireAll] = (arg || 'true') == 'true'
   when '--stream'         then parser_options[:stream] = true
-  when "--unique_bnodes"  then options[:unique_bnodes] = (arg || 'true') == 'true'
+  when "--unique_bnodes"  then parser_options[:unique_bnodes] = (arg || 'true') == 'true'
   when '--uri'            then parser_options[:base] = arg
   when '--validate'       then parser_options[:validate] = true
   when '--help'           then usage
   when '--embed'
     case arg
-    when '@always', '@never', '@link', '@last', '@first'
-      options[:embed] = arg
+    when '@always', '@never', '@link', '@once'
+      parser_options[:embed] = arg
     when 'true'
-      options[:embed] = '@never'
+      parser_options[:embed] = '@never'
     when 'false'
-      options[:embed] = '@first'
+      parser_options[:embed] = '@first'
     else
-      STDERR.puts "--embed option takes one of @always, @never, @link, @first, or @last"
+      STDERR.puts "--embed option takes one of @always, @never, @link, or @once"
       exit(1)
     end
   end
 end
 
 # Hack
-options[:parser_options][:context] = options[:context] if parser_options[:stream]
-
 if !(options.keys & [:expand, :compact, :flatten, :frame]).empty? &&
    (parser_options[:stream] || options[:output_format] != :jsonld)
    STDERR.puts "Incompatible options"
@@ -192,11 +189,11 @@ end
 
 if ARGV.empty?
   s = input ? input : $stdin.read
-  run(StringIO.new(s), options)
+  run(StringIO.new(s), options, parser_options)
 else
   ARGV.each do |file|
     # Call with opened files
-    RDF::Util::File.open_file(file, options) {|f| run(f, options)}
+    RDF::Util::File.open_file(file, options) {|f| run(f, options, parser_options)}
   end
 end
 puts

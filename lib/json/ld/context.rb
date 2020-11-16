@@ -104,16 +104,12 @@ module JSON::LD
     # @see #initialize
     # @see #parse
     # @param [String, #read, Array, Hash, Context] local_context
-    # @param [String, #to_s] :base (nil)
+    # @param [String, #to_s] base (nil)
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
-    # @param [Proc] :documentLoader (nil)
-    #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {API.documentLoader} for the method signature.
     # @param [Boolean] override_protected (false)
     #   Protected terms may be cleared.
     # @param [Boolean] propagate (true)
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
-    # @param [Boolean] validate (false)
-    #   Extra validatation
     # @raise [JsonLdError]
     #   on a remote context load error, syntax error, or a reference to a term which is not defined.
     # @return [Context]
@@ -231,14 +227,12 @@ module JSON::LD
     #
     #
     # @param [String, #read, Array, Hash, Context] local_context
-    # @param [String, #to_s] :base
+    # @param [String, #to_s] base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context.
     # @param [Boolean] override_protected Protected terms may be cleared.
     # @param [Boolean] propagate (true)
     #   If false, retains any previously defined term, which can be rolled back when the descending into a new node object changes.
     # @param [Array<String>] remote_contexts ([])
-    # @param [Boolean] validate (false)
-    #   Extra validatation
     # @param [Boolean] validate_scoped (true).
     #   Validate scoped context, loading if necessary.
     #   If false, do not load scoped contexts.
@@ -419,9 +413,7 @@ module JSON::LD
     # Merge in a context, creating a new context with updates from `context`
     #
     # @param [Context] context
-    # @param [Boolean] protected mark resulting context as protected
     # @param [Boolean] override_protected Allow or disallow protected terms to be changed
-    # @param [Boolean]
     # @return [Context]
     def merge(context, override_protected: false)
       ctx = Context.new(term_definitions: self.term_definitions, standard_prefixes: options[:standard_prefixes])
@@ -469,8 +461,6 @@ module JSON::LD
     # @param [String, RDF::URI] base for resolving document-relative IRIs
     # @param [Boolean] protected if true, causes all terms to be marked protected
     # @param [Boolean] override_protected Protected terms may be cleared.
-    # @param [Boolean] propagate
-    #   Context is propagated across node objects.
     # @param [Array<String>] remote_contexts
     # @param [Boolean] validate_scoped (true).
     #   Validate scoped context, loading if necessary.
@@ -846,7 +836,7 @@ module JSON::LD
     # If contex has a @version member, it's value MUST be 1.1, otherwise an "invalid @version value" has been detected, and processing is aborted.
     # If processingMode has been set, and it is not "json-ld-1.1", a "processing mode conflict" has been detecting, and processing is aborted.
     #
-    # @param [String, Number] expected
+    # @param [String, Number] value
     # @return [String]
     # @raise [JsonLdError::ProcessingModeConflict]
     def processingMode=(value = nil, **options)
@@ -2064,7 +2054,7 @@ module JSON::LD
       # @param ["ltr", "rtl"] direction_mapping
       #   Direction mapping of term, `false` is used if there is an explicit direction mapping for this term
       # @param [Boolean] reverse_property
-      # @param [Boolean] protected
+      # @param [Boolean] protected mark resulting context as protected
       # @param [String] nest term used for nest properties
       # @param [Boolean] simple
       #   This is a simple term definition, not an expanded term definition
