@@ -3620,7 +3620,7 @@ describe JSON::LD::API do
           }])
         },
       }.each do |title, params|
-        it(title) {run_expand params.merge(rdfstar: :SA)}
+        it(title) {run_expand params.merge(rdfstar: true)}
       end
     end
 

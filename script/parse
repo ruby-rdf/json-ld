@@ -116,7 +116,7 @@ OPT_ARGS = [
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT,   "Where to store output (default STDOUT)"],
   ["--profile", GetoptLong::NO_ARGUMENT,              "Run profiler with output to doc/profiles/"],
   ["--quiet", GetoptLong::NO_ARGUMENT,                "Reduce output"],
-  ["--rdfstar", GetoptLong::REQUIRED_ARGUMENT,        "RDF* mode, SA or PG"],
+  ["--rdfstar", GetoptLong::NO_ARGUMENT,        "RDF* mode"],
   ["--stream", GetoptLong::NO_ARGUMENT,               "Streaming reader/writer"],
   ["--uri", GetoptLong::REQUIRED_ARGUMENT,            "Run with argument value as base"],
   ["--validate", GetoptLong::NO_ARGUMENT,             "Validate input"],
@@ -157,9 +157,7 @@ opts.each do |opt, arg|
   when '--quiet'
     options[:quiet] = true
     logger.level = Logger::FATAL
-  when '--rdfstar'
-    parser_options[:rdfstar] = arg.to_sym
-    usage unless [:PG, :SA].include?(parser_options[:rdfstar])
+  when '--rdfstar'      then parser_options[:rdfstar] = true
   when '--stream'       then parser_options[:stream] = true
   when '--uri'          then parser_options[:base] = arg
   when '--validate'     then parser_options[:validate] = true

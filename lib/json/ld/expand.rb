@@ -281,9 +281,7 @@ module JSON::LD
               elsif @options[:rdfstar]
                 # Result must have just a single statement
                 rei_node = expand(value, active_property, context, log_depth: log_depth.to_i + 1)
-                old_star, @options[:rdfstar] = @options[:rdfstar], :SA
                 statements = to_enum(:item_to_rdf, rei_node)
-                @options[:rdfstar] = old_star # :PG would emit too many statements
                 raise JsonLdError::InvalidEmbeddedNode,
                       "Embedded node with #{statements.size} statements" unless
                       statements.count == 1

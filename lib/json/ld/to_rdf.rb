@@ -183,22 +183,6 @@ module JSON::LD
     end
 
     ##
-    # Recursively emit embedded statements in Property Graph mode
-    #
-    # @param [RDF::Statement] statement
-    def each_pg_statement(statement, &block)
-      if statement.subject.statement?
-        block.call(statement.subject)
-        each_pg_statement(statement.subject, &block)
-      end
-
-      if statement.object.statement?
-        block.call(statement.object)
-        each_pg_statement(statement.object, &block)
-      end
-    end
-
-    ##
     # Create a new named node using the sequence
     def node
       RDF::Node.new(namer.get_sym)

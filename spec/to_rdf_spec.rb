@@ -1199,12 +1199,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-            _:b0 <ex:prop> "value" .
           ),
         },
         "node with embedded subject having IRI @id": {
@@ -1215,12 +1211,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
-            <ex:rei> <ex:prop> "value" .
           ),
         },
         "node with embedded subject having BNode @id": {
@@ -1231,12 +1223,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
            <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-           <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-           _:b0 <ex:prop> "value" .
           ),
         },
         "node with embedded subject having a type": {
@@ -1247,12 +1235,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<<ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type>>> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<<ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type>>> <ex:prop> "value2" .
-            <ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type> .
           ),
         },
         "node with embedded subject having an IRI value": {
@@ -1263,12 +1247,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<<ex:rei> <ex:prop> <ex:value>>> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<<ex:rei> <ex:prop> <ex:value>>> <ex:prop> "value2" .
-            <ex:rei> <ex:prop> <ex:value> .
           ),
         },
         "node with embedded subject having an BNode value": {
@@ -1279,12 +1259,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<<ex:rei> <ex:prop> _:b0>> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<<ex:rei> <ex:prop> _:b0>> <ex:prop> "value2" .
-            <ex:rei> <ex:prop> _:b0 .
           ),
         },
         "node with recursive embedded subject": {
@@ -1298,13 +1274,8 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          sa: %(
+          expected: %(
             <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-            <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
-            <ex:rei> <ex:prop> "value3" .
           ),
         },
         "illegal node with subject having no property": {
@@ -1357,12 +1328,8 @@ describe JSON::LD::API do
               }
             }
           }),
-          sa: %(
+          expected: %(
             <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
-          ),
-          pg: %(
-            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
-            <ex:rei> <ex:prop> "value" .
           ),
         },
         "node with embedded object having properties": {
@@ -1376,14 +1343,9 @@ describe JSON::LD::API do
               "ex:prop": "value2"
             }
           }),
-          sa: %(
+          expected: %(
             <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
             <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
-            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
-            <ex:rei> <ex:prop> "value" .
           ),
         },
         "node with recursive embedded object": {
@@ -1400,31 +1362,20 @@ describe JSON::LD::API do
               "ex:prop": "value2"
             }
           }),
-          sa: %(
+          expected: %(
             <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
-            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-          ),
-          pg: %(
-            <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
-            <<<ex:rei> <ex:prop> "value3">> <ex:prop> "value" .
-            <ex:rei> <ex:prop> "value3" .
             <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
           ),
         },
       }.each do |title, params|
         context(title) do
-          it "Separate Assertions" do
-            output_graph = RDF::Graph.new {|g| g << RDF::NTriples::Reader.new(params[:sa], rdfstar: :SA)}
-            run_to_rdf params.merge(rdfstar: :SA, output: output_graph)
-          end if params[:sa]
-
-          it "Property Graph" do
-            output_graph = RDF::Graph.new {|g| g << RDF::NTriples::Reader.new(params[:pg], rdfstar: :SA)}
-            run_to_rdf params.merge(rdfstar: :PG, output: output_graph)
-          end if params[:pg]
+          it "Generates statements" do
+            output_graph = RDF::Graph.new {|g| g << RDF::NTriples::Reader.new(params[:expected], rdfstar: true)}
+            run_to_rdf params.merge(rdfstar: true, output: output_graph)
+          end if params[:expected]
 
           it "Exception" do
-            run_to_rdf params.merge(rdfstar: :SA)
+            run_to_rdf params.merge(rdfstar: true)
           end if params[:exception]
         end
       end
