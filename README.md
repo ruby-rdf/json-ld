@@ -2,9 +2,10 @@
 
 [JSON-LD][] reader/writer for [RDF.rb][RDF.rb] and fully conforming [JSON-LD API][] processor. Additionally this gem implements [JSON-LD Framing][].
 
-[![Gem Version](https://badge.fury.io/rb/json-ld.png)](https://badge.fury.io/rb/json-ld)
-[![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)](https://travis-ci.org/ruby-rdf/json-ld)
-[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/r/ruby-rdf/json-ld)
+![Gem Version](https://badge.fury.io/rb/json-ld.png)]
+![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=master)
+![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)
+[![Gitter chat](https://badges.gitter.im/ruby-rdf.png)](https://gitter.im/gitterHQ/gitter)
 
 ## Features
 
