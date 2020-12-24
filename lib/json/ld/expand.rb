@@ -273,12 +273,23 @@ module JSON::LD
                 context.expand_iri(v, as_string: true, base: @options[:base], documentRelative: true)
               end
             when Hash
-              raise JsonLdError::InvalidIdValue,
-                    "value of @id must be a string unless framing: #{value.inspect}" unless framing
-              raise JsonLdError::InvalidTypeValue,
-                    "value of @id must be a an empty object for framing: #{value.inspect}" unless
-                    value.empty?
-              [{}]
+              if framing
+                raise JsonLdError::InvalidTypeValue,
+                      "value of @id must be a an empty object for framing: #{value.inspect}" unless
+                      value.empty?
+                [{}]
+              elsif @options[:rdfstar]
+                # Result must have just a single statement
+                rei_node = expand(value, active_property, context, log_depth: log_depth.to_i + 1)
+                statements = to_enum(:item_to_rdf, rei_node)
+                raise JsonLdError::InvalidEmbeddedNode,
+                      "Embedded node with #{statements.size} statements" unless
+                      statements.count == 1
+                rei_node
+              else
+                raise JsonLdError::InvalidIdValue,
+                      "value of @id must be a string unless framing: #{value.inspect}" unless framing
+              end
             else
               raise JsonLdError::InvalidIdValue,
                     "value of @id must be a string or hash if framing: #{value.inspect}"

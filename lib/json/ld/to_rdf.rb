@@ -16,6 +16,8 @@ module JSON::LD
     # @return RDF::Resource the subject of this item
     def item_to_rdf(item, graph_name: nil, &block)
       # Just return value object as Term
+      return unless item
+
       if value?(item)
         value, datatype = item.fetch('@value'), item.fetch('@type', nil)
 
@@ -76,11 +78,13 @@ module JSON::LD
         return parse_list(item['@list'], graph_name: graph_name, &block)
       end
 
-      # Skip if '@id' is nil
-      subject = if item.has_key?('@id')
-        item['@id'].nil? ? nil : as_resource(item['@id'])
-      else
-        node
+      subject = case item['@id']
+      when nil then node
+      when String then as_resource(item['@id'])
+      when Object
+        # Embedded statement
+        # (No error checking, as this is done in expansion)
+        to_enum(:item_to_rdf, item['@id']).to_a.first
       end
 
       #log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}

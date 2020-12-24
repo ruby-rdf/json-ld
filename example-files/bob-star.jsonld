@@ -1,0 +1,12 @@
+{
+  "@context": {
+    "@base": "http://example.org/",
+    "ex": "http://example.org/",
+    "foaf": "http://xmlns.com/foaf/0.1/"
+  },
+  "@id": {
+    "@id": "bob",
+    "foaf:age": 23
+  },
+  "ex:certainty": 0.8
+}

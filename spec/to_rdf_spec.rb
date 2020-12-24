@@ -1175,6 +1175,212 @@ describe JSON::LD::API do
       end
     end
 
+    context "JSON-LD*" do
+      {
+        "node with embedded subject without rdfstar option": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidIdValue
+        },
+      }.each do |title, params|
+        it(title) {run_to_rdf params}
+      end
+
+      {
+        "node with embedded subject having no @id": {
+          input: %({
+            "@id": {
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+        "node with embedded subject having IRI @id": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+        "node with embedded subject having BNode @id": {
+          input: %({
+            "@id": {
+              "@id": "_:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+           <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+        "node with embedded subject having a type": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": "ex:Type"
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<<ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type>>> <ex:prop> "value2" .
+          ),
+        },
+        "node with embedded subject having an IRI value": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<<ex:rei> <ex:prop> <ex:value>>> <ex:prop> "value2" .
+          ),
+        },
+        "node with embedded subject having an BNode value": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "_:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<<ex:rei> <ex:prop> _:b0>> <ex:prop> "value2" .
+          ),
+        },
+        "node with recursive embedded subject": {
+          input: %({
+            "@id": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value3"
+              },
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          expected: %(
+            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+        "illegal node with subject having no property": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei"
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having multiple properties": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": ["value1", "value2"]
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having multiple types": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": ["ex:Type1", "ex:Type2"]
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "illegal node with subject having type and property": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@type": "ex:Type",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "node with embedded object": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              }
+            }
+          }),
+          expected: %(
+            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
+          ),
+        },
+        "node with embedded object having properties": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              },
+              "ex:prop": "value2"
+            }
+          }),
+          expected: %(
+            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
+            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+        "node with recursive embedded object": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": {
+                  "@id": "ex:rei",
+                  "ex:prop": "value3"
+                },
+                "ex:prop": "value"
+              },
+              "ex:prop": "value2"
+            }
+          }),
+          expected: %(
+            <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
+            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
+          ),
+        },
+      }.each do |title, params|
+        context(title) do
+          it "Generates statements" do
+            output_graph = RDF::Graph.new {|g| g << RDF::NTriples::Reader.new(params[:expected], rdfstar: true)}
+            run_to_rdf params.merge(rdfstar: true, output: output_graph)
+          end if params[:expected]
+
+          it "Exception" do
+            run_to_rdf params.merge(rdfstar: true)
+          end if params[:exception]
+        end
+      end
+    end
+
     context "exceptions" do
       {
         "Invalid subject" => {

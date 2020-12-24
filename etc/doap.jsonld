@@ -26,7 +26,7 @@
     "@type":              "doap:Project",
     "doap:name":          "JSON::LD",
     "doap:homepage":      "https://github.com/ruby-rdf/json-ld/",
-    "doap:license":       "https://unlicense.org/",
+    "doap:license":       "https://unlicense.org/1.0/",
     "doap:shortdesc":     "JSON-LD support for RDF.rb.",
     "doap:description":   "RDF.rb extension for parsing/serializing JSON-LD data.",
     "doap:created":       "2011-05-07",
