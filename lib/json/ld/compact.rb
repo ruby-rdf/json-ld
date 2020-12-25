@@ -98,8 +98,15 @@ module JSON::LD
           log_debug("", depth: log_depth.to_i) {"#{expanded_property}: #{expanded_value.inspect}"}
 
           if expanded_property == '@id'
-            compacted_value = Array(expanded_value).map do |expanded_id|
-              context.compact_iri(expanded_id, base: @options[:base])
+            compacted_value = as_array(expanded_value).map do |expanded_id|
+              if node?(expanded_id) && @options[:rdfstar]
+                # This can only really happen for valid RDF*
+                compact(expanded_id, base: base,
+                        property: '@id',
+                        log_depth: log_depth.to_i + 1)
+              else
+                context.compact_iri(expanded_id, base: @options[:base])
+              end
             end
 
             kw_alias = context.compact_iri('@id', vocab: true)
