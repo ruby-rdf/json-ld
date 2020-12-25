@@ -212,7 +212,6 @@ module JSON::LD
             end
 
             container = context.container(item_active_property)
-            require 'byebug'; byebug if container && !container.is_a?(Set)
             as_array = !@options[:compactArrays] || context.as_array?(item_active_property)
 
             value = case
