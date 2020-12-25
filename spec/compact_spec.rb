@@ -3113,6 +3113,210 @@ describe JSON::LD::API do
     end
   end
 
+  context "JSON-LD*" do
+    {
+      "subject-iii": {
+        input: %([{
+          "@id": {
+            "@id": "http://example/s1",
+            "http://example/p1": [{"@id": "http://example/o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+         "@context": {"ex": "http://example/"},
+         "@id": {
+           "@id": "ex:s1",
+           "ex:p1": {"@id": "ex:o1"}
+         },
+         "ex:p": {"@id": "ex:o"}
+       })
+      },
+      "subject-iib": {
+        input: %([{
+          "@id": {
+            "@id": "http://example/s1",
+            "http://example/p1": [{"@id": "_:o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "ex:s1",
+            "ex:p1": {"@id": "_:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-iil": {
+        input: %([{
+          "@id": {
+            "@id": "http://example/s1",
+            "http://example/p1": [{"@value": "o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "ex:s1",
+            "ex:p1": "o1"
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bii": {
+        input: %([{
+          "@id": {
+            "@id": "_:s1",
+            "http://example/p1": [{"@id": "http://example/o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": {"@id": "ex:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bib": {
+        input: %([{
+          "@id": {
+            "@id": "_:s1",
+            "http://example/p1": [{"@id": "_:o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": {"@id": "_:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bil": {
+        input: %([{
+          "@id": {
+            "@id": "_:s1",
+            "http://example/p1": [{"@value": "o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": "o1"
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "object-iii":  {
+        input: %([{
+          "@id": "http://example/s",
+          "http://example/p": [{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@id": "http://example/o1"}]
+            }
+          }]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": {"@id": "ex:o1"}
+            }
+          }
+        })
+      },
+      "object-iib":  {
+        input: %([{
+          "@id": "http://example/s",
+          "http://example/p": [{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@id": "_:o1"}]
+            }
+          }]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": {"@id": "_:o1"}
+            }
+          }
+        })
+      },
+      "object-iil":  {
+        input: %([{
+          "@id": "http://example/s",
+          "http://example/p": [{
+            "@id": {
+              "@id": "http://example/s1",
+              "http://example/p1": [{"@value": "o1"}]
+            }
+          }]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": "o1"
+            }
+          }
+        })
+      },
+      "recursive-subject": {
+        input: %([{
+          "@id": {
+            "@id": {
+              "@id": "http://example/s2",
+              "http://example/p2": [{"@id": "http://example/o2"}]
+            },
+            "http://example/p1": [{"@id": "http://example/o1"}]
+          },
+          "http://example/p": [{"@id": "http://example/o"}]
+        }]),
+        context: %({"ex": "http://example/"}),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": {
+              "@id": "ex:s2",
+              "ex:p2": {"@id": "ex:o2"}
+            },
+            "ex:p1": {"@id": "ex:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+    }.each do |name, params|
+      it(name) {run_compact(params.merge(rdfstar: true))}
+    end
+  end
 
   context "problem cases" do
     {
@@ -3200,8 +3404,8 @@ describe JSON::LD::API do
       expect(jld).to produce_jsonld(output, logger)
 
       # Compare expanded jld/output too to make sure list values remain ordered
-      exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
-      exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1')
+      exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1', rdfstar: params[:rdfstar])
+      exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1', rdfstar: params[:rdfstar])
       expect(exp_jld).to produce_jsonld(exp_output, logger)
     end
   end

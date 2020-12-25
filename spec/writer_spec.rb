@@ -189,6 +189,199 @@ describe JSON::LD::Writer do
     end
   end
 
+  context "RDF*" do
+    {
+      "subject-iii": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::URI('http://example/o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+         "@context": {"ex": "http://example/"},
+         "@id": {
+           "@id": "ex:s1",
+           "ex:p1": {"@id": "ex:o1"}
+         },
+         "ex:p": {"@id": "ex:o"}
+       })
+      },
+      "subject-iib": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Node.new('o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "ex:s1",
+            "ex:p1": {"@id": "_:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-iil": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Literal('o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "ex:s1",
+            "ex:p1": "o1"
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bii": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::Node('s1'),
+            RDF::URI('http://example/p1'),
+            RDF::URI('http://example/o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": {"@id": "ex:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bib": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::Node('s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Node.new('o1')),
+          RDF::URI('http://example/p'), RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": {"@id": "_:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "subject-bil": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::Node('s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Literal('o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": "_:s1",
+            "ex:p1": "o1"
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+      "object-iii":  {
+        input: RDF::Statement(
+          RDF::URI('http://example/s'),
+          RDF::URI('http://example/p'),
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::URI('http://example/o1'))),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": {"@id": "ex:o1"}
+            }
+          }
+        })
+      },
+      "object-iib":  {
+        input: RDF::Statement(
+          RDF::URI('http://example/s'),
+          RDF::URI('http://example/p'),
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Node.new('o1'))),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": {"@id": "_:o1"}
+            }
+          }
+        })
+      },
+      "object-iil":  {
+        input: RDF::Statement(
+          RDF::URI('http://example/s'),
+          RDF::URI('http://example/p'),
+          RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
+            RDF::Literal('o1'))),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": "ex:s",
+          "ex:p": {
+            "@id": {
+              "@id": "ex:s1",
+              "ex:p1": "o1"
+            }
+          }
+        })
+      },
+      "recursive-subject": {
+        input: RDF::Statement(
+          RDF::Statement(
+            RDF::Statement(
+              RDF::URI('http://example/s2'),
+              RDF::URI('http://example/p2'),
+              RDF::URI('http://example/o2')),
+            RDF::URI('http://example/p1'),
+            RDF::URI('http://example/o1')),
+          RDF::URI('http://example/p'),
+          RDF::URI('http://example/o')),
+        output: %({
+          "@context": {"ex": "http://example/"},
+          "@id": {
+            "@id": {
+              "@id": "ex:s2",
+              "ex:p2": {"@id": "ex:o2"}
+            },
+            "ex:p1": {"@id": "ex:o1"}
+          },
+          "ex:p": {"@id": "ex:o"}
+        })
+      },
+    }.each do |name, params|
+      it name do
+        graph = RDF::Graph.new {|g| g << params[:input]}
+        expect(
+          serialize(graph, rdfstar: true, prefixes: {ex: 'http://example/'})
+        ).to produce_jsonld(JSON.parse(params[:output]), logger)
+      end
+    end
+  end
+
   context "Writes fromRdf tests to isomorphic graph" do
     require 'suite_helper'
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}fromRdf-manifest.jsonld")
