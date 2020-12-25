@@ -1038,7 +1038,7 @@ module JSON::LD
     # @param [Term, #to_s] term in unexpanded form
     # @return [Array<'@index', '@language', '@index', '@set', '@type', '@id', '@graph'>]
     def container(term)
-      return [term] if term == '@list'
+      return Set[term] if term == '@list'
       term = find_definition(term)
       term ? term.container_mapping : Set.new
     end
