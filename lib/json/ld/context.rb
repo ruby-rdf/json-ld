@@ -1523,11 +1523,11 @@ module JSON::LD
             res['@language'] = lang
           end
           res['@direction'] = dir
-        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
+        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype) && value.valid?
           res['@type'] = uri(coerce(property)) if coerce(property)
           res['@value'] = value.object
         else
-          value.canonicalize! if value.datatype == RDF::XSD.double
+          value.canonicalize! if value.valid? && value.datatype == RDF::XSD.double
           if coerce(property)
             res['@type'] = uri(coerce(property)).to_s
           elsif value.has_datatype?
