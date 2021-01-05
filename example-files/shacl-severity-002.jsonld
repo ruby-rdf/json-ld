@@ -1,0 +1,191 @@
+[
+  {
+    "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#InvalidResource1",
+    "http://datashapes.org/sh/tests/core/misc/severity-002.test#property": [
+      {
+        "@value": true
+      }
+    ]
+  },
+  {
+    "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape1",
+    "http://www.w3.org/ns/shacl#nodeKind": [
+      {
+        "@id": "http://www.w3.org/ns/shacl#BlankNode"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#property": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape2"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#severity": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#MySeverity"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#targetNode": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#InvalidResource1"
+      }
+    ]
+  },
+  {
+    "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape2",
+    "http://www.w3.org/ns/shacl#path": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#property"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#datatype": [
+      {
+        "@id": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#severity": [
+      {
+        "@id": "http://www.w3.org/ns/shacl#Info"
+      }
+    ]
+  },
+  {
+    "@id": "urn:x-shacl-test:/core/misc/severity-002.ttl",
+    "@type": [
+      "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#Manifest"
+    ],
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#entries": [
+      {
+        "@list": [
+          {
+            "@id": "urn:x-shacl-test:/core/misc/severity-002"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "@id": "urn:x-shacl-test:/core/misc/severity-002",
+    "@type": [
+      "http://www.w3.org/ns/shacl-test#Validate"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#label": [
+      {
+        "@value": "Test of sh:severity 002"
+      }
+    ],
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#action": [
+      {
+        "@id": "_:g451300"
+      }
+    ],
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#result": [
+      {
+        "@id": "_:g451320"
+      }
+    ],
+    "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#status": [
+      {
+        "@id": "http://www.w3.org/ns/shacl-test#approved"
+      }
+    ]
+  },
+  {
+    "@id": "_:g451300",
+    "http://www.w3.org/ns/shacl-test#dataGraph": [
+      {
+        "@id": "urn:x-shacl-test:/core/misc/severity-002.ttl"
+      }
+    ],
+    "http://www.w3.org/ns/shacl-test#shapesGraph": [
+      {
+        "@id": "urn:x-shacl-test:/core/misc/severity-002.ttl"
+      }
+    ]
+  },
+  {
+    "@id": "_:g451320",
+    "@type": [
+      "http://www.w3.org/ns/shacl#ValidationReport"
+    ],
+    "http://www.w3.org/ns/shacl#conforms": [
+      {
+        "@value": false
+      }
+    ],
+    "http://www.w3.org/ns/shacl#result": [
+      {
+        "@id": "_:g451340"
+      },
+      {
+        "@id": "_:g451360"
+      }
+    ]
+  },
+  {
+    "@id": "_:g451340",
+    "@type": [
+      "http://www.w3.org/ns/shacl#ValidationResult"
+    ],
+    "http://www.w3.org/ns/shacl#focusNode": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#InvalidResource1"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#resultPath": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#property"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#resultSeverity": [
+      {
+        "@id": "http://www.w3.org/ns/shacl#Info"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#sourceConstraintComponent": [
+      {
+        "@id": "http://www.w3.org/ns/shacl#DatatypeConstraintComponent"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#sourceShape": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape2"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#value": [
+      {
+        "@value": true
+      }
+    ]
+  },
+  {
+    "@id": "_:g451360",
+    "@type": [
+      "http://www.w3.org/ns/shacl#ValidationResult"
+    ],
+    "http://www.w3.org/ns/shacl#focusNode": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#InvalidResource1"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#resultSeverity": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#MySeverity"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#sourceConstraintComponent": [
+      {
+        "@id": "http://www.w3.org/ns/shacl#NodeKindConstraintComponent"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#sourceShape": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape1"
+      }
+    ],
+    "http://www.w3.org/ns/shacl#value": [
+      {
+        "@id": "http://datashapes.org/sh/tests/core/misc/severity-002.test#InvalidResource1"
+      }
+    ]
+  }
+]

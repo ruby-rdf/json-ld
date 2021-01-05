@@ -4,7 +4,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](https://rubygems.org/gems/json-ld)
 [![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=develop)](https://github.com/ruby-rdf/json-ld/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/github/ruby-rdf/json-ld)
+[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg?branch=develop)](https://coveralls.io/github/ruby-rdf/json-ld?branch=develop)
 [![Gitter chat](https://badges.gitter.im/ruby-rdf.png)](https://gitter.im/gitterHQ/gitter)
 
 ## Features
@@ -17,7 +17,7 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 * If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
 * Provisional support for [JSON-LD*][JSON-LD*].
 
-[Implementation Report](file.earl.html)
+[Implementation Report](https://ruby-rdf.github.io/json-ld/etc/earl.html)
 
 Install with `gem install json-ld`
 

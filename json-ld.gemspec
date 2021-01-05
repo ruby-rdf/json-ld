@@ -11,7 +11,7 @@ Gem::Specification.new do |gem|
   gem.homepage              = "https://github.com/ruby-rdf/json-ld"
   gem.license               = 'Unlicense'
   gem.summary               = "JSON-LD reader/writer for Ruby."
-  gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces."
+  gem.description           = "JSON::LD parses and serializes JSON-LD into RDF and implements expansion, compaction and framing API interfaces for the Ruby RDF.rb library suite."
 
   gem.authors               = ['Gregg Kellogg']
   gem.email                 = 'public-linked-json@w3.org'
