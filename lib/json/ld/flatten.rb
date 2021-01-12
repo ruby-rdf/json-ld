@@ -36,7 +36,7 @@ module JSON::LD
         raise "Expected hash or array to create_node_map, got #{element.inspect}"
       else
         graph = (graph_map[active_graph] ||= {})
-        subject_node = graph[active_subject]
+        subject_node = !active_subject.is_a?(Hash) && graph[active_subject]
 
         # Transform BNode types
         if element.has_key?('@type')
