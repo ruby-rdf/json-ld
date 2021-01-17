@@ -7,6 +7,7 @@ module RDF::Util
       "https://w3c.github.io/json-ld-api/tests/" => ::File.expand_path("../json-ld-api/tests", __FILE__) + '/',
       "https://w3c.github.io/json-ld-framing/tests/" => ::File.expand_path("../json-ld-framing/tests", __FILE__) + '/',
       "https://w3c.github.io/json-ld-streaming/tests/" => ::File.expand_path("../json-ld-streaming/tests", __FILE__) + '/',
+      "https://json-ld.github.io/json-ld-star/tests/" => ::File.expand_path("../json-ld-star/tests", __FILE__) + '/',
       "file:" => ""
     }
 
@@ -76,6 +77,7 @@ module Fixtures
     SUITE = RDF::URI("https://w3c.github.io/json-ld-api/tests/")
     FRAME_SUITE = RDF::URI("https://w3c.github.io/json-ld-framing/tests/")
     STREAM_SUITE = RDF::URI("https://w3c.github.io/json-ld-streaming/tests/")
+    STAR_SUITE = RDF::URI("https://json-ld.github.io/json-ld-star/tests/")
 
     class Manifest < JSON::LD::Resource
       attr_accessor :manifest_url

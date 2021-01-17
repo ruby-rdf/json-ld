@@ -11,7 +11,7 @@ module JSON::LD
     # The following constant is used to reduce object allocations
     CONTAINER_INDEX_ID_TYPE = Set['@index', '@id', '@type'].freeze
     KEY_ID = %w(@id).freeze
-    KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction).freeze
+    KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction @annotation).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
     KEYS_INCLUDED_TYPE = %w(@included @type).freeze
 
@@ -172,6 +172,18 @@ module JSON::LD
 
           # If result contains the key @set, then set result to the key's associated value.
           return output_object['@set'] if output_object.key?('@set')
+        elsif output_object['@annotation']
+          # Otherwise, if result contains the key @annotation,
+          # the array value must all be node objects without an @id property, otherwise, an invalid annotation error has been detected and processing is aborted.
+          raise JsonLdError::InvalidAnnotation,
+            "@annotation must reference node objects without @id." unless
+            output_object['@annotation'].all? {|o| node?(o) && !o.key?('@id')}
+
+          # Additionally, the property must not be used if there is no active property, or the expanded active property is @graph.
+          raise JsonLdError::InvalidAnnotation,
+            "@annotation must not be used on a top-level object." if
+            %w(@graph @included).include?(expanded_active_property || '@graph')
+          
         end
 
         # If result contains only the key @language, set result to null.
@@ -258,6 +270,11 @@ module JSON::LD
 
           expanded_value = case expanded_property
           when '@id'
+            # If expanded active property is `@annotation`, an invalid annotation error has been found and processing is aborted.
+            raise JsonLdError::InvalidAnnotation,
+              "an annotation must not contain a property expanding to @id" if
+              expanded_active_property == '@annotation' && @options[:rdfstar]
+
             # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
             e_id = case value
             when String
@@ -522,6 +539,12 @@ module JSON::LD
             nests << key
             # Continue with the next key from element
             next
+          when '@annotation'
+            # Skip unless rdfstar option is set
+            next unless @options[:rdfstar]
+            as_array(expand(value, '@annotation', context,
+              framing: framing,
+              log_depth: log_depth.to_i + 1))
           else
             # Skip unknown keyword
             next
