@@ -297,7 +297,7 @@ module JSON::LD
                 [{}]
               elsif @options[:rdfstar]
                 # Result must have just a single statement
-                rei_node = expand(value, active_property, context, log_depth: log_depth.to_i + 1)
+                rei_node = expand(value, nil, context, log_depth: log_depth.to_i + 1)
                 statements = to_enum(:item_to_rdf, rei_node)
                 raise JsonLdError::InvalidEmbeddedNode,
                       "Embedded node with #{statements.size} statements" unless

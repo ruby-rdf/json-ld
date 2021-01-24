@@ -3840,6 +3840,141 @@ describe JSON::LD::API do
             }]
           }])
         },
+        "embedded node with reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": {
+              "@id": "ex:rei",
+              "rel": {"@id": "ex:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "@reverse": {
+                "ex:rel": [{"@id": "ex:value"}]
+              }
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "embedded node with expanded reverse relationship": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@reverse": {
+                "ex:rel": {"@id": "ex:value"}
+              }
+            },
+            "ex:prop": "value2"
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "@reverse": {
+                "ex:rel": [{"@id": "ex:value"}]
+              }
+            },
+            "ex:prop": [{"@value": "value2"}]
+          }])
+        },
+        "embedded node used as subject in reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            },
+            "rel": {"@id": "ex:value2"}
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "ex:value"}]
+            },
+            "@reverse": {
+              "ex:rel": [{"@id": "ex:value2"}]
+            }
+          }])
+        },
+        "embedded node used as object in reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": "ex:subj",
+            "rel": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "@reverse": {
+              "ex:rel": [{
+                "@id": "ex:rei",
+                "ex:prop": [{"@id": "ex:value"}]
+              }]
+            }
+          }])
+        },
+        "node with @annotation property on node object with reverse relationship": {
+          input: %({
+            "@context": {
+              "knownBy": {"@reverse": "ex:knows"}
+            },
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "knownBy": {
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:name": [{"@value": "Bob"}],
+            "@reverse": {
+              "ex:knows": [{
+                "@id": "ex:fred",
+                "ex:name": [{"@value": "Fred"}],
+                "@annotation": [{"ex:certainty": [{"@value": 0.8}]}]
+              }]
+            }
+          }])
+        },
+        "reverse relationship inside annotation": {
+          input: %({
+            "@context": {
+              "claims": {"@reverse": "ex:claims", "@type": "@id"}
+            },
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@id": "ex:jane",
+              "@annotation": {
+                "ex:certainty": 0.8,
+                "claims": "ex:sue"
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:knows": [{
+              "@id": "ex:jane",
+              "@annotation": [{
+                "ex:certainty": [{"@value": 0.8}],
+                "@reverse": {
+                  "ex:claims": [{"@id": "ex:sue"}]
+                }
+              }]
+            }]
+          }])
+        },
       }.each do |title, params|
         it(title) {run_expand params.merge(rdfstar: true)}
       end
