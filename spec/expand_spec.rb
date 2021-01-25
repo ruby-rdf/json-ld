@@ -3851,15 +3851,7 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "@reverse": {
-                "ex:rel": [{"@id": "ex:value"}]
-              }
-            },
-            "ex:prop": [{"@value": "value2"}]
-          }])
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
         },
         "embedded node with expanded reverse relationship": {
           input: %({
@@ -3871,15 +3863,7 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "@reverse": {
-                "ex:rel": [{"@id": "ex:value"}]
-              }
-            },
-            "ex:prop": [{"@value": "value2"}]
-          }])
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
         },
         "embedded node used as subject in reverse relationship": {
           input: %({
@@ -3909,16 +3893,22 @@ describe JSON::LD::API do
             },
             "@id": "ex:subj",
             "rel": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "ex:value"}
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": {"@id": "ex:value"}
+              },
+              "ex:prop": {"@id": "ex:value2"}
             }
           }),
           output: %([{
             "@id": "ex:subj",
             "@reverse": {
               "ex:rel": [{
-                "@id": "ex:rei",
-                "ex:prop": [{"@id": "ex:value"}]
+                "@id": {
+                  "@id": "ex:rei",
+                  "ex:prop": [{"@id": "ex:value"}]
+                },
+                "ex:prop": [{"@id": "ex:value2"}]
               }]
             }
           }])

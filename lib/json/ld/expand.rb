@@ -298,6 +298,10 @@ module JSON::LD
               elsif @options[:rdfstar]
                 # Result must have just a single statement
                 rei_node = expand(value, nil, context, log_depth: log_depth.to_i + 1)
+
+                # Node must not contain @reverse
+                raise JsonLdError::InvalidEmbeddedNode,
+                      "Embedded node with @reverse" if rei_node && rei_node.key?('@reverse')
                 statements = to_enum(:item_to_rdf, rei_node)
                 raise JsonLdError::InvalidEmbeddedNode,
                       "Embedded node with #{statements.size} statements" unless
