@@ -665,6 +665,520 @@ describe JSON::LD::API do
     end
   end
 
+  context "JSON-LD*" do
+    {
+      "node object with @annotation property is ignored without rdfstar option": {
+        input: %({
+          "@id": "ex:bob",
+          "ex:knows": {
+            "@id": "ex:fred",
+            "@annotation": {
+              "ex:certainty": 0.8
+            }
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:knows": [{"@id": "ex:fred"}]
+        }])
+      },
+      "value object with @annotation property is ignored without rdfstar option": {
+        input: %({
+          "@id": "ex:bob",
+          "ex:age": {
+            "@value": 23,
+            "@annotation": {
+              "ex:certainty": 0.8
+            }
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:age": [{"@value": 23}]
+        }])
+      },
+    }.each do |title, params|
+      it(title) {run_flatten params}
+    end
+
+    {
+      "node with embedded subject having no @id": {
+        input: %({
+          "@id": {
+            "ex:prop": "value"
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "ex:prop": [{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded subject having IRI @id": {
+        input: %({
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": "value"
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded subject having BNode @id": {
+        input: %({
+          "@id": {
+            "@id": "_:rei",
+            "ex:prop": "value"
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": "_:b0",
+            "ex:prop": [{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded subject having a type": {
+        input: %({
+          "@id": {
+            "@id": "ex:rei",
+            "@type": "ex:Type"
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "@type": ["ex:Type"]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded subject having an IRI value": {
+        input: %({
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": {"@id": "ex:value"}
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@id": "ex:value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded subject having an BNode value": {
+        input: %({
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": {"@id": "_:value"}
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@id": "_:b0"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with recursive embedded subject": {
+        input: %({
+          "@id": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value3"
+            },
+            "ex:prop": "value"
+          },
+          "ex:prop": "value2"
+        }),
+        output: %([{
+          "@id": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value3"}]
+            },
+            "ex:prop": [{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with embedded object": {
+        input: %({
+          "@id": "ex:subj",
+          "ex:value": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            }
+          }
+        }),
+        output: %([{
+          "@id": "ex:subj",
+          "ex:value": [{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value"}]
+            }
+          }]
+        }])
+      },
+      "node with embedded object having properties": {
+        input: %({
+          "@id": "ex:subj",
+          "ex:value": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }
+        }),
+        output: %([{
+          "@id": "ex:subj",
+          "ex:value": [{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value"}]
+            }
+          }]
+        }, {
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with recursive embedded object": {
+        input: %({
+          "@id": "ex:subj",
+          "ex:value": {
+            "@id": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value3"
+              },
+              "ex:prop": "value"
+            },
+            "ex:prop": "value2"
+          }
+        }),
+        output: %([{
+          "@id": "ex:subj",
+          "ex:value": [{
+            "@id": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value3"}]
+              },
+              "ex:prop":[{"@value": "value"}]
+            }
+          }]
+        }, {
+          "@id": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value3"}]
+            },
+            "ex:prop":[{"@value": "value"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }])
+      },
+      "node with @annotation property on value object": {
+        input: %({
+          "@id": "ex:bob",
+          "ex:age": {
+            "@value": 23,
+            "@annotation": {"ex:certainty": 0.8}
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:age": [{"@value": 23}]
+        }, {
+          "@id": {
+            "@id": "ex:bob",
+            "ex:age": [{"@value": 23}]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }])
+      },
+      "node with @annotation property on node object": {
+        input: %({
+          "@id": "ex:bob",
+          "ex:name": "Bob",
+          "ex:knows": {
+            "@id": "ex:fred",
+            "ex:name": "Fred",
+            "@annotation": {"ex:certainty": 0.8}
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:name": [{"@value": "Bob"}],
+          "ex:knows": [{"@id": "ex:fred"}]
+        }, {
+          "@id": "ex:fred",
+          "ex:name": [{"@value": "Fred"}]
+        }, {
+          "@id": {
+            "@id": "ex:bob",
+            "ex:knows": [{"@id": "ex:fred"}]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }])
+      },
+      "node with @annotation property multiple values": {
+        input: %({
+          "@id": "ex:bob",
+          "ex:name": "Bob",
+          "ex:knows": {
+            "@id": "ex:fred",
+            "ex:name": "Fred",
+            "@annotation": [{
+              "ex:certainty": 0.8
+            }, {
+              "ex:source": {"@id": "http://example.org/"}
+            }]
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:name": [{"@value": "Bob"}],
+          "ex:knows": [{"@id": "ex:fred"}]
+        }, {
+          "@id": "ex:fred",
+          "ex:name": [{"@value": "Fred"}]
+        }, {
+          "@id": {
+            "@id": "ex:bob",
+            "ex:knows": [{"@id": "ex:fred"}]
+          },
+          "ex:certainty": [{"@value": 0.8}],
+          "ex:source": [{"@id": "http://example.org/"}]
+        }])
+      },
+      "node with @annotation property on embedded subject": {
+        input: %({
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": {"@id": "_:value"}
+          },
+          "ex:prop": {
+            "@value": "value2",
+            "@annotation": {"ex:certainty": 0.8}
+          }
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@id": "_:b0"}]
+          },
+          "ex:prop": [{"@value": "value2"}]
+        }, {
+          "@id": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "_:b0"}]
+            },
+            "ex:prop": [{"@value": "value2"}]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }])
+      },
+      "node with @annotation property on embedded object": {
+        input: %({
+          "@id": "ex:subj",
+          "ex:value": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": "value"
+            },
+            "@annotation": {"ex:certainty": 0.8}
+          }
+        }),
+        output: %([{
+          "@id": "ex:subj",
+          "ex:value": [{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@value": "value"}]
+            }
+          }]
+        }, {
+          "@id": {
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value"}]
+              }
+            }]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }])
+      },
+      "embedded node used as subject in reverse relationship": {
+        input: %({
+          "@context": {
+            "rel": {"@reverse": "ex:rel"}
+          },
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": {"@id": "ex:value"}
+          },
+          "rel": {"@id": "ex:value2"}
+        }),
+        output: %([{
+          "@id": "ex:value2",
+          "ex:rel": [{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "ex:value"}]
+            }
+          }]
+        }])
+      },
+      "embedded node used as object in reverse relationship": {
+        input: %({
+          "@context": {
+            "rel": {"@reverse": "ex:rel"}
+          },
+          "@id": "ex:subj",
+          "rel": {
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            },
+            "ex:prop": {"@id": "ex:value2"}
+          }
+        }),
+        output: %([{
+          "@id": {
+            "@id": "ex:rei",
+            "ex:prop": [{"@id": "ex:value"}]
+          },
+          "ex:rel": [{"@id": "ex:subj"}],
+          "ex:prop": [{"@id": "ex:value2"}]
+        }
+      ])
+      },
+      "node with @annotation property on node object with reverse relationship": {
+        input: %({
+          "@context": {
+            "knownBy": {"@reverse": "ex:knows"}
+          },
+          "@id": "ex:bob",
+          "ex:name": "Bob",
+          "knownBy": {
+            "@id": "ex:fred",
+            "ex:name": "Fred",
+            "@annotation": {"ex:certainty": 0.8}
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:name": [{"@value": "Bob"}]
+        }, {
+          "@id": "ex:fred",
+          "ex:name": [{"@value": "Fred"}],
+          "ex:knows": [{"@id": "ex:bob"}]
+        }, {
+          "@id": {
+            "@id": "ex:fred",
+            "ex:knows": [{"@id": "ex:bob"}]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }])
+      },
+      "reverse relationship inside annotation": {
+        input: %({
+          "@context": {
+            "claims": {"@reverse": "ex:claims", "@type": "@id"}
+          },
+          "@id": "ex:bob",
+          "ex:knows": {
+            "@id": "ex:jane",
+            "@annotation": {
+              "ex:certainty": 0.8,
+              "claims": "ex:sue"
+            }
+          }
+        }),
+        output: %([{
+          "@id": "ex:bob",
+          "ex:knows": [{"@id": "ex:jane"}]
+        }, {
+          "@id": {
+            "@id": "ex:bob",
+            "ex:knows": [{"@id": "ex:jane"}]
+          },
+          "ex:certainty": [{"@value": 0.8}]
+        }, {
+          "@id": "ex:sue",
+          "ex:claims": [{
+            "@id": {
+              "@id": "ex:bob",
+              "ex:knows": [{"@id": "ex:jane"}]
+            }
+          }]
+        }])
+      },
+      "embedded node with annotation on value object": {
+        input: %({
+          "@context": {
+            "@base": "http://example.org/",
+            "@vocab": "http://example.org/",
+            "claims": {"@type": "@id"}
+          },
+          "@id": {
+            "@id": "bob",
+            "knows": {"@id": "alice"}
+          },
+          "certainty": {
+            "@value": 0.8,
+            "@annotation": {"claims": "ted"}
+          }
+        }),
+        output: %([{
+          "@id": {
+            "@id": "http://example.org/bob",
+            "http://example.org/knows": [{"@id": "http://example.org/alice"}]
+          },
+          "http://example.org/certainty": [{"@value": 0.8}]
+        }, {
+          "@id": {
+            "@id": {
+              "@id": "http://example.org/bob",
+              "http://example.org/knows": [{"@id": "http://example.org/alice"}]
+            },
+            "http://example.org/certainty": [{"@value": 0.8}]
+          },
+          "http://example.org/claims": [{"@id": "http://example.org/ted"}]
+        }])
+      }
+    }.each do |title, params|
+      it(title) {run_flatten params.merge(rdfstar: true)}
+    end
+  end
+
   def run_flatten(params)
     input, output, context = params[:input], params[:output], params[:context]
     input = ::JSON.parse(input) if input.is_a?(String)

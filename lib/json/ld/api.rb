@@ -480,16 +480,16 @@ module JSON::LD
         extractAllScripts:  true,
       }.merge(options)
 
-      # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
+      # Flatten input to simplify processing
+      flattened_input = API.flatten(input, nil, expanded: expanded, ordered: false, **options)
 
-      API.new(expanded_input, nil, **options) do
+      API.new(flattened_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Recurse through input
-        expanded_input.each do |node|
+        flattened_input.each do |node|
           item_to_rdf(node) do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRdf]
 
