@@ -237,7 +237,7 @@ module Fixtures
                   repo << statement
                 end
               else
-                JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
+                JSON::LD::API.toRdf(input_loc, rename_bnodes: false, logger: logger, **options) do |statement|
                   repo << statement
                 end
               end
@@ -327,7 +327,7 @@ module Fixtures
                   if t.manifest_url.to_s.include?('stream')
                     JSON::LD::Reader.open(t.input_loc, stream: true, logger: logger, **options).each_statement {}
                   else
-                    JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
+                    JSON::LD::API.toRdf(t.input_loc, rename_bnodes: false, logger: logger, **options) {}
                   end
                 else
                   success("Unknown test type: #{testType}")
