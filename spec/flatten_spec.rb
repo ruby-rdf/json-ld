@@ -206,7 +206,8 @@ describe JSON::LD::API do
               "http://example.org/bar": [ { "@id": "_:b0" } ]
             }
           ]
-        }
+        },
+        remap_nodes: true
       },
       "@list with embedded object": {
         input: %([{
@@ -1195,6 +1196,8 @@ describe JSON::LD::API do
       else
         expect{jld = JSON::LD::API.flatten(input, context, logger: logger, **params)}.not_to write.to(:error)
       end
+
+      jld = remap_bnodes(jld, output) if params[:remap_nodes]
       expect(jld).to produce_jsonld(output, logger)
     end
   end

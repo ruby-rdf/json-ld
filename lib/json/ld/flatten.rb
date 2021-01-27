@@ -99,12 +99,10 @@ module JSON::LD
           # Element is a node object
           ser_id = id = element.delete('@id')
           if id.is_a?(Hash)
-            # recursively rename blank nodes within `id`.
-            id = rename_embedded(id)
             # Index graph using serialized id
             ser_id = id.to_json_c14n
-          elsif blank_node?(id)
-            ser_id = id = namer.get_name(id)
+          elsif id.nil?
+            ser_id = id = namer.get_name
           end
 
           node = graph[ser_id] ||= {'@id' => id}
@@ -198,14 +196,14 @@ module JSON::LD
     #
     # @param [Object] node
     # @return [Hash]
-    def rename_embedded(node)
+    def rename_bnodes(node)
       case node
       when String
         blank_node?(node) ? namer.get_name(node) : node
       when Array
-        node.map {|n| rename_embedded(n)}
+        node.map {|n| rename_bnodes(n)}
       when Hash
-        node.inject({}) {|memo, (k, v)| memo.merge(k => rename_embedded(v))}
+        node.inject({}) {|memo, (k, v)| memo.merge(k => rename_bnodes(v))}
       else
         node
       end

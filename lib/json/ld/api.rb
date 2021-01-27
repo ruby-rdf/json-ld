@@ -278,7 +278,7 @@ module JSON::LD
         log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
-        #@value = rename_bnodes(@value) if @options[:rename_bnodes]
+        @value = rename_bnodes(@value) if @options[:rename_bnodes]
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         graph_maps = {'@default' => {}}
@@ -399,6 +399,9 @@ module JSON::LD
         unless options.has_key?(:omitGraph)
           options[:omitGraph] = context.processingMode('json-ld-1.1')
         end
+
+        # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
+        @value = rename_bnodes(@value)
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')

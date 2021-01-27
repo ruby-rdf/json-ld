@@ -264,6 +264,10 @@ module Fixtures
                 }
               else
                 expected = JSON.load(expect)
+
+                # If called for, remap bnodes
+                result = remap_bnodes(result, expected) if options[:remap_bnodes]
+
                 if options[:ordered]
                   # Compare without transformation
                   rspec_example.instance_eval {

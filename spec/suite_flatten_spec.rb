@@ -7,6 +7,8 @@ describe JSON::LD do
     m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}flatten-manifest.jsonld")
     describe m.name do
       m.entries.each do |t|
+        t.options[:remap_bnodes] = %w(#t0045).include?(t.property('@id'))
+
         specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = false
           if %w(#t0005).include?(t.property('@id'))
@@ -16,6 +18,8 @@ describe JSON::LD do
           end
         end
 
+        # Skip ordered tests when remapping bnodes
+        next if t.options[:remap_bnodes]
         specify "#{t.property('@id')}: #{t.name} ordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = true
           if %w(#t0005).include?(t.property('@id'))
