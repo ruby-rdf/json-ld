@@ -1078,8 +1078,7 @@ describe JSON::LD::API do
           },
           "ex:rel": [{"@id": "ex:subj"}],
           "ex:prop": [{"@id": "ex:value2"}]
-        }
-      ])
+        }])
       },
       "node with @annotation property on node object with reverse relationship": {
         input: %({

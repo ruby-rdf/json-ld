@@ -7,13 +7,14 @@ describe JSON::LD do
     %w{
       expand
       compact
+      flatten
       fromRdf
       toRdf
     }.each do |partial|
       m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::STAR_SUITE}#{partial}-manifest.jsonld")
       describe m.name do
         m.entries.each do |t|
-          specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
+          specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
             t.options[:ordered] = false
             expect {t.run self}.not_to write.to(:error)
           end
