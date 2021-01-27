@@ -3371,6 +3371,43 @@ describe JSON::LD::API do
           }),
           exception: JSON::LD::JsonLdError::InvalidReversePropertyMap,
         },
+        "Explicit and implicit @reverse in same object": {
+          input: %({
+            "@context": {
+              "fooOf": {"@reverse": "ex:foo", "@type": "@id"}
+            },
+            "@id": "ex:s",
+            "fooOf": "ex:o1",
+            "@reverse": {
+              "ex:bar": {"@id": "ex:o2"}
+            }
+          }),
+          output: %([{
+            "@id": "ex:s",
+            "@reverse": {
+              "ex:bar": [{"@id": "ex:o2"}],
+              "ex:foo": [{"@id": "ex:o1"}]
+            }
+          }])
+        },
+        "Two properties both with @reverse": {
+          input: %({
+            "@context": {
+              "fooOf": {"@reverse": "ex:foo", "@type": "@id"},
+              "barOf": {"@reverse": "ex:bar", "@type": "@id"}
+            },
+            "@id": "ex:s",
+            "fooOf": "ex:o1",
+            "barOf": "ex:o2"
+          }),
+          output: %([{
+            "@id": "ex:s",
+            "@reverse": {
+              "ex:bar": [{"@id": "ex:o2"}],
+              "ex:foo": [{"@id": "ex:o1"}]
+            }
+          }])
+        },
       }.each do |title, params|
         it(title) {run_expand params}
       end

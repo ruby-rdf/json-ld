@@ -13,7 +13,7 @@ module JSON::LD
     KEY_ID = %w(@id).freeze
     KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction @annotation).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
-    KEYS_INCLUDED_TYPE = %w(@included @type).freeze
+    KEYS_INCLUDED_TYPE_REVERSE = %w(@included @type @reverse).freeze
 
     ##
     # Expand an Array or Object given an active context and performing local context expansion.
@@ -266,7 +266,7 @@ module JSON::LD
 
           # If result has already an expanded property member (other than @type), an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
-                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && !KEYS_INCLUDED_TYPE.include?(expanded_property)
+                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && !KEYS_INCLUDED_TYPE_REVERSE.include?(expanded_property)
 
           expanded_value = case expanded_property
           when '@id'
