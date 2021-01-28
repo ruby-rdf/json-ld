@@ -198,12 +198,13 @@ module JSON::LD
     # @return [Hash]
     def rename_bnodes(node)
       case node
-      when String
-        blank_node?(node) ? namer.get_name(node) : node
       when Array
         node.map {|n| rename_bnodes(n)}
       when Hash
-        node.inject({}) {|memo, (k, v)| memo.merge(k => rename_bnodes(v))}
+        node.inject({}) do |memo, (k, v)|
+          v = namer.get_name(v) if k == '@id' && v.is_a?(String) && blank_node?(v)
+          memo.merge(k => rename_bnodes(v))
+        end
       else
         node
       end

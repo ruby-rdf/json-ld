@@ -11,9 +11,6 @@ describe JSON::LD do
 
         specify "#{t.property('@id')}: #{t.name} unordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = false
-          if %w(#t0021 #tp021).include?(t.property('@id'))
-            pending("changes due to blank node reordering")
-          end
           expect {t.run self}.not_to write.to(:error)
         end
 
@@ -21,7 +18,7 @@ describe JSON::LD do
         next if t.options[:remap_bnodes]
         specify "#{t.property('@id')}: #{t.name} ordered#{' (negative test)' unless t.positiveTest?}" do
           t.options[:ordered] = true
-          if %w(#t0021 #tp021).include?(t.property('@id'))
+          if %w(#tp021).include?(t.property('@id'))
             pending("changes due to blank node reordering")
           end
           expect {t.run self}.not_to write.to(:error)
