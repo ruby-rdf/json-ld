@@ -49,7 +49,7 @@ module JSON::LD
         subject_node = !reverse && graph[active_subject.is_a?(Hash) ? active_subject.to_json_c14n : active_subject]
 
         # Transform BNode types
-        if element.has_key?('@type')
+        if element.key?('@type')
           element['@type'] = Array(element['@type']).map {|t| blank_node?(t) ? namer.get_name(t) : t}
         end
 
@@ -143,7 +143,7 @@ module JSON::LD
                             active_subject: star_subject)
           end
 
-          if element.has_key?('@type')
+          if element.key?('@type')
             add_value(node, '@type', element.delete('@type'), property_is_array: true, allow_duplicate: false)
           end
 

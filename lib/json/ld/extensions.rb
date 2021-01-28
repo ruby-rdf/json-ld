@@ -11,10 +11,10 @@ module RDF
   class Statement
     # Validate extended RDF
     def valid_extended?
-      has_subject?    && subject.resource? && subject.valid_extended? &&
-      has_predicate?  && predicate.resource? && predicate.valid_extended? &&
-      has_object?     && object.term? && object.valid_extended? &&
-      (has_graph?      ? (graph_name.resource? && graph_name.valid_extended?) : true)
+      subject?    && subject.resource? && subject.valid_extended? &&
+      predicate?  && predicate.resource? && predicate.valid_extended? &&
+      object?     && object.term? && object.valid_extended? &&
+      (graph?      ? (graph_name.resource? && graph_name.valid_extended?) : true)
     end
   end
 

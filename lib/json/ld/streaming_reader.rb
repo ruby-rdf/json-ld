@@ -136,7 +136,7 @@ module JSON::LD
         when '@type'
           # Set the type-scoped context to the context on input, for use later
           raise JsonLdError::InvalidStreamingKeyOrder,
-                "found #{key} in state #{state}" unless [:await_context, :await_type].include?(state)
+                "found #{key} in state #{state}" unless %i(await_context await_type).include?(state)
 
           type_scoped_context = context
           as_array(value).sort.each do |term|
@@ -159,7 +159,7 @@ module JSON::LD
           raise JsonLdError::InvalidSetOrListObject,
                 "found #{key} in state #{state}" if is_list_or_set
           raise JsonLdError::CollidingKeywords,
-                "found #{key} in state #{state}" unless [:await_context, :await_type, :await_id].include?(state)
+                "found #{key} in state #{state}" unless %i(await_context await_type await_id).include?(state)
 
           # Set our actual id, and use for replacing any provisional statements using our existing node_id, which is provisional
           raise JsonLdError::InvalidIdValue,
@@ -209,7 +209,7 @@ module JSON::LD
           # Expanded values must be node objects
           have_statements = false
           parse_object(value, active_property, context) do |st|
-            have_statements ||= st.has_subject?
+            have_statements ||= st.subject?
             block.call(st)
           end
           raise JsonLdError::InvalidIncludedValue, "values of @included must expand to node objects" unless have_statements
@@ -232,7 +232,7 @@ module JSON::LD
         when '@list'
           raise JsonLdError::InvalidSetOrListObject,
                 "found #{key} in state #{state}" if
-            ![:await_context, :await_type, :await_id].include?(state)
+            !%i(await_context await_type await_id).include?(state)
           is_list_or_set = true
           if subject
             node_id = parse_list(value, active_property, context, &block)
@@ -277,7 +277,7 @@ module JSON::LD
         when '@set'
           raise JsonLdError::InvalidSetOrListObject,
                 "found #{key} in state #{state}" if
-                ![:await_context, :await_type, :await_id].include?(state)
+                !%i(await_context await_type await_id).include?(state)
           is_list_or_set = true
           value = as_array(value).compact
           parse_object(value, active_property, context, subject: subject, predicate: predicate, &block)

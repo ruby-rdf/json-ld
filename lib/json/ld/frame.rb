@@ -52,7 +52,7 @@ module JSON::LD
           state[:uniqueEmbeds][state[:graph]] ||= {}
         end
 
-        if flags[:embed] == '@link' && link.has_key?(id)
+        if flags[:embed] == '@link' && link.key?(id)
           # add existing linked subject
           add_frame_output(parent, property, link[id])
           next
@@ -66,7 +66,7 @@ module JSON::LD
           warn "[DEPRECATION] #{flags[:embed]}  is not a valid value of @embed in 1.1 mode.\n"
         end
 
-        if !state[:embedded] && state[:uniqueEmbeds][state[:graph]].has_key?(id)
+        if !state[:embedded] && state[:uniqueEmbeds][state[:graph]].key?(id)
           # Skip adding this node object to the top-level, as it was included in another node object
           next
         elsif state[:embedded] &&
@@ -76,7 +76,7 @@ module JSON::LD
           next
         elsif state[:embedded] &&
           %w(@first @once).include?(flags[:embed]) &&
-          state[:uniqueEmbeds][state[:graph]].has_key?(id)
+          state[:uniqueEmbeds][state[:graph]].key?(id)
 
           # if only the first match should be embedded
           # Embed unless already embedded
@@ -97,7 +97,7 @@ module JSON::LD
         state[:subjectStack] << {subject: subject, graph: state[:graph]}
 
         # Subject is also the name of a graph
-        if state[:graphMap].has_key?(id)
+        if state[:graphMap].key?(id)
           # check frame's "@graph" to see what to do next
           # 1. if it doesn't exist and state.graph === "@merged", don't recurse
           # 2. if it doesn't exist and state.graph !== "@merged", recurse
@@ -105,7 +105,7 @@ module JSON::LD
           # 4. if "@default" then don't recurse
           # 5. recurse
           recurse, subframe = false, nil
-          if !frame.has_key?('@graph')
+          if !frame.key?('@graph')
             recurse, subframe = (state[:graph] != '@merged'), {}
           else
             subframe = frame['@graph'].first
@@ -134,7 +134,7 @@ module JSON::LD
           end
 
           # explicit is on and property isn't in frame, skip processing
-          next if flags[:explicit] && !frame.has_key?(prop)
+          next if flags[:explicit] && !frame.key?(prop)
 
           # add objects
           objects.each do |o|
@@ -267,7 +267,7 @@ module JSON::LD
         # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
         input.map {|o| cleanup_preserve(o)}
       when Hash
-        if input.has_key?('@preserve')
+        if input.key?('@preserve')
           # Replace with the content of `@preserve`
           cleanup_preserve(input['@preserve'].first)
         else
@@ -388,7 +388,7 @@ module JSON::LD
           is_empty = v.empty?
           if v = v.first
             validate_frame(v)
-            has_default = v.has_key?('@default')
+            has_default = v.key?('@default')
           end
 
           # No longer a wildcard pattern if frame has any non-keyword properties

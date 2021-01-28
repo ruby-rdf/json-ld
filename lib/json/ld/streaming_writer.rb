@@ -64,8 +64,8 @@ module JSON::LD
           {"@value" => MultiJson.load(statement.object.to_s), "@type" => "@json"}
         else
           lit = {"@value" => statement.object.to_s}
-          lit["@type"] = statement.object.datatype.to_s if statement.object.has_datatype?
-          lit["@language"] = statement.object.language.to_s if statement.object.has_language?
+          lit["@type"] = statement.object.datatype.to_s if statement.object.datatype?
+          lit["@language"] = statement.object.language.to_s if statement.object.language?
           lit
         end
       end
@@ -91,7 +91,7 @@ module JSON::LD
     def start_graph(resource)
       #log_debug("start_graph") {"state: #{@state.inspect}, resource: #{resource}"}
       if resource
-        @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
+        @output.puts(",") if %i(wrote_node wrote_graph).include?(@state)
         @output.puts %({"@id": "#{resource}", "@graph": [)
         @state = :in_graph
       end
@@ -109,7 +109,7 @@ module JSON::LD
 
     def end_node
       #log_debug("end_node") {"state: #{@state.inspect}, node: #{@current_node_def.to_json}"}
-      @output.puts(",") if [:wrote_node, :wrote_graph].include?(@state)
+      @output.puts(",") if %i(wrote_node wrote_graph).include?(@state)
       if @current_node_def
         node_def = if context
           compacted = JSON::LD::API.compact(@current_node_def, context, rename_bnodes: false, **@options)

@@ -81,7 +81,7 @@ module JSON::LD
         log_debug("expand", depth: log_depth.to_i) {"after property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
-        if input.has_key?('@context')
+        if input.key?('@context')
           context = context.parse(input.delete('@context'), base: @options[:base])
           log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
         end
@@ -142,7 +142,7 @@ module JSON::LD
 
           if output_object['@type'] == '@json' && context.processingMode('json-ld-1.1')
             # Any value of @value is okay if @type: @json
-          elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
+          elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
@@ -266,7 +266,7 @@ module JSON::LD
 
           # If result has already an expanded property member (other than @type), an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
-                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && !KEYS_INCLUDED_TYPE_REVERSE.include?(expanded_property)
+                "#{expanded_property} already exists in result" if output_object.key?(expanded_property) && !KEYS_INCLUDED_TYPE_REVERSE.include?(expanded_property)
 
           expanded_value = case expanded_property
           when '@id'
@@ -504,7 +504,7 @@ module JSON::LD
               log_depth: log_depth.to_i + 1)
 
             # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
-            if value.has_key?('@reverse')
+            if value.key?('@reverse')
               #log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
               value['@reverse'].each do |property, item|
                 # If result does not have a property member, create one and set its value to an empty array.

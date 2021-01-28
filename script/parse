@@ -43,7 +43,7 @@ def run(input, options)
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     puts "Flattened in #{secs} seconds."
   elsif options[:expand]
-    options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+    options = options.merge(expandContext: options.delete(:context)) if options.key?(:context)
     output = JSON::LD::API.expand(input, **options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)

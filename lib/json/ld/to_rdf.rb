@@ -48,7 +48,7 @@ module JSON::LD
           # Only valid for rdf:JSON
           value = value.to_json_c14n
         else
-          if item.has_key?('@direction') && @options[:rdfDirection]
+          if item.key?('@direction') && @options[:rdfDirection]
             # Either serialize using a datatype, or a compound-literal
             case @options[:rdfDirection]
             when 'i18n-datatype'
@@ -63,7 +63,7 @@ module JSON::LD
           end
 
           # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
-          datatype ||= item.has_key?('@language') ? RDF.langString : RDF::XSD.string
+          datatype ||= item.key?('@language') ? RDF.langString : RDF::XSD.string
           if datatype == RDF::URI(RDF.to_uri + "JSON")
             value = value.to_json_c14n
           end

@@ -231,7 +231,7 @@ module JSON::LD
               unless container.include?('@list')
                 al = context.compact_iri('@list', vocab: true)
                 compacted_item = {al => compacted_item}
-                if expanded_item.has_key?('@index')
+                if expanded_item.key?('@index')
                   key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end
@@ -276,7 +276,7 @@ module JSON::LD
                   al = context.compact_iri('@id', vocab: true)
                   compacted_item[al] = context.compact_iri(expanded_item['@id'], vocab: false)
                 end
-                if expanded_item.has_key?('@index')
+                if expanded_item.key?('@index')
                   key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end

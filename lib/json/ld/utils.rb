@@ -11,8 +11,8 @@ module JSON::LD
     # @return [Boolean]
     def node?(value)
       value.is_a?(Hash) &&
-        !(value.has_key?('@value') || value.has_key?('@list') || value.has_key?('@set')) &&
-        (value.length > 1 || !value.has_key?('@id'))
+        !(value.key?('@value') || value.key?('@list') || value.key?('@set')) &&
+        (value.length > 1 || !value.key?('@id'))
     end
 
     ##
@@ -29,7 +29,7 @@ module JSON::LD
     # @return [Boolean]
     def node_or_ref?(value)
       value.is_a?(Hash) &&
-        !(value.has_key?('@value') || value.has_key?('@list') || value.has_key?('@set'))
+        !(value.key?('@value') || value.key?('@list') || value.key?('@set'))
     end
 
     ##
@@ -66,7 +66,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def simple_graph?(value)
-      graph?(value) && !value.has_key?('@id')
+      graph?(value) && !value.key?('@id')
     end
     
     ##
@@ -75,7 +75,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def list?(value)
-      value.is_a?(Hash) && value.has_key?('@list')
+      value.is_a?(Hash) && value.key?('@list')
     end
 
     ##
@@ -84,7 +84,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def index?(value)
-      value.is_a?(Hash) && value.has_key?('@index')
+      value.is_a?(Hash) && value.key?('@index')
     end
 
     ##
@@ -93,7 +93,7 @@ module JSON::LD
     # @param [Object] value
     # @return [Boolean]
     def value?(value)
-      value.is_a?(Hash) && value.has_key?('@value')
+      value.is_a?(Hash) && value.key?('@value')
     end
 
     ##
@@ -170,7 +170,7 @@ module JSON::LD
         end
       elsif subject[property]
         # check if subject already has value if duplicates not allowed
-        _has_value = !allow_duplicate && has_value(subject, property, value)
+        _has_value = !allow_duplicate && has_value?(subject, property, value)
 
         # make property an array if value not present or always an array
         if !subject[property].is_a?(Array) && (!_has_value || property_is_array)
@@ -188,7 +188,7 @@ module JSON::LD
     # @param property the property to look for.
     # 
     # @return [Boolean] true if the subject has the given property, false if not.
-    def has_property(subject, property)
+    def property?(subject, property)
       return false unless value = subject[property]
       !value.is_a?(Array) || !value.empty?
     end
@@ -200,8 +200,8 @@ module JSON::LD
     # @param [Object] value the value to check.
     # 
     # @return [Boolean] true if the value exists, false if not.
-    def has_value(subject, property, value)
-      if has_property(subject, property)
+    def has_value?(subject, property, value)
+      if property?(subject, property)
         val = subject[property]
         is_list = list?(val)
         if val.is_a?(Array) || is_list
@@ -265,7 +265,7 @@ module JSON::LD
     # @return [String]
     def get_sym(old = "")
       old = old.to_s.sub(/_:/, '')
-      if old && self.has_key?(old)
+      if old && self.key?(old)
         self[old]
       elsif !old.empty?
         self[old] = RDF::Node.new.to_unique_base[2..-1]
@@ -289,7 +289,7 @@ module JSON::LD
     # @return [String]
     def get_sym(old = "")
       old = old.to_s.sub(/_:/, '')
-      if !old.empty? && self.has_key?(old)
+      if !old.empty? && self.key?(old)
         self[old]
       elsif !old.empty?
         @num += 1

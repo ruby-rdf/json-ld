@@ -57,7 +57,7 @@ module JSON::LD
           lambda: ->(files, **options) do
             out = options[:output] || $stdout
             out.set_encoding(Encoding::UTF_8) if RUBY_PLATFORM == "java"
-            options = options.merge(expandContext: options.delete(:context)) if options.has_key?(:context)
+            options = options.merge(expandContext: options.delete(:context)) if options.key?(:context)
             options[:base] ||= options[:base_uri]
             if options[:format] == :jsonld
               if files.empty?

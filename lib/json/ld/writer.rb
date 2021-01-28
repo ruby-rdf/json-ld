@@ -237,8 +237,8 @@ module JSON::LD
     # @yield  [writer]
     # @yieldparam [RDF::Writer] writer
     def initialize(output = $stdout, **options, &block)
-      options[:base_uri] ||= options[:base] if options.has_key?(:base)
-      options[:base] ||= options[:base_uri] if options.has_key?(:base_uri)
+      options[:base_uri] ||= options[:base] if options.key?(:base)
+      options[:base] ||= options[:base_uri] if options.key?(:base_uri)
       super do
         @repo = RDF::Repository.new
 

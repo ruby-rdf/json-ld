@@ -73,7 +73,7 @@ doc_cache["https://linked.art/ns/v1/linked-art.json"] =
     contentType: "application/ld+json")
 
 options[:documentLoader] = Proc.new do |url, **options, &block|
-  raise "Context not pre-cached: #{url}" unless doc_cache.has_key?(url.to_s)
+  raise "Context not pre-cached: #{url}" unless doc_cache.key?(url.to_s)
   block.call doc_cache[url.to_s]
 end
 

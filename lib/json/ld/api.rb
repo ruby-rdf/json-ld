@@ -396,7 +396,7 @@ module JSON::LD
         end
 
         # Set omitGraph option, if not present, based on processingMode
-        unless options.has_key?(:omitGraph)
+        unless options.key?(:omitGraph)
           options[:omitGraph] = context.processingMode('json-ld-1.1')
         end
 
@@ -423,7 +423,7 @@ module JSON::LD
         frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
         # Default to based on processinMode
-        if !options.has_key?(:pruneBlankNodeIdentifiers)
+        if !options.key?(:pruneBlankNodeIdentifiers)
           options[:pruneBlankNodeIdentifiers] = context.processingMode('json-ld-1.1')
         end
 

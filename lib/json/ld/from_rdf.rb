@@ -75,7 +75,7 @@ module JSON::LD
             property: statement.predicate.to_s,
             value:    value
           })
-        elsif referenced_once.has_key?(statement.object.to_s)
+        elsif referenced_once.key?(statement.object.to_s)
           referenced_once[statement.object.to_s] = false
         elsif statement.object.node?
           referenced_once[statement.object.to_s] = {
@@ -146,7 +146,7 @@ module JSON::LD
       result = []
       default_graph.keys.opt_sort(ordered: @options[:ordered]).each do |subject|
         node = default_graph[subject]
-        if graph_map.has_key?(subject)
+        if graph_map.key?(subject)
           node['@graph'] = []
           graph_map[subject].keys.opt_sort(ordered: @options[:ordered]).each do |s|
             n = graph_map[subject][s]
