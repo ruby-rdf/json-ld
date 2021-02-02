@@ -102,13 +102,15 @@ module JSON::LD
     # @yield [api]
     # @yieldparam [API]
     # @raise [JsonLdError]
-    def initialize(input, context, rename_bnodes: true, unique_bnodes: false, **options, &block)
+    def initialize(input, context, **options, &block)
       @options = {
         compactArrays:      true,
         ordered:            false,
         extractAllScripts:  false,
+        rename_bnodes:      true,
+        unique_bnodes:      false,
       }.merge(options)
-      @namer = unique_bnodes ? BlankNodeUniqer.new : (rename_bnodes ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
+      @namer = @options[:unique_bnodes] ? BlankNodeUniqer.new : (@options[:rename_bnodes] ? BlankNodeNamer.new("b") : BlankNodeMapper.new)
 
       @options[:base] = RDF::URI(@options[:base]) if @options[:base] && !@options[:base].is_a?(RDF::URI)
       # For context via Link header
@@ -202,9 +204,9 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   The base context to use when compacting the input.
+    # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
-    # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The compacted JSON-LD document
@@ -248,9 +250,9 @@ module JSON::LD
     #   The JSON-LD object or array of JSON-LD objects to flatten or an IRI referencing the JSON-LD document to flatten.
     # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
+    # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
-    # @option options [Boolean] :expanded Input is already expanded
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The flattened JSON-LD document
@@ -274,6 +276,9 @@ module JSON::LD
       # Initialize input using
       API.new(expanded_input, context, no_default_base: true, **options) do
         log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
+
+        # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
+        @value = rename_bnodes(@value) if @options[:rename_bnodes]
 
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         graph_maps = {'@default' => {}}
@@ -316,6 +321,7 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the framing on.
     # @param [String, #read, Hash, Array] frame
     #   The frame to use when re-arranging the data.
+    # @param [Boolean] expanded (false) Input is already expanded
     # @option options (see #initialize)
     # @option options ['@always', '@link', '@once', '@never'] :embed ('@once')
     #   a flag specifying that objects should be directly embedded in the output, instead of being referred to by their IRI.
@@ -325,7 +331,6 @@ module JSON::LD
     #   A flag specifying that all properties present in the input frame must either have a default value or be present in the JSON-LD input for the frame to match.
     # @option options [Boolean] :omitDefault (false)
     #   a flag specifying that properties that are missing from the JSON-LD input should be omitted from the output.
-    # @option options [Boolean] :expanded Input is already expanded
     # @option options [Boolean] :pruneBlankNodeIdentifiers (true) removes blank node identifiers that are only used once.
     # @option options [Boolean] :omitGraph does not use `@graph` at top level unless necessary to describe multiple objects, defaults to `true` if processingMode is 1.1, otherwise `false`.
     # @yield jsonld
@@ -391,9 +396,12 @@ module JSON::LD
         end
 
         # Set omitGraph option, if not present, based on processingMode
-        unless options.has_key?(:omitGraph)
+        unless options.key?(:omitGraph)
           options[:omitGraph] = context.processingMode('json-ld-1.1')
         end
+
+        # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
+        @value = rename_bnodes(@value)
 
         # Get framing nodes from expanded input, replacing Blank Node identifiers as necessary
         create_node_map(value, framing_state[:graphMap], active_graph: '@default')
@@ -415,7 +423,7 @@ module JSON::LD
         frame(framing_state, framing_state[:subjects].keys.opt_sort(ordered: @options[:ordered]), (expanded_frame.first || {}), parent: result, **options)
 
         # Default to based on processinMode
-        if !options.has_key?(:pruneBlankNodeIdentifiers)
+        if !options.key?(:pruneBlankNodeIdentifiers)
           options[:pruneBlankNodeIdentifiers] = context.processingMode('json-ld-1.1')
         end
 
@@ -458,10 +466,10 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to process when outputting statements.
+    # @param [Boolean] expanded (false) Input is already expanded
     # @option options (see #initialize)
     # @option options [Boolean] :produceGeneralizedRdf (false)
     #   If true, output will include statements having blank node predicates, otherwise they are dropped.
-    # @option options [Boolean] :expanded Input is already expanded
     # @raise [JsonLdError]
     # @yield statement
     # @yieldparam [RDF::Statement] statement
@@ -470,7 +478,7 @@ module JSON::LD
       unless block_given?
         results = []
         results.extend(RDF::Enumerable)
-        self.toRdf(input, **options) do |stmt|
+        self.toRdf(input, expanded: expanded, **options) do |stmt|
           results << stmt
         end
         return results
@@ -480,16 +488,16 @@ module JSON::LD
         extractAllScripts:  true,
       }.merge(options)
 
-      # Expand input to simplify processing
-      expanded_input = expanded ? input : API.expand(input, ordered: false, **options)
+      # Flatten input to simplify processing
+      flattened_input = API.flatten(input, nil, expanded: expanded, ordered: false, **options)
 
-      API.new(expanded_input, nil, **options) do
+      API.new(flattened_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        log_debug(".toRdf") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Recurse through input
-        expanded_input.each do |node|
+        flattened_input.each do |node|
           item_to_rdf(node) do |statement|
             next if statement.predicate.node? && !options[:produceGeneralizedRdf]
 

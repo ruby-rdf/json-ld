@@ -11,9 +11,9 @@ module JSON::LD
     # The following constant is used to reduce object allocations
     CONTAINER_INDEX_ID_TYPE = Set['@index', '@id', '@type'].freeze
     KEY_ID = %w(@id).freeze
-    KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction).freeze
+    KEYS_VALUE_LANGUAGE_TYPE_INDEX_DIRECTION = %w(@value @language @type @index @direction @annotation).freeze
     KEYS_SET_LIST_INDEX = %w(@set @list @index).freeze
-    KEYS_INCLUDED_TYPE = %w(@included @type).freeze
+    KEYS_INCLUDED_TYPE_REVERSE = %w(@included @type @reverse).freeze
 
     ##
     # Expand an Array or Object given an active context and performing local context expansion.
@@ -49,7 +49,13 @@ module JSON::LD
             log_depth: log_depth.to_i + 1)
 
           # If the active property is @list or its container mapping is set to @list and v is an array, change it to a list object
-          v = {"@list" => v} if is_list && v.is_a?(Array)
+          if is_list && v.is_a?(Array)
+            # Make sure that no member of v contains an annotation object
+            raise JsonLdError::InvalidAnnotation,
+              "A list element must not contain @annotation." if
+              v.any? {|n| n.is_a?(Hash) && n.key?('@annotation')}
+            v = {"@list" => v}
+          end
 
           case v
           when nil then nil
@@ -81,7 +87,7 @@ module JSON::LD
         log_debug("expand", depth: log_depth.to_i) {"after property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
-        if input.has_key?('@context')
+        if input.key?('@context')
           context = context.parse(input.delete('@context'), base: @options[:base])
           log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
         end
@@ -142,7 +148,7 @@ module JSON::LD
 
           if output_object['@type'] == '@json' && context.processingMode('json-ld-1.1')
             # Any value of @value is okay if @type: @json
-          elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.has_key?('@language')
+          elsif !ary.all? {|v| v.is_a?(String) || v.is_a?(Hash) && v.empty?} && output_object.key?('@language')
             # Otherwise, if the value of result's @value member is not a string and result contains the key @language, an invalid language-tagged value error has been detected (only strings can be language-tagged) and processing is aborted.
             raise JsonLdError::InvalidLanguageTaggedValue,
                   "when @language is used, @value must be a string: #{output_object.inspect}"
@@ -172,6 +178,18 @@ module JSON::LD
 
           # If result contains the key @set, then set result to the key's associated value.
           return output_object['@set'] if output_object.key?('@set')
+        elsif output_object['@annotation']
+          # Otherwise, if result contains the key @annotation,
+          # the array value must all be node objects without an @id property, otherwise, an invalid annotation error has been detected and processing is aborted.
+          raise JsonLdError::InvalidAnnotation,
+            "@annotation must reference node objects without @id." unless
+            output_object['@annotation'].all? {|o| node?(o) && !o.key?('@id')}
+
+          # Additionally, the property must not be used if there is no active property, or the expanded active property is @graph.
+          raise JsonLdError::InvalidAnnotation,
+            "@annotation must not be used on a top-level object." if
+            %w(@graph @included).include?(expanded_active_property || '@graph')
+          
         end
 
         # If result contains only the key @language, set result to null.
@@ -254,10 +272,15 @@ module JSON::LD
 
           # If result has already an expanded property member (other than @type), an colliding keywords error has been detected and processing is aborted.
           raise JsonLdError::CollidingKeywords,
-                "#{expanded_property} already exists in result" if output_object.has_key?(expanded_property) && !KEYS_INCLUDED_TYPE.include?(expanded_property)
+                "#{expanded_property} already exists in result" if output_object.key?(expanded_property) && !KEYS_INCLUDED_TYPE_REVERSE.include?(expanded_property)
 
           expanded_value = case expanded_property
           when '@id'
+            # If expanded active property is `@annotation`, an invalid annotation error has been found and processing is aborted.
+            raise JsonLdError::InvalidAnnotation,
+              "an annotation must not contain a property expanding to @id" if
+              expanded_active_property == '@annotation' && @options[:rdfstar]
+
             # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
             e_id = case value
             when String
@@ -280,7 +303,11 @@ module JSON::LD
                 [{}]
               elsif @options[:rdfstar]
                 # Result must have just a single statement
-                rei_node = expand(value, active_property, context, log_depth: log_depth.to_i + 1)
+                rei_node = expand(value, nil, context, log_depth: log_depth.to_i + 1)
+
+                # Node must not contain @reverse
+                raise JsonLdError::InvalidEmbeddedNode,
+                      "Embedded node with @reverse" if rei_node && rei_node.key?('@reverse')
                 statements = to_enum(:item_to_rdf, rei_node)
                 raise JsonLdError::InvalidEmbeddedNode,
                       "Embedded node with #{statements.size} statements" unless
@@ -465,6 +492,11 @@ module JSON::LD
             # Spec FIXME: need to be sure that result is an array
             value = as_array(value)
 
+            # Make sure that no member of value contains an annotation object
+            raise JsonLdError::InvalidAnnotation,
+              "A list element must not contain @annotation." if
+              value.any? {|n| n.is_a?(Hash) && n.key?('@annotation')}
+
             value
           when '@set'
             # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
@@ -483,7 +515,7 @@ module JSON::LD
               log_depth: log_depth.to_i + 1)
 
             # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
-            if value.has_key?('@reverse')
+            if value.key?('@reverse')
               #log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
               value['@reverse'].each do |property, item|
                 # If result does not have a property member, create one and set its value to an empty array.
@@ -522,6 +554,12 @@ module JSON::LD
             nests << key
             # Continue with the next key from element
             next
+          when '@annotation'
+            # Skip unless rdfstar option is set
+            next unless @options[:rdfstar]
+            as_array(expand(value, '@annotation', context,
+              framing: framing,
+              log_depth: log_depth.to_i + 1))
           else
             # Skip unknown keyword
             next

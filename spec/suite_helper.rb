@@ -7,6 +7,7 @@ module RDF::Util
       "https://w3c.github.io/json-ld-api/tests/" => ::File.expand_path("../json-ld-api/tests", __FILE__) + '/',
       "https://w3c.github.io/json-ld-framing/tests/" => ::File.expand_path("../json-ld-framing/tests", __FILE__) + '/',
       "https://w3c.github.io/json-ld-streaming/tests/" => ::File.expand_path("../json-ld-streaming/tests", __FILE__) + '/',
+      "https://json-ld.github.io/json-ld-star/tests/" => ::File.expand_path("../json-ld-star/tests", __FILE__) + '/',
       "file:" => ""
     }
 
@@ -76,6 +77,7 @@ module Fixtures
     SUITE = RDF::URI("https://w3c.github.io/json-ld-api/tests/")
     FRAME_SUITE = RDF::URI("https://w3c.github.io/json-ld-framing/tests/")
     STREAM_SUITE = RDF::URI("https://w3c.github.io/json-ld-streaming/tests/")
+    STAR_SUITE = RDF::URI("https://json-ld.github.io/json-ld-star/tests/")
 
     class Manifest < JSON::LD::Resource
       attr_accessor :manifest_url
@@ -201,8 +203,8 @@ module Fixtures
         logger.info "frame: #{frame}" if frame_loc
 
         options = self.options
-        unless options[:specVersion] == "json-ld-1.1"
-          skip "not a 1.1 test" 
+        if options[:specVersion] == "json-ld-1.0"
+          skip "1.0 test" 
           return
         end
 
@@ -223,7 +225,7 @@ module Fixtures
               JSON::LD::API.frame(input_loc, frame_loc, logger: logger, **options)
             when "jld:FromRDFTest"
               # Use an array, to preserve input order
-              repo = RDF::NQuads::Reader.open(input_loc) do |reader|
+              repo = RDF::NQuads::Reader.open(input_loc, rdfstar: options[:rdfstar]) do |reader|
                 reader.each_statement.to_a
               end.to_a.uniq.extend(RDF::Enumerable)
               logger.info "repo: #{repo.dump(self.id == '#t0012' ? :nquads : :trig)}"
@@ -235,7 +237,7 @@ module Fixtures
                   repo << statement
                 end
               else
-                JSON::LD::API.toRdf(input_loc, logger: logger, **options) do |statement|
+                JSON::LD::API.toRdf(input_loc, rename_bnodes: false, logger: logger, **options) do |statement|
                   repo << statement
                 end
               end
@@ -256,12 +258,16 @@ module Fixtures
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect, logger: [])
+                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect, rdfstar: options[:rdfstar], logger: [])
                 rspec_example.instance_eval {
                   expect(result).to be_equivalent_graph(expected, logger)
                 }
               else
                 expected = JSON.load(expect)
+
+                # If called for, remap bnodes
+                result = remap_bnodes(result, expected) if options[:remap_bnodes]
+
                 if options[:ordered]
                   # Compare without transformation
                   rspec_example.instance_eval {
@@ -308,7 +314,7 @@ module Fixtures
                 when "jld:FrameTest"
                   JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
-                  repo = RDF::Repository.load(t.input_loc)
+                  repo = RDF::Repository.load(t.input_loc, rdfstar: options[:rdfstar])
                   logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
                 when "jld:HttpTest"
@@ -325,7 +331,7 @@ module Fixtures
                   if t.manifest_url.to_s.include?('stream')
                     JSON::LD::Reader.open(t.input_loc, stream: true, logger: logger, **options).each_statement {}
                   else
-                    JSON::LD::API.toRdf(t.input_loc, logger: logger, **options) {}
+                    JSON::LD::API.toRdf(t.input_loc, rename_bnodes: false, logger: logger, **options) {}
                   end
                 else
                   success("Unknown test type: #{testType}")

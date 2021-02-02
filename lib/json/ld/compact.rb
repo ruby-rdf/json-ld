@@ -64,7 +64,7 @@ module JSON::LD
           log_debug("prop-scoped", depth: log_depth.to_i) {"context: #{self.context.inspect}"}
         end
 
-        if element.key?('@id') || element.key?('@value')
+        if (element.key?('@id') || element.key?('@value')) && !element.key?('@annotation')
           result = context.compact_value(property, element, base: @options[:base])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
             log_debug("", depth: log_depth.to_i) {"=> scalar result: #{result.inspect}"}
@@ -231,7 +231,7 @@ module JSON::LD
               unless container.include?('@list')
                 al = context.compact_iri('@list', vocab: true)
                 compacted_item = {al => compacted_item}
-                if expanded_item.has_key?('@index')
+                if expanded_item.key?('@index')
                   key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end
@@ -276,7 +276,7 @@ module JSON::LD
                   al = context.compact_iri('@id', vocab: true)
                   compacted_item[al] = context.compact_iri(expanded_item['@id'], vocab: false)
                 end
-                if expanded_item.has_key?('@index')
+                if expanded_item.key?('@index')
                   key = context.compact_iri('@index', vocab: true)
                   compacted_item[key] = expanded_item['@index']
                 end

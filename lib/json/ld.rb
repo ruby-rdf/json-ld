@@ -47,6 +47,7 @@ module JSON
     DEFAULT_CONTEXT = "http://schema.org"
 
     KEYWORDS = Set.new(%w(
+      @annotation
       @base
       @container
       @context
@@ -116,6 +117,7 @@ module JSON
       class CollidingKeywords < JsonLdError; @code = "colliding keywords"; end
       class ConflictingIndexes < JsonLdError; @code = "conflicting indexes"; end
       class CyclicIRIMapping < JsonLdError; @code = "cyclic IRI mapping"; end
+      class InvalidAnnotation < JsonLdError; @code = "invalid annotation"; end
       class InvalidBaseIRI < JsonLdError; @code = "invalid base IRI"; end
       class InvalidContainerMapping < JsonLdError; @code = "invalid container mapping"; end
       class InvalidContextEntry < JsonLdError; @code = "invalid context entry"; end
@@ -137,7 +139,7 @@ module JSON
       class InvalidNestValue < JsonLdError; @code = "invalid @nest value"; end
       class InvalidPrefixValue < JsonLdError; @code = "invalid @prefix value"; end
       class InvalidPropagateValue < JsonLdError; @code = "invalid @propagate value"; end
-      class InvalidEmbeddedNode < JsonLdError; @code = "invalid reified node"; end
+      class InvalidEmbeddedNode < JsonLdError; @code = "invalid embedded node"; end
       class InvalidRemoteContext < JsonLdError; @code = "invalid remote context"; end
       class InvalidReverseProperty < JsonLdError; @code = "invalid reverse property"; end
       class InvalidReversePropertyMap < JsonLdError; @code = "invalid reverse property map"; end

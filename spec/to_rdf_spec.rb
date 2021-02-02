@@ -1528,7 +1528,7 @@ describe JSON::LD::API do
   def parse(input, **options)
     graph = options[:graph] || RDF::Graph.new
     options = {logger: logger, validate: true, canonicalize: false}.merge(options)
-    JSON::LD::API.toRdf(StringIO.new(input), **options) {|st| graph << st}
+    JSON::LD::API.toRdf(StringIO.new(input), rename_bnodes: false, **options) {|st| graph << st}
     graph
   end
 
@@ -1541,9 +1541,9 @@ describe JSON::LD::API do
       expect {JSON::LD::API.toRdf(input, **params)}.to raise_error(params[:exception])
     else
       if params[:write]
-        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, rename_bnodes: false, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
       else
-        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, **params) {|st| graph << st}}.not_to write.to(:error)
+        expect{JSON::LD::API.toRdf(input, base: params[:base], logger: logger, rename_bnodes: false, **params) {|st| graph << st}}.not_to write.to(:error)
       end
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end

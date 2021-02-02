@@ -68,6 +68,7 @@ module JSON::LD
     # @raise [RDF::ReaderError] if the JSON document cannot be loaded
     def initialize(input = $stdin, **options, &block)
       options[:base_uri] ||= options[:base]
+      options[:rename_bnodes] = false unless options.key?(:rename_bnodes)
       super do
         @options[:base] ||= base_uri.to_s if base_uri
         # Trim non-JSON stuff in script.

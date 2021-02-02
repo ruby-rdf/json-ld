@@ -1,11 +1,17 @@
 # -*- encoding: utf-8 -*-
 # frozen_string_literal: true
+require 'json/canonicalization'
+
 module JSON::LD
   module Flatten
     include Utils
 
     ##
     # This algorithm creates a JSON object node map holding an indexed representation of the graphs and nodes represented in the passed expanded document. All nodes that are not uniquely identified by an IRI get assigned a (new) blank node identifier. The resulting node map will have a member for every graph in the document whose value is another object with a member for every node represented in the document. The default graph is stored under the @default member, all other graphs are stored under their graph name.
+    #
+    # For RDF*/JSON-LD*:
+    #   * Values of `@id` can be an object (embedded node); when these are used as keys in a Node Map, they are serialized as canonical JSON, and de-serialized when flattening.
+    #   * The presence of `@annotation` implies an embedded node and the annotation object is removed from the node/value object in which it appears.
     #
     # @param [Array, Hash] element
     #   Expanded JSON-LD input
@@ -16,12 +22,15 @@ module JSON::LD
     #   Node identifier
     # @param [String] active_property (nil)
     #   Property within current node
+    # @param [Boolean] reverse (false)
+    #   Processing a reverse relationship
     # @param [Array] list (nil)
     #   Used when property value is a list
     def create_node_map(element, graph_map,
                         active_graph: '@default',
                         active_subject: nil,
                         active_property: nil,
+                        reverse: false,
                         list: nil)
       if element.is_a?(Array)
         # If element is an array, process each entry in element recursively by passing item for element, node map, active graph, active subject, active property, and list.
@@ -30,21 +39,45 @@ module JSON::LD
                           active_graph: active_graph,
                           active_subject: active_subject,
                           active_property: active_property,
+                          reverse: false,
                           list: list)
         end
       elsif !element.is_a?(Hash)
         raise "Expected hash or array to create_node_map, got #{element.inspect}"
       else
         graph = (graph_map[active_graph] ||= {})
-        subject_node = graph[active_subject]
+        subject_node = !reverse && graph[active_subject.is_a?(Hash) ? active_subject.to_json_c14n : active_subject]
 
         # Transform BNode types
-        if element.has_key?('@type')
+        if element.key?('@type')
           element['@type'] = Array(element['@type']).map {|t| blank_node?(t) ? namer.get_name(t) : t}
         end
 
         if value?(element)
           element['@type'] = element['@type'].first if element ['@type']
+
+          # For rdfstar, if value contains an `@annotation` member ...
+          # note: active_subject will not be nil, and may be an object itself.
+          if element.key?('@annotation')
+            # rdfstar being true is implicit, as it is checked in expansion
+            as = node_reference?(active_subject) ?
+              active_subject['@id'] :
+              active_subject
+            star_subject = {
+              "@id" => as,
+              active_property => [element]
+            }
+
+            # Note that annotation is an array, make the reified subject the id of each member of that array.
+            annotation = element.delete('@annotation').map do |a|
+              a.merge('@id' => star_subject)
+            end
+
+            # Invoke recursively using annotation.
+            create_node_map(annotation, graph_map,
+                            active_graph: active_graph)
+          end
+
           if list.nil?
             add_value(subject_node, active_property, element, property_is_array: true, allow_duplicate: false)
           else
@@ -64,13 +97,19 @@ module JSON::LD
           end
         else
           # Element is a node object
-          id = element.delete('@id')
-          id = namer.get_name(id) if blank_node?(id)
+          ser_id = id = element.delete('@id')
+          if id.is_a?(Hash)
+            # Index graph using serialized id
+            ser_id = id.to_json_c14n
+          elsif id.nil?
+            ser_id = id = namer.get_name
+          end
 
-          node = graph[id] ||= {'@id' => id}
+          node = graph[ser_id] ||= {'@id' => id}
 
-          if active_subject.is_a?(Hash)
-            # If subject is a hash, then we're processing a reverse-property relationship.
+          if reverse
+            # Note: active_subject is a Hash
+            # We're processing a reverse-property relationship.
             add_value(node, active_property, active_subject, property_is_array: true, allow_duplicate: false)
           elsif active_property
             reference = {'@id' => id}
@@ -81,7 +120,30 @@ module JSON::LD
             end
           end
 
-          if element.has_key?('@type')
+          # For rdfstar, if node contains an `@annotation` member ...
+          # note: active_subject will not be nil, and may be an object itself.
+          # XXX: what if we're reversing an annotation?
+          if element.key?('@annotation')
+            # rdfstar being true is implicit, as it is checked in expansion
+            as = node_reference?(active_subject) ?
+              active_subject['@id'] :
+              active_subject
+            star_subject = reverse ? 
+              {"@id" => node['@id'], active_property => [{'@id' => as}]} :
+              {"@id" => as, active_property => [{'@id' => node['@id']}]}
+
+            # Note that annotation is an array, make the reified subject the id of each member of that array.
+            annotation = element.delete('@annotation').map do |a|
+              a.merge('@id' => star_subject)
+            end
+
+            # Invoke recursively using annotation.
+            create_node_map(annotation, graph_map,
+                            active_graph: active_graph,
+                            active_subject: star_subject)
+          end
+
+          if element.key?('@type')
             add_value(node, '@type', element.delete('@type'), property_is_array: true, allow_duplicate: false)
           end
 
@@ -99,7 +161,8 @@ module JSON::LD
                 create_node_map(value, graph_map,
                                 active_graph: active_graph,
                                 active_subject: referenced_node,
-                                active_property: property)
+                                active_property: property,
+                                reverse: true)
               end
             end
           end
@@ -128,7 +191,27 @@ module JSON::LD
       end
     end
 
+    ##
+    # Rename blank nodes recursively within an embedded object
+    #
+    # @param [Object] node
+    # @return [Hash]
+    def rename_bnodes(node)
+      case node
+      when Array
+        node.map {|n| rename_bnodes(n)}
+      when Hash
+        node.inject({}) do |memo, (k, v)|
+          v = namer.get_name(v) if k == '@id' && v.is_a?(String) && blank_node?(v)
+          memo.merge(k => rename_bnodes(v))
+        end
+      else
+        node
+      end
+    end
+
   private
+
     ##
     # Merge nodes from all graphs in the graph_map into a new node map
     #

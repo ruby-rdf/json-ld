@@ -67,6 +67,39 @@ def detect_format(stream)
   end
 end
 
+# Creates a bijection between the two objects and replaces nodes in actual from expected.
+def remap_bnodes(actual, expected)
+  # Transform each to RDF and perform a blank node bijection.
+  # Replace the blank nodes in action with the mapping from bijection.
+  ds_actual = RDF::Repository.new << JSON::LD::API.toRdf(actual, rdfstar: true, rename_bnodes: false)
+  ds_expected = RDF::Repository.new << JSON::LD::API.toRdf(expected, rdfstar: true, rename_bnodes: false)
+  if bijection = ds_actual.bijection_to(ds_expected)
+    bijection = bijection.inject({}) {|memo, (k, v)| memo.merge(k.to_s => v.to_s)}
+
+    # Recursively replace blank nodes in actual with the bijection
+    #require 'byebug'; byebug
+    replace_nodes(actual, bijection)
+  else
+    actual
+  end
+end
+
+def replace_nodes(object, bijection)
+  case object
+  when Array
+    object.map {|o| replace_nodes(o, bijection)}
+  when Hash
+    object.inject({}) do |memo, (k, v)|
+      memo.merge(bijection.fetch(k, k) => replace_nodes(v, bijection))
+    end
+  when String
+    bijection.fetch(object, object)
+  else
+    object
+  end
+end
+
+
 LIBRARY_INPUT = JSON.parse(%([
   {
     "@id": "http://example.org/library",

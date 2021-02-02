@@ -102,7 +102,7 @@
                 %dd{rel: "doap:developer"}
                   - subject['developer'].each do |dev|
                     %div{resource: dev['@id'], typeof: Array(dev['@type']).join(" ")}
-                      - if dev.has_key?('@id')
+                      - if dev.key?('@id')
                         %a{href: dev['@id']}
                           %span{property: "foaf:name"}<
                             ~ CGI.escapeHTML dev['foaf:name'].to_s

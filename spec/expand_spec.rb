@@ -3371,6 +3371,43 @@ describe JSON::LD::API do
           }),
           exception: JSON::LD::JsonLdError::InvalidReversePropertyMap,
         },
+        "Explicit and implicit @reverse in same object": {
+          input: %({
+            "@context": {
+              "fooOf": {"@reverse": "ex:foo", "@type": "@id"}
+            },
+            "@id": "ex:s",
+            "fooOf": "ex:o1",
+            "@reverse": {
+              "ex:bar": {"@id": "ex:o2"}
+            }
+          }),
+          output: %([{
+            "@id": "ex:s",
+            "@reverse": {
+              "ex:bar": [{"@id": "ex:o2"}],
+              "ex:foo": [{"@id": "ex:o1"}]
+            }
+          }])
+        },
+        "Two properties both with @reverse": {
+          input: %({
+            "@context": {
+              "fooOf": {"@reverse": "ex:foo", "@type": "@id"},
+              "barOf": {"@reverse": "ex:bar", "@type": "@id"}
+            },
+            "@id": "ex:s",
+            "fooOf": "ex:o1",
+            "barOf": "ex:o2"
+          }),
+          output: %([{
+            "@id": "ex:s",
+            "@reverse": {
+              "ex:bar": [{"@id": "ex:o2"}],
+              "ex:foo": [{"@id": "ex:o1"}]
+            }
+          }])
+        },
       }.each do |title, params|
         it(title) {run_expand params}
       end
@@ -3387,6 +3424,36 @@ describe JSON::LD::API do
             "ex:prop": "value2"
           }),
           exception: JSON::LD::JsonLdError::InvalidIdValue
+        },
+        "node object with @annotation property is ignored without rdfstar option": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@id": "ex:fred",
+              "@annotation": {
+                "ex:certainty": 0.8
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:knows": [{"@id": "ex:fred"}]
+          }])
+        },
+        "value object with @annotation property is ignored without rdfstar option": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:age": {
+              "@value": 23,
+              "@annotation": {
+                "ex:certainty": 0.8
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:age": [{"@value": 23}]
+          }])
         },
       }.each do |title, params|
         it(title) {run_expand params}
@@ -3569,7 +3636,7 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "illegal node with embedded object having properties": {
+        "node with embedded object having properties": {
           input: %({
             "@id": "ex:subj",
             "ex:value": {
@@ -3616,6 +3683,322 @@ describe JSON::LD::API do
                 "ex:prop":[{"@value": "value"}]
               },
               "ex:prop": [{"@value": "value2"}]
+            }]
+          }])
+        },
+        "node with @annotation property on value object": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:age": {
+              "@value": 23,
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:age": [{
+              "@value": 23,
+              "@annotation": [{"ex:certainty": [{"@value": 0.8}]}]
+            }]
+          }])
+        },
+        "node with @annotation property on node object": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "ex:knows": {
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:name": [{"@value": "Bob"}],
+            "ex:knows": [{
+              "@id": "ex:fred",
+              "ex:name": [{"@value": "Fred"}],
+              "@annotation": [{"ex:certainty": [{"@value": 0.8}]}]
+            }]
+          }])
+        },
+        "node with @annotation property multiple values": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "ex:knows": {
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": [{
+                "ex:certainty": 0.8
+              }, {
+                "ex:source": {"@id": "http://example.org/"}
+              }]
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:name": [{"@value": "Bob"}],
+            "ex:knows": [{
+              "@id": "ex:fred",
+              "ex:name": [{"@value": "Fred"}],
+              "@annotation": [{
+                "ex:certainty": [{"@value": 0.8}]
+              }, {
+                "ex:source": [{"@id": "http://example.org/"}]
+              }]
+            }]
+          }])
+        },
+        "node with @annotation property that is on the top-level is invalid": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "@annotation": {"ex:prop": "value2"}
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation property on a top-level graph node is invalid": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "@graph": {
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": {"ex:prop": "value2"}
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation property having @id is invalid": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@id": "ex:fred",
+              "@annotation": {
+                "@id": "ex:invalid-ann-id",
+                "ex:prop": "value2"
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation property with value object value is invalid": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@id": "fred",
+              "@annotation": "value2"
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation on a list": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@list": [{"@id": "ex:fred"}],
+              "@annotation": {"ex:prop": "value2"}
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidSetOrListObject
+        },
+        "node with @annotation on a list value": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@list": [
+                {
+                  "@id": "ex:fred",
+                  "@annotation": {"ex:prop": "value2"}
+                }
+              ]
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation property on a top-level @included node is invalid": {
+          input: %({
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "@included": [{
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": {"ex:prop": "value2"}
+            }]
+          }),
+          exception: JSON::LD::JsonLdError::InvalidAnnotation
+        },
+        "node with @annotation property on embedded subject": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "_:value"}
+            },
+            "ex:prop": {
+              "@value": "value2",
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "_:value"}]
+            },
+            "ex:prop": [{
+              "@value": "value2",
+              "@annotation": [{
+                "ex:certainty": [{"@value": 0.8}]
+              }]
+            }]
+          }])
+        },
+        "node with @annotation property on embedded object": {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              },
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value"}]
+              },
+              "@annotation": [{
+                "ex:certainty": [{"@value": 0.8}]
+              }]
+            }]
+          }])
+        },
+        "embedded node with reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": {
+              "@id": "ex:rei",
+              "rel": {"@id": "ex:value"}
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "embedded node with expanded reverse relationship": {
+          input: %({
+            "@id": {
+              "@id": "ex:rei",
+              "@reverse": {
+                "ex:rel": {"@id": "ex:value"}
+              }
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+        },
+        "embedded node used as subject in reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": {"@id": "ex:value"}
+            },
+            "rel": {"@id": "ex:value2"}
+          }),
+          output: %([{
+            "@id": {
+              "@id": "ex:rei",
+              "ex:prop": [{"@id": "ex:value"}]
+            },
+            "@reverse": {
+              "ex:rel": [{"@id": "ex:value2"}]
+            }
+          }])
+        },
+        "embedded node used as object in reverse relationship": {
+          input: %({
+            "@context": {
+              "rel": {"@reverse": "ex:rel"}
+            },
+            "@id": "ex:subj",
+            "rel": {
+              "@id": {
+                "@id": "ex:rei",
+                "ex:prop": {"@id": "ex:value"}
+              },
+              "ex:prop": {"@id": "ex:value2"}
+            }
+          }),
+          output: %([{
+            "@id": "ex:subj",
+            "@reverse": {
+              "ex:rel": [{
+                "@id": {
+                  "@id": "ex:rei",
+                  "ex:prop": [{"@id": "ex:value"}]
+                },
+                "ex:prop": [{"@id": "ex:value2"}]
+              }]
+            }
+          }])
+        },
+        "node with @annotation property on node object with reverse relationship": {
+          input: %({
+            "@context": {
+              "knownBy": {"@reverse": "ex:knows"}
+            },
+            "@id": "ex:bob",
+            "ex:name": "Bob",
+            "knownBy": {
+              "@id": "ex:fred",
+              "ex:name": "Fred",
+              "@annotation": {"ex:certainty": 0.8}
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:name": [{"@value": "Bob"}],
+            "@reverse": {
+              "ex:knows": [{
+                "@id": "ex:fred",
+                "ex:name": [{"@value": "Fred"}],
+                "@annotation": [{"ex:certainty": [{"@value": 0.8}]}]
+              }]
+            }
+          }])
+        },
+        "reverse relationship inside annotation": {
+          input: %({
+            "@context": {
+              "claims": {"@reverse": "ex:claims", "@type": "@id"}
+            },
+            "@id": "ex:bob",
+            "ex:knows": {
+              "@id": "ex:jane",
+              "@annotation": {
+                "ex:certainty": 0.8,
+                "claims": "ex:sue"
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:knows": [{
+              "@id": "ex:jane",
+              "@annotation": [{
+                "ex:certainty": [{"@value": 0.8}],
+                "@reverse": {
+                  "ex:claims": [{"@id": "ex:sue"}]
+                }
+              }]
             }]
           }])
         },

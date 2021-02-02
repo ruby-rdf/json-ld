@@ -3389,7 +3389,7 @@ describe JSON::LD::API do
     input = ::JSON.parse(input) if input.is_a?(String)
     output = ::JSON.parse(output) if output.is_a?(String)
     context = ::JSON.parse(context) if context.is_a?(String)
-    context = context['@context'] if context.has_key?('@context')
+    context = context['@context'] if context.key?('@context')
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
       expect {JSON::LD::API.compact(input, context, logger: logger, **params)}.to raise_error(params[:exception])

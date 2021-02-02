@@ -314,7 +314,7 @@ module JSON::LD
               #context_opts.delete(:headers)
               JSON::LD::API.loadRemoteDocument(context.to_s, **context_opts) do |remote_doc|
                 # 3.2.5) Dereference context. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
+                raise JsonLdError::InvalidRemoteContext, "#{context}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.key?('@context')
 
                 # Parse stand-alone
                 ctx = Context.new(unfrozen: true, **options).dup
@@ -352,7 +352,7 @@ module JSON::LD
             '@propagate'  => :propagate=,
             '@vocab'      => :vocab=,
           }.each do |key, setter|
-            next unless context.has_key?(key)
+            next unless context.key?(key)
             if key == '@import'
               # Retrieve remote context and merge the remaining context object into the result.
               raise JsonLdError::InvalidContextEntry, "@import may only be used in 1.1 mode}" if result.processingMode("json-ld-1.0")
@@ -367,11 +367,11 @@ module JSON::LD
                 # FIXME: should cache this, but ContextCache is for parsed contexts
                 JSON::LD::API.loadRemoteDocument(import_loc, **context_opts) do |remote_doc|
                   # Dereference import_loc. If the dereferenced document has no top-level JSON object with an @context member, an invalid remote context has been detected and processing is aborted; otherwise, set context to the value of that member.
-                  raise JsonLdError::InvalidRemoteContext, "#{import_loc}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.has_key?('@context')
+                  raise JsonLdError::InvalidRemoteContext, "#{import_loc}" unless remote_doc.document.is_a?(Hash) && remote_doc.document.key?('@context')
                   import_context = remote_doc.document['@context']
                   import_context.delete('@base')
                   raise JsonLdError::InvalidRemoteContext, "#{import_context.to_json} must be an object" unless import_context.is_a?(Hash)
-                  raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.has_key?('@import')
+                  raise JsonLdError::InvalidContextEntry, "#{import_context.to_json} must not include @import entry" if import_context.key?('@import')
                   context.delete(key)
                   context = import_context.merge(context)
                 end
@@ -542,7 +542,7 @@ module JSON::LD
       # Potentially note that the term is protected
       definition.protected = value.fetch('@protected', protected)
 
-      if value.has_key?('@type')
+      if value.key?('@type')
         type = value['@type']
         # SPEC FIXME: @type may be nil
         type = case type
@@ -566,7 +566,7 @@ module JSON::LD
         definition.type_mapping = type
       end
 
-      if value.has_key?('@reverse')
+      if value.key?('@reverse')
         raise JsonLdError::InvalidReverseProperty, "unexpected key in #{value.inspect} on term #{term.inspect}" if
           value.key?('@id') || value.key?('@nest')
         raise JsonLdError::InvalidIRIMapping, "expected value of @reverse to be a string: #{value['@reverse'].inspect} on term #{term.inspect}" unless
@@ -592,7 +592,7 @@ module JSON::LD
         warn "[DEPRECATION] Blank Node terms deprecated in JSON-LD 1.1." if @options[:validate] && processingMode('json-ld-1.1') && definition.id.to_s.start_with?("_:")
 
         # If value contains an @container member, set the container mapping of definition to its value; if its value is neither @set, @index, @type, @id, an absolute IRI nor null, an invalid reverse property error has been detected (reverse properties only support set- and index-containers) and processing is aborted.
-        if value.has_key?('@container')
+        if value.key?('@container')
           container = value['@container']
           raise JsonLdError::InvalidReverseProperty,
                 "unknown mapping for '@container' to #{container.inspect} on term #{term.inspect}" unless
@@ -600,9 +600,9 @@ module JSON::LD
           definition.container_mapping = check_container(container, local_context, defined, term)
         end
         definition.reverse_property = true
-      elsif value.has_key?('@id') && value['@id'].nil?
+      elsif value.key?('@id') && value['@id'].nil?
         # Allowed to reserve a null term, which may be protected
-      elsif value.has_key?('@id') && value['@id'] != term
+      elsif value.key?('@id') && value['@id'] != term
         raise JsonLdError::InvalidIRIMapping, "expected value of @id to be a string: #{value['@id'].inspect} on term #{term.inspect}" unless
           value['@id'].is_a?(String)
 
@@ -637,7 +637,7 @@ module JSON::LD
       elsif term[1..-1].include?(':')
         # If term is a compact IRI with a prefix that is a key in local context then a dependency has been found. Use this algorithm recursively passing active context, local context, the prefix as term, and defined.
         prefix, suffix = term.split(':', 2)
-        create_term_definition(local_context, prefix, defined, protected: protected) if local_context.has_key?(prefix)
+        create_term_definition(local_context, prefix, defined, protected: protected) if local_context.key?(prefix)
 
         definition.id = if td = term_definitions[prefix]
           # If term's prefix has a term definition in active context, set the IRI mapping for definition to the result of concatenating the value associated with the prefix's IRI mapping and the term's suffix.
@@ -664,7 +664,7 @@ module JSON::LD
 
       @iri_to_term[definition.id] = term if simple_term && definition.id
 
-      if value.has_key?('@container')
+      if value.key?('@container')
         #log_debug("") {"container_mapping: #{value['@container'].inspect}"}
         definition.container_mapping = check_container(value['@container'], local_context, defined, term)
 
@@ -679,14 +679,14 @@ module JSON::LD
         end
       end
 
-      if value.has_key?('@index')
+      if value.key?('@index')
         # property-based indexing
         raise JsonLdError::InvalidTermDefinition, "@index without @index in @container: #{value['@index']} on term #{term.inspect}" unless definition.container_mapping.include?('@index')
         raise JsonLdError::InvalidTermDefinition, "@index must expand to an IRI: #{value['@index']} on term #{term.inspect}" unless value['@index'].is_a?(String) && !value['@index'].start_with?('@')
         definition.index = value['@index'].to_s
       end
 
-      if value.has_key?('@context')
+      if value.key?('@context')
         begin
           new_ctx = self.parse(value['@context'],
                                base: base,
@@ -704,7 +704,7 @@ module JSON::LD
         end
       end
 
-      if value.has_key?('@language')
+      if value.key?('@language')
         language = value['@language']
         language = case value['@language']
         when String
@@ -722,14 +722,14 @@ module JSON::LD
         definition.language_mapping = language || false
       end
 
-      if value.has_key?('@direction')
+      if value.key?('@direction')
         direction = value['@direction']
         raise JsonLdError::InvalidBaseDirection, "direction must be null, 'ltr', or 'rtl', was #{language.inspect}} on term #{term.inspect}" unless direction.nil? || %w(ltr rtl).include?(direction)
         #log_debug("") {"direction_mapping: #{direction.inspect}"}
         definition.direction_mapping = direction || false
       end
 
-      if value.has_key?('@nest')
+      if value.key?('@nest')
         nest = value['@nest']
         raise JsonLdError::InvalidNestValue, "nest must be a string, was #{nest.inspect}} on term #{term.inspect}" unless nest.is_a?(String)
         raise JsonLdError::InvalidNestValue, "nest must not be a keyword other than @nest, was #{nest.inspect}} on term #{term.inspect}" if nest.match?(/^@[a-zA-Z]+$/) && nest != '@nest'
@@ -737,7 +737,7 @@ module JSON::LD
         definition.nest = nest
       end
 
-      if value.has_key?('@prefix')
+      if value.key?('@prefix')
         raise JsonLdError::InvalidTermDefinition, "@prefix used on compact or relative IRI term #{term.inspect}" if term.match?(%r{:|/})
         case pfx = value['@prefix']
         when TrueClass, FalseClass
@@ -1018,7 +1018,7 @@ module JSON::LD
 
       term_sym = term.empty? ? "" : term.to_sym
       iri_to_term.delete(term_definitions[term].id.to_s) if term_definitions[term].id.is_a?(String)
-      @options[:prefixes][term_sym] = value if @options.has_key?(:prefixes)
+      @options[:prefixes][term_sym] = value if @options.key?(:prefixes)
       iri_to_term[value.to_s] = term
       term_definitions[term]
     end
@@ -1134,7 +1134,7 @@ module JSON::LD
     # @return [Term] related term definition
     def reverse_term(term)
       # Direct lookup of term
-      term = term_definitions[term.to_s] if term_definitions.has_key?(term.to_s) && !term.is_a?(TermDefinition)
+      term = term_definitions[term.to_s] if term_definitions.key?(term.to_s) && !term.is_a?(TermDefinition)
 
       # Lookup term, assuming term is an IRI
       unless term.is_a?(TermDefinition)
@@ -1182,7 +1182,7 @@ module JSON::LD
       defined = defined || {} # if we initialized in the keyword arg we would allocate {} at each invokation, even in the 2 (common) early returns above.
 
       # If local context is not null, it contains a key that equals value, and the value associated with the key that equals value in defined is not true, then invoke the Create Term Definition subalgorithm, passing active context, local context, value as term, and defined. This will ensure that a term definition is created for value in active context during Context Processing.
-      if local_context && local_context.has_key?(value) && !defined[value]
+      if local_context && local_context.key?(value) && !defined[value]
         create_term_definition(local_context, value, defined)
       end
 
@@ -1212,7 +1212,7 @@ module JSON::LD
         end
 
         # If local context is not null, it contains a key that equals prefix, and the value associated with the key that equals prefix in defined is not true, invoke the Create Term Definition algorithm, passing active context, local context, prefix as term, and defined. This will ensure that a term definition is created for prefix in active context during Context Processing.
-        if local_context && local_context.has_key?(prefix) && !defined[prefix]
+        if local_context && local_context.key?(prefix) && !defined[prefix]
           create_term_definition(local_context, prefix, defined)
         end
 
@@ -1287,7 +1287,7 @@ module JSON::LD
       return if iri.nil?
       iri = iri.to_s
 
-      if vocab && inverse_context.has_key?(iri)
+      if vocab && inverse_context.key?(iri)
         default_language = if self.default_direction
           "#{self.default_language}_#{self.default_direction}".downcase
         else
@@ -1298,7 +1298,7 @@ module JSON::LD
         containers.concat(CONTAINERS_INDEX_SET) if index?(value) && !graph?(value)
 
         # If the value is a JSON Object with the key @preserve, use the value of @preserve.
-        value = value['@preserve'].first if value.is_a?(Hash) && value.has_key?('@preserve')
+        value = value['@preserve'].first if value.is_a?(Hash) && value.key?('@preserve')
 
         if reverse
           tl, tl_value = "@type", "@reverse"
@@ -1312,11 +1312,11 @@ module JSON::LD
           list.each do |item|
             item_language, item_type = "@none", "@none"
             if value?(item)
-              if item.has_key?('@direction')
+              if item.key?('@direction')
                 item_language = "#{item['@language']}_#{item['@direction']}".downcase
-              elsif item.has_key?('@language')
+              elsif item.key?('@language')
                 item_language = item['@language'].downcase
-              elsif item.has_key?('@type')
+              elsif item.key?('@type')
                 item_type = item['@type']
               else
                 item_language = "@null"
@@ -1344,14 +1344,14 @@ module JSON::LD
         elsif graph?(value)
           # Prefer @index and @id containers, then @graph, then @index
           containers.concat(CONTAINERS_GRAPH_INDEX_INDEX) if index?(value)
-          containers.concat(CONTAINERS_GRAPH) if value.has_key?('@id')
+          containers.concat(CONTAINERS_GRAPH) if value.key?('@id')
 
           # Prefer an @graph container next
           containers.concat(CONTAINERS_GRAPH_SET)
 
           # Lastly, in 1.1, any graph can be indexed on @index or @id, so add if we haven't already
           containers.concat(CONTAINERS_GRAPH_INDEX) unless index?(value)
-          containers.concat(CONTAINERS_GRAPH) unless value.has_key?('@id')
+          containers.concat(CONTAINERS_GRAPH) unless value.key?('@id')
           containers.concat(CONTAINERS_INDEX_SET) unless index?(value)
           containers << '@set'
 
@@ -1359,13 +1359,13 @@ module JSON::LD
         else
           if value?(value)
             # In 1.1, an language map can be used to index values using @none
-            if value.has_key?('@language') && !index?(value)
+            if value.key?('@language') && !index?(value)
               tl_value = value['@language'].downcase
               tl_value += "_#{value['@direction']}" if value['@direction']
               containers.concat(CONTAINERS_LANGUAGE)
-            elsif value.has_key?('@direction') && !index?(value)
+            elsif value.key?('@direction') && !index?(value)
               tl_value = "_#{value['@direction']}"
-            elsif value.has_key?('@type')
+            elsif value.key?('@type')
               tl_value = value['@type']
               tl = '@type'
             end
@@ -1387,7 +1387,7 @@ module JSON::LD
         tl_value ||= '@null'
         preferred_values = []
         preferred_values << '@reverse' if tl_value == '@reverse'
-        if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.has_key?('@id')
+        if (tl_value == '@id' || tl_value == '@reverse') && value.is_a?(Hash) && value.key?('@id')
           t_iri = compact_iri(value['@id'], vocab: true, base: base)
           if (r_td = term_definitions[t_iri]) && r_td.id == value['@id']
             preferred_values.concat(CONTAINERS_VOCAB_ID)
@@ -1413,7 +1413,7 @@ module JSON::LD
       # At this point, there is no simple term that iri can be compacted to. If vocab is true and active context has a vocabulary mapping:
       if vocab && self.vocab && iri.start_with?(self.vocab) && iri.length > self.vocab.length
         suffix = iri[self.vocab.length..-1]
-        return suffix unless term_definitions.has_key?(suffix)
+        return suffix unless term_definitions.key?(suffix)
       end
 
       # The iri could not be compacted using the active context's vocabulary mapping. Try to create a compact IRI, starting by initializing compact IRI to null. This variable will be used to tore the created compact IRI, if any.
@@ -1427,7 +1427,7 @@ module JSON::LD
 
         suffix = iri[td.id.length..-1]
         ciri = "#{term}:#{suffix}"
-        candidates << ciri unless value && term_definitions.has_key?(ciri)
+        candidates << ciri unless value && term_definitions.key?(ciri)
       end
 
       return candidates.sort.first if !candidates.empty?
@@ -1523,16 +1523,16 @@ module JSON::LD
             res['@language'] = lang
           end
           res['@direction'] = dir
-        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype)
+        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype) && value.valid?
           res['@type'] = uri(coerce(property)) if coerce(property)
           res['@value'] = value.object
         else
-          value.canonicalize! if value.datatype == RDF::XSD.double
+          value.canonicalize! if value.valid? && value.datatype == RDF::XSD.double
           if coerce(property)
             res['@type'] = uri(coerce(property)).to_s
-          elsif value.has_datatype?
+          elsif value.datatype?
             res['@type'] = uri(value.datatype).to_s
-          elsif value.has_language? || language(property)
+          elsif value.language? || language(property)
             res['@language'] = (value.language || language(property)).to_s
           end
           res['@value'] = value.to_s
@@ -1580,15 +1580,15 @@ module JSON::LD
       direction = direction(property)
 
       result = case
-      when coerce(property) == '@id' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
+      when coerce(property) == '@id' && value.key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce)"}
         compact_iri(value['@id'], base: base)
-      when coerce(property) == '@vocab' && value.has_key?('@id') && (value.keys - %w(@id @index)).empty?
+      when coerce(property) == '@vocab' && value.key?('@id') && (value.keys - %w(@id @index)).empty?
         # Compact an @id coercion
         #log_debug("") {" (@id & coerce & vocab)"}
         compact_iri(value['@id'], vocab: true)
-      when value.has_key?('@id')
+      when value.key?('@id')
         #log_debug("") {" (@id)"}
         # return value as is
         value
@@ -1609,7 +1609,7 @@ module JSON::LD
         value
       end
 
-      if result.is_a?(Hash) && result.has_key?('@type') && value['@type'] != '@json'
+      if result.is_a?(Hash) && result.key?('@type') && value['@type'] != '@json'
         # Compact values of @type
         c_type =  if result['@type'].is_a?(Array)
           result['@type'].map {|t| compact_iri(t, vocab: true)}
@@ -1857,11 +1857,11 @@ module JSON::LD
       container_map = inverse_context[iri]
       #log_debug("  ") {"container_map: #{container_map.inspect}"}
       containers.each do |container|
-        next unless container_map.has_key?(container)
+        next unless container_map.key?(container)
         tl_map = container_map[container]
         value_map = tl_map[type_language]
         preferred_values.each do |item|
-          next unless value_map.has_key?(item)
+          next unless value_map.key?(item)
           #log_debug("=>") {value_map[item].inspect}
           return value_map[item]
         end

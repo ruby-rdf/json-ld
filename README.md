@@ -4,7 +4,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/json-ld.png)](https://rubygems.org/gems/json-ld)
 [![Build Status](https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=develop)](https://github.com/ruby-rdf/json-ld/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg)](https://coveralls.io/github/ruby-rdf/json-ld)
+[![Coverage Status](https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg?branch=develop)](https://coveralls.io/github/ruby-rdf/json-ld?branch=develop)
 [![Gitter chat](https://badges.gitter.im/ruby-rdf.png)](https://gitter.im/gitterHQ/gitter)
 
 ## Features
@@ -17,7 +17,7 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 * If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
 * Provisional support for [JSON-LD*][JSON-LD*].
 
-[Implementation Report](file.earl.html)
+[Implementation Report](https://ruby-rdf.github.io/json-ld/etc/earl.html)
 
 Install with `gem install json-ld`
 
@@ -39,7 +39,7 @@ The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JS
 
 ### JSON-LD* (RDFStar)
 
-The {JSON::LD::API.toRdf} and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD*][JSON-LD*].
+The {JSON::LD::API.expand}, {JSON::LD::API.compact}, {JSON::LD::API.toRdf}, and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD*][JSON-LD*].
 
 Internally, an `RDF::Statement` is treated as another resource, along with `RDF::URI` and `RDF::Node`, which allows an `RDF::Statement` to have a `#subject` or `#object` which is also an `RDF::Statement`.
 
@@ -54,6 +54,19 @@ In JSON-LD, with the `rdfstar` option set, the value of `@id`, in addition to an
       },
       "ex:certainty": 0.9
     }
+
+Additionally, the `@annotation` property (or alias) may be used on a node object or value object to annotate the statement for which the associated node is the object of a triple.
+
+    {
+      "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
+      "@id": "bob",
+      "foaf:age" 23,
+      "@annotation": {
+        "ex:certainty": 0.9
+      }
+    }
+
+In the first case, the embedded node is not asserted, and only appears as the subject of a triple. In the second case, the triple is asserted and used as the subject in another statement which annotates it.
 
 **Note: This feature is subject to change or elimination as the standards process progresses.**
 

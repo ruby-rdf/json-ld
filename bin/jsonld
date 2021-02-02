@@ -24,7 +24,7 @@ def run(input, options, parser_options)
 
   start = Time.new
   if options[:expand]
-    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.has_key?(:context)
+    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.key?(:context)
     input = JSON::LD::API.fromRdf(reader) if reader
     output = JSON::LD::API.expand(input, parser_options)
     secs = Time.new - start
@@ -49,7 +49,7 @@ def run(input, options, parser_options)
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
   else
-    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.has_key?(:context)
+    parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.key?(:context)
     parser_options[:standard_prefixes] = true
     reader ||= JSON::LD::Reader.new(input, parser_options)
     num = 0
@@ -181,7 +181,7 @@ opts.each do |opt, arg|
 end
 
 # Hack
-if !(options.keys & [:expand, :compact, :flatten, :frame]).empty? &&
+if !(options.keys & %i{expand compact flatten frame}).empty? &&
    (parser_options[:stream] || options[:output_format] != :jsonld)
    STDERR.puts "Incompatible options"
    exit(1)
