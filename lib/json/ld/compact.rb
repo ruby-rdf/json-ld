@@ -64,7 +64,7 @@ module JSON::LD
           log_debug("prop-scoped", depth: log_depth.to_i) {"context: #{self.context.inspect}"}
         end
 
-        if element.key?('@id') || element.key?('@value')
+        if (element.key?('@id') || element.key?('@value')) && !element.key?('@annotation')
           result = context.compact_value(property, element, base: @options[:base])
           if !result.is_a?(Hash) || context.coerce(property) == '@json'
             log_debug("", depth: log_depth.to_i) {"=> scalar result: #{result.inspect}"}
