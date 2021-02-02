@@ -49,7 +49,13 @@ module JSON::LD
             log_depth: log_depth.to_i + 1)
 
           # If the active property is @list or its container mapping is set to @list and v is an array, change it to a list object
-          v = {"@list" => v} if is_list && v.is_a?(Array)
+          if is_list && v.is_a?(Array)
+            # Make sure that no member of v contains an annotation object
+            raise JsonLdError::InvalidAnnotation,
+              "A list element must not contain @annotation." if
+              v.any? {|n| n.is_a?(Hash) && n.key?('@annotation')}
+            v = {"@list" => v}
+          end
 
           case v
           when nil then nil
@@ -485,6 +491,11 @@ module JSON::LD
 
             # Spec FIXME: need to be sure that result is an array
             value = as_array(value)
+
+            # Make sure that no member of value contains an annotation object
+            raise JsonLdError::InvalidAnnotation,
+              "A list element must not contain @annotation." if
+              value.any? {|n| n.is_a?(Hash) && n.key?('@annotation')}
 
             value
           when '@set'

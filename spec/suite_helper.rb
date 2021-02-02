@@ -203,8 +203,8 @@ module Fixtures
         logger.info "frame: #{frame}" if frame_loc
 
         options = self.options
-        unless options[:specVersion] == "json-ld-1.1"
-          skip "not a 1.1 test" 
+        if options[:specVersion] == "json-ld-1.0"
+          skip "1.0 test" 
           return
         end
 
@@ -225,7 +225,7 @@ module Fixtures
               JSON::LD::API.frame(input_loc, frame_loc, logger: logger, **options)
             when "jld:FromRDFTest"
               # Use an array, to preserve input order
-              repo = RDF::NQuads::Reader.open(input_loc) do |reader|
+              repo = RDF::NQuads::Reader.open(input_loc, rdfstar: options[:rdfstar]) do |reader|
                 reader.each_statement.to_a
               end.to_a.uniq.extend(RDF::Enumerable)
               logger.info "repo: #{repo.dump(self.id == '#t0012' ? :nquads : :trig)}"
@@ -258,7 +258,7 @@ module Fixtures
             end
             if evaluationTest?
               if testType == "jld:ToRDFTest"
-                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect, logger: [])
+                expected = RDF::Repository.new << RDF::NQuads::Reader.new(expect, rdfstar: options[:rdfstar], logger: [])
                 rspec_example.instance_eval {
                   expect(result).to be_equivalent_graph(expected, logger)
                 }
@@ -314,7 +314,7 @@ module Fixtures
                 when "jld:FrameTest"
                   JSON::LD::API.frame(t.input_loc, t.frame_loc, logger: logger, **options)
                 when "jld:FromRDFTest"
-                  repo = RDF::Repository.load(t.input_loc)
+                  repo = RDF::Repository.load(t.input_loc, rdfstar: options[:rdfstar])
                   logger.info "repo: #{repo.dump(t.id == '#t0012' ? :nquads : :trig)}"
                   JSON::LD::API.fromRdf(repo, logger: logger, **options)
                 when "jld:HttpTest"

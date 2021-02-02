@@ -3798,7 +3798,7 @@ describe JSON::LD::API do
             "@id": "ex:bob",
             "ex:knows": {
               "@list": [{"@id": "ex:fred"}],
-              "@annotation": "value2"
+              "@annotation": {"ex:prop": "value2"}
             }
           }),
           exception: JSON::LD::JsonLdError::InvalidSetOrListObject
@@ -3810,7 +3810,7 @@ describe JSON::LD::API do
               "@list": [
                 {
                   "@id": "ex:fred",
-                  "@annotation": "value2"
+                  "@annotation": {"ex:prop": "value2"}
                 }
               ]
             }
