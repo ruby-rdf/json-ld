@@ -77,7 +77,6 @@ def remap_bnodes(actual, expected)
     bijection = bijection.inject({}) {|memo, (k, v)| memo.merge(k.to_s => v.to_s)}
 
     # Recursively replace blank nodes in actual with the bijection
-    #require 'byebug'; byebug
     replace_nodes(actual, bijection)
   else
     actual

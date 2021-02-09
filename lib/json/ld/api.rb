@@ -253,6 +253,8 @@ module JSON::LD
     # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
+    # @option options [Boolean] :createAnnotations
+    #   Unfold embedded nodes which can be represented using `@annotation`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The flattened JSON-LD document
@@ -283,6 +285,13 @@ module JSON::LD
         # Initialize node map to a JSON object consisting of a single member whose key is @default and whose value is an empty JSON object.
         graph_maps = {'@default' => {}}
         create_node_map(value, graph_maps)
+
+        # If create annotations flag is set, then update each node map in graph maps with the result of calling the create annotations algorithm.
+        if options[:createAnnotations]
+          graph_maps.values.each do |node_map|
+            create_annotations(node_map)
+          end
+        end
 
         default_graph = graph_maps['@default']
         graph_maps.keys.opt_sort(ordered: @options[:ordered]).each do |graph_name|

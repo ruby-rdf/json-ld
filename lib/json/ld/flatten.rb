@@ -192,6 +192,50 @@ module JSON::LD
     end
 
     ##
+    # Create annotations
+    #
+    # Updates a node map from which annotations have been folded into embedded triples to re-extract the annotations.
+    #
+    # Map entries where the key is of the form of a canonicalized JSON object are used to find keys with the `@id` and property components. If found, the original map entry is removed and entries added to an `@annotation` property of the associated value.
+    #
+    # * Keys which are of the form of a canonicalized JSON object are examined in inverse order of length.
+    # * Deserialize the key into a map, and re-serialize the value of `@id`.
+    # * If the map contains an entry with that value (after re-canonicalizing, as appropriate), and the associated antry has a item which matches the non-`@id` item from the map, the node is used to create an `@annotation` entry within that value.
+    #
+    # @param [Hash{String => Hash}] input
+    # @return [Hash{String => Hash}]
+    def create_annotations(node_map)
+      node_map.keys.
+        select {|k| k.start_with?('{')}.
+        sort_by(&:length).
+        reverse.each do |key|
+
+        # Deserialize key, and re-serialize the `@id` value.
+        emb = JSON.parse(key)
+        id = emb.delete('@id')
+        property, value = emb.to_a.first
+
+        # If id is a map, set it to the result of canonicalizing that value, otherwise to itself.
+        id = id.to_json_c14n if id.is_a?(Hash)
+
+        next unless node_map.key?(id)
+        # If node map has an entry for id and that entry contains the same property and value from entry:
+        node = node_map[id] 
+
+        next unless node.key?(property)
+
+        node[property].each do |emb_value|
+          next unless emb_value == value.first
+
+          annotation = node_map.delete(key)
+          annotation.delete('@id')
+          add_value(emb_value, '@annotation', annotation, property_is_array: true) unless
+            annotation.empty?
+        end
+      end
+    end
+
+    ##
     # Rename blank nodes recursively within an embedded object
     #
     # @param [Object] node
