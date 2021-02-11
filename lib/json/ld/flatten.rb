@@ -210,8 +210,9 @@ module JSON::LD
         sort_by(&:length).
         reverse.each do |key|
 
+        annotation = node_map[key]
         # Deserialize key, and re-serialize the `@id` value.
-        emb = JSON.parse(key)
+        emb = annotation['@id'].dup
         id = emb.delete('@id')
         property, value = emb.to_a.first
 
@@ -227,7 +228,7 @@ module JSON::LD
         node[property].each do |emb_value|
           next unless emb_value == value.first
 
-          annotation = node_map.delete(key)
+          node_map.delete(key)
           annotation.delete('@id')
           add_value(emb_value, '@annotation', annotation, property_is_array: true) unless
             annotation.empty?
