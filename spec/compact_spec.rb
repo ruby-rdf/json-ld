@@ -3113,7 +3113,7 @@ describe JSON::LD::API do
     end
   end
 
-  context "JSON-LD*" do
+  context "JSON-LD-star" do
     {
       "subject-iii": {
         input: %([{

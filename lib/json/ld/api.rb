@@ -90,7 +90,7 @@ module JSON::LD
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
     # @option options [Boolean] rdfstar      (false)
-    #   support parsing JSON-LD* statement resources.
+    #   support parsing JSON-LD-star statement resources.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)

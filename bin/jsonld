@@ -26,34 +26,34 @@ def run(input, options, parser_options)
   if options[:expand]
     parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.key?(:context)
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.expand(input, parser_options)
+    output = JSON::LD::API.expand(input, **parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Expanded in #{secs} seconds." unless options[:quiet]
   elsif options[:compact]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.compact(input, parser_options[:context], parser_options)
+    output = JSON::LD::API.compact(input, parser_options[:context], **parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Compacted in #{secs} seconds." unless options[:quiet]
   elsif options[:flatten]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.flatten(input, parser_options[:context], parser_options)
+    output = JSON::LD::API.flatten(input, parser_options[:context], **parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Flattened in #{secs} seconds." unless options[:quiet]
   elsif options[:frame]
     input = JSON::LD::API.fromRdf(reader) if reader
-    output = JSON::LD::API.frame(input, parser_options[:frame], parser_options)
+    output = JSON::LD::API.frame(input, parser_options[:frame], **parser_options)
     secs = Time.new - start
     options[:output].puts output.to_json(JSON::LD::JSON_STATE)
     STDERR.puts "Framed in #{secs} seconds." unless options[:quiet]
   else
     parser_options = parser_options.merge(expandContext: parser_options.delete(:context)) if parser_options.key?(:context)
     parser_options[:standard_prefixes] = true
-    reader ||= JSON::LD::Reader.new(input, parser_options)
+    reader ||= JSON::LD::Reader.new(input, **parser_options)
     num = 0
-    RDF::Writer.for(options[:output_format]).new(options[:output], parser_options) do |w|
+    RDF::Writer.for(options[:output_format]).new(options[:output], **parser_options) do |w|
       reader.each do |statement|
         num += 1
         w << statement
@@ -113,6 +113,7 @@ OPT_ARGS = [
   ["--processingMode",GetoptLong::REQUIRED_ARGUMENT,"Set processing mode, defaults to json-ld-1.1"],
   ["--quiet",         GetoptLong::NO_ARGUMENT,      "Supress most output other than progress indicators"],
   ["--rename_bnodes", GetoptLong::OPTIONAL_ARGUMENT,"Rename bnodes as part of expansion, or keep them the same"],
+  ["--rdfstar",       GetoptLong::NO_ARGUMENT,      "Parse JSON-LD-star"],
   ["--requireAll",    GetoptLong::OPTIONAL_ARGUMENT,"Rename bnodes as part of expansion, or keep them the same"],
   ["--stream",        GetoptLong::NO_ARGUMENT,      "Use Streaming reader/writer"],
   ["--unique_bnodes", GetoptLong::OPTIONAL_ARGUMENT,"Use unique bnode identifiers"],
@@ -158,6 +159,7 @@ opts.each do |opt, arg|
   when '--quiet'
     options[:quiet] = true
     logger.level = Logger::FATAL
+  when "--rdfstar"        then parser_options[:rdfstar] = true
   when "--rename_bnodes"  then parser_options[:rename_bnodes] = (arg || 'true') == 'true'
   when "--requireAll"     then parser_options[:requireAll] = (arg || 'true') == 'true'
   when '--stream'         then parser_options[:stream] = true
@@ -193,7 +195,7 @@ if ARGV.empty?
 else
   ARGV.each do |file|
     # Call with opened files
-    RDF::Util::File.open_file(file, options) {|f| run(f, options, parser_options)}
+    RDF::Util::File.open_file(file, **options) {|f| run(f, options, parser_options)}
   end
 end
 puts

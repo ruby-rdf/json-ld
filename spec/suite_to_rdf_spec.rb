@@ -9,7 +9,7 @@ describe JSON::LD do
       m.entries.each do |t|
         specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
           pending "Generalized RDF" if t.options[:produceGeneralizedRdf]
-          pending "RDF*" if t.property('@id') == '#te122'
+          pending "RDF-star" if t.property('@id') == '#te122'
           if %w(#t0118).include?(t.property('@id'))
             expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
           elsif %w(#te075).include?(t.property('@id'))

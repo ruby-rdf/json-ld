@@ -1175,7 +1175,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "JSON-LD*" do
+    context "JSON-LD-star" do
       {
         "node with embedded subject without rdfstar option": {
           input: %({

@@ -9,7 +9,7 @@ module JSON::LD
     ##
     # This algorithm creates a JSON object node map holding an indexed representation of the graphs and nodes represented in the passed expanded document. All nodes that are not uniquely identified by an IRI get assigned a (new) blank node identifier. The resulting node map will have a member for every graph in the document whose value is another object with a member for every node represented in the document. The default graph is stored under the @default member, all other graphs are stored under their graph name.
     #
-    # For RDF*/JSON-LD*:
+    # For RDF-star/JSON-LD-star:
     #   * Values of `@id` can be an object (embedded node); when these are used as keys in a Node Map, they are serialized as canonical JSON, and de-serialized when flattening.
     #   * The presence of `@annotation` implies an embedded node and the annotation object is removed from the node/value object in which it appears.
     #

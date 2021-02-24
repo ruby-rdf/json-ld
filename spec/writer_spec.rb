@@ -189,7 +189,7 @@ describe JSON::LD::Writer do
     end
   end
 
-  context "RDF*" do
+  context "RDF-star" do
     {
       "subject-iii": {
         input: RDF::Statement(
