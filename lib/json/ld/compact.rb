@@ -145,7 +145,7 @@ module JSON::LD
             end
 
             unless compacted_value.empty?
-              al = context.compact_iri('@reverse')
+              al = context.compact_iri('@reverse', vocab: true)
               log_debug("", depth: log_depth.to_i) {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
             end

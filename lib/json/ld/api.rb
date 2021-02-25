@@ -311,7 +311,7 @@ module JSON::LD
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(compact(flattened))
-          kwgraph = self.context.compact_iri('@graph')
+          kwgraph = self.context.compact_iri('@graph', vocab: true)
           flattened = self.context.
             serialize(provided_context: context).
             merge(kwgraph => compacted)
@@ -457,7 +457,7 @@ module JSON::LD
         result = if !compacted.is_a?(Array)
           compacted
         else
-          kwgraph = context.compact_iri('@graph')
+          kwgraph = context.compact_iri('@graph', vocab: true)
           {kwgraph => compacted}
         end
         # Only add context if one was provided
