@@ -141,7 +141,7 @@ opts = GetoptLong.new(*OPT_ARGS.map {|o| o[0..-2]})
 opts.each do |opt, arg|
   case opt
   when '--debug'          then logger.level = Logger::DEBUG
-  when '--compact'        then parser_options[:compact] = true
+  when '--compact'        then options[:compact] = true
   when "--compactArrays"  then parser_options[:compactArrays] = (arg || 'true') == 'true'
   when '--context'        then parser_options[:context] = RDF::URI(arg).absolute? ? arg : File.open(arg)
   when '--evaluate'       then input = arg
