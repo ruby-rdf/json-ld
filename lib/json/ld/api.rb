@@ -90,7 +90,7 @@ module JSON::LD
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
     #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
     # @option options [Boolean] rdfstar      (false)
-    #   support parsing JSON-LD* statement resources.
+    #   support parsing JSON-LD-star statement resources.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
@@ -253,6 +253,8 @@ module JSON::LD
     # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
+    # @option options [Boolean] :createAnnotations
+    #   Unfold embedded nodes which can be represented using `@annotation`.
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The flattened JSON-LD document
@@ -284,6 +286,13 @@ module JSON::LD
         graph_maps = {'@default' => {}}
         create_node_map(value, graph_maps)
 
+        # If create annotations flag is set, then update each node map in graph maps with the result of calling the create annotations algorithm.
+        if options[:createAnnotations]
+          graph_maps.values.each do |node_map|
+            create_annotations(node_map)
+          end
+        end
+
         default_graph = graph_maps['@default']
         graph_maps.keys.opt_sort(ordered: @options[:ordered]).each do |graph_name|
           next if graph_name == '@default'
@@ -302,7 +311,7 @@ module JSON::LD
         if context && !flattened.empty?
           # Otherwise, return the result of compacting flattened according the Compaction algorithm passing context ensuring that the compaction result uses the @graph keyword (or its alias) at the top-level, even if the context is empty or if there is only one element to put in the @graph array. This ensures that the returned document has a deterministic structure.
           compacted = as_array(compact(flattened))
-          kwgraph = self.context.compact_iri('@graph')
+          kwgraph = self.context.compact_iri('@graph', vocab: true)
           flattened = self.context.
             serialize(provided_context: context).
             merge(kwgraph => compacted)
@@ -448,7 +457,7 @@ module JSON::LD
         result = if !compacted.is_a?(Array)
           compacted
         else
-          kwgraph = context.compact_iri('@graph')
+          kwgraph = context.compact_iri('@graph', vocab: true)
           {kwgraph => compacted}
         end
         # Only add context if one was provided

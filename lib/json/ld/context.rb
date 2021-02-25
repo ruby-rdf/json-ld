@@ -1455,6 +1455,8 @@ module JSON::LD
       if !vocab
         # transform iri to a relative IRI using the document's base IRI
         iri = remove_base(self.base || base, iri)
+        # Make . relative if it has the form of a keyword.
+        iri = "./#{iri}" if iri.match?(/^@[a-zA-Z]+$/)
         return iri
       else
         return iri

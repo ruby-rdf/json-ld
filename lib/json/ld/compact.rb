@@ -100,7 +100,7 @@ module JSON::LD
           if expanded_property == '@id'
             compacted_value = as_array(expanded_value).map do |expanded_id|
               if node?(expanded_id) && @options[:rdfstar]
-                # This can only really happen for valid RDF*
+                # This can only really happen for valid RDF-star
                 compact(expanded_id, base: base,
                         property: '@id',
                         log_depth: log_depth.to_i + 1)
@@ -145,7 +145,7 @@ module JSON::LD
             end
 
             unless compacted_value.empty?
-              al = context.compact_iri('@reverse')
+              al = context.compact_iri('@reverse', vocab: true)
               log_debug("", depth: log_depth.to_i) {"remainder: #{al} => #{compacted_value.inspect}"}
               result[al] = compacted_value
             end

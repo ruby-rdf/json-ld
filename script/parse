@@ -116,7 +116,7 @@ OPT_ARGS = [
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT,   "Where to store output (default STDOUT)"],
   ["--profile", GetoptLong::NO_ARGUMENT,              "Run profiler with output to doc/profiles/"],
   ["--quiet", GetoptLong::NO_ARGUMENT,                "Reduce output"],
-  ["--rdfstar", GetoptLong::NO_ARGUMENT,        "RDF* mode"],
+  ["--rdfstar", GetoptLong::NO_ARGUMENT,              "RDF-star mode"],
   ["--stream", GetoptLong::NO_ARGUMENT,               "Streaming reader/writer"],
   ["--uri", GetoptLong::REQUIRED_ARGUMENT,            "Run with argument value as base"],
   ["--validate", GetoptLong::NO_ARGUMENT,             "Validate input"],

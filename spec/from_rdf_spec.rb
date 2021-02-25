@@ -766,7 +766,7 @@ describe JSON::LD::API do
       end
     end
 
-    context "RDF*" do
+    context "RDF-star" do
       {
         "subject-iii": {
           input: RDF::Statement(

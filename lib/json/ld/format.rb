@@ -174,6 +174,13 @@ module JSON::LD
               use: :required,
               on: ["--context CONTEXT"],
               description: "Context to use when compacting.") {|arg| RDF::URI(arg)},
+            RDF::CLI::Option.new(
+              symbol: :createAnnotations,
+              datatype: TrueClass,
+              default: false,
+              control: :checkbox,
+              on: ["--[no-]create-annotations"],
+              description: "Unfold embedded nodes which can be represented using `@annotation`."),
           ]
         },
         frame: {

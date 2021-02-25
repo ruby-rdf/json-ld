@@ -15,7 +15,7 @@ JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and 
 
 * If the [jsonlint][] gem is installed, it will be used when validating an input document.
 * If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
-* Provisional support for [JSON-LD*][JSON-LD*].
+* Provisional support for [JSON-LD-star][JSON-LD-star].
 
 [Implementation Report](https://ruby-rdf.github.io/json-ld/etc/earl.html)
 
@@ -37,9 +37,9 @@ The order of triples retrieved from the `RDF::Enumerable` dataset determines the
 ### MultiJson parser
 The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
 
-### JSON-LD* (RDFStar)
+### JSON-LD-star (RDFStar)
 
-The {JSON::LD::API.expand}, {JSON::LD::API.compact}, {JSON::LD::API.toRdf}, and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD*][JSON-LD*].
+The {JSON::LD::API.expand}, {JSON::LD::API.compact}, {JSON::LD::API.toRdf}, and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD-star][JSON-LD-star].
 
 Internally, an `RDF::Statement` is treated as another resource, along with `RDF::URI` and `RDF::Node`, which allows an `RDF::Statement` to have a `#subject` or `#object` which is also an `RDF::Statement`.
 
@@ -636,7 +636,7 @@ see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [YARD-GS]:          https://rubydoc.info/docs/yard/file/docs/GettingStarted.md
 [PDD]:              https://unlicense.org/#unlicensing-contributions
 [RDF.rb]:           https://rubygems.org/gems/rdf
-[JSON-LD*]:             https://json-ld.github.io/json-ld-star/
+[JSON-LD-star]:             https://json-ld.github.io/json-ld-star/
 [Rack::LinkedData]: https://rubygems.org/gems/rack-linkeddata
 [Backports]:        https://rubygems.org/gems/backports
 [JSON-LD]:          https://www.w3.org/TR/json-ld11/ "JSON-LD 1.1"

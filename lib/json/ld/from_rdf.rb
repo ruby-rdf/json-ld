@@ -40,8 +40,10 @@ module JSON::LD
 
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
-        subject = statement.subject.to_s
-        node = node_map[subject] ||= resource_representation(statement.subject,useNativeTypes)
+        subject = statement.subject.statement? ?
+          resource_representation(statement.subject, useNativeTypes)['@id'].to_json_c14n :
+          statement.subject.to_s
+        node = node_map[subject] ||= resource_representation(statement.subject, useNativeTypes)
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
         if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF.to_uri + 'direction'
@@ -50,12 +52,14 @@ module JSON::LD
 
         # If object is an IRI, blank node identifier, or statement, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
         unless statement.object.literal?
-          node_map[statement.object.to_s] ||=
+          object = statement.object.statement? ?
+            resource_representation(statement.object, useNativeTypes)['@id'].to_json_c14n :
+            statement.object.to_s
+          node_map[object] ||=
             resource_representation(statement.object, useNativeTypes)
         end
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
-        # XXX JSON-LD* does not support embedded value of @type
         if statement.predicate == RDF.type && statement.object.resource? && !useRdfType
           merge_value(node, '@type', statement.object.to_s)
           next
@@ -112,8 +116,7 @@ module JSON::LD
           end
         end
 
-        # Skip to next graph, unless this one has lists
-        next unless nil_var = graph_object[RDF.nil.to_s]
+        nil_var = graph_object.fetch(RDF.nil.to_s, {})
 
         # For each item usage in the usages member of nil, perform the following steps:
         nil_var.fetch(:usages, []).each do |usage|
@@ -141,6 +144,9 @@ module JSON::LD
           head['@list'] = list.reverse
           list_nodes.each {|node_id| graph_object.delete(node_id)}
         end
+
+        # Create annotations on graph object
+        create_annotations(graph_object)
       end
 
       result = []
