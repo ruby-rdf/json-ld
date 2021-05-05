@@ -1884,7 +1884,7 @@ module JSON::LD
       @base_and_parents ||= begin
         u = base
         iri_set = u.to_s.end_with?('/') ? [u.to_s] : []
-        iri_set << u.to_s while (u = u.parent)
+        iri_set << u.to_s while (u != './' && u = u.parent)
         iri_set
       end
       b = base.to_s
