@@ -1,6 +1,5 @@
 source "https://rubygems.org"
 gem "nokogiri",       '~> 1.10'
-gem "nokogumbo", platforms: :mri
 
 gemspec
 gem 'rdf',                  git: "https://github.com/ruby-rdf/rdf",                 branch: "develop"
