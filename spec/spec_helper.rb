@@ -16,7 +16,6 @@ require 'yaml'
 begin
   require 'simplecov'
   require 'simplecov-lcov'
-  require 'coveralls'
   SimpleCov::Formatter::LcovFormatter.config do |config|
     #Coveralls is coverage by default/lcov. Send info results
     config.report_with_single_file = true
