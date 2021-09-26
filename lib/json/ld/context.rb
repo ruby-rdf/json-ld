@@ -253,6 +253,7 @@ module JSON::LD
 
       local_context = as_array(local_context)
 
+      log_depth do
       local_context.each do |context|
         case context
         when nil,false
@@ -266,22 +267,22 @@ module JSON::LD
                   "Attempt to clear a context with protected terms"
           end
         when Context
-           #log_debug("parse") {"context: #{context.inspect}"}
+           log_debug("parse") {"context: #{context.inspect}"}
            result = result.merge(context)
         when IO, StringIO
-          #log_debug("parse") {"io: #{context}"}
+          log_debug("parse") {"io: #{context}"}
           # Load context document, if it is an open file
           begin
             ctx = JSON.load(context)
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
             result = result.parse(ctx["@context"] ? ctx["@context"] : {})
           rescue JSON::ParserError => e
-            #log_debug("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
+            log_info("parse") {"Failed to parse @context from remote document at #{context}: #{e.message}"}
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Failed to parse remote context at #{context}: #{e.message}" if @options[:validate]
             self
           end
         when String, RDF::URI
-          #log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
+          log_debug("parse") {"remote: #{context}, base: #{result.context_base || result.base}"}
 
           # 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
           context = RDF::URI(result.context_base || base).join(context)
@@ -296,11 +297,11 @@ module JSON::LD
 
           cached_context = if PRELOADED[context_canon.to_s]
             # If we have a cached context, merge it into the current context (result) and use as the new context
-            #log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
+            log_debug("parse") {"=> cached_context: #{context_canon.to_s.inspect}"}
 
             # If this is a Proc, then replace the entry with the result of running the Proc
             if PRELOADED[context_canon.to_s].respond_to?(:call)
-              #log_debug("parse") {"=> (call)"}
+              log_debug("parse") {"=> (call)"}
               PRELOADED[context_canon.to_s] = PRELOADED[context_canon.to_s].call
             end
             PRELOADED[context_canon.to_s]
@@ -320,16 +321,17 @@ module JSON::LD
                 ctx = Context.new(unfrozen: true, **options).dup
                 ctx.context_base = context.to_s
                 ctx = ctx.parse(remote_doc.document['@context'], remote_contexts: remote_contexts.dup)
+                ctx.context_base = context.to_s # In case it was altered
                 ctx.instance_variable_set(:@base, nil)
                 ctx
               end
             rescue JsonLdError::LoadingDocumentFailed => e
-              #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              log_info("parse") {"Failed to retrieve @context from remote document at #{context_canon.inspect}: #{e.message}"}
               raise JsonLdError::LoadingRemoteContextFailed, "#{context}: #{e.message}", e.backtrace
             rescue JsonLdError
               raise
             rescue StandardError => e
-              #log_debug("parse") {"Failed to retrieve @context from remote document at #{context_no_base.context_base.inspect}: #{e.message}"}
+              log_info("parse") {"Failed to retrieve @context from remote document at #{context_canon.inspect}: #{e.message}"}
               raise JsonLdError::LoadingRemoteContextFailed, "#{context}: #{e.message}", e.backtrace
             end
           end
@@ -406,6 +408,7 @@ module JSON::LD
           raise JsonLdError::InvalidLocalContext, "must be a URL, JSON object or array of same: #{context.inspect}"
         end
       end
+      end
       result
     end
 
@@ -475,7 +478,7 @@ module JSON::LD
         remote_contexts: [],
         validate_scoped: true)
       # Expand a string value, unless it matches a keyword
-      #log_debug("create_term_definition") {"term = #{term.inspect}"}
+      log_debug("create_term_definition") {"term = #{term.inspect}"}
 
       # If defined contains the key term, then the associated value must be true, indicating that the term definition has already been created, so return. Otherwise, a cyclical term definition has been detected, which is an error.
       case defined[term]
@@ -646,7 +649,7 @@ module JSON::LD
           # Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
           term
         end
-        #log_debug("") {"=> #{definition.id}"}
+        log_debug("") {"=> #{definition.id}"}
       elsif term.include?('/')
         # If term is a relative IRI
         definition.id = expand_iri(term, vocab: true)
@@ -659,7 +662,7 @@ module JSON::LD
         # Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
         raise JsonLdError::InvalidIRIMapping, "relative term definition without vocab: #{term} on term #{term.inspect}" unless vocab
         definition.id = vocab + term
-        #log_debug("") {"=> #{definition.id}"}
+        log_debug("") {"=> #{definition.id}"}
       end
 
       @iri_to_term[definition.id] = term if simple_term && definition.id
@@ -699,6 +702,7 @@ module JSON::LD
           when nil then [nil]
           else value['@context']
           end
+          log_debug("") {"context: #{definition.context.inspect}"}
         rescue JsonLdError => e
           raise JsonLdError::InvalidScopedContext, "Term definition for #{term.inspect} contains illegal value for @context: #{e.message}"
         end
