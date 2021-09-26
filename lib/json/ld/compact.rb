@@ -297,6 +297,7 @@ module JSON::LD
                 if index_key == '@index'
                   map_key = expanded_item['@index']
                 else
+                  index_key = context.expand_iri(index_key, vocab: true)
                   container_key = context.compact_iri(index_key, vocab: true)
                   map_key, *others = Array(compacted_item[container_key])
                   if map_key.is_a?(String)
