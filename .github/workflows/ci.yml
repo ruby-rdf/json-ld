@@ -40,11 +40,10 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-        run: ruby --version
       - name: Install dependencies
         run: bundle install --jobs 4 --retry 3
       - name: Run tests
-        run: bundle exec rspec spec || $ALLOW_FAILURES
+        run: ruby --version; bundle exec rspec spec || $ALLOW_FAILURES
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v1.1.2
         if: "matrix.ruby == '3.0'"
