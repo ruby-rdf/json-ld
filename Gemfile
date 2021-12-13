@@ -3,6 +3,7 @@ gem "nokogiri",       '~> 1.10'
 
 gemspec
 gem 'rdf',                  git: "https://github.com/ruby-rdf/rdf",                 branch: "develop"
+gem 'json-canonicalization',git: "https://github.com/dryruby/json-canonicalization",branch: "develop"
 
 group :development do
   gem 'ebnf',               git: "https://github.com/dryruby/ebnf",                 branch: "develop"
