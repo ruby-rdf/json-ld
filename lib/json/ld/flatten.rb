@@ -202,7 +202,7 @@ module JSON::LD
     # * Deserialize the key into a map, and re-serialize the value of `@id`.
     # * If the map contains an entry with that value (after re-canonicalizing, as appropriate), and the associated antry has a item which matches the non-`@id` item from the map, the node is used to create an `@annotation` entry within that value.
     #
-    # @param [Hash{String => Hash}] input
+    # @param [Hash{String => Hash}] node_map
     # @return [Hash{String => Hash}]
     def create_annotations(node_map)
       node_map.keys.
