@@ -1688,7 +1688,7 @@ module JSON::LD
       ec.default_direction = that.default_direction
       ec.default_language = that.default_language
       ec.previous_context = that.previous_context
-      ec.processingMode = that.processingMode if that.instance_variable_get(:@processingModee)
+      ec.processingMode = that.processingMode if that.instance_variable_get(:@processingMode)
       ec.vocab = that.vocab if that.vocab
 
       ec.instance_eval do
