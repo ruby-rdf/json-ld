@@ -1,0 +1,17 @@
+{
+  "@context": [
+    {
+      "@language": "en"
+    },
+    {
+      "title": {
+        "@id": "dct:title"
+      },
+      "titles": {
+        "@id": "dct:title",
+        "@container": "@language"
+      }
+    }
+  ],
+  "title": "myTitle"
+}

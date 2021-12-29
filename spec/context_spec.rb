@@ -181,7 +181,14 @@ describe JSON::LD::Context do
         before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
         it "retrieves and parses a remote context document" do
           expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-          subject.parse(ctx)
+          ec = subject.parse(ctx)
+          expect(ec.send(:mappings)).to produce({
+            "xsd"      => "http://www.w3.org/2001/XMLSchema#",
+            "name"     => "http://xmlns.com/foaf/0.1/name",
+            "homepage" => "http://xmlns.com/foaf/0.1/homepage",
+            "avatar"   => "http://xmlns.com/foaf/0.1/avatar",
+            "integer"  => "http://www.w3.org/2001/XMLSchema#integer"
+          }, logger)
         end
       end
 

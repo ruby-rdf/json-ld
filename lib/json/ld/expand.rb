@@ -107,7 +107,7 @@ module JSON::LD
           Array(input[tk]).sort.each do |term|
             term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
             unless term_context.nil?
-              log_debug("expand", depth: log_depth.to_i) {"term_context: #{term_context.inspect}"}
+              log_debug("expand", depth: log_depth.to_i) {"term_context[#{term}]: #{term_context.inspect}"}
               context = context.parse(term_context, base: @options[:base], propagate: false)
             end
           end
@@ -258,10 +258,10 @@ module JSON::LD
           expanded_property.to_s.start_with?("_:") &&
           context.processingMode('json-ld-1.1')
 
-        #log_debug("expand property", depth: log_depth.to_i) {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
+        log_debug("expand property", depth: log_depth.to_i) {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
 
         if expanded_property.nil?
-          #log_debug(" => ", depth: log_depth.to_i) {"skip nil property"}
+          log_debug(" => ", depth: log_depth.to_i) {"skip nil property"}
           next
         end
 
@@ -341,7 +341,7 @@ module JSON::LD
             Array(output_object['@included']) + included_result
           when '@type'
             # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
-            #log_debug("@type", depth: log_depth.to_i) {"value: #{value.inspect}"}
+            log_debug("@type", depth: log_depth.to_i) {"value: #{value.inspect}"}
             e_type = case value
             when Array
               value.map do |v|
@@ -516,7 +516,7 @@ module JSON::LD
 
             # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
             if value.key?('@reverse')
-              #log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
+              log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
               value['@reverse'].each do |property, item|
                 # If result does not have a property member, create one and set its value to an empty array.
                 # Append item to the value of the property member of result.
@@ -566,7 +566,7 @@ module JSON::LD
           end
 
           # Unless expanded value is null, set the expanded property member of result to expanded value.
-          #log_debug("expand #{expanded_property}", depth: log_depth.to_i) { expanded_value.inspect}
+          log_debug("expand #{expanded_property}", depth: log_depth.to_i) { expanded_value.inspect}
           output_object[expanded_property] = expanded_value unless expanded_value.nil? && expanded_property == '@value' && input_type != '@json'
           next
         end
@@ -688,21 +688,21 @@ module JSON::LD
 
         # If expanded value is null, ignore key by continuing to the next key from element.
         if expanded_value.nil?
-          #log_debug(" => skip nil value", depth: log_depth.to_i)
+          log_debug(" => skip nil value", depth: log_depth.to_i)
           next
         end
-        #log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
+        log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
 
         # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
         if container.first == '@list' && container.length == 1 && !list?(expanded_value)
-          #log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
+          log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
           expanded_value = {'@list' => as_array(expanded_value)}
         end
-        #log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
+        log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
 
         # convert expanded value to @graph if container specifies it
         if container.first == '@graph' && container.length == 1
-          #log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
+          log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
           expanded_value = as_array(expanded_value).map do |v|
             {'@graph' => as_array(v)}
           end

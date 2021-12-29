@@ -15,10 +15,16 @@ require_relative 'matchers'
 require 'yaml'
 begin
   require 'simplecov'
-  require 'coveralls' unless ENV['NOCOVERALLS']
+  require 'simplecov-lcov'
+  SimpleCov::Formatter::LcovFormatter.config do |config|
+    #Coveralls is coverage by default/lcov. Send info results
+    config.report_with_single_file = true
+    config.single_report_path = 'coverage/lcov.info'
+  end
+
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
     SimpleCov::Formatter::HTMLFormatter,
-    (Coveralls::SimpleCov::Formatter unless ENV['NOCOVERALLS'])
+    SimpleCov::Formatter::LcovFormatter
   ])
   SimpleCov.start do
     add_filter "/spec/"

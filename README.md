@@ -14,7 +14,7 @@ JSON::LD parses and serializes [JSON-LD][] into [RDF][] and implements expansion
 JSON::LD can now be used to create a _context_ from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the `script/gen_context` script.
 
 * If the [jsonlint][] gem is installed, it will be used when validating an input document.
-* If available, uses [Nokogiri][] and/or [Nokogumbo][] for parsing HTML, falls back to REXML otherwise.
+* If available, uses [Nokogiri][] for parsing HTML, falls back to REXML otherwise.
 * Provisional support for [JSON-LD-star][JSON-LD-star].
 
 [Implementation Report](https://ruby-rdf.github.io/json-ld/etc/earl.html)
@@ -588,9 +588,9 @@ Note, the API method signatures differed in versions before 1.0, in that they al
   * {JSON::LD::Writer}
 
 ## Dependencies
-* [Ruby](https://ruby-lang.org/) (>= 2.4)
-* [RDF.rb](https://rubygems.org/gems/rdf) (~> 3.1)
-* [JSON](https://rubygems.org/gems/json) (>= 2.2)
+* [Ruby](https://ruby-lang.org/) (>= 2.6)
+* [RDF.rb](https://rubygems.org/gems/rdf) (~> 3.2)
+* [JSON](https://rubygems.org/gems/json) (>= 2.6)
 
 ## Installation
 The recommended installation method is via [RubyGems](https://rubygems.org/).

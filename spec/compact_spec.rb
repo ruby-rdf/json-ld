@@ -954,6 +954,76 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
+        "issue-514": {
+          input: %({
+            "http://example.org/ns/prop": [{
+              "@id": "http://example.org/ns/bar",
+              "http://example.org/ns/name": "bar"
+            }, {
+                "@id": "http://example.org/ns/foo",
+              "http://example.org/ns/name": "foo"
+            }]
+          }),
+          context: %({
+            "@context": {
+              "ex": "http://example.org/ns/",
+              "prop": {
+                "@id": "ex:prop",
+                "@container": "@index",
+                "@index": "ex:name"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "ex": "http://example.org/ns/",
+              "prop": {
+                "@id": "ex:prop",
+                "@container": "@index",
+                "@index": "ex:name"
+              }
+            },
+            "prop": {
+              "foo": { "@id": "ex:foo"},
+              "bar": { "@id": "ex:bar"}
+            }
+          })
+        },
+        "issue-514b": {
+          input: %({
+            "http://example.org/ns/prop": [{
+              "@id": "http://example.org/ns/bar",
+              "http://example.org/ns/name": "bar"
+            }, {
+                "@id": "http://example.org/ns/foo",
+              "http://example.org/ns/name": "foo"
+            }]
+          }),
+          context: %({
+            "@context": {
+              "ex": "http://example.org/ns/",
+              "prop": {
+                "@id": "ex:prop",
+                "@container": "@index",
+                "@index": "http://example.org/ns/name"
+              }
+            }
+          }),
+          output: %({
+            "@context": {
+              "ex": "http://example.org/ns/",
+              "prop": {
+                "@id": "ex:prop",
+                "@container": "@index",
+                "@index": "http://example.org/ns/name"
+              }
+            },
+            "prop": {
+              "foo": { "@id": "ex:foo"},
+              "bar": { "@id": "ex:bar"}
+            }
+          })
+        },
       }.each_pair do |title, params|
         it(title) {run_compact(params)}
       end

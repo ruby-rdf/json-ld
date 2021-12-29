@@ -992,6 +992,95 @@ describe JSON::LD::API do
       end
     end
 
+    context "omitGraph option" do
+      {
+        "Defaults to false in 1.0": {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            }
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            },
+            "@graph": [{
+              "foo": "bar",
+              "prop": "value"
+            }]
+          }),
+          processingMode: "json-ld-1.0"
+        },
+        "Set with option in 1.0":  {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            }
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            },
+            "foo": "bar",
+            "prop": "value"
+          }),
+          processingMode: "json-ld-1.0",
+          omitGraph: true
+        },
+        "Defaults to true in 1.1": {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            }
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            },
+            "foo": "bar",
+            "prop": "value"
+          }),
+          processingMode: "json-ld-1.1"
+        },
+        "Set with option in 1.1":  {
+          input: %([{
+            "http://example.org/prop": [{"@value": "value"}],
+            "http://example.org/foo": [{"@value": "bar"}]
+          }]),
+          frame: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            }
+          }),
+          output: %({
+            "@context": {
+              "@vocab": "http://example.org/"
+            },
+            "@graph": [{
+              "foo": "bar",
+              "prop": "value"
+            }]
+          }),
+          processingMode: "json-ld-1.1",
+          omitGraph: false
+        },
+      }.each do |title, params|
+        it(title) {do_frame(params.merge(pruneBlankNodeIdentifiers: true))}
+      end
+    end
+
     context "@included" do
       {
         "Basic Included array": {
@@ -2359,15 +2448,16 @@ describe JSON::LD::API do
 
   def do_frame(params)
     begin
-      input, frame, output, processingMode = params[:input], params[:frame], params[:output], params.fetch(:processingMode, 'json-ld-1.0')
+      input, frame, output = params[:input], params[:frame], params[:output]
+      params = {processingMode: 'json-ld-1.0'}.merge(params)
       input = ::JSON.parse(input) if input.is_a?(String)
       frame = ::JSON.parse(frame) if frame.is_a?(String)
       output = ::JSON.parse(output) if output.is_a?(String)
       jld = nil
       if params[:write]
-        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)}.to write(params[:write]).to(:error)
+        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, **params)}.to write(params[:write]).to(:error)
       else
-        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, processingMode: processingMode)}.not_to write.to(:error)
+        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, **params)}.not_to write.to(:error)
       end
       expect(jld).to produce_jsonld(output, logger)
 
