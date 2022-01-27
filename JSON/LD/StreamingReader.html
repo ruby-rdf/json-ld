@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: JSON::LD::StreamingReader
+  
+    &mdash; JSON-LD reader/writer for RDF.rb.
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "JSON::LD::StreamingReader";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (S)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span>
+     &raquo; 
+    <span class="title">StreamingReader</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: JSON::LD::StreamingReader
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="ToRDF.html" title="JSON::LD::ToRDF (module)">ToRDF</a></span>, <span class='object_link'><a href="Utils.html" title="JSON::LD::Utils (module)">Utils</a></span></dd>
+  </dl>
+  
+  
+
+  
+  <dl>
+    <dt>Included in:</dt>
+    <dd><span class='object_link'><a href="Reader.html" title="JSON::LD::Reader (class)">Reader</a></span></dd>
+  </dl>
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/json/ld/streaming_reader.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>A streaming JSON-LD parser in Ruby.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><a href="http://json-ld.org/spec/ED/20110507/" target="_parent" title="http://json-ld.org/spec/ED/20110507/">http://json-ld.org/spec/ED/20110507/</a></li>
+    
+  </ul>
+<p class="tag_title">Author:</p>
+<ul class="author">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p><a href="http://greggkellogg.net/">Gregg Kellogg</a></p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#base-instance_method" title="#base (instance method)">#<strong>base</strong>  &#x21d2; RDF::URI </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The base URI to use when resolving relative URIs.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#namer-instance_method" title="#namer (instance method)">#<strong>namer</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute namer.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#format-class_method" title="format (class method)">.<strong>format</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stream_statement-instance_method" title="#stream_statement (instance method)">#<strong>stream_statement</strong>(&amp;block)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="ToRDF.html" title="JSON::LD::ToRDF (module)">ToRDF</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="ToRDF.html#item_to_rdf-instance_method" title="JSON::LD::ToRDF#item_to_rdf (method)">#item_to_rdf</a></span>, <span class='object_link'><a href="ToRDF.html#node-instance_method" title="JSON::LD::ToRDF#node (method)">#node</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="Utils.html" title="JSON::LD::Utils (module)">Utils</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Utils.html#add_value-instance_method" title="JSON::LD::Utils#add_value (method)">#add_value</a></span>, <span class='object_link'><a href="Utils.html#as_array-instance_method" title="JSON::LD::Utils#as_array (method)">#as_array</a></span>, <span class='object_link'><a href="Utils.html#as_resource-instance_method" title="JSON::LD::Utils#as_resource (method)">#as_resource</a></span>, <span class='object_link'><a href="Utils.html#blank_node%3F-instance_method" title="JSON::LD::Utils#blank_node? (method)">#blank_node?</a></span>, <span class='object_link'><a href="Utils.html#compare_values-instance_method" title="JSON::LD::Utils#compare_values (method)">#compare_values</a></span>, <span class='object_link'><a href="Utils.html#graph%3F-instance_method" title="JSON::LD::Utils#graph? (method)">#graph?</a></span>, <span class='object_link'><a href="Utils.html#has_value%3F-instance_method" title="JSON::LD::Utils#has_value? (method)">#has_value?</a></span>, <span class='object_link'><a href="Utils.html#index%3F-instance_method" title="JSON::LD::Utils#index? (method)">#index?</a></span>, <span class='object_link'><a href="Utils.html#list%3F-instance_method" title="JSON::LD::Utils#list? (method)">#list?</a></span>, <span class='object_link'><a href="Utils.html#node%3F-instance_method" title="JSON::LD::Utils#node? (method)">#node?</a></span>, <span class='object_link'><a href="Utils.html#node_or_ref%3F-instance_method" title="JSON::LD::Utils#node_or_ref? (method)">#node_or_ref?</a></span>, <span class='object_link'><a href="Utils.html#node_reference%3F-instance_method" title="JSON::LD::Utils#node_reference? (method)">#node_reference?</a></span>, <span class='object_link'><a href="Utils.html#property%3F-instance_method" title="JSON::LD::Utils#property? (method)">#property?</a></span>, <span class='object_link'><a href="Utils.html#simple_graph%3F-instance_method" title="JSON::LD::Utils#simple_graph? (method)">#simple_graph?</a></span>, <span class='object_link'><a href="Utils.html#value%3F-instance_method" title="JSON::LD::Utils#value? (method)">#value?</a></span></p>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="base-instance_method">
+  
+    #<strong>base</strong>  &#x21d2; <tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>The base URI to use when resolving relative URIs</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+18
+19
+20</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_reader.rb', line 18</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_base'>base</span>
+  <span class='ivar'>@base</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="namer-instance_method">
+  
+    #<strong>namer</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute namer.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+19
+20
+21</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_reader.rb', line 19</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_namer'>namer</span>
+  <span class='ivar'>@namer</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="format-class_method">
+  
+    .<strong>format</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+21</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_reader.rb', line 21</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_format'>format</span><span class='semicolon'>;</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Format.html" title="JSON::LD::Format (class)">Format</a></span></span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="stream_statement-instance_method">
+  
+    #<strong>stream_statement</strong>(&amp;block)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li>RDF::Reader#each_statement</li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_reader.rb', line 25</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stream_statement'>stream_statement</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_unique_bnodes'>unique_bnodes</span><span class='comma'>,</span> <span class='id identifier rubyid_rename_bnodes'>rename_bnodes</span> <span class='op'>=</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:unique_bnodes</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:rename_bnodes</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='comment'># FIXME: document loader doesn&#39;t stream
+</span>  <span class='ivar'>@base</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:base</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_base_uri'>base_uri</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='const'>MultiJson</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='ivar'>@doc</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context_ref'>context_ref</span> <span class='op'>=</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:expandContext</span><span class='rbracket'>]</span>
+  <span class='comment'>#context_ref = @options.fetch(:expandContext, remote_doc.contextUrl)
+</span>  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'><span class='object_link'><a href="Context.html#parse-class_method" title="JSON::LD::Context.parse (method)">parse</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_context_ref'>context_ref</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+
+  <span class='ivar'>@namer</span> <span class='op'>=</span> <span class='id identifier rubyid_unique_bnodes'>unique_bnodes</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="BlankNodeUniqer.html" title="JSON::LD::BlankNodeUniqer (class)">BlankNodeUniqer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='id identifier rubyid_rename_bnodes'>rename_bnodes</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="BlankNodeNamer.html" title="JSON::LD::BlankNodeNamer (class)">BlankNodeNamer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BlankNodeNamer.html#initialize-instance_method" title="JSON::LD::BlankNodeNamer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>b</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="BlankNodeMapper.html" title="JSON::LD::BlankNodeMapper (class)">BlankNodeMapper</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='rparen'>)</span>
+  <span class='comment'># Namer for naming provisional nodes, which may be determined later to be actual
+</span>  <span class='ivar'>@provisional_namer</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="BlankNodeNamer.html" title="JSON::LD::BlankNodeNamer (class)">BlankNodeNamer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BlankNodeNamer.html#initialize-instance_method" title="JSON::LD::BlankNodeNamer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>p</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_parse_object'>parse_object</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>graph_is_named:</span> <span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_st'>st</span><span class='op'>|</span>
+    <span class='comment'># Only output reasonably valid triples
+</span>    <span class='kw'>if</span> <span class='id identifier rubyid_st'>st</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span><span class='period'>.</span><span class='id identifier rubyid_all?'>all?</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_r'>r</span><span class='op'>|</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Term</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='lparen'>(</span><span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_uri?'>uri?</span> <span class='op'>?</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span> <span class='op'>:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='rbrace'>}</span>
+      <span class='id identifier rubyid_block'>block</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_st'>st</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>rescue</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'>ParserError</span><span class='comma'>,</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_fatal'>log_fatal</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Failed to parse input document: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>exception:</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>ReaderError</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Jan 27 23:44:05 2022 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.27 (ruby-3.1.0).
+</div>
+
+    </div>
+  </body>
+</html>

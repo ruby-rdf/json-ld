@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: JSON::LD::Context::TermDefinition
+  
+    &mdash; JSON-LD reader/writer for RDF.rb.
+  
+</title>
+
+  <link rel="stylesheet" href="../../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "JSON::LD::Context::TermDefinition";
+  relpath = '../../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../../JSON.html" title="JSON (module)">JSON</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../LD.html" title="JSON::LD (module)">LD</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Context.html" title="JSON::LD::Context (class)">Context</a></span></span>
+     &raquo; 
+    <span class="title">TermDefinition</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: JSON::LD::Context::TermDefinition
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">JSON::LD::Context::TermDefinition</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/json/ld/context.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Term Definitions specify how properties and values have to be interpreted as well as the current vocabulary mapping and the default language</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#container_mapping-instance_method" title="#container_mapping (instance method)">#<strong>container_mapping</strong>  &#x21d2; Array&lt;&#39;@index&#39;, &#39;@language&#39;, &#39;@index&#39;, &#39;@set&#39;, &#39;@type&#39;, &#39;@id&#39;, &#39;@graph&#39;&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Base container mapping, without @set.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context-instance_method" title="#context (instance method)">#<strong>context</strong>  &#x21d2; Hash{String =&gt; Object} </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Term-specific context.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#direction_mapping-instance_method" title="#direction_mapping (instance method)">#<strong>direction_mapping</strong>  &#x21d2; &quot;ltr&quot;, &quot;rtl&quot; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Direction of term, <code>false</code> is used if there is explicit direction mapping mapping for this term.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#id-instance_method" title="#id (instance method)">#<strong>id</strong>  &#x21d2; RDF::URI </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>IRI map.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#index-instance_method" title="#index (instance method)">#<strong>index</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Property used for data indexing; defaults to @index.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#language_mapping-instance_method" title="#language_mapping (instance method)">#<strong>language_mapping</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Language mapping of term, <code>false</code> is used if there is an explicit language mapping for this term.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#nest-instance_method" title="#nest (instance method)">#<strong>nest</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Term used for nest properties.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#prefix=-instance_method" title="#prefix= (instance method)">#<strong>prefix</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+      <span class="note title writeonly">writeonly</span>
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Indicate that term may be used as a prefix.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#protected=-instance_method" title="#protected= (instance method)">#<strong>protected</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+      <span class="note title writeonly">writeonly</span>
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Term is protected.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#reverse_property-instance_method" title="#reverse_property (instance method)">#<strong>reverse_property</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Reverse Property.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#simple-instance_method" title="#simple (instance method)">#<strong>simple</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>This is a simple term definition, not an expanded term definition.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#term-instance_method" title="#term (instance method)">#<strong>term</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Term name.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#type_mapping-instance_method" title="#type_mapping (instance method)">#<strong>type_mapping</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Type mapping.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#==-instance_method" title="#== (instance method)">#<strong>==</strong>(other)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if term definitions are identical, modulo @protected.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#as_set%3F-instance_method" title="#as_set? (instance method)">#<strong>as_set?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>If container mapping was defined along with @set.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(term, id: nil, index: nil, type_mapping: nil, container_mapping: nil, language_mapping: nil, direction_mapping: nil, reverse_property: false, nest: nil, protected: nil, simple: false, prefix: nil, context: nil)  &#x21d2; TermDefinition </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a new Term Mapping with an ID.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#inspect-instance_method" title="#inspect (instance method)">#<strong>inspect</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#prefix%3F-instance_method" title="#prefix? (instance method)">#<strong>prefix?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>This is an appropriate term to use as the prefix of a compact IRI.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#protected%3F-instance_method" title="#protected? (instance method)">#<strong>protected?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Term is protected.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#simple%3F-instance_method" title="#simple? (instance method)">#<strong>simple?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>This is a simple term definition, not an expanded term definition.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#to_context_definition-instance_method" title="#to_context_definition (instance method)">#<strong>to_context_definition</strong>(context)  &#x21d2; String, Hash{String =&gt; Array[String], String} </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Output Hash or String definition for this definition considering @language and @vocab.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#to_rb-instance_method" title="#to_rb (instance method)">#<strong>to_rb</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Turn this into a source for a new instantiation FIXME: context serialization.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(term, id: nil, index: nil, type_mapping: nil, container_mapping: nil, language_mapping: nil, direction_mapping: nil, reverse_property: false, nest: nil, protected: nil, simple: false, prefix: nil, context: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="JSON::LD::Context::TermDefinition (class)">TermDefinition</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a new Term Mapping with an ID</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>term</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>type_mapping</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type mapping</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>container_mapping</span>
+      
+      
+        <span class='type'>(<tt>Set&lt;'@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@<span class='object_link'><a href="../Context.html#language-instance_method" title="JSON::LD::Context#language (method)">language</a></span>', '@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@set', '@type', '@<span class='object_link'><a href="#id-instance_method" title="JSON::LD::Context::TermDefinition#id (method)">id</a></span>', '@graph'&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>language_mapping</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Language mapping of term, <code>false</code> is used if there is an explicit language mapping for this term</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>direction_mapping</span>
+      
+      
+        <span class='type'>(<tt>"ltr"</tt>, <tt>"rtl"</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Direction mapping of term, <code>false</code> is used if there is an explicit direction mapping for this term</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reverse_property</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>protected</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>mark resulting context as protected</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>nest</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>term used for nest properties</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>simple</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>This is a simple term definition, not an expanded term definition</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>prefix</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Term may be used as a prefix</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2069
+2070
+2071
+2072
+2073
+2074
+2075
+2076
+2077
+2078
+2079
+2080
+2081
+2082
+2083
+2084
+2085
+2086
+2087
+2088
+2089
+2090
+2091
+2092
+2093
+2094
+2095</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2069</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='comma'>,</span>
+              <span class='label'>id:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>index:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>type_mapping:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>container_mapping:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>language_mapping:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>direction_mapping:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>reverse_property:</span> <span class='kw'>false</span><span class='comma'>,</span>
+              <span class='label'>nest:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>protected:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>simple:</span> <span class='kw'>false</span><span class='comma'>,</span>
+              <span class='label'>prefix:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>context:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@term</span>                   <span class='op'>=</span> <span class='id identifier rubyid_term'>term</span>
+  <span class='ivar'>@id</span>                     <span class='op'>=</span> <span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>           <span class='kw'>unless</span> <span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@index</span>                  <span class='op'>=</span> <span class='id identifier rubyid_index'>index</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>        <span class='kw'>unless</span> <span class='id identifier rubyid_index'>index</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@type_mapping</span>           <span class='op'>=</span> <span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='kw'>unless</span> <span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_container_mapping'>container_mapping</span>  <span class='op'>=</span> <span class='id identifier rubyid_container_mapping'>container_mapping</span>
+  <span class='ivar'>@language_mapping</span>       <span class='op'>=</span> <span class='id identifier rubyid_language_mapping'>language_mapping</span>  <span class='kw'>unless</span> <span class='id identifier rubyid_language_mapping'>language_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@direction_mapping</span>      <span class='op'>=</span> <span class='id identifier rubyid_direction_mapping'>direction_mapping</span> <span class='kw'>unless</span> <span class='id identifier rubyid_direction_mapping'>direction_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@reverse_property</span>       <span class='op'>=</span> <span class='id identifier rubyid_reverse_property'>reverse_property</span>
+  <span class='ivar'>@protected</span>              <span class='op'>=</span> <span class='id identifier rubyid_protected'>protected</span>
+  <span class='ivar'>@nest</span>                   <span class='op'>=</span> <span class='id identifier rubyid_nest'>nest</span>              <span class='kw'>unless</span> <span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@simple</span>                 <span class='op'>=</span> <span class='id identifier rubyid_simple'>simple</span>
+  <span class='ivar'>@prefix</span>                 <span class='op'>=</span> <span class='id identifier rubyid_prefix'>prefix</span>            <span class='kw'>unless</span> <span class='id identifier rubyid_prefix'>prefix</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@context</span>                <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span>           <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id="container_mapping=-instance_method"></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="container_mapping-instance_method">
+  
+    #<strong>container_mapping</strong>  &#x21d2; <tt><span class='object_link'><a href="../../../Array.html" title="Array (class)">Array</a></span>&lt;'@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@<span class='object_link'><a href="../Context.html#language-instance_method" title="JSON::LD::Context#language (method)">language</a></span>', '@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@set', '@type', '@<span class='object_link'><a href="#id-instance_method" title="JSON::LD::Context::TermDefinition#id (method)">id</a></span>', '@graph'&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Base container mapping, without @set</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../Array.html" title="Array (class)">Array</a></span>&lt;'@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@<span class='object_link'><a href="../Context.html#language-instance_method" title="JSON::LD::Context#language (method)">language</a></span>', '@<span class='object_link'><a href="#index-instance_method" title="JSON::LD::Context::TermDefinition#index (method)">index</a></span>', '@set', '@type', '@<span class='object_link'><a href="#id-instance_method" title="JSON::LD::Context::TermDefinition#id (method)">id</a></span>', '@graph'&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Container mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2010
+2011
+2012</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2010</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_container_mapping'>container_mapping</span>
+  <span class='ivar'>@container_mapping</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="context=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="context-instance_method">
+  
+    #<strong>context</strong>  &#x21d2; <tt>Hash{String =&gt; Object}</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Term-specific context</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash{String =&gt; Object}</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2039
+2040
+2041</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2039</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context'>context</span>
+  <span class='ivar'>@context</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="direction_mapping=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="direction_mapping-instance_method">
+  
+    #<strong>direction_mapping</strong>  &#x21d2; <tt>"ltr"</tt>, <tt>"rtl"</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Direction of term, <code>false</code> is used if there is explicit direction mapping mapping for this term.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>"ltr"</tt>, <tt>"rtl"</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>direction_mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2021
+2022
+2023</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2021</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_direction_mapping'>direction_mapping</span>
+  <span class='ivar'>@direction_mapping</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="id=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="id-instance_method">
+  
+    #<strong>id</strong>  &#x21d2; <tt><span class='object_link'><a href="../../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns IRI map.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>IRI map</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2000
+2001
+2002</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2000</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_id'>id</span>
+  <span class='ivar'>@id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="index=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="index-instance_method">
+  
+    #<strong>index</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Property used for data indexing; defaults to @index</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2032
+2033
+2034</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2032</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_index'>index</span>
+  <span class='ivar'>@index</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="language_mapping=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="language_mapping-instance_method">
+  
+    #<strong>language_mapping</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Language mapping of term, <code>false</code> is used if there is an explicit language mapping for this term.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Language mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2017
+2018
+2019</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2017</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_language_mapping'>language_mapping</span>
+  <span class='ivar'>@language_mapping</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="nest=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="nest-instance_method">
+  
+    #<strong>nest</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Term used for nest properties.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Term used for nest properties</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2013
+2014
+2015</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2013</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_nest'>nest</span>
+  <span class='ivar'>@nest</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="prefix=-instance_method">
+  
+    #<strong>prefix=</strong>(value)  &#x21d2; <tt>Object</tt>  <span class="extras">(writeonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Indicate that term may be used as a prefix</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2035
+2036
+2037</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2035</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_prefix='>prefix=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@prefix</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="protected=-instance_method">
+  
+    #<strong>protected=</strong>(value)  &#x21d2; <tt>Boolean</tt>  <span class="extras">(writeonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Term is protected.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2043
+2044
+2045</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2043</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_protected='>protected=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@protected</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="reverse_property=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="reverse_property-instance_method">
+  
+    #<strong>reverse_property</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Reverse Property.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Reverse Property</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2024
+2025
+2026</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2024</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_reverse_property'>reverse_property</span>
+  <span class='ivar'>@reverse_property</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="simple=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="simple-instance_method">
+  
+    #<strong>simple</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>This is a simple term definition, not an expanded term definition</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2028
+2029
+2030</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2028</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_simple'>simple</span>
+  <span class='ivar'>@simple</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="term=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="term-instance_method">
+  
+    #<strong>term</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns term name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>term name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2003
+2004
+2005</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2003</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_term'>term</span>
+  <span class='ivar'>@term</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="type_mapping=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="type_mapping-instance_method">
+  
+    #<strong>type_mapping</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Type mapping.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2006
+2007
+2008</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2006</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_type_mapping'>type_mapping</span>
+  <span class='ivar'>@type_mapping</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="==-instance_method">
+  
+    #<strong>==</strong>(other)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if term definitions are identical, modulo @protected</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2187
+2188
+2189
+2190
+2191
+2192
+2193
+2194
+2195
+2196
+2197
+2198
+2199
+2200
+2201
+2202</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2187</span>
+
+<span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="JSON::LD::Context::TermDefinition (class)">TermDefinition</a></span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_id'>id</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_term'>term</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_term'>term</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_type_mapping'>type_mapping</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_type_mapping'>type_mapping</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_container_mapping'>container_mapping</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_container_mapping'>container_mapping</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_nest'>nest</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_nest'>nest</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_language_mapping'>language_mapping</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_language_mapping'>language_mapping</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_direction_mapping'>direction_mapping</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_direction_mapping'>direction_mapping</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_reverse_property'>reverse_property</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_reverse_property'>reverse_property</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_simple'>simple</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_simple'>simple</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_index'>index</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_index'>index</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_prefix?'>prefix?</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_prefix?'>prefix?</span> <span class='op'>&amp;&amp;</span>
+  <span class='id identifier rubyid_as_set?'>as_set?</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_as_set?'>as_set?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="as_set?-instance_method">
+  
+    #<strong>as_set?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>If container mapping was defined along with @set</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2183</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2183</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_as_set?'>as_set?</span><span class='semicolon'>;</span> <span class='ivar'>@as_set</span> <span class='op'>||</span> <span class='kw'>false</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="inspect-instance_method">
+  
+    #<strong>inspect</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2204
+2205
+2206
+2207
+2208
+2209
+2210
+2211
+2212
+2213
+2214
+2215
+2216
+2217
+2218
+2219
+2220
+2221</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2204</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_inspect'>inspect</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>[TD</span><span class='tstring_end'>)</span></span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>id=</span><span class='embexpr_beg'>#{</span><span class='ivar'>@id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>index=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index'>index</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_index'>index</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>term=</span><span class='embexpr_beg'>#{</span><span class='ivar'>@term</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rev</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_reverse_property'>reverse_property</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>container=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_container_mapping'>container_mapping</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_container_mapping'>container_mapping</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>as_set=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_as_set?'>as_set?</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>lang=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_language_mapping'>language_mapping</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_language_mapping'>language_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dir=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_direction_mapping'>direction_mapping</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_direction_mapping'>direction_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>type=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>nest=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>simple=true</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@simple</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>protected=true</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@protected</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>prefix=</span><span class='embexpr_beg'>#{</span><span class='ivar'>@prefix</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='ivar'>@prefix</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>has-context</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>]</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="prefix?-instance_method">
+  
+    #<strong>prefix?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>This is an appropriate term to use as the prefix of a compact IRI</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>simple</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2051</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2051</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_prefix?'>prefix?</span><span class='semicolon'>;</span> <span class='ivar'>@prefix</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="protected?-instance_method">
+  
+    #<strong>protected?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Term is protected.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2099</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2099</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_protected?'>protected?</span><span class='semicolon'>;</span> <span class='op'>!</span><span class='op'>!</span><span class='ivar'>@protected</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="simple?-instance_method">
+  
+    #<strong>simple?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>This is a simple term definition, not an expanded term definition</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>simple</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2047</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2047</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_simple?'>simple?</span><span class='semicolon'>;</span> <span class='id identifier rubyid_simple'>simple</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="to_context_definition-instance_method">
+  
+    #<strong>to_context_definition</strong>(context)  &#x21d2; <tt>String</tt>, <tt>Hash{String =&gt; <span class='object_link'><a href="../../../Array.html" title="Array (class)">Array</a></span>[String], String}</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Output Hash or String definition for this definition considering @language and @vocab</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Context.html" title="JSON::LD::Context (class)">Context</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Hash{String =&gt; <span class='object_link'><a href="../../../Array.html" title="Array (class)">Array</a></span>[String], String}</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2124
+2125
+2126
+2127
+2128
+2129
+2130
+2131
+2132
+2133
+2134
+2135
+2136
+2137
+2138
+2139
+2140
+2141
+2142
+2143
+2144
+2145
+2146
+2147
+2148
+2149
+2150
+2151
+2152
+2153
+2154
+2155
+2156
+2157
+2158
+2159
+2160</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2124</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_to_context_definition'>to_context_definition</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cid'>cid</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span><span class='rparen'>)</span>
+    <span class='comment'># Nothing to return unless it&#39;s the same as the vocab
+</span>    <span class='id identifier rubyid_id'>id</span> <span class='op'>==</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span> <span class='op'>?</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span> <span class='op'>:</span> <span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='lbracket'>[</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='op'>..</span><span class='op'>-</span><span class='int'>1</span><span class='rbracket'>]</span>
+  <span class='kw'>else</span>
+    <span class='comment'># Find a term to act as a prefix
+</span>    <span class='id identifier rubyid_iri'>iri</span><span class='comma'>,</span> <span class='id identifier rubyid_prefix'>prefix</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_iri_to_term'>iri_to_term</span><span class='period'>.</span><span class='id identifier rubyid_detect'>detect</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_i'>i</span><span class='comma'>,</span><span class='id identifier rubyid_p'>p</span><span class='op'>|</span> <span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_i'>i</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span><span class='rbrace'>}</span>
+    <span class='id identifier rubyid_iri'>iri</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_iri'>iri</span> <span class='op'>!=</span> <span class='id identifier rubyid_id'>id</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_prefix'>prefix</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='lbracket'>[</span><span class='id identifier rubyid_iri'>iri</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='op'>..</span><span class='op'>-</span><span class='int'>1</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_id'>id</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>if</span> <span class='id identifier rubyid_simple?'>simple?</span>
+     <span class='id identifier rubyid_cid'>cid</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='kw'>unless</span> <span class='id identifier rubyid_cid'>cid</span> <span class='op'>==</span> <span class='id identifier rubyid_term'>term</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_defn'>defn</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='id identifier rubyid_reverse_property'>reverse_property</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@reverse</span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_cid'>cid</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='kw'>unless</span> <span class='id identifier rubyid_cid'>cid</span> <span class='op'>==</span> <span class='id identifier rubyid_term'>term</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_reverse_property'>reverse_property</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_type_mapping'>type_mapping</span>
+      <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../LD.html#KEYWORDS-constant" title="JSON::LD::KEYWORDS (constant)">KEYWORDS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_type_mapping'>type_mapping</span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_compact_iri'>compact_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_type_mapping'>type_mapping</span><span class='comma'>,</span> <span class='label'>vocab:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+
+    <span class='id identifier rubyid_cm'>cm</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Array.html" title="Array (class)">Array</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_container_mapping'>container_mapping</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_cm'>cm</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@set</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_as_set?'>as_set?</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_cm'>cm</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@set</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_cm'>cm</span> <span class='op'>=</span> <span class='id identifier rubyid_cm'>cm</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span> <span class='kw'>if</span> <span class='id identifier rubyid_cm'>cm</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>==</span> <span class='int'>1</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@container</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_cm'>cm</span> <span class='kw'>unless</span> <span class='id identifier rubyid_cm'>cm</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+    <span class='comment'># Language set as false to be output as null
+</span>    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='ivar'>@language_mapping</span> <span class='op'>?</span> <span class='ivar'>@language_mapping</span> <span class='op'>:</span> <span class='kw'>nil</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='ivar'>@language_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@direction</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='ivar'>@direction_mapping</span> <span class='op'>?</span> <span class='ivar'>@direction_mapping</span> <span class='op'>:</span> <span class='kw'>nil</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='ivar'>@direction_mapping</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@context</span> <span class='kw'>if</span> <span class='ivar'>@context</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@nest</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@nest</span> <span class='kw'>if</span> <span class='ivar'>@nest</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@index</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@index</span> <span class='kw'>if</span> <span class='ivar'>@index</span>
+    <span class='id identifier rubyid_defn'>defn</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@prefix</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@prefix</span> <span class='kw'>unless</span> <span class='ivar'>@prefix</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_defn'>defn</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="to_rb-instance_method">
+  
+    #<strong>to_rb</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Turn this into a source for a new instantiation FIXME: context serialization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+2166
+2167
+2168
+2169
+2170
+2171
+2172
+2173
+2174
+2175
+2176
+2177
+2178
+2179</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 2166</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_to_rb'>to_rb</span>
+  <span class='id identifier rubyid_defn'>defn</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>TermDefinition.new\(</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>)</span></span><span class='rbracket'>]</span>
+  <span class='qwords_beg'>%w(</span><span class='tstring_content'>id</span><span class='words_sep'> </span><span class='tstring_content'>index</span><span class='words_sep'> </span><span class='tstring_content'>type_mapping</span><span class='words_sep'> </span><span class='tstring_content'>container_mapping</span><span class='words_sep'> </span><span class='tstring_content'>language_mapping</span><span class='words_sep'> </span><span class='tstring_content'>direction_mapping</span><span class='words_sep'> </span><span class='tstring_content'>reverse_property</span><span class='words_sep'> </span><span class='tstring_content'>nest</span><span class='words_sep'> </span><span class='tstring_content'>simple</span><span class='words_sep'> </span><span class='tstring_content'>prefix</span><span class='words_sep'> </span><span class='tstring_content'>context</span><span class='words_sep'> </span><span class='tstring_content'>protected</span><span class='tstring_end'>)</span></span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_acc'>acc</span><span class='op'>|</span>
+    <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='id identifier rubyid_instance_variable_get'>instance_variable_get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_acc'>acc</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='kw'>if</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Term</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_acc'>acc</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>container_mapping</span><span class='tstring_end'>&#39;</span></span>
+      <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
+      <span class='id identifier rubyid_v'>v</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@set</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_as_set?'>as_set?</span>
+      <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span> <span class='kw'>if</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>&lt;=</span> <span class='int'>1</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_defn'>defn</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_acc'>acc</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_v'>v</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_defn'>defn</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Jan 27 23:44:09 2022 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.27 (ruby-3.1.0).
+</div>
+
+    </div>
+  </body>
+</html>

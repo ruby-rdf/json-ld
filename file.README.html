@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: README
+  
+    &mdash; JSON-LD reader/writer for RDF.rb.
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "README";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'>
+<h1 id="label-JSON-LD+reader-2Fwriter">JSON-LD reader/writer</h1>
+
+<p><a href="https://www.w3.org/TR/json-ld11/">JSON-LD</a> reader/writer for <a href="https://rubygems.org/gems/rdf">RDF.rb</a> and fully conforming <a href="https://www.w3.org/TR/json-ld11-api/">JSON-LD API</a> processor. Additionally this gem implements <a href="https://www.w3.org/TR/json-ld11-framing/">JSON-LD Framing</a>.</p>
+
+<p><a href="https://rubygems.org/gems/json-ld"><img src="https://badge.fury.io/rb/json-ld.png"></a> <a href="https://github.com/ruby-rdf/json-ld/actions?query=workflow%3ACI"><img src="https://secure.travis-ci.org/ruby-rdf/json-ld.png?branch=develop"></a> <a href="https://coveralls.io/github/ruby-rdf/json-ld?branch=develop"><img src="https://coveralls.io/repos/ruby-rdf/json-ld/badge.svg?branch=develop"></a> <a href="https://gitter.im/gitterHQ/gitter"><img src="https://badges.gitter.im/ruby-rdf.png"></a></p>
+
+<h2 id="label-Features">Features</h2>
+
+<p>JSON::LD parses and serializes <a href="https://www.w3.org/TR/json-ld11/">JSON-LD</a> into <a href="https://www.w3.org/RDF/">RDF</a> and implements expansion, compaction and framing API interfaces. It also extracts JSON-LD from HTML.</p>
+
+<p>JSON::LD can now be used to create a <em>context</em> from an RDFS/OWL definition, and optionally include a JSON-LD representation of the ontology itself. This is currently accessed through the <code>script/gen_context</code> script.</p>
+<ul><li>
+<p>If the <a href="https://rubygems.org/gems/jsonlint">jsonlint</a> gem is installed, it will be used when validating an input document.</p>
+</li><li>
+<p>If available, uses [Nokogiri][] for parsing HTML, falls back to REXML otherwise.</p>
+</li><li>
+<p>Provisional support for <a href="https://json-ld.github.io/json-ld-star/">JSON-LD-star</a>.</p>
+</li></ul>
+
+<p><a href="https://ruby-rdf.github.io/json-ld/etc/earl.html">Implementation Report</a></p>
+
+<p>Install with <code>gem install json-ld</code></p>
+
+<h3 id="label-JSON-LD+Streaming+Profile">JSON-LD Streaming Profile</h3>
+
+<p>This gem implements an optimized streaming reader used for generating RDF from large dataset dumps formatted as JSON-LD. Such documents must correspond to the <a href="https://w3c.github.io/json-ld-streaming/">JSON-LD Streaming Profile</a>:</p>
+<ul><li>
+<p>Keys in JSON objects must be ordered with any of <code>@context</code>, and/or <code>@type</code> coming before any other keys, in that order. This includes aliases of those keys. It is strongly encouraged that <code>@id</code> be present, and come immediately after.</p>
+</li><li>
+<p>JSON-LD documents can be signaled or requested in <a href="https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form">streaming document form</a>. The profile URI identifying the <a href="https://w3c.github.io/json-ld-streaming/#dfn-streaming-document-form">streaming document form</a> is <code>http://www.w3.org/ns/json-ld#streaming</code>.</p>
+</li></ul>
+
+<p>This gem also implements an optimized streaming writer used for generating JSON-LD from large repositories. Such documents result in the JSON-LD Streaming Profile:</p>
+<ul><li>
+<p>Each statement written as a separate node in expanded/flattened form.</p>
+</li><li>
+<p><code>RDF List</code>s are written as separate nodes using <code>rdf:first</code> and <code>rdf:rest</code> properties.</p>
+</li></ul>
+
+<p>The order of triples retrieved from the <code>RDF::Enumerable</code> dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by <em>graph name</em>, <em>subect</em>, <em>predicate</em> and <em>object</em>.</p>
+
+<h3 id="label-MultiJson+parser">MultiJson parser</h3>
+
+<p>The <a href="https://rubygems.org/gems/multi_json">MultiJson</a> gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the <code>:adapter</code> option to any API call. See <a href="https://rubygems.org/gems/multi_json">MultiJson</a> for more information.</p>
+
+<h3 id="label-JSON-LD-star+-28RDFStar-29">JSON-LD-star (RDFStar)</h3>
+
+<p>The <a href="https://json-ld.github.io/json-ld-star/">JSON::LD::API.expand}, <span class='object_link'><a href="JSON/LD/API.html#compact-class_method" title="JSON::LD::API.compact (method)">JSON::LD::API.compact</a></span>, <span class='object_link'><a href="JSON/LD/API.html#toRdf-class_method" title="JSON::LD::API.toRdf (method)">JSON::LD::API.toRdf</a></span>, and <span class='object_link'><a href="JSON/LD/API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">JSON::LD::API.fromRdf</a></span> API methods, along with the <span class='object_link'><a href="JSON/LD/Reader.html" title="JSON::LD::Reader (class)">JSON::LD::Reader</a></span> and <span class='object_link'><a href="JSON/LD/Writer.html" title="JSON::LD::Writer (class)">JSON::LD::Writer</a></span>, include provisional support for 
+<p>Internally, an <code>RDF::Statement</code> is treated as another resource, along with <code>RDF::URI</code> and <code>RDF::Node</code>, which allows an <code>RDF::Statement</code> to have a <code>#subject</code> or <code>#object</code> which is also an <code>RDF::Statement</code>.</p>
+
+<p>In JSON-LD, with the <code>rdfstar</code> option set, the value of <code>@id</code>, in addition to an IRI or Blank Node Identifier, can be a JSON-LD node object having exactly one property with an optional <code>@id</code>, which may also be an embedded object. (It may also have <code>@context</code> and <code>@index</code> values).</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;@id&quot;: {
+    &quot;@context&quot;: {&quot;foaf&quot;: &quot;http://xmlns.com/foaf/0.1/&quot;,
+    &quot;@index&quot;: &quot;ignored&quot;,
+    &quot;@id&quot;: &quot;bob&quot;,
+    &quot;foaf:age&quot; 23
+  },
+  &quot;ex:certainty&quot;: 0.9
+}
+</code></pre>
+
+<p>Additionally, the <code>@annotation</code> property (or alias) may be used on a node object or value object to annotate the statement for which the associated node is the object of a triple.</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;@context&quot;: &quot;http://xmlns.com/foaf/0.1/&quot;,
+  &quot;@id&quot;: &quot;bob&quot;,
+  &quot;foaf:age&quot; 23,
+  &quot;@annotation&quot;: {
+    &quot;ex:certainty&quot;: 0.9
+  }
+}
+</code></pre>
+
+<p>In the first case, the embedded node is not asserted, and only appears as the subject of a triple. In the second case, the triple is asserted and used as the subject in another statement which annotates it.</p>
+
+<p><strong>Note: This feature is subject to change or elimination as the standards process progresses.</strong></p>
+
+<h4 id="label-Serializing+a+Graph+containing+embedded+statements">Serializing a Graph containing embedded statements</h4>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json-ld</span><span class='tstring_end'>&#39;</span></span>
+<span class='id identifier rubyid_statement'>statement</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/Statement.html" title="RDF::Statement (class)">Statement</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>bob</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Vocab</span><span class='op'>::</span><span class='const'>FOAF</span><span class='period'>.</span><span class='id identifier rubyid_age'>age</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/Literal.html" title="RDF::Literal (class)">Literal</a></span></span><span class='lparen'>(</span><span class='int'>23</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Graph</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_statement'>statement</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ex:certainty</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/Literal.html" title="RDF::Literal (class)">Literal</a></span></span><span class='lparen'>(</span><span class='float'>0.9</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_graph'>graph</span><span class='period'>.</span><span class='id identifier rubyid_dump'>dump</span><span class='lparen'>(</span><span class='symbol'>:jsonld</span><span class='comma'>,</span> <span class='label'>validate:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>standard_prefixes:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+<span class='comment'># =&gt; {&quot;@id&quot;: &quot;bob&quot;, &quot;foaf:age&quot; 23, &quot;ex:certainty&quot;: 0.9}
+</span></code></pre>
+
+<p>Alternatively, using the {JSON::LD::API.fromRdf} method:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='op'>::</span><span class='id identifier rubyid_fromRdf'><span class='object_link'><a href="JSON/LD/API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">fromRdf</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_graph'>graph</span><span class='rparen'>)</span>
+<span class='comment'># =&gt; {&quot;@id&quot;: &quot;bob&quot;, &quot;foaf:age&quot; 23, &quot;ex:certainty&quot;: 0.9}
+</span></code></pre>
+
+<h4 id="label-Reading+a+Graph+containing+embedded+statements">Reading a Graph containing embedded statements</h4>
+
+<p>By default, {JSON::LD::API.toRdf} (and {JSON::LD::Reader}) will reject a document containing a subject resource.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_jsonld'>jsonld</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>{
+  &quot;@id&quot;: {
+    &quot;@id&quot;: &quot;bob&quot;, &quot;foaf:age&quot; 23
+  },
+  &quot;ex:certainty&quot;: 0.9
+}</span><span class='tstring_end'>)</span></span>
+<span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Graph</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='op'>&lt;&lt;</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_toRdf'><span class='object_link'><a href="JSON/LD/API.html#toRdf-class_method" title="JSON::LD::API.toRdf (method)">toRdf</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='rparen'>)</span>
+<span class='comment'># =&gt; JSON::LD::JsonLdError::InvalidIdValue
+</span></code></pre>
+
+<p>{JSON::LD::API.toRdf} (and {JSON::LD::Reader}) support a boolean valued <code>rdfstar</code> option; only one statement is asserted, although the reified statement is contained within the graph.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Graph</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_graph'>graph</span><span class='op'>|</span>
+  <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/Reader.html" title="JSON::LD::Reader (class)">Reader</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="JSON/LD/Reader.html#initialize-instance_method" title="JSON::LD::Reader#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_jsonld'>jsonld</span><span class='comma'>,</span> <span class='label'>rdfstar:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_reader'>reader</span><span class='op'>|</span> <span class='id identifier rubyid_graph'>graph</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_reader'>reader</span><span class='rbrace'>}</span>
+<span class='kw'>end</span>
+<span class='id identifier rubyid_graph'>graph</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span> <span class='comment'>#=&gt; 1
+</span></code></pre>
+
+<h2 id="label-Examples">Examples</h2>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>rubygems</span><span class='tstring_end'>&#39;</span></span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json/ld</span><span class='tstring_end'>&#39;</span></span>
+</code></pre>
+
+<h3 id="label-Expand+a+Document">Expand a Document</h3>
+
+<pre class="code ruby"><code class="ruby">input = JSON.parse %({
+      &quot;@context&quot;: {
+        &quot;name&quot;: &quot;http://xmlns.com/foaf/0.1/name&quot;,
+        &quot;homepage&quot;: &quot;http://xmlns.com/foaf/0.1/homepage&quot;,
+        &quot;avatar&quot;: &quot;http://xmlns.com/foaf/0.1/avatar&quot;
+      },
+      &quot;name&quot;: &quot;Manu Sporny&quot;,
+      &quot;homepage&quot;: &quot;http://manu.sporny.org/&quot;,
+      &quot;avatar&quot;: &quot;http://twitter.com/account/profile_image/manusporny&quot;
+    })
+    JSON::LD::API.expand(input) =&gt;
+    
+    [{
+        &quot;http://xmlns.com/foaf/0.1/name&quot;: [Sporny&quot;],
+        &quot;http://xmlns.com/foaf/0.1/homepage&quot;: [&lt;a href=&quot;\&quot;@value\&quot;=&gt;\&quot;https://manu.sporny.org/\&quot;&quot; target=&quot;_parent&quot; title=&quot;&quot;@value&quot;=&gt;&quot;https://manu.sporny.org/&quot;&quot;&gt;&quot;@value&quot;=&gt;&quot;https://manu.sporny.org/&quot;&lt;/a&gt;], 
+        &quot;http://xmlns.com/foaf/0.1/avatar&quot;: [&quot;https://twitter.com/account/profile_image/manusporny&quot;]
+    }]
+</code></pre>
+
+<h3 id="label-Compact+a+Document">Compact a Document</h3>
+
+<pre class="code ruby"><code class="ruby">input = JSON.parse %([{
+    &quot;http://xmlns.com/foaf/0.1/name&quot;: [&quot;Manu Sporny&quot;],
+    &quot;http://xmlns.com/foaf/0.1/homepage&quot;: [&quot;https://manu.sporny.org/&quot;],
+    &quot;http://xmlns.com/foaf/0.1/avatar&quot;: [&quot;https://twitter.com/account/profile_image/manusporny&quot;]
+}])
+
+context = JSON.parse(%({
+  &quot;@context&quot;: {
+    &quot;name&quot;: &quot;http://xmlns.com/foaf/0.1/name&quot;,
+    &quot;homepage&quot;: &quot;http://xmlns.com/foaf/0.1/homepage&quot;, &quot;@type&quot;: &quot;@id&quot;,
+    &quot;avatar&quot;: &quot;http://xmlns.com/foaf/0.1/avatar&quot;, &quot;@type&quot;: &quot;@id&quot;
+  }
+}))[&#39;@context&#39;]
+
+JSON::LD::API.compact(input, context) =&gt;
+{
+    &quot;@context&quot;: {
+      &quot;name&quot;: &quot;http://xmlns.com/foaf/0.1/name&quot;,
+      &quot;homepage&quot;: &quot;http://xmlns.com/foaf/0.1/homepage&quot;, &quot;@type&quot;: &quot;@id&quot;,
+      &quot;avatar&quot;: &quot;http://xmlns.com/foaf/0.1/avatar&quot;, &quot;@type&quot;: &quot;@id&quot;
+    },
+    &quot;avatar&quot;: &quot;https://twitter.com/account/profile_image/manusporny&quot;,
+    &quot;homepage&quot;: &quot;https://manu.sporny.org/&quot;,
+    &quot;name&quot;: &quot;Manu Sporny&quot;
+}
+</code></pre>
+
+<h3 id="label-Frame+a+Document">Frame a Document</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_input'>input</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span> <span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>{
+  &quot;@context&quot;: {
+    &quot;Book&quot;:         &quot;http://example.org/vocab#Book&quot;,
+    &quot;Chapter&quot;:      &quot;http://example.org/vocab#Chapter&quot;,
+    &quot;contains&quot;:     &quot;http://example.org/vocab#contains&quot;, &quot;@type&quot;: &quot;@id&quot;,
+    &quot;creator&quot;:      &quot;http://purl.org/dc/terms/creator&quot;,
+    &quot;description&quot;:  &quot;http://purl.org/dc/terms/description&quot;,
+    &quot;Library&quot;:      &quot;http://example.org/vocab#Library&quot;,
+    &quot;title&quot;:        &quot;http://purl.org/dc/terms/title&quot;
+  },
+  &quot;@graph&quot;:
+  [{
+    &quot;@id&quot;: &quot;http://example.com/library&quot;,
+    &quot;@type&quot;: &quot;Library&quot;,
+    &quot;contains&quot;: &quot;http://example.org/library/the-republic&quot;
+  },
+  {
+    &quot;@id&quot;: &quot;http://example.org/library/the-republic&quot;,
+    &quot;@type&quot;: &quot;Book&quot;,
+    &quot;creator&quot;: &quot;Plato&quot;,
+    &quot;title&quot;: &quot;The Republic&quot;,
+    &quot;contains&quot;: &quot;http://example.org/library/the-republic#introduction&quot;
+  },
+  {
+    &quot;@id&quot;: &quot;http://example.org/library/the-republic#introduction&quot;,
+    &quot;@type&quot;: &quot;Chapter&quot;,
+    &quot;description&quot;: &quot;An introductory chapter on The Republic.&quot;,
+    &quot;title&quot;: &quot;The Introduction&quot;
+  }]
+}</span><span class='tstring_end'>)</span></span>
+
+<span class='id identifier rubyid_frame'>frame</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span> <span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>{
+  &quot;@context&quot;: {
+    &quot;Book&quot;:         &quot;http://example.org/vocab#Book&quot;,
+    &quot;Chapter&quot;:      &quot;http://example.org/vocab#Chapter&quot;,
+    &quot;contains&quot;:     &quot;http://example.org/vocab#contains&quot;,
+    &quot;creator&quot;:      &quot;http://purl.org/dc/terms/creator&quot;,
+    &quot;description&quot;:  &quot;http://purl.org/dc/terms/description&quot;,
+    &quot;Library&quot;:      &quot;http://example.org/vocab#Library&quot;,
+    &quot;title&quot;:        &quot;http://purl.org/dc/terms/title&quot;
+  },
+  &quot;@type&quot;: &quot;Library&quot;,
+  &quot;contains&quot;: {
+    &quot;@type&quot;: &quot;Book&quot;,
+    &quot;contains&quot;: {
+      &quot;@type&quot;: &quot;Chapter&quot;
+    }
+  }
+}</span><span class='tstring_end'>)</span></span>
+
+<span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_frame'><span class='object_link'><a href="JSON/LD/API.html#frame-class_method" title="JSON::LD::API.frame (method)">frame</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='rparen'>)</span> <span class='op'>=&gt;</span>
+<span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Book</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/vocab#Book</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Chapter</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/vocab#Chapter</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>contains</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/vocab#contains</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>creator</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://purl.org/dc/terms/creator</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>description</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://purl.org/dc/terms/description</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Library</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/vocab#Library</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>title</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://purl.org/dc/terms/title</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span>
+    <span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.com/library</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@type</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Library</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>contains</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/library/the-republic</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@type</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Book</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>contains</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/library/the-republic#introduction</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@type</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Chapter</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>description</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>An introductory chapter on The Republic.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>title</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>The Introduction</span><span class='tstring_end'>&quot;</span></span>
+        <span class='rbrace'>}</span><span class='comma'>,</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>creator</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Plato</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>title</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>The Republic</span><span class='tstring_end'>&quot;</span></span>
+      <span class='rbrace'>}</span>
+    <span class='rbrace'>}</span>
+  <span class='rbracket'>]</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<h3 id="label-Turn+JSON-LD+into+RDF+-28Turtle-29">Turn JSON-LD into RDF (Turtle)</h3>
+
+<pre class="code ruby"><code class="ruby">input = JSON.parse %({
+  &quot;@context&quot;: {
+    &quot;&quot;:       &quot;https://manu.sporny.org/&quot;,
+    &quot;foaf&quot;:   &quot;http://xmlns.com/foaf/0.1/&quot;
+  },
+  &quot;@id&quot;:       &quot;http://example.org/people#joebob&quot;,
+  &quot;@type&quot;:          &quot;foaf:Person&quot;,
+  &quot;foaf:name&quot;:      &quot;Joe Bob&quot;,
+  &quot;foaf:nick&quot;:      { &quot;@list&quot;: [ &quot;joe&quot;, &quot;bob&quot;, &quot;jaybe&quot; ] }
+})
+
+graph = RDF::Graph.new &lt;&lt; JSON::LD::API.toRdf(input)
+
+require &#39;rdf/turtle&#39;
+graph.dump(:ttl, prefixes: &quot;http://xmlns.com/foaf/0.1/&quot;)
+@prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+
+&lt;http://example.org/people#joebob&gt; a foaf:Person;
+   foaf:name &quot;Joe Bob&quot;;
+   foaf:nick (&quot;joe&quot; &quot;bob&quot; &quot;jaybe&quot;) .
+</code></pre>
+
+<h3 id="label-Turn+RDF+into+JSON-LD">Turn RDF into JSON-LD</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>rdf/turtle</span><span class='tstring_end'>&#39;</span></span>
+<span class='id identifier rubyid_input'>input</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Graph</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='op'>&lt;&lt;</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Turtle</span><span class='op'>::</span><span class='const'>Reader</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>
+  @prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+
+  &lt;https://manu.sporny.org/#me&gt; a foaf:Person;
+     foaf:knows [ a foaf:Person;
+       foaf:name &quot;Gregg Kellogg&quot;];
+     foaf:name &quot;Manu Sporny&quot; .
+</span><span class='tstring_end'>)</span></span><span class='rparen'>)</span>
+
+<span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span> <span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>{
+  &quot;@context&quot;: {
+    &quot;&quot;:       &quot;https://manu.sporny.org/&quot;,
+    &quot;foaf&quot;:   &quot;http://xmlns.com/foaf/0.1/&quot;
+  }
+}</span><span class='tstring_end'>)</span></span>
+
+<span class='id identifier rubyid_compacted'>compacted</span> <span class='op'>=</span> <span class='kw'>nil</span>
+<span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='op'>::</span><span class='id identifier rubyid_fromRdf'><span class='object_link'><a href="JSON/LD/API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">fromRdf</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_expanded'>expanded</span><span class='op'>|</span>
+  <span class='id identifier rubyid_compacted'>compacted</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_compact'><span class='object_link'><a href="JSON/LD/API.html#compact-class_method" title="JSON::LD::API.compact (method)">compact</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_expanded'>expanded</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='kw'>end</span>
+<span class='id identifier rubyid_compacted'>compacted</span> <span class='op'>=&gt;</span>
+  <span class='lbracket'>[</span>
+    <span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>_:g70265766605380</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@type</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://xmlns.com/foaf/0.1/Person</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://xmlns.com/foaf/0.1/name</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Gregg Kellogg</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+    <span class='rbrace'>}</span><span class='comma'>,</span>
+    <span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://manu.sporny.org/#me</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@type</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://xmlns.com/foaf/0.1/Person</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://xmlns.com/foaf/0.1/knows</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>_:g70265766605380</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://xmlns.com/foaf/0.1/name</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Manu Sporny</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+    <span class='rbrace'>}</span>
+  <span class='rbracket'>]</span>
+</code></pre>
+
+<h2 id="label-Use+a+custom+Document+Loader">Use a custom Document Loader</h2>
+
+<p>In some cases, the built-in document loader {JSON::LD::API.documentLoader} is inadequate; for example, when using <code>http://schema.org</code> as a remote context, it will be re-loaded every time (however, see {json-ld-preloaded}[https://rubygems.org/gems/json-ld-preloaded]).</p>
+
+<p>All entries into the {JSON::LD::API} accept a <code>:documentLoader</code> option, which can be used to provide an alternative method to use when loading remote documents. For example:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_load_document_local'>load_document_local</span> <span class='op'>=</span> <span class='const'>Proc</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='op'>|</span>
+  <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='label'>canonicalize:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>http://schema.org/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_remote_document'>remote_document</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API/RemoteDocument.html" title="JSON::LD::API::RemoteDocument (class)">RemoteDocument</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="JSON/LD/API/RemoteDocument.html#initialize-instance_method" title="JSON::LD::API::RemoteDocument#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_read'>read</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>etc/schema.org.jsonld</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_block_given?'>block_given?</span> <span class='op'>?</span> <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_remote_document'>remote_document</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_remote_document'>remote_document</span>
+  <span class='kw'>else</span>
+    <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_documentLoader'><span class='object_link'><a href="JSON/LD/API.html#documentLoader-class_method" title="JSON::LD::API.documentLoader (method)">documentLoader</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Then, when performing something like expansion:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_expand'><span class='object_link'><a href="JSON/LD/API.html#expand-class_method" title="JSON::LD::API.expand (method)">expand</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>documentLoader:</span> <span class='id identifier rubyid_load_document_local'>load_document_local</span><span class='rparen'>)</span>
+</code></pre>
+
+<h2 id="label-Preloading+contexts">Preloading contexts</h2>
+
+<p>In many cases, for small documents, processing time can be dominated by loading and parsing remote contexts. In particular, a small schema.org example may need to download a large context and turn it into an internal representation, before the actual document can be expanded for processing. Using {JSON::LD::Context.add_preloaded}, an implementation can perform this loading up-front, and make it available to the processor.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/Context.html" title="JSON::LD::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>http://schema.org/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JSON/LD/Context.html" title="JSON::LD::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_add_preloaded'><span class='object_link'><a href="JSON/LD/Context.html#add_preloaded-class_method" title="JSON::LD::Context.add_preloaded (method)">add_preloaded</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>http://schema.org/</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_ctx'>ctx</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>On lookup, URIs with an <code>https</code> prefix are normalized to <code>http</code>.</p>
+
+<p>A context may be serialized to Ruby to speed this process using <code>Context#to_rb</code>. When loaded, this generated file will add entries to the {JSON::LD::Context::PRELOADED}.</p>
+
+<h2 id="label-RDF+Reader+and+Writer">RDF Reader and Writer</h2>
+
+<p>{JSON::LD} also acts as a normal RDF reader and writer, using the standard RDF.rb reader/writer interfaces:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Graph</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>etc/doap.jsonld</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>format:</span> <span class='symbol'>:jsonld</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_graph'>graph</span><span class='period'>.</span><span class='id identifier rubyid_dump'>dump</span><span class='lparen'>(</span><span class='symbol'>:jsonld</span><span class='comma'>,</span> <span class='label'>standard_prefixes:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+</code></pre>
+
+<p><code>RDF::GRAPH#dump</code> can also take a <code>:context</code> option to use a separately defined context</p>
+
+<p>As JSON-LD may come from many different sources, included as an embedded script tag within an HTML document, the RDF Reader will strip input before the leading <code>{</code> or <code>[</code> and after the trailing <code>}</code> or <code>]</code>.</p>
+
+<h2 id="label-Extensions+from+JSON-LD+1.0">Extensions from JSON-LD 1.0</h2>
+
+<p>This implementation is being used as a test-bed for features planned for an upcoming JSON-LD 1.1 Community release.</p>
+
+<h3 id="label-Scoped+Contexts">Scoped Contexts</h3>
+
+<p>A term definition can include <code>@context</code>, which is applied to values of that object. This is also used when compacting. Taken together, this allows framing to effectively include context definitions more deeply within the framed structure.</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;@context&quot;: {
+    &quot;ex&quot;: &quot;http://example.com/&quot;,
+    &quot;foo&quot;: {
+      &quot;@id&quot;: &quot;ex:foo&quot;,
+      &quot;@type&quot;: &quot;@vocab&quot;
+      &quot;@context&quot;: {
+        &quot;Bar&quot;: &quot;ex:Bar&quot;,
+        &quot;Baz&quot;: &quot;ex:Baz&quot;
+      }
+    }
+  },
+  &quot;foo&quot;: &quot;Bar&quot;
+}
+</code></pre>
+
+<h3 id="label-40id+and+-40type+maps">@id and @type maps</h3>
+
+<p>The value of <code>@container</code> in a term definition can include <code>@id</code> or <code>@type</code>, in addition to <code>@set</code>, <code>@list</code>, <code>@language</code>, and <code>@index</code>. This allows value indexing based on either the <code>@id</code> or <code>@type</code> of associated objects.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@vocab</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example/</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>idmap</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>idmap</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/foo</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Object with @id &lt;foo&gt;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>_:bar</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Object with @id _:bar</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<h3 id="label-40graph+containers+and+maps">@graph containers and maps</h3>
+
+<p>A term can have <code>@container</code> set to include <code>@graph</code> optionally including <code>@id</code> or <code>@index</code> and <code>@set</code>. In the first form, with <code>@container</code> set to <code>@graph</code>, the value of a property is treated as a <em>simple graph object</em>, meaning that values treated as if they were contained in an object with <code>@graph</code>, creating <em>named graph</em> with an anonymous name.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@vocab</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>value</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>x</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>which expands to the following:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbracket'>[</span><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/input</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/value</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>x</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+    <span class='rbrace'>}</span><span class='rbracket'>]</span>
+  <span class='rbrace'>}</span><span class='rbracket'>]</span>
+<span class='rbrace'>}</span><span class='rbracket'>]</span>
+</code></pre>
+
+<p>Compaction reverses this process, optionally ensuring that a single value is contained within an array of <code>@container</code> also includes <code>@set</code>:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@vocab</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@set</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>A graph map uses the map form already existing for <code>@index</code>, <code>@language</code>, <code>@type</code>, and <code>@id</code> where the index is either an index value or an id.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@vocab</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@index</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>g1</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>x</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>treats “g1” as an index, and expands to the following:</p>
+
+<pre class="code ruby"><code class="ruby">[{
+  &quot;http://example.org/input&quot;: [{
+    &quot;@index&quot;: &quot;g1&quot;,
+    &quot;@graph&quot;: [{
+      &quot;http://example.org/value&quot;: [&quot;x&quot;]
+    }]
+  }]
+}])
+</code></pre>
+
+<p>This can also include <code>@set</code> to ensure that, when compacting, a single value of an index will be in array form.</p>
+
+<p>The <em>id</em> version is similar:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@vocab</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.org/</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@graph</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>input</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>http://example.com/g1</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>x</span><span class='tstring_end'>&quot;</span></span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>which expands to:</p>
+
+<pre class="code ruby"><code class="ruby">[{
+  &quot;http://example.org/input&quot;: [{
+    &quot;@id&quot;: &quot;http://example.com/g1&quot;,
+    &quot;@graph&quot;: [{
+      &quot;http://example.org/value&quot;: [&quot;x&quot;]
+    }]
+  }]
+}])
+</code></pre>
+
+<h3 id="label-Transparent+Nesting">Transparent Nesting</h3>
+
+<p>Many JSON APIs separate properties from their entities using an intermediate object. For example, a set of possible labels may be grouped under a common property:</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;@context&quot;: {
+    &quot;skos&quot;: &quot;http://www.w3.org/2004/02/skos/core#&quot;,
+    &quot;labels&quot;: &quot;@nest&quot;,
+    &quot;main_label&quot;: &quot;skos:prefLabel&quot;,
+    &quot;other_label&quot;: &quot;skos:altLabel&quot;,
+    &quot;homepage&quot;: &lt;a href=&quot;\&quot;@id\&quot;:\&quot;http://schema.org/description\&quot;,&quot; target=&quot;_parent&quot; title=&quot;&amp;quot;@type&amp;quot;:&amp;quot;@id&amp;quot;&quot;&gt;&quot;@type&quot;:&quot;@id&quot;&lt;/a&gt;
+  },
+  &quot;@id&quot;:&quot;http://example.org/myresource&quot;,
+  &quot;homepage&quot;: &quot;http://example.org&quot;,
+  &quot;labels&quot;: {
+     &quot;main_label&quot;: &quot;This is the main label for my resource&quot;,
+     &quot;other_label&quot;: &quot;This is the other label&quot;
+  }
+}
+</code></pre>
+
+<p>In this case, the <code>labels</code> property is semantically meaningless. Defining it as equivalent to <code>@nest</code> causes it to be ignored when expanding, making it equivalent to the following:</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;@context&quot;: {
+    &quot;skos&quot;: &quot;http://www.w3.org/2004/02/skos/core#&quot;,
+    &quot;labels&quot;: &quot;@nest&quot;,
+    &quot;main_label&quot;: &quot;skos:prefLabel&quot;,
+    &quot;other_label&quot;: &quot;skos:altLabel&quot;,
+    &quot;homepage&quot;: &lt;a href=&quot;\&quot;@id\&quot;:\&quot;http://schema.org/description\&quot;,&quot; target=&quot;_parent&quot; title=&quot;&amp;quot;@type&amp;quot;:&amp;quot;@id&amp;quot;&quot;&gt;&quot;@type&quot;:&quot;@id&quot;&lt;/a&gt;
+  },
+  &quot;@id&quot;:&quot;http://example.org/myresource&quot;,
+  &quot;homepage&quot;: &quot;http://example.org&quot;,
+  &quot;main_label&quot;: &quot;This is the main label for my resource&quot;,
+  &quot;other_label&quot;: &quot;This is the other label&quot;
+}
+</code></pre>
+
+<p>Similarly, properties may be marked with “@nest”: “nest-term”, to cause them to be nested. Note that the <code>@nest</code> keyword can also be aliased in the context.</p>
+
+<pre class="code ruby"><code class="ruby"> {
+   &quot;@context&quot;: {
+     &quot;skos&quot;: &quot;http://www.w3.org/2004/02/skos/core#&quot;,
+     &quot;labels&quot;: &quot;@nest&quot;,
+     &quot;main_label&quot;: &quot;skos:prefLabel&quot;, &quot;@nest&quot;: &quot;labels&quot;,
+     &quot;other_label&quot;: &quot;skos:altLabel&quot;, &quot;@nest&quot;: &quot;labels&quot;,
+     &quot;homepage&quot;: &lt;a href=&quot;\&quot;@id\&quot;:\&quot;http://schema.org/description\&quot;,&quot; target=&quot;_parent&quot; title=&quot;&amp;quot;@type&amp;quot;:&amp;quot;@id&amp;quot;&quot;&gt;&quot;@type&quot;:&quot;@id&quot;&lt;/a&gt;
+   },
+   &quot;@id&quot;:&quot;http://example.org/myresource&quot;,
+   &quot;homepage&quot;: &quot;http://example.org&quot;,
+   &quot;labels&quot;: {
+      &quot;main_label&quot;: &quot;This is the main label for my resource&quot;,
+      &quot;other_label&quot;: &quot;This is the other label&quot;
+   }
+ }
+</code></pre>
+
+<p>In this way, nesting survives round-tripping through expansion, and framed output can include nested properties.</p>
+
+<h2 id="label-Sinatra-2FRack+support">Sinatra/Rack support</h2>
+
+<p>JSON-LD 1.1 describes support for the <em>profile</em> parameter to a media type in an HTTP ACCEPT header. This allows an HTTP request to specify the format (expanded/compacted/flattened/framed) along with a reference to a context or frame to use to format the returned document.</p>
+
+<p>An HTTP header may be constructed as follows:</p>
+
+<pre class="code ruby"><code class="ruby">GET /ordinary-json-document.json HTTP/1.1
+Host: example.com
+Accept: application/ld+json;profile=&quot;http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context&quot;, application/ld+json
+</code></pre>
+
+<p>This tells a server that the top priority is to return JSON-LD compacted using a context at <code>http://conneg.example.com/context</code>, and if not available, to just return any form of JSON-LD.</p>
+
+<p>The <a href="https://rack.github.com/">JSON::LD::ContentNegotiation} class provides a {Rack</a> <code>call</code> method, and <a href="https://www.sinatrarb.com/">Sinatra</a> <code>registered</code> class method to allow content-negotiation using such profile parameters. For example:</p>
+
+<pre class="code ruby"><code class="ruby">#!/usr/bin/env rackup
+require &#39;sinatra/base&#39;
+require &#39;json/ld&#39;
+
+module My
+  class Application &lt; Sinatra::Base
+    register JSON::LD::ContentNegotiation
+
+    get &#39;/hello&#39; do
+      [{
+        &quot;http://example.org/input&quot;: [{
+          &quot;@id&quot;: &quot;http://example.com/g1&quot;,
+          &quot;@graph&quot;: [{
+            &quot;http://example.org/value&quot;: [{&quot;@value&quot;: &quot;x&quot;}]
+          }]
+        }]
+      }])
+    end
+  end
+end
+
+run My::Application
+</code></pre>
+
+<p>The {JSON::LD::ContentNegotiation#call} method looks for a result which includes an object, with an acceptable <code>Accept</code> header and formats the result as JSON-LD, considering the profile parameters. This can be tested using something like the following:</p>
+
+<pre class="code ruby"><code class="ruby">$ rackup config.ru
+
+$ curl -iH &#39;Accept: application/ld+json;profile=&quot;http://www.w3.org/ns/json-ld#compacted http://conneg.example.com/context&quot;&#39; http://localhost:9292/hello
+</code></pre>
+
+<p>See <a href="https://rubygems.org/gems/rack-linkeddata">Rack::LinkedData</a> to do the same thing with an RDF Graph or Dataset as the source, rather than Ruby objects.</p>
+
+<h2 id="label-Documentation">Documentation</h2>
+
+<p>Full documentation available on <a href="https://ruby-rdf.github.io/json-ld/file/README.md">RubyDoc</a></p>
+
+<h2 id="label-Differences+from+JSON-LD+API">Differences from <a href="https://www.w3.org/TR/json-ld11-api/">JSON-LD API</a></h2>
+
+<p>The specified JSON-LD API is based on a WebIDL definition implementing <a href="https://dom.spec.whatwg.org/#promises">Promises</a> intended for use within a browser. This version implements a more Ruby-like variation of this API without the use of promises or callback arguments, preferring Ruby blocks. All API methods execute synchronously, so that the return from a method can typically be used as well as a block.</p>
+
+<p>Note, the API method signatures differed in versions before 1.0, in that they also had a callback parameter. And 1.0.6 has some other minor method signature differences than previous versions. This should be the only exception to the use of semantic versioning.</p>
+
+<h3 id="label-Principal+Classes">Principal Classes</h3>
+<ul><li>
+<p>{JSON::LD}</p>
+</li><li>
+<p>{JSON::LD::API}</p>
+</li><li>
+<p>{JSON::LD::Compact}</p>
+</li><li>
+<p>{JSON::LD::Context}</p>
+</li><li>
+<p>{JSON::LD::Format}</p>
+</li><li>
+<p>{JSON::LD::Frame}</p>
+</li><li>
+<p>{JSON::LD::FromRDF}</p>
+</li><li>
+<p>{JSON::LD::Reader}</p>
+</li><li>
+<p>{JSON::LD::ToRDF}</p>
+</li><li>
+<p>{JSON::LD::Writer}</p>
+</li></ul>
+
+<h2 id="label-Dependencies">Dependencies</h2>
+<ul><li>
+<p><a href="https://ruby-lang.org/">Ruby</a> (&gt;= 2.6)</p>
+</li><li>
+<p><a href="https://rubygems.org/gems/rdf">RDF.rb</a> (~&gt; 3.2)</p>
+</li><li>
+<p><a href="https://rubygems.org/gems/json">JSON</a> (&gt;= 2.6)</p>
+</li></ul>
+
+<h2 id="label-Installation">Installation</h2>
+
+<p>The recommended installation method is via <a href="https://rubygems.org/">RubyGems</a>. To install the latest official release of the <code>JSON-LD</code> gem, do:</p>
+
+<pre class="code ruby"><code class="ruby">% [sudo] gem install json-ld
+</code></pre>
+
+<h2 id="label-Download">Download</h2>
+
+<p>To get a local working copy of the development repository, do:</p>
+
+<pre class="code ruby"><code class="ruby">% git clone git://github.com/ruby-rdf/json-ld.git
+</code></pre>
+
+<h2 id="label-Mailing+List">Mailing List</h2>
+<ul><li>
+<p><a href="https://lists.w3.org/Archives/Public/public-rdf-ruby">lists.w3.org/Archives/Public/public-rdf-ruby</a>/</p>
+</li></ul>
+
+<h2 id="label-Author">Author</h2>
+<ul><li>
+<p><a href="https://github.com/gkellogg">Gregg Kellogg</a> - <a href="https://greggkellogg.net">greggkellogg.net</a>/</p>
+</li></ul>
+
+<h2 id="label-Contributing">Contributing</h2>
+<ul><li>
+<p>Do your best to adhere to the existing coding conventions and idioms.</p>
+</li><li>
+<p>Don’t use hard tabs, and don’t leave trailing whitespace on any line.</p>
+</li><li>
+<p>Do document every method you add using <a href="https://yardoc.org/">YARD</a> annotations. Read the  <a href="https://rubydoc.info/docs/yard/file/docs/GettingStarted.md">tutorial</a> or just look at the existing code for examples.</p>
+</li><li>
+<p>Don’t touch the <code>json-ld.gemspec</code>, <code>VERSION</code> or <code>AUTHORS</code> files. If you need to  change them, do so on your private branch only.</p>
+</li><li>
+<p>Do feel free to add yourself to the <code>CREDITS</code> file and the corresponding  list in the the <code>README</code>. Alphabetical order applies.</p>
+</li><li>
+<p>Do note that in order for us to merge any non-trivial changes (as a rule  of thumb, additions larger than about 15 lines of code), we need an  explicit <a href="https://unlicense.org/#unlicensing-contributions">public domain dedication</a> on record from you,  which you will be asked to agree to on the first commit to a repo within the organization.  Note that the agreement applies to all repos in the <a href="https://github.com/ruby-rdf/">Ruby RDF</a> organization.</p>
+</li></ul>
+
+<h2 id="label-License">License</h2>
+
+<p>This is free and unencumbered public domain software. For more information, see <a href="https://unlicense.org">unlicense.org</a>/ or the accompanying {file:UNLICENSE} file.</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Thu Jan 27 23:44:04 2022 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.27 (ruby-3.1.0).
+</div>
+
+    </div>
+  </body>
+</html>
