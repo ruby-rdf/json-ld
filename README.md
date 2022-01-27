@@ -565,7 +565,7 @@ The {JSON::LD::ContentNegotiation#call} method looks for a result which includes
 See [Rack::LinkedData][] to do the same thing with an RDF Graph or Dataset as the source, rather than Ruby objects.
 
 ## Documentation
-Full documentation available on [RubyDoc](https://rubydoc.info/gems/json-ld/file/README.md)
+Full documentation available on [RubyDoc](https://ruby-rdf.github.io/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
 The specified JSON-LD API is based on a WebIDL definition implementing [Promises][] intended for use within a browser.
