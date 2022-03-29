@@ -41,6 +41,10 @@ describe JSON::LD::Format do
     specify {expect(described_class.to_sym).to eq :jsonld}
   end
 
+  describe "#to_uri" do
+    specify {expect(described_class.to_uri).to eq RDF::URI('http://www.w3.org/ns/formats/JSON-LD')}
+  end
+
   describe ".detect" do
     {
       jsonld: '{"@context" => "foo"}',

@@ -23,7 +23,8 @@ module JSON::LD
   class Format < RDF::Format
     content_type     'application/ld+json',
                      extension: :jsonld,
-                     alias: 'application/x-ld+json'
+                     alias: 'application/x-ld+json',
+                     uri: 'http://www.w3.org/ns/formats/JSON-LD'
     content_encoding 'utf-8'
 
     reader { JSON::LD::Reader }
