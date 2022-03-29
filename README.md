@@ -72,7 +72,7 @@ In the first case, the embedded node is not asserted, and only appears as the su
 
 #### Serializing a Graph containing embedded statements
 
-    require 'json-ld'
+    require 'json/ld'
     statement = RDF::Statement(RDF::URI('bob'), RDF::Vocab::FOAF.age, RDF::Literal(23))
     graph = RDF::Graph.new << [statement, RDF::URI("ex:certainty"), RDF::Literal(0.9)]
     graph.dump(:jsonld, validate: false, standard_prefixes: true)

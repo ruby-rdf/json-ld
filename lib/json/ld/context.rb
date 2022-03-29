@@ -7,7 +7,7 @@ require 'rdf/util/cache'
 
 begin
   # Attempt to load this to avoid unnecessary context fetches
-  require 'json-ld-preloaded'
+  require 'json/ld/preloaded'
 rescue LoadError
   # Silently allow this to fail
 end
