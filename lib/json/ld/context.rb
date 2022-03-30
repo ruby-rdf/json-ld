@@ -5,13 +5,6 @@ require 'bigdecimal'
 require 'set'
 require 'rdf/util/cache'
 
-begin
-  # Attempt to load this to avoid unnecessary context fetches
-  require 'json/ld/preloaded'
-rescue LoadError
-  # Silently allow this to fail
-end
-
 module JSON::LD
   class Context
     include Utils
@@ -48,6 +41,13 @@ module JSON::LD
       def alias_preloaded(a, url)
         PRELOADED[a.to_s.freeze] = PRELOADED[url.to_s.freeze]
       end
+    end
+
+    begin
+      # Attempt to load this to avoid unnecessary context fetches
+      require 'json/ld/preloaded'
+    rescue LoadError
+      # Silently allow this to fail
     end
 
     # The base.
