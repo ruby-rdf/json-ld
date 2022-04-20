@@ -1,0 +1,11 @@
+{
+  "@id" : "http://example/collection",
+  "http://example/p" : [ "book:ZZZ" ],
+  "book" : [ "book:YYY" ],
+  "@context" : {
+    "book" : {
+      "@id" : "http://onbetween.ch/3ms/cms#",
+      "@type" : "@id"
+    }
+  }
+}
