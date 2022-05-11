@@ -72,7 +72,7 @@ In the first case, the embedded node is not asserted, and only appears as the su
 
 #### Serializing a Graph containing embedded statements
 
-    require 'json-ld'
+    require 'json/ld'
     statement = RDF::Statement(RDF::URI('bob'), RDF::Vocab::FOAF.age, RDF::Literal(23))
     graph = RDF::Graph.new << [statement, RDF::URI("ex:certainty"), RDF::Literal(0.9)]
     graph.dump(:jsonld, validate: false, standard_prefixes: true)
@@ -565,7 +565,7 @@ The {JSON::LD::ContentNegotiation#call} method looks for a result which includes
 See [Rack::LinkedData][] to do the same thing with an RDF Graph or Dataset as the source, rather than Ruby objects.
 
 ## Documentation
-Full documentation available on [RubyDoc](https://rubydoc.info/gems/json-ld/file/README.md)
+Full documentation available on [RubyDoc](https://ruby-rdf.github.io/json-ld/file/README.md)
 
 ## Differences from [JSON-LD API][]
 The specified JSON-LD API is based on a WebIDL definition implementing [Promises][] intended for use within a browser.

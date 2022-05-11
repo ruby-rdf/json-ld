@@ -130,7 +130,7 @@
     ],
     "http://usefulinc.com/ns/doap#homepage": [
       {
-        "@id": "http://ruby-rdf.github.com/shex"
+        "@id": "https://ruby-rdf.github.io/shex"
       }
     ],
     "http://usefulinc.com/ns/doap#developer": [

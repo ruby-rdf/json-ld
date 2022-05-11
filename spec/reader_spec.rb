@@ -131,7 +131,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/d;p?q", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s001", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s001", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s002", "urn:ex:p": "g"},
           {"@id": "urn:ex:s003", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s004", "urn:ex:p": "g/"},
@@ -183,7 +183,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/d/", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s043", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s043", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s044", "urn:ex:p": "g"},
           {"@id": "urn:ex:s045", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s046", "urn:ex:p": "g/"},
@@ -235,7 +235,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/./d;p?q", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s085", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s085", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s086", "urn:ex:p": "g"},
           {"@id": "urn:ex:s087", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s088", "urn:ex:p": "g/"},
@@ -287,7 +287,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/../d;p?q", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s127", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s127", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s128", "urn:ex:p": "g"},
           {"@id": "urn:ex:s129", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s130", "urn:ex:p": "g/"},
@@ -339,7 +339,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/.", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s169", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s169", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s170", "urn:ex:p": "g"},
           {"@id": "urn:ex:s171", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s172", "urn:ex:p": "g/"},
@@ -391,7 +391,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "http://a/bb/ccc/..", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s211", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s211", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s212", "urn:ex:p": "g"},
           {"@id": "urn:ex:s213", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s214", "urn:ex:p": "g/"},
@@ -443,7 +443,7 @@ describe JSON::LD::Reader do
       {
         "@context": {"@base": "file:///a/bb/ccc/d;p?q", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
-          {"@id": "urn:ex:s253", "urn:ex:p": "g:h"},
+          {"@id": "urn:ex:s253", "urn:ex:p": "gg:h"},
           {"@id": "urn:ex:s254", "urn:ex:p": "g"},
           {"@id": "urn:ex:s255", "urn:ex:p": "./g"},
           {"@id": "urn:ex:s256", "urn:ex:p": "g/"},
@@ -523,7 +523,7 @@ describe JSON::LD::Reader do
     let(:nt) {%q{
       # RFC3986 normal examples
 
-      <urn:ex:s001> <urn:ex:p> <g:h>.
+      <urn:ex:s001> <urn:ex:p> <gg:h>.
       <urn:ex:s002> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s003> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s004> <urn:ex:p> <http://a/bb/ccc/g/>.
@@ -571,7 +571,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with trailing slash in base IRI
 
-      <urn:ex:s043> <urn:ex:p> <g:h>.
+      <urn:ex:s043> <urn:ex:p> <gg:h>.
       <urn:ex:s044> <urn:ex:p> <http://a/bb/ccc/d/g>.
       <urn:ex:s045> <urn:ex:p> <http://a/bb/ccc/d/g>.
       <urn:ex:s046> <urn:ex:p> <http://a/bb/ccc/d/g/>.
@@ -619,7 +619,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with /. in the base IRI
 
-      <urn:ex:s085> <urn:ex:p> <g:h>.
+      <urn:ex:s085> <urn:ex:p> <gg:h>.
       <urn:ex:s086> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s087> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s088> <urn:ex:p> <http://a/bb/ccc/g/>.
@@ -667,7 +667,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with /.. in the base IRI
 
-      <urn:ex:s127> <urn:ex:p> <g:h>.
+      <urn:ex:s127> <urn:ex:p> <gg:h>.
       <urn:ex:s128> <urn:ex:p> <http://a/bb/g>.
       <urn:ex:s129> <urn:ex:p> <http://a/bb/g>.
       <urn:ex:s130> <urn:ex:p> <http://a/bb/g/>.
@@ -715,7 +715,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with trailing /. in the base IRI
 
-      <urn:ex:s169> <urn:ex:p> <g:h>.
+      <urn:ex:s169> <urn:ex:p> <gg:h>.
       <urn:ex:s170> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s171> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s172> <urn:ex:p> <http://a/bb/ccc/g/>.
@@ -763,7 +763,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with trailing /.. in the base IRI
 
-      <urn:ex:s211> <urn:ex:p> <g:h>.
+      <urn:ex:s211> <urn:ex:p> <gg:h>.
       <urn:ex:s212> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s213> <urn:ex:p> <http://a/bb/ccc/g>.
       <urn:ex:s214> <urn:ex:p> <http://a/bb/ccc/g/>.
@@ -811,7 +811,7 @@ describe JSON::LD::Reader do
 
       # RFC3986 normal examples with file path
 
-      <urn:ex:s253> <urn:ex:p> <g:h>.
+      <urn:ex:s253> <urn:ex:p> <gg:h>.
       <urn:ex:s254> <urn:ex:p> <file:///a/bb/ccc/g>.
       <urn:ex:s255> <urn:ex:p> <file:///a/bb/ccc/g>.
       <urn:ex:s256> <urn:ex:p> <file:///a/bb/ccc/g/>.

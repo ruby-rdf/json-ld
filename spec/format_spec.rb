@@ -41,6 +41,10 @@ describe JSON::LD::Format do
     specify {expect(described_class.to_sym).to eq :jsonld}
   end
 
+  describe "#to_uri" do
+    specify {expect(described_class.to_uri).to eq RDF::URI('http://www.w3.org/ns/formats/JSON-LD')}
+  end
+
   describe ".detect" do
     {
       jsonld: '{"@context" => "foo"}',
@@ -66,7 +70,7 @@ describe JSON::LD::Format do
     end
   end
 
-  describe ".cli_commands" do
+  describe ".cli_commands", skip: Gem.win_platform? do
     require 'rdf/cli'
     let(:ttl) {File.expand_path("../test-files/test-1-rdf.ttl", __FILE__)}
     let(:json) {File.expand_path("../test-files/test-1-input.json", __FILE__)}

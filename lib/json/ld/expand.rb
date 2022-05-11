@@ -88,7 +88,7 @@ module JSON::LD
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.key?('@context')
-          context = context.parse(input.delete('@context'), base: @options[:base])
+          context = context.parse(input['@context'], base: @options[:base])
           log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
         end
 
@@ -99,7 +99,7 @@ module JSON::LD
 
         # See if keys mapping to @type have terms with a local context
         type_key = nil
-        input.keys.sort.
+        (input.keys - %w(@context)).sort.
           select {|k| context.expand_iri(k, vocab: true, base: @options[:base]) == '@type'}.
           each do |tk|
 

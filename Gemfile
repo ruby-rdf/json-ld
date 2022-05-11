@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-gem "nokogiri",       '~> 1.10'
+gem "nokogiri",       '~> 1.13', '>= 1.13.4'
 
 gemspec
 gem 'rdf',                  git: "https://github.com/ruby-rdf/rdf",                 branch: "develop"
