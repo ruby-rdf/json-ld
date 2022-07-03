@@ -11,7 +11,7 @@ module JSON::LD
     ##
     # @param [Hash{String => Object}] item
     # @param [RDF::Resource] graph_name
-    # @param [Boolean] emitted triples are quoted triples.
+    # @param [Boolean] quoted emitted triples are quoted triples.
     # @yield statement
     # @yieldparam [RDF::Statement] statement
     # @return RDF::Resource the subject of this item

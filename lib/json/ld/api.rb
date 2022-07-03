@@ -155,6 +155,9 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
+    # @param [Proc] serializer (nil)
+    #   A Serializer method used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @raise [JsonLdError]
@@ -167,7 +170,7 @@ module JSON::LD
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
-    def self.expand(input, framing: false, **options, &block)
+    def self.expand(input, framing: false, serializer: nil, **options, &block)
       result = doc_base = nil
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
@@ -180,6 +183,7 @@ module JSON::LD
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
+      result = serializer.call(result) if serializer
 
       if block_given?
         case block.arity
@@ -204,6 +208,9 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   The base context to use when compacting the input.
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
@@ -215,7 +222,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
     # @see https://www.w3.org/TR/json-ld11-api/#compaction-algorithm
-    def self.compact(input, context, expanded: false, **options)
+    def self.compact(input, context, expanded: false, serializer: nil, **options)
       result = nil
       options = {compactToRelative:  true}.merge(options)
 
@@ -238,6 +245,7 @@ module JSON::LD
         end
         result = ctx.merge(result) unless ctx.fetch('@context', {}).empty?
       end
+      result = serializer.call(result) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -251,6 +259,9 @@ module JSON::LD
     # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
     # @param [Boolean] expanded (false) Input is already expanded
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @option options [Boolean] :createAnnotations
@@ -262,7 +273,7 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
-    def self.flatten(input, context, expanded: false, **options)
+    def self.flatten(input, context, expanded: false, serializer: nil, **options)
       flattened = []
       options = {
         compactToRelative:  true,
@@ -318,6 +329,7 @@ module JSON::LD
         end
       end
 
+      flattened = serializer.call(flattened) if serializer
       block_given? ? yield(flattened) : flattened
     end
 
@@ -350,7 +362,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
     # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
-    def self.frame(input, frame, expanded: false, **options)
+    def self.frame(input, frame, expanded: false, serializer: nil, **options)
       result = nil
       options = {
         base:                       (RDF::URI(input) if input.is_a?(String)),
@@ -467,6 +479,7 @@ module JSON::LD
         result
       end
 
+      result = serializer.call(result) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -528,18 +541,21 @@ module JSON::LD
     # The resulting `Array` is either returned or yielded, if a block is given.
     #
     # @param [RDF::Enumerable] input
+    # @param [Boolean] useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
+    # @param [Boolean] useNativeTypes (false) use native representations
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
-    # @option options [Boolean] :useRdfType (false)
-    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
-    # @option options [Boolean] :useNativeTypes (false) use native representations
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
-    def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
+    def self.fromRdf(input, useRdfType: false, useNativeTypes: false, serializer: nil, **options, &block)
       result = nil
 
       API.new(nil, nil, **options) do
@@ -548,6 +564,7 @@ module JSON::LD
           useNativeTypes: useNativeTypes)
       end
 
+      result = serializer.call(result) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -792,6 +809,16 @@ module JSON::LD
       end
     rescue MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
+    end
+
+    ##
+    # The default serializer for serialzing Ruby Objects to JSON.
+    #
+    # Defaults to `MultiJson.dump`
+    #
+    # @param [Object] object
+    def self.serializer(object)
+      MultiJson.dump(object, JSON_STATE)
     end
 
     ##

@@ -60,6 +60,7 @@ module RDF::Util
         document_options[:headers][:content_type] = options[:contentType] if options[:contentType]
 
         remote_document = RDF::Util::File::RemoteDocument.new(response.read, **document_options)
+        response.close
         if block_given?
           return yield remote_document
         else

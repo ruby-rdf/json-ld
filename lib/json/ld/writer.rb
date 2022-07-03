@@ -229,6 +229,8 @@ module JSON::LD
     #   frame to use when serializing.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    # @option options [Proc] serializer (JSON::LD::API.serializer)
+    #   A Serializer method used for generating the JSON serialization of the result.
     # @option options [Boolean] :stream (false)
     #   Do not attempt to optimize graph presentation, suitable for streaming large graphs.
     # @yield  [writer] `self`
@@ -239,6 +241,7 @@ module JSON::LD
     def initialize(output = $stdout, **options, &block)
       options[:base_uri] ||= options[:base] if options.key?(:base)
       options[:base] ||= options[:base_uri] if options.key?(:base_uri)
+      @serializer = options.fetch(:serializer, JSON::LD::API.method(:serializer))
       super do
         @repo = RDF::Repository.new
 
@@ -335,7 +338,7 @@ module JSON::LD
           result = API.compact(result, context,  **@options)
         end
 
-        @output.write(result.to_json(JSON_STATE))
+        @output.write(@serializer.call(result))
       end
 
       super
