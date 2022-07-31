@@ -73,8 +73,8 @@ describe JSON::LD::Format do
   describe ".cli_commands", skip: Gem.win_platform? do
     require 'rdf/cli'
     let(:ttl) {File.expand_path("../test-files/test-1-rdf.ttl", __FILE__)}
-    let(:json) {File.expand_path("../test-files/test-1-input.json", __FILE__)}
-    let(:context) {File.expand_path("../test-files/test-1-context.json", __FILE__)}
+    let(:json) {File.expand_path("../test-files/test-1-input.jsonld", __FILE__)}
+    let(:context) {File.expand_path("../test-files/test-1-context.jsonld", __FILE__)}
 
     describe "#expand" do
       it "expands RDF" do

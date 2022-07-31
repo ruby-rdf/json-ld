@@ -48,77 +48,75 @@ describe JSON::LD::API do
       context "with MultiJson adapter #{adapter.inspect}" do
         Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
           test = File.basename(filename).sub(/-input\..*$/, '')
-          frame = filename.sub(/-input\..*$/, '-frame.json')
-          framed = filename.sub(/-input\..*$/, '-framed.json')
-          compacted = filename.sub(/-input\..*$/, '-compacted.json')
-          context = filename.sub(/-input\..*$/, '-context.json')
-          expanded = filename.sub(/-input\..*$/, '-expanded.json')
+          frame = filename.sub(/-input\..*$/, '-frame.jsonld')
+          framed = filename.sub(/-input\..*$/, '-framed.jsonld')
+          compacted = filename.sub(/-input\..*$/, '-compacted.jsonld')
+          context = filename.sub(/-input\..*$/, '-context.jsonld')
+          expanded = filename.sub(/-input\..*$/, '-expanded.jsonld')
           ttl = filename.sub(/-input\..*$/, '-rdf.ttl')
       
           context test, skip: ("Not supported in JRuby" if RUBY_ENGINE == "jruby" && %w(oj yajl).include?(adapter.to_s)) do
+            around do |example|
+              @file = File.open(filename)
+              case filename
+              when /.jsonld$/
+                @file.define_singleton_method(:content_type) {'application/ld+json'}
+              end
+              if context
+                @ctx_io = File.open(context)
+                case context
+                when /.jsonld$/
+                  @ctx_io.define_singleton_method(:content_type) {'application/ld+json'}
+                end
+              end
+              example.run
+              @file.close
+              @ctx_io.close if @ctx_io
+            end
+
             if File.exist?(expanded)
               it "expands" do
                 options = {logger: logger, adapter: adapter}
-                File.open(context) do |ctx_io|
-                  File.open(filename) do |file|
-                    options[:expandContext] = ctx_io if context
-                    jld = described_class.expand(file, **options)
-                    expect(jld).to produce_jsonld(JSON.parse(File.read(expanded)), logger)
-                  end
-                end
+                options[:expandContext] = @ctx_io if context
+                jld = described_class.expand(@file, **options)
+                expect(jld).to produce_jsonld(JSON.parse(File.read(expanded)), logger)
               end
 
               it "expands with serializer" do
                 options = {logger: logger, adapter: adapter}
-                File.open(context) do |ctx_io|
-                  File.open(filename) do |file|
-                    options[:expandContext] = ctx_io if context
-                    jld = described_class.expand(file, serializer: JSON::LD::API.method(:serializer), **options)
-                    expect(jld).to be_a(String)
-                    expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(expanded)), logger)
-                  end
-                end
+                options[:expandContext] = @ctx_io if context
+                jld = described_class.expand(@file, serializer: JSON::LD::API.method(:serializer), **options)
+                expect(jld).to be_a(String)
+                expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(expanded)), logger)
               end
             end
         
             if File.exist?(compacted) && File.exist?(context)
               it "compacts" do
-                File.open(context) do |ctx_io|
-                  File.open(filename) do |file|
-                    jld = described_class.compact(file, ctx_io, adapter: adapter, logger: logger)
-                    expect(jld).to produce_jsonld(JSON.parse(File.read(compacted)), logger)
-                  end
-                end
+                jld = described_class.compact(@file, @ctx_io, adapter: adapter, logger: logger)
+                expect(jld).to produce_jsonld(JSON.parse(File.read(compacted)), logger)
               end
 
               it "compacts with serializer" do
-                File.open(context) do |ctx_io|
-                  File.open(filename) do |file|
-                    jld = described_class.compact(file, ctx_io, serializer: JSON::LD::API.method(:serializer), adapter: adapter, logger: logger)
-                    expect(jld).to be_a(String)
-                    expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(compacted)), logger)
-                  end
-                end
+                jld = described_class.compact(@file, @ctx_io, serializer: JSON::LD::API.method(:serializer), adapter: adapter, logger: logger)
+                expect(jld).to be_a(String)
+                expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(compacted)), logger)
               end
             end
         
             if File.exist?(framed) && File.exist?(frame)
               it "frames" do
                 File.open(frame) do |frame_io|
-                  File.open(filename) do |file|
-                    jld = described_class.frame(file, frame_io, adapter: adapter, logger: logger)
-                    expect(jld).to produce_jsonld(JSON.parse(File.read(framed)), logger)
-                  end
+                  jld = described_class.frame(@file, frame_io, adapter: adapter, logger: logger)
+                  expect(jld).to produce_jsonld(JSON.parse(File.read(framed)), logger)
                 end
               end
 
               it "frames with serializer" do
                 File.open(frame) do |frame_io|
-                  File.open(filename) do |file|
-                    jld = described_class.frame(file, frame_io, serializer: JSON::LD::API.method(:serializer), adapter: adapter, logger: logger)
-                    expect(jld).to be_a(String)
-                    expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(framed)), logger)
-                  end
+                  jld = described_class.frame(@file, frame_io, serializer: JSON::LD::API.method(:serializer), adapter: adapter, logger: logger)
+                  expect(jld).to be_a(String)
+                  expect(JSON.load(jld)).to produce_jsonld(JSON.parse(File.read(framed)), logger)
                 end
               end
             end

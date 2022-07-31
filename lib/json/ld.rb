@@ -46,6 +46,9 @@ module JSON
     # Default context when compacting without one being specified
     DEFAULT_CONTEXT = "http://schema.org"
 
+    # Acceptable MultiJson adapters
+    MUTLI_JSON_ADAPTERS = %i(oj json_gem json_pure ok_json yajl nsjsonseerialization)
+
     KEYWORDS = Set.new(%w(
       @annotation
       @base

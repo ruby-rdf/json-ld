@@ -186,10 +186,6 @@ module JSON::LD
       # @return [Boolean]
       # @see    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
       def accept?(accept_params)
-        # Profiles that aren't specific IANA relations represent the URL
-        # of a context or frame that may be subject to black- or white-listing
-        profile = accept_params[:profile].to_s.split(/\s+/)
-
         if block_given?
           yield(accept_params)
         else
@@ -303,7 +299,7 @@ module JSON::LD
       else
 
         log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-        result = API.fromRdf(@repo, **@options)
+        result = API.fromRdf(@repo, **@options.merge(serializer: nil))
 
         # Some options may be indicated from accept parameters
         profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
@@ -325,17 +321,17 @@ module JSON::LD
 
         # Rename BNodes to uniquify them, if necessary
         if options[:unique_bnodes]
-          result = API.flatten(result, context, **@options)
+          result = API.flatten(result, context, **@options.merge(serializer: nil))
         end
 
         if frame = @options[:frame]
           # Perform framing, if given a frame
           log_debug("writer") { "frame result"}
-          result = API.frame(result, frame, **@options)
+          result = API.frame(result, frame, **@options.merge(serializer: nil))
         elsif context
           # Perform compaction, if we have a context
           log_debug("writer") { "compact result"}
-          result = API.compact(result, context,  **@options)
+          result = API.compact(result, context,  **@options.merge(serializer: nil))
         end
 
         @output.write(@serializer.call(result))

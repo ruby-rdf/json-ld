@@ -126,7 +126,8 @@ module JSON::LD
 
         case remote_doc.document
         when String
-          MultiJson.load(remote_doc.document, **options)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          MultiJson.load(remote_doc.document, **mj_opts)
         else
           # Already parsed
           remote_doc.document
@@ -391,7 +392,8 @@ module JSON::LD
                                         requestProfile: 'http://www.w3.org/ns/json-ld#frame',
                                         **options)
         if remote_doc.document.is_a?(String)
-          MultiJson.load(remote_doc.document)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          MultiJson.load(remote_doc.document, **mj_opts)
         else
           remote_doc.document
         end
@@ -665,7 +667,8 @@ module JSON::LD
             end
           else
             validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
-            MultiJson.load(remote_doc.document, **options)
+            mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+            MultiJson.load(remote_doc.document, **mj_opts)
           end
         end
 
@@ -699,8 +702,8 @@ module JSON::LD
         base_uri ||= url.base_uri if url.respond_to?(:base_uri)
         content_type = options[:content_type]
         content_type ||= url.content_type if url.respond_to?(:content_type)
-        context_url = if url.respond_to?(:links) && url.links
-         (content_type == 'appliaction/json' || content_type.match?(%r(application/(^ld)+json)))
+        context_url = if url.respond_to?(:links) && url.links &&
+         (content_type == 'application/json' || content_type.match?(%r(application/(^ld)+json)))
           link = url.links.find_link(LINK_REL_CONTEXT)
           link.href if link
         end
@@ -776,7 +779,8 @@ module JSON::LD
         raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, **options)
+        mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+        MultiJson.load(content, **mj_opts)
       elsif extractAllScripts
         res = []
         elements = if profile
@@ -790,7 +794,8 @@ module JSON::LD
         elements.each do |element|
           content = element.inner_html
           validate_input(content, url: url) if options[:validate]
-          r = MultiJson.load(content, **options)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          r = MultiJson.load(content, **mj_opts)
           if r.is_a?(Hash)
             res << r
           elsif r.is_a?(Array)
@@ -805,7 +810,8 @@ module JSON::LD
         raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, **options)
+        mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+        MultiJson.load(content, **mj_opts)
       end
     rescue MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message

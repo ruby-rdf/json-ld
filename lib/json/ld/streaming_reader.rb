@@ -26,7 +26,8 @@ module JSON::LD
       unique_bnodes, rename_bnodes = @options[:unique_bnodes], @options.fetch(:rename_bnodes, true)
       # FIXME: document loader doesn't stream
       @base = RDF::URI(@options[:base] || base_uri)
-      value = MultiJson.load(@doc, **@options)
+      mj_opts = @options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+      value = MultiJson.load(@doc, mj_opts)
       context_ref = @options[:expandContext]
       #context_ref = @options.fetch(:expandContext, remote_doc.contextUrl)
       context = Context.parse(context_ref, **@options)

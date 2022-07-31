@@ -57,7 +57,7 @@ module JSON::LD
     end
 
     ##
-    # Initializes the RDF/JSON reader instance.
+    # Initializes the JSON-LD reader instance.
     #
     # @param  [IO, File, String]       input
     # @param  [Hash{Symbol => Object}] options

@@ -624,8 +624,7 @@ To get a local working copy of the development repository, do:
   which you will be asked to agree to on the first commit to a repo within the organization.
   Note that the agreement applies to all repos in the [Ruby RDF](https://github.com/ruby-rdf/) organization.
 
-License
--------
+## License
 
 This is free and unencumbered public domain software. For more information,
 see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
@@ -641,7 +640,7 @@ see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [Backports]:        https://rubygems.org/gems/backports
 [JSON-LD]:          https://www.w3.org/TR/json-ld11/ "JSON-LD 1.1"
 [JSON-LD API]:      https://www.w3.org/TR/json-ld11-api/ "JSON-LD 1.1 Processing Algorithms and API"
-[JSON-LD Framing]:  https://www.w3.org/TR/json-ld11-framing/ "JSON-LD Framing 1.1"
+[JSON-LD Framing]:  https://www.w3.org/TR/json-ld11-framing/ "JSON-LD 1.1 Framing"
 [Promises]:         https://dom.spec.whatwg.org/#promises
 [jsonlint]:         https://rubygems.org/gems/jsonlint
 [Sinatra]:          https://www.sinatrarb.com/
