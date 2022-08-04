@@ -97,15 +97,15 @@
 <p><code>RDF List</code>s are written as separate nodes using <code>rdf:first</code> and <code>rdf:rest</code> properties.</p>
 </li></ul>
 
-<p>The order of triples retrieved from the <code>RDF::Enumerable</code> dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by <em>graph name</em>, <em>subect</em>, <em>predicate</em> and <em>object</em>.</p>
+<p>The order of triples retrieved from the <code>RDF::Enumerable</code> dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by <em>graph name</em>, <em>subject</em>, <em>predicate</em> and <em>object</em>.</p>
 
 <h3 id="label-MultiJson+parser">MultiJson parser</h3>
 
-<p>The <a href="https://rubygems.org/gems/multi_json">MultiJson</a> gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the <code>:adapter</code> option to any API call. See <a href="https://rubygems.org/gems/multi_json">MultiJson</a> for more information.</p>
+<p>The <a href="https://rubygems.org/gems/multi_json">MultiJson</a> gem is used for parsing and serializing JSON; this defaults to the native JSON parser/serializer, but will use a more performant parser if one is available. A specific parser can be specified by adding the <code>:adapter</code> option to any API call. Additionally, a custom serialilzer may be specified by passing the <code>:serializer</code> option to <a href="https://rubygems.org/gems/multi_json">JSON::LD::Writer} or methods of <span class='object_link'><a href="JSON/LD/API.html" title="JSON::LD::API (class)">JSON::LD::API</a></span>. See for more information.</p>
 
 <h3 id="label-JSON-LD-star+-28RDFStar-29">JSON-LD-star (RDFStar)</h3>
 
-<p>The <a href="https://json-ld.github.io/json-ld-star/">JSON::LD::API.expand}, <span class='object_link'><a href="JSON/LD/API.html#compact-class_method" title="JSON::LD::API.compact (method)">JSON::LD::API.compact</a></span>, <span class='object_link'><a href="JSON/LD/API.html#toRdf-class_method" title="JSON::LD::API.toRdf (method)">JSON::LD::API.toRdf</a></span>, and <span class='object_link'><a href="JSON/LD/API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">JSON::LD::API.fromRdf</a></span> API methods, along with the <span class='object_link'><a href="JSON/LD/Reader.html" title="JSON::LD::Reader (class)">JSON::LD::Reader</a></span> and <span class='object_link'><a href="JSON/LD/Writer.html" title="JSON::LD::Writer (class)">JSON::LD::Writer</a></span>, include provisional support for 
+<p>The <a href="https://json-ld.github.io/json-ld-star/">JSON::LD::API.expand, <span class='object_link'><a href="JSON/LD/API.html#compact-class_method" title="JSON::LD::API.compact (method)">JSON::LD::API.compact</a></span>, <span class='object_link'><a href="JSON/LD/API.html#toRdf-class_method" title="JSON::LD::API.toRdf (method)">JSON::LD::API.toRdf</a></span>, and <span class='object_link'><a href="JSON/LD/API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">JSON::LD::API.fromRdf</a></span> API methods, along with the <span class='object_link'><a href="JSON/LD/Reader.html" title="JSON::LD::Reader (class)">JSON::LD::Reader</a></span> and <span class='object_link'><a href="JSON/LD/Writer.html" title="JSON::LD::Writer (class)">JSON::LD::Writer</a></span>, include provisional support for 
 <p>Internally, an <code>RDF::Statement</code> is treated as another resource, along with <code>RDF::URI</code> and <code>RDF::Node</code>, which allows an <code>RDF::Statement</code> to have a <code>#subject</code> or <code>#object</code> which is also an <code>RDF::Statement</code>.</p>
 
 <p>In JSON-LD, with the <code>rdfstar</code> option set, the value of <code>@id</code>, in addition to an IRI or Blank Node Identifier, can be a JSON-LD node object having exactly one property with an optional <code>@id</code>, which may also be an embedded object. (It may also have <code>@context</code> and <code>@index</code> values).</p>
@@ -744,9 +744,9 @@ $ curl -iH &#39;Accept: application/ld+json;profile=&quot;http://www.w3.org/ns/j
 </div></div>
 
       <div id="footer">
-  Generated on Wed May 11 20:46:10 2022 by
-  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.27 (ruby-3.1.2).
+  Generated on Thu Aug  4 20:51:02 2022 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.28 (ruby-3.1.2).
 </div>
 
     </div>

@@ -786,6 +786,22 @@
         </li>
       
         <li>
+          <span class="name">serializer</span>
+          <span class="type">(<tt>Proc</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>JSON::LD::API.serializer</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>A Serializer method used for generating the JSON serialization of the result.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:stream</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -877,6 +893,8 @@
       <pre class="lines">
 
 
+237
+238
 239
 240
 241
@@ -889,15 +907,15 @@
 248
 249
 250
-251
-252</pre>
+251</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 239</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 237</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_output'>output</span> <span class='op'>=</span> <span class='gvar'>$stdout</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:base_uri</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:base</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='symbol'>:base</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:base</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:base_uri</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='symbol'>:base_uri</span><span class='rparen'>)</span>
+  <span class='ivar'>@serializer</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:serializer</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_method'>method</span><span class='lparen'>(</span><span class='symbol'>:serializer</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='kw'>super</span> <span class='kw'>do</span>
     <span class='ivar'>@repo</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Repository</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
 
@@ -1239,20 +1257,12 @@
 191
 192
 193
-194
-195
-196
-197
-198</pre>
+194</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 188</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_accept?'>accept?</span><span class='lparen'>(</span><span class='id identifier rubyid_accept_params'>accept_params</span><span class='rparen'>)</span>
-  <span class='comment'># Profiles that aren&#39;t specific IANA relations represent the URL
-</span>  <span class='comment'># of a context or frame that may be subject to black- or white-listing
-</span>  <span class='id identifier rubyid_profile'>profile</span> <span class='op'>=</span> <span class='id identifier rubyid_accept_params'>accept_params</span><span class='lbracket'>[</span><span class='symbol'>:profile</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\s+</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span>
-
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
     <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_accept_params'>accept_params</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
@@ -1303,10 +1313,10 @@
       <pre class="lines">
 
 
-203</pre>
+199</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 203</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 199</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_context'>default_context</span><span class='semicolon'>;</span> <span class='ivar'>@default_context</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html#DEFAULT_CONTEXT-constant" title="JSON::LD::DEFAULT_CONTEXT (constant)">DEFAULT_CONTEXT</a></span></span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
     </td>
@@ -1355,10 +1365,10 @@
       <pre class="lines">
 
 
-208</pre>
+204</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 208</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 204</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_context='>default_context=</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='ivar'>@default_context</span> <span class='op'>=</span> <span class='id identifier rubyid_url'>url</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
     </td>
@@ -1649,6 +1659,7 @@
       <pre class="lines">
 
 
+296
 297
 298
 299
@@ -1693,11 +1704,10 @@
 338
 339
 340
-341
-342</pre>
+341</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 297</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 296</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_write_epilogue'>write_epilogue</span>
   <span class='kw'>if</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:stream</span><span class='rbracket'>]</span>
@@ -1705,7 +1715,7 @@
   <span class='kw'>else</span>
 
     <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>writer</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>serialize </span><span class='embexpr_beg'>#{</span><span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> statements, </span><span class='embexpr_beg'>#{</span><span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fromRdf'><span class='object_link'><a href="API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">fromRdf</a></span></span><span class='lparen'>(</span><span class='ivar'>@repo</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fromRdf'><span class='object_link'><a href="API.html#fromRdf-class_method" title="JSON::LD::API.fromRdf (method)">fromRdf</a></span></span><span class='lparen'>(</span><span class='ivar'>@repo</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>serializer:</span> <span class='kw'>nil</span><span class='rparen'>)</span><span class='rparen'>)</span>
 
     <span class='comment'># Some options may be indicated from accept parameters
 </span>    <span class='id identifier rubyid_profile'>profile</span> <span class='op'>=</span> <span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:accept_params</span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:profile</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1727,20 +1737,20 @@
 
     <span class='comment'># Rename BNodes to uniquify them, if necessary
 </span>    <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:unique_bnodes</span><span class='rbracket'>]</span>
-      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_flatten'><span class='object_link'><a href="API.html#flatten-class_method" title="JSON::LD::API.flatten (method)">flatten</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_flatten'><span class='object_link'><a href="API.html#flatten-class_method" title="JSON::LD::API.flatten (method)">flatten</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>serializer:</span> <span class='kw'>nil</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
 
     <span class='kw'>if</span> <span class='id identifier rubyid_frame'>frame</span> <span class='op'>=</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:frame</span><span class='rbracket'>]</span>
       <span class='comment'># Perform framing, if given a frame
 </span>      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>writer</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>frame result</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_frame'><span class='object_link'><a href="API.html#frame-class_method" title="JSON::LD::API.frame (method)">frame</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_frame'><span class='object_link'><a href="API.html#frame-class_method" title="JSON::LD::API.frame (method)">frame</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>serializer:</span> <span class='kw'>nil</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='kw'>elsif</span> <span class='id identifier rubyid_context'>context</span>
       <span class='comment'># Perform compaction, if we have a context
 </span>      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>writer</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>compact result</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_compact'><span class='object_link'><a href="API.html#compact-class_method" title="JSON::LD::API.compact (method)">compact</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>  <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_compact'><span class='object_link'><a href="API.html#compact-class_method" title="JSON::LD::API.compact (method)">compact</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>  <span class='op'>**</span><span class='ivar'>@options</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>serializer:</span> <span class='kw'>nil</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
 
-    <span class='ivar'>@output</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span><span class='rparen'>)</span>
+    <span class='ivar'>@output</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='ivar'>@serializer</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 
   <span class='kw'>super</span>
@@ -1776,13 +1786,13 @@
       <pre class="lines">
 
 
+283
 284
 285
-286
-287</pre>
+286</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 284</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 283</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_write_prologue'>write_prologue</span>
   <span class='id identifier rubyid_stream_prologue'>stream_prologue</span> <span class='kw'>if</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:stream</span><span class='rbracket'>]</span>
@@ -1856,17 +1866,17 @@
       <pre class="lines">
 
 
+271
 272
 273
 274
 275
 276
 277
-278
-279</pre>
+278</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 272</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 271</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_write_quad'>write_quad</span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_statement'>statement</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Statement.html" title="RDF::Statement (class)">Statement</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='rparen'>)</span>
@@ -1948,12 +1958,12 @@
       <pre class="lines">
 
 
+260
 261
-262
-263</pre>
+262</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 261</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/writer.rb', line 260</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_write_triple'>write_triple</span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_write_quad'>write_quad</span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
@@ -1968,9 +1978,9 @@
 </div>
 
       <div id="footer">
-  Generated on Wed May 11 20:46:14 2022 by
-  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.27 (ruby-3.1.2).
+  Generated on Thu Aug  4 20:51:06 2022 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.28 (ruby-3.1.2).
 </div>
 
     </div>
