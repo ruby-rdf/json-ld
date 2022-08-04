@@ -126,7 +126,8 @@ module JSON::LD
 
         case remote_doc.document
         when String
-          MultiJson.load(remote_doc.document, **options)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          MultiJson.load(remote_doc.document, **mj_opts)
         else
           # Already parsed
           remote_doc.document
@@ -155,6 +156,9 @@ module JSON::LD
     #
     # @param [String, #read, Hash, Array] input
     #   The JSON-LD object to copy and perform the expansion upon.
+    # @param [Proc] serializer (nil)
+    #   A Serializer method used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @raise [JsonLdError]
@@ -167,7 +171,7 @@ module JSON::LD
     # @return [Object, Array<Hash>]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
-    def self.expand(input, framing: false, **options, &block)
+    def self.expand(input, framing: false, serializer: nil, **options, &block)
       result = doc_base = nil
       API.new(input, options[:expandContext], **options) do
         result = self.expand(self.value, nil, self.context,
@@ -180,6 +184,7 @@ module JSON::LD
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
+      result = serializer.call(result, **options) if serializer
 
       if block_given?
         case block.arity
@@ -204,6 +209,9 @@ module JSON::LD
     #   The JSON-LD object to copy and perform the compaction upon.
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   The base context to use when compacting the input.
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param [Boolean] expanded (false) Input is already expanded
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
@@ -215,7 +223,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the compacted JSON-LD document
     # @raise [JsonLdError]
     # @see https://www.w3.org/TR/json-ld11-api/#compaction-algorithm
-    def self.compact(input, context, expanded: false, **options)
+    def self.compact(input, context, expanded: false, serializer: nil, **options)
       result = nil
       options = {compactToRelative:  true}.merge(options)
 
@@ -238,6 +246,7 @@ module JSON::LD
         end
         result = ctx.merge(result) unless ctx.fetch('@context', {}).empty?
       end
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -251,6 +260,9 @@ module JSON::LD
     # @param [String, #read, Hash, Array, JSON::LD::EvaluationContext] context
     #   An optional external context to use additionally to the context embedded in input when expanding the input.
     # @param [Boolean] expanded (false) Input is already expanded
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
     # @option options [Boolean] :createAnnotations
@@ -262,7 +274,7 @@ module JSON::LD
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the flattened JSON-LD document
     # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
-    def self.flatten(input, context, expanded: false, **options)
+    def self.flatten(input, context, expanded: false, serializer: nil, **options)
       flattened = []
       options = {
         compactToRelative:  true,
@@ -318,6 +330,7 @@ module JSON::LD
         end
       end
 
+      flattened = serializer.call(flattened, **options) if serializer
       block_given? ? yield(flattened) : flattened
     end
 
@@ -350,7 +363,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the framed JSON-LD document
     # @raise [InvalidFrame]
     # @see https://www.w3.org/TR/json-ld11-api/#framing-algorithm
-    def self.frame(input, frame, expanded: false, **options)
+    def self.frame(input, frame, expanded: false, serializer: nil, **options)
       result = nil
       options = {
         base:                       (RDF::URI(input) if input.is_a?(String)),
@@ -379,7 +392,8 @@ module JSON::LD
                                         requestProfile: 'http://www.w3.org/ns/json-ld#frame',
                                         **options)
         if remote_doc.document.is_a?(String)
-          MultiJson.load(remote_doc.document)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          MultiJson.load(remote_doc.document, **mj_opts)
         else
           remote_doc.document
         end
@@ -467,6 +481,7 @@ module JSON::LD
         result
       end
 
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -528,18 +543,21 @@ module JSON::LD
     # The resulting `Array` is either returned or yielded, if a block is given.
     #
     # @param [RDF::Enumerable] input
+    # @param [Boolean] useRdfType (false)
+    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
+    # @param [Boolean] useNativeTypes (false) use native representations
+    # @param [Proc] serializer (nil)
+    #   A Serializer instance used for generating the JSON serialization of the result. If absent, the internal Ruby objects are returned, which can be transformed to JSON externally via `#to_json`.
+    #   See {JSON::LD::API.serializer}.
     # @param  [Hash{Symbol => Object}] options
     # @option options (see #initialize)
-    # @option options [Boolean] :useRdfType (false)
-    #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
-    # @option options [Boolean] :useNativeTypes (false) use native representations
     # @yield jsonld
     # @yieldparam [Hash] jsonld
     #   The JSON-LD document in expanded form
     # @yieldreturn [Object] returned object
     # @return [Object, Hash]
     #   If a block is given, the result of evaluating the block is returned, otherwise, the expanded JSON-LD document
-    def self.fromRdf(input, useRdfType: false, useNativeTypes: false, **options, &block)
+    def self.fromRdf(input, useRdfType: false, useNativeTypes: false, serializer: nil, **options, &block)
       result = nil
 
       API.new(nil, nil, **options) do
@@ -548,6 +566,7 @@ module JSON::LD
           useNativeTypes: useNativeTypes)
       end
 
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -648,7 +667,8 @@ module JSON::LD
             end
           else
             validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
-            MultiJson.load(remote_doc.document, **options)
+            mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+            MultiJson.load(remote_doc.document, **mj_opts)
           end
         end
 
@@ -682,8 +702,8 @@ module JSON::LD
         base_uri ||= url.base_uri if url.respond_to?(:base_uri)
         content_type = options[:content_type]
         content_type ||= url.content_type if url.respond_to?(:content_type)
-        context_url = if url.respond_to?(:links) && url.links
-         (content_type == 'appliaction/json' || content_type.match?(%r(application/(^ld)+json)))
+        context_url = if url.respond_to?(:links) && url.links &&
+         (content_type == 'application/json' || content_type.match?(%r(application/(^ld)+json)))
           link = url.links.find_link(LINK_REL_CONTEXT)
           link.href if link
         end
@@ -759,7 +779,8 @@ module JSON::LD
         raise JSON::LD::JsonLdError::LoadingDocumentFailed, "Script tag has type=#{element.attributes['type']}" unless element.attributes['type'].to_s.start_with?('application/ld+json')
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, **options)
+        mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+        MultiJson.load(content, **mj_opts)
       elsif extractAllScripts
         res = []
         elements = if profile
@@ -773,7 +794,8 @@ module JSON::LD
         elements.each do |element|
           content = element.inner_html
           validate_input(content, url: url) if options[:validate]
-          r = MultiJson.load(content, **options)
+          mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+          r = MultiJson.load(content, **mj_opts)
           if r.is_a?(Hash)
             res << r
           elsif r.is_a?(Array)
@@ -788,10 +810,25 @@ module JSON::LD
         raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
         content = element.inner_html
         validate_input(content, url: url) if options[:validate]
-        MultiJson.load(content, **options)
+        mj_opts = options.keep_if {|k,v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v)}
+        MultiJson.load(content, **mj_opts)
       end
     rescue MultiJson::ParseError => e
       raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
+    end
+
+    ##
+    # The default serializer for serialzing Ruby Objects to JSON.
+    #
+    # Defaults to `MultiJson.dump`
+    #
+    # @param [Object] object
+    # @param [Array<Object>] args
+    #   other arguments that may be passed for some specific implementation.
+    # @param [Hash<Symbol, Object>] options
+    #   options passed from the invoking context.
+    def self.serializer(object, *args, **options)
+      MultiJson.dump(object, JSON_STATE)
     end
 
     ##

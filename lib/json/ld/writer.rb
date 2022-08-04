@@ -186,10 +186,6 @@ module JSON::LD
       # @return [Boolean]
       # @see    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
       def accept?(accept_params)
-        # Profiles that aren't specific IANA relations represent the URL
-        # of a context or frame that may be subject to black- or white-listing
-        profile = accept_params[:profile].to_s.split(/\s+/)
-
         if block_given?
           yield(accept_params)
         else
@@ -229,6 +225,8 @@ module JSON::LD
     #   frame to use when serializing.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originall initialized with (if any).
+    # @option options [Proc] serializer (JSON::LD::API.serializer)
+    #   A Serializer method used for generating the JSON serialization of the result.
     # @option options [Boolean] :stream (false)
     #   Do not attempt to optimize graph presentation, suitable for streaming large graphs.
     # @yield  [writer] `self`
@@ -239,6 +237,7 @@ module JSON::LD
     def initialize(output = $stdout, **options, &block)
       options[:base_uri] ||= options[:base] if options.key?(:base)
       options[:base] ||= options[:base_uri] if options.key?(:base_uri)
+      @serializer = options.fetch(:serializer, JSON::LD::API.method(:serializer))
       super do
         @repo = RDF::Repository.new
 
@@ -300,7 +299,7 @@ module JSON::LD
       else
 
         log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
-        result = API.fromRdf(@repo, **@options)
+        result = API.fromRdf(@repo, **@options.merge(serializer: nil))
 
         # Some options may be indicated from accept parameters
         profile = @options.fetch(:accept_params, {}).fetch(:profile, "").split(' ')
@@ -322,20 +321,20 @@ module JSON::LD
 
         # Rename BNodes to uniquify them, if necessary
         if options[:unique_bnodes]
-          result = API.flatten(result, context, **@options)
+          result = API.flatten(result, context, **@options.merge(serializer: nil))
         end
 
         if frame = @options[:frame]
           # Perform framing, if given a frame
           log_debug("writer") { "frame result"}
-          result = API.frame(result, frame, **@options)
+          result = API.frame(result, frame, **@options.merge(serializer: nil))
         elsif context
           # Perform compaction, if we have a context
           log_debug("writer") { "compact result"}
-          result = API.compact(result, context,  **@options)
+          result = API.compact(result, context,  **@options.merge(serializer: nil))
         end
 
-        @output.write(result.to_json(JSON_STATE))
+        @output.write(@serializer.call(result, **@options))
       end
 
       super

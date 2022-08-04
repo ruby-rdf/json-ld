@@ -32,10 +32,10 @@ This gem also implements an optimized streaming writer used for generating JSON-
 * Each statement written as a separate node in expanded/flattened form.
 * `RDF List`s are written as separate nodes using `rdf:first` and `rdf:rest` properties.
 
-The order of triples retrieved from the `RDF::Enumerable` dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by _graph name_, _subect_, _predicate_ and _object_.
+The order of triples retrieved from the `RDF::Enumerable` dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by _graph name_, _subject_, _predicate_ and _object_.
 
 ### MultiJson parser
-The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing JSON; this defaults to the native JSON parser, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
+The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing and serializing JSON; this defaults to the native JSON parser/serializer, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. Additionally, a custom serialilzer may be specified by passing the `:serializer` option to {JSON::LD::Writer} or methods of {JSON::LD::API}. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
 
 ### JSON-LD-star (RDFStar)
 
@@ -624,8 +624,7 @@ To get a local working copy of the development repository, do:
   which you will be asked to agree to on the first commit to a repo within the organization.
   Note that the agreement applies to all repos in the [Ruby RDF](https://github.com/ruby-rdf/) organization.
 
-License
--------
+## License
 
 This is free and unencumbered public domain software. For more information,
 see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
@@ -641,7 +640,7 @@ see <https://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 [Backports]:        https://rubygems.org/gems/backports
 [JSON-LD]:          https://www.w3.org/TR/json-ld11/ "JSON-LD 1.1"
 [JSON-LD API]:      https://www.w3.org/TR/json-ld11-api/ "JSON-LD 1.1 Processing Algorithms and API"
-[JSON-LD Framing]:  https://www.w3.org/TR/json-ld11-framing/ "JSON-LD Framing 1.1"
+[JSON-LD Framing]:  https://www.w3.org/TR/json-ld11-framing/ "JSON-LD 1.1 Framing"
 [Promises]:         https://dom.spec.whatwg.org/#promises
 [jsonlint]:         https://rubygems.org/gems/jsonlint
 [Sinatra]:          https://www.sinatrarb.com/

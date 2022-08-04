@@ -2438,7 +2438,31 @@ describe JSON::LD::API do
           "@id": "ex:entity1"
         }),
         processingMode: "json-ld-1.1"
-      }
+      },
+      "don't embed list elements": {
+        frame: %({
+          "@context": {"ex": "http://example.org/"},
+          "ex:embed": {
+            "@list": [{"@embed": "@never"}]
+          }
+        }),
+        input: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:embed": {
+            "@list": [{
+              "@id": "ex:Sub2",
+              "ex:prop": "property"
+            }]
+          }
+        }),
+        output: %({
+          "@context": {"ex": "http://example.org/"},
+          "@id": "ex:Sub1",
+          "ex:embed": {"@list": [{"@id": "ex:Sub2"}]}
+        }),
+        processingMode: "json-ld-1.1"
+      },
     }.each do |title, params|
       it title do
         do_frame(params)
