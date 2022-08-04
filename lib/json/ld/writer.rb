@@ -334,7 +334,7 @@ module JSON::LD
           result = API.compact(result, context,  **@options.merge(serializer: nil))
         end
 
-        @output.write(@serializer.call(result))
+        @output.write(@serializer.call(result, **@options))
       end
 
       super

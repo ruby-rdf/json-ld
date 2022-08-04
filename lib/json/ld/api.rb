@@ -184,7 +184,7 @@ module JSON::LD
 
       # Finally, if element is a JSON object, it is wrapped into an array.
       result = [result].compact unless result.is_a?(Array)
-      result = serializer.call(result) if serializer
+      result = serializer.call(result, **options) if serializer
 
       if block_given?
         case block.arity
@@ -246,7 +246,7 @@ module JSON::LD
         end
         result = ctx.merge(result) unless ctx.fetch('@context', {}).empty?
       end
-      result = serializer.call(result) if serializer
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -330,7 +330,7 @@ module JSON::LD
         end
       end
 
-      flattened = serializer.call(flattened) if serializer
+      flattened = serializer.call(flattened, **options) if serializer
       block_given? ? yield(flattened) : flattened
     end
 
@@ -481,7 +481,7 @@ module JSON::LD
         result
       end
 
-      result = serializer.call(result) if serializer
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -566,7 +566,7 @@ module JSON::LD
           useNativeTypes: useNativeTypes)
       end
 
-      result = serializer.call(result) if serializer
+      result = serializer.call(result, **options) if serializer
       block_given? ? yield(result) : result
     end
 
@@ -823,7 +823,11 @@ module JSON::LD
     # Defaults to `MultiJson.dump`
     #
     # @param [Object] object
-    def self.serializer(object)
+    # @param [Array<Object>] args
+    #   other arguments that may be passed for some specific implementation.
+    # @param [Hash<Symbol, Object>] options
+    #   options passed from the invoking context.
+    def self.serializer(object, *args, **options)
       MultiJson.dump(object, JSON_STATE)
     end
 
