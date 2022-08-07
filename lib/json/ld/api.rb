@@ -827,8 +827,10 @@ module JSON::LD
     #   other arguments that may be passed for some specific implementation.
     # @param [Hash<Symbol, Object>] options
     #   options passed from the invoking context.
+    # @option options [Object] :serializer_opts (JSON_STATE)
     def self.serializer(object, *args, **options)
-      MultiJson.dump(object, JSON_STATE)
+      serializer_opts = options.fetch(:serializer_opts, JSON_STATE)
+      MultiJson.dump(object, serializer_opts)
     end
 
     ##
