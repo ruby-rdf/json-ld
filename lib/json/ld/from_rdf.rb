@@ -168,6 +168,9 @@ module JSON::LD
     end
 
     private
+
+    RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
+
     def resource_representation(resource, useNativeTypes)
       case resource
       when RDF::Statement
@@ -183,11 +186,43 @@ module JSON::LD
         end
         rep
       when RDF::Literal
-        @context.expand_value(nil,
-                              resource,
-                              rdfDirection: @options[:rdfDirection],
-                              useNativeTypes: useNativeTypes,
-                              base: @options[:base])
+        base = @options[:base]
+        rdfDirection = @options[:rdfDirection]
+        res = {}
+
+        if resource.datatype == RDF::URI(RDF.to_uri + "JSON") && @context.processingMode('json-ld-1.1')
+          res['@type'] = '@json'
+          res['@value'] = begin
+            ::JSON.parse(resource.object)
+          rescue ::JSON::ParserError => e
+            raise JSON::LD::JsonLdError::InvalidJsonLiteral, e.message
+          end
+        elsif resource.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype' && @context.processingMode('json-ld-1.1')
+          lang, dir = resource.datatype.fragment.split('_')
+          res['@value'] = resource.to_s
+          unless lang.empty?
+            if lang !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+              if options[:validate]
+                raise JsonLdError::InvalidLanguageMapping, "rdf:language must be valid BCP47: #{lang.inspect}"
+              else
+                warn "rdf:language must be valid BCP47: #{lang.inspect}"
+              end
+            end
+            res['@language'] = lang
+          end
+          res['@direction'] = dir
+        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(resource.datatype) && resource.valid?
+          res['@value'] = resource.object
+        else
+          resource.canonicalize! if resource.valid? && resource.datatype == RDF::XSD.double
+          if resource.datatype?
+            res['@type'] = resource.datatype.to_s
+          elsif resource.language?
+            res['@language'] = resource.language.to_s
+          end
+          res['@value'] = resource.to_s
+        end
+        res
       else
         {'@id' => resource.to_s}
       end

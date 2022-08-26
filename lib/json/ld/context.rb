@@ -1467,8 +1467,6 @@ module JSON::LD
       end
     end
 
-    RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
-
     ##
     # If active property has a type mapping in the active context set to @id or @vocab, a JSON object with a single member @id whose value is the result of using the IRI Expansion algorithm on value is returned.
     #
@@ -1500,50 +1498,12 @@ module JSON::LD
         return {'@id' => expand_iri(value, vocab: true, documentRelative: true, base: base).to_s}
       end
 
-      value = RDF::Literal(value) if
-        value.is_a?(Date) ||
-        value.is_a?(DateTime) ||
-        value.is_a?(Time)
-
       result = case value
       when RDF::URI, RDF::Node
         {'@id' => value.to_s}
-      when RDF::Literal
-        res = {}
-        if value.datatype == RDF::URI(RDF.to_uri + "JSON") && processingMode('json-ld-1.1')
-          # Value parsed as JSON
-          # FIXME: MultiJson
-          res['@type'] = '@json'
-          res['@value'] = ::JSON.parse(value.object)
-        elsif value.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype' && processingMode('json-ld-1.1')
-          lang, dir = value.datatype.fragment.split('_')
-          res['@value'] = value.to_s
-          unless lang.empty?
-            if lang !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
-              if options[:validate]
-                raise JsonLdError::InvalidLanguageMapping, "rdf:language must be valid BCP47: #{lang.inspect}"
-              else
-                warn "rdf:language must be valid BCP47: #{lang.inspect}"
-              end
-            end
-            res['@language'] = lang
-          end
-          res['@direction'] = dir
-        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(value.datatype) && value.valid?
-          res['@type'] = uri(coerce(property)) if coerce(property)
-          res['@value'] = value.object
-        else
-          value.canonicalize! if value.valid? && value.datatype == RDF::XSD.double
-          if coerce(property)
-            res['@type'] = uri(coerce(property)).to_s
-          elsif value.datatype?
-            res['@type'] = uri(value.datatype).to_s
-          elsif value.language? || language(property)
-            res['@language'] = (value.language || language(property)).to_s
-          end
-          res['@value'] = value.to_s
-        end
-        res
+      when Date, DateTime, Time
+        lit = RDF::Literal.new(value)
+        {'@value' => lit.to_s, '@type' => lit.datatype.to_s}
       else
         # Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
         res = {}
@@ -1561,8 +1521,6 @@ module JSON::LD
       end
 
       result
-    rescue ::JSON::ParserError => e
-      raise JSON::LD::JsonLdError::InvalidJsonLiteral, e.message
     end
 
     ##
