@@ -25,6 +25,8 @@ module JSON::LD
         datatype = RDF::URI(RDF.to_uri + "JSON") if datatype == '@json'
 
         case value
+        when RDF::Value
+          return value
         when TrueClass, FalseClass
           # If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
           value = value.to_s
