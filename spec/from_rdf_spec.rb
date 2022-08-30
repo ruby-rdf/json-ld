@@ -268,6 +268,73 @@ describe JSON::LD::API do
           it(title) {do_fromRdf(processingMode: "json-ld-1.1", **params)}
         end
       end
+
+      context "extendedRepresentation: true" do
+        {
+          "true": {
+            output: [{
+               "@id" => "http://example.org/vocab#id",
+               "http://example.org/vocab#bool" => [{"@value" => RDF::Literal(true)}]
+             }],
+            input:%(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:bool true .
+            )
+          },
+          "false": {
+            output: [{
+               "@id" => "http://example.org/vocab#id",
+               "http://example.org/vocab#bool" => [{"@value" => RDF::Literal(false)}]
+             }],
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:bool false .
+            )
+          },
+          "double": {
+            output: [{
+               "@id" => "http://example.org/vocab#id",
+               "http://example.org/vocab#double" => [{"@value" => RDF::Literal(1.23E0)}]
+             }],
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:double 1.23E0 .
+            )
+          },
+          "double-zero": {
+            output: [{
+               "@id" => "http://example.org/vocab#id",
+               "http://example.org/vocab#double" => [{"@value" => RDF::Literal(0, datatype: RDF::XSD.double)}]
+             }],
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:double 0.0E0 .
+            )
+          },
+          "integer": {
+            output: [{
+               "@id" => "http://example.org/vocab#id",
+               "http://example.org/vocab#integer" => [{"@value" => RDF::Literal(123)}]
+             }],
+            input: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              ex:id ex:integer 123 .
+            )
+          },
+        }.each do |title, params|
+          params[:input] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:input])
+          it(title) {
+            do_fromRdf(processingMode: "json-ld-1.1",
+            useNativeTypes: true,
+            extendedRepresentation: true,
+            **params)}
+        end
+      end
     end
 
     context "anons" do
