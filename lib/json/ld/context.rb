@@ -273,7 +273,7 @@ module JSON::LD
           log_debug("parse") {"io: #{context}"}
           # Load context document, if it is an open file
           begin
-            ctx = JSON.load(context)
+            ctx = load_context(context, **@options)
             raise JSON::LD::JsonLdError::InvalidRemoteContext, "Context missing @context key" if @options[:validate] && ctx['@context'].nil?
             result = result.parse(ctx["@context"] ? ctx["@context"] : {})
           rescue JSON::ParserError => e
@@ -911,8 +911,7 @@ module JSON::LD
         #log_debug "serlialize: reuse context: #{provided_context.inspect}"
         provided_context
       when IO, StringIO
-        provided_context.rewind
-        JSON.load(provided_context).fetch('@context', {})
+        load_context(provided_context, **@options).fetch('@context', {})
       else
         ctx = {}
         ctx['@version'] = 1.1 if @processingMode == 'json-ld-1.1'
@@ -1688,6 +1687,16 @@ module JSON::LD
     CONTEXT_CONTAINER_INDEX_GRAPH = Set.new(%w(@index @graph)).freeze
     CONTEXT_BASE_FRAG_OR_QUERY = %w(? #).freeze
     CONTEXT_TYPE_ID_VOCAB = %w(@id @vocab).freeze
+
+    ##
+    # Reads the `@context` from an IO
+    def load_context(io, **options)
+      io.rewind
+      remote_doc = API.loadRemoteDocument(io, **options)
+      remote_doc.document.is_a?(String) ?
+        MultiJson.load(remote_doc.document) :
+        remote_doc.document
+    end
 
     def uri(value)
       case value.to_s
