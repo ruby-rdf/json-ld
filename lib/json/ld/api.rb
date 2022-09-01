@@ -576,6 +576,9 @@ module JSON::LD
     # Uses built-in or provided documentLoader to retrieve a parsed document.
     #
     # @param [RDF::URI, String] url
+    # @param [Regexp] allowed_content_types
+    #   A regular expression matching other content types allowed
+    #   beyond types for JSON and HTML.
     # @param [String, RDF::URI] base
     #   Location to use as documentUrl instead of `url`.
     # @option options [Proc] :documentLoader
@@ -596,6 +599,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.loadRemoteDocument(url,
+                                allowed_content_types: nil,
                                 base: nil,
                                 documentLoader: nil,
                                 extractAllScripts: false,
@@ -676,7 +680,8 @@ module JSON::LD
 
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
-            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/) ||
+            (allowed_content_types && remote_doc.contentType.match?(allowed_content_types))
         end
         block_given? ? yield(remote_doc) : remote_doc
       end
