@@ -655,7 +655,6 @@ describe JSON::LD::Context do
           "@language" => "en"
         }
       }, logger)
-      expect(subject.to_rb).not_to be_empty
     end
 
     it "@vocab" do
@@ -665,7 +664,6 @@ describe JSON::LD::Context do
           "@vocab" => "http://example.com/"
         }
       }, logger)
-      expect(subject.to_rb).not_to be_empty
     end
 
     it "term mappings" do
@@ -676,7 +674,6 @@ describe JSON::LD::Context do
           "foo" => "http://example.com/"
         }
       }, logger)
-      expect(c.to_rb).not_to be_empty
     end
 
     it "@context" do
@@ -929,6 +926,37 @@ describe JSON::LD::Context do
       end
     end
 
+  end
+
+  describe "#to_rb" do
+    before(:all) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+    subject {
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+      context.parse("http://example.com/context")
+    }
+
+    it "encodes as utf-8" do
+      expect(subject.to_rb).to match(/encoding: utf-8/)
+    end
+
+    it "marked as auto-generated" do
+      expect(subject.to_rb).to match(/This file generated automatically from/)
+    end
+
+    it "includes URL in preloaded" do
+      expect(subject.to_rb).to include(%(add_preloaded("http://example.com/context")))
+    end
+
+    it "includes processingMode" do
+      expect(subject.to_rb).to include(%(processingMode: "json-ld-1.1"))
+    end
+
+    it "term mappings" do
+      expect(subject.to_rb).to include(%("avatar" => TermDefinition.new("avatar", id: "http://xmlns.com/foaf/0.1/avatar", type_mapping: "@id")))
+      expect(subject.to_rb).to include(%("homepage" => TermDefinition.new("homepage", id: "http://xmlns.com/foaf/0.1/homepage", type_mapping: "@id")))
+      expect(subject.to_rb).to include(%("name" => TermDefinition.new("name", id: "http://xmlns.com/foaf/0.1/name", simple: true)))
+      expect(subject.to_rb).to include(%("xsd" => TermDefinition.new("xsd", id: "http://www.w3.org/2001/XMLSchema#", simple: true, prefix: true)))
+    end
   end
 
   describe "#base=" do

@@ -304,6 +304,7 @@ module JSON::LD
               log_debug("parse") {"=> (call)"}
               PRELOADED[context_canon.to_s] = PRELOADED[context_canon.to_s].call
             end
+            PRELOADED[context_canon.to_s].context_base ||= context_canon.to_s
             PRELOADED[context_canon.to_s]
           else
             # Load context document, if it is a string
