@@ -29,13 +29,13 @@ module JSON::LD
     # @return [Array<Hash{String => Object}>]
     def expand(input, active_property, context,
                framing: false, from_map: false, log_depth: nil)
-      log_debug("expand", depth: log_depth.to_i) {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
+      # log_debug("expand", depth: log_depth.to_i) {"input: #{input.inspect}, active_property: #{active_property.inspect}, context: #{context.inspect}"}
       framing = false if active_property == '@default'
       expanded_active_property = context.expand_iri(active_property, vocab: true, as_string: true, base: @options[:base]) if active_property
 
       # Use a term-specific context, if defined, based on the non-type-scoped context.
       property_scoped_context = context.term_definitions[active_property].context if active_property && context.term_definitions[active_property]
-      log_debug("expand", depth: log_depth.to_i) {"property_scoped_context: #{property_scoped_context.inspect}"} unless property_scoped_context.nil?
+      # log_debug("expand", depth: log_depth.to_i) {"property_scoped_context: #{property_scoped_context.inspect}"} unless property_scoped_context.nil?
 
       result = case input
       when Array
@@ -76,7 +76,7 @@ module JSON::LD
             !(expanded_key_map.values == ['@id'])
 
           # If there's a previous context, the context was type-scoped
-          log_debug("expand", depth: log_depth.to_i) {"previous_context: #{context.previous_context.inspect}"} if revert_context
+          # log_debug("expand", depth: log_depth.to_i) {"previous_context: #{context.previous_context.inspect}"} if revert_context
           context = context.previous_context if revert_context
         end
 
@@ -84,12 +84,12 @@ module JSON::LD
         unless property_scoped_context.nil?
           context = context.parse(property_scoped_context, base: @options[:base], override_protected: true)
         end
-        log_debug("expand", depth: log_depth.to_i) {"after property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
+        # log_debug("expand", depth: log_depth.to_i) {"after property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
         # If element contains the key @context, set active context to the result of the Context Processing algorithm, passing active context and the value of the @context key as local context.
         if input.key?('@context')
           context = context.parse(input['@context'], base: @options[:base])
-          log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
+          # log_debug("expand", depth: log_depth.to_i) {"context: #{context.inspect}"}
         end
 
         # Set the type-scoped context to the context on input, for use later
@@ -107,7 +107,7 @@ module JSON::LD
           Array(input[tk]).sort.each do |term|
             term_context = type_scoped_context.term_definitions[term].context if type_scoped_context.term_definitions[term]
             unless term_context.nil?
-              log_debug("expand", depth: log_depth.to_i) {"term_context[#{term}]: #{term_context.inspect}"}
+              # log_debug("expand", depth: log_depth.to_i) {"term_context[#{term}]: #{term_context.inspect}"}
               context = context.parse(term_context, base: @options[:base], propagate: false)
             end
           end
@@ -121,7 +121,7 @@ module JSON::LD
                       type_scoped_context: type_scoped_context,
                       log_depth: log_depth.to_i + 1)
 
-        log_debug("output object", depth: log_depth.to_i) {output_object.inspect}
+        # log_debug("output object", depth: log_depth.to_i) {output_object.inspect}
 
         # If result contains the key @value:
         if value?(output_object)
@@ -199,7 +199,7 @@ module JSON::LD
         if (expanded_active_property || '@graph') == '@graph' &&
            (output_object.key?('@value') || output_object.key?('@list') ||
            (output_object.keys - KEY_ID).empty? && !framing)
-          log_debug(" =>", depth: log_depth.to_i) { "empty top-level: " + output_object.inspect}
+          # log_debug(" =>", depth: log_depth.to_i) { "empty top-level: " + output_object.inspect}
           return nil
         end
 
@@ -219,12 +219,12 @@ module JSON::LD
                                   base: @options[:base],
                                   override_protected: true)
         end
-        log_debug("expand", depth: log_depth.to_i) {"property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
+        # log_debug("expand", depth: log_depth.to_i) {"property_scoped_context: #{context.inspect}"} unless property_scoped_context.nil?
 
         context.expand_value(active_property, input, base: @options[:base])
       end
 
-      log_debug(depth: log_depth.to_i) {" => #{result.inspect}"}
+      # log_debug(depth: log_depth.to_i) {" => #{result.inspect}"}
       result
     end
 
@@ -258,10 +258,10 @@ module JSON::LD
           expanded_property.to_s.start_with?("_:") &&
           context.processingMode('json-ld-1.1')
 
-        log_debug("expand property", depth: log_depth.to_i) {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
+        # log_debug("expand property", depth: log_depth.to_i) {"ap: #{active_property.inspect}, expanded: #{expanded_property.inspect}, value: #{value.inspect}"}
 
         if expanded_property.nil?
-          log_debug(" => ", depth: log_depth.to_i) {"skip nil property"}
+          # log_debug(" => ", depth: log_depth.to_i) {"skip nil property"}
           next
         end
 
@@ -341,7 +341,7 @@ module JSON::LD
             Array(output_object['@included']) + included_result
           when '@type'
             # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
-            log_debug("@type", depth: log_depth.to_i) {"value: #{value.inspect}"}
+            # log_debug("@type", depth: log_depth.to_i) {"value: #{value.inspect}"}
             e_type = case value
             when Array
               value.map do |v|
@@ -516,7 +516,7 @@ module JSON::LD
 
             # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
             if value.key?('@reverse')
-              log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
+              # log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
               value['@reverse'].each do |property, item|
                 # If result does not have a property member, create one and set its value to an empty array.
                 # Append item to the value of the property member of result.
@@ -566,7 +566,7 @@ module JSON::LD
           end
 
           # Unless expanded value is null, set the expanded property member of result to expanded value.
-          log_debug("expand #{expanded_property}", depth: log_depth.to_i) { expanded_value.inspect}
+          # log_debug("expand #{expanded_property}", depth: log_depth.to_i) { expanded_value.inspect}
           output_object[expanded_property] = expanded_value unless expanded_value.nil? && expanded_property == '@value' && input_type != '@json'
           next
         end
@@ -619,7 +619,7 @@ module JSON::LD
             if id_context.nil?
               context
             else
-              log_debug("expand", depth: log_depth.to_i) {"id_context: #{id_context.inspect}"}
+              # log_debug("expand", depth: log_depth.to_i) {"id_context: #{id_context.inspect}"}
               context.parse(id_context, base: @options[:base], propagate: false)
             end
           else
@@ -632,7 +632,7 @@ module JSON::LD
             # If container mapping in the active context includes @type, and k is a term in the active context having a local context, use that context when expanding values
             map_context = container_context.term_definitions[k].context if container.include?('@type') && container_context.term_definitions[k]
             unless map_context.nil?
-              log_debug("expand", depth: log_depth.to_i) {"map_context: #{map_context.inspect}"}
+              # log_debug("expand", depth: log_depth.to_i) {"map_context: #{map_context.inspect}"}
               map_context = container_context.parse(map_context, base: @options[:base],
                                                     propagate: false)
             end
@@ -688,21 +688,21 @@ module JSON::LD
 
         # If expanded value is null, ignore key by continuing to the next key from element.
         if expanded_value.nil?
-          log_debug(" => skip nil value", depth: log_depth.to_i)
+          # log_debug(" => skip nil value", depth: log_depth.to_i)
           next
         end
-        log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
+        # log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
 
         # If the container mapping associated to key in active context is @list and expanded value is not already a list object, convert expanded value to a list object by first setting it to an array containing only expanded value if it is not already an array, and then by setting it to a JSON object containing the key-value pair @list-expanded value.
         if container.first == '@list' && container.length == 1 && !list?(expanded_value)
-          log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
+          # log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
           expanded_value = {'@list' => as_array(expanded_value)}
         end
-        log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
+        # log_debug(depth: log_depth.to_i) {" => #{expanded_value.inspect}"}
 
         # convert expanded value to @graph if container specifies it
         if container.first == '@graph' && container.length == 1
-          log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
+          # log_debug(" => ", depth: log_depth.to_i) { "convert #{expanded_value.inspect} to list"}
           expanded_value = as_array(expanded_value).map do |v|
             {'@graph' => as_array(v)}
           end
@@ -742,7 +742,7 @@ module JSON::LD
         nest_context = if nest_context.nil?
           context
         else
-          log_debug("expand", depth: log_depth.to_i) {"nest_context: #{nest_context.inspect}"}
+          # log_debug("expand", depth: log_depth.to_i) {"nest_context: #{nest_context.inspect}"}
           context.parse(nest_context, base: @options[:base],
                         override_protected: true)
         end

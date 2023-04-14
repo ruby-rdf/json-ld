@@ -32,7 +32,7 @@ module JSON::LD
 
       # For each statement in dataset
       dataset.each do |statement|
-        #log_debug("statement") { statement.to_nquads.chomp}
+        # log_debug("statement") { statement.to_nquads.chomp}
 
         name = statement.graph_name ? @context.expand_iri(statement.graph_name, base: @options[:base]).to_s : '@default'
 
@@ -126,7 +126,7 @@ module JSON::LD
           list, list_nodes = [], []
 
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
-          #log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
+          # log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
           while property == RDF.rest.to_s &&
               blank_node?(node) &&
               referenced_once[node['@id']] &&
@@ -165,7 +165,7 @@ module JSON::LD
         node.delete(:usages)
         result << node unless node_reference?(node)
       end
-      #log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
+      # log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
       result
     end
 

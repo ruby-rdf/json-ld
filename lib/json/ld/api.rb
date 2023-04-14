@@ -236,7 +236,7 @@ module JSON::LD
       end
 
       API.new(expanded_input, context, no_default_base: true, **options) do
-        log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
 
         # xxx) Add the given context to the output
@@ -290,7 +290,7 @@ module JSON::LD
 
       # Initialize input using
       API.new(expanded_input, context, no_default_base: true, **options) do
-        log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
         @value = rename_bnodes(@value) if @options[:rename_bnodes]
@@ -411,8 +411,8 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
-        log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         if %w(@first @last).include?(options[:embed]) && context.processingMode('json-ld-1.1')
           raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{options[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
@@ -459,7 +459,7 @@ module JSON::LD
 
         # Replace values with `@preserve` with the content of its entry.
         result = cleanup_preserve(result)
-        log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
         compacted = compact(result)
@@ -478,7 +478,7 @@ module JSON::LD
         # Only add context if one was provided
         result = context.serialize(provided_context: frame).merge(result) if frame['@context']
         
-        log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result
       end
 
@@ -519,7 +519,7 @@ module JSON::LD
       API.new(flattened_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Recurse through input
         flattened_input.each do |node|
@@ -528,7 +528,7 @@ module JSON::LD
 
             # Drop invalid statements (other than IRIs)
             unless statement.valid_extended?
-              log_debug(".toRdf") {"drop invalid statement: #{statement.to_nquads}"}
+              # log_debug(".toRdf") {"drop invalid statement: #{statement.to_nquads}"}
               next
             end
 

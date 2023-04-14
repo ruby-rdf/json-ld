@@ -298,7 +298,7 @@ module JSON::LD
         stream_epilogue
       else
 
-        log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
+        # log_debug("writer") { "serialize #{@repo.count} statements, #{@options.inspect}"}
         result = API.fromRdf(@repo, **@options.merge(serializer: nil))
 
         # Some options may be indicated from accept parameters
@@ -326,11 +326,11 @@ module JSON::LD
 
         if frame = @options[:frame]
           # Perform framing, if given a frame
-          log_debug("writer") { "frame result"}
+          # log_debug("writer") { "frame result"}
           result = API.frame(result, frame, **@options.merge(serializer: nil))
         elsif context
           # Perform compaction, if we have a context
-          log_debug("writer") { "compact result"}
+          # log_debug("writer") { "compact result"}
           result = API.compact(result, context,  **@options.merge(serializer: nil))
         end
 
