@@ -66,6 +66,7 @@ module JSON::LD
     # @param [String, #read, Hash, Array, JSON::LD::Context] context
     #   An external context to use additionally to the context embedded in input when expanding the input.
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Symbol] :adapter used with MultiJson
     # @option options [RDF::URI, String, #to_s] :base
     #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context. If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
     # @option options [Boolean] :compactArrays (true)
@@ -74,10 +75,10 @@ module JSON::LD
     #   Creates document relative IRIs when compacting, if `true`, otherwise leaves expanded.
     # @option options [Proc] :documentLoader
     #   The callback of the loader to be used to retrieve remote documents and contexts. If specified, it must be used to retrieve remote documents and contexts; otherwise, if not specified, the processor's built-in loader must be used. See {documentLoader} for the method signature.
-    # @option options [Boolean] :lowercaseLanguage
-    #   By default, language tags are left as is. To normalize to lowercase, set this option to `true`.
     # @option options [String, #read, Hash, Array, JSON::LD::Context] :expandContext
     #   A context that is used to initialize the active context when expanding a document.
+    # @option options [Boolean] :extendedRepresentation (false)
+    #   Use the extended internal representation.
     # @option options [Boolean] :extractAllScripts
     #   If set, when given an HTML input without a fragment identifier, extracts all `script` elements with type `application/ld+json` into an array during expansion.
     # @option options [Boolean, String, RDF::URI] :flatten
@@ -86,19 +87,19 @@ module JSON::LD
     #   When set, this has the effect of inserting a context definition with `@language` set to the associated value, creating a default language for interpreting string values.
     # @option options [Symbol] :library
     #   One of :nokogiri or :rexml. If nil/unspecified uses :nokogiri if available, :rexml otherwise.
+    # @option options [Boolean] :lowercaseLanguage
+    #   By default, language tags are left as is. To normalize to lowercase, set this option to `true`.
+    # @option options [Boolean] :ordered (true)
+    #   Order traversal of dictionary members by key when performing algorithms.
     # @option options [String] :processingMode
     #   Processing mode, json-ld-1.0 or json-ld-1.1.
-    #   If `processingMode` is not specified, a mode of `json-ld-1.0` or `json-ld-1.1` is set, the context used for `expansion` or `compaction`.
-    # @option options [Boolean] rdfstar      (false)
+    # @option options [Boolean] :rdfstar      (false)
     #   support parsing JSON-LD-star statement resources.
     # @option options [Boolean] :rename_bnodes (true)
     #   Rename bnodes as part of expansion, or keep them the same.
     # @option options [Boolean]  :unique_bnodes   (false)
     #   Use unique bnode identifiers, defaults to using the identifier which the node was originally initialized with (if any).
-    # @option options [Symbol] :adapter used with MultiJson
     # @option options [Boolean] :validate Validate input, if a string or readable object.
-    # @option options [Boolean] :ordered (true)
-    #   Order traversal of dictionary members by key when performing algorithms.
     # @yield [api]
     # @yieldparam [API]
     # @raise [JsonLdError]
@@ -235,7 +236,7 @@ module JSON::LD
       end
 
       API.new(expanded_input, context, no_default_base: true, **options) do
-        log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".compact") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
         result = compact(value)
 
         # xxx) Add the given context to the output
@@ -289,7 +290,7 @@ module JSON::LD
 
       # Initialize input using
       API.new(expanded_input, context, no_default_base: true, **options) do
-        log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".flatten") {"expanded input: #{value.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
         @value = rename_bnodes(@value) if @options[:rename_bnodes]
@@ -410,8 +411,8 @@ module JSON::LD
 
       # Initialize input using frame as context
       API.new(expanded_input, frame['@context'], no_default_base: true, **options) do
-        log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
-        log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded input: #{expanded_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         if %w(@first @last).include?(options[:embed]) && context.processingMode('json-ld-1.1')
           raise JSON::LD::JsonLdError::InvalidEmbedValue, "#{options[:embed]} is not a valid value of @embed in 1.1 mode" if @options[:validate]
@@ -458,7 +459,7 @@ module JSON::LD
 
         # Replace values with `@preserve` with the content of its entry.
         result = cleanup_preserve(result)
-        log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"expanded result: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Compact result
         compacted = compact(result)
@@ -477,7 +478,7 @@ module JSON::LD
         # Only add context if one was provided
         result = context.serialize(provided_context: frame).merge(result) if frame['@context']
         
-        log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".frame") {"after compact: #{result.to_json(JSON_STATE) rescue 'malformed json'}"}
         result
       end
 
@@ -518,7 +519,7 @@ module JSON::LD
       API.new(flattened_input, nil, **options) do
         # 1) Perform the Expansion Algorithm on the JSON-LD input.
         #    This removes any existing context to allow the given context to be cleanly applied.
-        log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
+        # log_debug(".toRdf") {"flattened input: #{flattened_input.to_json(JSON_STATE) rescue 'malformed json'}"}
 
         # Recurse through input
         flattened_input.each do |node|
@@ -527,7 +528,7 @@ module JSON::LD
 
             # Drop invalid statements (other than IRIs)
             unless statement.valid_extended?
-              log_debug(".toRdf") {"drop invalid statement: #{statement.to_nquads}"}
+              # log_debug(".toRdf") {"drop invalid statement: #{statement.to_nquads}"}
               next
             end
 
@@ -562,6 +563,7 @@ module JSON::LD
 
       API.new(nil, nil, **options) do
         result = from_statements(input,
+          extendedRepresentation: options[:extendedRepresentation],
           useRdfType: useRdfType,
           useNativeTypes: useNativeTypes)
       end
@@ -574,6 +576,9 @@ module JSON::LD
     # Uses built-in or provided documentLoader to retrieve a parsed document.
     #
     # @param [RDF::URI, String] url
+    # @param [Regexp] allowed_content_types
+    #   A regular expression matching other content types allowed
+    #   beyond types for JSON and HTML.
     # @param [String, RDF::URI] base
     #   Location to use as documentUrl instead of `url`.
     # @option options [Proc] :documentLoader
@@ -594,6 +599,7 @@ module JSON::LD
     #   If a block is given, the result of evaluating the block is returned, otherwise, the retrieved remote document and context information unless block given
     # @raise [JsonLdError]
     def self.loadRemoteDocument(url,
+                                allowed_content_types: nil,
                                 base: nil,
                                 documentLoader: nil,
                                 extractAllScripts: false,
@@ -674,7 +680,8 @@ module JSON::LD
 
         if remote_doc.contentType && validate
           raise IOError, "url: #{url}, contentType: #{remote_doc.contentType}" unless
-            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/)
+            remote_doc.contentType.match?(/application\/(.+\+)?json|text\/html|application\/xhtml\+xml/) ||
+            (allowed_content_types && remote_doc.contentType.match?(allowed_content_types))
         end
         block_given? ? yield(remote_doc) : remote_doc
       end

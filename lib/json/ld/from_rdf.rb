@@ -14,9 +14,11 @@ module JSON::LD
     # @param [Boolean] useRdfType (false)
     #   If set to `true`, the JSON-LD processor will treat `rdf:type` like a normal property instead of using `@type`.
     # @param [Boolean] useNativeTypes (false) use native representations
+    # @param extendedRepresentation (false)
+    #   Use the extended internal representation for native types.
     #
     # @return [Array<Hash>] the JSON-LD document in normalized form
-    def from_statements(dataset, useRdfType: false, useNativeTypes: false)
+    def from_statements(dataset, useRdfType: false, useNativeTypes: false, extendedRepresentation: false)
       default_graph = {}
       graph_map = {'@default' => default_graph}
       referenced_once = {}
@@ -30,7 +32,7 @@ module JSON::LD
 
       # For each statement in dataset
       dataset.each do |statement|
-        #log_debug("statement") { statement.to_nquads.chomp}
+        # log_debug("statement") { statement.to_nquads.chomp}
 
         name = statement.graph_name ? @context.expand_iri(statement.graph_name, base: @options[:base]).to_s : '@default'
 
@@ -41,9 +43,9 @@ module JSON::LD
         default_graph[name] ||= {'@id' => name} unless name == '@default'
 
         subject = statement.subject.statement? ?
-          resource_representation(statement.subject, useNativeTypes)['@id'].to_json_c14n :
+          resource_representation(statement.subject, useNativeTypes, extendedRepresentation)['@id'].to_json_c14n :
           statement.subject.to_s
-        node = node_map[subject] ||= resource_representation(statement.subject, useNativeTypes)
+        node = node_map[subject] ||= resource_representation(statement.subject, useNativeTypes, extendedRepresentation)
 
         # If predicate is rdf:datatype, note subject in compound literal subjects map
         if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF.to_uri + 'direction'
@@ -53,10 +55,10 @@ module JSON::LD
         # If object is an IRI, blank node identifier, or statement, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
         unless statement.object.literal?
           object = statement.object.statement? ?
-            resource_representation(statement.object, useNativeTypes)['@id'].to_json_c14n :
+            resource_representation(statement.object, useNativeTypes, extendedRepresentation)['@id'].to_json_c14n :
             statement.object.to_s
           node_map[object] ||=
-            resource_representation(statement.object, useNativeTypes)
+            resource_representation(statement.object, useNativeTypes, extendedRepresentation)
         end
 
         # If predicate equals rdf:type, and object is an IRI or blank node identifier, append object to the value of the @type member of node. If no such member exists, create one and initialize it to an array whose only item is object. Finally, continue to the next RDF triple.
@@ -66,7 +68,7 @@ module JSON::LD
         end
 
         # Set value to the result of using the RDF to Object Conversion algorithm, passing object, rdfDirection, and use native types.
-        value = resource_representation(statement.object, useNativeTypes)
+        value = resource_representation(statement.object, useNativeTypes, extendedRepresentation)
 
         merge_value(node, statement.predicate.to_s, value)
 
@@ -124,7 +126,7 @@ module JSON::LD
           list, list_nodes = [], []
 
           # If property equals rdf:rest, the value associated to the usages member of node has exactly 1 entry, node has a rdf:first and rdf:rest property, both of which have as value an array consisting of a single element, and node has no other members apart from an optional @type member whose value is an array with a single item equal to rdf:List, node represents a well-formed list node. Continue with the following steps:
-          #log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
+          # log_debug("list element?") {node.to_json(JSON_STATE) rescue 'malformed json'}
           while property == RDF.rest.to_s &&
               blank_node?(node) &&
               referenced_once[node['@id']] &&
@@ -163,31 +165,68 @@ module JSON::LD
         node.delete(:usages)
         result << node unless node_reference?(node)
       end
-      #log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
+      # log_debug("fromRdf") {result.to_json(JSON_STATE) rescue 'malformed json'}
       result
     end
 
     private
-    def resource_representation(resource, useNativeTypes)
+
+    RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
+
+    def resource_representation(resource, useNativeTypes, extendedRepresentation)
       case resource
       when RDF::Statement
         # Note, if either subject or object are a BNode which is used elsewhere,
         # this might not work will with the BNode accounting from above.
-        rep = {'@id' => resource_representation(resource.subject, false)}
+        rep = {'@id' => resource_representation(resource.subject, false, extendedRepresentation)}
         if resource.predicate == RDF.type
           rep['@id'].merge!('@type' => resource.object.to_s)
         else
           rep['@id'].merge!(
             resource.predicate.to_s =>
-            as_array(resource_representation(resource.object, useNativeTypes)))
+            as_array(resource_representation(resource.object, useNativeTypes, extendedRepresentation)))
         end
         rep
       when RDF::Literal
-        @context.expand_value(nil,
-                              resource,
-                              rdfDirection: @options[:rdfDirection],
-                              useNativeTypes: useNativeTypes,
-                              base: @options[:base])
+        base = @options[:base]
+        rdfDirection = @options[:rdfDirection]
+        res = {}
+
+        if resource.datatype == RDF::URI(RDF.to_uri + "JSON") && @context.processingMode('json-ld-1.1')
+          res['@type'] = '@json'
+          res['@value'] = begin
+            ::JSON.parse(resource.object)
+          rescue ::JSON::ParserError => e
+            raise JSON::LD::JsonLdError::InvalidJsonLiteral, e.message
+          end
+        elsif useNativeTypes && extendedRepresentation
+          res['@value'] = resource  # Raw literal
+        elsif resource.datatype.start_with?("https://www.w3.org/ns/i18n#") && rdfDirection == 'i18n-datatype' && @context.processingMode('json-ld-1.1')
+          lang, dir = resource.datatype.fragment.split('_')
+          res['@value'] = resource.to_s
+          unless lang.empty?
+            if lang !~ /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/
+              if options[:validate]
+                raise JsonLdError::InvalidLanguageMapping, "rdf:language must be valid BCP47: #{lang.inspect}"
+              else
+                warn "rdf:language must be valid BCP47: #{lang.inspect}"
+              end
+            end
+            res['@language'] = lang
+          end
+          res['@direction'] = dir
+        elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(resource.datatype) && resource.valid?
+          res['@value'] = resource.object
+        else
+          resource.canonicalize! if resource.valid? && resource.datatype == RDF::XSD.double
+          if resource.datatype?
+            res['@type'] = resource.datatype.to_s
+          elsif resource.language?
+            res['@language'] = resource.language.to_s
+          end
+          res['@value'] = resource.to_s
+        end
+        res
       else
         {'@id' => resource.to_s}
       end

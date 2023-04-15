@@ -2463,6 +2463,49 @@ describe JSON::LD::API do
         }),
         processingMode: "json-ld-1.1"
       },
+      "issue #142": {
+        input: %({
+          "@context":{
+            "ex":"http://example.org/vocab#",
+            "ex:info":{"@type":"@json"},
+            "ex:other":{"@type":"@json"}
+          },
+          "@id":"http://example.org/test/#library",
+          "@type":"ex:Library",
+          "ex:info":{
+            "author":"JOHN",
+            "pages":200
+          },
+          "ex:other":{
+            "publisher":"JANE"
+          }
+        }),
+        frame: %({
+          "@context":{
+            "ex":"http://example.org/vocab#",
+            "ex:info":{"@type":"@json"},
+            "ex:other":{"@type":"@json"}
+          },
+          "http://example.org/vocab#info":{}
+        }),
+        output: %({
+          "@context": {
+            "ex": "http://example.org/vocab#",
+            "ex:info": {"@type": "@json"},
+            "ex:other": {"@type": "@json"}
+          },
+          "@id": "http://example.org/test/#library",
+          "@type": "ex:Library",
+          "ex:info": {
+            "author": "JOHN",
+            "pages": 200
+          },
+          "ex:other": {
+            "publisher": "JANE"
+          }
+        }),
+        processingMode: "json-ld-1.1"  
+      }
     }.each do |title, params|
       it title do
         do_frame(params)

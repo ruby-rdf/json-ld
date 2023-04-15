@@ -655,7 +655,6 @@ describe JSON::LD::Context do
           "@language" => "en"
         }
       }, logger)
-      expect(subject.to_rb).not_to be_empty
     end
 
     it "@vocab" do
@@ -665,7 +664,6 @@ describe JSON::LD::Context do
           "@vocab" => "http://example.com/"
         }
       }, logger)
-      expect(subject.to_rb).not_to be_empty
     end
 
     it "term mappings" do
@@ -676,7 +674,6 @@ describe JSON::LD::Context do
           "foo" => "http://example.com/"
         }
       }, logger)
-      expect(c.to_rb).not_to be_empty
     end
 
     it "@context" do
@@ -929,6 +926,37 @@ describe JSON::LD::Context do
       end
     end
 
+  end
+
+  describe "#to_rb" do
+    before(:all) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+    subject {
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+      context.parse("http://example.com/context")
+    }
+
+    it "encodes as utf-8" do
+      expect(subject.to_rb).to match(/encoding: utf-8/)
+    end
+
+    it "marked as auto-generated" do
+      expect(subject.to_rb).to match(/This file generated automatically from/)
+    end
+
+    it "includes URL in preloaded" do
+      expect(subject.to_rb).to include(%(add_preloaded("http://example.com/context")))
+    end
+
+    it "includes processingMode" do
+      expect(subject.to_rb).to include(%(processingMode: "json-ld-1.1"))
+    end
+
+    it "term mappings" do
+      expect(subject.to_rb).to include(%("avatar" => TermDefinition.new("avatar", id: "http://xmlns.com/foaf/0.1/avatar", type_mapping: "@id")))
+      expect(subject.to_rb).to include(%("homepage" => TermDefinition.new("homepage", id: "http://xmlns.com/foaf/0.1/homepage", type_mapping: "@id")))
+      expect(subject.to_rb).to include(%("name" => TermDefinition.new("name", id: "http://xmlns.com/foaf/0.1/name", simple: true)))
+      expect(subject.to_rb).to include(%("xsd" => TermDefinition.new("xsd", id: "http://www.w3.org/2001/XMLSchema#", simple: true, prefix: true)))
+    end
   end
 
   describe "#base=" do
@@ -1553,14 +1581,6 @@ describe JSON::LD::Context do
       "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
       "native date" =>    ["foo", Date.parse("2011-12-27"),       {"@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s}],
       "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
-      "rdf boolean" =>    ["foo", RDF::Literal(true),             {"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-      "rdf integer" =>    ["foo", RDF::Literal(1),                {"@value" => "1", "@type" => RDF::XSD.integer.to_s}],
-      "rdf decimal" =>    ["foo", RDF::Literal::Decimal.new(1.1), {"@value" => "1.1", "@type" => RDF::XSD.decimal.to_s}],
-      "rdf double" =>     ["foo", RDF::Literal::Double.new(1.1),  {"@value" => "1.1E0", "@type" => RDF::XSD.double.to_s}],
-      "rdf URI" =>        ["foo", RDF::URI("foo"),                {"@id" => "foo"}],
-      "rdf date " =>      ["foo", RDF::Literal(Date.parse("2011-12-27")), {"@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s}],
-      "rdf nonNeg" =>     ["foo", RDF::Literal::NonNegativeInteger.new(1), {"@value" => "1", "@type" => RDF::XSD.nonNegativeInteger}],
-      "rdf float" =>      ["foo", RDF::Literal::Float.new(1.0),   {"@value" => "1.0", "@type" => RDF::XSD.float}],
       "ex:none string" => ["ex:none", "foo",                      {"@value" => "foo"}],
       "ex:none boolean" =>["ex:none", true,                       {"@value" => true}],
       "ex:none integer" =>["ex:none", 1,                          {"@value" => 1}],

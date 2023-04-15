@@ -409,6 +409,139 @@ describe JSON::LD::API do
           end
         end
       end
+
+      context "with xsd: true" do
+        {
+          "true": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal(true)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:e true] .
+            )
+          },
+          "integer": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal(1)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:e 1] .
+            )
+          },
+          "decimal": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal::Decimal.new("1.1")
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              [ex:e 1.1] .
+            )
+          },
+          "float": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("1.1e1", datatype: RDF::XSD.float)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e "1.1e1"^^xsd:float] .
+            )
+          },
+          "double": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("1.1e1", datatype: RDF::XSD.double)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e 1.1e1] .
+            )
+          },
+          "date": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("2022-08-27", datatype: RDF::XSD.date)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e "2022-08-27"^^xsd:date] .
+            )
+          },
+          "time": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("12:00:00", datatype: RDF::XSD.time)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e "12:00:00"^^xsd:time] .
+            )
+          },
+          "dateTime": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("2022-08-27T12:00:00", datatype: RDF::XSD.dateTime)
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e "2022-08-27T12:00:00"^^xsd:dateTime] .
+            )
+          },
+          "language": {
+            input: {
+              "@context" => {
+                "e" => "http://example.org/vocab#e"
+              },
+              "e" => RDF::Literal.new("language", language: :"en-us")
+            },
+            output: %(
+              @prefix ex: <http://example.org/vocab#> .
+              @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+              @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+              [ex:e "language"@en-us] .
+            )
+          },
+        }.each do |title, params|
+          it title do
+            params[:output] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:output])
+            run_to_rdf(params.merge(xsd: true))
+          end
+        end
+      end
     end
 
     context "prefixes" do
