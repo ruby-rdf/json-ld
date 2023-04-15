@@ -32,14 +32,14 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 2.6'
   gem.requirements          = []
-  gem.add_runtime_dependency     'rdf',             '~> 3.2', '>= 3.2.9'
+  gem.add_runtime_dependency     'rdf',             '~> 3.2', '>= 3.2.10'
   gem.add_runtime_dependency     'multi_json',      '~> 1.15'
   gem.add_runtime_dependency     'link_header',     '~> 0.0', '>= 0.0.8'
   gem.add_runtime_dependency     'json-canonicalization', '~> 0.3'
   gem.add_runtime_dependency     'htmlentities',    '~> 4.3'
   gem.add_runtime_dependency     "rack",            '>= 2.2', '< 4'
   gem.add_development_dependency 'sinatra-linkeddata','~> 3.2'
-  gem.add_development_dependency 'jsonlint',        '~> 0.3'  unless is_java
+  gem.add_development_dependency 'jsonlint',        '~> 0.4'  unless is_java
   gem.add_development_dependency 'oj',              '~> 3.14'  unless is_java
   gem.add_development_dependency 'yajl-ruby',       '~> 1.4'  unless is_java
   gem.add_development_dependency 'rack-test',       '>= 1.1', '< 3'
