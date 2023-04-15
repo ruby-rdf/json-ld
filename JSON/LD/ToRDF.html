@@ -458,7 +458,9 @@
 150
 151
 152
-153</pre>
+153
+154
+155</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/to_rdf.rb', line 18</span>
@@ -473,6 +475,8 @@
     <span class='id identifier rubyid_datatype'>datatype</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='period'>.</span><span class='id identifier rubyid_to_uri'>to_uri</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>JSON</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_datatype'>datatype</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@json</span><span class='tstring_end'>&#39;</span></span>
 
     <span class='kw'>case</span> <span class='id identifier rubyid_value'>value</span>
+    <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Value</span>
+      <span class='kw'>return</span> <span class='id identifier rubyid_value'>value</span>
     <span class='kw'>when</span> <span class='const'>TrueClass</span><span class='comma'>,</span> <span class='const'>FalseClass</span>
       <span class='comment'># If value is true or false, then set value its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to xsd:boolean.
 </span>      <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
@@ -536,14 +540,14 @@
 </span>    <span class='id identifier rubyid_to_enum'>to_enum</span><span class='lparen'>(</span><span class='symbol'>:item_to_rdf</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>quoted:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
   <span class='kw'>end</span>
 
-  <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;subject: #{subject.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+  <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;subject: #{subject.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>  <span class='id identifier rubyid_item'>item</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_property'>property</span><span class='comma'>,</span> <span class='id identifier rubyid_values'>values</span><span class='op'>|</span>
     <span class='kw'>case</span> <span class='id identifier rubyid_property'>property</span>
     <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span>
       <span class='comment'># If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
 </span>      <span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
         <span class='id identifier rubyid_object'>object</span> <span class='op'>=</span> <span class='id identifier rubyid_as_resource'>as_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span>
-        <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;type: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+        <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;type: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>        <span class='kw'>yield</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Statement.html" title="RDF::Statement (class)">Statement</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='period'>.</span><span class='id identifier rubyid_type'>type</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='label'>quoted:</span> <span class='id identifier rubyid_quoted'>quoted</span><span class='rparen'>)</span>
       <span class='kw'>end</span>
     <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@graph</span><span class='tstring_end'>&#39;</span></span>
@@ -555,12 +559,12 @@
       <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Huh?</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_prop'>prop</span><span class='comma'>,</span> <span class='id identifier rubyid_vv'>vv</span><span class='op'>|</span>
         <span class='id identifier rubyid_predicate'>predicate</span> <span class='op'>=</span> <span class='id identifier rubyid_as_resource'>as_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_prop'>prop</span><span class='rparen'>)</span>
-        <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;@reverse predicate: #{predicate.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+        <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;@reverse predicate: #{predicate.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>        <span class='comment'># For each item in values
 </span>        <span class='id identifier rubyid_vv'>vv</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
           <span class='comment'># Item is a node definition. Generate object as the result of the Object Converstion algorithm passing item.
 </span>          <span class='id identifier rubyid_object'>object</span> <span class='op'>=</span> <span class='id identifier rubyid_item_to_rdf'>item_to_rdf</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
-          <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;subject: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+          <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;subject: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>          <span class='comment'># yield subject, prediate, and literal to results.
 </span>          <span class='kw'>yield</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Statement.html" title="RDF::Statement (class)">Statement</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='label'>quoted:</span> <span class='id identifier rubyid_quoted'>quoted</span><span class='rparen'>)</span>
         <span class='kw'>end</span>
@@ -575,12 +579,12 @@
       <span class='comment'># Otherwise, property is an IRI or Blank Node identifier
 </span>      <span class='comment'># Initialize predicate from  property as an IRI or Blank node
 </span>      <span class='id identifier rubyid_predicate'>predicate</span> <span class='op'>=</span> <span class='id identifier rubyid_as_resource'>as_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
-      <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;predicate: #{predicate.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+      <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;predicate: #{predicate.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>
       <span class='comment'># For each item in values
 </span>      <span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
         <span class='kw'>if</span> <span class='id identifier rubyid_list?'>list?</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span>
-          <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;list: #{v.inspect}&quot;}
+          <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;list: #{v.inspect}&quot;}
 </span>          <span class='comment'># If item is a list object, initialize list_results as an empty array, and object to the result of the List Conversion algorithm, passing the value associated with the @list key from item and list_results.
 </span>          <span class='id identifier rubyid_object'>object</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_list'>parse_list</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@list</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
 
@@ -589,7 +593,7 @@
         <span class='kw'>else</span>
           <span class='comment'># Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
 </span>          <span class='id identifier rubyid_object'>object</span> <span class='op'>=</span> <span class='id identifier rubyid_item_to_rdf'>item_to_rdf</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
-          <span class='comment'>#log_debug(&quot;item_to_rdf&quot;)  {&quot;object: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
+          <span class='comment'># log_debug(&quot;item_to_rdf&quot;)  {&quot;object: #{object.to_ntriples rescue &#39;malformed rdf&#39;}&quot;}
 </span>          <span class='comment'># yield subject, prediate, and literal to results.
 </span>          <span class='kw'>yield</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Statement.html" title="RDF::Statement (class)">Statement</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_subject'>subject</span><span class='comma'>,</span> <span class='id identifier rubyid_predicate'>predicate</span><span class='comma'>,</span> <span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='id identifier rubyid_graph_name'>graph_name</span><span class='comma'>,</span> <span class='label'>quoted:</span> <span class='id identifier rubyid_quoted'>quoted</span><span class='rparen'>)</span>
         <span class='kw'>end</span>
@@ -630,12 +634,12 @@
       <pre class="lines">
 
 
-188
-189
-190</pre>
+190
+191
+192</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/to_rdf.rb', line 188</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/to_rdf.rb', line 190</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_node'>node</span>
   <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Node.html" title="RDF::Node (class)">Node</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_namer'>namer</span><span class='period'>.</span><span class='id identifier rubyid_get_sym'>get_sym</span><span class='rparen'>)</span>
@@ -742,8 +746,6 @@
       <pre class="lines">
 
 
-164
-165
 166
 167
 168
@@ -762,13 +764,15 @@
 181
 182
 183
-184</pre>
+184
+185
+186</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/to_rdf.rb', line 164</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/to_rdf.rb', line 166</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_parse_list'>parse_list</span><span class='lparen'>(</span><span class='id identifier rubyid_list'>list</span><span class='comma'>,</span> <span class='label'>graph_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
-  <span class='comment'>#log_debug(&#39;parse_list&#39;) {&quot;list: #{list.inspect}&quot;}
+  <span class='comment'># log_debug(&#39;parse_list&#39;) {&quot;list: #{list.inspect}&quot;}
 </span>
   <span class='id identifier rubyid_last'>last</span> <span class='op'>=</span> <span class='id identifier rubyid_list'>list</span><span class='period'>.</span><span class='id identifier rubyid_pop'>pop</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_first_bnode'>first_bnode</span> <span class='op'>=</span> <span class='id identifier rubyid_last'>last</span> <span class='op'>?</span> <span class='id identifier rubyid_node'>node</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='period'>.</span><span class='id identifier rubyid_nil'>nil</span>
@@ -798,9 +802,9 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Aug  7 22:25:02 2022 by
+  Generated on Sat Apr 15 20:55:49 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-3.1.2).
+  0.9.34 (ruby-3.1.4).
 </div>
 
     </div>

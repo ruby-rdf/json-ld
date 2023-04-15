@@ -531,7 +531,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#loadRemoteDocument-class_method" title="loadRemoteDocument (class method)">.<strong>loadRemoteDocument</strong>(url, base: nil, documentLoader: nil, extractAllScripts: false, profile: nil, requestProfile: nil, validate: false, **options) {|remote_document| ... } &#x21d2; Object, RemoteDocument </a>
+      <a href="#loadRemoteDocument-class_method" title="loadRemoteDocument (class method)">.<strong>loadRemoteDocument</strong>(url, allowed_content_types: nil, base: nil, documentLoader: nil, extractAllScripts: false, profile: nil, requestProfile: nil, validate: false, **options) {|remote_document| ... } &#x21d2; Object, RemoteDocument </a>
     
 
     
@@ -1035,6 +1035,19 @@
     <ul class="option">
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -1093,19 +1106,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -1114,6 +1114,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -1171,6 +1187,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -1178,13 +1223,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -1232,19 +1277,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -1253,22 +1285,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -1377,7 +1393,6 @@
       <pre class="lines">
 
 
-226
 227
 228
 229
@@ -1402,10 +1417,11 @@
 248
 249
 250
-251</pre>
+251
+252</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 226</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 227</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -1419,8 +1435,8 @@
   <span class='kw'>end</span>
 
   <span class='const'><span class='object_link'><a href="" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_expanded_input'>expanded_input</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>no_default_base:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.compact</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expanded input: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_expanded_input'>expanded_input</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_compact'>compact</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+    <span class='comment'># log_debug(&quot;.compact&quot;) {&quot;expanded input: #{expanded_input.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_compact'>compact</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
 
     <span class='comment'># xxx) Add the given context to the output
 </span>    <span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_serialize'>serialize</span><span class='lparen'>(</span><span class='label'>provided_context:</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
@@ -1590,13 +1606,6 @@
       <pre class="lines">
 
 
-698
-699
-700
-701
-702
-703
-704
 705
 706
 707
@@ -1610,10 +1619,17 @@
 715
 716
 717
-718</pre>
+718
+719
+720
+721
+722
+723
+724
+725</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 698</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 705</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_documentLoader'>documentLoader</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='label'>extractAllScripts:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>profile:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>requestProfile:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_url'>url</span>
@@ -1724,6 +1740,19 @@
     <ul class="option">
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -1782,19 +1811,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -1803,6 +1819,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -1860,6 +1892,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -1867,13 +1928,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -1921,19 +1982,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -1942,22 +1990,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -2082,7 +2114,6 @@
       <pre class="lines">
 
 
-174
 175
 176
 177
@@ -2107,10 +2138,11 @@
 196
 197
 198
-199</pre>
+199
+200</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 174</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 175</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_expand'>expand</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>framing:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_doc_base'>doc_base</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -2275,6 +2307,19 @@
         </li>
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -2333,19 +2378,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -2354,6 +2386,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -2411,6 +2459,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -2418,13 +2495,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -2472,19 +2549,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -2493,22 +2557,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -2604,7 +2652,6 @@
       <pre class="lines">
 
 
-277
 278
 279
 280
@@ -2662,10 +2709,11 @@
 332
 333
 334
-335</pre>
+335
+336</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 277</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 278</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_flattened'>flattened</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -2682,8 +2730,8 @@
 
   <span class='comment'># Initialize input using
 </span>  <span class='const'><span class='object_link'><a href="" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_expanded_input'>expanded_input</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>no_default_base:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.flatten</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expanded input: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+    <span class='comment'># log_debug(&quot;.flatten&quot;) {&quot;expanded input: #{value.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>
     <span class='comment'># Rename blank nodes recusively. Note that this does not create new blank node identifiers where none exist, which is performed in the node map generation algorithm.
 </span>    <span class='ivar'>@value</span> <span class='op'>=</span> <span class='id identifier rubyid_rename_bnodes'>rename_bnodes</span><span class='lparen'>(</span><span class='ivar'>@value</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:rename_bnodes</span><span class='rbracket'>]</span>
 
@@ -2930,6 +2978,19 @@
         </li>
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -2988,19 +3049,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -3009,6 +3057,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -3066,6 +3130,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -3073,13 +3166,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -3127,19 +3220,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -3148,22 +3228,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -3272,7 +3336,6 @@
       <pre class="lines">
 
 
-366
 367
 368
 369
@@ -3392,10 +3455,11 @@
 483
 484
 485
-486</pre>
+486
+487</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 366</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 367</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_frame'>frame</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -3444,9 +3508,9 @@
 
   <span class='comment'># Initialize input using frame as context
 </span>  <span class='const'><span class='object_link'><a href="" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_expanded_input'>expanded_input</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>no_default_base:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.frame</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expanded input: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_expanded_input'>expanded_input</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.frame</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expanded frame: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_expanded_frame'>expanded_frame</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+    <span class='comment'># log_debug(&quot;.frame&quot;) {&quot;expanded input: #{expanded_input.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>    <span class='comment'># log_debug(&quot;.frame&quot;) {&quot;expanded frame: #{expanded_frame.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>
     <span class='kw'>if</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>@first</span><span class='words_sep'> </span><span class='tstring_content'>@last</span><span class='tstring_end'>)</span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:embed</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_processingMode'>processingMode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidEmbedValue.html" title="JSON::LD::JsonLdError::InvalidEmbedValue (class)">InvalidEmbedValue</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:embed</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'> is not a valid value of @embed in 1.1 mode</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
       <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[DEPRECATION] </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:embed</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'>  is not a valid value of @embed in 1.1 mode.\n</span><span class='tstring_end'>&quot;</span></span>
@@ -3492,8 +3556,8 @@
 
     <span class='comment'># Replace values with `@preserve` with the content of its entry.
 </span>    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cleanup_preserve'>cleanup_preserve</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.frame</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expanded result: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+    <span class='comment'># log_debug(&quot;.frame&quot;) {&quot;expanded result: #{result.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>
     <span class='comment'># Compact result
 </span>    <span class='id identifier rubyid_compacted'>compacted</span> <span class='op'>=</span> <span class='id identifier rubyid_compact'>compact</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
 
@@ -3511,8 +3575,8 @@
     <span class='comment'># Only add context if one was provided
 </span>    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_serialize'>serialize</span><span class='lparen'>(</span><span class='label'>provided_context:</span> <span class='id identifier rubyid_frame'>frame</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_frame'>frame</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
     
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.frame</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>after compact: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-    <span class='id identifier rubyid_result'>result</span>
+    <span class='comment'># log_debug(&quot;.frame&quot;) {&quot;after compact: #{result.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>    <span class='id identifier rubyid_result'>result</span>
   <span class='kw'>end</span>
 
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_serializer'>serializer</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_serializer'>serializer</span>
@@ -3643,6 +3707,19 @@
     <ul class="option">
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -3701,19 +3778,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -3722,6 +3786,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -3779,6 +3859,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -3786,13 +3895,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -3840,19 +3949,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -3861,22 +3957,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -3965,7 +4045,6 @@
       <pre class="lines">
 
 
-560
 561
 562
 563
@@ -3976,16 +4055,19 @@
 568
 569
 570
-571</pre>
+571
+572
+573</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 560</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 561</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_fromRdf'>fromRdf</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>useRdfType:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>useNativeTypes:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
 
   <span class='const'><span class='object_link'><a href="" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
     <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_from_statements'>from_statements</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span>
+      <span class='label'>extendedRepresentation:</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:extendedRepresentation</span><span class='rbracket'>]</span><span class='comma'>,</span>
       <span class='label'>useRdfType:</span> <span class='id identifier rubyid_useRdfType'>useRdfType</span><span class='comma'>,</span>
       <span class='label'>useNativeTypes:</span> <span class='id identifier rubyid_useNativeTypes'>useNativeTypes</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
@@ -4120,13 +4202,6 @@
       <pre class="lines">
 
 
-736
-737
-738
-739
-740
-741
-742
 743
 744
 745
@@ -4202,10 +4277,17 @@
 815
 816
 817
-818</pre>
+818
+819
+820
+821
+822
+823
+824
+825</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 736</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 743</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_load_html'>load_html</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>url:</span><span class='comma'>,</span>
                      <span class='label'>library:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -4298,7 +4380,7 @@
       <div class="method_details ">
   <h3 class="signature " id="loadRemoteDocument-class_method">
   
-    .<strong>loadRemoteDocument</strong>(url, base: nil, documentLoader: nil, extractAllScripts: false, profile: nil, requestProfile: nil, validate: false, **options) {|remote_document| ... } &#x21d2; <tt>Object</tt>, <tt><span class='object_link'><a href="API/RemoteDocument.html" title="JSON::LD::API::RemoteDocument (class)">RemoteDocument</a></span></tt> 
+    .<strong>loadRemoteDocument</strong>(url, allowed_content_types: nil, base: nil, documentLoader: nil, extractAllScripts: false, profile: nil, requestProfile: nil, validate: false, **options) {|remote_document| ... } &#x21d2; <tt>Object</tt>, <tt><span class='object_link'><a href="API/RemoteDocument.html" title="JSON::LD::API::RemoteDocument (class)">RemoteDocument</a></span></tt> 
   
 
   
@@ -4324,6 +4406,24 @@
         <span class='type'>(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>)</span>
       
       
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>allowed_content_types</span>
+      
+      
+        <span class='type'>(<tt>Regexp</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>A regular expression matching other content types allowed beyond types for JSON and HTML.</p>
+</div>
       
     </li>
   
@@ -4431,6 +4531,8 @@
 </ul>
 
   
+    
+    
     
     
     
@@ -4555,11 +4657,6 @@
       <pre class="lines">
 
 
-596
-597
-598
-599
-600
 601
 602
 603
@@ -4642,12 +4739,20 @@
 680
 681
 682
-683</pre>
+683
+684
+685
+686
+687
+688
+689
+690</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 596</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 601</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_loadRemoteDocument'>loadRemoteDocument</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span>
+                            <span class='label'>allowed_content_types:</span> <span class='kw'>nil</span><span class='comma'>,</span>
                             <span class='label'>base:</span> <span class='kw'>nil</span><span class='comma'>,</span>
                             <span class='label'>documentLoader:</span> <span class='kw'>nil</span><span class='comma'>,</span>
                             <span class='label'>extractAllScripts:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -4728,7 +4833,8 @@
 
     <span class='kw'>if</span> <span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='period'>.</span><span class='id identifier rubyid_contentType'>contentType</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_validate'>validate</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'>IOError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>url: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>, contentType: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='period'>.</span><span class='id identifier rubyid_contentType'>contentType</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span>
-        <span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='period'>.</span><span class='id identifier rubyid_contentType'>contentType</span><span class='period'>.</span><span class='id identifier rubyid_match?'>match?</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>application\/(.+\+)?json|text\/html|application\/xhtml\+xml</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='period'>.</span><span class='id identifier rubyid_contentType'>contentType</span><span class='period'>.</span><span class='id identifier rubyid_match?'>match?</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>application\/(.+\+)?json|text\/html|application\/xhtml\+xml</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span> <span class='op'>||</span>
+        <span class='lparen'>(</span><span class='id identifier rubyid_allowed_content_types'>allowed_content_types</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='period'>.</span><span class='id identifier rubyid_contentType'>contentType</span><span class='period'>.</span><span class='id identifier rubyid_match?'>match?</span><span class='lparen'>(</span><span class='id identifier rubyid_allowed_content_types'>allowed_content_types</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
     <span class='id identifier rubyid_block_given?'>block_given?</span> <span class='op'>?</span> <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_remote_doc'>remote_doc</span>
   <span class='kw'>end</span>
@@ -4840,13 +4946,13 @@
       <pre class="lines">
 
 
-831
-832
-833
-834</pre>
+838
+839
+840
+841</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 831</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 838</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_serializer'>serializer</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_serializer_opts'>serializer_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:serializer_opts</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span>
@@ -4961,6 +5067,19 @@
         </li>
       
         <li>
+          <span class="name">:adapter</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>used with MultiJson</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:base</span>
           <span class="type">(<tt><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">RDF::URI</a></span></tt>, <tt>String</tt>, <tt>#to_s</tt>)</span>
           <span class="default">
@@ -5019,19 +5138,6 @@
         </li>
       
         <li>
-          <span class="name">:lowercaseLanguage</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:expandContext</span>
           <span class="type">(<tt>String</tt>, <tt>#read</tt>, <tt>Hash</tt>, <tt><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></tt>, <tt><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">JSON::LD::Context</a></span></tt>)</span>
           <span class="default">
@@ -5040,6 +5146,22 @@
           
             &mdash; <div class='inline'>
 <p>A context that is used to initialize the active context when expanding a document.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extendedRepresentation</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Use the extended internal representation.</p>
 </div>
           
         </li>
@@ -5097,6 +5219,35 @@
         </li>
       
         <li>
+          <span class="name">:lowercaseLanguage</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>By default, language tags are left as is. To normalize to lowercase, set this option to <code>true</code>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:ordered</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Order traversal of dictionary members by key when performing algorithms.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:processingMode</span>
           <span class="type">(<tt>String</tt>)</span>
           <span class="default">
@@ -5104,13 +5255,13 @@
           </span>
           
             &mdash; <div class='inline'>
-<p>Processing mode, json-ld-1.0 or json-ld-1.1. If <code>processingMode</code> is not specified, a mode of <code>json-ld-1.0</code> or <code>json-ld-1.1</code> is set, the context used for <code>expansion</code> or <code>compaction</code>.</p>
+<p>Processing mode, json-ld-1.0 or json-ld-1.1.</p>
 </div>
           
         </li>
       
         <li>
-          <span class="name">rdfstar</span>
+          <span class="name">:rdfstar</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
             
@@ -5158,19 +5309,6 @@
         </li>
       
         <li>
-          <span class="name">:adapter</span>
-          <span class="type">(<tt>Symbol</tt>)</span>
-          <span class="default">
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>used with MultiJson</p>
-</div>
-          
-        </li>
-      
-        <li>
           <span class="name">:validate</span>
           <span class="type">(<tt>Boolean</tt>)</span>
           <span class="default">
@@ -5179,22 +5317,6 @@
           
             &mdash; <div class='inline'>
 <p>Validate input, if a string or readable object.</p>
-</div>
-          
-        </li>
-      
-        <li>
-          <span class="name">:ordered</span>
-          <span class="type">(<tt>Boolean</tt>)</span>
-          <span class="default">
-            
-              &mdash; default:
-              <tt>true</tt>
-            
-          </span>
-          
-            &mdash; <div class='inline'>
-<p>Order traversal of dictionary members by key when performing algorithms.</p>
 </div>
           
         </li>
@@ -5273,7 +5395,6 @@
       <pre class="lines">
 
 
-501
 502
 503
 504
@@ -5310,10 +5431,11 @@
 535
 536
 537
-538</pre>
+538
+539</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 501</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 502</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_toRdf'>toRdf</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -5335,8 +5457,8 @@
   <span class='const'><span class='object_link'><a href="" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_flattened_input'>flattened_input</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
     <span class='comment'># 1) Perform the Expansion Algorithm on the JSON-LD input.
 </span>    <span class='comment'>#    This removes any existing context to allow the given context to be cleanly applied.
-</span>    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.toRdf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flattened input: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_flattened_input'>flattened_input</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span> <span class='kw'>rescue</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>malformed json</span><span class='tstring_end'>&#39;</span></span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+</span>    <span class='comment'># log_debug(&quot;.toRdf&quot;) {&quot;flattened input: #{flattened_input.to_json(JSON_STATE) rescue &#39;malformed json&#39;}&quot;}
+</span>
     <span class='comment'># Recurse through input
 </span>    <span class='id identifier rubyid_flattened_input'>flattened_input</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_node'>node</span><span class='op'>|</span>
       <span class='id identifier rubyid_item_to_rdf'>item_to_rdf</span><span class='lparen'>(</span><span class='id identifier rubyid_node'>node</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_statement'>statement</span><span class='op'>|</span>
@@ -5344,8 +5466,8 @@
 
         <span class='comment'># Drop invalid statements (other than IRIs)
 </span>        <span class='kw'>unless</span> <span class='id identifier rubyid_statement'>statement</span><span class='period'>.</span><span class='id identifier rubyid_valid_extended?'>valid_extended?</span>
-          <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.toRdf</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>drop invalid statement: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_statement'>statement</span><span class='period'>.</span><span class='id identifier rubyid_to_nquads'>to_nquads</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-          <span class='kw'>next</span>
+          <span class='comment'># log_debug(&quot;.toRdf&quot;) {&quot;drop invalid statement: #{statement.to_nquads}&quot;}
+</span>          <span class='kw'>next</span>
         <span class='kw'>end</span>
 
         <span class='kw'>yield</span> <span class='id identifier rubyid_statement'>statement</span>
@@ -5363,9 +5485,9 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Aug  7 22:25:06 2022 by
+  Generated on Sat Apr 15 20:55:53 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-3.1.2).
+  0.9.34 (ruby-3.1.4).
 </div>
 
     </div>

@@ -254,7 +254,7 @@
       <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_writer.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stream_epilogue'>stream_epilogue</span>
-  <span class='comment'>#log_debug(&quot;epilogue&quot;) {&quot;state: #{@state.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;epilogue&quot;) {&quot;state: #{@state.inspect}&quot;}
 </span>  <span class='id identifier rubyid_end_graph'>end_graph</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span>
     <span class='ivar'>@output</span><span class='period'>.</span><span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n]}</span><span class='tstring_end'>&quot;</span></span>
@@ -324,7 +324,7 @@
   <span class='kw'>else</span> <span class='const'><span class='object_link'><a href="Context.html" title="JSON::LD::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'><span class='object_link'><a href="Context.html#parse-class_method" title="JSON::LD::Context.parse (method)">parse</a></span></span><span class='lparen'>(</span><span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:context</span><span class='rbracket'>]</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 
-  <span class='comment'>#log_debug(&quot;prologue&quot;) {&quot;context: #{context.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;prologue&quot;) {&quot;context: #{context.inspect}&quot;}
 </span>  <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span>
     <span class='ivar'>@output</span><span class='period'>.</span><span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>%(</span><span class='tstring_content'>{&quot;@context&quot;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_serialize'>serialize</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='embexpr_end'>}</span><span class='tstring_content'>, &quot;@graph&quot;: [</span><span class='tstring_end'>)</span></span>
   <span class='kw'>else</span>
@@ -407,7 +407,7 @@
       <pre class="code"><span class="info file"># File 'lib/json/ld/streaming_writer.rb', line 41</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stream_statement'>stream_statement</span><span class='lparen'>(</span><span class='id identifier rubyid_statement'>statement</span><span class='rparen'>)</span>
-  <span class='comment'>#log_debug(&quot;ss&quot;) {&quot;state: #{@state.inspect}, stmt: #{statement}&quot;}
+  <span class='comment'># log_debug(&quot;ss&quot;) {&quot;state: #{@state.inspect}, stmt: #{statement}&quot;}
 </span>  <span class='kw'>if</span> <span class='ivar'>@current_graph</span> <span class='op'>!=</span> <span class='id identifier rubyid_statement'>statement</span><span class='period'>.</span><span class='id identifier rubyid_graph_name'>graph_name</span>
     <span class='id identifier rubyid_end_graph'>end_graph</span>
     <span class='id identifier rubyid_start_graph'>start_graph</span><span class='lparen'>(</span><span class='id identifier rubyid_statement'>statement</span><span class='period'>.</span><span class='id identifier rubyid_graph_name'>graph_name</span><span class='rparen'>)</span>
@@ -449,9 +449,9 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Aug  7 22:25:03 2022 by
+  Generated on Sat Apr 15 20:55:50 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-3.1.2).
+  0.9.34 (ruby-3.1.4).
 </div>
 
     </div>

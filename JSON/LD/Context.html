@@ -296,11 +296,6 @@
         </dt>
         <dd><pre class="code"><span class='qwords_beg'>%w(</span><span class='tstring_content'>@vocab</span><span class='words_sep'> </span><span class='tstring_content'>@id</span><span class='words_sep'> </span><span class='tstring_content'>@none</span><span class='tstring_end'>)</span></span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
       
-        <dt id="RDF_LITERAL_NATIVE_TYPES-constant" class="">RDF_LITERAL_NATIVE_TYPES =
-          
-        </dt>
-        <dd><pre class="code"><span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>XSD</span><span class='period'>.</span><span class='id identifier rubyid_boolean'>boolean</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>XSD</span><span class='period'>.</span><span class='id identifier rubyid_integer'>integer</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>XSD</span><span class='period'>.</span><span class='id identifier rubyid_double'>double</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
-      
     </dl>
   
 
@@ -1612,7 +1607,7 @@
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_language'>default_language</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:language</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:language</span><span class='rbracket'>]</span> <span class='op'>=~</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$</span><span class='regexp_end'>/</span></span>
   <span class='ivar'>@term_definitions</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:term_definitions</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:term_definitions</span><span class='rbracket'>]</span>
 
-  <span class='comment'>#log_debug(&quot;init&quot;) {&quot;iri_to_term: #{iri_to_term.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;init&quot;) {&quot;iri_to_term: #{iri_to_term.inspect}&quot;}
 </span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
 <span class='kw'>end</span></pre>
@@ -2671,12 +2666,12 @@
       <pre class="lines">
 
 
-1722
-1723
-1724</pre>
+1680
+1681
+1682</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1722</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1680</span>
 
 <span class='kw'>def</span> <span class='kw'>alias</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_iri_to_term'>iri_to_term</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
@@ -3476,6 +3471,48 @@
       <pre class="lines">
 
 
+1539
+1540
+1541
+1542
+1543
+1544
+1545
+1546
+1547
+1548
+1549
+1550
+1551
+1552
+1553
+1554
+1555
+1556
+1557
+1558
+1559
+1560
+1561
+1562
+1563
+1564
+1565
+1566
+1567
+1568
+1569
+1570
+1571
+1572
+1573
+1574
+1575
+1576
+1577
+1578
+1579
+1580
 1581
 1582
 1583
@@ -3493,55 +3530,13 @@
 1595
 1596
 1597
-1598
-1599
-1600
-1601
-1602
-1603
-1604
-1605
-1606
-1607
-1608
-1609
-1610
-1611
-1612
-1613
-1614
-1615
-1616
-1617
-1618
-1619
-1620
-1621
-1622
-1623
-1624
-1625
-1626
-1627
-1628
-1629
-1630
-1631
-1632
-1633
-1634
-1635
-1636
-1637
-1638
-1639
-1640</pre>
+1598</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1581</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1539</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_compact_value'>compact_value</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'>#log_debug(&quot;compact_value&quot;) {&quot;property: #{property.inspect}, value: #{value.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;compact_value&quot;) {&quot;property: #{property.inspect}, value: #{value.inspect}&quot;}
 </span>
   <span class='id identifier rubyid_indexing'>indexing</span> <span class='op'>=</span> <span class='id identifier rubyid_index?'>index?</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_container'>container</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@index</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_language'>language</span> <span class='op'>=</span> <span class='id identifier rubyid_language'>language</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
@@ -3550,25 +3545,25 @@
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>case</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span> <span class='op'>-</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>@id</span><span class='words_sep'> </span><span class='tstring_content'>@index</span><span class='tstring_end'>)</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
     <span class='comment'># Compact an @id coercion
-</span>    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (@id &amp; coerce)&quot;}
+</span>    <span class='comment'># log_debug(&quot;&quot;) {&quot; (@id &amp; coerce)&quot;}
 </span>    <span class='id identifier rubyid_compact_iri'>compact_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='id identifier rubyid_base'>base</span><span class='rparen'>)</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@vocab</span><span class='tstring_end'>&#39;</span></span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span> <span class='op'>-</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>@id</span><span class='words_sep'> </span><span class='tstring_content'>@index</span><span class='tstring_end'>)</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
     <span class='comment'># Compact an @id coercion
-</span>    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (@id &amp; coerce &amp; vocab)&quot;}
+</span>    <span class='comment'># log_debug(&quot;&quot;) {&quot; (@id &amp; coerce &amp; vocab)&quot;}
 </span>    <span class='id identifier rubyid_compact_iri'>compact_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>vocab:</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (@id)&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot; (@id)&quot;}
 </span>    <span class='comment'># return value as is
 </span>    <span class='id identifier rubyid_value'>value</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
     <span class='comment'># Compact common datatype
-</span>    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (@type &amp; coerce) == #{coerce(property)}&quot;}
+</span>    <span class='comment'># log_debug(&quot;&quot;) {&quot; (@type &amp; coerce) == #{coerce(property)}&quot;}
 </span>    <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@none</span><span class='tstring_end'>&#39;</span></span> <span class='op'>||</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
     <span class='comment'># use original expanded value
 </span>    <span class='id identifier rubyid_value'>value</span>
   <span class='kw'>when</span> <span class='op'>!</span><span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (native)&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot; (native)&quot;}
 </span>    <span class='id identifier rubyid_indexing'>indexing</span> <span class='op'>||</span> <span class='op'>!</span><span class='id identifier rubyid_index?'>index?</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span>
   <span class='kw'>when</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span> <span class='op'>==</span> <span class='id identifier rubyid_language'>language</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@direction</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='id identifier rubyid_direction'>direction</span>
     <span class='comment'># Compact language and direction
@@ -3589,7 +3584,7 @@
   
   <span class='comment'># If the result is an object, tranform keys using any term keyword aliases
 </span>  <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='op'>|</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_alias'>alias</span><span class='lparen'>(</span><span class='id identifier rubyid_k'>k</span><span class='rparen'>)</span> <span class='op'>!=</span> <span class='id identifier rubyid_k'>k</span><span class='rbrace'>}</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot; (map to key aliases)&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot; (map to key aliases)&quot;}
 </span>    <span class='id identifier rubyid_new_element'>new_element</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
     <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
       <span class='id identifier rubyid_new_element'>new_element</span><span class='lbracket'>[</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_alias'>alias</span><span class='lparen'>(</span><span class='id identifier rubyid_k'>k</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_v'>v</span>
@@ -3597,7 +3592,7 @@
     <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_new_element'>new_element</span>
   <span class='kw'>end</span>
 
-  <span class='comment'>#log_debug(&quot;&quot;) {&quot;=&gt; #{result.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;&quot;) {&quot;=&gt; #{result.inspect}&quot;}
 </span>  <span class='id identifier rubyid_result'>result</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -3936,7 +3931,6 @@
       <pre class="lines">
 
 
-474
 475
 476
 477
@@ -4225,10 +4219,11 @@
 760
 761
 762
-763</pre>
+763
+764</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 474</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 475</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create_term_definition'>create_term_definition</span><span class='lparen'>(</span><span class='id identifier rubyid_local_context'>local_context</span><span class='comma'>,</span> <span class='id identifier rubyid_term'>term</span><span class='comma'>,</span> <span class='id identifier rubyid_defined'>defined</span><span class='comma'>,</span>
     <span class='label'>base:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -4237,8 +4232,8 @@
     <span class='label'>remote_contexts:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='label'>validate_scoped:</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='comment'># Expand a string value, unless it matches a keyword
-</span>  <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>create_term_definition</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>term = </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+</span>  <span class='comment'># log_debug(&quot;create_term_definition&quot;) {&quot;term = #{term.inspect}&quot;}
+</span>
   <span class='comment'># If defined contains the key term, then the associated value must be true, indicating that the term definition has already been created, so return. Otherwise, a cyclical term definition has been detected, which is an error.
 </span>  <span class='kw'>case</span> <span class='id identifier rubyid_defined'>defined</span><span class='lbracket'>[</span><span class='id identifier rubyid_term'>term</span><span class='rbracket'>]</span>
   <span class='kw'>when</span> <span class='const'>TrueClass</span> <span class='kw'>then</span> <span class='kw'>return</span>
@@ -4282,7 +4277,7 @@
 
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidTermDefinition.html" title="JSON::LD::JsonLdError::InvalidTermDefinition (class)">InvalidTermDefinition</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Term definition for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> is an </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='embexpr_end'>}</span><span class='tstring_content'> on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
 
-  <span class='comment'>#log_debug(&quot;&quot;) {&quot;Hash[#{term.inspect}] = #{value.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;&quot;) {&quot;Hash[#{term.inspect}] = #{value.inspect}&quot;}
 </span>  <span class='id identifier rubyid_definition'>definition</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Context/TermDefinition.html" title="JSON::LD::Context::TermDefinition (class)">TermDefinition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_simple'>simple</span> <span class='op'>=</span> <span class='id identifier rubyid_simple_term'>simple_term</span>
 
@@ -4324,7 +4319,7 @@
 </span>    <span class='kw'>elsif</span> <span class='op'>!</span><span class='const'><span class='object_link'><a href="#JSON_LD_10_TYPE_VALUES-constant" title="JSON::LD::Context::JSON_LD_10_TYPE_VALUES (constant)">JSON_LD_10_TYPE_VALUES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_type'>type</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_type'>type</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_type'>type</span><span class='period'>.</span><span class='id identifier rubyid_absolute?'>absolute?</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidTypeMapping.html" title="JSON::LD::JsonLdError::InvalidTypeMapping (class)">InvalidTypeMapping</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>unknown mapping for &#39;@type&#39;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;type_mapping: #{type.inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;type_mapping: #{type.inspect}&quot;}
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_type_mapping'>type_mapping</span> <span class='op'>=</span> <span class='id identifier rubyid_type'>type</span>
   <span class='kw'>end</span>
 
@@ -4408,8 +4403,8 @@
       <span class='comment'># Otherwise, term is an absolute IRI. Set the IRI mapping for definition to term
 </span>      <span class='id identifier rubyid_term'>term</span>
     <span class='kw'>end</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=&gt; </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;=&gt; #{definition.id}&quot;}
+</span>  <span class='kw'>elsif</span> <span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
     <span class='comment'># If term is a relative IRI
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span> <span class='op'>=</span> <span class='id identifier rubyid_expand_iri'>expand_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='comma'>,</span> <span class='label'>vocab:</span> <span class='kw'>true</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidKeywordAlias.html" title="JSON::LD::JsonLdError::InvalidKeywordAlias (class)">InvalidKeywordAlias</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expected term to expand to an absolute IRI </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span>
@@ -4421,13 +4416,13 @@
     <span class='comment'># Otherwise, active context must have a vocabulary mapping, otherwise an invalid value has been detected, which is an error. Set the IRI mapping for definition to the result of concatenating the value associated with the vocabulary mapping and term.
 </span>    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidIRIMapping.html" title="JSON::LD::JsonLdError::InvalidIRIMapping (class)">InvalidIRIMapping</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>relative term definition without vocab: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='embexpr_end'>}</span><span class='tstring_content'> on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_vocab'>vocab</span>
     <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span> <span class='op'>=</span> <span class='id identifier rubyid_vocab'>vocab</span> <span class='op'>+</span> <span class='id identifier rubyid_term'>term</span>
-    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=&gt; </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-  <span class='kw'>end</span>
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;=&gt; #{definition.id}&quot;}
+</span>  <span class='kw'>end</span>
 
   <span class='ivar'>@iri_to_term</span><span class='lbracket'>[</span><span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_term'>term</span> <span class='kw'>if</span> <span class='id identifier rubyid_simple_term'>simple_term</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@container</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;container_mapping: #{value[&#39;@container&#39;].inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;container_mapping: #{value[&#39;@container&#39;].inspect}&quot;}
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_container_mapping'>container_mapping</span> <span class='op'>=</span> <span class='id identifier rubyid_check_container'>check_container</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@container</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_local_context'>local_context</span><span class='comma'>,</span> <span class='id identifier rubyid_defined'>defined</span><span class='comma'>,</span> <span class='id identifier rubyid_term'>term</span><span class='rparen'>)</span>
 
     <span class='comment'># If @container includes @type
@@ -4461,8 +4456,8 @@
       <span class='kw'>when</span> <span class='kw'>nil</span> <span class='kw'>then</span> <span class='lbracket'>[</span><span class='kw'>nil</span><span class='rbracket'>]</span>
       <span class='kw'>else</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
       <span class='kw'>end</span>
-      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-    <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+      <span class='comment'># log_debug(&quot;&quot;) {&quot;context: #{definition.context.inspect}&quot;}
+</span>    <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidScopedContext.html" title="JSON::LD::JsonLdError::InvalidScopedContext (class)">InvalidScopedContext</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Term definition for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'> contains illegal value for @context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
@@ -4481,14 +4476,14 @@
     <span class='kw'>else</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidLanguageMapping.html" title="JSON::LD::JsonLdError::InvalidLanguageMapping (class)">InvalidLanguageMapping</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>language must be null or a string, was </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'>} on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;language_mapping: #{language.inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;language_mapping: #{language.inspect}&quot;}
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_language_mapping'>language_mapping</span> <span class='op'>=</span> <span class='id identifier rubyid_language'>language</span> <span class='op'>||</span> <span class='kw'>false</span>
   <span class='kw'>end</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@direction</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
     <span class='id identifier rubyid_direction'>direction</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@direction</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidBaseDirection.html" title="JSON::LD::JsonLdError::InvalidBaseDirection (class)">InvalidBaseDirection</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>direction must be null, &#39;ltr&#39;, or &#39;rtl&#39;, was </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_language'>language</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'>} on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_direction'>direction</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>ltr</span><span class='words_sep'> </span><span class='tstring_content'>rtl</span><span class='tstring_end'>)</span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_direction'>direction</span><span class='rparen'>)</span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;direction_mapping: #{direction.inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;direction_mapping: #{direction.inspect}&quot;}
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_direction_mapping'>direction_mapping</span> <span class='op'>=</span> <span class='id identifier rubyid_direction'>direction</span> <span class='op'>||</span> <span class='kw'>false</span>
   <span class='kw'>end</span>
 
@@ -4496,7 +4491,7 @@
     <span class='id identifier rubyid_nest'>nest</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@nest</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidNestValue.html" title="JSON::LD::JsonLdError::InvalidNestValue (class)">InvalidNestValue</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>nest must be a string, was </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'>} on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidNestValue.html" title="JSON::LD::JsonLdError::InvalidNestValue (class)">InvalidNestValue</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>nest must not be a keyword other than @nest, was </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_content'>} on term </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_nest'>nest</span><span class='period'>.</span><span class='id identifier rubyid_match?'>match?</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>^@[a-zA-Z]+$</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_nest'>nest</span> <span class='op'>!=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@nest</span><span class='tstring_end'>&#39;</span></span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;nest: #{nest.inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;nest: #{nest.inspect}&quot;}
 </span>    <span class='id identifier rubyid_definition'>definition</span><span class='period'>.</span><span class='id identifier rubyid_nest'>nest</span> <span class='op'>=</span> <span class='id identifier rubyid_nest'>nest</span>
   <span class='kw'>end</span>
 
@@ -4629,26 +4624,26 @@
       <pre class="lines">
 
 
-1683
-1684
-1685
-1686
-1687
-1688
-1689
-1690
-1691
-1692
-1693
-1694
-1695
-1696
-1697
-1698
-1699</pre>
+1641
+1642
+1643
+1644
+1645
+1646
+1647
+1648
+1649
+1650
+1651
+1652
+1653
+1654
+1655
+1656
+1657</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1683</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1641</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_dup'>dup</span>
   <span class='id identifier rubyid_that'>that</span> <span class='op'>=</span> <span class='kw'>self</span>
@@ -4711,12 +4706,12 @@
       <pre class="lines">
 
 
-769
 770
-771</pre>
+771
+772</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 769</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 770</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_empty?'>empty?</span>
   <span class='ivar'>@term_definitions</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>&amp;&amp;</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_vocab'>vocab</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>&amp;&amp;</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_language'>default_language</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -5295,6 +5290,8 @@
       <pre class="lines">
 
 
+1487
+1488
 1489
 1490
 1491
@@ -5330,59 +5327,17 @@
 1521
 1522
 1523
-1524
-1525
-1526
-1527
-1528
-1529
-1530
-1531
-1532
-1533
-1534
-1535
-1536
-1537
-1538
-1539
-1540
-1541
-1542
-1543
-1544
-1545
-1546
-1547
-1548
-1549
-1550
-1551
-1552
-1553
-1554
-1555
-1556
-1557
-1558
-1559
-1560
-1561
-1562
-1563
-1564
-1565
-1566</pre>
+1524</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1489</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1487</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_expand_value'>expand_value</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>useNativeTypes:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>rdfDirection:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_td'>td</span> <span class='op'>=</span> <span class='id identifier rubyid_term_definitions'>term_definitions</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="Context/TermDefinition.html" title="JSON::LD::Context::TermDefinition (class)">TermDefinition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span><span class='rparen'>)</span>
 
   <span class='comment'># If the active property has a type mapping in active context that is @id, return a new JSON object containing a single key-value pair where the key is @id and the value is the result of using the IRI Expansion algorithm, passing active context, value, and true for document relative.
 </span>  <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_td'>td</span><span class='period'>.</span><span class='id identifier rubyid_type_mapping'>type_mapping</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span>
-    <span class='comment'>#log_debug(&quot;&quot;) {&quot;as relative IRI: #{value.inspect}&quot;}
+    <span class='comment'># log_debug(&quot;&quot;) {&quot;as relative IRI: #{value.inspect}&quot;}
 </span>    <span class='kw'>return</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_expand_iri'>expand_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>documentRelative:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='id identifier rubyid_base'>base</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbrace'>}</span>
   <span class='kw'>end</span>
 
@@ -5391,50 +5346,12 @@
     <span class='kw'>return</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_expand_iri'>expand_iri</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>vocab:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>documentRelative:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>base:</span> <span class='id identifier rubyid_base'>base</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbrace'>}</span>
   <span class='kw'>end</span>
 
-  <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Literal.html" title="RDF::Literal (class)">Literal</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span> <span class='kw'>if</span>
-    <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Date</span><span class='rparen'>)</span> <span class='op'>||</span>
-    <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>DateTime</span><span class='rparen'>)</span> <span class='op'>||</span>
-    <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Time</span><span class='rparen'>)</span>
-
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>case</span> <span class='id identifier rubyid_value'>value</span>
   <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Node.html" title="RDF::Node (class)">Node</a></span></span>
     <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbrace'>}</span>
-  <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Literal.html" title="RDF::Literal (class)">Literal</a></span></span>
-    <span class='id identifier rubyid_res'>res</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-    <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='period'>.</span><span class='id identifier rubyid_to_uri'>to_uri</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>JSON</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_processingMode'>processingMode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-      <span class='comment'># Value parsed as JSON
-</span>      <span class='comment'># FIXME: MultiJson
-</span>      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@json</span><span class='tstring_end'>&#39;</span></span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span>
-    <span class='kw'>elsif</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://www.w3.org/ns/i18n#</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_rdfDirection'>rdfDirection</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>i18n-datatype</span><span class='tstring_end'>&#39;</span></span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_processingMode'>processingMode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_lang'>lang</span><span class='comma'>,</span> <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span><span class='period'>.</span><span class='id identifier rubyid_fragment'>fragment</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-      <span class='kw'>unless</span> <span class='id identifier rubyid_lang'>lang</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-        <span class='kw'>if</span> <span class='id identifier rubyid_lang'>lang</span> <span class='op'>!~</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$</span><span class='regexp_end'>/</span></span>
-          <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
-            <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidLanguageMapping.html" title="JSON::LD::JsonLdError::InvalidLanguageMapping (class)">InvalidLanguageMapping</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rdf:language must be valid BCP47: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_lang'>lang</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-          <span class='kw'>else</span>
-            <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rdf:language must be valid BCP47: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_lang'>lang</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-          <span class='kw'>end</span>
-        <span class='kw'>end</span>
-        <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_lang'>lang</span>
-      <span class='kw'>end</span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@direction</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_dir'>dir</span>
-    <span class='kw'>elsif</span> <span class='id identifier rubyid_useNativeTypes'>useNativeTypes</span> <span class='op'>&amp;&amp;</span> <span class='const'><span class='object_link'><a href="#RDF_LITERAL_NATIVE_TYPES-constant" title="JSON::LD::Context::RDF_LITERAL_NATIVE_TYPES (constant)">RDF_LITERAL_NATIVE_TYPES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_uri'>uri</span><span class='lparen'>(</span><span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_object'>object</span>
-    <span class='kw'>else</span>
-      <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_canonicalize!'>canonicalize!</span> <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>XSD</span><span class='period'>.</span><span class='id identifier rubyid_double'>double</span>
-      <span class='kw'>if</span> <span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
-        <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_uri'>uri</span><span class='lparen'>(</span><span class='id identifier rubyid_coerce'>coerce</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-      <span class='kw'>elsif</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype?'>datatype?</span>
-        <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_uri'>uri</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-      <span class='kw'>elsif</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_language?'>language?</span> <span class='op'>||</span> <span class='id identifier rubyid_language'>language</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span>
-        <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@language</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_language'>language</span> <span class='op'>||</span> <span class='id identifier rubyid_language'>language</span><span class='lparen'>(</span><span class='id identifier rubyid_property'>property</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-      <span class='kw'>end</span>
-      <span class='id identifier rubyid_res'>res</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-    <span class='kw'>end</span>
-    <span class='id identifier rubyid_res'>res</span>
+  <span class='kw'>when</span> <span class='const'>Date</span><span class='comma'>,</span> <span class='const'>DateTime</span><span class='comma'>,</span> <span class='const'>Time</span>
+    <span class='id identifier rubyid_lit'>lit</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/Literal.html" title="RDF::Literal (class)">Literal</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+    <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@value</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_lit'>lit</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@type</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_lit'>lit</span><span class='period'>.</span><span class='id identifier rubyid_datatype'>datatype</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbrace'>}</span>
   <span class='kw'>else</span>
     <span class='comment'># Otherwise, initialize result to a JSON object with an @value member whose value is set to value.
 </span>    <span class='id identifier rubyid_res'>res</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -5452,8 +5369,6 @@
   <span class='kw'>end</span>
 
   <span class='id identifier rubyid_result'>result</span>
-<span class='kw'>rescue</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'>ParserError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidJsonLiteral.html" title="JSON::LD::JsonLdError::InvalidJsonLiteral (class)">InvalidJsonLiteral</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -5750,20 +5665,20 @@
       <pre class="lines">
 
 
-1670
-1671
-1672
-1673
-1674
-1675
-1676
-1677
-1678
-1679
-1680</pre>
+1628
+1629
+1630
+1631
+1632
+1633
+1634
+1635
+1636
+1637
+1638</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1670</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1628</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_inspect'>inspect</span>
   <span class='id identifier rubyid_v'>v</span> <span class='op'>=</span> <span class='qwords_beg'>%w(</span><span class='tstring_content'>[Context</span><span class='tstring_end'>)</span></span>
@@ -5931,7 +5846,6 @@
       <pre class="lines">
 
 
-421
 422
 423
 424
@@ -5952,10 +5866,11 @@
 439
 440
 441
-442</pre>
+442
+443</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 421</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 422</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>override_protected:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="JSON::LD::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>term_definitions:</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_term_definitions'>term_definitions</span><span class='comma'>,</span> <span class='label'>standard_prefixes:</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:standard_prefixes</span><span class='rbracket'>]</span><span class='rparen'>)</span>
@@ -6446,7 +6361,8 @@
 410
 411
 412
-413</pre>
+413
+414</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 243</span>
@@ -6478,13 +6394,13 @@
               <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Attempt to clear a context with protected terms</span><span class='tstring_end'>&quot;</span></span>
       <span class='kw'>end</span>
     <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="" title="JSON::LD::Context (class)">Context</a></span></span>
-       <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parse</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-       <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+       <span class='comment'># log_debug(&quot;parse&quot;) {&quot;context: #{context.inspect}&quot;}
+</span>       <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
     <span class='kw'>when</span> <span class='const'>IO</span><span class='comma'>,</span> <span class='const'>StringIO</span>
-      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parse</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>io: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-      <span class='comment'># Load context document, if it is an open file
+      <span class='comment'># log_debug(&quot;parse&quot;) {&quot;io: #{context}&quot;}
+</span>      <span class='comment'># Load context document, if it is an open file
 </span>      <span class='kw'>begin</span>
-        <span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='id identifier rubyid_load_context'>load_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span>
         <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidRemoteContext.html" title="JSON::LD::JsonLdError::InvalidRemoteContext (class)">InvalidRemoteContext</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Context missing @context key</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_ctx'>ctx</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
         <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_ctx'>ctx</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>?</span> <span class='id identifier rubyid_ctx'>ctx</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
       <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'>ParserError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
@@ -6493,8 +6409,8 @@
         <span class='kw'>self</span>
       <span class='kw'>end</span>
     <span class='kw'>when</span> <span class='const'>String</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span>
-      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parse</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>remote: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='embexpr_end'>}</span><span class='tstring_content'>, base: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_context_base'>context_base</span> <span class='op'>||</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_base'>base</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+      <span class='comment'># log_debug(&quot;parse&quot;) {&quot;remote: #{context}, base: #{result.context_base || result.base}&quot;}
+</span>
       <span class='comment'># 3.2.1) Set context to the result of resolving value against the base IRI which is established as specified in section 5.1 Establishing a Base URI of [RFC3986]. Only the basic algorithm in section 5.2 of [RFC3986] is used; neither Syntax-Based Normalization nor Scheme-Based Normalization are performed. Characters additionally allowed in IRI references are treated in the same way that unreserved characters are treated in URI references, per section 6.5 of [RFC3987].
 </span>      <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_context_base'>context_base</span> <span class='op'>||</span> <span class='id identifier rubyid_base'>base</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_context_canon'>context_canon</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_canonicalize'>canonicalize</span>
@@ -6508,13 +6424,14 @@
 
       <span class='id identifier rubyid_cached_context'>cached_context</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span>
         <span class='comment'># If we have a cached context, merge it into the current context (result) and use as the new context
-</span>        <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parse</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=&gt; cached_context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-
+</span>        <span class='comment'># log_debug(&quot;parse&quot;) {&quot;=&gt; cached_context: #{context_canon.to_s.inspect}&quot;}
+</span>
         <span class='comment'># If this is a Proc, then replace the entry with the result of running the Proc
 </span>        <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:call</span><span class='rparen'>)</span>
-          <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parse</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>=&gt; (call)</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span>
-          <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span>
+          <span class='comment'># log_debug(&quot;parse&quot;) {&quot;=&gt; (call)&quot;}
+</span>          <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span>
         <span class='kw'>end</span>
+        <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_context_base'>context_base</span> <span class='op'>||=</span> <span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
         <span class='const'><span class='object_link'><a href="#PRELOADED-constant" title="JSON::LD::Context::PRELOADED (constant)">PRELOADED</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_context_canon'>context_canon</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span>
       <span class='kw'>else</span>
         <span class='comment'># Load context document, if it is a string
@@ -6695,7 +6612,6 @@
       <pre class="lines">
 
 
-822
 823
 824
 825
@@ -6706,10 +6622,11 @@
 830
 831
 832
-833</pre>
+833
+834</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 822</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 823</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_processingMode'>processingMode</span><span class='lparen'>(</span><span class='id identifier rubyid_expected'>expected</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_expected'>expected</span>
@@ -6802,7 +6719,6 @@
       <pre class="lines">
 
 
-846
 847
 848
 849
@@ -6813,10 +6729,11 @@
 854
 855
 856
-857</pre>
+857
+858</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 846</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 847</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_processingMode='>processingMode=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span> <span class='op'>==</span> <span class='float'>1.1</span>
@@ -6889,14 +6806,14 @@
       <pre class="lines">
 
 
-883
 884
 885
 886
-887</pre>
+887
+888</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 883</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 884</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_propagate='>propagate=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidContextEntry.html" title="JSON::LD::JsonLdError::InvalidContextEntry (class)">InvalidContextEntry</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@propagate may only be set in 1.1 mode</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_processingMode'>processingMode</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>json-ld-1.0</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -7161,7 +7078,6 @@
       <pre class="lines">
 
 
-899
 900
 901
 902
@@ -7198,25 +7114,24 @@
 933</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 899</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 900</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_serialize'>serialize</span><span class='lparen'>(</span><span class='label'>provided_context:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
-  <span class='comment'>#log_debug(&quot;serlialize: generate context&quot;)
-</span>  <span class='comment'>#log_debug(&quot;&quot;) {&quot;=&gt; context: #{inspect}&quot;}
+  <span class='comment'># log_debug(&quot;serlialize: generate context&quot;)
+</span>  <span class='comment'># log_debug(&quot;&quot;) {&quot;=&gt; context: #{inspect}&quot;}
 </span>  <span class='id identifier rubyid_use_context'>use_context</span> <span class='op'>=</span> <span class='kw'>case</span> <span class='id identifier rubyid_provided_context'>provided_context</span>
   <span class='kw'>when</span> <span class='const'>String</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span>
-    <span class='comment'>#log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
+    <span class='comment'># log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
 </span>    <span class='id identifier rubyid_provided_context'>provided_context</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
   <span class='kw'>when</span> <span class='const'>Hash</span>
-    <span class='comment'>#log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
+    <span class='comment'># log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
 </span>    <span class='comment'># If it has an @context entry use it, otherwise it is assumed to be the body of a context
 </span>    <span class='id identifier rubyid_provided_context'>provided_context</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_provided_context'>provided_context</span><span class='rparen'>)</span>
   <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span>
-    <span class='comment'>#log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
+    <span class='comment'># log_debug &quot;serlialize: reuse context: #{provided_context.inspect}&quot;
 </span>    <span class='id identifier rubyid_provided_context'>provided_context</span>
   <span class='kw'>when</span> <span class='const'>IO</span><span class='comma'>,</span> <span class='const'>StringIO</span>
-    <span class='id identifier rubyid_provided_context'>provided_context</span><span class='period'>.</span><span class='id identifier rubyid_rewind'>rewind</span>
-    <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_provided_context'>provided_context</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_load_context'>load_context</span><span class='lparen'>(</span><span class='id identifier rubyid_provided_context'>provided_context</span><span class='comma'>,</span> <span class='op'>**</span><span class='ivar'>@options</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
     <span class='id identifier rubyid_ctx'>ctx</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
     <span class='id identifier rubyid_ctx'>ctx</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@version</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='float'>1.1</span> <span class='kw'>if</span> <span class='ivar'>@processingMode</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>&#39;</span></span>
@@ -7322,7 +7237,7 @@
       <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1017</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_mapping'>set_mapping</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
-  <span class='comment'>#log_debug(&quot;&quot;) {&quot;map #{term.inspect} to #{value.inspect}&quot;}
+  <span class='comment'># log_debug(&quot;&quot;) {&quot;map #{term.inspect} to #{value.inspect}&quot;}
 </span>  <span class='id identifier rubyid_term'>term</span> <span class='op'>=</span> <span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
   <span class='id identifier rubyid_term_definitions'>term_definitions</span><span class='lbracket'>[</span><span class='id identifier rubyid_term'>term</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Context/TermDefinition.html" title="JSON::LD::Context::TermDefinition (class)">TermDefinition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='comma'>,</span> <span class='label'>id:</span> <span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>simple:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>prefix:</span> <span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_end_with?'>end_with?</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'><span class='object_link'><a href="#PREFIX_URI_ENDINGS-constant" title="JSON::LD::Context::PREFIX_URI_ENDINGS (constant)">PREFIX_URI_ENDINGS</a></span></span><span class='rparen'>)</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_term_definitions'>term_definitions</span><span class='lbracket'>[</span><span class='id identifier rubyid_term'>term</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_simple'>simple</span> <span class='op'>=</span> <span class='kw'>true</span>
@@ -7392,12 +7307,12 @@
       <pre class="lines">
 
 
-1709
-1710
-1711</pre>
+1667
+1668
+1669</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1709</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1667</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_term_valid?'>term_valid?</span><span class='lparen'>(</span><span class='id identifier rubyid_term'>term</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_term'>term</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -7466,31 +7381,31 @@
       <pre class="lines">
 
 
-1647
-1648
-1649
-1650
-1651
-1652
-1653
-1654
-1655
-1656
-1657
-1658
-1659
-1660
-1661
-1662
-1663
-1664
-1665
-1666
-1667
-1668</pre>
+1605
+1606
+1607
+1608
+1609
+1610
+1611
+1612
+1613
+1614
+1615
+1616
+1617
+1618
+1619
+1620
+1621
+1622
+1623
+1624
+1625
+1626</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1647</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/context.rb', line 1605</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_rb'>to_rb</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_aliases'>aliases</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_canon_base'>canon_base</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../RDF/URI.html" title="RDF::URI (class)">URI</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_context_base'>context_base</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_canonicalize'>canonicalize</span>
@@ -7524,9 +7439,9 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Aug  7 22:25:10 2022 by
+  Generated on Sat Apr 15 20:55:56 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-3.1.2).
+  0.9.34 (ruby-3.1.4).
 </div>
 
     </div>
