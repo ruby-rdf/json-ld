@@ -43,6 +43,8 @@ group :development, :test do
   gem 'psych',      platforms: [:mri, :rbx]
   gem 'benchmark-ips'
   gem 'rake'
+  gem 'rubocop'
+  gem 'rubocop-performance'
 end
 
 group :debug do
