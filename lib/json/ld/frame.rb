@@ -273,15 +273,14 @@ module JSON
       def cleanup_preserve(input)
         case input
         when Array
-          # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-          input.map { |o| cleanup_preserve(o) }
+          input.map! { |o| cleanup_preserve(o) }
         when Hash
           if input.key?('@preserve')
             # Replace with the content of `@preserve`
             cleanup_preserve(input['@preserve'].first)
           else
-            input.inject({}) do |memo, (k, v)|
-              memo.merge(k => cleanup_preserve(v))
+            input.transform_values do |v|
+              cleanup_preserve(v)
             end
           end
         else
@@ -298,10 +297,10 @@ module JSON
         case input
         when Array
           # If, after replacement, an array contains only the value null remove the value, leaving an empty array.
-          input.map { |o| cleanup_null(o) }.compact
+          input.map! { |o| cleanup_null(o) }.compact
         when Hash
-          input.inject({}) do |memo, (k, v)|
-            memo.merge(k => cleanup_null(v))
+          input.transform_values do |v|
+            cleanup_null(v)
           end
         when '@null'
           # If the value from the key-pair is @null, replace the value with null

@@ -255,9 +255,9 @@ module JSON
         when Array
           node.map { |n| rename_bnodes(n) }
         when Hash
-          node.inject({}) do |memo, (k, v)|
+          node.each_with_object({}) do |(k, v), memo|
             v = namer.get_name(v) if k == '@id' && v.is_a?(String) && blank_node?(v)
-            memo.merge(k => rename_bnodes(v))
+            memo[k] = rename_bnodes(v)
           end
         else
           node
