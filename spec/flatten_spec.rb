@@ -1,18 +1,19 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 
 describe JSON::LD::API do
-  let(:logger) {RDF::Spec.logger}
+  let(:logger) { RDF::Spec.logger }
 
   describe ".flatten" do
     {
-      "single object": {
+      'single object': {
         input: %({"@id": "http://example.com", "@type": "http://www.w3.org/2000/01/rdf-schema#Resource"}),
         output: %([
           {"@id": "http://example.com", "@type": ["http://www.w3.org/2000/01/rdf-schema#Resource"]}
         ])
       },
-      "embedded object": {
+      'embedded object': {
         input: %({
           "@context": {
             "foaf": "http://xmlns.com/foaf/0.1/"
@@ -36,7 +37,7 @@ describe JSON::LD::API do
           }
         ])
       },
-      "embedded anon": {
+      'embedded anon': {
         input: %({
           "@context": {
             "foaf": "http://xmlns.com/foaf/0.1/"
@@ -59,7 +60,7 @@ describe JSON::LD::API do
           }
         ])
       },
-      "reverse properties": {
+      'reverse properties': {
         input: %([
           {
             "@id": "http://example.com/people/markus",
@@ -103,8 +104,8 @@ describe JSON::LD::API do
           }
         ])
       },
-      "Simple named graph (Wikidata)": {
-        input: %q({
+      'Simple named graph (Wikidata)': {
+        input: '{
           "@context": {
             "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
             "ex": "http://example.org/",
@@ -133,8 +134,8 @@ describe JSON::LD::API do
               "ex:hasReference": "http://www.wikipedia.org/"
             }
           ]
-        }),
-        output: %q([{
+        }',
+        output: '[{
           "@id": "http://example.org/ParisFact1",
           "@type": ["http://www.w3.org/1999/02/22-rdf-syntax-ns#Graph"],
           "http://example.org/hasReference": [
@@ -154,10 +155,10 @@ describe JSON::LD::API do
               "@id": "http://example.org/location/Paris#this",
               "http://example.org/hasPopulation": [{"@value": 7000000}]
             }]
-          }]),
+          }]'
       },
-      "Test Manifest (shortened)": {
-        input: %q{
+      'Test Manifest (shortened)': {
+        input: '
           {
             "@id": "",
             "http://example/sequence": {"@list": [
@@ -168,8 +169,8 @@ describe JSON::LD::API do
               }
             ]}
           }
-        },
-        output: %q{
+        ',
+        output: '
           [{
             "@id": "",
             "http://example/sequence": [{"@list": [{"@id": "#t0001"}]}]
@@ -178,10 +179,10 @@ describe JSON::LD::API do
             "http://example/input": [{"@id": "error-expand-0001-in.jsonld"}],
             "http://example/name": [{"@value": "Keywords cannot be aliased to other keywords"}]
           }]
-        },
+        '
       },
-      "@reverse bnode issue (0045)": {
-        input: %q{
+      '@reverse bnode issue (0045)': {
+        input: '
           {
             "@context": {
               "foo": "http://example.org/foo",
@@ -190,8 +191,8 @@ describe JSON::LD::API do
             "foo": "Foo",
             "bar": [ "http://example.org/origin", "_:b0" ]
           }
-        },
-        output: %q{
+        ',
+        output: '
           [
             {
               "@id": "_:b0",
@@ -206,10 +207,10 @@ describe JSON::LD::API do
               "http://example.org/bar": [ { "@id": "_:b0" } ]
             }
           ]
-        },
+        ',
         remap_nodes: true
       },
-      "@list with embedded object": {
+      '@list with embedded object': {
         input: %([{
           "http://example.com/foo": [{
             "@list": [{
@@ -235,16 +236,16 @@ describe JSON::LD::API do
           }
         ])
       },
-      "coerced @list containing an deep list": {
+      'coerced @list containing an deep list': {
         input: %([{
           "http://example.com/foo": [{"@list": [{"@list": [{"@list": [{"@value": "baz"}]}]}]}]
         }]),
         output: %([{
           "@id": "_:b0",
           "http://example.com/foo": [{"@list": [{"@list": [{"@list": [{"@value": "baz"}]}]}]}]
-        }]),
+        }])
       },
-      "@list containing empty @list": {
+      '@list containing empty @list': {
         input: %({
           "http://example.com/foo": {"@list": [{"@list": []}]}
         }),
@@ -253,7 +254,7 @@ describe JSON::LD::API do
           "http://example.com/foo": [{"@list": [{"@list": []}]}]
         }])
       },
-      "coerced @list containing mixed list values": {
+      'coerced @list containing mixed list values': {
         input: %({
           "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
           "foo": [
@@ -279,14 +280,14 @@ describe JSON::LD::API do
             "http://example/Baz"
           ]
         }])
-      },
+      }
     }.each do |title, params|
-      it(title) {run_flatten(params)}
+      it(title) { run_flatten(params) }
     end
 
     context "@included" do
       {
-        "Basic Included array": {
+        'Basic Included array': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -305,7 +306,7 @@ describe JSON::LD::API do
             "http://example.org/prop": [{"@value": "value2"}]
           }])
         },
-        "Basic Included object": {
+        'Basic Included object': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -324,7 +325,7 @@ describe JSON::LD::API do
             "http://example.org/prop": [{"@value": "value2"}]
           }])
         },
-        "Multiple properties mapping to @included are folded together": {
+        'Multiple properties mapping to @included are folded together': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -343,7 +344,7 @@ describe JSON::LD::API do
             "http://example.org/prop": [{"@value": "value2"}]
           }])
         },
-        "Included containing @included": {
+        'Included containing @included': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -368,7 +369,7 @@ describe JSON::LD::API do
             "http://example.org/prop": [{"@value": "value3"}]
           }])
         },
-        "Property value with @included": {
+        'Property value with @included': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -394,7 +395,7 @@ describe JSON::LD::API do
             "@type": ["http://example.org/Bar"]
           }])
         },
-        "json.api example": {
+        'json.api example': {
           input: %({
             "@context": {
               "@version": 1.1,
@@ -525,16 +526,16 @@ describe JSON::LD::API do
             ],
             "http://example.org/vocab#related": [{"@id": "http://example.com/articles/1/author"}]
           }])
-        },
+        }
       }.each do |title, params|
-        it(title) {run_flatten(params)}
+        it(title) { run_flatten(params) }
       end
     end
   end
 
   context "html" do
     {
-      "Flattens embedded JSON-LD script element": {
+      'Flattens embedded JSON-LD script element': {
         input: %(
         <html>
           <head>
@@ -556,7 +557,7 @@ describe JSON::LD::API do
           "@graph": [{"@id": "_:b0","foo": ["bar"]}]
         })
       },
-      "Flattens first script element with extractAllScripts: false": {
+      'Flattens first script element with extractAllScripts: false': {
         input: %(
         <html>
           <head>
@@ -588,7 +589,7 @@ describe JSON::LD::API do
         }),
         extractAllScripts: false
       },
-      "Flattens targeted script element": {
+      'Flattens targeted script element': {
         input: %(
         <html>
           <head>
@@ -621,7 +622,7 @@ describe JSON::LD::API do
         }),
         base: "http://example.org/doc#second"
       },
-      "Flattens all script elements by default": {
+      'Flattens all script elements by default': {
         input: %(
         <html>
           <head>
@@ -656,11 +657,11 @@ describe JSON::LD::API do
             {"@id": "_:b2", "ex:bar": "bar"}
           ]
         })
-      },
+      }
     }.each do |title, params|
       it(title) do
         params[:input] = StringIO.new(params[:input])
-        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        params[:input].send(:define_singleton_method, :content_type) { "text/html" }
         run_flatten params.merge(validate: true)
       end
     end
@@ -668,7 +669,7 @@ describe JSON::LD::API do
 
   context "JSON-LD-star" do
     {
-      "node object with @annotation property is ignored without rdfstar option": {
+      'node object with @annotation property is ignored without rdfstar option': {
         input: %({
           "@id": "ex:bob",
           "ex:knows": {
@@ -683,7 +684,7 @@ describe JSON::LD::API do
           "ex:knows": [{"@id": "ex:fred"}]
         }])
       },
-      "value object with @annotation property is ignored without rdfstar option": {
+      'value object with @annotation property is ignored without rdfstar option': {
         input: %({
           "@id": "ex:bob",
           "ex:age": {
@@ -697,13 +698,13 @@ describe JSON::LD::API do
           "@id": "ex:bob",
           "ex:age": [{"@value": 23}]
         }])
-      },
+      }
     }.each do |title, params|
-      it(title) {run_flatten params}
+      it(title) { run_flatten params }
     end
 
     {
-      "node with embedded subject having no @id": {
+      'node with embedded subject having no @id': {
         input: %({
           "@id": {
             "ex:prop": "value"
@@ -717,7 +718,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded subject having IRI @id": {
+      'node with embedded subject having IRI @id': {
         input: %({
           "@id": {
             "@id": "ex:rei",
@@ -733,7 +734,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded subject having BNode @id": {
+      'node with embedded subject having BNode @id': {
         input: %({
           "@id": {
             "@id": "_:rei",
@@ -749,7 +750,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded subject having a type": {
+      'node with embedded subject having a type': {
         input: %({
           "@id": {
             "@id": "ex:rei",
@@ -765,7 +766,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded subject having an IRI value": {
+      'node with embedded subject having an IRI value': {
         input: %({
           "@id": {
             "@id": "ex:rei",
@@ -781,7 +782,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded subject having an BNode value": {
+      'node with embedded subject having an BNode value': {
         input: %({
           "@id": {
             "@id": "ex:rei",
@@ -797,7 +798,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with recursive embedded subject": {
+      'node with recursive embedded subject': {
         input: %({
           "@id": {
             "@id": {
@@ -819,7 +820,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with embedded object": {
+      'node with embedded object': {
         input: %({
           "@id": "ex:subj",
           "ex:value": {
@@ -839,7 +840,7 @@ describe JSON::LD::API do
           }]
         }])
       },
-      "node with embedded object having properties": {
+      'node with embedded object having properties': {
         input: %({
           "@id": "ex:subj",
           "ex:value": {
@@ -866,7 +867,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with recursive embedded object": {
+      'node with recursive embedded object': {
         input: %({
           "@id": "ex:subj",
           "ex:value": {
@@ -902,7 +903,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@value": "value2"}]
         }])
       },
-      "node with @annotation property on value object": {
+      'node with @annotation property on value object': {
         input: %({
           "@id": "ex:bob",
           "ex:age": {
@@ -921,7 +922,7 @@ describe JSON::LD::API do
           "ex:certainty": [{"@value": 0.8}]
         }])
       },
-      "node with @annotation property on node object": {
+      'node with @annotation property on node object': {
         input: %({
           "@id": "ex:bob",
           "ex:name": "Bob",
@@ -946,7 +947,7 @@ describe JSON::LD::API do
           "ex:certainty": [{"@value": 0.8}]
         }])
       },
-      "node with @annotation property multiple values": {
+      'node with @annotation property multiple values': {
         input: %({
           "@id": "ex:bob",
           "ex:name": "Bob",
@@ -976,7 +977,7 @@ describe JSON::LD::API do
           "ex:source": [{"@id": "http://example.org/"}]
         }])
       },
-      "node with @annotation property on embedded subject": {
+      'node with @annotation property on embedded subject': {
         input: %({
           "@id": {
             "@id": "ex:rei",
@@ -1004,7 +1005,7 @@ describe JSON::LD::API do
           "ex:certainty": [{"@value": 0.8}]
         }])
       },
-      "node with @annotation property on embedded object": {
+      'node with @annotation property on embedded object': {
         input: %({
           "@id": "ex:subj",
           "ex:value": {
@@ -1036,7 +1037,7 @@ describe JSON::LD::API do
           "ex:certainty": [{"@value": 0.8}]
         }])
       },
-      "embedded node used as subject in reverse relationship": {
+      'embedded node used as subject in reverse relationship': {
         input: %({
           "@context": {
             "rel": {"@reverse": "ex:rel"}
@@ -1057,7 +1058,7 @@ describe JSON::LD::API do
           }]
         }])
       },
-      "embedded node used as object in reverse relationship": {
+      'embedded node used as object in reverse relationship': {
         input: %({
           "@context": {
             "rel": {"@reverse": "ex:rel"}
@@ -1080,7 +1081,7 @@ describe JSON::LD::API do
           "ex:prop": [{"@id": "ex:value2"}]
         }])
       },
-      "node with @annotation property on node object with reverse relationship": {
+      'node with @annotation property on node object with reverse relationship': {
         input: %({
           "@context": {
             "knownBy": {"@reverse": "ex:knows"}
@@ -1108,7 +1109,7 @@ describe JSON::LD::API do
           "ex:certainty": [{"@value": 0.8}]
         }])
       },
-      "reverse relationship inside annotation": {
+      'reverse relationship inside annotation': {
         input: %({
           "@context": {
             "claims": {"@reverse": "ex:claims", "@type": "@id"}
@@ -1141,7 +1142,7 @@ describe JSON::LD::API do
           }]
         }])
       },
-      "embedded node with annotation on value object": {
+      'embedded node with annotation on value object': {
         input: %({
           "@context": {
             "@base": "http://example.org/",
@@ -1175,25 +1176,29 @@ describe JSON::LD::API do
         }])
       }
     }.each do |title, params|
-      it(title) {run_flatten params.merge(rdfstar: true)}
+      it(title) { run_flatten params.merge(rdfstar: true) }
     end
   end
 
   def run_flatten(params)
-    input, output, context = params[:input], params[:output], params[:context]
-    input = ::JSON.parse(input) if input.is_a?(String)
-    output = ::JSON.parse(output) if output.is_a?(String)
-    context = ::JSON.parse(context) if context.is_a?(String)
+    input = params[:input]
+    output = params[:output]
+    context = params[:context]
+    input = JSON.parse(input) if input.is_a?(String)
+    output = JSON.parse(output) if output.is_a?(String)
+    context = JSON.parse(context) if context.is_a?(String)
     params[:base] ||= nil
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.flatten(input, context, logger: logger, **params)}.to raise_error(params[:exception])
+      expect { JSON::LD::API.flatten(input, context, logger: logger, **params) }.to raise_error(params[:exception])
     else
       jld = nil
       if params[:write]
-        expect{jld = JSON::LD::API.flatten(input, context, logger: logger, **params)}.to write(params[:write]).to(:error)
+        expect do
+          jld = JSON::LD::API.flatten(input, context, logger: logger, **params)
+        end.to write(params[:write]).to(:error)
       else
-        expect{jld = JSON::LD::API.flatten(input, context, logger: logger, **params)}.not_to write.to(:error)
+        expect { jld = JSON::LD::API.flatten(input, context, logger: logger, **params) }.not_to write.to(:error)
       end
 
       jld = remap_bnodes(jld, output) if params[:remap_nodes]

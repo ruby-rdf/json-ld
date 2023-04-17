@@ -1,12 +1,13 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 
 describe JSON::LD::API do
-  let(:logger) {RDF::Spec.logger}
+  let(:logger) { RDF::Spec.logger }
 
   describe ".frame" do
     {
-      "exact @type match": {
+      'exact @type match': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": "ex:Type1"
@@ -30,7 +31,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "wildcard @type match": {
+      'wildcard @type match': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": {}
@@ -57,7 +58,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "match none @type match": {
+      'match none @type match': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": []
@@ -82,7 +83,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "multiple matches on @type": {
+      'multiple matches on @type': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": "ex:Type1"
@@ -114,7 +115,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "single @id match": {
+      'single @id match': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@id": "ex:Sub1"
@@ -138,7 +139,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "multiple @id match": {
+      'multiple @id match': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@id": ["ex:Sub1", "ex:Sub2"]
@@ -169,7 +170,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "wildcard and match none": {
+      'wildcard and match none': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:p": [],
@@ -196,7 +197,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "match on any property if @requireAll is false": {
+      'match on any property if @requireAll is false': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": false,
@@ -227,7 +228,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "match on defeaults if @requireAll is true and at least one property matches": {
+      'match on defeaults if @requireAll is true and at least one property matches': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": true,
@@ -271,7 +272,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "match with @requireAll with one default": {
+      'match with @requireAll with one default': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@requireAll": true,
@@ -372,7 +373,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "issue #40 - example": {
+      'issue #40 - example': {
         frame: %({
           "@context": {
             "@version": 1.1,
@@ -417,18 +418,18 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.1'
       },
-      "implicitly includes unframed properties (default @explicit false)": {
+      'implicitly includes unframed properties (default @explicit false)': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": "ex:Type1"
         }),
-        input: %q({
+        input: '{
           "@context": {"ex": "http://example.org/"},
           "@id": "ex:Sub1",
           "@type": "ex:Type1",
           "ex:prop1": "Property 1",
           "ex:prop2": {"@id": "ex:Obj1"}
-        }),
+        }',
         output: %({
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
@@ -439,19 +440,19 @@ describe JSON::LD::API do
           }]
         })
       },
-      "explicitly includes unframed properties @explicit false": {
+      'explicitly includes unframed properties @explicit false': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@explicit": false,
           "@type": "ex:Type1"
         }),
-        input: %q({
+        input: '{
           "@context": {"ex": "http://example.org/"},
           "@id": "ex:Sub1",
           "@type": "ex:Type1",
           "ex:prop1": "Property 1",
           "ex:prop2": {"@id": "ex:Obj1"}
-        }),
+        }',
         output: %({
           "@context": {"ex": "http://example.org/"},
           "@graph": [{
@@ -462,7 +463,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "explicitly excludes unframed properties (@explicit: true)": {
+      'explicitly excludes unframed properties (@explicit: true)': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@explicit": true,
@@ -483,7 +484,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "non-existent framed properties create null property": {
+      'non-existent framed properties create null property': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": "ex:Type1",
@@ -511,7 +512,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "non-existent framed properties create default property": {
+      'non-existent framed properties create default property': {
         frame: %({
           "@context": {
             "ex": "http://example.org/",
@@ -541,7 +542,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "default value for @type": {
+      'default value for @type': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "@type": {"@default": "ex:Foo"},
@@ -561,7 +562,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "mixed content": {
+      'mixed content': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:mixed": {"@embed": "@never"}
@@ -585,7 +586,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "no embedding (@embed: @never)": {
+      'no embedding (@embed: @never)': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:embed": {"@embed": "@never"}
@@ -606,7 +607,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "first embed (@embed: @once)": {
+      'first embed (@embed: @once)': {
         frame: %({
           "@context": {"ex": "http://www.example.com/#"},
           "@type": "ex:Thing",
@@ -632,7 +633,7 @@ describe JSON::LD::API do
         }),
         ordered: true
       },
-      "always embed (@embed: @always)": {
+      'always embed (@embed: @always)': {
         frame: %({
           "@context": {"ex": "http://www.example.com/#"},
           "@type": "ex:Thing",
@@ -657,7 +658,7 @@ describe JSON::LD::API do
           ]
         })
       },
-      "mixed list": {
+      'mixed list': {
         frame: %({
           "@context": {"ex": "http://example.org/"},
           "ex:mixedlist": {}
@@ -687,7 +688,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "framed list": {
+      'framed list': {
         frame: %({
           "@context": {
             "ex": "http://example.org/",
@@ -722,7 +723,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "presentation example": {
+      'presentation example': {
         frame: %({
           "@context": {
             "primaryTopic": {
@@ -769,7 +770,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "microdata manifest": {
+      'microdata manifest': {
         frame: %({
           "@context": {
             "xsd": "http://www.w3.org/2001/XMLSchema#",
@@ -792,7 +793,7 @@ describe JSON::LD::API do
             }
           }]
         }),
-        input: %q({
+        input: '{
           "@context": {
             "md": "http://www.w3.org/ns/md#",
             "mf": "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#",
@@ -817,7 +818,7 @@ describe JSON::LD::API do
             "mq:data": {"@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.html"},
             "mq:query": {"@id": "http://www.w3.org/TR/microdata-rdf/tests/0001.ttl"}
           }]
-        }),
+        }',
         output: %({
           "@context": {
             "xsd": "http://www.w3.org/2001/XMLSchema#",
@@ -848,7 +849,7 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.1'
       },
-      "library": {
+      library: {
         frame: %({
           "@context": {
             "dc": "http://purl.org/dc/elements/1.1/",
@@ -917,7 +918,7 @@ describe JSON::LD::API do
 
     describe "@reverse" do
       {
-        "embed matched frames with @reverse": {
+        'embed matched frames with @reverse': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "@type": "ex:Type1",
@@ -950,7 +951,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "embed matched frames with reversed property": {
+        'embed matched frames with reversed property': {
           frame: %({
             "@context": {
               "ex": "http://example.org/",
@@ -984,7 +985,7 @@ describe JSON::LD::API do
               }
             }]
           })
-        },
+        }
       }.each do |title, params|
         it title do
           do_frame(params)
@@ -994,7 +995,7 @@ describe JSON::LD::API do
 
     context "omitGraph option" do
       {
-        "Defaults to false in 1.0": {
+        'Defaults to false in 1.0': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1015,7 +1016,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.0"
         },
-        "Set with option in 1.0":  {
+        'Set with option in 1.0': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1035,7 +1036,7 @@ describe JSON::LD::API do
           processingMode: "json-ld-1.0",
           omitGraph: true
         },
-        "Defaults to true in 1.1": {
+        'Defaults to true in 1.1': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1054,7 +1055,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
-        "Set with option in 1.1":  {
+        'Set with option in 1.1': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1075,15 +1076,15 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1",
           omitGraph: false
-        },
+        }
       }.each do |title, params|
-        it(title) {do_frame(params.merge(pruneBlankNodeIdentifiers: true))}
+        it(title) { do_frame(params.merge(pruneBlankNodeIdentifiers: true)) }
       end
     end
 
     context "@included" do
       {
-        "Basic Included array": {
+        'Basic Included array': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1120,7 +1121,7 @@ describe JSON::LD::API do
             "prop": "value"
           })
         },
-        "Basic Included object": {
+        'Basic Included object': {
           input: %([{
             "http://example.org/prop": [{"@value": "value"}],
             "http://example.org/foo": [{"@value": "bar"}]
@@ -1155,7 +1156,7 @@ describe JSON::LD::API do
             }
           })
         },
-        "json.api example": {
+        'json.api example': {
           input: %([{
             "@id": "http://example.org/base/1",
             "@type": ["http://example.org/vocab#articles"],
@@ -1272,16 +1273,16 @@ describe JSON::LD::API do
               "author": "9",
               "self": "http://example.com/comments/12"
             }]
-          }),
-        },
+          })
+        }
       }.each do |title, params|
-        it(title) {do_frame(params.merge(processingMode: 'json-ld-1.1'))}
+        it(title) { do_frame(params.merge(processingMode: 'json-ld-1.1')) }
       end
     end
 
     describe "node pattern" do
       {
-        "matches a deep node pattern": {
+        'matches a deep node pattern': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {
@@ -1320,7 +1321,7 @@ describe JSON::LD::API do
               }
             }]
           })
-        },
+        }
       }.each do |title, params|
         it title do
           do_frame(params)
@@ -1330,7 +1331,7 @@ describe JSON::LD::API do
 
     describe "value pattern" do
       {
-        "matches exact values": {
+        'matches exact values': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": "P",
@@ -1354,7 +1355,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches wildcard @value": {
+        'matches wildcard @value': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {"@value": {}},
@@ -1378,7 +1379,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches wildcard @type": {
+        'matches wildcard @type': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:q": {"@value": "Q", "@type": {}}
@@ -1396,7 +1397,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches wildcard @language": {
+        'matches wildcard @language': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:r": {"@value": "R", "@language": {}}
@@ -1414,7 +1415,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "match none @type": {
+        'match none @type': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {"@value": {}, "@type": []},
@@ -1438,7 +1439,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "match none @language": {
+        'match none @language': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {"@value": {}, "@language": []},
@@ -1462,7 +1463,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches some @value": {
+        'matches some @value': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {"@value": ["P", "Q", "R"]},
@@ -1486,7 +1487,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches some @type": {
+        'matches some @type': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:q": {"@value": "Q", "@type": ["ex:q", "ex:Q"]}
@@ -1504,7 +1505,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "matches some @language": {
+        'matches some @language': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:r": {"@value": "R", "@language": ["p", "q", "r"]}
@@ -1522,7 +1523,7 @@ describe JSON::LD::API do
             }]
           })
         },
-        "excludes non-matched values": {
+        'excludes non-matched values': {
           frame: %({
             "@context": {"ex": "http://example.org/"},
             "ex:p": {"@value": {}},
@@ -1545,7 +1546,7 @@ describe JSON::LD::API do
               "ex:r": {"@value": "R", "@language": "R"}
             }]
           })
-        },
+        }
       }.each do |title, params|
         it title do
           do_frame(params)
@@ -1555,7 +1556,7 @@ describe JSON::LD::API do
 
     describe "named graphs" do
       {
-        "Merge graphs if no outer @graph is used": {
+        'Merge graphs if no outer @graph is used': {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class"
@@ -1579,7 +1580,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "Frame default graph if outer @graph is used": {
+        'Frame default graph if outer @graph is used': {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class",
@@ -1611,7 +1612,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "Merge one graph and preserve another": {
+        'Merge one graph and preserve another': {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class",
@@ -1656,7 +1657,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "Merge one graph and deep preserve another": {
+        'Merge one graph and deep preserve another': {
           frame: %({
             "@context": {"@vocab": "urn:"},
             "@type": "Class",
@@ -1705,7 +1706,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "library": {
+        library: {
           frame: %({
             "@context": {"@vocab": "http://example.org/"},
             "@type": "Library",
@@ -1758,7 +1759,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "named graph with @embed: @never": {
+        'named graph with @embed: @never': {
           input: %({
             "@id": "ex:cred",
             "ex:subject": {
@@ -1815,7 +1816,7 @@ describe JSON::LD::API do
             }
           }),
           processingMode: 'json-ld-1.1'
-        },
+        }
       }.each do |title, params|
         it title do
           do_frame(params)
@@ -1826,7 +1827,7 @@ describe JSON::LD::API do
 
   describe "prune blank nodes" do
     {
-      "preserves single-use bnode identifiers if @version 1.0": {
+      'preserves single-use bnode identifiers if @version 1.0': {
         frame: %({
           "@context": {
             "dc": "http://purl.org/dc/terms/",
@@ -1877,7 +1878,7 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.0'
       },
-      "preserves single-use bnode identifiers if pruneBlankNodeIdentifiers=false": {
+      'preserves single-use bnode identifiers if pruneBlankNodeIdentifiers=false': {
         frame: %({
           "@context": {
             "dc": "http://purl.org/dc/terms/",
@@ -1928,7 +1929,7 @@ describe JSON::LD::API do
         }),
         pruneBlankNodeIdentiers: false
       },
-      "framing with @version: 1.1 prunes identifiers": {
+      'framing with @version: 1.1 prunes identifiers': {
         frame: %({
           "@context": {
             "@version": 1.1,
@@ -1985,7 +1986,7 @@ describe JSON::LD::API do
 
   context "problem cases" do
     {
-      "pr #20": {
+      'pr #20': {
         frame: %({}),
         input: %([
           {
@@ -2019,7 +2020,7 @@ describe JSON::LD::API do
           ]
         })
       },
-      "issue #28": {
+      'issue #28': {
         frame: %({
           "@context": {
             "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -2074,7 +2075,7 @@ describe JSON::LD::API do
           ]
         })
       },
-      "PR #663 - Multiple named graphs": {
+      'PR #663 - Multiple named graphs': {
         frame: %({
           "@context": {
             "@vocab": "http://example.com/",
@@ -2184,8 +2185,8 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.1'
       },
-      "w3c/json-ld-framing#5": {
-        frame: %({ 
+      'w3c/json-ld-framing#5': {
+        frame: %({
           "@context" : {
             "@vocab" : "http://purl.bdrc.io/ontology/core/",
             "taxSubclassOf" : {
@@ -2257,7 +2258,7 @@ describe JSON::LD::API do
         }),
         processingMode: 'json-ld-1.1'
       },
-      "issue json-ld-framing#30": {
+      'issue json-ld-framing#30': {
         input: %({
           "@context": {"eg": "https://example.org/ns/"},
           "@id": "https://example.org/what",
@@ -2277,7 +2278,7 @@ describe JSON::LD::API do
           }]
         })
       },
-      "issue json-ld-framing#64": {
+      'issue json-ld-framing#64': {
         input: %({
           "@context": {
             "@version": 1.1,
@@ -2301,7 +2302,7 @@ describe JSON::LD::API do
             "Production": {
               "@context": {
                 "part": {
-                  "@type": "@id", 
+                  "@type": "@id",
                   "@container": "@set"
                 }
               }
@@ -2316,7 +2317,7 @@ describe JSON::LD::API do
             "Production": {
               "@context": {
                 "part": {
-                  "@type": "@id", 
+                  "@type": "@id",
                   "@container": "@set"
                 }
               }
@@ -2335,7 +2336,7 @@ describe JSON::LD::API do
         }),
         processingMode: "json-ld-1.1"
       },
-      "issue json-ld-framing#27": {
+      'issue json-ld-framing#27': {
         input: %({
           "@id": "ex:cred",
           "ex:subject": {
@@ -2395,7 +2396,7 @@ describe JSON::LD::API do
         }),
         processingMode: "json-ld-1.1"
       },
-      "missing types": {
+      'missing types': {
         input: %({
             "@context": {
               "ex": "http://example.com#",
@@ -2463,7 +2464,7 @@ describe JSON::LD::API do
         }),
         processingMode: "json-ld-1.1"
       },
-      "issue #142": {
+      'issue #142': {
         input: %({
           "@context":{
             "ex":"http://example.org/vocab#",
@@ -2504,7 +2505,7 @@ describe JSON::LD::API do
             "publisher": "JANE"
           }
         }),
-        processingMode: "json-ld-1.1"  
+        processingMode: "json-ld-1.1"
       }
     }.each do |title, params|
       it title do
@@ -2514,28 +2515,28 @@ describe JSON::LD::API do
   end
 
   def do_frame(params)
-    begin
-      input, frame, output = params[:input], params[:frame], params[:output]
-      params = {processingMode: 'json-ld-1.0'}.merge(params)
-      input = ::JSON.parse(input) if input.is_a?(String)
-      frame = ::JSON.parse(frame) if frame.is_a?(String)
-      output = ::JSON.parse(output) if output.is_a?(String)
-      jld = nil
-      if params[:write]
-        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, **params)}.to write(params[:write]).to(:error)
-      else
-        expect{jld = JSON::LD::API.frame(input, frame, logger: logger, **params)}.not_to write.to(:error)
-      end
-      expect(jld).to produce_jsonld(output, logger)
-
-      # Compare expanded jld/output too to make sure list values remain ordered
-      exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
-      exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1')
-      expect(exp_jld).to produce_jsonld(exp_output, logger)
-    rescue JSON::LD::JsonLdError => e
-      fail("#{e.class}: #{e.message}\n" +
-        "#{logger}\n" +
-        "Backtrace:\n#{e.backtrace.join("\n")}")
+    input = params[:input]
+    frame = params[:frame]
+    output = params[:output]
+    params = { processingMode: 'json-ld-1.0' }.merge(params)
+    input = JSON.parse(input) if input.is_a?(String)
+    frame = JSON.parse(frame) if frame.is_a?(String)
+    output = JSON.parse(output) if output.is_a?(String)
+    jld = nil
+    if params[:write]
+      expect { jld = JSON::LD::API.frame(input, frame, logger: logger, **params) }.to write(params[:write]).to(:error)
+    else
+      expect { jld = JSON::LD::API.frame(input, frame, logger: logger, **params) }.not_to write.to(:error)
     end
+    expect(jld).to produce_jsonld(output, logger)
+
+    # Compare expanded jld/output too to make sure list values remain ordered
+    exp_jld = JSON::LD::API.expand(jld, processingMode: 'json-ld-1.1')
+    exp_output = JSON::LD::API.expand(output, processingMode: 'json-ld-1.1')
+    expect(exp_jld).to produce_jsonld(exp_output, logger)
+  rescue JSON::LD::JsonLdError => e
+    raise("#{e.class}: #{e.message}\n" \
+          "#{logger}\n" \
+          "Backtrace:\n#{e.backtrace.join("\n")}")
   end
 end

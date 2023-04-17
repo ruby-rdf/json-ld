@@ -1,5 +1,7 @@
-$:.unshift(File.join("../../lib", __FILE__))
-$:.unshift File.dirname(__FILE__)
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.join("../../lib", __FILE__))
+$LOAD_PATH.unshift File.dirname(__FILE__)
 
 require "bundler/setup"
 require 'rspec'
@@ -17,15 +19,15 @@ begin
   require 'simplecov'
   require 'simplecov-lcov'
   SimpleCov::Formatter::LcovFormatter.config do |config|
-    #Coveralls is coverage by default/lcov. Send info results
+    # Coveralls is coverage by default/lcov. Send info results
     config.report_with_single_file = true
     config.single_report_path = 'coverage/lcov.info'
   end
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-    SimpleCov::Formatter::HTMLFormatter,
-    SimpleCov::Formatter::LcovFormatter
-  ])
+                                                                   SimpleCov::Formatter::HTMLFormatter,
+                                                                   SimpleCov::Formatter::LcovFormatter
+                                                                 ])
   SimpleCov.start do
     add_filter "/spec/"
   end
@@ -50,7 +52,7 @@ URI_CACHE = File.expand_path(File.join(File.dirname(__FILE__), "uri-cache"))
 Dir.mkdir(URI_CACHE) unless File.directory?(URI_CACHE)
 # Cache client requests
 
-::RSpec.configure do |c|
+RSpec.configure do |c|
   c.filter_run focus: true
   c.run_all_when_everything_filtered = true
   c.include(RDF::Spec::Matchers)
@@ -67,9 +69,9 @@ def detect_format(stream)
     string = stream.to_s
   end
   case string
-  when /<html/i           then RDF::RDFa::Reader
-  when /\{\s*\"@\"/i      then JSON::LD::Reader
-  else                         RDF::Turtle::Reader
+  when /<html/i then RDF::RDFa::Reader
+  when /\{\s*"@"/i then JSON::LD::Reader
+  else RDF::Turtle::Reader
   end
 end
 
@@ -79,8 +81,8 @@ def remap_bnodes(actual, expected)
   # Replace the blank nodes in action with the mapping from bijection.
   ds_actual = RDF::Repository.new << JSON::LD::API.toRdf(actual, rdfstar: true, rename_bnodes: false)
   ds_expected = RDF::Repository.new << JSON::LD::API.toRdf(expected, rdfstar: true, rename_bnodes: false)
-  if bijection = ds_actual.bijection_to(ds_expected)
-    bijection = bijection.inject({}) {|memo, (k, v)| memo.merge(k.to_s => v.to_s)}
+  if (bijection = ds_actual.bijection_to(ds_expected))
+    bijection = bijection.inject({}) { |memo, (k, v)| memo.merge(k.to_s => v.to_s) }
 
     # Recursively replace blank nodes in actual with the bijection
     replace_nodes(actual, bijection)
@@ -92,7 +94,7 @@ end
 def replace_nodes(object, bijection)
   case object
   when Array
-    object.map {|o| replace_nodes(o, bijection)}
+    object.map { |o| replace_nodes(o, bijection) }
   when Hash
     object.inject({}) do |memo, (k, v)|
       memo.merge(bijection.fetch(k, k) => replace_nodes(v, bijection))
@@ -103,7 +105,6 @@ def replace_nodes(object, bijection)
     object
   end
 end
-
 
 LIBRARY_INPUT = JSON.parse(%([
   {

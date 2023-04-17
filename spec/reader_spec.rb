@@ -1,32 +1,33 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 require 'rdf/spec/reader'
 
 describe JSON::LD::Reader do
-  let!(:doap) {File.expand_path("../../etc/doap.jsonld", __FILE__)}
-  let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
-  let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
-  let(:logger) {RDF::Spec.logger}
+  let!(:doap) { File.expand_path('../etc/doap.jsonld', __dir__) }
+  let!(:doap_nt) { File.expand_path('../etc/doap.nt', __dir__) }
+  let!(:doap_count) { File.open(doap_nt).each_line.to_a.length }
+  let(:logger) { RDF::Spec.logger }
 
-  after(:each) {|example| puts logger.to_s if example.exception}
+  after { |example| puts logger if example.exception }
 
   it_behaves_like 'an RDF::Reader' do
-    let(:reader_input) {File.read(doap)}
-    let(:reader) {JSON::LD::Reader.new(reader_input)}
-    let(:reader_count) {doap_count}
+    let(:reader_input) { File.read(doap) }
+    let(:reader) { JSON::LD::Reader.new(reader_input) }
+    let(:reader_count) { doap_count }
   end
 
   describe ".for" do
-    formats = [
+    [
       :jsonld,
       "etc/doap.jsonld",
-      {file_name:      'etc/doap.jsonld'},
-      {file_extension: 'jsonld'},
-      {content_type:   'application/ld+json'},
-      {content_type:   'application/x-ld+json'},
+      { file_name:      'etc/doap.jsonld' },
+      { file_extension: 'jsonld' },
+      { content_type:   'application/ld+json' },
+      { content_type:   'application/x-ld+json' }
     ].each do |arg|
       it "discovers with #{arg.inspect}" do
-        expect(RDF::Reader.for(arg)).to eq JSON::LD::Reader
+        expect(RDF::Reader.for(arg)).to eq described_class
       end
     end
   end
@@ -41,14 +42,14 @@ describe JSON::LD::Reader do
 
   context :interface do
     {
-      plain: %q({
+      plain: '{
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
         "@id": "_:bnode1",
         "@type": "foaf:Person",
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
-      }),
-      leading_comment: %q(
+      }',
+      leading_comment: '
       // A comment before content
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -56,8 +57,8 @@ describe JSON::LD::Reader do
         "@type": "foaf:Person",
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
-      }),
-      script: %q(<script type="application/ld+json">
+      }',
+      script: '<script type="application/ld+json">
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
         "@id": "_:bnode1",
@@ -65,8 +66,8 @@ describe JSON::LD::Reader do
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
       }
-      </script>),
-      script_comments: %q(<script type="application/ld+json">
+      </script>',
+      script_comments: '<script type="application/ld+json">
       // A comment before content
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -75,10 +76,10 @@ describe JSON::LD::Reader do
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
        }
-      </script>),
+      </script>'
     }.each do |variant, src|
       context variant do
-        subject {src}
+        subject { src }
 
         describe "#initialize" do
           it "yields reader given string" do
@@ -127,7 +128,8 @@ describe JSON::LD::Reader do
 
   describe "Base IRI resolution" do
     # From https://gist.github.com/RubenVerborgh/39f0e8d63e33e435371a
-    let(:json) {%q{[
+    let(:json) do
+      '[
       {
         "@context": {"@base": "http://a/bb/ccc/d;p?q", "urn:ex:p": {"@type": "@id"}},
         "@graph": [
@@ -519,8 +521,10 @@ describe JSON::LD::Reader do
           {"@id": "urn:ex:s306", "urn:ex:p": "../xyz"}
         ]
       }
-    ]}}
-    let(:nt) {%q{
+    ]'
+    end
+    let(:nt) do
+      '
       # RFC3986 normal examples
 
       <urn:ex:s001> <urn:ex:p> <gg:h>.
@@ -873,10 +877,12 @@ describe JSON::LD::Reader do
       <urn:ex:s304> <urn:ex:p> <http://abc/d:f/xyz>.
       <urn:ex:s305> <urn:ex:p> <http://abc/d:f/xyz>.
       <urn:ex:s306> <urn:ex:p> <http://abc/xyz>.
-    }}
+    '
+    end
+
     it "produces equivalent triples" do
       nt_str = RDF::NTriples::Reader.new(nt).dump(:ntriples)
-      json_str = JSON::LD::Reader.new(json).dump(:ntriples)
+      json_str = described_class.new(json).dump(:ntriples)
       expect(json_str).to eql(nt_str)
     end
   end

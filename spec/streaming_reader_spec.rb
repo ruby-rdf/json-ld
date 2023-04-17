@@ -1,39 +1,40 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 require 'rdf/spec/reader'
 
-describe JSON::LD::Reader do
-  let!(:doap) {File.expand_path("../../etc/doap.jsonld", __FILE__)}
-  let!(:doap_nt) {File.expand_path("../../etc/doap.nt", __FILE__)}
-  let!(:doap_count) {File.open(doap_nt).each_line.to_a.length}
-  let(:logger) {RDF::Spec.logger}
+describe JSON::LD::StreamingReader do
+  let!(:doap) { File.expand_path('../etc/doap.jsonld', __dir__) }
+  let!(:doap_nt) { File.expand_path('../etc/doap.nt', __dir__) }
+  let!(:doap_count) { File.open(doap_nt).each_line.to_a.length }
+  let(:logger) { RDF::Spec.logger }
 
-  after(:each) {|example| puts logger.to_s if example.exception}
+  after { |example| puts logger if example.exception }
 
   it_behaves_like 'an RDF::Reader' do
-    let(:reader_input) {File.read(doap)}
-    let(:reader) {JSON::LD::Reader.new(reader_input, stream: true)}
-    let(:reader_count) {doap_count}
+    let(:reader_input) { File.read(doap) }
+    let(:reader) { JSON::LD::Reader.new(reader_input, stream: true) }
+    let(:reader_count) { doap_count }
   end
 
   context "when validating", pending: ("JRuby support for jsonlint" if RUBY_ENGINE == "jruby") do
     it "detects invalid JSON" do
       expect do |b|
-        described_class.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true, logger: false).each_statement(&b)
+        JSON::LD::Reader.new(StringIO.new(%({"a": "b", "a": "c"})), validate: true, logger: false).each_statement(&b)
       end.to raise_error(RDF::ReaderError)
     end
   end
 
   context :interface do
     {
-      plain: %q({
+      plain: '{
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
         "@type": "foaf:Person",
         "@id": "_:bnode1",
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
-      }),
-      leading_comment: %q(
+      }',
+      leading_comment: '
       // A comment before content
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -41,8 +42,8 @@ describe JSON::LD::Reader do
         "@id": "_:bnode1",
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
-      }),
-      script: %q(<script type="application/ld+json">
+      }',
+      script: '<script type="application/ld+json">
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
         "@type": "foaf:Person",
@@ -50,8 +51,8 @@ describe JSON::LD::Reader do
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
       }
-      </script>),
-      script_comments: %q(<script type="application/ld+json">
+      </script>',
+      script_comments: '<script type="application/ld+json">
       // A comment before content
       {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
@@ -60,10 +61,10 @@ describe JSON::LD::Reader do
         "foaf:homepage": "http://example.com/bob/",
         "foaf:name": "Bob"
        }
-      </script>),
+      </script>'
     }.each do |variant, src|
       context variant do
-        subject {src}
+        subject { src }
 
         describe "#initialize" do
           it "yields reader given string" do
@@ -112,7 +113,7 @@ describe JSON::LD::Reader do
 
   context "Selected toRdf tests" do
     {
-      "e004": {
+      e004: {
         input: %({
           "@context": {
             "mylist1": {"@id": "http://example.com/mylist1", "@container": "@list"}
@@ -128,7 +129,7 @@ describe JSON::LD::Reader do
         <http://example.org/id> <http://example.org/list2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
         )
       },
-      "e015": {
+      e015: {
         input: %({
           "@context": {
             "myset2": {"@id": "http://example.com/myset2", "@container": "@set" }
@@ -139,7 +140,7 @@ describe JSON::LD::Reader do
         expect: %(
         )
       },
-      "in06": {
+      in06: {
         input: %({
           "@context": {
             "@version": 1.1,
@@ -175,60 +176,71 @@ describe JSON::LD::Reader do
     end
   end
 
-  describe "test suite" do
-    require_relative 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::STREAM_SUITE}stream-toRdf-manifest.jsonld")
-    describe m.name do
-      m.entries.each do |t|
-        specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-          pending "Generalized RDF" if t.options[:produceGeneralizedRdf]
-          pending "@nest defining @id" if %w(#tin06).include?(t.property('@id'))
-          pending "double @reverse" if %w(#te043).include?(t.property('@id'))
-          pending "graph map containing named graph" if %w(#te084 #te087 #te098 #te101 #te105 #te106).include?(t.property('@id'))
-          pending "named graphs" if %w(#t0029 #te021).include?(t.property('@id'))
+  unless ENV['CI']
+    describe "test suite" do
+      require_relative 'suite_helper'
+      m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::STREAM_SUITE}stream-toRdf-manifest.jsonld")
+      describe m.name do
+        m.entries.each do |t|
+          specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
+            pending "Generalized RDF" if t.options[:produceGeneralizedRdf]
+            pending "@nest defining @id" if %w[#tin06].include?(t.property('@id'))
+            pending "double @reverse" if %w[#te043].include?(t.property('@id'))
+            pending "graph map containing named graph" if %w[#te084 #te087 #te098 #te101 #te105
+                                                             #te106].include?(t.property('@id'))
+            pending "named graphs" if %w[#t0029 #te021].include?(t.property('@id'))
 
-          if %w(#t0118).include?(t.property('@id'))
-            expect {t.run self}.to write(/Statement .* is invalid/).to(:error)
-          elsif %w(#twf07).include?(t.property('@id'))
-            expect {t.run self}.to write(/skipping graph statement within invalid graph name/).to(:error)
-          elsif %w(#te075).include?(t.property('@id'))
-            expect {t.run self}.to write(/is invalid/).to(:error)
-          elsif %w(#te005 #tpr34 #tpr35 #tpr36 #tpr37 #tpr38 #tpr39 #te119 #te120).include?(t.property('@id'))
-            expect {t.run self}.to write("beginning with '@' are reserved for future use").to(:error)
-          elsif %w(#te068).include?(t.property('@id'))
-            expect {t.run self}.to write("[DEPRECATION]").to(:error)
-          elsif %w(#twf05).include?(t.property('@id'))
-            expect {t.run self}.to write("@language must be valid BCP47").to(:error)
-          else
-            expect {t.run self}.not_to write.to(:error)
+            if %w[#t0118].include?(t.property('@id'))
+              expect { t.run self }.to write(/Statement .* is invalid/).to(:error)
+            elsif %w[#twf07].include?(t.property('@id'))
+              expect { t.run self }.to write(/skipping graph statement within invalid graph name/).to(:error)
+            elsif %w[#te075].include?(t.property('@id'))
+              expect { t.run self }.to write(/is invalid/).to(:error)
+            elsif %w[#te005 #tpr34 #tpr35 #tpr36 #tpr37 #tpr38 #tpr39 #te119 #te120].include?(t.property('@id'))
+              expect { t.run self }.to write("beginning with '@' are reserved for future use").to(:error)
+            elsif %w[#te068].include?(t.property('@id'))
+              expect { t.run self }.to write("[DEPRECATION]").to(:error)
+            elsif %w[#twf05].include?(t.property('@id'))
+              expect { t.run self }.to write("@language must be valid BCP47").to(:error)
+            else
+              expect { t.run self }.not_to write.to(:error)
+            end
           end
         end
       end
     end
-  end unless ENV['CI']
+  end
 
   def run_to_rdf(params)
     input = params[:input]
     logger.info("input: #{input}")
     output = RDF::Repository.new
     if params[:expect]
-      RDF::NQuads::Reader.new(params[:expect], validate: false) {|r| output << r}
+      RDF::NQuads::Reader.new(params[:expect], validate: false) { |r| output << r }
       logger.info("expect (quads): #{output.dump(:nquads, validate: false)}")
     else
       logger.info("expect: #{Regexp.new params[:exception]}")
     end
-    
+
     graph = params[:graph] || RDF::Repository.new
     pending params.fetch(:pending, "test implementation") if !input || params[:pending]
     if params[:exception]
       expect do |b|
         JSON::LD::Reader.new(input, stream: true, validate: true, logger: false, **params).each_statement(&b)
-      end.to raise_error {|er| expect(er.message).to include params[:exception]}
+      end.to raise_error { |er| expect(er.message).to include params[:exception] }
     else
       if params[:write]
-        expect{JSON::LD::Reader.new(input, stream: true, logger: logger, **params) {|st| graph << st}}.to write(params[:write]).to(:error)
+        expect do
+          JSON::LD::Reader.new(input, stream: true, logger: logger, **params) do |st|
+            graph << st
+          end
+        end.to write(params[:write]).to(:error)
       else
-        expect{JSON::LD::Reader.new(input, stream: true, logger: logger, **params) {|st| graph << st}}.not_to write.to(:error)
+        expect do
+          JSON::LD::Reader.new(input, stream: true, logger: logger, **params) do |st|
+            graph << st
+          end
+        end.not_to write.to(:error)
       end
       logger.info("results (quads): #{graph.dump(:nquads, validate: false)}")
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)

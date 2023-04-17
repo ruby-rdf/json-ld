@@ -45,6 +45,7 @@ group :development, :test do
   gem 'rake'
   gem 'rubocop'
   gem 'rubocop-performance'
+  gem 'rubocop-rspec'
   gem 'simplecov', '~> 0.21', platforms: :mri
   gem 'simplecov-lcov', '~> 0.8', platforms: :mri
 end
