@@ -57,7 +57,7 @@ module JSON
             extendedRepresentation)
 
           # If predicate is rdf:datatype, note subject in compound literal subjects map
-          if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF.to_uri + 'direction'
+          if @options[:rdfDirection] == 'compound-literal' && statement.predicate == RDF_DIRECTION
             compound_literal_subjects[name][subject] ||= true
           end
 
@@ -120,14 +120,14 @@ module JSON
 
               v.delete('@id')
               v['@value'] = cl_node[RDF.value.to_s].first['@value']
-              if cl_node[RDF.to_uri.to_s + 'language']
-                lang = cl_node[RDF.to_uri.to_s + 'language'].first['@value']
+              if (langs = cl_node[RDF_LANGUAGE.to_s])
+                lang = langs.first['@value']
                 unless /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.match?(lang)
                   warn "i18n datatype language must be valid BCP47: #{lang.inspect}"
                 end
                 v['@language'] = lang
               end
-              v['@direction'] = cl_node[RDF.to_uri.to_s + 'direction'].first['@value']
+              v['@direction'] = cl_node[RDF_DIRECTION.to_s].first['@value']
             end
           end
 
@@ -209,7 +209,7 @@ module JSON
           rdfDirection = @options[:rdfDirection]
           res = {}
 
-          if resource.datatype == RDF::URI(RDF.to_uri + "JSON") && @context.processingMode('json-ld-1.1')
+          if resource.datatype == RDF_JSON && @context.processingMode('json-ld-1.1')
             res['@type'] = '@json'
             res['@value'] = begin
               ::JSON.parse(resource.object)

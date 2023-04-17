@@ -60,7 +60,7 @@ module JSON
 
           pd << if statement.object.resource?
             { '@id' => statement.object.to_s }
-          elsif statement.object.datatype == RDF::URI(RDF.to_uri + "JSON")
+          elsif statement.object.datatype == RDF_JSON
             { "@value" => MultiJson.load(statement.object.to_s), "@type" => "@json" }
           else
             lit = { "@value" => statement.object.to_s }
