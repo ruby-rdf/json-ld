@@ -110,6 +110,11 @@ module JSON
 
     MAX_CONTEXTS_LOADED = 50
 
+    # URI Constants
+    RDF_JSON = RDF::URI("#{RDF.to_uri}JSON")
+    RDF_DIRECTION = RDF::URI("#{RDF.to_uri}direction")
+    RDF_LANGUAGE = RDF::URI("#{RDF.to_uri}language")
+
     class JsonLdError < StandardError
       def to_s
         "#{self.class.instance_variable_get :@code}: #{super}"

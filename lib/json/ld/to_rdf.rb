@@ -24,7 +24,7 @@ module JSON
           value = item.fetch('@value')
           datatype = item.fetch('@type', nil)
 
-          datatype = RDF::URI(RDF.to_uri + "JSON") if datatype == '@json'
+          datatype = RDF_JSON if datatype == '@json'
 
           case value
           when RDF::Value
@@ -35,7 +35,7 @@ module JSON
             datatype ||= RDF::XSD.boolean.to_s
           when Numeric
             # Otherwise, if value is a number, then set value to its canonical lexical form as defined in the section Data Round Tripping. If datatype is null, set it to either xsd:integer or xsd:double, depending on if the value contains a fractional and/or an exponential component.
-            value = if datatype == RDF::URI(RDF.to_uri + "JSON")
+            value = if datatype == RDF_JSON
               value.to_json_c14n
             else
               # Don't serialize as double if there are no fractional bits
@@ -62,15 +62,15 @@ module JSON
               when 'compound-literal'
                 cl = RDF::Node.new
                 yield RDF::Statement(cl, RDF.value, item['@value'].to_s)
-                yield RDF::Statement(cl, RDF.to_uri + 'language', item['@language'].downcase) if item['@language']
-                yield RDF::Statement(cl, RDF.to_uri + 'direction', item['@direction'])
+                yield RDF::Statement(cl, RDF_LANGUAGE, item['@language'].downcase) if item['@language']
+                yield RDF::Statement(cl, RDF_DIRECTION, item['@direction'])
                 return cl
               end
             end
 
             # Otherwise, if datatype is null, set it to xsd:string or xsd:langString, depending on if item has a @language key.
             datatype ||= item.key?('@language') ? RDF.langString : RDF::XSD.string
-            value = value.to_json_c14n if datatype == RDF::URI(RDF.to_uri + "JSON")
+            value = value.to_json_c14n if datatype == RDF_JSON
           end
           datatype = RDF::URI(datatype) if datatype && !datatype.is_a?(RDF::URI)
 
