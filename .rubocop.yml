@@ -1,0 +1,49 @@
+---
+  require:
+    - rubocop-performance
+
+  AllCops:
+    DisplayCopNames: true
+    NewCops: enable
+    TargetRubyVersion: 2.6
+
+  Layout/ArgumentAlignment:
+    # https://www.rubydoc.info/github/bbatsov/RuboCop/RuboCop/Cop/Layout/ArgumentAlignment
+    EnforcedStyle: with_fixed_indentation
+  Layout/CaseIndentation:
+    EnforcedStyle: end
+  Layout/EndAlignment:
+    # https://www.rubydoc.info/gems/rubocop/RuboCop/Cop/Layout/EndAlignment
+    EnforcedStyleAlignWith: variable
+  Layout/FirstArgumentIndentation:
+    # https://www.rubydoc.info/github/bbatsov/RuboCop/RuboCop/Cop/Layout/FirstArgumentIndentation
+    Enabled: false
+  Layout/HashAlignment:
+    EnforcedLastArgumentHashStyle: ignore_implicit
+  Layout/LineLength:
+    Max: 120
+  Layout/MultilineMethodCallIndentation:
+    # https://www.rubydoc.info/gems/rubocop/RuboCop/Cop/Layout/MultilineMethodCallIndentation
+    EnforcedStyle: indented
+  Lint/AmbiguousBlockAssociation:
+    AllowedMethods: ['change']
+
+  Metrics/MethodLength:
+    CountComments: false  # count full line comments?
+    Max: 20
+
+  Style/Documentation:
+    Enabled: false
+  Style/DoubleNegation:
+    Enabled: false
+  Style/FormatStringToken:
+    Enabled: false
+  Style/HashSyntax:
+    Enabled: false
+  Style/MutableConstant:
+    Enabled: false
+  Style/StringLiterals:
+    Enabled: false
+  Style/StringConcatenation:
+    Enabled: false
+
