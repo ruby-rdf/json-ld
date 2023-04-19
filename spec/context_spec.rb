@@ -1,48 +1,52 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 require 'rdf/xsd'
 require 'rdf/spec/reader'
 
 # Add for testing
-class JSON::LD::Context
-  # Retrieve type mappings
-  def coercions
-    term_definitions.inject({}) do |memo, (t,td)|
-      memo[t] = td.type_mapping
-      memo
-    end
-  end
+module JSON
+  module LD
+    class Context
+      # Retrieve type mappings
+      def coercions
+        term_definitions.transform_values(&:type_mapping)
+      end
 
-  def containers
-    term_definitions.inject({}) do |memo, (t,td)|
-      memo[t] = td.container_mapping
-      memo
+      def containers
+        term_definitions.transform_values(&:container_mapping)
+      end
     end
   end
 end
 
 describe JSON::LD::Context do
-  let(:logger) {RDF::Spec.logger}
-  let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)}
+  subject { context }
+
+  let(:logger) { RDF::Spec.logger }
+  let(:context) do
+    described_class.new(logger: logger, validate: true, processingMode: "json-ld-1.1", compactToRelative: true)
+  end
   let(:remote_doc) do
-    JSON::LD::API::RemoteDocument.new(%q({
+    JSON::LD::API::RemoteDocument.new('{
       "@context": {
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": {"@id": "http://xmlns.com/foaf/0.1/homepage", "@type": "@id"},
         "avatar": {"@id": "http://xmlns.com/foaf/0.1/avatar", "@type": "@id"}
       }
-    }),
-    documentUrl: "http://example.com/context",
-    contentType: "application/ld+json")
+    }',
+      documentUrl: "http://example.com/context",
+      contentType: "application/ld+json")
   end
-  subject {context}
 
   describe ".parse" do
-    let(:ctx) {[
-      {"foo" => "http://example.com/foo"},
-      {"bar" => "foo"}
-    ]}
+    let(:ctx) do
+      [
+        { "foo" => "http://example.com/foo" },
+        { "bar" => "foo" }
+      ]
+    end
 
     it "merges definitions from each context" do
       ec = described_class.parse(ctx)
@@ -55,27 +59,30 @@ describe JSON::LD::Context do
 
   describe "#parse" do
     context "remote" do
-
       it "fails given a missing remote @context" do
-        JSON::LD::Context.instance_variable_set(:@cache, nil)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_raise(IOError)
-        expect {subject.parse("http://example.com/context")}.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
+        described_class.instance_variable_set(:@cache, nil)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_raise(IOError)
+        expect do
+          subject.parse("http://example.com/context")
+        end.to raise_error(JSON::LD::JsonLdError::LoadingRemoteContextFailed, %r{http://example.com/context})
       end
 
       it "creates mappings" do
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
-          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "name" => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+          "avatar" => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
 
       it "retrieves and parses a remote context document in HTML using the context profile" do
         remote_doc =
-          JSON::LD::API::RemoteDocument.new(%q(
+          JSON::LD::API::RemoteDocument.new(+'
             <html><head>
             <script>Not This</script>
             <script type="application/ld+json">
@@ -105,24 +112,25 @@ describe JSON::LD::Context do
             }
             </script>
             </head></html>
-            ),
+            ',
             documentUrl: "http://example.com/context",
             contentType: "text/html")
 
-        JSON::LD::Context.instance_variable_set(:@cache, nil)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        described_class.instance_variable_set(:@cache, nil)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
-          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "name" => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+          "avatar" => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
 
       it "retrieves and parses a remote context document in HTML" do
         remote_doc =
-          JSON::LD::API::RemoteDocument.new(%q(
+          JSON::LD::API::RemoteDocument.new(+'
             <html><head>
             <script>Not This</script>
             <script type="application/ld+json">
@@ -144,63 +152,69 @@ describe JSON::LD::Context do
             }
             </script>
             </head></html>
-            ),
+            ',
             documentUrl: "http://example.com/context",
             contentType: "text/html")
-          JSON::LD::Context.instance_variable_set(:@cache, nil)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        described_class.instance_variable_set(:@cache, nil)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/context")
         expect(ec.send(:mappings)).to produce({
-          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "name" => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+          "avatar" => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
 
       it "notes non-existing @context" do
-        expect {subject.parse(StringIO.new("{}"))}.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
+        expect { subject.parse(StringIO.new("{}")) }.to raise_error(JSON::LD::JsonLdError::InvalidRemoteContext)
       end
 
       it "parses a referenced context at a relative URI" do
-        JSON::LD::Context.instance_variable_set(:@cache, nil)
+        described_class.instance_variable_set(:@cache, nil)
         rd1 = JSON::LD::API::RemoteDocument.new(%({"@context": "context"}), base_uri: "http://example.com/c1")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c1", anything).and_yield(rd1)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
         ec = subject.parse("http://example.com/c1")
         expect(ec.send(:mappings)).to produce({
-          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "name" => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar"
+          "avatar" => "http://xmlns.com/foaf/0.1/avatar"
         }, logger)
       end
 
       context "remote with local mappings" do
-        let(:ctx) {["http://example.com/context", {"integer" => "xsd:integer"}]}
-        before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+        let(:ctx) { ["http://example.com/context", { "integer" => "xsd:integer" }] }
+
+        before { described_class.instance_variable_set(:@cache, nil) }
+
         it "retrieves and parses a remote context document" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+            anything).and_yield(remote_doc)
           ec = subject.parse(ctx)
           expect(ec.send(:mappings)).to produce({
-            "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-            "name"     => "http://xmlns.com/foaf/0.1/name",
+            "xsd" => "http://www.w3.org/2001/XMLSchema#",
+            "name" => "http://xmlns.com/foaf/0.1/name",
             "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-            "avatar"   => "http://xmlns.com/foaf/0.1/avatar",
-            "integer"  => "http://www.w3.org/2001/XMLSchema#integer"
+            "avatar" => "http://xmlns.com/foaf/0.1/avatar",
+            "integer" => "http://www.w3.org/2001/XMLSchema#integer"
           }, logger)
         end
       end
 
       context "pre-loaded remote" do
-        let(:ctx) {"http://example.com/preloaded"}
-        before(:all) {
-          JSON::LD::Context.add_preloaded("http://example.com/preloaded",
-            JSON::LD::Context.parse({'foo' => "http://example.com/"})
-          )
-          JSON::LD::Context.alias_preloaded("https://example.com/preloaded", "http://example.com/preloaded")
-        }
-        after(:all) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+        let(:ctx) { "http://example.com/preloaded" }
+
+        before(:all) do
+          described_class.add_preloaded("http://example.com/preloaded",
+            described_class.parse({ 'foo' => "http://example.com/" }))
+          described_class.alias_preloaded("https://example.com/preloaded", "http://example.com/preloaded")
+        end
+
+        after(:all) { described_class.instance_variable_set(:@cache, nil) }
 
         it "does not load referenced context" do
           expect(JSON::LD::API).not_to receive(:documentLoader).with(ctx, anything)
@@ -215,24 +229,26 @@ describe JSON::LD::Context do
         it "uses loaded context" do
           ec = subject.parse(ctx)
           expect(ec.send(:mappings)).to produce({
-            "foo"   => "http://example.com/"
+            "foo" => "http://example.com/"
           }, logger)
         end
 
         it "uses aliased context" do
           ec = subject.parse(ctx.sub('http', 'https'))
           expect(ec.send(:mappings)).to produce({
-            "foo"   => "http://example.com/"
+            "foo" => "http://example.com/"
           }, logger)
         end
       end
     end
 
     context "Array" do
-      let(:ctx) {[
-        {"foo" => "http://example.com/foo"},
-        {"bar" => "foo"}
-      ]}
+      let(:ctx) do
+        [
+          { "foo" => "http://example.com/foo" },
+          { "bar" => "foo" }
+        ]
+      end
 
       it "merges definitions from each context" do
         ec = subject.parse(ctx)
@@ -243,21 +259,22 @@ describe JSON::LD::Context do
       end
 
       it "merges definitions from remote contexts" do
-        JSON::LD::Context.instance_variable_set(:@cache, nil)
-        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        rd2 = JSON::LD::API::RemoteDocument.new(%q({
+        described_class.instance_variable_set(:@cache, nil)
+        expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
+        rd2 = JSON::LD::API::RemoteDocument.new('{
           "@context": {
             "title": {"@id": "http://purl.org/dc/terms/title"}
           }
-        }), base_uri: "http://example.com/c2")
+        }', base_uri: "http://example.com/c2")
         expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/c2", anything).and_yield(rd2)
-        ec = subject.parse(%w(http://example.com/context http://example.com/c2))
+        ec = subject.parse(%w[http://example.com/context http://example.com/c2])
         expect(ec.send(:mappings)).to produce({
-          "xsd"      => "http://www.w3.org/2001/XMLSchema#",
-          "name"     => "http://xmlns.com/foaf/0.1/name",
+          "xsd" => "http://www.w3.org/2001/XMLSchema#",
+          "name" => "http://xmlns.com/foaf/0.1/name",
           "homepage" => "http://xmlns.com/foaf/0.1/homepage",
-          "avatar"   => "http://xmlns.com/foaf/0.1/avatar",
-          "title"    => "http://purl.org/dc/terms/title"
+          "avatar" => "http://xmlns.com/foaf/0.1/avatar",
+          "title" => "http://purl.org/dc/terms/title"
         }, logger)
       end
     end
@@ -295,7 +312,7 @@ describe JSON::LD::Context do
 
       it "maps term with @id" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/"}
+          "foo" => { "@id" => "http://example.com/" }
         }).send(:mappings)).to produce({
           "foo" => "http://example.com/"
         }, logger)
@@ -304,7 +321,7 @@ describe JSON::LD::Context do
       it "maps term with blank node @id (with deprecation)" do
         expect do
           expect(subject.parse({
-            "foo" => {"@id" => "_:bn"}
+            "foo" => { "@id" => "_:bn" }
           }).send(:mappings)).to produce({
             "foo" => RDF::Node("bn")
           }, logger)
@@ -314,7 +331,7 @@ describe JSON::LD::Context do
       it "warns and ignores keyword-like term" do
         expect do
           expect(subject.parse({
-            "@foo" => {"@id" => "http://example.org/foo"}
+            "@foo" => { "@id" => "http://example.org/foo" }
           }).send(:mappings)).to produce({}, logger)
         end.to write("Terms beginning with '@' are reserved").to(:error)
       end
@@ -322,7 +339,7 @@ describe JSON::LD::Context do
       it "maps '@' as a term" do
         expect do
           expect(subject.parse({
-            "@" => {"@id" => "http://example.org/@"}
+            "@" => { "@id" => "http://example.org/@" }
           }).send(:mappings)).to produce({
             "@" => "http://example.org/@"
           }, logger)
@@ -332,7 +349,7 @@ describe JSON::LD::Context do
       it "maps '@foo.bar' as a term" do
         expect do
           expect(subject.parse({
-            "@foo.bar" => {"@id" => "http://example.org/foo.bar"}
+            "@foo.bar" => { "@id" => "http://example.org/foo.bar" }
           }).send(:mappings)).to produce({
             "@foo.bar" => "http://example.org/foo.bar"
           }, logger)
@@ -341,7 +358,7 @@ describe JSON::LD::Context do
 
       it "associates @list container mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@container" => "@list"}
+          "foo" => { "@id" => "http://example.com/", "@container" => "@list" }
         }).containers).to produce({
           "foo" => Set["@list"]
         }, logger)
@@ -349,7 +366,7 @@ describe JSON::LD::Context do
 
       it "associates @type container mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@container" => "@type"}
+          "foo" => { "@id" => "http://example.com/", "@container" => "@type" }
         }).containers).to produce({
           "foo" => Set["@type"]
         }, logger)
@@ -357,7 +374,7 @@ describe JSON::LD::Context do
 
       it "associates @id container mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@container" => "@id"}
+          "foo" => { "@id" => "http://example.com/", "@container" => "@id" }
         }).containers).to produce({
           "foo" => Set["@id"]
         }, logger)
@@ -365,7 +382,7 @@ describe JSON::LD::Context do
 
       it "associates @id type mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@type" => "@id"}
+          "foo" => { "@id" => "http://example.com/", "@type" => "@id" }
         }).coercions).to produce({
           "foo" => "@id"
         }, logger)
@@ -373,7 +390,7 @@ describe JSON::LD::Context do
 
       it "associates @json type mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@type" => "@json"}
+          "foo" => { "@id" => "http://example.com/", "@type" => "@json" }
         }).coercions).to produce({
           "foo" => "@json"
         }, logger)
@@ -381,7 +398,7 @@ describe JSON::LD::Context do
 
       it "associates type mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s}
+          "foo" => { "@id" => "http://example.com/", "@type" => RDF::XSD.string.to_s }
         }).coercions).to produce({
           "foo" => RDF::XSD.string
         }, logger)
@@ -389,7 +406,7 @@ describe JSON::LD::Context do
 
       it "associates language mapping with term" do
         expect(subject.parse({
-          "foo" => {"@id" => "http://example.com/", "@language" => "en"}
+          "foo" => { "@id" => "http://example.com/", "@language" => "en" }
         }).send(:languages)).to produce({
           "foo" => "en"
         }, logger)
@@ -419,37 +436,37 @@ describe JSON::LD::Context do
       context "with null" do
         it "removes @language if set to null" do
           expect(subject.parse([
-            {
-              "@language" => "en"
-            },
-            {
-              "@language" => nil
-            }
-          ]).default_language).to produce(nil, logger)
+                                 {
+                                   "@language" => "en"
+                                 },
+                                 {
+                                   "@language" => nil
+                                 }
+                               ]).default_language).to produce(nil, logger)
         end
 
         it "removes @vocab if set to null" do
           expect(subject.parse([
-            {
-              "@vocab" => "http://schema.org/"
-            },
-            {
-              "@vocab" => nil
-            }
-          ]).vocab).to produce(nil, logger)
+                                 {
+                                   "@vocab" => "http://schema.org/"
+                                 },
+                                 {
+                                   "@vocab" => nil
+                                 }
+                               ]).vocab).to produce(nil, logger)
         end
 
         it "removes term if set to null with @vocab" do
           expect(subject.parse([
-            {
-              "@vocab" => "http://schema.org/",
-              "term" => nil
-            }
-          ]).send(:mappings)).to produce({"term" => nil}, logger)
+                                 {
+                                   "@vocab" => "http://schema.org/",
+                                   "term" => nil
+                                 }
+                               ]).send(:mappings)).to produce({ "term" => nil }, logger)
         end
 
         it "loads initial context" do
-          init_ec = JSON::LD::Context.new
+          init_ec = described_class.new
           nil_ec = subject.parse(nil)
           expect(nil_ec.default_language).to eq init_ec.default_language
           expect(nil_ec.send(:languages)).to eq init_ec.send(:languages)
@@ -459,29 +476,35 @@ describe JSON::LD::Context do
         end
 
         it "removes a term definition" do
-          expect(subject.parse({"name" => nil}).send(:mapping, "name")).to be_nil
+          expect(subject.parse({ "name" => nil }).send(:mapping, "name")).to be_nil
         end
       end
 
-
       context "@propagate" do
         it "generates an InvalidPropagateValue error if not a boolean" do
-          expect {subject.parse({'@version' => 1.1, '@propagate' => "String"})}.to raise_error(JSON::LD::JsonLdError::InvalidPropagateValue)
+          expect do
+            subject.parse({ '@version' => 1.1,
+            '@propagate' => "String" })
+          end.to raise_error(JSON::LD::JsonLdError::InvalidPropagateValue)
         end
       end
 
       context "@import" do
-        before(:each) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+        before { described_class.instance_variable_set(:@cache, nil) }
+
         it "generates an InvalidImportValue error if not a string" do
-          expect {subject.parse({'@version' => 1.1, '@import' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
+          expect do
+            subject.parse({ '@version' => 1.1, '@import' => true })
+          end.to raise_error(JSON::LD::JsonLdError::InvalidImportValue)
         end
 
         it "retrieves remote context" do
-          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-          ec = subject.parse(JSON.parse %({
+          expect(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+            anything).and_yield(remote_doc)
+          ec = subject.parse(JSON.parse(%({
             "@version": 1.1,
             "@import": "http://example.com/context"
-          }))
+          })))
           expect(ec.term_definitions).to include("avatar")
         end
       end
@@ -489,109 +512,116 @@ describe JSON::LD::Context do
 
     describe "Syntax Errors" do
       {
-        "malformed JSON" => StringIO.new(%q({"@context": {"foo" "http://malformed/"})),
-        "no @id, @type, or @container" => {"foo" => {}},
-        "value as array" => {"foo" => []},
-        "@id as object" => {"foo" => {"@id" => {}}},
-        "@id as array of object" => {"foo" => {"@id" => [{}]}},
-        "@id as array of null" => {"foo" => {"@id" => [nil]}},
-        "@type as object" => {"foo" => {"@type" => {}}},
-        "@type as array" => {"foo" => {"@type" => []}},
-        "@type as @list" => {"foo" => {"@type" => "@list"}},
-        "@type as @none" => {"@version" => 1.1, "foo" => {"@type" => "@none"}},
-        "@type as @set" => {"foo" => {"@type" => "@set"}},
-        "@container as object" => {"foo" => {"@container" => {}}},
-        "@container as empty array" => {"foo" => {"@container" => []}},
-        "@container as string" => {"foo" => {"@container" => "true"}},
-        "@context which is invalid" => {"foo" => {"@context" => {"bar" => []}}},
-        "@language as @id" => {"@language" => {"@id" => "http://example.com/"}},
-        "@direction as foo" => {"@direction" => "foo"},
-        "@vocab as @id" => {"@vocab" => {"@id" => "http://example.com/"}},
-        "@prefix string" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => "str"}},
-        "@prefix array" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => []}},
-        "@prefix object" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => {}}},
+        "malformed JSON" => StringIO.new('{"@context": {"foo" "http://malformed/"}'),
+        "no @id, @type, or @container" => { "foo" => {} },
+        "value as array" => { "foo" => [] },
+        "@id as object" => { "foo" => { "@id" => {} } },
+        "@id as array of object" => { "foo" => { "@id" => [{}] } },
+        "@id as array of null" => { "foo" => { "@id" => [nil] } },
+        "@type as object" => { "foo" => { "@type" => {} } },
+        "@type as array" => { "foo" => { "@type" => [] } },
+        "@type as @list" => { "foo" => { "@type" => "@list" } },
+        "@type as @none" => { "@version" => 1.1, "foo" => { "@type" => "@none" } },
+        "@type as @set" => { "foo" => { "@type" => "@set" } },
+        "@container as object" => { "foo" => { "@container" => {} } },
+        "@container as empty array" => { "foo" => { "@container" => [] } },
+        "@container as string" => { "foo" => { "@container" => "true" } },
+        "@context which is invalid" => { "foo" => { "@context" => { "bar" => [] } } },
+        "@language as @id" => { "@language" => { "@id" => "http://example.com/" } },
+        "@direction as foo" => { "@direction" => "foo" },
+        "@vocab as @id" => { "@vocab" => { "@id" => "http://example.com/" } },
+        "@prefix string" => { "foo" => { "@id" => 'http://example.org/', "@prefix" => "str" } },
+        "@prefix array" => { "foo" => { "@id" => 'http://example.org/', "@prefix" => [] } },
+        "@prefix object" => { "foo" => { "@id" => 'http://example.org/', "@prefix" => {} } },
         "IRI term expands to different IRI" => {
           "ex" => "http://example.com/",
           "ex2" => "http://example.com/2/",
           "ex:foo" => "ex2:foo"
-      },
+        },
         "IRI term expands to different IRI (reverse)" => {
           "ex" => "http://example.com/",
           "ex2" => "http://example.com/2/",
-          "ex:foo" => {"@reverse" => "ex2:foo"}
+          "ex:foo" => { "@reverse" => "ex2:foo" }
         }
       }.each do |title, context|
         it title do
-          expect {
+          expect do
             ec = subject.parse(context)
             expect(ec.serialize).to produce({}, logger)
-          }.to raise_error(JSON::LD::JsonLdError)
+          end.to raise_error(JSON::LD::JsonLdError)
         end
       end
 
       context "1.0" do
-        let(:context) {JSON::LD::Context.new(logger: logger, validate: true, processingMode: 'json-ld-1.0')}
+        let(:context) { described_class.new(logger: logger, validate: true, processingMode: 'json-ld-1.0') }
+
         {
-          "@context" => {"foo" => {"@id" => 'http://example.org/', "@context" => {}}},
-          "@container @id" => {"foo" => {"@container" => "@id"}},
-          "@container @type" => {"foo" => {"@container" => "@type"}},
-          "@nest" => {"foo" => {"@id" => 'http://example.org/', "@nest" => "@nest"}},
-          "@type as @none" => {"foo" => {"@type" => "@none"}},
-          "@type as @json" => {"foo" => {"@type" => "@json"}},
-          "@prefix" => {"foo" => {"@id" => 'http://example.org/', "@prefix" => true}},
+          "@context" => { "foo" => { "@id" => 'http://example.org/', "@context" => {} } },
+          "@container @id" => { "foo" => { "@container" => "@id" } },
+          "@container @type" => { "foo" => { "@container" => "@type" } },
+          "@nest" => { "foo" => { "@id" => 'http://example.org/', "@nest" => "@nest" } },
+          "@type as @none" => { "foo" => { "@type" => "@none" } },
+          "@type as @json" => { "foo" => { "@type" => "@json" } },
+          "@prefix" => { "foo" => { "@id" => 'http://example.org/', "@prefix" => true } }
         }.each do |title, context|
           it title do
-            expect {
+            expect do
               ec = subject.parse(context)
               expect(ec.serialize).to produce({}, logger)
-            }.to raise_error(JSON::LD::JsonLdError)
+            end.to raise_error(JSON::LD::JsonLdError)
           end
         end
 
         it "generates InvalidContextEntry if using @propagate" do
-          expect {context.parse({'@propagate' => true})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
+          expect { context.parse({ '@propagate' => true }) }.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
         it "generates InvalidContextEntry if using @import" do
-          expect {context.parse({'@import' => "location"})}.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
+          expect do
+            context.parse({ '@import' => "location" })
+          end.to raise_error(JSON::LD::JsonLdError::InvalidContextEntry)
         end
 
-        (JSON::LD::KEYWORDS - %w(@base @language @version @protected @propagate @vocab)).each do |kw|
+        (JSON::LD::KEYWORDS - %w[@base @language @version @protected @propagate @vocab]).each do |kw|
           it "does not redefine #{kw} with an @container" do
-            expect {
-              ec = subject.parse({kw => {"@container" => "@set"}})
+            expect do
+              ec = subject.parse({ kw => { "@container" => "@set" } })
               expect(ec.serialize).to produce({}, logger)
-            }.to raise_error(JSON::LD::JsonLdError)
+            end.to raise_error(JSON::LD::JsonLdError)
           end
         end
       end
 
-      (JSON::LD::KEYWORDS - %w(@base @direction @language @protected @propagate @import @version @vocab)).each do |kw|
+      (JSON::LD::KEYWORDS - %w[@base @direction @language @protected @propagate @import @version @vocab]).each do |kw|
         it "does not redefine #{kw} as a string" do
-          expect {
-            ec = subject.parse({kw => "http://example.com/"})
+          expect do
+            ec = subject.parse({ kw => "http://example.com/" })
             expect(ec.serialize).to produce({}, logger)
-          }.to raise_error(JSON::LD::JsonLdError)
+          end.to raise_error(JSON::LD::JsonLdError)
         end
 
         it "does not redefine #{kw} with an @id" do
-          expect {
-            ec = subject.parse({kw => {"@id" => "http://example.com/"}})
+          expect do
+            ec = subject.parse({ kw => { "@id" => "http://example.com/" } })
             expect(ec.serialize).to produce({}, logger)
-          }.to raise_error(JSON::LD::JsonLdError)
+          end.to raise_error(JSON::LD::JsonLdError)
         end
 
-        it "does not redefine #{kw} with an @container" do
-          expect {
-            ec = subject.parse({"@version" => 1.1, kw => {"@container" => "@set"}})
-            expect(ec.serialize).to produce({}, logger)
-          }.to raise_error(JSON::LD::JsonLdError)
-        end unless kw == '@type'
+        unless kw == '@type'
+          it "does not redefine #{kw} with an @container" do
+            expect do
+              ec = subject.parse({ "@version" => 1.1, kw => { "@container" => "@set" } })
+              expect(ec.serialize).to produce({}, logger)
+            end.to raise_error(JSON::LD::JsonLdError)
+          end
+        end
+
+        next unless kw == '@type'
 
         it "redefines #{kw} with an @container" do
-          ec = subject.parse({kw => {"@container" => "@set"}})
+          ec = subject.parse({ kw => { "@container" => "@set" } })
           expect(ec.as_array('@type')).to be_truthy
-        end if kw == '@type'
+        end
       end
     end
   end
@@ -600,9 +630,9 @@ describe JSON::LD::Context do
     it "sets to json-ld-1.1 if @version: 1.1" do
       [
         %({"@version": 1.1}),
-        %([{"@version": 1.1}]),
+        %([{"@version": 1.1}])
       ].each do |str|
-        ctx = JSON::LD::Context.parse(::JSON.parse(str))
+        ctx = described_class.parse(JSON.parse(str))
         expect(ctx.processingMode).to eql "json-ld-1.1"
       end
     end
@@ -614,22 +644,27 @@ describe JSON::LD::Context do
         1.0,
         "foo"
       ].each do |vers|
-        expect {JSON::LD::Context.parse({"@version" => vers})}.to raise_error(JSON::LD::JsonLdError::InvalidVersionValue)
+        expect do
+          described_class.parse({ "@version" => vers })
+        end.to raise_error(JSON::LD::JsonLdError::InvalidVersionValue)
       end
     end
 
     it "raises ProcessingModeConflict if provided processing mode conflicts with context" do
-      expect {JSON::LD::Context.parse({"@version" => 1.1}, processingMode: "json-ld-1.0")}.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
+      expect do
+        described_class.parse({ "@version" => 1.1 },
+          processingMode: "json-ld-1.0")
+      end.to raise_error(JSON::LD::JsonLdError::ProcessingModeConflict)
     end
 
     it "does not raise ProcessingModeConflict nested context is different from starting context" do
-      expect {JSON::LD::Context.parse([{}, {"@version" => 1.1}])}.not_to raise_error
+      expect { described_class.parse([{}, { "@version" => 1.1 }]) }.not_to raise_error
     end
   end
 
   describe "#merge" do
     it "creates a new context with components of each" do
-      c2 = JSON::LD::Context.parse({'foo' => "http://example.com/"})
+      c2 = described_class.parse({ 'foo' => "http://example.com/" })
       cm = context.merge(c2)
       expect(cm).not_to equal context
       expect(cm).not_to equal c2
@@ -638,9 +673,10 @@ describe JSON::LD::Context do
   end
 
   describe "#serialize" do
-    before {JSON::LD::Context.instance_variable_set(:@cache, nil)}
+    before { described_class.instance_variable_set(:@cache, nil) }
+
     it "context hash" do
-      ctx = {"foo" => "http://example.com/"}
+      ctx = { "foo" => "http://example.com/" }
 
       ec = subject.parse(ctx)
       expect(ec.serialize).to produce({
@@ -667,8 +703,8 @@ describe JSON::LD::Context do
     end
 
     it "term mappings" do
-      c = subject.
-        parse({'foo' => "http://example.com/"})
+      c = subject
+        .parse({ 'foo' => "http://example.com/" })
       expect(c.serialize).to produce({
         "@context" => {
           "foo" => "http://example.com/"
@@ -678,13 +714,13 @@ describe JSON::LD::Context do
 
     it "@context" do
       expect(subject.parse({
-        "foo" => {"@id" => "http://example.com/", "@context" => {"bar" => "http://example.com/baz"}}
-      }).
-      serialize).to produce({
+        "foo" => { "@id" => "http://example.com/", "@context" => { "bar" => "http://example.com/baz" } }
+      })
+      .serialize).to produce({
         "@context" => {
           "foo" => {
             "@id" => "http://example.com/",
-            "@context" => {"bar" => "http://example.com/baz"}
+            "@context" => { "bar" => "http://example.com/baz" }
           }
         }
       }, logger)
@@ -693,45 +729,45 @@ describe JSON::LD::Context do
     it "@type with dependent prefixes in a single context" do
       expect(subject.parse({
         'xsd' => "http://www.w3.org/2001/XMLSchema#",
-        'homepage' => {'@id' => RDF::Vocab::FOAF.homepage.to_s, '@type' => '@id'}
-      }).
-      serialize).to produce({
+        'homepage' => { '@id' => RDF::Vocab::FOAF.homepage.to_s, '@type' => '@id' }
+      })
+      .serialize).to produce({
         "@context" => {
           "xsd" => RDF::XSD.to_uri.to_s,
-          "homepage" => {"@id" => RDF::Vocab::FOAF.homepage.to_s, "@type" => "@id"}
+          "homepage" => { "@id" => RDF::Vocab::FOAF.homepage.to_s, "@type" => "@id" }
         }
       }, logger)
     end
 
     it "@list with @id definition in a single context" do
       expect(subject.parse({
-        'knows' => {'@id' => RDF::Vocab::FOAF.knows.to_s, '@container' => '@list'}
-      }).
-      serialize).to produce({
+        'knows' => { '@id' => RDF::Vocab::FOAF.knows.to_s, '@container' => '@list' }
+      })
+      .serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list" }
         }
       }, logger)
     end
 
     it "@set with @id definition in a single context" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set" }
+      })
+      .serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@set" }
         }
       }, logger)
     end
 
     it "@language with @id definition in a single context" do
       expect(subject.parse({
-        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
-      }).
-      serialize).to produce({
+        "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en" }
+      })
+      .serialize).to produce({
         "@context" => {
-          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en"}
+          "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "en" }
         }
       }, logger)
     end
@@ -739,12 +775,12 @@ describe JSON::LD::Context do
     it "@language with @id definition in a single context and equivalent default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
-      }).
-      serialize).to produce({
+        "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en' }
+      })
+      .serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en'}
+          "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => 'en' }
         }
       }, logger)
     end
@@ -752,12 +788,12 @@ describe JSON::LD::Context do
     it "@language with @id definition in a single context and different default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
-      }).
-      serialize).to produce({
+        "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de" }
+      })
+      .serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de"}
+          "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => "de" }
         }
       }, logger)
     end
@@ -765,45 +801,45 @@ describe JSON::LD::Context do
     it "null @language with @id definition in a single context and default" do
       expect(subject.parse({
         "@language" => 'en',
-        "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
-      }).
-      serialize).to produce({
+        "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil }
+      })
+      .serialize).to produce({
         "@context" => {
           "@language" => 'en',
-          "name" => {"@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil}
+          "name" => { "@id" => RDF::Vocab::FOAF.name.to_s, "@language" => nil }
         }
       }, logger)
     end
 
     it "prefix with @type and @list" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list" }
+      })
+      .serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@list" }
         }
       }, logger)
     end
 
     it "prefix with @type and @set" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set" }
+      })
+      .serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@id", "@container" => "@set" }
         }
       }, logger)
     end
 
     it "prefix with @type @json" do
       expect(subject.parse({
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json" }
+      })
+      .serialize).to produce({
         "@context" => {
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@type" => "@json" }
         }
       }, logger)
     end
@@ -814,8 +850,8 @@ describe JSON::LD::Context do
         "foaf:knows" => {
           "@container" => "@list"
         }
-      }).
-      serialize).to produce({
+      })
+      .serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "foaf:knows" => {
@@ -828,12 +864,12 @@ describe JSON::LD::Context do
     it "does not use aliased @id in key position" do
       expect(subject.parse({
         "id" => "@id",
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list" }
+      })
+      .serialize).to produce({
         "@context" => {
           "id" => "@id",
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list" }
         }
       }, logger)
     end
@@ -845,8 +881,8 @@ describe JSON::LD::Context do
         "foaf:homepage" => {
           "@type" => "@id"
         }
-      }).
-      serialize).to produce({
+      })
+      .serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "id" => "@id",
@@ -861,13 +897,13 @@ describe JSON::LD::Context do
       expect(subject.parse({
         "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "type" => "@type",
-        "foaf:homepage" => {"@type" => "@id"}
-      }).
-      serialize).to produce({
+        "foaf:homepage" => { "@type" => "@id" }
+      })
+      .serialize).to produce({
         "@context" => {
           "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
           "type" => "@type",
-          "foaf:homepage" => {"@type" => "@id"}
+          "foaf:homepage" => { "@type" => "@id" }
         }
       }, logger)
     end
@@ -875,12 +911,12 @@ describe JSON::LD::Context do
     it "does not use aliased @container" do
       expect(subject.parse({
         "container" => "@container",
-        "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
-      }).
-      serialize).to produce({
+        "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list" }
+      })
+      .serialize).to produce({
         "@context" => {
           "container" => "@container",
-          "knows" => {"@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list"}
+          "knows" => { "@id" => RDF::Vocab::FOAF.knows.to_s, "@container" => "@list" }
         }
       }, logger)
     end
@@ -888,12 +924,12 @@ describe JSON::LD::Context do
     it "compacts IRIs to Compact IRIs" do
       expect(subject.parse({
         "ex" => 'http://example.org/',
-        "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
-      }).
-      serialize).to produce({
+        "term" => { "@id" => "ex:term", "@type" => "ex:datatype" }
+      })
+      .serialize).to produce({
         "@context" => {
           "ex" => 'http://example.org/',
-          "term" => {"@id" => "ex:term", "@type" => "ex:datatype"}
+          "term" => { "@id" => "ex:term", "@type" => "ex:datatype" }
         }
       }, logger)
     end
@@ -901,39 +937,40 @@ describe JSON::LD::Context do
     it "compacts IRIs using @vocab" do
       expect(subject.parse({
         "@vocab" => 'http://example.org/',
-        "term" => {"@id" => "http://example.org/term", "@type" => "datatype"}
-      }).
-      serialize).to produce({
+        "term" => { "@id" => "http://example.org/term", "@type" => "datatype" }
+      })
+      .serialize).to produce({
         "@context" => {
           "@vocab" => 'http://example.org/',
-          "term" => {"@type" => "datatype"}
+          "term" => { "@type" => "datatype" }
         }
       }, logger)
     end
 
     context "invalid term definitions" do
       {
-        "empty term": {
-          input: {"" => "http://blank-term/"}
+        'empty term': {
+          input: { "" => "http://blank-term/" }
         },
-        "extra key": {
-          input: {"foo" => {"@id" => "http://example.com/foo", "@baz" => "foobar"}}
+        'extra key': {
+          input: { "foo" => { "@id" => "http://example.com/foo", "@baz" => "foobar" } }
         }
       }.each do |title, params|
         it title do
-          expect {subject.parse(params[:input])}.to raise_error(JSON::LD::JsonLdError::InvalidTermDefinition)
+          expect { subject.parse(params[:input]) }.to raise_error(JSON::LD::JsonLdError::InvalidTermDefinition)
         end
       end
     end
-
   end
 
   describe "#to_rb" do
-    before(:all) {JSON::LD::Context.instance_variable_set(:@cache, nil)}
-    subject {
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
+    subject do
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context",
+        anything).and_yield(remote_doc)
       context.parse("http://example.com/context")
-    }
+    end
+
+    before(:all) { described_class.instance_variable_set(:@cache, nil) }
 
     it "encodes as utf-8" do
       expect(subject.to_rb).to match(/encoding: utf-8/)
@@ -960,14 +997,14 @@ describe JSON::LD::Context do
   end
 
   describe "#base=" do
-    subject {
+    subject do
       context.parse({
         '@base' => 'http://base/',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '_' => 'http://underscore/'
       })
-    }
+    end
 
     it "sets new base uri given an absolute uri" do
       subject.base = "http://example.org/"
@@ -981,11 +1018,11 @@ describe JSON::LD::Context do
   end
 
   describe "#vocab=" do
-    subject {
+    subject do
       context.parse({
-        '@base' => 'http://base/resource',
+        '@base' => 'http://base/resource'
       })
-    }
+    end
 
     it "sets vocab from absolute iri" do
       subject.vocab = "http://example.org/"
@@ -1023,21 +1060,21 @@ describe JSON::LD::Context do
   end
 
   describe "#expand_iri" do
-    subject {
+    subject do
       context.parse({
         '@base' => 'http://base/base',
         '@vocab' => 'http://vocab/',
         'ex' => 'http://example.org/',
         '_' => 'http://underscore/'
       })
-    }
+    end
 
     it "bnode" do
       expect(subject.expand_iri("_:a")).to be_a(RDF::Node)
     end
 
     context "keywords" do
-      %w(id type).each do |kw|
+      %w[id type].each do |kw|
         it "expands #{kw} to @#{kw}" do
           subject.set_mapping(kw, "@#{kw}")
           expect(subject.expand_iri(kw, vocab: true)).to produce("@#{kw}", logger)
@@ -1048,22 +1085,22 @@ describe JSON::LD::Context do
     context "relative IRI" do
       context "with no options" do
         {
-          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
-          "term" =>          ["ex",                  RDF::URI("ex")],
-          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
-          "#frag"         => ["#frag",               RDF::URI("#frag")],
-          "#frag:2"       => ["#frag:2",             RDF::URI("#frag:2")],
-          "keyword" =>       ["@type",               "@type"],
-          "unmapped" =>      ["foo",                 RDF::URI("foo")],
-          "relative" =>      ["foo/bar",             RDF::URI("foo/bar")],
-          "dotseg" =>        ["../foo/bar",          RDF::URI("../foo/bar")],
-          "empty term" =>    ["",                    RDF::URI("")],
-          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI" => ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" => ["ex", RDF::URI("ex")],
+          "prefix:suffix" => ["ex:suffix", RDF::URI("http://example.org/suffix")],
+          "#frag" => ["#frag", RDF::URI("#frag")],
+          "#frag:2" => ["#frag:2",             RDF::URI("#frag:2")],
+          "keyword" => ["@type",               "@type"],
+          "unmapped" => ["foo",                 RDF::URI("foo")],
+          "relative" => ["foo/bar",             RDF::URI("foo/bar")],
+          "dotseg" => ["../foo/bar", RDF::URI("../foo/bar")],
+          "empty term" => ["", RDF::URI("")],
+          "another abs IRI" => ["ex://foo", RDF::URI("ex://foo")],
           "absolute IRI looking like a Compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
-          "bnode" =>         ["_:t0",                RDF::Node("t0")],
-          "_" =>             ["_",                   RDF::URI("_")],
-          "@" =>             ["@",                   RDF::URI("@")],
+          "bnode" => ["_:t0", RDF::Node("t0")],
+          "_" => ["_",                   RDF::URI("_")],
+          "@" => ["@",                   RDF::URI("@")]
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input)).to produce(result, logger)
@@ -1073,22 +1110,22 @@ describe JSON::LD::Context do
 
       context "with base IRI" do
         {
-          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
-          "term" =>          ["ex",                  RDF::URI("http://base/ex")],
-          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
-          "#frag"         => ["#frag",               RDF::URI("http://base/base#frag")],
-          "#frag:2"       => ["#frag:2",             RDF::URI("http://base/base#frag:2")],
-          "keyword" =>       ["@type",               "@type"],
-          "unmapped" =>      ["foo",                 RDF::URI("http://base/foo")],
-          "relative" =>      ["foo/bar",             RDF::URI("http://base/foo/bar")],
-          "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/foo/bar")],
-          "empty term" =>    ["",                    RDF::URI("http://base/base")],
-          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI" => ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" => ["ex", RDF::URI("http://base/ex")],
+          "prefix:suffix" => ["ex:suffix", RDF::URI("http://example.org/suffix")],
+          "#frag" => ["#frag", RDF::URI("http://base/base#frag")],
+          "#frag:2" => ["#frag:2",             RDF::URI("http://base/base#frag:2")],
+          "keyword" => ["@type",               "@type"],
+          "unmapped" => ["foo",                 RDF::URI("http://base/foo")],
+          "relative" => ["foo/bar",             RDF::URI("http://base/foo/bar")],
+          "dotseg" => ["../foo/bar", RDF::URI("http://base/foo/bar")],
+          "empty term" => ["", RDF::URI("http://base/base")],
+          "another abs IRI" => ["ex://foo", RDF::URI("ex://foo")],
           "absolute IRI looking like a compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
-          "bnode" =>         ["_:t0",                RDF::Node("t0")],
-          "_" =>             ["_",                   RDF::URI("http://base/_")],
-          "@" =>             ["@",                   RDF::URI("http://base/@")],
+          "bnode" => ["_:t0", RDF::Node("t0")],
+          "_" => ["_",                   RDF::URI("http://base/_")],
+          "@" => ["@",                   RDF::URI("http://base/@")]
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, documentRelative: true)).to produce(result, logger)
@@ -1098,21 +1135,21 @@ describe JSON::LD::Context do
 
       context "@vocab" do
         {
-          "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
-          "term" =>          ["ex",                  RDF::URI("http://example.org/")],
-          "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
-          "#frag"         => ["#frag",               RDF::URI("http://vocab/#frag")],
-          "#frag:2"       => ["#frag:2",             RDF::URI("http://vocab/#frag:2")],
-          "keyword" =>       ["@type",               "@type"],
-          "unmapped" =>      ["foo",                 RDF::URI("http://vocab/foo")],
-          "relative" =>      ["foo/bar",             RDF::URI("http://vocab/foo/bar")],
-          "dotseg" =>        ["../foo/bar",          RDF::URI("http://vocab/../foo/bar")],
-          "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+          "absolute IRI" => ["http://example.org/", RDF::URI("http://example.org/")],
+          "term" => ["ex", RDF::URI("http://example.org/")],
+          "prefix:suffix" => ["ex:suffix", RDF::URI("http://example.org/suffix")],
+          "#frag" => ["#frag", RDF::URI("http://vocab/#frag")],
+          "#frag:2" => ["#frag:2",             RDF::URI("http://vocab/#frag:2")],
+          "keyword" => ["@type",               "@type"],
+          "unmapped" => ["foo",                 RDF::URI("http://vocab/foo")],
+          "relative" => ["foo/bar",             RDF::URI("http://vocab/foo/bar")],
+          "dotseg" => ["../foo/bar", RDF::URI("http://vocab/../foo/bar")],
+          "another abs IRI" => ["ex://foo", RDF::URI("ex://foo")],
           "absolute IRI looking like a compact IRI" =>
                              ["foo:bar",             RDF::URI("foo:bar")],
-          "bnode" =>         ["_:t0",                RDF::Node("t0")],
-          "_" =>             ["_",                   RDF::URI("http://underscore/")],
-          "@" =>             ["@",                   RDF::URI("http://vocab/@")],
+          "bnode" => ["_:t0", RDF::Node("t0")],
+          "_" => ["_",                   RDF::URI("http://underscore/")],
+          "@" => ["@",                   RDF::URI("http://vocab/@")]
         }.each do |title, (input, result)|
           it title do
             expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
@@ -1120,30 +1157,30 @@ describe JSON::LD::Context do
         end
 
         context "set to ''" do
-          subject {
+          subject do
             context.parse({
               '@base' => 'http://base/base',
               '@vocab' => '',
               'ex' => 'http://example.org/',
               '_' => 'http://underscore/'
             })
-          }
+          end
 
           {
-            "absolute IRI" =>  ["http://example.org/", RDF::URI("http://example.org/")],
-            "term" =>          ["ex",                  RDF::URI("http://example.org/")],
-            "prefix:suffix" => ["ex:suffix",           RDF::URI("http://example.org/suffix")],
-            "#frag"         => ["#frag",               RDF::URI("http://base/base#frag")],
-            "#frag:2"       => ["#frag:2",             RDF::URI("http://base/base#frag:2")],
-            "keyword" =>       ["@type",               "@type"],
-            "unmapped" =>      ["foo",                 RDF::URI("http://base/basefoo")],
-            "relative" =>      ["foo/bar",             RDF::URI("http://base/basefoo/bar")],
-            "dotseg" =>        ["../foo/bar",          RDF::URI("http://base/base../foo/bar")],
-            "another abs IRI"=>["ex://foo",            RDF::URI("ex://foo")],
+            "absolute IRI" => ["http://example.org/", RDF::URI("http://example.org/")],
+            "term" => ["ex", RDF::URI("http://example.org/")],
+            "prefix:suffix" => ["ex:suffix", RDF::URI("http://example.org/suffix")],
+            "#frag" => ["#frag", RDF::URI("http://base/base#frag")],
+            "#frag:2" => ["#frag:2",             RDF::URI("http://base/base#frag:2")],
+            "keyword" => ["@type",               "@type"],
+            "unmapped" => ["foo",                 RDF::URI("http://base/basefoo")],
+            "relative" => ["foo/bar",             RDF::URI("http://base/basefoo/bar")],
+            "dotseg" => ["../foo/bar", RDF::URI("http://base/base../foo/bar")],
+            "another abs IRI" => ["ex://foo", RDF::URI("ex://foo")],
             "absolute IRI looking like a compact IRI" =>
-                               ["foo:bar",             RDF::URI("foo:bar")],
-            "bnode" =>         ["_:t0",                RDF::Node("t0")],
-            "_" =>             ["_",                   RDF::URI("http://underscore/")],
+                               ["foo:bar", RDF::URI("foo:bar")],
+            "bnode" => ["_:t0", RDF::Node("t0")],
+            "_" => ["_", RDF::URI("http://underscore/")]
           }.each do |title, (input, result)|
             it title do
               expect(subject.expand_iri(input, vocab: true)).to produce(result, logger)
@@ -1152,45 +1189,46 @@ describe JSON::LD::Context do
         end
 
         it "expand-0110" do
-          ctx = JSON::LD::Context.parse({
+          ctx = described_class.parse({
             "@base" => "http://example.com/some/deep/directory/and/file/",
             "@vocab" => "/relative"
           })
-          expect(ctx.expand_iri("#fragment-works", vocab: true)).to produce("http://example.com/relative#fragment-works", logger)
+          expect(ctx.expand_iri("#fragment-works",
+            vocab: true)).to produce("http://example.com/relative#fragment-works", logger)
         end
       end
     end
   end
 
   describe "#compact_iri" do
-    subject {
+    subject do
       c = context.parse({
-        '@base'   => 'http://base/',
-        "xsd"     => "http://www.w3.org/2001/XMLSchema#",
-        'ex'      => 'http://example.org/',
-        '_'       => 'http://underscore/',
-        'rex'     => {'@reverse' => "ex"},
-        'lex'     => {'@id' => 'ex', '@language' => 'en'},
-        'tex'     => {'@id' => 'ex', '@type' => 'xsd:string'},
-        'exp'     => {'@id' => 'ex:pert'},
-        'experts' => {'@id' => 'ex:perts'},
+        '@base' => 'http://base/',
+        "xsd" => "http://www.w3.org/2001/XMLSchema#",
+        'ex' => 'http://example.org/',
+        '_' => 'http://underscore/',
+        'rex' => { '@reverse' => "ex" },
+        'lex' => { '@id' => 'ex', '@language' => 'en' },
+        'tex' => { '@id' => 'ex', '@type' => 'xsd:string' },
+        'exp' => { '@id' => 'ex:pert' },
+        'experts' => { '@id' => 'ex:perts' }
       })
       logger.clear
       c
-    }
+    end
 
     {
       "nil" => [nil, nil],
-      "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-      "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-      "unmapped"      => ["foo",                 "foo"],
-      "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-      "relative"      => ["foo/bar",             "http://base/foo/bar"],
-      "odd Compact IRI"=>["ex:perts",            "http://example.org/perts"]
+      "absolute IRI" => ["http://example.com/", "http://example.com/"],
+      "prefix:suffix" => ["ex:suffix", "http://example.org/suffix"],
+      "unmapped" => %w[foo foo],
+      "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+      "relative" => ["foo/bar", "http://base/foo/bar"],
+      "odd Compact IRI" => ["ex:perts", "http://example.org/perts"]
     }.each do |title, (result, input)|
       it title do
         if result.is_a?(Class)
-          expect {subject.compact_iri(input)}.to raise_error(result)
+          expect { subject.compact_iri(input) }.to raise_error(result)
         else
           expect(subject.compact_iri(input)).to produce(result, logger)
         end
@@ -1199,17 +1237,17 @@ describe JSON::LD::Context do
 
     context "with :vocab option" do
       {
-        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-        "keyword"       => ["@type",               "@type"],
-        "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-        "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
+        "absolute IRI" => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["ex:suffix", "http://example.org/suffix"],
+        "keyword" => ["@type", "@type"],
+        "unmapped" => %w[foo foo],
+        "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+        "relative" => ["http://base/foo/bar", "http://base/foo/bar"],
+        "odd Compact IRI" => ["experts", "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           if result.is_a?(Class)
-            expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+            expect { subject.compact_iri(input, vocab: true) }.to raise_error(result)
           else
             expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
           end
@@ -1218,20 +1256,20 @@ describe JSON::LD::Context do
     end
 
     context "with @vocab" do
-      before(:each) { subject.vocab = "http://example.org/"}
+      before { subject.vocab = "http://example.org/" }
 
       {
-        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-        "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
-        "keyword"       => ["@type",               "@type"],
-        "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-        "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-        "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
+        "absolute IRI" => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["suffix", "http://example.org/suffix"],
+        "keyword" => ["@type", "@type"],
+        "unmapped" => %w[foo foo],
+        "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+        "relative" => ["http://base/foo/bar", "http://base/foo/bar"],
+        "odd Compact IRI" => ["experts", "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           if result.is_a?(Class)
-            expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+            expect { subject.compact_iri(input, vocab: true) }.to raise_error(result)
           else
             expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
           end
@@ -1241,28 +1279,28 @@ describe JSON::LD::Context do
       it "does not use @vocab if it would collide with a term" do
         subject.set_mapping("name", "http://xmlns.com/foaf/0.1/name")
         subject.set_mapping("ex", nil)
-        expect(subject.compact_iri("http://example.org/name", vocab: true)).
-          not_to produce("name", logger)
+        expect(subject.compact_iri("http://example.org/name", vocab: true))
+          .not_to produce("name", logger)
       end
 
       context "with @vocab: relative" do
-        before(:each) {
+        before do
           subject.vocab = nil
           subject.base = 'http://base/base'
-        }
+        end
 
         {
-          "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-          "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-          "keyword"       => ["@type",               "@type"],
-          "unmapped"      => ["foo",                 "foo"],
-          "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-          "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-          "odd Compact IRI"=> ["experts",            "http://example.org/perts"]
+          "absolute IRI" => ["http://example.com/", "http://example.com/"],
+          "prefix:suffix" => ["ex:suffix", "http://example.org/suffix"],
+          "keyword" => ["@type", "@type"],
+          "unmapped" => %w[foo foo],
+          "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+          "relative" => ["http://base/foo/bar", "http://base/foo/bar"],
+          "odd Compact IRI" => ["experts", "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
             if result.is_a?(Class)
-              expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+              expect { subject.compact_iri(input, vocab: true) }.to raise_error(result)
             else
               expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
             end
@@ -1276,38 +1314,39 @@ describe JSON::LD::Context do
         c = subject.parse({
           "xsd" => RDF::XSD.to_s,
           "plain" => "http://example.com/plain",
-          "lang" => {"@id" => "http://example.com/lang", "@language" => "en"},
-          "dir" => {"@id" => "http://example.com/dir", "@direction" => "ltr"},
-          "langdir" => {"@id" => "http://example.com/langdir", "@language" => "en", "@direction" => "ltr"},
-          "bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean"},
-          "integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer"},
-          "double" => {"@id" => "http://example.com/double", "@type" => "xsd:double"},
-          "date" => {"@id" => "http://example.com/date", "@type" => "xsd:date"},
-          "id" => {"@id" => "http://example.com/id", "@type" => "@id"},
-          'graph' => {'@id' => 'http://example.com/graph', '@container' => '@graph'},
-          'json'    => {'@id' => 'http://example.com/json', '@type' => '@json'},
+          "lang" => { "@id" => "http://example.com/lang", "@language" => "en" },
+          "dir" => { "@id" => "http://example.com/dir", "@direction" => "ltr" },
+          "langdir" => { "@id" => "http://example.com/langdir", "@language" => "en", "@direction" => "ltr" },
+          "bool" => { "@id" => "http://example.com/bool", "@type" => "xsd:boolean" },
+          "integer" => { "@id" => "http://example.com/integer", "@type" => "xsd:integer" },
+          "double" => { "@id" => "http://example.com/double", "@type" => "xsd:double" },
+          "date" => { "@id" => "http://example.com/date", "@type" => "xsd:date" },
+          "id" => { "@id" => "http://example.com/id", "@type" => "@id" },
+          'graph' => { '@id' => 'http://example.com/graph', '@container' => '@graph' },
+          'json' => { '@id' => 'http://example.com/json', '@type' => '@json' },
 
-          "list_plain" => {"@id" => "http://example.com/plain", "@container" => "@list"},
-          "list_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list"},
-          "list_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list"},
-          "list_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@list"},
-          "list_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list"},
-          "list_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list"},
-          "list_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list"},
-          "list_graph" => {"@id" => "http://example.com/graph", "@type" => "@id", "@container" => "@list"},
+          "list_plain" => { "@id" => "http://example.com/plain", "@container" => "@list" },
+          "list_lang" => { "@id" => "http://example.com/lang", "@language" => "en", "@container" => "@list" },
+          "list_bool" => { "@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@list" },
+          "list_integer" => { "@id" => "http://example.com/integer", "@type" => "xsd:integer",
+                              "@container" => "@list" },
+          "list_double" => { "@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@list" },
+          "list_date" => { "@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@list" },
+          "list_id" => { "@id" => "http://example.com/id", "@type" => "@id", "@container" => "@list" },
+          "list_graph" => { "@id" => "http://example.com/graph", "@type" => "@id", "@container" => "@list" },
 
-          "set_plain" => {"@id" => "http://example.com/plain", "@container" => "@set"},
-          "set_lang" => {"@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set"},
-          "set_bool" => {"@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set"},
-          "set_integer" => {"@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set"},
-          "set_double" => {"@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set"},
-          "set_date" => {"@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set"},
-          "set_id" => {"@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set"},
-          'set_graph' => {'@id' => 'http://example.com/graph', '@container' => ['@graph', '@set']},
+          "set_plain" => { "@id" => "http://example.com/plain", "@container" => "@set" },
+          "set_lang" => { "@id" => "http://example.com/lang", "@language" => "en", "@container" => "@set" },
+          "set_bool" => { "@id" => "http://example.com/bool", "@type" => "xsd:boolean", "@container" => "@set" },
+          "set_integer" => { "@id" => "http://example.com/integer", "@type" => "xsd:integer", "@container" => "@set" },
+          "set_double" => { "@id" => "http://example.com/double", "@type" => "xsd:double", "@container" => "@set" },
+          "set_date" => { "@id" => "http://example.com/date", "@type" => "xsd:date", "@container" => "@set" },
+          "set_id" => { "@id" => "http://example.com/id", "@type" => "@id", "@container" => "@set" },
+          'set_graph' => { '@id' => 'http://example.com/graph', '@container' => ['@graph', '@set'] },
 
-          "map_lang" => {"@id" => "http://example.com/lang", "@container" => "@language"},
+          "map_lang" => { "@id" => "http://example.com/lang", "@container" => "@language" },
 
-          "set_map_lang" => {"@id" => "http://example.com/lang", "@container" => ["@language", "@set"]},
+          "set_map_lang" => { "@id" => "http://example.com/lang", "@container" => ["@language", "@set"] }
         })
         logger.clear
         c
@@ -1315,21 +1354,21 @@ describe JSON::LD::Context do
 
       # Prefered sets and maps over non sets or maps
       {
-        "set_plain" => [{"@value" => "foo"}],
-        "map_lang" => [{"@value" => "en", "@language" => "en"}],
-        "set_bool" => [{"@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean"}],
-        "set_integer" => [{"@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer"}],
-        "set_id" => [{"@id" => "http://example.org/id"}],
-        "graph" => [{"@graph" => [{"@id" => "http://example.org/id"}]}],
-        'json' => [{"@value" => {"some" => "json"}, "@type" => "@json"}],
-        'dir' => [{"@value" => "dir", "@direction" => "ltr"}],
-        'langdir' => [{"@value" => "lang dir", "@language" => "en", "@direction" => "ltr"}],
+        "set_plain" => [{ "@value" => "foo" }],
+        "map_lang" => [{ "@value" => "en", "@language" => "en" }],
+        "set_bool" => [{ "@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean" }],
+        "set_integer" => [{ "@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer" }],
+        "set_id" => [{ "@id" => "http://example.org/id" }],
+        "graph" => [{ "@graph" => [{ "@id" => "http://example.org/id" }] }],
+        'json' => [{ "@value" => { "some" => "json" }, "@type" => "@json" }],
+        'dir' => [{ "@value" => "dir", "@direction" => "ltr" }],
+        'langdir' => [{ "@value" => "lang dir", "@language" => "en", "@direction" => "ltr" }]
       }.each do |prop, values|
         context "uses #{prop}" do
           values.each do |value|
             it "for #{value.inspect}" do
-              expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: value, vocab: true)).
-                to produce(prop, logger)
+              expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: value, vocab: true))
+                .to produce(prop, logger)
             end
           end
         end
@@ -1338,28 +1377,29 @@ describe JSON::LD::Context do
       # @language and @type with @list
       context "for @list" do
         {
-          "list_plain"   => [
-            [{"@value" => "foo"}],
-            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => "baz"}],
-            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
-            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1.1}],
-            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => true}],
-            [{"@value" => "foo"}, {"@value" => "bar"}, {"@value" => 1}],
-            [{"@value" => "de", "@language" => "de"}, {"@value" => "jp", "@language" => "jp"}],
-            [{"@value" => true}], [{"@value" => false}],
-            [{"@value" => 1}], [{"@value" => 1.1}],
+          "list_plain" => [
+            [{ "@value" => "foo" }],
+            [{ "@value" => "foo" }, { "@value" => "bar" }, { "@value" => "baz" }],
+            [{ "@value" => "foo" }, { "@value" => "bar" }, { "@value" => 1 }],
+            [{ "@value" => "foo" }, { "@value" => "bar" }, { "@value" => 1.1 }],
+            [{ "@value" => "foo" }, { "@value" => "bar" }, { "@value" => true }],
+            [{ "@value" => "foo" }, { "@value" => "bar" }, { "@value" => 1 }],
+            [{ "@value" => "de", "@language" => "de" }, { "@value" => "jp", "@language" => "jp" }],
+            [{ "@value" => true }], [{ "@value" => false }],
+            [{ "@value" => 1 }], [{ "@value" => 1.1 }]
           ],
-          "list_lang" => [[{"@value" => "en", "@language" => "en"}]],
-          "list_bool" => [[{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}]],
-          "list_integer" => [[{"@value" => "1", "@type" => RDF::XSD.integer.to_s}]],
-          "list_double" => [[{"@value" => "1", "@type" => RDF::XSD.double.to_s}]],
-          "list_date" => [[{"@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s}]],
+          "list_lang" => [[{ "@value" => "en", "@language" => "en" }]],
+          "list_bool" => [[{ "@value" => "true", "@type" => RDF::XSD.boolean.to_s }]],
+          "list_integer" => [[{ "@value" => "1", "@type" => RDF::XSD.integer.to_s }]],
+          "list_double" => [[{ "@value" => "1", "@type" => RDF::XSD.double.to_s }]],
+          "list_date" => [[{ "@value" => "2012-04-17", "@type" => RDF::XSD.date.to_s }]]
         }.each do |prop, values|
           context "uses #{prop}" do
             values.each do |value|
-              it "for #{{"@list" => value}.inspect}" do
-                expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: {"@list" => value}, vocab: true)).
-                  to produce(prop, logger)
+              it "for #{{ '@list' => value }.inspect}" do
+                expect(ctx.compact_iri("http://example.com/#{prop.sub(/^\w+_/, '')}", value: { "@list" => value },
+                  vocab: true))
+                  .to produce(prop, logger)
               end
             end
           end
@@ -1370,16 +1410,16 @@ describe JSON::LD::Context do
     context "Compact IRI compaction" do
       {
         "nil" => [nil, nil],
-        "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-        "prefix:suffix" => ["ex:suffix",           "http://example.org/suffix"],
-        "unmapped"      => ["foo",                 "foo"],
-        "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-        "relative"      => ["foo/bar",             "http://base/foo/bar"],
-        "odd Compact IRI"=> ["ex:perts",            "http://example.org/perts"]
+        "absolute IRI" => ["http://example.com/", "http://example.com/"],
+        "prefix:suffix" => ["ex:suffix", "http://example.org/suffix"],
+        "unmapped" => %w[foo foo],
+        "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+        "relative" => ["foo/bar", "http://base/foo/bar"],
+        "odd Compact IRI" => ["ex:perts", "http://example.org/perts"]
       }.each do |title, (result, input)|
         it title do
           if result.is_a?(Class)
-            expect {subject.compact_iri(input)}.to raise_error(result)
+            expect { subject.compact_iri(input) }.to raise_error(result)
           else
             expect(subject.compact_iri(input)).to produce(result, logger)
           end
@@ -1387,20 +1427,20 @@ describe JSON::LD::Context do
       end
 
       context "and @vocab" do
-        before(:each) { subject.vocab = "http://example.org/"}
+        before { subject.vocab = "http://example.org/" }
 
         {
-          "absolute IRI"  => ["http://example.com/", "http://example.com/"],
-          "prefix:suffix" => ["suffix",              "http://example.org/suffix"],
-          "keyword"       => ["@type",               "@type"],
-          "unmapped"      => ["foo",                 "foo"],
-          "bnode"         => [JSON::LD::JsonLdError:: IRIConfusedWithPrefix, RDF::Node("a")],
-          "relative"      => ["http://base/foo/bar", "http://base/foo/bar"],
-          "odd Compact IRI"=> ["experts",             "http://example.org/perts"]
+          "absolute IRI" => ["http://example.com/", "http://example.com/"],
+          "prefix:suffix" => ["suffix", "http://example.org/suffix"],
+          "keyword" => ["@type", "@type"],
+          "unmapped" => %w[foo foo],
+          "bnode" => [JSON::LD::JsonLdError::IRIConfusedWithPrefix, RDF::Node("a")],
+          "relative" => ["http://base/foo/bar", "http://base/foo/bar"],
+          "odd Compact IRI" => ["experts", "http://example.org/perts"]
         }.each do |title, (result, input)|
           it title do
             if result.is_a?(Class)
-              expect {subject.compact_iri(input, vocab: true)}.to raise_error(result)
+              expect { subject.compact_iri(input, vocab: true) }.to raise_error(result)
             else
               expect(subject.compact_iri(input, vocab: true)).to produce(result, logger)
             end
@@ -1411,7 +1451,7 @@ describe JSON::LD::Context do
 
     context "compact-0018" do
       let(:ctx) do
-        subject.parse(JSON.parse %({
+        subject.parse(JSON.parse(%({
           "id1": "http://example.com/id1",
           "type1": "http://example.com/t1",
           "type2": "http://example.com/t2",
@@ -1443,7 +1483,7 @@ describe JSON::LD::Context do
             "@container": "@list",
             "@type": "type2"
           }
-        }))
+        })))
       end
 
       {
@@ -1455,7 +1495,7 @@ describe JSON::LD::Context do
           '{ "@value": true}',
           '{ "@value": false}'
         ],
-        "term1" => %q({
+        "term1" => '{
           "@list": [
             { "@value": "v1.1", "@language": "de" },
             { "@value": "v1.2", "@language": "en" },
@@ -1464,8 +1504,8 @@ describe JSON::LD::Context do
             { "@value": true},
             { "@value": false}
           ]
-        }),
-        "term2" => %q({
+        }',
+        "term2" => '{
           "@list": [
             { "@value": "v2.1", "@language": "en" },
             { "@value": "v2.2", "@language": "en" },
@@ -1474,8 +1514,8 @@ describe JSON::LD::Context do
             { "@value": "v2.5", "@language": "en" },
             { "@value": "v2.6", "@language": "en" }
           ]
-        }),
-        "term3" => %q({
+        }',
+        "term3" => '{
           "@list": [
             { "@value": "v3.1"},
             { "@value": "v3.2"},
@@ -1484,8 +1524,8 @@ describe JSON::LD::Context do
             { "@value": "v3.5"},
             { "@value": "v3.6"}
           ]
-        }),
-        "term4" => %q({
+        }',
+        "term4" => '{
           "@list": [
             { "@value": "v4.1", "@type": "http://example.com/t1" },
             { "@value": "v4.2", "@type": "http://example.com/t1" },
@@ -1494,8 +1534,8 @@ describe JSON::LD::Context do
             { "@value": "v4.5", "@type": "http://example.com/t1" },
             { "@value": "v4.6", "@type": "http://example.com/t1" }
           ]
-        }),
-        "term5" => %q({
+        }',
+        "term5" => '{
           "@list": [
             { "@value": "v5.1", "@type": "http://example.com/t2" },
             { "@value": "v5.2", "@type": "http://example.com/t2" },
@@ -1504,12 +1544,12 @@ describe JSON::LD::Context do
             { "@value": "v5.5", "@type": "http://example.com/t2" },
             { "@value": "v5.6", "@type": "http://example.com/t2" }
           ]
-        }),
+        }'
       }.each do |term, value|
         [value].flatten.each do |v|
           it "Uses #{term} for #{v}" do
-            expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v), vocab: true)).
-              to produce(term, logger)
+            expect(ctx.compact_iri("http://example.com/term", value: JSON.parse(v), vocab: true))
+              .to produce(term, logger)
           end
         end
       end
@@ -1519,19 +1559,21 @@ describe JSON::LD::Context do
       let(:ctx) do
         subject.parse({
           "ex" => "http://example.org/ns#",
-          "ex:property" => {"@container" => "@list"}
+          "ex:property" => { "@container" => "@list" }
         })
       end
+
       it "Compact @id that is a property IRI when @container is @list" do
-        expect(ctx.compact_iri("http://example.org/ns#property", vocab: false)).
-          to produce("ex:property", logger)
+        expect(ctx.compact_iri("http://example.org/ns#property", vocab: false))
+          .to produce("ex:property", logger)
       end
     end
 
     context "compact-0041" do
       let(:ctx) do
-        subject.parse({"name" => {"@id" => "http://example.com/property", "@container" => "@list"}})
+        subject.parse({ "name" => { "@id" => "http://example.com/property", "@container" => "@list" } })
       end
+
       it "Does not use @list with @index" do
         expect(ctx.compact_iri("http://example.com/property", value: {
           "@list" => ["one item"],
@@ -1542,55 +1584,61 @@ describe JSON::LD::Context do
   end
 
   describe "#expand_value" do
-    subject {
+    subject do
       ctx = context.parse({
         "dc" => RDF::Vocab::DC.to_uri.to_s,
         "ex" => "http://example.org/",
         "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
         "xsd" => "http://www.w3.org/2001/XMLSchema#",
-        "foaf:age" => {"@type" => "xsd:integer"},
-        "foaf:knows" => {"@type" => "@id"},
-        "dc:created" => {"@type" => "xsd:date"},
-        "ex:integer" => {"@type" => "xsd:integer"},
-        "ex:double" => {"@type" => "xsd:double"},
-        "ex:boolean" => {"@type" => "xsd:boolean"},
-        "ex:none" => {"@type" => "@none"},
-        "ex:json" => {"@type" => "@json"}
+        "foaf:age" => { "@type" => "xsd:integer" },
+        "foaf:knows" => { "@type" => "@id" },
+        "dc:created" => { "@type" => "xsd:date" },
+        "ex:integer" => { "@type" => "xsd:integer" },
+        "ex:double" => { "@type" => "xsd:double" },
+        "ex:boolean" => { "@type" => "xsd:boolean" },
+        "ex:none" => { "@type" => "@none" },
+        "ex:json" => { "@type" => "@json" }
       })
       logger.clear
       ctx
-    }
+    end
 
-    %w(boolean integer string dateTime date time).each do |dt|
+    %w[boolean integer string dateTime date time].each do |dt|
       it "expands datatype xsd:#{dt}" do
-        expect(subject.expand_value("foo", RDF::XSD[dt])).to produce({"@id" => "http://www.w3.org/2001/XMLSchema##{dt}"}, logger)
+        expect(subject.expand_value("foo",
+          RDF::XSD[dt])).to produce({ "@id" => "http://www.w3.org/2001/XMLSchema##{dt}" }, logger)
       end
     end
 
     {
-      "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
-      "term" =>           ["foaf:knows",  "ex",                   {"@id" => "ex"}],
-      "prefix:suffix" =>  ["foaf:knows",  "ex:suffix",            {"@id" => "http://example.org/suffix"}],
-      "no IRI" =>         ["foo",         "http://example.com/",  {"@value" => "http://example.com/"}],
-      "no term" =>        ["foo",         "ex",                   {"@value" => "ex"}],
-      "no prefix" =>      ["foo",         "ex:suffix",            {"@value" => "ex:suffix"}],
-      "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-      "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
-      "native boolean" => ["foo", true,                           {"@value" => true}],
-      "native integer" => ["foo", 1,                              {"@value" => 1}],
-      "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
-      "native date" =>    ["foo", Date.parse("2011-12-27"),       {"@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s}],
-      "native dateTime" =>["foo", DateTime.parse("2011-12-27T10:11:12Z"), {"@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s}],
-      "ex:none string" => ["ex:none", "foo",                      {"@value" => "foo"}],
-      "ex:none boolean" =>["ex:none", true,                       {"@value" => true}],
-      "ex:none integer" =>["ex:none", 1,                          {"@value" => 1}],
-      "ex:none double" => ["ex:none", 1.1e1,                      {"@value" => 1.1E1}],
-      "ex:json string" => ["ex:json", "foo",                      {"@value" => "foo", "@type" => "@json"}],
-      "ex:json boolean" =>["ex:json", true,                       {"@value" => true, "@type" => "@json"}],
-      "ex:json integer" =>["ex:json", 1,                          {"@value" => 1, "@type" => "@json"}],
-      "ex:json double" => ["ex:json", 1.1e1,                      {"@value" => 1.1e1, "@type" => "@json"}],
-      "ex:json object" => ["ex:json", {"foo" => "bar"},           {"@value" => {"foo" => "bar"}, "@type" => "@json"}],
-      "ex:json array" =>  ["ex:json", [{"foo" => "bar"}],         {"@value" => [{"foo" => "bar"}], "@type" => "@json"}],
+      "absolute IRI" => ["foaf:knows", "http://example.com/", { "@id" => "http://example.com/" }],
+      "term" => ["foaf:knows", "ex", { "@id" => "ex" }],
+      "prefix:suffix" => ["foaf:knows", "ex:suffix", { "@id" => "http://example.org/suffix" }],
+      "no IRI" => ["foo", "http://example.com/", { "@value" => "http://example.com/" }],
+      "no term" => ["foo", "ex", { "@value" => "ex" }],
+      "no prefix" => ["foo", "ex:suffix", { "@value" => "ex:suffix" }],
+      "integer" => ["foaf:age", "54", { "@value" => "54", "@type" => RDF::XSD.integer.to_s }],
+      "date " => ["dc:created", "2011-12-27Z",
+                  { "@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s }],
+      "native boolean" => ["foo", true,                           { "@value" => true }],
+      "native integer" => ["foo", 1,                              { "@value" => 1 }],
+      "native double" => ["foo", 1.1e1, { "@value" => 1.1E1 }],
+      "native date" => ["foo", Date.parse("2011-12-27"),
+                        { "@value" => "2011-12-27", "@type" => RDF::XSD.date.to_s }],
+      "native dateTime" => ["foo", DateTime.parse("2011-12-27T10:11:12Z"),
+                            { "@value" => "2011-12-27T10:11:12Z", "@type" => RDF::XSD.dateTime.to_s }],
+      "ex:none string" => ["ex:none", "foo", { "@value" => "foo" }],
+      "ex:none boolean" => ["ex:none", true,                       { "@value" => true }],
+      "ex:none integer" => ["ex:none", 1,                          { "@value" => 1 }],
+      "ex:none double" => ["ex:none", 1.1e1,                      { "@value" => 1.1E1 }],
+      "ex:json string" => ["ex:json", "foo",                      { "@value" => "foo", "@type" => "@json" }],
+      "ex:json boolean" => ["ex:json", true,                       { "@value" => true, "@type" => "@json" }],
+      "ex:json integer" => ["ex:json", 1,                          { "@value" => 1, "@type" => "@json" }],
+      "ex:json double" => ["ex:json", 1.1e1, { "@value" => 1.1e1, "@type" => "@json" }],
+      "ex:json object" => ["ex:json", { "foo" => "bar" },
+                           { "@value" => { "foo" => "bar" }, "@type" => "@json" }],
+      "ex:json array" => ["ex:json", [{ "foo" => "bar" }],
+                          { "@value" => [{ "foo" => "bar" }], "@type" => "@json" }]
     }.each do |title, (key, compacted, expanded)|
       it title do
         expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1598,14 +1646,16 @@ describe JSON::LD::Context do
     end
 
     context "@language" do
-      before(:each) {subject.default_language = "en"}
+      before { subject.default_language = "en" }
+
       {
-        "no IRI" =>         ["foo",         "http://example.com/",  {"@value" => "http://example.com/", "@language" => "en"}],
-        "no term" =>        ["foo",         "ex",                   {"@value" => "ex", "@language" => "en"}],
-        "no prefix" =>      ["foo",         "ex:suffix",            {"@value" => "ex:suffix", "@language" => "en"}],
-        "native boolean" => ["foo",         true,                   {"@value" => true}],
-        "native integer" => ["foo",         1,                      {"@value" => 1}],
-        "native double" =>  ["foo",         1.1,                    {"@value" => 1.1}],
+        "no IRI" => ["foo", "http://example.com/",
+                     { "@value" => "http://example.com/", "@language" => "en" }],
+        "no term" => ["foo", "ex", { "@value" => "ex", "@language" => "en" }],
+        "no prefix" => ["foo", "ex:suffix", { "@value" => "ex:suffix", "@language" => "en" }],
+        "native boolean" => ["foo",         true,                   { "@value" => true }],
+        "native integer" => ["foo",         1,                      { "@value" => 1 }],
+        "native double" => ["foo", 1.1, { "@value" => 1.1 }]
       }.each do |title, (key, compacted, expanded)|
         it title do
           expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1614,25 +1664,26 @@ describe JSON::LD::Context do
     end
 
     context "coercion" do
-      before(:each) {subject.default_language = "en"}
+      before { subject.default_language = "en" }
+
       {
-        "boolean-boolean" => ["ex:boolean", true,   {"@value" => true, "@type" => RDF::XSD.boolean.to_s}],
-        "boolean-integer" => ["ex:integer", true,   {"@value" => true, "@type" => RDF::XSD.integer.to_s}],
-        "boolean-double"  => ["ex:double",  true,   {"@value" => true, "@type" => RDF::XSD.double.to_s}],
-        "boolean-json"    => ["ex:json",   true,    {"@value" => true, "@type" => '@json'}],
-        "double-boolean"  => ["ex:boolean", 1.1,    {"@value" => 1.1, "@type" => RDF::XSD.boolean.to_s}],
-        "double-double"   => ["ex:double",  1.1,    {"@value" => 1.1, "@type" => RDF::XSD.double.to_s}],
-        "double-integer"  => ["foaf:age",   1.1,    {"@value" => 1.1, "@type" => RDF::XSD.integer.to_s}],
-        "double-json"     => ["ex:json",   1.1,     {"@value" => 1.1, "@type" => '@json'}],
-        "json-json"       => ["ex:json",   {"foo" => "bar"}, {"@value" => {"foo" => "bar"}, "@type" => '@json'}],
-        "integer-boolean" => ["ex:boolean", 1,      {"@value" => 1, "@type" => RDF::XSD.boolean.to_s}],
-        "integer-double"  => ["ex:double",  1,      {"@value" => 1, "@type" => RDF::XSD.double.to_s}],
-        "integer-integer" => ["foaf:age",   1,      {"@value" => 1, "@type" => RDF::XSD.integer.to_s}],
-        "integer-json"    => ["ex:json",   1,       {"@value" => 1, "@type" => '@json'}],
-        "string-boolean"  => ["ex:boolean", "foo",  {"@value" => "foo", "@type" => RDF::XSD.boolean.to_s}],
-        "string-double"   => ["ex:double",  "foo",  {"@value" => "foo", "@type" => RDF::XSD.double.to_s}],
-        "string-integer"  => ["foaf:age",   "foo",  {"@value" => "foo", "@type" => RDF::XSD.integer.to_s}],
-        "string-json"     => ["ex:json",   "foo",   {"@value" => "foo", "@type" => '@json'}],
+        "boolean-boolean" => ["ex:boolean", true,   { "@value" => true, "@type" => RDF::XSD.boolean.to_s }],
+        "boolean-integer" => ["ex:integer", true,   { "@value" => true, "@type" => RDF::XSD.integer.to_s }],
+        "boolean-double" => ["ex:double", true, { "@value" => true, "@type" => RDF::XSD.double.to_s }],
+        "boolean-json" => ["ex:json", true, { "@value" => true, "@type" => '@json' }],
+        "double-boolean" => ["ex:boolean", 1.1, { "@value" => 1.1, "@type" => RDF::XSD.boolean.to_s }],
+        "double-double" => ["ex:double", 1.1, { "@value" => 1.1, "@type" => RDF::XSD.double.to_s }],
+        "double-integer" => ["foaf:age", 1.1, { "@value" => 1.1, "@type" => RDF::XSD.integer.to_s }],
+        "double-json" => ["ex:json", 1.1,     { "@value" => 1.1, "@type" => '@json' }],
+        "json-json" => ["ex:json", { "foo" => "bar" }, { "@value" => { "foo" => "bar" }, "@type" => '@json' }],
+        "integer-boolean" => ["ex:boolean", 1, { "@value" => 1, "@type" => RDF::XSD.boolean.to_s }],
+        "integer-double" => ["ex:double", 1, { "@value" => 1, "@type" => RDF::XSD.double.to_s }],
+        "integer-integer" => ["foaf:age", 1, { "@value" => 1, "@type" => RDF::XSD.integer.to_s }],
+        "integer-json" => ["ex:json", 1, { "@value" => 1, "@type" => '@json' }],
+        "string-boolean" => ["ex:boolean", "foo", { "@value" => "foo", "@type" => RDF::XSD.boolean.to_s }],
+        "string-double" => ["ex:double", "foo", { "@value" => "foo", "@type" => RDF::XSD.double.to_s }],
+        "string-integer" => ["foaf:age", "foo", { "@value" => "foo", "@type" => RDF::XSD.integer.to_s }],
+        "string-json" => ["ex:json", "foo", { "@value" => "foo", "@type" => '@json' }]
       }.each do |title, (key, compacted, expanded)|
         it title do
           expect(subject.expand_value(key, compacted)).to produce(expanded, logger)
@@ -1642,44 +1693,51 @@ describe JSON::LD::Context do
   end
 
   describe "#compact_value" do
+    subject { ctx }
+
     let(:ctx) do
       c = context.parse({
-        "dc"         => RDF::Vocab::DC.to_uri.to_s,
-        "ex"         => "http://example.org/",
-        "foaf"       => RDF::Vocab::FOAF.to_uri.to_s,
-        "xsd"        => RDF::XSD.to_s,
-        "langmap"    => {"@id" => "http://example.com/langmap", "@container" => "@language"},
-        "list"       => {"@id" => "http://example.org/list", "@container" => "@list"},
-        "nolang"     => {"@id" => "http://example.org/nolang", "@language" => nil},
-        "dc:created" => {"@type" => RDF::XSD.date.to_s},
-        "foaf:age"   => {"@type" => RDF::XSD.integer.to_s},
-        "foaf:knows" => {"@type" => "@id"},
-        "ex:none"    => {"@type" => "@none"},
+        "dc" => RDF::Vocab::DC.to_uri.to_s,
+        "ex" => "http://example.org/",
+        "foaf" => RDF::Vocab::FOAF.to_uri.to_s,
+        "xsd" => RDF::XSD.to_s,
+        "langmap" => { "@id" => "http://example.com/langmap", "@container" => "@language" },
+        "list" => { "@id" => "http://example.org/list", "@container" => "@list" },
+        "nolang" => { "@id" => "http://example.org/nolang", "@language" => nil },
+        "dc:created" => { "@type" => RDF::XSD.date.to_s },
+        "foaf:age" => { "@type" => RDF::XSD.integer.to_s },
+        "foaf:knows" => { "@type" => "@id" },
+        "ex:none" => { "@type" => "@none" }
       })
       logger.clear
       c
     end
-    subject {ctx}
 
     {
-      "absolute IRI" =>   ["foaf:knows",  "http://example.com/",  {"@id" => "http://example.com/"}],
-      "prefix:suffix" =>  ["foaf:knows",  "ex:suffix",            {"@id" => "http://example.org/suffix"}],
-      "integer" =>        ["foaf:age",    "54",                   {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-      "date " =>          ["dc:created",  "2011-12-27Z",          {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
-      "no IRI" =>         ["foo", {"@id" =>"http://example.com/"},{"@id" => "http://example.com/"}],
-      "no IRI (Compact IRI)" => ["foo", {"@id" => RDF::Vocab::FOAF.Person.to_s},       {"@id" => RDF::Vocab::FOAF.Person.to_s}],
-      "no boolean" =>     ["foo", {"@value" => "true", "@type" => "xsd:boolean"},{"@value" => "true", "@type" => RDF::XSD.boolean.to_s}],
-      "no integer" =>     ["foo", {"@value" => "54", "@type" => "xsd:integer"},{"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-      "no date " =>       ["foo", {"@value" => "2011-12-27Z", "@type" => "xsd:date"}, {"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
-      "no string " =>     ["foo", "string",                       {"@value" => "string"}],
-      "no lang " =>       ["nolang", "string",                    {"@value" => "string"}],
-      "native boolean" => ["foo", true,                           {"@value" => true}],
-      "native integer" => ["foo", 1,                              {"@value" => 1}],
-      "native integer(list)"=>["list", 1,                         {"@value" => 1}],
-      "native double" =>  ["foo", 1.1e1,                          {"@value" => 1.1E1}],
-      "ex:none IRI" =>    ["ex:none", {"@id" => "http://example.com/"},  {"@id" => "http://example.com/"}],
-      "ex:none string" => ["ex:none", {"@value" => "string"},     {"@value" => "string"}],
-      "ex:none integer" =>["ex:none", {"@value" => "54", "@type" => "xsd:integer"}, {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
+      "absolute IRI" => ["foaf:knows", "http://example.com/", { "@id" => "http://example.com/" }],
+      "prefix:suffix" => ["foaf:knows", "ex:suffix", { "@id" => "http://example.org/suffix" }],
+      "integer" => ["foaf:age", "54", { "@value" => "54", "@type" => RDF::XSD.integer.to_s }],
+      "date " => ["dc:created", "2011-12-27Z",
+                  { "@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s }],
+      "no IRI" => ["foo", { "@id" => "http://example.com/" }, { "@id" => "http://example.com/" }],
+      "no IRI (Compact IRI)" => ["foo", { "@id" => RDF::Vocab::FOAF.Person.to_s },
+                                 { "@id" => RDF::Vocab::FOAF.Person.to_s }],
+      "no boolean" => ["foo", { "@value" => "true", "@type" => "xsd:boolean" },
+                       { "@value" => "true", "@type" => RDF::XSD.boolean.to_s }],
+      "no integer" => ["foo", { "@value" => "54", "@type" => "xsd:integer" },
+                       { "@value" => "54", "@type" => RDF::XSD.integer.to_s }],
+      "no date " => ["foo", { "@value" => "2011-12-27Z", "@type" => "xsd:date" },
+                     { "@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s }],
+      "no string " => ["foo", "string", { "@value" => "string" }],
+      "no lang " => ["nolang", "string", { "@value" => "string" }],
+      "native boolean" => ["foo", true,                           { "@value" => true }],
+      "native integer" => ["foo", 1,                              { "@value" => 1 }],
+      "native integer(list)" => ["list", 1,                         { "@value" => 1 }],
+      "native double" => ["foo", 1.1e1, { "@value" => 1.1E1 }],
+      "ex:none IRI" => ["ex:none", { "@id" => "http://example.com/" }, { "@id" => "http://example.com/" }],
+      "ex:none string" => ["ex:none", { "@value" => "string" }, { "@value" => "string" }],
+      "ex:none integer" => ["ex:none", { "@value" => "54", "@type" => "xsd:integer" },
+                            { "@value" => "54", "@type" => RDF::XSD.integer.to_s }]
     }.each do |title, (key, compacted, expanded)|
       it title do
         expect(subject.compact_value(key, expanded)).to produce(compacted, logger)
@@ -1688,24 +1746,39 @@ describe JSON::LD::Context do
 
     context "@language" do
       {
-        "@id"                            => ["foo", {"@id" => "foo"},                                 {"@id" => "foo"}],
-        "integer"                        => ["foo", {"@value" => "54", "@type" => "xsd:integer"},     {"@value" => "54", "@type" => RDF::XSD.integer.to_s}],
-        "date"                           => ["foo", {"@value" => "2011-12-27Z","@type" => "xsd:date"},{"@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s}],
-        "no lang"                        => ["foo", {"@value" => "foo"  },                            {"@value" => "foo"}],
-        "same lang"                      => ["foo", "foo",                                            {"@value" => "foo", "@language" => "en"}],
-        "other lang"                     => ["foo",  {"@value" => "foo", "@language" => "bar"},       {"@value" => "foo", "@language" => "bar"}],
-        "langmap"                        => ["langmap", "en",                                         {"@value" => "en", "@language" => "en"}],
-        "no lang with @type coercion"    => ["dc:created", {"@value" => "foo"},                       {"@value" => "foo"}],
-        "no lang with @id coercion"      => ["foaf:knows", {"@value" => "foo"},                       {"@value" => "foo"}],
-        "no lang with @language=null"    => ["nolang", "string",                                      {"@value" => "string"}],
-        "same lang with @type coercion"  => ["dc:created", {"@value" => "foo"},                       {"@value" => "foo"}],
-        "same lang with @id coercion"    => ["foaf:knows", {"@value" => "foo"},                       {"@value" => "foo"}],
-        "other lang with @type coercion" => ["dc:created", {"@value" => "foo", "@language" => "bar"}, {"@value" => "foo", "@language" => "bar"}],
-        "other lang with @id coercion"   => ["foaf:knows", {"@value" => "foo", "@language" => "bar"}, {"@value" => "foo", "@language" => "bar"}],
-        "native boolean"                 => ["foo", true,                                             {"@value" => true}],
-        "native integer"                 => ["foo", 1,                                                {"@value" => 1}],
-        "native integer(list)"           => ["list", 1,                                               {"@value" => 1}],
-        "native double"                  => ["foo", 1.1e1,                                            {"@value" => 1.1E1}],
+        "@id" => ["foo", { "@id" => "foo" }, { "@id" => "foo" }],
+        "integer" => ["foo", { "@value" => "54", "@type" => "xsd:integer" },
+                      { "@value" => "54", "@type" => RDF::XSD.integer.to_s }],
+        "date" => ["foo", { "@value" => "2011-12-27Z", "@type" => "xsd:date" },
+                   { "@value" => "2011-12-27Z", "@type" => RDF::XSD.date.to_s }],
+        "no lang" => ["foo", { "@value" => "foo" },
+                      { "@value" => "foo" }],
+        "same lang" => ["foo", "foo",
+                        { "@value" => "foo", "@language" => "en" }],
+        "other lang" => ["foo", { "@value" => "foo", "@language" => "bar" },
+                         { "@value" => "foo", "@language" => "bar" }],
+        "langmap" => ["langmap", "en",
+                      { "@value" => "en", "@language" => "en" }],
+        "no lang with @type coercion" => ["dc:created", { "@value" => "foo" },
+                                          { "@value" => "foo" }],
+        "no lang with @id coercion" => ["foaf:knows", { "@value" => "foo" },
+                                        { "@value" => "foo" }],
+        "no lang with @language=null" => ["nolang", "string",
+                                          { "@value" => "string" }],
+        "same lang with @type coercion" => ["dc:created", { "@value" => "foo" },
+                                            { "@value" => "foo" }],
+        "same lang with @id coercion" => ["foaf:knows", { "@value" => "foo" },
+                                          { "@value" => "foo" }],
+        "other lang with @type coercion" => ["dc:created", { "@value" => "foo", "@language" => "bar" },
+                                             { "@value" => "foo", "@language" => "bar" }],
+        "other lang with @id coercion" => ["foaf:knows", { "@value" => "foo", "@language" => "bar" },
+                                           { "@value" => "foo", "@language" => "bar" }],
+        "native boolean" => ["foo", true,
+                             { "@value" => true }],
+        "native integer" => ["foo", 1, { "@value" => 1 }],
+        "native integer(list)" => ["list", 1, { "@value" => 1 }],
+        "native double" => ["foo", 1.1e1,
+                            { "@value" => 1.1E1 }]
       }.each do |title, (key, compacted, expanded)|
         it title do
           subject.default_language = "en"
@@ -1715,7 +1788,7 @@ describe JSON::LD::Context do
     end
 
     context "keywords" do
-      before(:each) do
+      before do
         subject.set_mapping("id", "@id")
         subject.set_mapping("type", "@type")
         subject.set_mapping("list", "@list")
@@ -1725,10 +1798,10 @@ describe JSON::LD::Context do
       end
 
       {
-        "@id" =>      [{"id" => "http://example.com/"},             {"@id" => "http://example.com/"}],
-        "@type" =>    [{"literal" => "foo", "type" => "http://example.com/"},
-                                                                    {"@value" => "foo", "@type" => "http://example.com/"}],
-        "@value" =>   [{"literal" => "foo", "language" => "bar"},   {"@value" => "foo", "@language" => "bar"}],
+        "@id" => [{ "id" => "http://example.com/" }, { "@id" => "http://example.com/" }],
+        "@type" => [{ "literal" => "foo", "type" => "http://example.com/" },
+                    { "@value" => "foo", "@type" => "http://example.com/" }],
+        "@value" => [{ "literal" => "foo", "language" => "bar" }, { "@value" => "foo", "@language" => "bar" }]
       }.each do |title, (compacted, expanded)|
         it title do
           expect(subject.compact_value("foo", expanded)).to produce(compacted, logger)
@@ -1742,49 +1815,49 @@ describe JSON::LD::Context do
   end
 
   describe "#container" do
-    subject {
+    subject do
       ctx = context.parse({
-        "ex"          => "http://example.org/",
-        "graph"       => {"@id" => "ex:graph", "@container" => "@graph"},
-        "graphSet"    => {"@id" => "ex:graphSet", "@container" => ["@graph", "@set"]},
-        "graphId"     => {"@id" => "ex:graphSet", "@container" => ["@graph", "@id"]},
-        "graphIdSet"  => {"@id" => "ex:graphSet", "@container" => ["@graph", "@id", "@set"]},
-        "graphNdx"    => {"@id" => "ex:graphSet", "@container" => ["@graph", "@index"]},
-        "graphNdxSet" => {"@id" => "ex:graphSet", "@container" => ["@graph", "@index", "@set"]},
-        "id"          => {"@id" => "ex:idSet", "@container" => "@id"},
-        "idSet"       => {"@id" => "ex:id", "@container" => ["@id", "@set"]},
-        "language"    => {"@id" => "ex:language", "@container" => "@language"},
-        "langSet"     => {"@id" => "ex:languageSet", "@container" => ["@language", "@set"]},
-        "list"        => {"@id" => "ex:list", "@container" => "@list"},
-        "ndx"         => {"@id" => "ex:ndx", "@container" => "@index"},
-        "ndxSet"      => {"@id" => "ex:ndxSet", "@container" => ["@index", "@set"]},
-        "set"         => {"@id" => "ex:set", "@container" => "@set"},
-        "type"        => {"@id" => "ex:type", "@container" => "@type"},
-        "typeSet"     => {"@id" => "ex:typeSet", "@container" => ["@type", "@set"]},
+        "ex" => "http://example.org/",
+        "graph" => { "@id" => "ex:graph", "@container" => "@graph" },
+        "graphSet" => { "@id" => "ex:graphSet", "@container" => ["@graph", "@set"] },
+        "graphId" => { "@id" => "ex:graphSet", "@container" => ["@graph", "@id"] },
+        "graphIdSet" => { "@id" => "ex:graphSet", "@container" => ["@graph", "@id", "@set"] },
+        "graphNdx" => { "@id" => "ex:graphSet", "@container" => ["@graph", "@index"] },
+        "graphNdxSet" => { "@id" => "ex:graphSet", "@container" => ["@graph", "@index", "@set"] },
+        "id" => { "@id" => "ex:idSet", "@container" => "@id" },
+        "idSet" => { "@id" => "ex:id", "@container" => ["@id", "@set"] },
+        "language" => { "@id" => "ex:language", "@container" => "@language" },
+        "langSet" => { "@id" => "ex:languageSet", "@container" => ["@language", "@set"] },
+        "list" => { "@id" => "ex:list", "@container" => "@list" },
+        "ndx" => { "@id" => "ex:ndx", "@container" => "@index" },
+        "ndxSet" => { "@id" => "ex:ndxSet", "@container" => ["@index", "@set"] },
+        "set" => { "@id" => "ex:set", "@container" => "@set" },
+        "type" => { "@id" => "ex:type", "@container" => "@type" },
+        "typeSet" => { "@id" => "ex:typeSet", "@container" => ["@type", "@set"] }
       })
       logger.clear
       ctx
-    }
+    end
 
     it "uses TermDefinition" do
       {
-        "ex"          => Set.new,
-        "graph"       => Set["@graph"],
-        "graphSet"    => Set["@graph"],
-        "graphId"     => Set["@graph", "@id"],
-        "graphIdSet"  => Set["@graph", "@id"],
-        "graphNdx"    => Set["@graph", "@index"],
+        "ex" => Set.new,
+        "graph" => Set["@graph"],
+        "graphSet" => Set["@graph"],
+        "graphId" => Set["@graph", "@id"],
+        "graphIdSet" => Set["@graph", "@id"],
+        "graphNdx" => Set["@graph", "@index"],
         "graphNdxSet" => Set["@graph", "@index"],
-        "id"          => Set['@id'],
-        "idSet"       => Set['@id'],
-        "language"    => Set['@language'],
-        "langSet"     => Set['@language'],
-        "list"        => Set['@list'],
-        "ndx"         => Set['@index'],
-        "ndxSet"      => Set['@index'],
-        "set"         => Set.new,
-        "type"        => Set['@type'],
-        "typeSet"     => Set['@type'],
+        "id" => Set['@id'],
+        "idSet" => Set['@id'],
+        "language" => Set['@language'],
+        "langSet" => Set['@language'],
+        "list" => Set['@list'],
+        "ndx" => Set['@index'],
+        "ndxSet" => Set['@index'],
+        "set" => Set.new,
+        "type" => Set['@type'],
+        "typeSet" => Set['@type']
       }.each do |defn, container|
         expect(subject.container(subject.term_definitions[defn])).to eq container
       end
@@ -1792,23 +1865,23 @@ describe JSON::LD::Context do
 
     it "#as_array" do
       {
-        "ex"          => false,
-        "graph"       => false,
-        "graphSet"    => true,
-        "graphId"     => false,
-        "graphIdSet"  => true,
-        "graphNdx"    => false,
+        "ex" => false,
+        "graph" => false,
+        "graphSet" => true,
+        "graphId" => false,
+        "graphIdSet" => true,
+        "graphNdx" => false,
         "graphNdxSet" => true,
-        "id"          => false,
-        "idSet"       => true,
-        "language"    => false,
-        "langSet"     => true,
-        "list"        => true,
-        "ndx"         => false,
-        "ndxSet"      => true,
-        "set"         => true,
-        "type"        => false,
-        "typeSet"     => true,
+        "id" => false,
+        "idSet" => true,
+        "language" => false,
+        "langSet" => true,
+        "list" => true,
+        "ndx" => false,
+        "ndxSet" => true,
+        "set" => true,
+        "type" => false,
+        "typeSet" => true
       }.each do |defn, as_array|
         expect(subject.as_array?(subject.term_definitions[defn])).to eq as_array
       end
@@ -1816,23 +1889,23 @@ describe JSON::LD::Context do
 
     it "uses array" do
       {
-        "ex"          => Set.new,
-        "graph"       => Set["@graph"],
-        "graphSet"    => Set["@graph"],
-        "graphId"     => Set["@graph", "@id"],
-        "graphIdSet"  => Set["@graph", "@id"],
-        "graphNdx"    => Set["@graph", "@index"],
+        "ex" => Set.new,
+        "graph" => Set["@graph"],
+        "graphSet" => Set["@graph"],
+        "graphId" => Set["@graph", "@id"],
+        "graphIdSet" => Set["@graph", "@id"],
+        "graphNdx" => Set["@graph", "@index"],
         "graphNdxSet" => Set["@graph", "@index"],
-        "id"          => Set['@id'],
-        "idSet"       => Set['@id'],
-        "language"    => Set['@language'],
-        "langSet"     => Set['@language'],
-        "list"        => Set['@list'],
-        "ndx"         => Set['@index'],
-        "ndxSet"      => Set['@index'],
-        "set"         => Set.new,
-        "type"        => Set['@type'],
-        "typeSet"     => Set['@type'],
+        "id" => Set['@id'],
+        "idSet" => Set['@id'],
+        "language" => Set['@language'],
+        "langSet" => Set['@language'],
+        "list" => Set['@list'],
+        "ndx" => Set['@index'],
+        "ndxSet" => Set['@index'],
+        "set" => Set.new,
+        "type" => Set['@type'],
+        "typeSet" => Set['@type']
       }.each do |defn, container|
         expect(subject.container(defn)).to eq container
       end
@@ -1840,15 +1913,16 @@ describe JSON::LD::Context do
   end
 
   describe "#language" do
-    subject {
+    subject do
       ctx = context.parse({
         "ex" => "http://example.org/",
-        "nil" => {"@id" => "ex:nil", "@language" => nil},
-        "en" => {"@id" => "ex:en", "@language" => "en"},
+        "nil" => { "@id" => "ex:nil", "@language" => nil },
+        "en" => { "@id" => "ex:en", "@language" => "en" }
       })
       logger.clear
       ctx
-    }
+    end
+
     it "uses TermDefinition" do
       expect(subject.language(subject.term_definitions['ex'])).to be_falsey
       expect(subject.language(subject.term_definitions['nil'])).to be_falsey
@@ -1863,43 +1937,44 @@ describe JSON::LD::Context do
   end
 
   describe "#reverse?" do
-    subject {
+    subject do
       ctx = context.parse({
         "ex" => "http://example.org/",
-        "reverse" => {"@reverse" => "ex:reverse"},
+        "reverse" => { "@reverse" => "ex:reverse" }
       })
       logger.clear
       ctx
-    }
+    end
+
     it "uses TermDefinition" do
-      expect(subject.reverse?(subject.term_definitions['ex'])).to be_falsey
-      expect(subject.reverse?(subject.term_definitions['reverse'])).to be_truthy
+      expect(subject).not_to be_reverse(subject.term_definitions['ex'])
+      expect(subject).to be_reverse(subject.term_definitions['reverse'])
     end
 
     it "uses string" do
-      expect(subject.reverse?('ex')).to be_falsey
-      expect(subject.reverse?('reverse')).to be_truthy
+      expect(subject).not_to be_reverse('ex')
+      expect(subject).to be_reverse('reverse')
     end
   end
 
   describe "#nest" do
-    subject {
+    subject do
       ctx = context.parse({
-        "ex"          => "http://example.org/",
-        "nest"        => {"@id" => "ex:nest", "@nest" => "@nest"},
-        "nest2"       => {"@id" => "ex:nest2", "@nest" => "nest-alias"},
-        "nest-alias"  => "@nest"
+        "ex" => "http://example.org/",
+        "nest" => { "@id" => "ex:nest", "@nest" => "@nest" },
+        "nest2" => { "@id" => "ex:nest2", "@nest" => "nest-alias" },
+        "nest-alias" => "@nest"
       })
       logger.clear
       ctx
-    }
+    end
 
     it "uses term" do
       {
-        "ex"       => nil,
-        "nest"     => "@nest",
-        "nest2"      => "nest-alias",
-        "nest-alias"  => nil,
+        "ex" => nil,
+        "nest" => "@nest",
+        "nest2" => "nest-alias",
+        "nest-alias" => nil
       }.each do |defn, nest|
         expect(subject.nest(defn)).to eq nest
       end
@@ -1907,28 +1982,29 @@ describe JSON::LD::Context do
 
     context "detects error" do
       it "does not allow a keyword other than @nest for the value of @nest" do
-        expect {
-          context.parse({"no-keyword-nest" => {"@id" => "http://example/f", "@nest" => "@id"}})
-        }.to raise_error JSON::LD::JsonLdError::InvalidNestValue
+        expect do
+          context.parse({ "no-keyword-nest" => { "@id" => "http://example/f", "@nest" => "@id" } })
+        end.to raise_error JSON::LD::JsonLdError::InvalidNestValue
       end
 
       it "does not allow @nest with @reverse" do
-        expect {
-          context.parse({"no-reverse-nest" => {"@reverse" => "http://example/f", "@nest" => "@nest"}})
-        }.to raise_error JSON::LD::JsonLdError::InvalidReverseProperty
+        expect do
+          context.parse({ "no-reverse-nest" => { "@reverse" => "http://example/f", "@nest" => "@nest" } })
+        end.to raise_error JSON::LD::JsonLdError::InvalidReverseProperty
       end
     end
   end
 
   describe "#reverse_term" do
-    subject {
+    subject do
       ctx = context.parse({
         "ex" => "http://example.org/",
-        "reverse" => {"@reverse" => "ex"},
+        "reverse" => { "@reverse" => "ex" }
       })
       logger.clear
       ctx
-    }
+    end
+
     it "uses TermDefinition" do
       expect(subject.reverse_term(subject.term_definitions['ex'])).to eql subject.term_definitions['reverse']
       expect(subject.reverse_term(subject.term_definitions['reverse'])).to eql subject.term_definitions['ex']
@@ -1943,8 +2019,8 @@ describe JSON::LD::Context do
   describe "protected contexts" do
     it "seals a term with @protected true" do
       ctx = context.parse({
-        "protected" => {"@id" => "http://example.com/protected", "@protected" => true},
-        "unprotected" => {"@id" => "http://example.com/unprotected"},
+        "protected" => { "@id" => "http://example.com/protected", "@protected" => true },
+        "unprotected" => { "@id" => "http://example.com/unprotected" }
       })
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
@@ -1953,8 +2029,8 @@ describe JSON::LD::Context do
     it "seals all term with @protected true in context" do
       ctx = context.parse({
         "@protected" => true,
-        "protected" => {"@id" => "http://example.com/protected"},
-        "protected2" => {"@id" => "http://example.com/protected2"},
+        "protected" => { "@id" => "http://example.com/protected" },
+        "protected2" => { "@id" => "http://example.com/protected2" }
       })
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["protected2"]).to be_protected
@@ -1963,8 +2039,8 @@ describe JSON::LD::Context do
     it "does not seal term with @protected: false when context is protected" do
       ctx = context.parse({
         "@protected" => true,
-        "protected" => {"@id" => "http://example.com/protected"},
-        "unprotected" => {"@id" => "http://example.com/unprotected", "@protected" => false},
+        "protected" => { "@id" => "http://example.com/protected" },
+        "unprotected" => { "@id" => "http://example.com/unprotected", "@protected" => false }
       })
       expect(ctx.term_definitions["protected"]).to be_protected
       expect(ctx.term_definitions["unprotected"]).not_to be_protected
@@ -1972,85 +2048,96 @@ describe JSON::LD::Context do
 
     it "does not error when redefining an identical term" do
       c = {
-        "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
+        "protected" => { "@id" => "http://example.com/protected", "@protected" => true }
       }
       ctx = context.parse(c)
 
-      expect {ctx.parse(c)}.not_to raise_error
+      expect { ctx.parse(c) }.not_to raise_error
     end
 
     it "errors when redefining a protected term" do
       ctx = context.parse({
-        "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
+        "protected" => { "@id" => "http://example.com/protected", "@protected" => true }
       })
 
-      expect {ctx.parse({"protected" => "http://example.com/different"})}.to raise_error(JSON::LD::JsonLdError::ProtectedTermRedefinition)
+      expect do
+        ctx.parse({ "protected" => "http://example.com/different" })
+      end.to raise_error(JSON::LD::JsonLdError::ProtectedTermRedefinition)
     end
 
     it "errors when clearing a context having protected terms" do
       ctx = context.parse({
-        "protected" => {"@id" => "http://example.com/protected", "@protected" => true}
+        "protected" => { "@id" => "http://example.com/protected", "@protected" => true }
       })
 
-      expect {ctx.parse(nil)}.to raise_error(JSON::LD::JsonLdError::InvalidContextNullification)
+      expect { ctx.parse(nil) }.to raise_error(JSON::LD::JsonLdError::InvalidContextNullification)
     end
   end
 
   describe JSON::LD::Context::TermDefinition do
     context "with nothing" do
-      subject {described_class.new("term")}
-      its(:term) {is_expected.to eq "term"}
-      its(:id) {is_expected.to be_nil}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term"))}
+      subject { described_class.new("term") }
+
+      its(:term) { is_expected.to eq "term" }
+      its(:id) { is_expected.to be_nil }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term")) }
     end
 
     context "with id" do
-      subject {described_class.new("term", id: "http://example.org/term")}
-      its(:term) {is_expected.to eq "term"}
-      its(:id) {is_expected.to eq "http://example.org/term"}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", id: "http://example.org/term"))}
+      subject { described_class.new("term", id: "http://example.org/term") }
+
+      its(:term) { is_expected.to eq "term" }
+      its(:id) { is_expected.to eq "http://example.org/term" }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", id: "http://example.org/term")) }
     end
 
     context "with type_mapping" do
-      subject {described_class.new("term", type_mapping: "http://example.org/type")}
-      its(:type_mapping) {is_expected.to eq "http://example.org/type"}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", type_mapping: "http://example.org/type"))}
+      subject { described_class.new("term", type_mapping: "http://example.org/type") }
+
+      its(:type_mapping) { is_expected.to eq "http://example.org/type" }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", type_mapping: "http://example.org/type")) }
     end
 
     context "with container_mapping @set" do
-      subject {described_class.new("term", container_mapping: "@set")}
-      its(:container_mapping) {is_expected.to be_empty}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@set"))}
+      subject { described_class.new("term", container_mapping: "@set") }
+
+      its(:container_mapping) { is_expected.to be_empty }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", container_mapping: "@set")) }
     end
 
     context "with container_mapping @id @set" do
-      subject {described_class.new("term", container_mapping: %w(@id @set))}
-      its(:container_mapping) {is_expected.to eq Set['@id']}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: ["@id", "@set"]))}
+      subject { described_class.new("term", container_mapping: %w[@id @set]) }
+
+      its(:container_mapping) { is_expected.to eq Set['@id'] }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", container_mapping: ["@id", "@set"])) }
     end
 
     context "with container_mapping @list" do
-      subject {described_class.new("term", container_mapping: "@list")}
-      its(:container_mapping) {is_expected.to eq Set['@list']}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", container_mapping: "@list"))}
+      subject { described_class.new("term", container_mapping: "@list") }
+
+      its(:container_mapping) { is_expected.to eq Set['@list'] }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", container_mapping: "@list")) }
     end
 
     context "with language_mapping" do
-      subject {described_class.new("term", language_mapping: "en")}
-      its(:language_mapping) {is_expected.to eq "en"}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", language_mapping: "en"))}
+      subject { described_class.new("term", language_mapping: "en") }
+
+      its(:language_mapping) { is_expected.to eq "en" }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", language_mapping: "en")) }
     end
 
     context "with reverse_property" do
-      subject {described_class.new("term", reverse_property: true)}
-      its(:reverse_property) {is_expected.to be_truthy}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", reverse_property: true))}
+      subject { described_class.new("term", reverse_property: true) }
+
+      its(:reverse_property) { is_expected.to be_truthy }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", reverse_property: true)) }
     end
 
     context "with simple" do
-      subject {described_class.new("term", simple: true)}
-      its(:simple) {is_expected.to be_truthy}
-      its(:to_rb) {is_expected.to eq %(TermDefinition.new("term", simple: true))}
+      subject { described_class.new("term", simple: true) }
+
+      its(:simple) { is_expected.to be_truthy }
+      its(:to_rb) { is_expected.to eq %(TermDefinition.new("term", simple: true)) }
     end
   end
 end

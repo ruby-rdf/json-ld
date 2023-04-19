@@ -1,11 +1,12 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 require 'rack/linkeddata'
 require 'rack/test'
 
 describe JSON::LD::ContentNegotiation do
-  include ::Rack::Test::Methods
-  let(:logger) {RDF::Spec.logger}
+  include Rack::Test::Methods
+  let(:logger) { RDF::Spec.logger }
 
   let(:app) do
     described_class.new(double("Target Rack Application", :call => [200, {}, @results || "A String"]))
@@ -13,9 +14,9 @@ describe JSON::LD::ContentNegotiation do
 
   describe "#parse_accept_header" do
     {
-      "application/n-triples, application/ld+json;q=0.5" => %w(application/ld+json),
+      "application/n-triples, application/ld+json;q=0.5" => %w[application/ld+json],
       "application/ld+json, application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted" =>
-        %w(application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted application/ld+json),
+        %w[application/ld+json;profile=http://www.w3.org/ns/json-ld#compacted application/ld+json]
     }.each do |accept, content_types|
       it "returns #{content_types.inspect} given #{accept.inspect}" do
         expect(app.send(:parse_accept_header, accept)).to eq content_types
@@ -39,17 +40,17 @@ describe JSON::LD::ContentNegotiation do
   end
 
   describe "#call" do
-    let(:schema_context) {
-      JSON::LD::API::RemoteDocument.new(%q({
+    let(:schema_context) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "@vocab": "http://schema.org/",
           "id": "@id",
           "type": "@type"
         }
-      }), documentUrl: "http://schema.org")
-    }
-    let(:frame) {
-      JSON::LD::API::RemoteDocument.new(%q({
+      }', documentUrl: "http://schema.org")
+    end
+    let(:frame) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
@@ -61,21 +62,23 @@ describe JSON::LD::ContentNegotiation do
             "@type": "ex:Chapter"
           }
         }
-      }), documentUrl: "http://conneg.example.com/frame")
-    }
-    let(:context) {
-      JSON::LD::API::RemoteDocument.new(%q({
+      }', documentUrl: "http://conneg.example.com/frame")
+    end
+    let(:context) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
         }
-      }), documentUrl: "http://conneg.example.com/context")
-    }
+      }', documentUrl: "http://conneg.example.com/context")
+    end
 
-    before(:each) do
+    before do
       allow(JSON::LD::API).to receive(:documentLoader).with("http://schema.org", any_args).and_yield(schema_context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context", any_args).and_yield(context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_yield(frame)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context",
+        any_args).and_yield(context)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame",
+        any_args).and_yield(frame)
     end
 
     context "with text result" do
@@ -86,7 +89,7 @@ describe JSON::LD::ContentNegotiation do
     end
 
     context "with object result" do
-      before(:each) do
+      before do
         @results = LIBRARY_INPUT
       end
 
@@ -97,9 +100,9 @@ describe JSON::LD::ContentNegotiation do
 
       context "with Accept" do
         {
-          "application/n-triples"                           => "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
-          "application/json"                                => LIBRARY_INPUT,
-          "application/ld+json"                             => LIBRARY_INPUT,
+          "application/n-triples" => "406 Not Acceptable (No appropriate combinaion of media-type and parameters found)\n",
+          "application/json" => LIBRARY_INPUT,
+          "application/ld+json" => LIBRARY_INPUT,
           %(application/ld+json;profile=http://www.w3.org/ns/json-ld#expanded) =>
                                                                LIBRARY_EXPANDED,
 
@@ -127,15 +130,15 @@ describe JSON::LD::ContentNegotiation do
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#framed http://www.w3.org/ns/json-ld#compacted") =>
                                                                "406 Not Acceptable (framed profile without a frame)\n",
           %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#framed") =>
-                                                               "406 Not Acceptable (framed profile without a frame)\n",
+                                                               "406 Not Acceptable (framed profile without a frame)\n"
         }.each do |accepts, result|
           context accepts do
-            before(:each) do
-              get '/', {}, {"HTTP_ACCEPT" => accepts}
+            before do
+              get '/', {}, { "HTTP_ACCEPT" => accepts }
             end
 
             it "status" do
-              expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
+              expect(last_response.status).to satisfy("be 200 or 406") { |x| [200, 406].include?(x) }
             end
 
             it "sets content type" do
@@ -185,15 +188,15 @@ describe JSON::LD::ContentNegotiation do
             accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed),
             link: %(<http://conneg.example.com/context> rel="http://www.w3.org/ns/json-ld#context"),
             result: "406 Not Acceptable (framed profile without a frame)\n"
-          },
+          }
         }.each do |name, params|
           context name do
-            before(:each) do
-              get '/', {}, {"HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link]}
+            before do
+              get '/', {}, { "HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link] }
             end
 
             it "status" do
-              expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
+              expect(last_response.status).to satisfy("be 200 or 406") { |x| [200, 406].include?(x) }
             end
 
             it "sets content type" do
@@ -215,8 +218,8 @@ describe JSON::LD::ContentNegotiation do
 end
 
 describe Rack::LinkedData::ContentNegotiation do
-  include ::Rack::Test::Methods
-  let(:logger) {RDF::Spec.logger}
+  include Rack::Test::Methods
+  let(:logger) { RDF::Spec.logger }
 
   let(:app) do
     graph = RDF::NTriples::Reader.new(%(
@@ -230,21 +233,21 @@ describe Rack::LinkedData::ContentNegotiation do
       <http://example.org/library/the-republic#introduction> <http://purl.org/dc/elements/1.1/title> "The Introduction" .
       <http://example.org/library/the-republic#introduction> <http://purl.org/dc/elements/1.1/description> "An introductory chapter on The Republic." .
     ))
-    Rack::LinkedData::ContentNegotiation.new(double("Target Rack Application", :call => [200, {}, graph]), {})
+    described_class.new(double("Target Rack Application", :call => [200, {}, graph]), {})
   end
 
   describe "#call" do
-    let(:schema_context) {
-      JSON::LD::API::RemoteDocument.new(%q({
+    let(:schema_context) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "@vocab": "http://schema.org/",
           "id": "@id",
           "type": "@type"
         }
-      }), documentUrl: "http://schema.org")
-    }
-    let(:frame) {
-      JSON::LD::API::RemoteDocument.new(%q({
+      }', documentUrl: "http://schema.org")
+    end
+    let(:frame) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
@@ -256,26 +259,28 @@ describe Rack::LinkedData::ContentNegotiation do
             "@type": "ex:Chapter"
           }
         }
-      }), documentUrl: "http://conneg.example.com/frame")
-    }
-    let(:context) {
-      JSON::LD::API::RemoteDocument.new(%q({
+      }', documentUrl: "http://conneg.example.com/frame")
+    end
+    let(:context) do
+      JSON::LD::API::RemoteDocument.new('{
         "@context": {
           "dc": "http://purl.org/dc/elements/1.1/",
           "ex": "http://example.org/vocab#"
         }
-      }), documentUrl: "http://conneg.example.com/context")
-    }
+      }', documentUrl: "http://conneg.example.com/context")
+    end
 
-    before(:each) do
+    before do
       allow(JSON::LD::API).to receive(:documentLoader).with("http://schema.org", any_args).and_yield(schema_context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context", any_args).and_yield(context)
-      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame", any_args).and_yield(frame)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/context",
+        any_args).and_yield(context)
+      allow(JSON::LD::API).to receive(:documentLoader).with("http://conneg.example.com/frame",
+        any_args).and_yield(frame)
     end
 
     {
-      "application/json"                                => LIBRARY_FLATTENED_EXPANDED,
-      "application/ld+json"                             => LIBRARY_FLATTENED_EXPANDED,
+      "application/json" => LIBRARY_FLATTENED_EXPANDED,
+      "application/ld+json" => LIBRARY_FLATTENED_EXPANDED,
       %(application/ld+json;profile=http://www.w3.org/ns/json-ld#expanded) =>
                                                            LIBRARY_FLATTENED_EXPANDED,
 
@@ -292,16 +297,16 @@ describe Rack::LinkedData::ContentNegotiation do
       %(application/ld+json;profile="http://www.w3.org/ns/json-ld#flattened http://www.w3.org/ns/json-ld#compacted") =>
                                                            LIBRARY_FLATTENED_COMPACTED_DEFAULT,
       %(application/ld+json;profile="http://www.w3.org/ns/json-ld#compacted http://www.w3.org/ns/json-ld#flattened") =>
-                                                           LIBRARY_FLATTENED_COMPACTED_DEFAULT,
+                                                           LIBRARY_FLATTENED_COMPACTED_DEFAULT
 
     }.each do |accepts, result|
       context accepts do
-        before(:each) do
-          get '/', {}, {"HTTP_ACCEPT" => accepts}
+        before do
+          get '/', {}, { "HTTP_ACCEPT" => accepts }
         end
 
         it "status" do
-          expect(last_response.status).to satisfy("200 or 406") {|x| [200, 406].include?(x)}
+          expect(last_response.status).to satisfy("200 or 406") { |x| [200, 406].include?(x) }
         end
 
         it "sets content type" do
@@ -344,15 +349,15 @@ describe Rack::LinkedData::ContentNegotiation do
           accept: %(application/ld+json;profile=http://www.w3.org/ns/json-ld#framed),
           link: %(<http://conneg.example.com/frame> rel="http://www.w3.org/ns/json-ld#frame"),
           result: LIBRARY_FRAMED
-        },
+        }
       }.each do |name, params|
         context name do
-          before(:each) do
-            get '/', {}, {"HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link]}
+          before do
+            get '/', {}, { "HTTP_ACCEPT" => params[:accept], "HTTP_LINK" => params[:link] }
           end
 
           it "status" do
-            expect(last_response.status).to satisfy("be 200 or 406") {|x| [200, 406].include?(x)}
+            expect(last_response.status).to satisfy("be 200 or 406") { |x| [200, 406].include?(x) }
           end
 
           it "sets content type" do

@@ -1544,10 +1544,10 @@ module JSON
         candidates = []
 
         term_definitions.each do |term, td|
-          next if td.nil? || td.id.nil? || td.id == iri || !iri.start_with?(td.id)
-
           # Skip term if `@prefix` is not true in term definition
-          next unless td.prefix?
+          next unless td&.prefix?
+
+          next if td&.id.nil? || td.id == iri || !td.match_iri?(iri)
 
           suffix = iri[td.id.length..]
           ciri = "#{term}:#{suffix}"
@@ -1572,7 +1572,7 @@ module JSON
 
         # If iri could be confused with a compact IRI using a term in this context, signal an error
         term_definitions.each do |term, td|
-          next unless iri.to_s.start_with?("#{term}:") && td.prefix?
+          next unless td.prefix? && td.match_compact_iri?(iri)
 
           raise JSON::LD::JsonLdError::IRIConfusedWithPrefix, "Absolute IRI '#{iri}' confused with prefix '#{term}'"
         end
@@ -2204,6 +2204,22 @@ module JSON
           !!@protected
         end
 
+        # Returns true if the term matches a IRI
+        #
+        # @param iri [String] the IRI
+        # @return [Boolean]
+        def match_iri?(iri)
+          iri.start_with?(id)
+        end
+
+        # Returns true if the term matches a compact IRI
+        #
+        # @param iri [String] the compact IRI
+        # @return [Boolean]
+        def match_compact_iri?(iri)
+          iri.start_with?(prefix_colon)
+        end
+
         # Set container mapping, from an array which may include @set
         def container_mapping=(mapping)
           mapping = case mapping
@@ -2327,6 +2343,12 @@ module JSON
           v << "prefix=#{@prefix.inspect}" unless @prefix.nil?
           v << "has-context" unless context.nil?
           v.join(" ") + "]"
+        end
+
+        private
+
+        def prefix_colon
+          @prefix_colon ||= "#{term}:".freeze
         end
       end
     end

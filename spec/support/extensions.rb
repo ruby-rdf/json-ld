@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Object
   def equivalent_jsonld?(other, ordered: false)
     self == other
@@ -7,6 +9,7 @@ end
 class Hash
   def equivalent_jsonld?(other, ordered: false)
     return false unless other.is_a?(Hash) && other.length == length
+
     all? do |key, value|
       # List values are still ordered
       if key == '@language' && value.is_a?(String)
@@ -18,11 +21,8 @@ class Hash
   end
 
   def diff(other)
-    self.keys.inject({}) do |memo, key|
-      unless self[key] == other[key]
-        memo[key] = [self[key], other[key]] 
-      end
-      memo
+    keys.each_with_object({}) do |key, memo|
+      memo[key] = [self[key], other[key]] unless self[key] == other[key]
     end
   end
 end
@@ -30,14 +30,15 @@ end
 class Array
   def equivalent_jsonld?(other, ordered: false)
     return false unless other.is_a?(Array) && other.length == length
+
     if ordered
       b = other.dup
       # All elements must match in order
-      all? {|av| av.equivalent_jsonld?(b.shift)}
+      all? { |av| av.equivalent_jsonld?(b.shift) }
     else
       # Look for any element which matches
       all? do |av|
-        other.any? {|bv| av.equivalent_jsonld?(bv)}
+        other.any? { |bv| av.equivalent_jsonld?(bv) }
       end
     end
   end

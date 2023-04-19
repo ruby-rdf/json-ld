@@ -1,25 +1,24 @@
-# coding: utf-8
 require_relative 'spec_helper'
 require 'rdf/spec/writer'
 require 'json/ld/streaming_writer'
 
 describe JSON::LD::StreamingWriter do
-  let(:logger) {RDF::Spec.logger}
+  let(:logger) { RDF::Spec.logger }
 
-  after(:each) {|example| puts logger.to_s if example.exception}
+  after { |example| puts logger if example.exception }
 
   it_behaves_like 'an RDF::Writer' do
-    let(:writer) {JSON::LD::Writer.new(StringIO.new(""), stream: true)}
+    let(:writer) { JSON::LD::Writer.new(StringIO.new(""), stream: true) }
   end
 
   context "simple tests" do
-    it "should use full URIs without base" do
+    it "uses full URIs without base" do
       input = %(<http://a/b> <http://a/c> <http://a/d> .)
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
       expect(obj).to produce_jsonld([{
-        '@id'         => "http://a/b",
-        "http://a/c"  => [{"@id" => "http://a/d"}]
+        '@id' => "http://a/b",
+        "http://a/c" => [{ "@id" => "http://a/d" }]
       }], logger)
     end
 
@@ -32,98 +31,101 @@ describe JSON::LD::StreamingWriter do
       )
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
-      expect(obj).to eql JSON.parse(%{[{
+      expect(obj).to eql JSON.parse(%([{
         "@id": "https://senet.org/gm",
         "@type": ["http://vocab.org/frbr/core#Work"],
         "http://purl.org/dc/terms/title": [{"@value": "Rhythm Paradise", "@language": "en"}],
         "https://senet.org/ns#unofficialTitle": [{"@value": "Rhythm Tengoku", "@language": "en"}],
         "https://senet.org/ns#urlkey": [{"@value": "rhythm-tengoku"}]
-      }]})
+      }]))
     end
 
     it "serializes multiple subjects" do
-      input = %q(
+      input = '
         @prefix : <http://www.w3.org/2006/03/test-description#> .
         @prefix dc: <http://purl.org/dc/terms/> .
         <http://example.com/test-cases/0001> a :TestCase .
         <http://example.com/test-cases/0002> a :TestCase .
-      )
+      '
       obj = serialize(input)
       expect(parse(obj.to_json, format: :jsonld)).to be_equivalent_graph(parse(input), logger: logger)
-      expect(obj).to contain_exactly(*JSON.parse(%{[
+      expect(obj).to match_array(JSON.parse(%([
         {"@id": "http://example.com/test-cases/0001", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]},
         {"@id": "http://example.com/test-cases/0002", "@type": ["http://www.w3.org/2006/03/test-description#TestCase"]}
-      ]}))
+      ])))
     end
   end
 
   context "Named Graphs" do
     {
       "default" => [
-        %q({<a> <b> <c> .}),
-        %q([{"@id": "a", "b": [{"@id": "c"}]}])
+        '{<a> <b> <c> .}',
+        '[{"@id": "a", "b": [{"@id": "c"}]}]'
       ],
       "named" => [
-        %q(<C> {<a> <b> <c> .}),
-        %q([{"@id" :  "C", "@graph" :  [{"@id": "a", "b": [{"@id": "c"}]}]}])
+        '<C> {<a> <b> <c> .}',
+        '[{"@id" :  "C", "@graph" :  [{"@id": "a", "b": [{"@id": "c"}]}]}]'
       ],
       "combo" => [
-        %q(
+        '
           <a> <b> <c> .
           <C> {<A> <b> <c> .}
-        ),
-        %q([
+        ',
+        '[
           {"@id": "a", "b": [{"@id": "c"}]},
           {"@id": "C", "@graph": [{"@id": "A", "b": [{"@id": "c"}]}]}
-        ])
+        ]'
       ],
       "combo with duplicated statement" => [
-        %q(
+        '
           <a> <b> <c> .
           <C> {<a> <b> <c> .}
-        ),
-        %q([
+        ',
+        '[
           {"@id": "a", "b": [{"@id": "c"}]},
           {"@id": "C", "@graph": [{"@id": "a", "b": [{"@id": "c"}]}]}
-        ])
-      ],
+        ]'
+      ]
     }.each_pair do |title, (input, matches)|
       context title do
-        subject {serialize(input)}
+        subject { serialize(input) }
+
         it "matches expected json" do
-          expect(subject).to contain_exactly(*JSON.parse(matches))
+          expect(subject).to match_array(JSON.parse(matches))
         end
       end
     end
   end
 
+  unless ENV['CI']
+    context "Writes fromRdf tests to isomorphic graph" do
+      require 'suite_helper'
+      m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}fromRdf-manifest.jsonld")
+      [nil, {}].each do |ctx|
+        context "with context #{ctx.inspect}" do
+          describe m.name do
+            m.entries.each do |t|
+              next unless t.positiveTest? && !t.property('input').include?('0016')
 
-  context "Writes fromRdf tests to isomorphic graph" do
-    require 'suite_helper'
-    m = Fixtures::SuiteTest::Manifest.open("#{Fixtures::SuiteTest::SUITE}fromRdf-manifest.jsonld")
-    [nil, {}].each do |ctx|
-      context "with context #{ctx.inspect}" do
-        describe m.name do
-          m.entries.each do |t|
-            next unless t.positiveTest? && !t.property('input').include?('0016')
-            t.logger = RDF::Spec.logger
-            t.logger.info "test: #{t.inspect}"
-            t.logger.info "source: #{t.input}"
-            specify "#{t.property('@id')}: #{t.name}" do
-              repo = RDF::Repository.load(t.input_loc, format: :nquads)
-              jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger, **t.options) do |writer|
-                writer << repo
+              t.logger = RDF::Spec.logger
+              t.logger.info "test: #{t.inspect}"
+              t.logger.info "source: #{t.input}"
+              specify "#{t.property('@id')}: #{t.name}" do
+                repo = RDF::Repository.load(t.input_loc, format: :nquads)
+                jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger, **t.options) do |writer|
+                  writer << repo
+                end
+                t.logger.info "Generated: #{jsonld}"
+
+                # And then, re-generate jsonld as RDF
+                expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
               end
-              t.logger.info "Generated: #{jsonld}"
-
-              # And then, re-generate jsonld as RDF
-              expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
             end
           end
         end
       end
     end
-  end unless ENV['CI']
+  end
 
   def parse(input, format: :trig, **options)
     reader = RDF::Reader.for(format)
@@ -139,7 +141,7 @@ describe JSON::LD::StreamingWriter do
       writer << g
     end
     puts result if $verbose
-    
+
     JSON.parse(result)
   end
 end
