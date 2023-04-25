@@ -1054,8 +1054,11 @@ module JSON
       #
       # @param [RDF::Queryable] graph
       #
+      # @note requires rdf/vocab gem.
+      #
       # @return [self]
       def from_vocabulary(graph)
+        require 'rdf/vocab' unless RDF.const_defined?(:Vocab)
         statements = {}
         ranges = {}
 
@@ -1067,7 +1070,7 @@ module JSON
           (statements[statement.subject] ||= []) << statement
 
           # Keep track of predicate ranges
-          if [RDF::RDFS.range, RDF::SCHEMA.rangeIncludes].include?(statement.predicate)
+          if [RDF::RDFS.range, RDF::Vocab::SCHEMA.rangeIncludes].include?(statement.predicate)
             (ranges[statement.subject] ||= []) << statement.object
           end
         end
@@ -1084,7 +1087,7 @@ module JSON
             prop_ranges = ranges.fetch(subject, [])
             # If any range is empty or member of range includes rdfs:Literal or schema:Text
             next if (vocab && prop_ranges.empty?) ||
-                    prop_ranges.include?(RDF::SCHEMA.Text) ||
+                    prop_ranges.include?(RDF::Vocab::SCHEMA.Text) ||
                     prop_ranges.include?(RDF::RDFS.Literal)
 
             td = term_definitions[term] = TermDefinition.new(term, id: subject.to_s)
@@ -1094,10 +1097,10 @@ module JSON
             when RDF::XSD.string
               td.language_mapping = false if default_language
               # FIXME: text direction
-            when RDF::XSD.boolean, RDF::SCHEMA.Boolean, RDF::XSD.date, RDF::SCHEMA.Date,
-              RDF::XSD.dateTime, RDF::SCHEMA.DateTime, RDF::XSD.time, RDF::SCHEMA.Time,
-              RDF::XSD.duration, RDF::SCHEMA.Duration, RDF::XSD.decimal, RDF::SCHEMA.Number,
-              RDF::XSD.float, RDF::SCHEMA.Float, RDF::XSD.integer, RDF::SCHEMA.Integer
+            when RDF::XSD.boolean, RDF::Vocab::SCHEMA.Boolean, RDF::XSD.date, RDF::Vocab::SCHEMA.Date,
+              RDF::XSD.dateTime, RDF::Vocab::SCHEMA.DateTime, RDF::XSD.time, RDF::Vocab::SCHEMA.Time,
+              RDF::XSD.duration, RDF::Vocab::SCHEMA.Duration, RDF::XSD.decimal, RDF::Vocab::SCHEMA.Number,
+              RDF::XSD.float, RDF::Vocab::SCHEMA.Float, RDF::XSD.integer, RDF::Vocab::SCHEMA.Integer
               td.type_mapping = r
               td.simple = false
             else
