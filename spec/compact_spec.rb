@@ -1,8 +1,9 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 
 describe JSON::LD::API do
-  let(:logger) {RDF::Spec.logger}
+  let(:logger) { RDF::Spec.logger }
 
   describe ".compact" do
     {
@@ -87,7 +88,7 @@ describe JSON::LD::API do
           "b": "2012-01-04"
         })
       },
-      "@list coercion": {
+      '@list coercion': {
         input: %({
           "http://example.com/b": {"@list": ["c", "d"]}
         }),
@@ -156,7 +157,7 @@ describe JSON::LD::API do
         output: %({
           "@id": "http://example.com/",
           "@type": "#{RDF::RDFS.Resource}"
-        }),
+        })
       },
       "@type with array @id" => {
         input: %({
@@ -167,7 +168,7 @@ describe JSON::LD::API do
         output: %({
           "@id": "http://example.com/",
           "@type": "#{RDF::RDFS.Resource}"
-        }),
+        })
       },
       "default language" => {
         input: %({
@@ -206,9 +207,9 @@ describe JSON::LD::API do
           },
           "term5": [ "v5", "plain literal" ]
         })
-      },
+      }
     }.each_pair do |title, params|
-      it(title) {run_compact(params)}
+      it(title) { run_compact(params) }
     end
 
     context "keyword aliasing" do
@@ -225,7 +226,7 @@ describe JSON::LD::API do
             "@type": "#{RDF::RDFS.Resource}"
           })
         },
-        "@type": {
+        '@type': {
           input: %({
             "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
             "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
@@ -237,7 +238,7 @@ describe JSON::LD::API do
             "http://example.org/foo": {"@value": "bar", "type": "http://example.com/type"}
           })
         },
-        "@type with @container: @set": {
+        '@type with @container: @set': {
           input: %({
             "@type": "http://www.w3.org/2000/01/rdf-schema#Resource",
             "http://example.org/foo": {"@value": "bar", "@type": "http://example.com/type"}
@@ -289,9 +290,9 @@ describe JSON::LD::API do
             "@context": {"list": "@list"},
             "http://example.org/foo": {"list": ["bar"]}
           })
-        },
+        }
       }.each do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -402,9 +403,9 @@ describe JSON::LD::API do
             },
             "http://example/t": {"@id": "http://example/id"}
           })
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -465,9 +466,9 @@ describe JSON::LD::API do
           }),
           base: "http://example.org/",
           processingMode: 'json-ld-1.1'
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -532,7 +533,7 @@ describe JSON::LD::API do
           })
         }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -553,27 +554,30 @@ describe JSON::LD::API do
           })
         }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
     context "context as reference" do
       let(:remote_doc) do
         JSON::LD::API::RemoteDocument.new(
-          %q({"@context": {"b": "http://example.com/b"}}),
-          documentUrl: "http://example.com/context")
+          '{"@context": {"b": "http://example.com/b"}}',
+          documentUrl: "http://example.com/context"
+        )
       end
+
       it "uses referenced context" do
         JSON::LD::Context.instance_variable_set(:@cache, nil)
-        input = ::JSON.parse %({
+        input = JSON.parse %({
           "http://example.com/b": "c"
         })
-        expected = ::JSON.parse %({
+        expected = JSON.parse %({
           "@context": "http://example.com/context",
           "b": "c"
         })
-        allow(JSON::LD::API).to receive(:documentLoader).with("http://example.com/context", anything).and_yield(remote_doc)
-        jld = JSON::LD::API.compact(input, "http://example.com/context", logger: logger, validate: true)
+        allow(described_class).to receive(:documentLoader).with("http://example.com/context",
+          anything).and_yield(remote_doc)
+        jld = described_class.compact(input, "http://example.com/context", logger: logger, validate: true)
         expect(jld).to produce_jsonld(expected, logger)
       end
     end
@@ -630,7 +634,7 @@ describe JSON::LD::API do
           output: %({
             "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
             "foo": [[]]
-          }),
+          })
         },
         "coerced @list containing a list" => {
           input: %([{
@@ -642,7 +646,7 @@ describe JSON::LD::API do
           output: %({
             "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
             "foo": [["baz"]]
-          }),
+          })
         },
         "coerced @list containing an deep list" => {
           input: %([{
@@ -654,7 +658,7 @@ describe JSON::LD::API do
           output: %({
             "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
             "foo": [[["baz"]]]
-          }),
+          })
         },
         "coerced @list containing multiple lists" => {
           input: %([{
@@ -669,7 +673,7 @@ describe JSON::LD::API do
           output: %({
             "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
             "foo": [["a"], ["b"]]
-          }),
+          })
         },
         "coerced @list containing mixed list values" => {
           input: %([{
@@ -684,16 +688,16 @@ describe JSON::LD::API do
           output: %({
             "@context": {"foo": {"@id": "http://example.com/foo", "@container": "@list"}},
             "foo": [["a"], "b"]
-          }),
-        },
+          })
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
     context "with @type: @json" do
       {
-        "true": {
+        true => {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -701,11 +705,11 @@ describe JSON::LD::API do
             },
             "e": true
           }),
-          input:%( [{
+          input: %( [{
             "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
-          }]),
+          }])
         },
-        "false": {
+        false => {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -715,9 +719,9 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
-          }]),
+          }])
         },
-        "double": {
+        double: {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -727,9 +731,9 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#double": [{"@value": 1.23, "@type": "@json"}]
-          }]),
+          }])
         },
-        "double-zero": {
+        'double-zero': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -739,9 +743,9 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#double": [{"@value": 0.0e0, "@type": "@json"}]
-          }]),
+          }])
         },
-        "integer": {
+        integer: {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -751,9 +755,9 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
-          }]),
+          }])
         },
-        "string": {
+        string: {
           input: %([{
             "http://example.org/vocab#string": [{
               "@value": "string",
@@ -768,7 +772,7 @@ describe JSON::LD::API do
             "e": "string"
           })
         },
-        "null": {
+        null: {
           input: %([{
             "http://example.org/vocab#null": [{
               "@value": null,
@@ -783,7 +787,7 @@ describe JSON::LD::API do
             "e": null
           })
         },
-        "object": {
+        object: {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -793,9 +797,9 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
-          }]),
+          }])
         },
-        "array": {
+        array: {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -805,18 +809,18 @@ describe JSON::LD::API do
           }),
           input: %([{
             "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
-          }]),
+          }])
         },
-        "Already expanded object": {
+        'Already expanded object': {
           output: %({
             "@context": {"@version": 1.1},
             "http://example.org/vocab#object": {"@value": {"foo": "bar"}, "@type": "@json"}
           }),
           input: %([{
             "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
-          }]),
+          }])
         },
-        "Already expanded object with aliased keys": {
+        'Already expanded object with aliased keys': {
           output: %({
             "@context": {"@version": 1.1, "value": "@value", "type": "@type", "json": "@json"},
             "http://example.org/vocab#object": {"value": {"foo": "bar"}, "type": "json"}
@@ -824,9 +828,9 @@ describe JSON::LD::API do
           input: %([{
             "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
           }])
-        },
+        }
       }.each do |title, params|
-        it(title) {run_compact(processingMode: 'json-ld-1.1', **params)}
+        it(title) { run_compact(processingMode: 'json-ld-1.1', **params) }
       end
     end
 
@@ -954,7 +958,7 @@ describe JSON::LD::API do
           }),
           processingMode: 'json-ld-1.1'
         },
-        "issue-514": {
+        'issue-514': {
           input: %({
             "http://example.org/ns/prop": [{
               "@id": "http://example.org/ns/bar",
@@ -989,7 +993,7 @@ describe JSON::LD::API do
             }
           })
         },
-        "issue-514b": {
+        'issue-514b': {
           input: %({
             "http://example.org/ns/prop": [{
               "@id": "http://example.org/ns/bar",
@@ -1023,14 +1027,14 @@ describe JSON::LD::API do
               "bar": { "@id": "ex:bar"}
             }
           })
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
 
       context "@index: property" do
         {
-          "property-valued index indexes property value, instead of property (value)": {
+          'property-valued index indexes property value, instead of property (value)': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1053,7 +1057,7 @@ describe JSON::LD::API do
               ]
             }])
           },
-          "property-valued index indexes property value, instead of @index (multiple values)": {
+          'property-valued index indexes property value, instead of @index (multiple values)': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1079,7 +1083,7 @@ describe JSON::LD::API do
               ]
             }])
           },
-          "property-valued index extracts property value, instead of @index (node)": {
+          'property-valued index extracts property value, instead of @index (node)': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1106,7 +1110,7 @@ describe JSON::LD::API do
               ]
             }])
           },
-          "property-valued index indexes property value, instead of property (multimple nodes)": {
+          'property-valued index indexes property value, instead of property (multimple nodes)': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1133,7 +1137,7 @@ describe JSON::LD::API do
               ]
             }])
           },
-          "property-valued index indexes using @none if no property value exists": {
+          'property-valued index indexes using @none if no property value exists': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1155,7 +1159,7 @@ describe JSON::LD::API do
               ]
             }])
           },
-          "property-valued index indexes using @none if no property value does not compact to string": {
+          'property-valued index indexes using @none if no property value does not compact to string': {
             output: %({
               "@context": {
                 "@version": 1.1,
@@ -1182,7 +1186,7 @@ describe JSON::LD::API do
             }])
           }
         }.each do |title, params|
-          it(title) {run_compact(**params)}
+          it(title) { run_compact(**params) }
         end
       end
     end
@@ -1276,7 +1280,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
-        "simple map with term direction": {
+        'simple map with term direction': {
           input: %([
             {
               "@id": "http://example.com/queen",
@@ -1316,7 +1320,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
-        "simple map with overriding term direction": {
+        'simple map with overriding term direction': {
           input: %([
             {
               "@id": "http://example.com/queen",
@@ -1358,7 +1362,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
-        "simple map with overriding null direction": {
+        'simple map with overriding null direction': {
           input: %([
             {
               "@id": "http://example.com/queen",
@@ -1400,7 +1404,7 @@ describe JSON::LD::API do
           }),
           processingMode: "json-ld-1.1"
         },
-        "simple map with mismatching term direction": {
+        'simple map with mismatching term direction': {
           input: %([
             {
               "@id": "http://example.com/queen",
@@ -1442,9 +1446,9 @@ describe JSON::LD::API do
             ]
           }),
           processingMode: "json-ld-1.1"
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -1470,7 +1474,7 @@ describe JSON::LD::API do
               "http://example.org/foo": {"label": "Object with @id <foo>"},
               "_:bar": {"label": "Object with @id _:bar"}
             }
-          }),
+          })
         },
         "Indexes to object already having an @id" => {
           input: %([{
@@ -1492,7 +1496,7 @@ describe JSON::LD::API do
               "_:foo": {"label": "Object with @id _:bar"},
               "http://example.org/bar": {"label": "Object with @id <foo>"}
             }
-          }),
+          })
         },
         "Indexes to object using compact IRI @id" => {
           input: %([{
@@ -1561,9 +1565,9 @@ describe JSON::LD::API do
               "none": {"label": "Object with no @id"}
             }
           })
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
     end
 
@@ -1712,9 +1716,9 @@ describe JSON::LD::API do
               "none": {"label": "Object with no @id"}
             }
           })
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
     end
 
@@ -1888,7 +1892,7 @@ describe JSON::LD::API do
           })
         }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
 
       context "+ @index" do
@@ -1986,9 +1990,9 @@ describe JSON::LD::API do
                 "@graph": {"value": "x"}
               }
             })
-          },
+          }
         }.each_pair do |title, params|
-          it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+          it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
         end
       end
 
@@ -2150,16 +2154,16 @@ describe JSON::LD::API do
                 "none" : {"value": "x"}
               }
             })
-          },
+          }
         }.each_pair do |title, params|
-          it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+          it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
         end
       end
     end
 
     context "@included" do
       {
-        "Basic Included array": {
+        'Basic Included array': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2178,7 +2182,7 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "Basic Included object": {
+        'Basic Included object': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2196,7 +2200,7 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "Multiple properties mapping to @included are folded together": {
+        'Multiple properties mapping to @included are folded together': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2216,7 +2220,7 @@ describe JSON::LD::API do
             ]
           }])
         },
-        "Included containing @included": {
+        'Included containing @included': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2240,7 +2244,7 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "Property value with @included": {
+        'Property value with @included': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2261,9 +2265,9 @@ describe JSON::LD::API do
               }]
             }]
           }])
-        },
+        }
       }.each do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -2374,7 +2378,7 @@ describe JSON::LD::API do
             "nestedlist": {
               "list": ["a", "b"]
             }
-          }),
+          })
         },
         "Nested @container: @index" => {
           input: %([{
@@ -2400,7 +2404,7 @@ describe JSON::LD::API do
                 "B": "b"
               }
             }
-          }),
+          })
         },
         "Nested @container: @language" => {
           input: %([{
@@ -2512,9 +2516,9 @@ describe JSON::LD::API do
             "term": {"@id": "http://example/foo", "@nest": "unknown"}
           }),
           exception: JSON::LD::JsonLdError::InvalidNestValue
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
     end
 
@@ -2533,9 +2537,9 @@ describe JSON::LD::API do
               {"ex:bar": "bar"}
             ]
           })
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
 
@@ -2579,7 +2583,7 @@ describe JSON::LD::API do
             "foo": {
               "bar": "http://example/baz"
             }
-          }),
+          })
         },
         "property and value with different terms mapping to the same expanded property" => {
           input: %([
@@ -2603,7 +2607,7 @@ describe JSON::LD::API do
             "foo": {
               "Bar": "baz"
             }
-          }),
+          })
         },
         "deep @context affects nested nodes" => {
           input: %([
@@ -2629,7 +2633,7 @@ describe JSON::LD::API do
                 "baz": "buzz"
               }
             }
-          }),
+          })
         },
         "scoped context layers on intemediate contexts" => {
           input: %([{
@@ -2659,7 +2663,7 @@ describe JSON::LD::API do
               "http://example.com/c": "C in example.com"
             },
             "c": "C in example"
-          }),
+          })
         },
         "Raises InvalidTermDefinition if processingMode is 1.0" => {
           input: %([{
@@ -2673,7 +2677,7 @@ describe JSON::LD::API do
           validate: true,
           exception: JSON::LD::JsonLdError::InvalidTermDefinition
         },
-        "Scoped on id map": {
+        'Scoped on id map': {
           output: %({
             "@context": {
               "@version": 1.1,
@@ -2721,9 +2725,9 @@ describe JSON::LD::API do
               "http://schema.org/wordCount": [{"@value": 1204}]
             }]
           }])
-        },
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
     end
 
@@ -2771,7 +2775,7 @@ describe JSON::LD::API do
               "bar": {"@type": "http://www.w3.org/2001/XMLSchema#string"}
             },
             "a": {"@type": "Foo", "bar": "http://example/baz"}
-          }),
+          })
         },
         "alias of @type" => {
           input: %([
@@ -2794,7 +2798,7 @@ describe JSON::LD::API do
               "Foo": {"@context": {"bar": "http://example.org/bar"}}
             },
             "a": {"type": "Foo", "bar": "baz"}
-          }),
+          })
         },
         "deep @context does not affect nested nodes" => {
           input: %([
@@ -2816,7 +2820,7 @@ describe JSON::LD::API do
             },
             "@type": "Foo",
             "bar": {"baz": {"@id": "http://example/buzz"}}
-          }),
+          })
         },
         "scoped context layers on intemediate contexts" => {
           input: %([{
@@ -2842,7 +2846,7 @@ describe JSON::LD::API do
               "http://example.com/a": "A in example.com"
             },
             "c": "C in example"
-          }),
+          })
         },
         "orders lexicographically" => {
           input: %([{
@@ -2864,7 +2868,7 @@ describe JSON::LD::API do
             },
             "@type": ["t2", "t1"],
             "foo": "urn:bar"
-          }),
+          })
         },
         "with @container: @type" => {
           input: %([{
@@ -2937,10 +2941,10 @@ describe JSON::LD::API do
               "@type": "Foo",
               "bar": {"@id": "http://example.org/baz"}
             }
-          }),
-        },
+          })
+        }
       }.each_pair do |title, params|
-        it(title) {run_compact({processingMode: "json-ld-1.1"}.merge(params))}
+        it(title) { run_compact({ processingMode: "json-ld-1.1" }.merge(params)) }
       end
     end
 
@@ -3035,16 +3039,16 @@ describe JSON::LD::API do
             "@context": {"@base": "http://example.org/foo/", "@vocab": ""},
             "bar": "term"
           })
-        },
+        }
       }.each do |title, params|
-        it(title) {run_compact(params)}
+        it(title) { run_compact(params) }
       end
     end
   end
 
   context "html" do
     {
-      "Compacts embedded JSON-LD script element": {
+      'Compacts embedded JSON-LD script element': {
         input: %(
         <html>
           <head>
@@ -3066,7 +3070,7 @@ describe JSON::LD::API do
           "foo": ["bar"]
         })
       },
-      "Compacts first script element": {
+      'Compacts first script element': {
         input: %(
         <html>
           <head>
@@ -3097,7 +3101,7 @@ describe JSON::LD::API do
           "foo": ["bar"]
         })
       },
-      "Compacts targeted script element": {
+      'Compacts targeted script element': {
         input: %(
         <html>
           <head>
@@ -3130,7 +3134,7 @@ describe JSON::LD::API do
         }),
         base: "http://example.org/doc#second"
       },
-      "Compacts all script elements with extractAllScripts option": {
+      'Compacts all script elements with extractAllScripts option': {
         input: %(
         <html>
           <head>
@@ -3173,11 +3177,11 @@ describe JSON::LD::API do
           ]
         }),
         extractAllScripts: true
-      },
+      }
     }.each do |title, params|
       it(title) do
         params[:input] = StringIO.new(params[:input])
-        params[:input].send(:define_singleton_method, :content_type) {"text/html"}
+        params[:input].send(:define_singleton_method, :content_type) { "text/html" }
         run_compact params.merge(validate: true)
       end
     end
@@ -3185,7 +3189,7 @@ describe JSON::LD::API do
 
   context "JSON-LD-star" do
     {
-      "subject-iii": {
+      'subject-iii': {
         input: %([{
           "@id": {
             "@id": "http://example/s1",
@@ -3203,7 +3207,7 @@ describe JSON::LD::API do
          "ex:p": {"@id": "ex:o"}
        })
       },
-      "subject-iib": {
+      'subject-iib': {
         input: %([{
           "@id": {
             "@id": "http://example/s1",
@@ -3221,7 +3225,7 @@ describe JSON::LD::API do
           "ex:p": {"@id": "ex:o"}
         })
       },
-      "subject-iil": {
+      'subject-iil': {
         input: %([{
           "@id": {
             "@id": "http://example/s1",
@@ -3239,7 +3243,7 @@ describe JSON::LD::API do
           "ex:p": {"@id": "ex:o"}
         })
       },
-      "subject-bii": {
+      'subject-bii': {
         input: %([{
           "@id": {
             "@id": "_:s1",
@@ -3257,7 +3261,7 @@ describe JSON::LD::API do
           "ex:p": {"@id": "ex:o"}
         })
       },
-      "subject-bib": {
+      'subject-bib': {
         input: %([{
           "@id": {
             "@id": "_:s1",
@@ -3275,7 +3279,7 @@ describe JSON::LD::API do
           "ex:p": {"@id": "ex:o"}
         })
       },
-      "subject-bil": {
+      'subject-bil': {
         input: %([{
           "@id": {
             "@id": "_:s1",
@@ -3293,7 +3297,7 @@ describe JSON::LD::API do
           "ex:p": {"@id": "ex:o"}
         })
       },
-      "object-iii":  {
+      'object-iii': {
         input: %([{
           "@id": "http://example/s",
           "http://example/p": [{
@@ -3315,7 +3319,7 @@ describe JSON::LD::API do
           }
         })
       },
-      "object-iib":  {
+      'object-iib': {
         input: %([{
           "@id": "http://example/s",
           "http://example/p": [{
@@ -3337,7 +3341,7 @@ describe JSON::LD::API do
           }
         })
       },
-      "object-iil":  {
+      'object-iil': {
         input: %([{
           "@id": "http://example/s",
           "http://example/p": [{
@@ -3359,7 +3363,7 @@ describe JSON::LD::API do
           }
         })
       },
-      "recursive-subject": {
+      'recursive-subject': {
         input: %([{
           "@id": {
             "@id": {
@@ -3382,15 +3386,15 @@ describe JSON::LD::API do
           },
           "ex:p": {"@id": "ex:o"}
         })
-      },
+      }
     }.each do |name, params|
-      it(name) {run_compact(params.merge(rdfstar: true))}
+      it(name) { run_compact(params.merge(rdfstar: true)) }
     end
   end
 
   context "problem cases" do
     {
-      "issue json-ld-framing#64": {
+      'issue json-ld-framing#64': {
         input: %({
           "@context": {
             "@version": 1.1,
@@ -3413,7 +3417,7 @@ describe JSON::LD::API do
           "Production": {
             "@context": {
               "part": {
-                "@type": "@id", 
+                "@type": "@id",
                 "@container": "@set"
               }
             }
@@ -3426,7 +3430,7 @@ describe JSON::LD::API do
             "Production": {
               "@context": {
                 "part": {
-                  "@type": "@id", 
+                  "@type": "@id",
                   "@container": "@set"
                 }
               }
@@ -3453,22 +3457,26 @@ describe JSON::LD::API do
   end
 
   def run_compact(params)
-    input, output, context = params[:input], params[:output], params[:context]
+    input = params[:input]
+    output = params[:output]
+    context = params[:context]
     params[:base] ||= nil
-    context ||= output  # Since it will have the context
-    input = ::JSON.parse(input) if input.is_a?(String)
-    output = ::JSON.parse(output) if output.is_a?(String)
-    context = ::JSON.parse(context) if context.is_a?(String)
+    context ||= output # Since it will have the context
+    input = JSON.parse(input) if input.is_a?(String)
+    output = JSON.parse(output) if output.is_a?(String)
+    context = JSON.parse(context) if context.is_a?(String)
     context = context['@context'] if context.key?('@context')
     pending params.fetch(:pending, "test implementation") unless input
     if params[:exception]
-      expect {JSON::LD::API.compact(input, context, logger: logger, **params)}.to raise_error(params[:exception])
+      expect { JSON::LD::API.compact(input, context, logger: logger, **params) }.to raise_error(params[:exception])
     else
       jld = nil
       if params[:write]
-        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.to write(params[:write]).to(:error)
+        expect do
+          jld = JSON::LD::API.compact(input, context, logger: logger, **params)
+        end.to write(params[:write]).to(:error)
       else
-        expect{jld = JSON::LD::API.compact(input, context, logger: logger, **params)}.not_to write.to(:error)
+        expect { jld = JSON::LD::API.compact(input, context, logger: logger, **params) }.not_to write.to(:error)
       end
 
       expect(jld).to produce_jsonld(output, logger)

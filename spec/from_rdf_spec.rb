@@ -1,148 +1,149 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 require 'rdf/spec/writer'
 
 describe JSON::LD::API do
-  let(:logger) {RDF::Spec.logger}
+  let(:logger) { RDF::Spec.logger }
 
   describe ".fromRdf" do
     context "simple tests" do
       it "One subject IRI object" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
         expect(serialize(input)).to produce_jsonld([
-        {
-          '@id'         => "http://a/b",
-          "http://a/c"  => [{"@id" => "http://a/d"}]
-        }
-        ], logger)
+                                                     {
+                                                       '@id' => "http://a/b",
+                                                       "http://a/c" => [{ "@id" => "http://a/d" }]
+                                                     }
+                                                   ], logger)
       end
 
-      it "should generate object list" do
+      it "generates object list" do
         input = %(@prefix : <http://example.com/> . :b :c :d, :e .)
-        expect(serialize(input)).
-        to produce_jsonld([{
-          '@id'                         => "http://example.com/b",
-          "http://example.com/c" => [
-            {"@id" => "http://example.com/d"},
-            {"@id" => "http://example.com/e"}
-          ]
-        }
-        ], logger)
+        expect(serialize(input))
+          .to produce_jsonld([{
+            '@id' => "http://example.com/b",
+            "http://example.com/c" => [
+              { "@id" => "http://example.com/d" },
+              { "@id" => "http://example.com/e" }
+            ]
+          }], logger)
       end
-    
-      it "should generate property list" do
+
+      it "generates property list" do
         input = %(@prefix : <http://example.com/> . :b :c :d; :e :f .)
-        expect(serialize(input)).
-        to produce_jsonld([{
-          '@id'   => "http://example.com/b",
-          "http://example.com/c"      => [{"@id" => "http://example.com/d"}],
-          "http://example.com/e"      => [{"@id" => "http://example.com/f"}]
-        }
-        ], logger)
+        expect(serialize(input))
+          .to produce_jsonld([{
+            '@id' => "http://example.com/b",
+            "http://example.com/c" => [{ "@id" => "http://example.com/d" }],
+            "http://example.com/e" => [{ "@id" => "http://example.com/f" }]
+          }], logger)
       end
-    
+
       it "serializes multiple subjects" do
-        input = %q(
+        input = '
           @prefix : <http://www.w3.org/2006/03/test-description#> .
           @prefix dc: <http://purl.org/dc/elements/1.1/> .
           <test-cases/0001> a :TestCase .
           <test-cases/0002> a :TestCase .
-        )
-        expect(serialize(input)).
-        to produce_jsonld([
-          {'@id'  => "test-cases/0001", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
-          {'@id'  => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"]},
-        ], logger)
+        '
+        expect(serialize(input))
+          .to produce_jsonld([
+                               { '@id' => "test-cases/0001",
+                                 '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"] },
+                               { '@id' => "test-cases/0002", '@type' => ["http://www.w3.org/2006/03/test-description#TestCase"] }
+                             ], logger)
       end
     end
-  
+
     context "literals" do
       context "coercion" do
         it "typed literal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"^^ex:d .)
           expect(serialize(input)).to produce_jsonld([
-            {
-              '@id'   => "http://example.com/a",
-              "http://example.com/b"    => [{"@value" => "foo", "@type" => "http://example.com/d"}]
-            }
-          ], logger)
+                                                       {
+                                                         '@id' => "http://example.com/a",
+                                                         "http://example.com/b" => [{ "@value" => "foo",
+                                                                                      "@type" => "http://example.com/d" }]
+                                                       }
+                                                     ], logger)
         end
 
         it "integer" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
           expect(serialize(input, useNativeTypes: true)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => 1}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => 1 }]
           }], logger)
         end
 
         it "integer (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1 .)
           expect(serialize(input, useNativeTypes: false)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => "1","@type" => "http://www.w3.org/2001/XMLSchema#integer"}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => "1", "@type" => "http://www.w3.org/2001/XMLSchema#integer" }]
           }], logger)
         end
 
         it "boolean" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
           expect(serialize(input, useNativeTypes: true)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => true}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => true }]
           }], logger)
         end
 
         it "boolean (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b true .)
           expect(serialize(input, useNativeTypes: false)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => "true","@type" => "http://www.w3.org/2001/XMLSchema#boolean"}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => "true", "@type" => "http://www.w3.org/2001/XMLSchema#boolean" }]
           }], logger)
         end
 
         it "decmal" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0 .)
           expect(serialize(input, useNativeTypes: true)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal"}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => "1.0", "@type" => "http://www.w3.org/2001/XMLSchema#decimal" }]
           }], logger)
         end
 
         it "double" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
           expect(serialize(input, useNativeTypes: true)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => 1.0E0}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => 1.0E0 }]
           }], logger)
         end
 
         it "double (non-native)" do
           input = %(@prefix ex: <http://example.com/> . ex:a ex:b 1.0e0 .)
           expect(serialize(input, useNativeTypes: false)).to produce_jsonld([{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"    => [{"@value" => "1.0E0","@type" => "http://www.w3.org/2001/XMLSchema#double"}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@value" => "1.0E0", "@type" => "http://www.w3.org/2001/XMLSchema#double" }]
           }], logger)
         end
       end
 
       context "datatyped (non-native)" do
         {
-          integer:            1,
-          unsignedInteger:    1,
+          integer: 1,
+          unsignedInteger: 1,
           nonNegativeInteger: 1,
-          float:              1,
+          float: 1,
           nonPositiveInteger: -1,
-          negativeInteger:    -1,
+          negativeInteger: -1
         }.each do |t, v|
-          it "#{t}" do
+          it t.to_s do
             input = %(
               @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
               @prefix ex: <http://example.com/> .
               ex:a ex:b "#{v}"^^xsd:#{t} .
             )
             expect(serialize(input, useNativeTypes: false)).to produce_jsonld([{
-              '@id'   => "http://example.com/a",
-              "http://example.com/b"    => [{"@value" => "#{v}","@type" => "http://www.w3.org/2001/XMLSchema##{t}"}]
+              '@id' => "http://example.com/a",
+              "http://example.com/b" => [{ "@value" => v.to_s, "@type" => "http://www.w3.org/2001/XMLSchema##{t}" }]
             }], logger)
           end
         end
@@ -151,25 +152,25 @@ describe JSON::LD::API do
       it "encodes language literal" do
         input = %(@prefix ex: <http://example.com/> . ex:a ex:b "foo"@en-us .)
         expect(serialize(input)).to produce_jsonld([{
-          '@id'   => "http://example.com/a",
-          "http://example.com/b"    => [{"@value" => "foo", "@language" => "en-us"}]
+          '@id' => "http://example.com/a",
+          "http://example.com/b" => [{ "@value" => "foo", "@language" => "en-us" }]
         }], logger)
       end
 
       context "with @type: @json" do
         {
-          "true": {
+          true => {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#bool": [{"@value": true, "@type": "@json"}]
              }]),
-            input:%(
+            input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:bool "true"^^rdf:JSON .
             )
           },
-          "false": {
+          false => {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#bool": [{"@value": false, "@type": "@json"}]
@@ -180,7 +181,7 @@ describe JSON::LD::API do
               ex:id ex:bool "false"^^rdf:JSON .
             )
           },
-          "double": {
+          double: {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#double": [{"@value": 1.23E0, "@type": "@json"}]
@@ -191,7 +192,7 @@ describe JSON::LD::API do
               ex:id ex:double "1.23E0"^^rdf:JSON .
             )
           },
-          "double-zero": {
+          'double-zero': {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#double": [{"@value": 0, "@type": "@json"}]
@@ -202,7 +203,7 @@ describe JSON::LD::API do
               ex:id ex:double "0.0E0"^^rdf:JSON .
             )
           },
-          "integer": {
+          integer: {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#integer": [{"@value": 123, "@type": "@json"}]
@@ -213,7 +214,7 @@ describe JSON::LD::API do
               ex:id ex:integer "123"^^rdf:JSON .
             )
           },
-          "string": {
+          string: {
             output: %([{
               "@id": "http://example.org/vocab#id",
               "http://example.org/vocab#string": [{
@@ -227,7 +228,7 @@ describe JSON::LD::API do
               ex:id ex:string "\\"string\\""^^rdf:JSON .
             )
           },
-          "null": {
+          null: {
             output: %([{
               "@id": "http://example.org/vocab#id",
               "http://example.org/vocab#null": [{
@@ -241,7 +242,7 @@ describe JSON::LD::API do
               ex:id ex:null "null"^^rdf:JSON .
             )
           },
-          "object": {
+          object: {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#object": [{"@value": {"foo": "bar"}, "@type": "@json"}]
@@ -252,7 +253,7 @@ describe JSON::LD::API do
               ex:id ex:object """{"foo":"bar"}"""^^rdf:JSON .
             )
           },
-          "array": {
+          array: {
             output: %([{
                "@id": "http://example.org/vocab#id",
                "http://example.org/vocab#array": [{"@value": [{"foo": "bar"}], "@type": "@json"}]
@@ -262,223 +263,224 @@ describe JSON::LD::API do
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:array """[{"foo":"bar"}]"""^^rdf:JSON .
             )
-          },
+          }
         }.each do |title, params|
           params[:input] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:input])
-          it(title) {do_fromRdf(processingMode: "json-ld-1.1", **params)}
+          it(title) { do_fromRdf(processingMode: "json-ld-1.1", **params) }
         end
       end
 
       context "extendedRepresentation: true" do
         {
-          "true": {
+          true => {
             output: [{
-               "@id" => "http://example.org/vocab#id",
-               "http://example.org/vocab#bool" => [{"@value" => RDF::Literal(true)}]
-             }],
-            input:%(
+              "@id" => "http://example.org/vocab#id",
+              "http://example.org/vocab#bool" => [{ "@value" => RDF::Literal(true) }]
+            }],
+            input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:bool true .
             )
           },
-          "false": {
+          false => {
             output: [{
-               "@id" => "http://example.org/vocab#id",
-               "http://example.org/vocab#bool" => [{"@value" => RDF::Literal(false)}]
-             }],
+              "@id" => "http://example.org/vocab#id",
+              "http://example.org/vocab#bool" => [{ "@value" => RDF::Literal(false) }]
+            }],
             input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:bool false .
             )
           },
-          "double": {
+          double: {
             output: [{
-               "@id" => "http://example.org/vocab#id",
-               "http://example.org/vocab#double" => [{"@value" => RDF::Literal(1.23E0)}]
-             }],
+              "@id" => "http://example.org/vocab#id",
+              "http://example.org/vocab#double" => [{ "@value" => RDF::Literal(1.23E0) }]
+            }],
             input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:double 1.23E0 .
             )
           },
-          "double-zero": {
+          'double-zero': {
             output: [{
-               "@id" => "http://example.org/vocab#id",
-               "http://example.org/vocab#double" => [{"@value" => RDF::Literal(0, datatype: RDF::XSD.double)}]
-             }],
+              "@id" => "http://example.org/vocab#id",
+              "http://example.org/vocab#double" => [{ "@value" => RDF::Literal(0, datatype: RDF::XSD.double) }]
+            }],
             input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:double 0.0E0 .
             )
           },
-          "integer": {
+          integer: {
             output: [{
-               "@id" => "http://example.org/vocab#id",
-               "http://example.org/vocab#integer" => [{"@value" => RDF::Literal(123)}]
-             }],
+              "@id" => "http://example.org/vocab#id",
+              "http://example.org/vocab#integer" => [{ "@value" => RDF::Literal(123) }]
+            }],
             input: %(
               @prefix ex: <http://example.org/vocab#> .
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               ex:id ex:integer 123 .
             )
-          },
+          }
         }.each do |title, params|
           params[:input] = RDF::Graph.new << RDF::Turtle::Reader.new(params[:input])
           it(title) {
             do_fromRdf(processingMode: "json-ld-1.1",
-            useNativeTypes: true,
-            extendedRepresentation: true,
-            **params)}
+              useNativeTypes: true,
+              extendedRepresentation: true,
+            **params)
+          }
         end
       end
     end
 
     context "anons" do
-      it "should generate bare anon" do
+      it "generates bare anon" do
         input = %(@prefix : <http://example.com/> . _:a :a :b .)
         expect(serialize(input)).to produce_jsonld([
-        {
-          "@id" => "_:a",
-          "http://example.com/a"  => [{"@id" => "http://example.com/b"}]
-        }
-        ], logger)
+                                                     {
+                                                       "@id" => "_:a",
+                                                       "http://example.com/a" => [{ "@id" => "http://example.com/b" }]
+                                                     }
+                                                   ], logger)
       end
-    
-      it "should generate anon as object" do
+
+      it "generates anon as object" do
         input = %(@prefix : <http://example.com/> . :a :b _:a . _:a :c :d .)
         expect(serialize(input)).to produce_jsonld([
-          {
-            "@id" => "_:a",
-            "http://example.com/c"  => [{"@id" => "http://example.com/d"}]
-          },
-          {
-            "@id" => "http://example.com/a",
-            "http://example.com/b"  => [{"@id" => "_:a"}]
-          }
-        ], logger)
+                                                     {
+                                                       "@id" => "_:a",
+                                                       "http://example.com/c" => [{ "@id" => "http://example.com/d" }]
+                                                     },
+                                                     {
+                                                       "@id" => "http://example.com/a",
+                                                       "http://example.com/b" => [{ "@id" => "_:a" }]
+                                                     }
+                                                   ], logger)
       end
     end
 
     context "lists" do
       {
         "literal list" => {
-          input: %q(
+          input: '
             @prefix : <http://example.com/> .
             @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
             :a :b ("apple" "banana")  .
-          ),
+          ',
           output: [{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{
               "@list" => [
-                {"@value" => "apple"},
-                {"@value" => "banana"}
+                { "@value" => "apple" },
+                { "@value" => "banana" }
               ]
             }]
           }]
         },
         "iri list" => {
-          input: %q(@prefix : <http://example.com/> . :a :b (:c) .),
+          input: '@prefix : <http://example.com/> . :a :b (:c) .',
           output: [{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{
               "@list" => [
-                {"@id" => "http://example.com/c"}
+                { "@id" => "http://example.com/c" }
               ]
             }]
           }]
         },
         "empty list" => {
-          input: %q(@prefix : <http://example.com/> . :a :b () .),
+          input: '@prefix : <http://example.com/> . :a :b () .',
           output: [{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{"@list" => []}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@list" => [] }]
           }]
         },
         "single element list" => {
-          input: %q(@prefix : <http://example.com/> . :a :b ( "apple" ) .),
+          input: '@prefix : <http://example.com/> . :a :b ( "apple" ) .',
           output: [{
-            '@id'   => "http://example.com/a",
-            "http://example.com/b"  => [{"@list" => [{"@value" => "apple"}]}]
+            '@id' => "http://example.com/a",
+            "http://example.com/b" => [{ "@list" => [{ "@value" => "apple" }] }]
           }]
         },
         "single element list without @type" => {
-          input: %q(@prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .),
+          input: '@prefix : <http://example.com/> . :a :b ( _:a ) . _:a :b "foo" .',
           output: [
             {
-              '@id'   => "_:a",
-              "http://example.com/b"  => [{"@value" => "foo"}]
+              '@id' => "_:a",
+              "http://example.com/b" => [{ "@value" => "foo" }]
             },
             {
-              '@id'   => "http://example.com/a",
-              "http://example.com/b"  => [{"@list" => [{"@id" => "_:a"}]}]
-            },
+              '@id' => "http://example.com/a",
+              "http://example.com/b" => [{ "@list" => [{ "@id" => "_:a" }] }]
+            }
           ]
         },
         "multiple graphs with shared BNode" => {
-          input: %q(
+          input: '
             <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G> .
             _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-A" <http://www.example.com/G> .
             _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:z1 <http://www.example.com/G> .
             _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-B" <http://www.example.com/G> .
             _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://www.example.com/G> .
             <http://www.example.com/x> <http://www.example.com/p> _:z1 <http://www.example.com/G1> .
-          ),
+          ',
           output: [{
             "@id" => "http://www.example.com/G",
             "@graph" => [{
               "@id" => "_:z0",
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-A"}],
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@id" => "_:z1"}]
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{ "@value" => "cell-A" }],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{ "@id" => "_:z1" }]
             }, {
               "@id" => "_:z1",
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-B"}],
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@list" => []}]
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{ "@value" => "cell-B" }],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{ "@list" => [] }]
             }, {
               "@id" => "http://www.example.com/z",
-              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+              "http://www.example.com/q" => [{ "@id" => "_:z0" }]
             }]
           },
-          {
-            "@id" => "http://www.example.com/G1",
-            "@graph" => [{
-              "@id" => "http://www.example.com/x",
-              "http://www.example.com/p" => [{"@id" => "_:z1"}]
-            }]
-          }],
+                   {
+                     "@id" => "http://www.example.com/G1",
+                     "@graph" => [{
+                       "@id" => "http://www.example.com/x",
+                       "http://www.example.com/p" => [{ "@id" => "_:z1" }]
+                     }]
+                   }],
           reader: RDF::NQuads::Reader
         },
         "multiple graphs with shared BNode (at head)" => {
-          input: %q(
+          input: '
             <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G> .
             _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-A" <http://www.example.com/G> .
             _:z0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:z1 <http://www.example.com/G> .
             _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "cell-B" <http://www.example.com/G> .
             _:z1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> <http://www.example.com/G> .
             <http://www.example.com/z> <http://www.example.com/q> _:z0 <http://www.example.com/G1> .
-          ),
+          ',
           output: [{
             "@id" => "http://www.example.com/G",
             "@graph" => [{
               "@id" => "_:z0",
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{"@value" => "cell-A"}],
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{"@list" => [{ "@value" => "cell-B" }]}]
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" => [{ "@value" => "cell-A" }],
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" => [{ "@list" => [{ "@value" => "cell-B" }] }]
             }, {
               "@id" => "http://www.example.com/z",
-              "http://www.example.com/q" => [{"@id" => "_:z0"}]
+              "http://www.example.com/q" => [{ "@id" => "_:z0" }]
             }]
           },
-          {
-            "@id" => "http://www.example.com/G1",
-            "@graph" => [{
-              "@id" => "http://www.example.com/z",
-              "http://www.example.com/q" => [{"@id" => "_:z0"}]
-            }]
-          }],
+                   {
+                     "@id" => "http://www.example.com/G1",
+                     "@graph" => [{
+                       "@id" => "http://www.example.com/z",
+                       "http://www.example.com/q" => [{ "@id" => "_:z0" }]
+                     }]
+                   }],
           reader: RDF::NQuads::Reader
         },
         "@list containing empty @list" => {
@@ -552,12 +554,12 @@ describe JSON::LD::API do
           reader: RDF::NQuads::Reader
         }
       }.each do |name, params|
-        it "#{name}" do
+        it name.to_s do
           do_fromRdf(params)
         end
       end
     end
-    
+
     context "quads" do
       {
         "simple named graph" => {
@@ -569,9 +571,9 @@ describe JSON::LD::API do
               "@id" => "http://example.com/U",
               "@graph" => [{
                 "@id" => "http://example.com/a",
-                "http://example.com/b" => [{"@id" => "http://example.com/c"}]
+                "http://example.com/b" => [{ "@id" => "http://example.com/c" }]
               }]
-            },
+            }
           ]
         },
         "with properties" => {
@@ -584,9 +586,9 @@ describe JSON::LD::API do
               "@id" => "http://example.com/U",
               "@graph" => [{
                 "@id" => "http://example.com/a",
-                "http://example.com/b" => [{"@id" => "http://example.com/c"}]
+                "http://example.com/b" => [{ "@id" => "http://example.com/c" }]
               }],
-              "http://example.com/d" => [{"@id" => "http://example.com/e"}]
+              "http://example.com/d" => [{ "@id" => "http://example.com/e" }]
             }
           ]
         },
@@ -604,9 +606,9 @@ describe JSON::LD::API do
               "@id" => "http://example.com/U",
               "@graph" => [{
                 "@id" => "http://example.com/a",
-                "http://example.com/b" => [{"@list" => [{"@id" => "http://example.com/c"}]}]
+                "http://example.com/b" => [{ "@list" => [{ "@id" => "http://example.com/c" }] }]
               }],
-              "http://example.com/d" => [{"@list" => [{"@id" => "http://example.com/e"}]}]
+              "http://example.com/d" => [{ "@list" => [{ "@id" => "http://example.com/e" }] }]
             }
           ]
         },
@@ -626,7 +628,7 @@ describe JSON::LD::API do
                 {
                   "@id" => "http://example.com/a",
                   "http://example.com/b" => [{
-                    "@list" => [{"@id" => "http://example.com/c"}]
+                    "@list" => [{ "@id" => "http://example.com/c" }]
                   }]
                 }
               ]
@@ -637,15 +639,15 @@ describe JSON::LD::API do
                 {
                   "@id" => "http://example.com/a",
                   "http://example.com/b" => [{
-                    "@list" => [{"@id" => "http://example.com/e"}]
+                    "@list" => [{ "@id" => "http://example.com/e" }]
                   }]
                 }
               ]
             }
           ]
-        },
+        }
       }.each_pair do |name, params|
-        it "#{name}" do
+        it name.to_s do
           do_fromRdf(params.merge(reader: RDF::NQuads::Reader))
         end
       end
@@ -654,51 +656,51 @@ describe JSON::LD::API do
     context "@direction" do
       context "rdfDirection: null" do
         {
-          "no language rtl datatype": {
-            input: %q(
+          'no language rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "no language", "@type": "https://www.w3.org/ns/i18n#_rtl"}]
-            }]),
+            }]'
           },
-          "no language rtl compound-literal": {
-            input: %q(
+          'no language rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "no language";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@id": "_:cl1"}]
             }, {
               "@id": "_:cl1",
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "no language"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl datatype": {
-            input: %q(
+          'en-US rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "en-US", "@type": "https://www.w3.org/ns/i18n#en-us_rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl compound-literal": {
-            input: %q(
+          'en-US rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "en-US";
                 rdf:language "en-us";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@id": "_:cl1"}]
             }, {
@@ -706,7 +708,7 @@ describe JSON::LD::API do
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "en-US"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-us"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
-            }]),
+            }]'
           }
         }.each_pair do |name, params|
           it name do
@@ -717,51 +719,51 @@ describe JSON::LD::API do
 
       context "rdfDirection: i18n-datatype" do
         {
-          "no language rtl datatype": {
-            input: %q(
+          'no language rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "no language", "@direction": "rtl"}]
-            }]),
+            }]'
           },
-          "no language rtl compound-literal": {
-            input: %q(
+          'no language rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "no language";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@id": "_:cl1"}]
             }, {
               "@id": "_:cl1",
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "no language"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl datatype": {
-            input: %q(
+          'en-US rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-US_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "en-US", "@language": "en-US", "@direction": "rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl compound-literal": {
-            input: %q(
+          'en-US rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "en-US";
                 rdf:language "en-US";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@id": "_:cl1"}]
             }, {
@@ -769,65 +771,67 @@ describe JSON::LD::API do
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#value": [{"@value": "en-US"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#language": [{"@value": "en-US"}],
               "http://www.w3.org/1999/02/22-rdf-syntax-ns#direction": [{"@value": "rtl"}]
-            }]),
+            }]'
           }
         }.each_pair do |name, params|
           it name do
-            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'i18n-datatype', processingMode: 'json-ld-1.1'))
+            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'i18n-datatype',
+              processingMode: 'json-ld-1.1'))
           end
         end
       end
 
       context "rdfDirection: compound-literal" do
         {
-          "no language rtl datatype": {
-            input: %q(
+          'no language rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "no language"^^<https://www.w3.org/ns/i18n#_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "no language", "@type": "https://www.w3.org/ns/i18n#_rtl"}]
-            }]),
+            }]'
           },
-          "no language rtl compound-literal": {
-            input: %q(
+          'no language rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "no language";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "no language", "@direction": "rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl datatype": {
-            input: %q(
+          'en-US rtl datatype': {
+            input: '
               <http://example.com/a> <http://example.org/label> "en-US"^^<https://www.w3.org/ns/i18n#en-us_rtl> .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "en-US", "@type": "https://www.w3.org/ns/i18n#en-us_rtl"}]
-            }]),
+            }]'
           },
-          "en-US rtl compound-literal": {
-            input: %q(
+          'en-US rtl compound-literal': {
+            input: '
               @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
               <http://example.com/a> <http://example.org/label> _:cl1 .
 
               _:cl1 rdf:value "en-US";
                 rdf:language "en-us";
                 rdf:direction "rtl" .
-            ),
-            output: %q([{
+            ',
+            output: '[{
               "@id": "http://example.com/a",
               "http://example.org/label": [{"@value": "en-US", "@language": "en-us", "@direction": "rtl"}]
-            }]),
+            }]'
           }
         }.each_pair do |name, params|
           it name do
-            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'compound-literal', processingMode: 'json-ld-1.1'))
+            do_fromRdf(params.merge(reader: RDF::Turtle::Reader, rdfDirection: 'compound-literal',
+              processingMode: 'json-ld-1.1'))
           end
         end
       end
@@ -835,14 +839,16 @@ describe JSON::LD::API do
 
     context "RDF-star" do
       {
-        "subject-iii": {
+        'subject-iii': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')),
+              RDF::URI('http://example/o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "http://example/s1",
@@ -851,14 +857,16 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "subject-iib": {
+        'subject-iib': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Node.new('o1')),
+              RDF::Node.new('o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "http://example/s1",
@@ -867,14 +875,16 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "subject-iil": {
+        'subject-iil': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Literal('o1')),
+              RDF::Literal('o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "http://example/s1",
@@ -883,14 +893,16 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "subject-bii": {
+        'subject-bii': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::Node('s1'),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')),
+              RDF::URI('http://example/o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "_:s1",
@@ -899,13 +911,15 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "subject-bib": {
+        'subject-bib': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::Node('s1'),
               RDF::URI('http://example/p1'),
-              RDF::Node.new('o1')),
-            RDF::URI('http://example/p'), RDF::URI('http://example/o')),
+              RDF::Node.new('o1')
+            ),
+            RDF::URI('http://example/p'), RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "_:s1",
@@ -914,14 +928,16 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "subject-bil": {
+        'subject-bil': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::Node('s1'),
               RDF::URI('http://example/p1'),
-              RDF::Literal('o1')),
+              RDF::Literal('o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": "_:s1",
@@ -930,14 +946,16 @@ describe JSON::LD::API do
             "http://example/p": [{"@id": "http://example/o"}]
           }])
         },
-        "object-iii":  {
+        'object-iii': {
           input: RDF::Statement(
             RDF::URI('http://example/s'),
             RDF::URI('http://example/p'),
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1'))),
+              RDF::URI('http://example/o1')
+            )
+          ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
@@ -948,14 +966,16 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "object-iib":  {
+        'object-iib': {
           input: RDF::Statement(
             RDF::URI('http://example/s'),
             RDF::URI('http://example/p'),
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Node.new('o1'))),
+              RDF::Node.new('o1')
+            )
+          ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
@@ -966,14 +986,16 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "object-iil":  {
+        'object-iil': {
           input: RDF::Statement(
             RDF::URI('http://example/s'),
             RDF::URI('http://example/p'),
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Literal('o1'))),
+              RDF::Literal('o1')
+            )
+          ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
@@ -984,17 +1006,20 @@ describe JSON::LD::API do
             }]
           }])
         },
-        "recursive-subject": {
+        'recursive-subject': {
           input: RDF::Statement(
             RDF::Statement(
               RDF::Statement(
                 RDF::URI('http://example/s2'),
                 RDF::URI('http://example/p2'),
-                RDF::URI('http://example/o2')),
+                RDF::URI('http://example/o2')
+              ),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')),
+              RDF::URI('http://example/o1')
+            ),
             RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')),
+            RDF::URI('http://example/o')
+          ),
           output: %([{
             "@id": {
               "@id": {
@@ -1005,11 +1030,11 @@ describe JSON::LD::API do
             },
             "http://example/p": [{"@id": "http://example/o"}]
           }])
-        },
+        }
       }.each do |name, params|
         it name do
-          graph = RDF::Graph.new {|g| g << params[:input]}
-          do_fromRdf(params.merge(input: graph, prefixes: {ex: 'http://example/'}))
+          graph = RDF::Graph.new { |g| g << params[:input] }
+          do_fromRdf(params.merge(input: graph, prefixes: { ex: 'http://example/' }))
         end
       end
     end
@@ -1029,9 +1054,9 @@ describe JSON::LD::API do
               { "@id" => "http://www.w3.org/2001/XMLSchema#boolean" }
             ]
           }]
-        },
+        }
       }.each do |t, params|
-        it "#{t}" do
+        it t.to_s do
           do_fromRdf(params)
         end
       end
@@ -1053,20 +1078,19 @@ describe JSON::LD::API do
   end
 
   def do_fromRdf(params)
-    begin
-      input, output = params[:input], params[:output]
-      output = ::JSON.parse(output) if output.is_a?(String)
-      jld = nil
-      if params[:write]
-        expect{jld = serialize(input, **params)}.to write(params[:write]).to(:error)
-      else
-        expect{jld = serialize(input, **params)}.not_to write.to(:error)
-      end
-      expect(jld).to produce_jsonld(output, logger)
-    rescue JSON::LD::JsonLdError => e
-      fail("#{e.class}: #{e.message}\n" +
-        "#{logger}\n" +
-        "Backtrace:\n#{e.backtrace.join("\n")}")
+    input = params[:input]
+    output = params[:output]
+    output = JSON.parse(output) if output.is_a?(String)
+    jld = nil
+    if params[:write]
+      expect { jld = serialize(input, **params) }.to write(params[:write]).to(:error)
+    else
+      expect { jld = serialize(input, **params) }.not_to write.to(:error)
     end
+    expect(jld).to produce_jsonld(output, logger)
+  rescue JSON::LD::JsonLdError => e
+    raise("#{e.class}: #{e.message}\n" \
+          "#{logger}\n" \
+          "Backtrace:\n#{e.backtrace.join("\n")}")
   end
 end

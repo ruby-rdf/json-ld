@@ -1,32 +1,39 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require_relative 'spec_helper'
 
 describe JSON::LD::Resource do
-  subject {JSON::LD::Resource.new({'@id' => '_:foo', "http://schema.org/name" => "foo"})}
+  subject { JSON::LD::Resource.new({ '@id' => '_:foo', "http://schema.org/name" => "foo" }) }
+
   describe "#initialize" do
-    specify {expect(subject).not_to be_nil}
-    specify {expect(subject).to be_a(JSON::LD::Resource)}
-    specify {expect(subject).not_to be_clean}
-    specify {expect(subject).to be_anonymous}
-    specify {expect(subject).to be_dirty}
-    specify {expect(subject).to be_new}
-    specify {expect(subject).not_to be_resolved}
-    specify {expect(subject).not_to be_stub}
+    specify { expect(subject).not_to be_nil }
+    specify { expect(subject).to be_a(described_class) }
+    specify { expect(subject).not_to be_clean }
+    specify { expect(subject).to be_anonymous }
+    specify { expect(subject).to be_dirty }
+    specify { expect(subject).to be_new }
+    specify { expect(subject).not_to be_resolved }
+    specify { expect(subject).not_to be_stub }
+
     context "schema:name property" do
-      specify {expect(subject.property("http://schema.org/name")).to eq "foo"}
+      specify { expect(subject.property("http://schema.org/name")).to eq "foo" }
     end
 
     describe "compacted with context" do
-      subject {JSON::LD::Resource.new({'@id' => '_:foo', "http://schema.org/name" => "foo"}, compact: true, context: {"@vocab" => "http://schema.org/"})}
-      specify {expect(subject).not_to be_nil}
-      specify {expect(subject).to be_a(JSON::LD::Resource)}
-      specify {expect(subject).not_to be_clean}
-      specify {expect(subject).to be_anonymous}
-      specify {expect(subject).to be_dirty}
-      specify {expect(subject).to be_new}
-      specify {expect(subject).not_to be_resolved}
-      specify {expect(subject).not_to be_stub}
-      its(:name) {should eq "foo"}
+      subject do
+        described_class.new({ '@id' => '_:foo', "http://schema.org/name" => "foo" }, compact: true,
+          context: { "@vocab" => "http://schema.org/" })
+      end
+
+      specify { expect(subject).not_to be_nil }
+      specify { expect(subject).to be_a(described_class) }
+      specify { expect(subject).not_to be_clean }
+      specify { expect(subject).to be_anonymous }
+      specify { expect(subject).to be_dirty }
+      specify { expect(subject).to be_new }
+      specify { expect(subject).not_to be_resolved }
+      specify { expect(subject).not_to be_stub }
+      its(:name) { is_expected.to eq "foo" }
     end
   end
 
@@ -39,8 +46,8 @@ describe JSON::LD::Resource do
   end
 
   describe "#hash" do
-    specify {expect(subject.hash).to be_a(Integer)}
-      
+    specify { expect(subject.hash).to be_a(Integer) }
+
     it "returns the hash of the attributes" do
       expect(subject.hash).to eq subject.deresolve.hash
     end
@@ -51,17 +58,18 @@ describe JSON::LD::Resource do
       expect(subject.to_json).to be_a(String)
       expect(JSON.parse(subject.to_json)).to be_a(Hash)
     end
+
     it "has same ID" do
       expect(JSON.parse(subject.to_json)['@id']).to eq subject.id
     end
   end
 
   describe "#each" do
-    specify {expect {|b| subject.each(&b)}.to yield_with_args(subject.statements.first)}
+    specify { expect { |b| subject.each(&b) }.to yield_with_args(subject.statements.first) }
   end
 
   describe RDF::Enumerable do
-    specify {expect(subject).to be_enumerable}
+    specify { expect(subject).to be_enumerable }
 
     it "initializes a graph" do
       g = RDF::Graph.new << subject
@@ -71,6 +79,6 @@ describe JSON::LD::Resource do
   end
 
   describe "#save" do
-    specify {expect {subject.save}.to raise_error(NotImplementedError)}
+    specify { expect { subject.save }.to raise_error(NotImplementedError) }
   end
 end

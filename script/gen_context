@@ -80,7 +80,7 @@ end
 # Load vocabulary
 graph = RDF::Graph.load(ARGV[0])
 
-context = JSON::LD::Context.new(options).
+context = JSON::LD::Context.new(**options).
   parse(base_context).
   from_vocabulary(graph)
 
