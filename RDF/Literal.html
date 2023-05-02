@@ -190,7 +190,8 @@
 38
 39
 40
-41</pre>
+41
+42</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/extensions.rb', line 37</span>
@@ -198,6 +199,7 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_valid_extended?'>valid_extended?</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_language?'>language?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_language'>language</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>!~</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>^[a-zA-Z]+(-[a-zA-Z0-9]+)*$</span><span class='regexp_end'>/</span></span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_datatype?'>datatype?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_datatype'>datatype</span><span class='period'>.</span><span class='id identifier rubyid_invalid?'>invalid?</span>
+
   <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -210,7 +212,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 15 20:55:56 2023 by
+  Generated on Tue May  2 20:01:36 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-3.1.4).
 </div>

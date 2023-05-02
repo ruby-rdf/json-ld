@@ -119,7 +119,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#%2B-instance_method" title="#+ (instance method)">#<strong>+</strong>(value)  &#x21d2; Object </a>
+      <a href="#%2B-instance_method" title="#+ (instance method)">#<strong>+</strong>(other)  &#x21d2; Object </a>
     
 
     
@@ -176,7 +176,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="+-instance_method">
   
-    #<strong>+</strong>(value)  &#x21d2; <tt>Object</tt> 
+    #<strong>+</strong>(other)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -206,8 +206,8 @@
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/extensions.rb', line 6</span>
 
-<span class='kw'>def</span> <span class='op'>+</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
-  <span class='const'><span class='object_link'><a href="" title="RDF::Node (class)">Node</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span> <span class='op'>+</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='op'>+</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="RDF::Node (class)">Node</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span> <span class='op'>+</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -261,7 +261,7 @@
       <pre class="code"><span class="info file"># File 'lib/json/ld/extensions.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_valid_extended?'>valid_extended?</span>
-  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span>
+  <span class='id identifier rubyid_valid?'>valid?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -273,7 +273,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 15 20:55:56 2023 by
+  Generated on Tue May  2 20:01:36 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-3.1.4).
 </div>

@@ -417,7 +417,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#method_missing-instance_method" title="#method_missing (instance method)">#<strong>method_missing</strong>(method, *args)  &#x21d2; Object </a>
+      <a href="#method_missing-instance_method" title="#method_missing (instance method)">#<strong>method_missing</strong>(method, *_args)  &#x21d2; Object </a>
     
 
     
@@ -811,23 +811,23 @@
       <pre class="lines">
 
 
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92</pre>
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 94</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_node_definition'>node_definition</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='ivar'>@context</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:context</span><span class='rbracket'>]</span>
@@ -859,7 +859,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="method_missing-instance_method">
   
-    #<strong>method_missing</strong>(method, *args)  &#x21d2; <tt>Object</tt> 
+    #<strong>method_missing</strong>(method, *_args)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -882,14 +882,14 @@
       <pre class="lines">
 
 
-218
-219
-220</pre>
+236
+237
+238</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 218</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 236</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_method_missing'>method_missing</span><span class='lparen'>(</span><span class='id identifier rubyid_method'>method</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_method_missing'>method_missing</span><span class='lparen'>(</span><span class='id identifier rubyid_method'>method</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid__args'>_args</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_property'>property</span><span class='lparen'>(</span><span class='id identifier rubyid_method'>method</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -948,12 +948,12 @@
       <pre class="lines">
 
 
-10
 11
-12</pre>
+12
+13</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 10</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 11</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_attributes'>attributes</span>
   <span class='ivar'>@attributes</span>
@@ -1009,12 +1009,12 @@
       <pre class="lines">
 
 
-16
 17
-18</pre>
+18
+19</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 16</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 17</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_context'>context</span>
   <span class='ivar'>@context</span>
@@ -1070,12 +1070,12 @@
       <pre class="lines">
 
 
-13
 14
-15</pre>
+15
+16</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 13</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 14</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_id'>id</span>
   <span class='ivar'>@id</span>
@@ -1131,12 +1131,16 @@
       <pre class="lines">
 
 
-47</pre>
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 56</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_anonymous?'>anonymous?</span><span class='semicolon'>;</span> <span class='ivar'>@anon</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_anonymous?'>anonymous?</span>
+  <span class='ivar'>@anon</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1181,12 +1185,16 @@
       <pre class="lines">
 
 
-22</pre>
+23
+24
+25</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 22</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 23</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_clean?'>clean?</span><span class='semicolon'>;</span> <span class='ivar'>@clean</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_clean?'>clean?</span>
+  <span class='ivar'>@clean</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1238,21 +1246,6 @@
       <pre class="lines">
 
 
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
 126
 127
 128
@@ -1264,10 +1257,25 @@
 134
 135
 136
-137</pre>
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 111</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_deresolve'>deresolve</span>
   <span class='id identifier rubyid_node_definition'>node_definition</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_resolved?'>resolved?</span>
@@ -1275,10 +1283,10 @@
       <span class='id identifier rubyid_attributes'>attributes</span><span class='period'>.</span><span class='id identifier rubyid_each_pair'>each_pair</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_prop'>prop</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='op'>|</span>
         <span class='id identifier rubyid_memo'>memo</span><span class='lbracket'>[</span><span class='id identifier rubyid_prop'>prop</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='kw'>case</span> <span class='id identifier rubyid_value'>value</span>
         <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="" title="JSON::LD::Resource (class)">Resource</a></span></span>
-          <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='rbrace'>}</span>
+          <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span> <span class='rbrace'>}</span>
         <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span>
           <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
-            <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="JSON::LD::Resource (class)">Resource</a></span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='lbrace'>{</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='rbrace'>}</span> <span class='op'>:</span> <span class='id identifier rubyid_v'>v</span>
+            <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="JSON::LD::Resource (class)">Resource</a></span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span> <span class='rbrace'>}</span> <span class='op'>:</span> <span class='id identifier rubyid_v'>v</span>
           <span class='kw'>end</span>
         <span class='kw'>else</span>
           <span class='id identifier rubyid_value'>value</span>
@@ -1294,7 +1302,7 @@
   <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_expand'><span class='object_link'><a href="API.html#expand-class_method" title="JSON::LD::API.expand (method)">expand</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_node_definition'>node_definition</span><span class='comma'>,</span> <span class='label'>expandContext:</span> <span class='ivar'>@context</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_expanded'>expanded</span><span class='op'>|</span>
     <span class='id identifier rubyid_compacted'>compacted</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_compact'><span class='object_link'><a href="API.html#compact-class_method" title="JSON::LD::API.compact (method)">compact</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_expanded'>expanded</span><span class='comma'>,</span> <span class='ivar'>@context</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_compacted'>compacted</span><span class='period'>.</span><span class='id identifier rubyid_delete_if'>delete_if</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span><span class='rbrace'>}</span>
+  <span class='id identifier rubyid_compacted'>compacted</span><span class='period'>.</span><span class='id identifier rubyid_delete_if'>delete_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid__v'>_v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>@context</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1340,12 +1348,16 @@
       <pre class="lines">
 
 
-28</pre>
+31
+32
+33</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 31</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_dirty?'>dirty?</span><span class='semicolon'>;</span> <span class='op'>!</span><span class='id identifier rubyid_clean?'>clean?</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_dirty?'>dirty?</span>
+  <span class='op'>!</span><span class='id identifier rubyid_clean?'>clean?</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1377,12 +1389,12 @@
       <pre class="lines">
 
 
-151
-152
-153</pre>
+166
+167
+168</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 151</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 166</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_each'>each</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="API.html" title="JSON::LD::API (class)">API</a></span></span><span class='period'>.</span><span class='id identifier rubyid_toRdf'><span class='object_link'><a href="API.html#toRdf-class_method" title="JSON::LD::API.toRdf (method)">toRdf</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_attributes'>attributes</span><span class='comma'>,</span> <span class='label'>expandContext:</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -1431,15 +1443,15 @@
       <pre class="lines">
 
 
-97
-98
-99</pre>
+112
+113
+114</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 97</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 112</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_hash'>hash</span>
-  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_deresolve'>deresolve</span><span class='period'>.</span><span class='id identifier rubyid_hash'>hash</span>
+  <span class='id identifier rubyid_deresolve'>deresolve</span><span class='period'>.</span><span class='id identifier rubyid_hash'>hash</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1461,23 +1473,23 @@
       <pre class="lines">
 
 
-222
-223
-224
-225
-226
-227
-228</pre>
+240
+241
+242
+243
+244
+245
+246</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 222</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 240</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_inspect'>inspect</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;Resource</span><span class='tstring_end'>&quot;</span></span> <span class='op'>+</span>
-  <span class='id identifier rubyid_attributes'>attributes</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n  </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_k'>k</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>+</span>
-  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_attributes'>attributes</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n  </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_k'>k</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_v'>v</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>+</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&gt;</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1523,12 +1535,16 @@
       <pre class="lines">
 
 
-57</pre>
+70
+71
+72</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 57</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 70</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_new?'>new?</span><span class='semicolon'>;</span> <span class='op'>!</span><span class='op'>!</span><span class='ivar'>@new</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_new?'>new?</span>
+  <span class='op'>!</span><span class='op'>!</span><span class='ivar'>@new</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1560,12 +1576,16 @@
       <pre class="lines">
 
 
-214</pre>
+230
+231
+232</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 214</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 230</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_property'>property</span><span class='lparen'>(</span><span class='id identifier rubyid_prop_name'>prop_name</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='ivar'>@attributes</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_prop_name'>prop_name</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_property'>property</span><span class='lparen'>(</span><span class='id identifier rubyid_prop_name'>prop_name</span><span class='rparen'>)</span>
+  <span class='ivar'>@attributes</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_prop_name'>prop_name</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1610,12 +1630,16 @@
       <pre class="lines">
 
 
-34</pre>
+39
+40
+41</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 34</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 39</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_reconciled?'>reconciled?</span><span class='semicolon'>;</span> <span class='ivar'>@reconciled</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_reconciled?'>reconciled?</span>
+  <span class='ivar'>@reconciled</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1682,21 +1706,6 @@
       <pre class="lines">
 
 
-165
-166
-167
-168
-169
-170
-171
-172
-173
-174
-175
-176
-177
-178
-179
 180
 181
 182
@@ -1714,24 +1723,40 @@
 194
 195
 196
-197</pre>
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 180</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resolve'>resolve</span><span class='lparen'>(</span><span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_resolved?'>resolved?</span>
+
   <span class='kw'>def</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
     <span class='kw'>case</span> <span class='id identifier rubyid_obj'>obj</span>
     <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span>
-      <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_o'>o</span><span class='op'>|</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_o'>o</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span><span class='rbrace'>}</span>
+      <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_o'>o</span><span class='op'>|</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_o'>o</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
     <span class='kw'>when</span> <span class='const'>Hash</span>
       <span class='kw'>if</span> <span class='id identifier rubyid_node_reference?'>node_reference?</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='rparen'>)</span>
         <span class='id identifier rubyid_reference_map'>reference_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="" title="JSON::LD::Resource (class)">Resource</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="JSON::LD::Resource#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='comma'>,</span>
           <span class='label'>context:</span> <span class='ivar'>@context_name</span><span class='comma'>,</span>
           <span class='label'>clean:</span> <span class='kw'>false</span><span class='comma'>,</span>
-          <span class='label'>stub:</span> <span class='kw'>true</span>
-          <span class='rparen'>)</span>
+          <span class='label'>stub:</span> <span class='kw'>true</span><span class='rparen'>)</span>
       <span class='kw'>else</span>
         <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_each_key'>each_key</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='op'>|</span>
           <span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
@@ -1743,12 +1768,13 @@
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 
-  <span class='comment'>#$logger.debug &quot;resolve(0): #{attributes.inspect}&quot;
-</span>  <span class='ivar'>@attributes</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
-    <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span> <span class='op'>||</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>type</span><span class='tstring_end'>&#39;</span></span>
+  <span class='comment'># $logger.debug &quot;resolve(0): #{attributes.inspect}&quot;
+</span>  <span class='ivar'>@attributes</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid__v'>_v</span><span class='op'>|</span>
+    <span class='kw'>next</span> <span class='kw'>if</span> <span class='qwords_beg'>%w[</span><span class='tstring_content'>id</span><span class='words_sep'> </span><span class='tstring_content'>type</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_k'>k</span><span class='rparen'>)</span>
+
     <span class='ivar'>@attributes</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='ivar'>@attributes</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-  <span class='comment'>#$logger.debug &quot;resolve(1): #{attributes.inspect}&quot;
+  <span class='comment'># $logger.debug &quot;resolve(1): #{attributes.inspect}&quot;
 </span>  <span class='ivar'>@resolved</span> <span class='op'>=</span> <span class='kw'>true</span>
   <span class='kw'>self</span>
 <span class='kw'>end</span></pre>
@@ -1796,12 +1822,16 @@
       <pre class="lines">
 
 
-41</pre>
+48
+49
+50</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 41</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 48</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_resolved?'>resolved?</span><span class='semicolon'>;</span> <span class='ivar'>@resolved</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_resolved?'>resolved?</span>
+  <span class='ivar'>@resolved</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1866,12 +1896,12 @@
       <pre class="lines">
 
 
-208
-209
-210</pre>
+224
+225
+226</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 208</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 224</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_save'>save</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span>
@@ -1920,12 +1950,16 @@
       <pre class="lines">
 
 
-52</pre>
+63
+64
+65</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 52</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 63</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_stub?'>stub?</span><span class='semicolon'>;</span> <span class='op'>!</span><span class='op'>!</span><span class='ivar'>@stub</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_stub?'>stub?</span>
+  <span class='op'>!</span><span class='op'>!</span><span class='ivar'>@stub</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1990,12 +2024,12 @@
       <pre class="lines">
 
 
-145
-146
-147</pre>
+160
+161
+162</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 145</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 160</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_deresolve'>deresolve</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
@@ -2020,42 +2054,40 @@
       <pre class="lines">
 
 
-167
-168
-169
-170
-171
-172
-173
-174
-175
-176
-177
-178
-179
-180
-181
-182
 183
 184
 185
 186
-187</pre>
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 167</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/resource.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_obj'>obj</span>
   <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span>
-    <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_o'>o</span><span class='op'>|</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_o'>o</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span><span class='rbrace'>}</span>
+    <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_o'>o</span><span class='op'>|</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_o'>o</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
   <span class='kw'>when</span> <span class='const'>Hash</span>
     <span class='kw'>if</span> <span class='id identifier rubyid_node_reference?'>node_reference?</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_reference_map'>reference_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="" title="JSON::LD::Resource (class)">Resource</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="JSON::LD::Resource#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='comma'>,</span>
         <span class='label'>context:</span> <span class='ivar'>@context_name</span><span class='comma'>,</span>
         <span class='label'>clean:</span> <span class='kw'>false</span><span class='comma'>,</span>
-        <span class='label'>stub:</span> <span class='kw'>true</span>
-        <span class='rparen'>)</span>
+        <span class='label'>stub:</span> <span class='kw'>true</span><span class='rparen'>)</span>
     <span class='kw'>else</span>
       <span class='id identifier rubyid_obj'>obj</span><span class='period'>.</span><span class='id identifier rubyid_each_key'>each_key</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='op'>|</span>
         <span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_update_obj'>update_obj</span><span class='lparen'>(</span><span class='id identifier rubyid_obj'>obj</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_reference_map'>reference_map</span><span class='rparen'>)</span>
@@ -2076,7 +2108,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 15 20:55:56 2023 by
+  Generated on Tue May  2 20:01:36 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-3.1.4).
 </div>

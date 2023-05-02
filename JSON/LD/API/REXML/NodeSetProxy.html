@@ -316,13 +316,13 @@
       <pre class="lines">
 
 
-139
-140
-141
-142</pre>
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 139</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 142</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_node_set'>node_set</span><span class='comma'>,</span> <span class='id identifier rubyid_parent'>parent</span><span class='rparen'>)</span>
   <span class='ivar'>@node_set</span> <span class='op'>=</span> <span class='id identifier rubyid_node_set'>node_set</span>
@@ -367,12 +367,12 @@
       <pre class="lines">
 
 
-162
-163
-164</pre>
+165
+166
+167</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 162</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 165</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_method_missing'>method_missing</span><span class='lparen'>(</span><span class='id identifier rubyid_method'>method</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
   <span class='ivar'>@node_set</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='id identifier rubyid_method'>method</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
@@ -415,12 +415,12 @@
       <pre class="lines">
 
 
-136
-137
-138</pre>
+140
+141
+142</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 136</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 140</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_node_set'>node_set</span>
   <span class='ivar'>@node_set</span>
@@ -458,12 +458,12 @@
       <pre class="lines">
 
 
-137
-138
-139</pre>
+140
+141
+142</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 137</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 140</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_parent'>parent</span>
   <span class='ivar'>@parent</span>
@@ -539,14 +539,14 @@
       <pre class="lines">
 
 
-149
-150
-151
 152
-153</pre>
+153
+154
+155
+156</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 152</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_each'>each</span>
   <span class='ivar'>@node_set</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_c'>c</span><span class='op'>|</span>
@@ -573,15 +573,15 @@
       <pre class="lines">
 
 
-156
-157
-158</pre>
+159
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 156</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/html/rexml.rb', line 159</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_html'>to_html</span>
-  <span class='id identifier rubyid_node_set'>node_set</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:to_s</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_node_set'>node_set</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:to_s</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -593,7 +593,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 15 20:55:57 2023 by
+  Generated on Tue May  2 20:01:37 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-3.1.4).
 </div>
