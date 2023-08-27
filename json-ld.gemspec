@@ -40,12 +40,12 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'jsonlint',        '~> 0.4'  unless is_java
   gem.add_development_dependency 'oj',              '~> 3.15' unless is_java
   gem.add_development_dependency 'rack-test',       '~> 2.1'
-  gem.add_development_dependency 'rdf-isomorphic',  '~> 3.2'
-  gem.add_development_dependency 'rdf-spec',        '~> 3.2'
-  gem.add_development_dependency 'rdf-trig',        '~> 3.2'
-  gem.add_development_dependency 'rdf-turtle',      '~> 3.2'
-  gem.add_development_dependency 'rdf-vocab',       '~> 3.2'
-  gem.add_development_dependency 'rdf-xsd',         '~> 3.2'
+  gem.add_development_dependency 'rdf-isomorphic',  '~> 3.3'
+  gem.add_development_dependency 'rdf-spec',        '~> 3.3'
+  gem.add_development_dependency 'rdf-trig',        '~> 3.3'
+  gem.add_development_dependency 'rdf-turtle',      '~> 3.3'
+  gem.add_development_dependency 'rdf-vocab',       '~> 3.3'
+  gem.add_development_dependency 'rdf-xsd',         '~> 3.3'
   gem.add_development_dependency 'rspec',           '~> 3.12'
   gem.add_development_dependency 'rspec-its',       '~> 1.3'
   gem.add_development_dependency 'sinatra-linkeddata', '~> 3.2'
