@@ -8,7 +8,6 @@ gem 'json-canonicalization', git: "https://github.com/dryruby/json-canonicalizat
 gem 'rdf', git: "https://github.com/ruby-rdf/rdf", branch: "develop"
 
 group :development do
-  gem 'earl-report'
   gem 'ebnf', git: "https://github.com/dryruby/ebnf", branch: "develop"
   gem 'fasterer'
   gem 'json-ld-preloaded', github: "ruby-rdf/json-ld-preloaded", branch: "develop"
