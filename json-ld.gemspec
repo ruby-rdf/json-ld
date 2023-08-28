@@ -48,7 +48,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdf-xsd',         '~> 3.3'
   gem.add_development_dependency 'rspec',           '~> 3.12'
   gem.add_development_dependency 'rspec-its',       '~> 1.3'
-  gem.add_development_dependency 'sinatra-linkeddata', '~> 3.2'
   gem.add_development_dependency 'yajl-ruby',       '~> 1.4' unless is_java
   gem.add_development_dependency 'yard', '~> 0.9'
 

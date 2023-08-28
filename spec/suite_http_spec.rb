@@ -1,5 +1,4 @@
 require_relative 'spec_helper'
-require 'rack/rdf'
 require 'rack/test'
 
 begin
