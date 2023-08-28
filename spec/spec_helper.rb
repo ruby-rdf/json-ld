@@ -145,7 +145,7 @@ LIBRARY_EXPANDED = JSON.parse(%([
 ]))
 
 LIBRARY_COMPACTED_DEFAULT = JSON.parse(%({
-  "@context": "http://schema.org",
+  "@context": "http://example.com/context",
   "@graph": [
     {
       "id": "http://example.org/library",
@@ -213,7 +213,7 @@ LIBRARY_FLATTENED_EXPANDED = JSON.parse(%([
 ]))
 
 LIBRARY_FLATTENED_COMPACTED_DEFAULT = JSON.parse(%({
-  "@context": "http://schema.org",
+  "@context": "http://example.com/context",
   "@graph": [
     {
       "id": "http://example.org/library",
