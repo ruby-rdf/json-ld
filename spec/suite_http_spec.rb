@@ -1,5 +1,4 @@
 require_relative 'spec_helper'
-require 'rack/linkeddata'
 require 'rack/test'
 
 begin
@@ -15,10 +14,8 @@ begin
 
           let(:app) do
             JSON::LD::ContentNegotiation.new(
-              Rack::LinkedData::ContentNegotiation.new(
-                double("Target Rack Application", :call => [200, {}, @results]),
-                {}
-              )
+              double("Target Rack Application", :call => [200, {}, @results]),
+              {}
             )
           end
 

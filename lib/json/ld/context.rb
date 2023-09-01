@@ -2322,7 +2322,6 @@ module JSON
             language_mapping == other.language_mapping &&
             direction_mapping == other.direction_mapping &&
             reverse_property == other.reverse_property &&
-            simple == other.simple &&
             index == other.index &&
             context == other.context &&
             prefix? == other.prefix? &&

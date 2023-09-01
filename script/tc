@@ -4,7 +4,7 @@ $:.unshift(File.expand_path("../../lib", __FILE__))
 require "bundler/setup"
 require 'logger'
 require 'json/ld'
-require 'linkeddata'
+#require 'linkeddata'
 require 'rdf/isomorphic'
 require File.expand_path("../../spec/spec_helper", __FILE__)
 require File.expand_path("../../spec/suite_helper", __FILE__)
