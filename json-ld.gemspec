@@ -32,7 +32,7 @@ Gem::Specification.new do |gem|
   gem.required_ruby_version = '>= 3.0'
   gem.requirements          = []
   gem.add_runtime_dependency     'htmlentities', '~> 4.3'
-  gem.add_runtime_dependency     'json-canonicalization', '~> 0.3', '>= 0.3.2'
+  gem.add_runtime_dependency     'json-canonicalization', '~> 1.0'
   gem.add_runtime_dependency     'link_header', '~> 0.0', '>= 0.0.8'
   gem.add_runtime_dependency     'multi_json',      '~> 1.15'
   gem.add_runtime_dependency     "rack",            '>= 2.2', '< 4'
