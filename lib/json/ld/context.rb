@@ -1724,6 +1724,16 @@ module JSON
       # @return [String]
       def to_rb(*aliases)
         canon_base = RDF::URI(context_base).canonicalize
+        canon_base.scheme = 'http' if canon_base.scheme == 'https'
+
+        aliases = aliases.map do |url|
+          url = RDF::URI(url).canonicalize
+          url.scheme = 'http' if url.scheme == 'https'
+          url.to_s
+        end.uniq
+
+        aliases.delete(canon_base.to_s)
+
         defn = []
 
         defn << "base: #{base.to_s.inspect}" if base
