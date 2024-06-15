@@ -843,9 +843,11 @@ module JSON
           end
         end
 
-        if previous_definition&.protected? && definition != previous_definition && !override_protected
+        if !override_protected && previous_definition&.protected?
+          if definition != previous_definition
+            raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
+          end
           definition = previous_definition
-          raise JSON::LD::JsonLdError::ProtectedTermRedefinition, "Attempt to redefine protected term #{term}"
         end
 
         term_definitions[term] = definition
