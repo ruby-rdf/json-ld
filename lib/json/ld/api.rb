@@ -638,7 +638,7 @@ module JSON
             options[:headers]['Accept'].sub('application/ld+json,',
               "application/ld+json;profile=#{requestProfile}, application/ld+json;q=0.9,")
         end
-        documentLoader.call(url, **options) do |remote_doc|
+        documentLoader.call(url, extractAllScripts: extractAllScripts, **options) do |remote_doc|
           case remote_doc
           when RDF::Util::File::RemoteDocument
             # Convert to RemoteDocument
