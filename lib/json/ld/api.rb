@@ -846,7 +846,6 @@ module JSON
           res = []
 
           SCRIPT_LOADERS.each do |type, loader|
-            next unless res.empty?  # Only load a single type
             elements = if profile
               es = input.xpath("//script[starts-with(@type, '#{type};profile=#{profile}')]")
               # If no profile script, just take a single script without profile
