@@ -290,8 +290,7 @@ module JSON
       def self.flatten(input, context, expanded: false, serializer: nil, **options)
         flattened = []
         options = {
-          compactToRelative: true,
-          extractAllScripts: true
+          compactToRelative: true
         }.merge(options)
 
         # Expand input to simplify processing
@@ -518,6 +517,8 @@ module JSON
       # @option options (see #initialize)
       # @option options [Boolean] :produceGeneralizedRdf (false)
       #   If true, output will include statements having blank node predicates, otherwise they are dropped.
+      # @option options [Boolean] :extractAllScripts (true)
+      #   If set, when given an HTML input without a fragment identifier, extracts all `script` elements with type `application/ld+json` into an array during expansion.
       # @raise [JsonLdError]
       # @yield statement
       # @yieldparam [RDF::Statement] statement
