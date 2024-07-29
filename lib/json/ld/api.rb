@@ -290,8 +290,7 @@ module JSON
       def self.flatten(input, context, expanded: false, serializer: nil, **options)
         flattened = []
         options = {
-          compactToRelative: true,
-          extractAllScripts: true
+          compactToRelative: true
         }.merge(options)
 
         # Expand input to simplify processing
@@ -518,6 +517,8 @@ module JSON
       # @option options (see #initialize)
       # @option options [Boolean] :produceGeneralizedRdf (false)
       #   If true, output will include statements having blank node predicates, otherwise they are dropped.
+      # @option options [Boolean] :extractAllScripts (true)
+      #   If set, when given an HTML input without a fragment identifier, extracts all `script` elements with type `application/ld+json` into an array during expansion.
       # @raise [JsonLdError]
       # @yield statement
       # @yieldparam [RDF::Statement] statement
@@ -638,7 +639,7 @@ module JSON
             options[:headers]['Accept'].sub('application/ld+json,',
               "application/ld+json;profile=#{requestProfile}, application/ld+json;q=0.9,")
         end
-        documentLoader.call(url, **options) do |remote_doc|
+        documentLoader.call(url, extractAllScripts: extractAllScripts, **options) do |remote_doc|
           case remote_doc
           when RDF::Util::File::RemoteDocument
             # Convert to RemoteDocument
@@ -759,6 +760,28 @@ module JSON
       end
 
       ##
+      # Hash of recognized script types and the loaders that decode them
+      # into a hash or array of hashes.
+      #
+      # @return Hash{type, Proc}
+      SCRIPT_LOADERS = {
+        'application/ld+json' => ->(content, url:, **options) do
+            validate_input(content, url: url) if options[:validate]
+            mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
+            MultiJson.load(content, **mj_opts)
+          end
+      }
+
+      ##
+      # Adds a loader for some specific content type
+      #
+      # @param [String] type
+      # @param [Proc] loader
+      def self.add_script_loader(type, loader)
+        SCRIPT_LOADERS[type] = loader
+      end
+
+      ##
       # Load one or more script tags from an HTML source.
       # Unescapes and uncomments input, returns the internal representation
       # Yields document base
@@ -812,47 +835,52 @@ module JSON
           element = input.at_xpath("//script[@id='#{id}']")
           raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found with id=#{id}" unless element
 
-          unless element.attributes['type'].to_s.start_with?('application/ld+json')
+          script_type = SCRIPT_LOADERS.keys.detect {|type| element.attributes['type'].to_s.start_with?(type)}
+          unless script_type
             raise JSON::LD::JsonLdError::LoadingDocumentFailed,
               "Script tag has type=#{element.attributes['type']}"
           end
 
-          content = element.inner_html
-          validate_input(content, url: url) if options[:validate]
-          mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-          MultiJson.load(content, **mj_opts)
+          loader = SCRIPT_LOADERS[script_type]
+          loader.call(element.inner_html, url: url, **options)
         elsif extractAllScripts
           res = []
-          elements = if profile
-            es = input.xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]")
-            # If no profile script, just take a single script without profile
-            es = [input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")].compact if es.empty?
-            es
-          else
-            input.xpath("//script[starts-with(@type, 'application/ld+json')]")
-          end
-          elements.each do |element|
-            content = element.inner_html
-            validate_input(content, url: url) if options[:validate]
-            mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-            r = MultiJson.load(content, **mj_opts)
-            if r.is_a?(Hash)
-              res << r
-            elsif r.is_a?(Array)
-              res.concat(r)
+
+          SCRIPT_LOADERS.each do |type, loader|
+            elements = if profile
+              es = input.xpath("//script[starts-with(@type, '#{type};profile=#{profile}')]")
+              # If no profile script, just take a single script without profile
+              es = [input.at_xpath("//script[starts-with(@type, '#{type}')]")].compact if es.empty?
+              es
+            else
+              input.xpath("//script[starts-with(@type, '#{type}')]")
+            end
+            elements.each do |element|
+              content = element.inner_html
+              r = loader.call(content, url: url, extractAllScripts: true, **options)
+              if r.is_a?(Hash)
+                res << r
+              elsif r.is_a?(Array)
+                res.concat(r)
+              end
             end
           end
           res
         else
-          # Find the first script with type application/ld+json.
-          element = input.at_xpath("//script[starts-with(@type, 'application/ld+json;profile=#{profile}')]") if profile
-          element ||= input.at_xpath("//script[starts-with(@type, 'application/ld+json')]")
-          raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
+          # Find the first script with a known type
+          script_type, element = nil, nil
+          SCRIPT_LOADERS.keys.each do |type|
+            next if script_type # already found the type
+            element = input.at_xpath("//script[starts-with(@type, '#{type};profile=#{profile}')]") if profile
+            element ||= input.at_xpath("//script[starts-with(@type, '#{type}')]")
+            script_type = type if element
+          end
+          unless script_type
+            raise JSON::LD::JsonLdError::LoadingDocumentFailed, "No script tag found" unless element
+          end
 
           content = element.inner_html
-          validate_input(content, url: url) if options[:validate]
-          mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-          MultiJson.load(content, **mj_opts)
+          SCRIPT_LOADERS[script_type].call(content, url: url, **options)
         end
       rescue MultiJson::ParseError => e
         raise JSON::LD::JsonLdError::InvalidScriptElement, e.message

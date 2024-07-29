@@ -557,6 +557,37 @@ describe JSON::LD::API do
           "@graph": [{"@id": "_:b0","foo": ["bar"]}]
         })
       },
+      'Flattens first script element by default': {
+        input: %(
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@context": {
+                "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+              },
+              "foo": [{"@value": "bar"}]
+            }
+            </script>
+            <script type="application/ld+json">
+            {
+              "@context": {"ex": "http://example.com/"},
+              "@graph": [
+                {"ex:foo": {"@value": "foo"}},
+                {"ex:bar": {"@value": "bar"}}
+              ]
+            }
+            </script>
+          </head>
+        </html>),
+        context: %({"foo": {"@id": "http://example.com/foo", "@container": "@list"}}),
+        output: %({
+          "@context": {
+            "foo": {"@id": "http://example.com/foo", "@container": "@list"}
+          },
+          "@graph": [{"@id": "_:b0","foo": ["bar"]}]
+        })
+      },
       'Flattens first script element with extractAllScripts: false': {
         input: %(
         <html>
@@ -622,7 +653,7 @@ describe JSON::LD::API do
         }),
         base: "http://example.org/doc#second"
       },
-      'Flattens all script elements by default': {
+      'Flattens all script elements extractAllScripts: true': {
         input: %(
         <html>
           <head>
@@ -656,7 +687,8 @@ describe JSON::LD::API do
             {"@id": "_:b1", "ex:foo": "foo"},
             {"@id": "_:b2", "ex:bar": "bar"}
           ]
-        })
+        }),
+        extractAllScripts: true
       }
     }.each do |title, params|
       it(title) do

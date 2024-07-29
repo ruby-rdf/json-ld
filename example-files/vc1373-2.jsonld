@@ -1,0 +1,62 @@
+{
+  "@context": [
+    {
+      "@protected": true,
+      "@vocab": "https://www.w3.org/ns/credentials/issuer-dependent#",
+      "id": "@id",
+      "type": "@type",
+      "VerifiablePresentation": {
+        "@id": "https://www.w3.org/2018/credentials#VerifiablePresentation",
+        "@context": {
+          "@protected": true,
+          "id": "@id",
+          "type": "@type",
+          "holder": {
+            "@id": "https://www.w3.org/2018/credentials#holder",
+            "@type": "@id"
+          },
+          "proof": {
+            "@id": "https://w3id.org/security#proof",
+            "@type": "@id",
+            "@container": "@graph"
+          },
+          "verifiableCredential": {
+            "@id": "https://www.w3.org/2018/credentials#verifiableCredential",
+            "@type": "@id",
+            "@container": "@graph",
+            "@context": null
+          },
+          "termsOfUse": {
+            "@id": "https://www.w3.org/2018/credentials#termsOfUse",
+            "@type": "@id"
+          }
+        }
+      },
+      "issuer": {
+        "@id": "https://www.w3.org/2018/credentials#issuer",
+        "@type": "@id",
+        "@context": {
+          "@protected": true,
+
+          "id": "@id",
+          "type": "@type",
+
+          "description": {
+            "@id": "https://schema.org/description",
+            "@context": {
+              "value": "@value", "lang": "@language", "dir": "@direction"
+            }
+          },
+          "name": {
+            "@id": "https://schema.org/name",
+            "@context": {
+              "value": "@value", "lang": "@language", "dir": "@direction"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "type": "VerifiablePresentation",
+  "verifiableCredential": ["http://university.example/credentials/1872"]
+}

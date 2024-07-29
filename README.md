@@ -603,6 +603,10 @@ To get a local working copy of the development repository, do:
 
     % git clone git://github.com/ruby-rdf/json-ld.git
 
+## Change Log
+
+See [Release Notes on GitHub](https://github.com/ruby-rdf/json-ld/releases)
+
 ## Mailing List
 * <https://lists.w3.org/Archives/Public/public-rdf-ruby/>
 
