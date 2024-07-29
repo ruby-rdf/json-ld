@@ -214,6 +214,28 @@
         </dt>
         <dd><pre class="code"><span class='qwords_beg'>%w[</span><span class='tstring_content'>json-ld-1.0</span><span class='words_sep'> </span><span class='tstring_content'>json-ld-1.1</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
       
+        <dt id="SCRIPT_LOADERS-constant" class="">SCRIPT_LOADERS =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Hash of recognized script types and the loaders that decode them into a hash or array of hashes.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>application/ld+json</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tlambda'>-&gt;</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span>
+      <span class='id identifier rubyid_validate_input'>validate_input</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
+      <span class='id identifier rubyid_mj_opts'>mj_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>!=</span> <span class='symbol'>:adapter</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../LD.html#MUTLI_JSON_ADAPTERS-constant" title="JSON::LD::MUTLI_JSON_ADAPTERS (constant)">MUTLI_JSON_ADAPTERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+      <span class='const'>MultiJson</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_mj_opts'>mj_opts</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+<span class='rbrace'>}</span></pre></dd>
+      
     </dl>
   
 
@@ -357,6 +379,30 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_script_loader-class_method" title="add_script_loader (class method)">.<strong>add_script_loader</strong>(type, loader)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Adds a loader for some specific content type.</p>
+</div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -939,7 +985,74 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="compact-class_method">
+  <h3 class="signature first" id="add_script_loader-class_method">
+  
+    .<strong>add_script_loader</strong>(type, loader)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Adds a loader for some specific content type</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>type</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>loader</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+780
+781
+782</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 780</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_add_script_loader'>add_script_loader</span><span class='lparen'>(</span><span class='id identifier rubyid_type'>type</span><span class='comma'>,</span> <span class='id identifier rubyid_loader'>loader</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_type'>type</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_loader'>loader</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="compact-class_method">
   
     .<strong>compact</strong>(input, context, expanded: false, serializer: nil, **options) {|jsonld| ... } &#x21d2; <tt>Object</tt>, <tt>Hash</tt> 
   
@@ -1638,7 +1751,6 @@
       <pre class="lines">
 
 
-733
 734
 735
 736
@@ -1658,10 +1770,11 @@
 750
 751
 752
-753</pre>
+753
+754</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 733</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 734</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_documentLoader'>documentLoader</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='label'>extractAllScripts:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>profile:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>requestProfile:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_url'>url</span>
@@ -2745,8 +2858,7 @@
 348
 349
 350
-351
-352</pre>
+351</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 290</span>
@@ -2754,8 +2866,7 @@
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_flattened'>flattened</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-    <span class='label'>compactToRelative:</span> <span class='kw'>true</span><span class='comma'>,</span>
-    <span class='label'>extractAllScripts:</span> <span class='kw'>true</span>
+    <span class='label'>compactToRelative:</span> <span class='kw'>true</span>
   <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
 
   <span class='comment'># Expand input to simplify processing
@@ -3376,6 +3487,7 @@
       <pre class="lines">
 
 
+382
 383
 384
 385
@@ -3502,11 +3614,10 @@
 506
 507
 508
-509
-510</pre>
+509</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 383</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 382</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_frame'>frame</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='id identifier rubyid_frame'>frame</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -4099,7 +4210,6 @@
       <pre class="lines">
 
 
-584
 585
 586
 587
@@ -4111,10 +4221,11 @@
 593
 594
 595
-596</pre>
+596
+597</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 584</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 585</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_fromRdf'>fromRdf</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>useRdfType:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>useNativeTypes:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -4256,29 +4367,6 @@
       <pre class="lines">
 
 
-771
-772
-773
-774
-775
-776
-777
-778
-779
-780
-781
-782
-783
-784
-785
-786
-787
-788
-789
-790
-791
-792
-793
 794
 795
 796
@@ -4344,10 +4432,38 @@
 856
 857
 858
-859</pre>
+859
+860
+861
+862
+863
+864
+865
+866
+867
+868
+869
+870
+871
+872
+873
+874
+875
+876
+877
+878
+879
+880
+881
+882
+883
+884
+885
+886
+887</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 771</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 794</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_load_html'>load_html</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>url:</span><span class='comma'>,</span>
                    <span class='label'>library:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -4393,47 +4509,52 @@
 </span>    <span class='id identifier rubyid_element'>element</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[@id=&#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/LoadingDocumentFailed.html" title="JSON::LD::JsonLdError::LoadingDocumentFailed (class)">LoadingDocumentFailed</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No script tag found with id=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_element'>element</span>
 
-    <span class='kw'>unless</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_attributes'>attributes</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>application/ld+json</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_script_type'>script_type</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='period'>.</span><span class='id identifier rubyid_detect'>detect</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_type'>type</span><span class='op'>|</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_attributes'>attributes</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_type'>type</span><span class='rparen'>)</span><span class='rbrace'>}</span>
+    <span class='kw'>unless</span> <span class='id identifier rubyid_script_type'>script_type</span>
       <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/LoadingDocumentFailed.html" title="JSON::LD::JsonLdError::LoadingDocumentFailed (class)">LoadingDocumentFailed</a></span></span><span class='comma'>,</span>
         <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Script tag has type=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_attributes'>attributes</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>type</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
 
-    <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_inner_html'>inner_html</span>
-    <span class='id identifier rubyid_validate_input'>validate_input</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
-    <span class='id identifier rubyid_mj_opts'>mj_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>!=</span> <span class='symbol'>:adapter</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../LD.html#MUTLI_JSON_ADAPTERS-constant" title="JSON::LD::MUTLI_JSON_ADAPTERS (constant)">MUTLI_JSON_ADAPTERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-    <span class='const'>MultiJson</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_mj_opts'>mj_opts</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_loader'>loader</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_script_type'>script_type</span><span class='rbracket'>]</span>
+    <span class='id identifier rubyid_loader'>loader</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_inner_html'>inner_html</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='kw'>elsif</span> <span class='id identifier rubyid_extractAllScripts'>extractAllScripts</span>
     <span class='id identifier rubyid_res'>res</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
-    <span class='id identifier rubyid_elements'>elements</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_profile'>profile</span>
-      <span class='id identifier rubyid_es'>es</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_xpath'>xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;application/ld+json;profile=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_profile'>profile</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-      <span class='comment'># If no profile script, just take a single script without profile
-</span>      <span class='id identifier rubyid_es'>es</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;application/ld+json&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span> <span class='kw'>if</span> <span class='id identifier rubyid_es'>es</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-      <span class='id identifier rubyid_es'>es</span>
-    <span class='kw'>else</span>
-      <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_xpath'>xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;application/ld+json&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='kw'>end</span>
-    <span class='id identifier rubyid_elements'>elements</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_element'>element</span><span class='op'>|</span>
-      <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_inner_html'>inner_html</span>
-      <span class='id identifier rubyid_validate_input'>validate_input</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
-      <span class='id identifier rubyid_mj_opts'>mj_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>!=</span> <span class='symbol'>:adapter</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../LD.html#MUTLI_JSON_ADAPTERS-constant" title="JSON::LD::MUTLI_JSON_ADAPTERS (constant)">MUTLI_JSON_ADAPTERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-      <span class='id identifier rubyid_r'>r</span> <span class='op'>=</span> <span class='const'>MultiJson</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_mj_opts'>mj_opts</span><span class='rparen'>)</span>
-      <span class='kw'>if</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
-        <span class='id identifier rubyid_res'>res</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_r'>r</span>
-      <span class='kw'>elsif</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span><span class='rparen'>)</span>
-        <span class='id identifier rubyid_res'>res</span><span class='period'>.</span><span class='id identifier rubyid_concat'>concat</span><span class='lparen'>(</span><span class='id identifier rubyid_r'>r</span><span class='rparen'>)</span>
+
+    <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_type'>type</span><span class='comma'>,</span> <span class='id identifier rubyid_loader'>loader</span><span class='op'>|</span>
+      <span class='id identifier rubyid_elements'>elements</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_profile'>profile</span>
+        <span class='id identifier rubyid_es'>es</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_xpath'>xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='embexpr_end'>}</span><span class='tstring_content'>;profile=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_profile'>profile</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+        <span class='comment'># If no profile script, just take a single script without profile
+</span>        <span class='id identifier rubyid_es'>es</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span> <span class='kw'>if</span> <span class='id identifier rubyid_es'>es</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+        <span class='id identifier rubyid_es'>es</span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_xpath'>xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
+      <span class='id identifier rubyid_elements'>elements</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_element'>element</span><span class='op'>|</span>
+        <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_inner_html'>inner_html</span>
+        <span class='id identifier rubyid_r'>r</span> <span class='op'>=</span> <span class='id identifier rubyid_loader'>loader</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='label'>extractAllScripts:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+        <span class='kw'>if</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_res'>res</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_r'>r</span>
+        <span class='kw'>elsif</span> <span class='id identifier rubyid_r'>r</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Array.html" title="Array (class)">Array</a></span></span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_res'>res</span><span class='period'>.</span><span class='id identifier rubyid_concat'>concat</span><span class='lparen'>(</span><span class='id identifier rubyid_r'>r</span><span class='rparen'>)</span>
+        <span class='kw'>end</span>
       <span class='kw'>end</span>
     <span class='kw'>end</span>
     <span class='id identifier rubyid_res'>res</span>
   <span class='kw'>else</span>
-    <span class='comment'># Find the first script with type application/ld+json.
-</span>    <span class='id identifier rubyid_element'>element</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;application/ld+json;profile=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_profile'>profile</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_profile'>profile</span>
-    <span class='id identifier rubyid_element'>element</span> <span class='op'>||=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;application/ld+json&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/LoadingDocumentFailed.html" title="JSON::LD::JsonLdError::LoadingDocumentFailed (class)">LoadingDocumentFailed</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No script tag found</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_element'>element</span>
+    <span class='comment'># Find the first script with a known type
+</span>    <span class='id identifier rubyid_script_type'>script_type</span><span class='comma'>,</span> <span class='id identifier rubyid_element'>element</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span>
+    <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_keys'>keys</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_type'>type</span><span class='op'>|</span>
+      <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_script_type'>script_type</span> <span class='comment'># already found the type
+</span>      <span class='id identifier rubyid_element'>element</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='embexpr_end'>}</span><span class='tstring_content'>;profile=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_profile'>profile</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_profile'>profile</span>
+      <span class='id identifier rubyid_element'>element</span> <span class='op'>||=</span> <span class='id identifier rubyid_input'>input</span><span class='period'>.</span><span class='id identifier rubyid_at_xpath'>at_xpath</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>//script[starts-with(@type, &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_type'>type</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;)]</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_script_type'>script_type</span> <span class='op'>=</span> <span class='id identifier rubyid_type'>type</span> <span class='kw'>if</span> <span class='id identifier rubyid_element'>element</span>
+    <span class='kw'>end</span>
+    <span class='kw'>unless</span> <span class='id identifier rubyid_script_type'>script_type</span>
+      <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/LoadingDocumentFailed.html" title="JSON::LD::JsonLdError::LoadingDocumentFailed (class)">LoadingDocumentFailed</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No script tag found</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_element'>element</span>
+    <span class='kw'>end</span>
 
     <span class='id identifier rubyid_content'>content</span> <span class='op'>=</span> <span class='id identifier rubyid_element'>element</span><span class='period'>.</span><span class='id identifier rubyid_inner_html'>inner_html</span>
-    <span class='id identifier rubyid_validate_input'>validate_input</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:validate</span><span class='rbracket'>]</span>
-    <span class='id identifier rubyid_mj_opts'>mj_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>!=</span> <span class='symbol'>:adapter</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../LD.html#MUTLI_JSON_ADAPTERS-constant" title="JSON::LD::MUTLI_JSON_ADAPTERS (constant)">MUTLI_JSON_ADAPTERS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-    <span class='const'>MultiJson</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_mj_opts'>mj_opts</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="#SCRIPT_LOADERS-constant" title="JSON::LD::API::SCRIPT_LOADERS (constant)">SCRIPT_LOADERS</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_script_type'>script_type</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_content'>content</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>rescue</span> <span class='const'>MultiJson</span><span class='op'>::</span><span class='const'>ParseError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../../JSON.html" title="JSON (module)">JSON</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LD.html" title="JSON::LD (module)">LD</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError.html" title="JSON::LD::JsonLdError (class)">JsonLdError</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="JsonLdError/InvalidScriptElement.html" title="JSON::LD::JsonLdError::InvalidScriptElement (class)">InvalidScriptElement</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span>
@@ -4723,7 +4844,6 @@
       <pre class="lines">
 
 
-624
 625
 626
 627
@@ -4817,10 +4937,11 @@
 715
 716
 717
-718</pre>
+718
+719</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 624</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 625</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_loadRemoteDocument'>loadRemoteDocument</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span>
                             <span class='label'>allowed_content_types:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -4839,7 +4960,7 @@
       <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:headers</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Accept</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_sub'>sub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>application/ld+json,</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
         <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>application/ld+json;profile=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_requestProfile'>requestProfile</span><span class='embexpr_end'>}</span><span class='tstring_content'>, application/ld+json;q=0.9,</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_documentLoader'>documentLoader</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='op'>|</span>
+  <span class='id identifier rubyid_documentLoader'>documentLoader</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='label'>extractAllScripts:</span> <span class='id identifier rubyid_extractAllScripts'>extractAllScripts</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_remote_doc'>remote_doc</span><span class='op'>|</span>
     <span class='kw'>case</span> <span class='id identifier rubyid_remote_doc'>remote_doc</span>
     <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../../RDF.html" title="RDF (module)">RDF</a></span></span><span class='op'>::</span><span class='const'>Util</span><span class='op'>::</span><span class='const'>File</span><span class='op'>::</span><span class='const'>RemoteDocument</span>
       <span class='comment'># Convert to RemoteDocument
@@ -5022,13 +5143,13 @@
       <pre class="lines">
 
 
-872
-873
-874
-875</pre>
+900
+901
+902
+903</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 872</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 900</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_serializer'>serializer</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid__args'>_args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_serializer_opts'>serializer_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='symbol'>:serializer_opts</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../LD.html#JSON_STATE-constant" title="JSON::LD::JSON_STATE (constant)">JSON_STATE</a></span></span><span class='rparen'>)</span>
@@ -5138,6 +5259,22 @@
           
             &mdash; <div class='inline'>
 <p>If true, output will include statements having blank node predicates, otherwise they are dropped.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:extractAllScripts</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>If set, when given an HTML input without a fragment identifier, extracts all <code>script</code> elements with type <code>application/ld+json</code> into an array during expansion.</p>
 </div>
           
         </li>
@@ -5471,7 +5608,6 @@
       <pre class="lines">
 
 
-525
 526
 527
 528
@@ -5508,10 +5644,11 @@
 559
 560
 561
-562</pre>
+562
+563</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 525</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 526</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_toRdf'>toRdf</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>expanded:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -5582,20 +5719,20 @@
       <pre class="lines">
 
 
-880
-881
-882
-883
-884
-885
-886
-887
-888
-889
-890</pre>
+908
+909
+910
+911
+912
+913
+914
+915
+916
+917
+918</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 880</span>
+      <pre class="code"><span class="info file"># File 'lib/json/ld/api.rb', line 908</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_validate_input'>validate_input</span><span class='lparen'>(</span><span class='id identifier rubyid_input'>input</span><span class='comma'>,</span> <span class='label'>url:</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>unless</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>JsonLint</span><span class='rparen'>)</span>
@@ -5618,9 +5755,9 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Dec  4 21:20:35 2023 by
+  Generated on Mon Jul 29 22:13:21 2024 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.34 (ruby-3.1.4).
+  0.9.36 (ruby-3.1.6).
 </div>
 
     </div>
