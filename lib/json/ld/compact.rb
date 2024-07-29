@@ -299,10 +299,10 @@ module JSON
                   else
                     index_key = context.expand_iri(index_key, vocab: true)
                     container_key = context.compact_iri(index_key, vocab: true)
-                    map_key, *others = Array(compacted_item[container_key])
+                    map_key, *others = Array(compacted_item.is_a?(Hash) && compacted_item[container_key])
                     if map_key.is_a?(String)
                       case others.length
-                      when 0 then compacted_item.delete(container_key)
+                      when 0 then compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                       when 1 then compacted_item[container_key] = others.first
                       else        compacted_item[container_key] = others
                       end
@@ -316,15 +316,15 @@ module JSON
                   map_key = expanded_item['@language']
                   value?(expanded_item) ? expanded_item['@value'] : compacted_item
                 elsif container.include?('@type')
-                  map_key, *types = Array(compacted_item[container_key])
+                  map_key, *types = Array(compacted_item.is_a?(Hash) && compacted_item[container_key])
                   case types.length
-                  when 0 then compacted_item.delete(container_key)
+                  when 0 then compacted_item.delete(container_key) if compacted_item.is_a?(Hash)
                   when 1 then compacted_item[container_key] = types.first
                   else        compacted_item[container_key] = types
                   end
 
                   # if compacted_item contains a single entry who's key maps to @id, then recompact the item without @type
-                  if compacted_item.keys.length == 1 && expanded_item.key?('@id')
+                  if compacted_item.is_a?(Hash) && compacted_item.keys.length == 1 && expanded_item.key?('@id')
                     compacted_item = compact({ '@id' => expanded_item['@id'] },
                       base: base,
                       property: item_active_property,

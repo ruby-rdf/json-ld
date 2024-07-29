@@ -3448,6 +3448,40 @@ describe JSON::LD::API do
           }
         }),
         processingMode: "json-ld-1.1"
+      },
+      "ruby-rdf/json-ld#62": {
+        input: %({
+          "@context": {
+            "@vocab": "http://schema.org/"
+          },
+          "@type": "Event",
+          "location": {
+            "@id": "http://kg.artsdata.ca/resource/K11-200"
+          }
+        }),
+        context: %({
+          "@context": {
+            "@vocab": "http://schema.org/",
+            "location": {
+              "@type": "@id",
+              "@container": "@type"
+            }
+          }
+        }),
+        output: %({
+          "@context": {
+            "@vocab": "http://schema.org/",
+            "location": {
+              "@type": "@id",
+              "@container": "@type"
+            }
+          },
+          "@type": "Event",
+          "location": {
+            "@none": "http://kg.artsdata.ca/resource/K11-200"
+          }
+        }),
+        processingMode: "json-ld-1.1"
       }
     }.each do |title, params|
       it title do
