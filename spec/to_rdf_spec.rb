@@ -1312,198 +1312,184 @@ describe JSON::LD::API do
       end
     end
 
-    context "JSON-LD-star" do
+    context "@triple" do
       {
-        'node with embedded subject without rdfstar option': {
+        'node with triple term object without rdfstar option': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "http://example/p1": [{"@id": "http://example/o1"}]
+              }
+            }
           }),
-          exception: JSON::LD::JsonLdError::InvalidIdValue
+          output: %(<ex:sub> <ex:prop> _:bn0 .)
         }
       }.each do |title, params|
         it(title) { run_to_rdf params }
       end
 
       {
-        'node with embedded subject having no @id': {
+        'node with triple term object having no @id': {
           input: %({
-            "@id": {
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-          )
-        },
-        'node with embedded subject having IRI @id': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
-          )
-        },
-        'node with embedded subject having BNode @id': {
-          input: %({
-            "@id": {
-              "@id": "_:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-           <<_:b0 <ex:prop> "value">> <ex:prop> "value2" .
-          )
-        },
-        'node with embedded subject having a type': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": "ex:Type"
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<<ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type>>> <ex:prop> "value2" .
-          )
-        },
-        'node with embedded subject having an IRI value': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "ex:value"}
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<<ex:rei> <ex:prop> <ex:value>>> <ex:prop> "value2" .
-          )
-        },
-        'node with embedded subject having an BNode value': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "_:value"}
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<<ex:rei> <ex:prop> _:b0>> <ex:prop> "value2" .
-          )
-        },
-        'node with recursive embedded subject': {
-          input: %({
-            "@id": {
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": "value3"
-              },
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          expected: %(
-            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
-          )
-        },
-        'illegal node with subject having no property': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei"
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having multiple properties': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": ["value1", "value2"]
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having multiple types': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": ["ex:Type1", "ex:Type2"]
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having type and property': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": "ex:Type",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'node with embedded object': {
-          input: %({
-            "@id": "ex:subj",
-            "ex:value": {
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": "value"
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "ex:p1": [{"@id": "ex:o1"}]
               }
             }
           }),
           expected: %(
-            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
+            <ex:sub> <ex:prop> <<(_:bn0 <ex:p1> <ex:o1>)>> .
           )
         },
-        'node with embedded object having properties': {
+        'node with triple term object having @id': {
           input: %({
-            "@id": "ex:subj",
-            "ex:value": {
-              "@id": {
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
                 "@id": "ex:rei",
-                "ex:prop": "value"
-              },
-              "ex:prop": "value2"
+                "ex:p1": [{"@id": "ex:o1"}]
+              }
             }
           }),
           expected: %(
-            <ex:subj> <ex:value> <<<ex:rei> <ex:prop> "value">> .
-            <<<ex:rei> <ex:prop> "value">> <ex:prop> "value2" .
+            <ex:sub> <ex:prop> <<(<ex:rei> <ex:p1> <ex:o1>)>> .
           )
         },
-        'node with recursive embedded object': {
+        'node with triple term object having BNode @id': {
           input: %({
-            "@id": "ex:subj",
-            "ex:value": {
-              "@id": {
-                "@id": {
-                  "@id": "ex:rei",
-                  "ex:prop": "value3"
-                },
-                "ex:prop": "value"
-              },
-              "ex:prop": "value2"
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "_:rei",
+                "ex:p1": [{"@id": "ex:o1"}]
+              }
             }
           }),
           expected: %(
-            <ex:subj> <ex:value> <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> .
-            <<<<<ex:rei> <ex:prop> "value3">> <ex:prop> "value">> <ex:prop> "value2" .
+            <ex:sub> <ex:prop> <<(_:b0 <ex:p1> <ex:o1>)>> .
           )
-        }
+        },
+        'node with triple term having a type': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "@type": "ex:Type"
+              }
+            }
+          }),
+          expected: %(
+            <ex:sub> <ex:prop> <<(<ex:rei> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <ex:Type>)>> .
+          )
+        },
+        'node with triple term having a literal value': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "ex:p1": "value"
+              }
+            }
+          }),
+          expected: %(
+            <ex:sub> <ex:prop> <<(<ex:rei> <ex:p1> "value")>> .
+          )
+        },
+        'node with triple term having a BNode value': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "ex:p1": {"@id": "_:bn0"}
+              }
+            }
+          }),
+          expected: %(
+            <ex:sub> <ex:prop> <<(<ex:rei> <ex:p1> _:bn0)>> .
+          )
+        },
+        'node with recursive triple term': {
+          input: %({
+            "@id": "ex:s0",
+            "ex:p0": {
+              "@triple": {
+                "@id": "ex:s1",
+                "ex:p1": {
+                  "@triple": {
+                    "@id": "ex:s2",
+                    "ex:p2": "value"
+                  }
+                }
+              }
+            }
+          }),
+          expected: %(
+            <ex:s0> <ex:p0> <<(<ex:s1> <ex:p1> <<(<ex:s2> <ex:p2> "value")>>)>> .
+          )
+        },
+        'illegal node with triple term subject': {
+          input: %({
+            "@triple": {
+              "@id": "ex:rei",
+              "ex:p1": {"@id": "ex:o1"}
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal node with triple term having no property': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei"
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal node with triple term having multiple properties': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "ex:p1": ["value1", "value2"]
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal node with triple term having multiple types': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "@type": ["ex:T1", "ex:T2"]
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal node with triple term having type and property': {
+          input: %({
+            "@id": "ex:sub",
+            "ex:prop": {
+              "@triple": {
+                "@id": "ex:rei",
+                "@type": "ex:Type",
+                "ex:p1": "value"
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
       }.each do |title, params|
         context(title) do
           if params[:expected]
@@ -1693,7 +1679,7 @@ describe JSON::LD::API do
           JSON::LD::API.toRdf(input, base: params[:base], logger: logger, rename_bnodes: false, **params) do |st|
             graph << st
           end
-        end.not_to write.to(:error)
+        end.not_to write.to(:error), logger.to_s
       end
       expect(graph).to be_equivalent_graph(output, logger: logger, inputDocument: input)
     end

@@ -11,7 +11,6 @@ module JSON
       # This algorithm creates a JSON object node map holding an indexed representation of the graphs and nodes represented in the passed expanded document. All nodes that are not uniquely identified by an IRI get assigned a (new) blank node identifier. The resulting node map will have a member for every graph in the document whose value is another object with a member for every node represented in the document. The default graph is stored under the @default member, all other graphs are stored under their graph name.
       #
       # For RDF-star/JSON-LD-star:
-      #   * Values of `@id` can be an object (embedded node); when these are used as keys in a Node Map, they are serialized as canonical JSON, and de-serialized when flattening.
       #   * The presence of `@annotation` implies an embedded node and the annotation object is removed from the node/value object in which it appears.
       #
       # @param [Array, Hash] element
@@ -98,12 +97,20 @@ module JSON
             else
               list['@list'] << result
             end
+          elsif triple_term?(element)
+            # Add just the @triple member from element as the value of the property in the subject node.
+            # FIXME: if a triple term can have other properties, the triple term would need to be its own entry in the node mode.
+            add_value(subject_node, active_property, element.dup.delete_if {|k,v| k != '@triple'}, allow_duplicate: false)
+            if element.keys.length != 1
+              raise "Expected triple term to not have other properties, got #{element.inspect}"
+            end
           else
             # Element is a node object
             ser_id = id = element.delete('@id')
             if id.is_a?(Hash)
               # Index graph using serialized id
               ser_id = id.to_json_c14n
+              raise "Can't happen"
             elsif id.nil?
               ser_id = id = namer.get_name
             end

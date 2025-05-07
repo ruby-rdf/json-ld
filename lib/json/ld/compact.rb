@@ -22,7 +22,7 @@ module JSON
                   base: nil,
                   property: nil,
                   log_depth: nil)
-        # log_debug("compact", depth: log_depth.to_i) {"element: #{element.inspect}, ec: #{context.inspect}"}
+        log_debug("compact", depth: log_depth.to_i) {"element: #{element.inspect}, ec: #{context.inspect}"}
 
         # If the term definition for active property itself contains a context, use that for compacting values.
         input_context = context
@@ -101,14 +101,7 @@ module JSON
 
             if expanded_property == '@id'
               compacted_value = as_array(expanded_value).map do |expanded_id|
-                if node?(expanded_id) && @options[:rdfstar]
-                  # This can only really happen for valid RDF-star
-                  compact(expanded_id, base: base,
-                    property: '@id',
-                    log_depth: log_depth.to_i + 1)
-                else
-                  context.compact_iri(expanded_id, base: @options[:base])
-                end
+                context.compact_iri(expanded_id, base: @options[:base])
               end
 
               kw_alias = context.compact_iri('@id', vocab: true)
@@ -167,6 +160,18 @@ module JSON
 
             if expanded_property == '@index' && context.container(property).include?('@index')
               # log_debug("@index", depth: log_depth.to_i) {"drop @index"}
+              next
+            end
+
+            # If expanded property is @triple
+            if expanded_property == '@triple'
+              # Compact using `property`
+              compacted_value = compact(expanded_value, base: base,
+                property: property,
+                log_depth: log_depth.to_i + 1)
+
+              al = context.compact_iri('@triple', vocab: true)
+              result[al] = compacted_value
               next
             end
 

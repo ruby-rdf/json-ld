@@ -73,9 +73,11 @@ module JSON
                          @propagate
                          @protected
                          @preserve
+                         @reifier
                          @requireAll
                          @reverse
                          @set
+                         @triple
                          @type
                          @value
                          @version
@@ -128,6 +130,7 @@ module JSON
       class ConflictingIndexes < JsonLdError; @code = 'conflicting indexes'; end
       class CyclicIRIMapping < JsonLdError; @code = 'cyclic IRI mapping'; end
       class InvalidAnnotation < JsonLdError; @code = 'invalid annotation'; end
+      class InvalidBaseDirection < JsonLdError; @code = 'invalid base direction'; end
       class InvalidBaseIRI < JsonLdError; @code = 'invalid base IRI'; end
       class InvalidContainerMapping < JsonLdError; @code = 'invalid container mapping'; end
       class InvalidContextEntry < JsonLdError; @code = 'invalid context entry'; end
@@ -149,7 +152,6 @@ module JSON
       class InvalidNestValue < JsonLdError; @code = 'invalid @nest value'; end
       class InvalidPrefixValue < JsonLdError; @code = 'invalid @prefix value'; end
       class InvalidPropagateValue < JsonLdError; @code = 'invalid @propagate value'; end
-      class InvalidEmbeddedNode < JsonLdError; @code = 'invalid embedded node'; end
       class InvalidRemoteContext < JsonLdError; @code = 'invalid remote context'; end
       class InvalidReverseProperty < JsonLdError; @code = 'invalid reverse property'; end
       class InvalidReversePropertyMap < JsonLdError; @code = 'invalid reverse property map'; end
@@ -160,7 +162,7 @@ module JSON
       class InvalidSetOrListObject < JsonLdError; @code = 'invalid set or list object'; end
       class InvalidStreamingKeyOrder < JsonLdError; @code = 'invalid streaming key order' end
       class InvalidTermDefinition < JsonLdError; @code = 'invalid term definition'; end
-      class InvalidBaseDirection < JsonLdError; @code = 'invalid base direction'; end
+      class InvalidTripleTerm < JsonLdError; @code = 'invalid triple term'; end
       class InvalidTypedValue < JsonLdError; @code = 'invalid typed value'; end
       class InvalidTypeMapping < JsonLdError; @code = 'invalid type mapping'; end
       class InvalidTypeValue < JsonLdError; @code = 'invalid type value'; end

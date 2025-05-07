@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ['3.0', 3.1, 3.2, 3.3, ruby-head, jruby]
+        ruby: ['3.0', 3.1, 3.2, 3.3, 3.4, ruby-head, jruby]
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -33,7 +33,7 @@ jobs:
         run: ruby --version; bundle exec rspec spec || $ALLOW_FAILURES
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2
-        if: "matrix.ruby == '3.2'"
+        if: "matrix.ruby == '3.4'"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   wintests:
@@ -42,11 +42,11 @@ jobs:
     runs-on: windows-latest
     env:
       CI: true
-      ALLOW_FAILURES: ${{ matrix.ruby == '3.2' || matrix.ruby == 'jruby' }}
+      ALLOW_FAILURES: ${{ matrix.ruby == 'jruby' }}
     strategy:
       fail-fast: false
       matrix:
-        ruby: [3.1, 3.2]
+        ruby: [3.1, 3.2, 3.3, 3.4]
     steps:
       - name: Clone repository
         uses: actions/checkout@v3

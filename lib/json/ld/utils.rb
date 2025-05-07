@@ -12,7 +12,7 @@ module JSON
       # @return [Boolean]
       def node?(value)
         value.is_a?(Hash) &&
-          !(value.key?('@value') || value.key?('@list') || value.key?('@set')) &&
+          !(value.key?('@value') || value.key?('@list') || value.key?('@set') || value.key?('@triple')) &&
           (value.length > 1 || !value.key?('@id'))
       end
 
@@ -30,7 +30,7 @@ module JSON
       # @return [Boolean]
       def node_or_ref?(value)
         value.is_a?(Hash) &&
-          !(value.key?('@value') || value.key?('@list') || value.key?('@set'))
+          !(value.key?('@value') || value.key?('@list') || value.key?('@set') || value.key?('@triple'))
       end
 
       ##
@@ -89,7 +89,16 @@ module JSON
       end
 
       ##
-      # Is value literal?
+      # Is value a triple term?
+      #
+      # @param [Object] value
+      # @return [Boolean]
+      def triple_term?(value)
+        value.is_a?(Hash) && value.key?('@triple')
+      end
+
+      ##
+      # Is value a literal?
       #
       # @param [Object] value
       # @return [Boolean]

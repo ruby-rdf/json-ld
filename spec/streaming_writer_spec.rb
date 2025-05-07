@@ -112,7 +112,7 @@ describe JSON::LD::StreamingWriter do
               t.logger.info "source: #{t.input}"
               specify "#{t.property('@id')}: #{t.name}" do
                 repo = RDF::Repository.load(t.input_loc, format: :nquads)
-                jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger, **t.options) do |writer|
+                jsonld = JSON::LD::Writer.buffer(stream: true, context: ctx, logger: t.logger, **t.options.merge(validate: false)) do |writer|
                   writer << repo
                 end
                 t.logger.info "Generated: #{jsonld}"

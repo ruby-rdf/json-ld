@@ -12,15 +12,22 @@ module JSON
       ##
       # @param [Hash{String => Object}] item
       # @param [RDF::Resource] graph_name
-      # @param [Boolean] quoted emitted triples are quoted triples.
+      # @param [Boolen] tripleTerm Mark statement(s) as triple terms
       # @yield statement
       # @yieldparam [RDF::Statement] statement
       # @return RDF::Resource the subject of this item
-      def item_to_rdf(item, graph_name: nil, quoted: false, &block)
+      def item_to_rdf(item, graph_name: nil, tripleTerm: false, &block)
         # Just return value object as Term
         return unless item
 
-        if value?(item)
+        if @options[:rdfstar] && triple_term?(item)
+          # Value of @triple returns a single triple
+          tt_statement = []
+          item_to_rdf(item['@triple'], graph_name: graph_name, tripleTerm: true) do |b|
+            tt_statement = b
+          end
+          return tt_statement # The result is the tripleTerm
+        elsif value?(item)
           value = item.fetch('@value')
           datatype = item.fetch('@type', nil)
 
@@ -82,14 +89,7 @@ module JSON
           return parse_list(item['@list'], graph_name: graph_name, &block)
         end
 
-        subject = case item['@id']
-        when nil then node
-        when String then as_resource(item['@id'])
-        when Object
-          # Embedded/quoted statement
-          # (No error checking, as this is done in expansion)
-          to_enum(:item_to_rdf, item['@id'], quoted: true).to_a.first
-        end
+        subject = item['@id'] ? as_resource(item['@id']) : node
 
         # log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
         item.each do |property, values|
@@ -99,12 +99,12 @@ module JSON
             values.each do |v|
               object = as_resource(v)
               # log_debug("item_to_rdf")  {"type: #{object.to_ntriples rescue 'malformed rdf'}"}
-              yield RDF::Statement(subject, RDF.type, object, graph_name: graph_name, quoted: quoted)
+              yield RDF::Statement(subject, RDF.type, object, graph_name: graph_name, tripleTerm: tripleTerm)
             end
           when '@graph'
             values = [values].compact unless values.is_a?(Array)
             values.each do |nd|
-              item_to_rdf(nd, graph_name: subject, quoted: quoted, &block)
+              item_to_rdf(nd, graph_name: subject, tripleTerm: tripleTerm, &block)
             end
           when '@reverse'
             raise "Huh?" unless values.is_a?(Hash)
@@ -115,15 +115,15 @@ module JSON
               # For each item in values
               vv.each do |v|
                 # Item is a node definition. Generate object as the result of the Object Converstion algorithm passing item.
-                object = item_to_rdf(v, graph_name: graph_name, &block)
+                object = item_to_rdf(v, graph_name: graph_name, tripleTerm: tripleTerm, &block)
                 # log_debug("item_to_rdf")  {"subject: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # yield subject, prediate, and literal to results.
-                yield RDF::Statement(object, predicate, subject, graph_name: graph_name, quoted: quoted)
+                yield RDF::Statement(object, predicate, subject, graph_name: graph_name, tripleTerm: tripleTerm)
               end
             end
           when '@included'
             values.each do |v|
-              item_to_rdf(v, graph_name: graph_name, &block)
+              item_to_rdf(v, graph_name: graph_name, tripleTerm: tripleTerm, &block)
             end
           when /^@/
             # Otherwise, if @type is any other keyword, skip to the next property-values pair
@@ -143,11 +143,11 @@ module JSON
                 # Append a triple composed of subject, prediate, and object to results and add all triples from list_results to results.
               else
                 # Otherwise, item is a value object or a node definition. Generate object as the result of the Object Converstion algorithm passing item.
-                object = item_to_rdf(v, graph_name: graph_name, &block)
+                object = item_to_rdf(v, graph_name: graph_name, tripleTerm: tripleTerm, &block)
                 # log_debug("item_to_rdf")  {"object: #{object.to_ntriples rescue 'malformed rdf'}"}
                 # yield subject, prediate, and literal to results.
               end
-              yield RDF::Statement(subject, predicate, object, graph_name: graph_name, quoted: quoted)
+              yield RDF::Statement(subject, predicate, object, graph_name: graph_name, tripleTerm: tripleTerm)
             end
           end
         end

@@ -48,11 +48,7 @@ module JSON
 
           default_graph[name] ||= { '@id' => name } unless name == '@default'
 
-          subject = if statement.subject.statement?
-            resource_representation(statement.subject, useNativeTypes, extendedRepresentation)['@id'].to_json_c14n
-          else
-            statement.subject.to_s
-          end
+          subject = statement.subject.to_s
           node = node_map[subject] ||= resource_representation(statement.subject, useNativeTypes,
             extendedRepresentation)
 
@@ -62,9 +58,9 @@ module JSON
           end
 
           # If object is an IRI, blank node identifier, or statement, and node map does not have an object member, create one and initialize its value to a new JSON object consisting of a single member @id whose value is set to object.
-          unless statement.object.literal?
+          unless statement.object.literal? || statement.object.statement?
             object = if statement.object.statement?
-              resource_representation(statement.object, useNativeTypes, extendedRepresentation)['@id'].to_json_c14n
+              resource_representation(statement.object, useNativeTypes, extendedRepresentation)['@triple'].to_json_c14n
             else
               statement.object.to_s
             end
@@ -189,18 +185,18 @@ module JSON
 
       private
 
-      RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer, RDF::XSD.double]).freeze
+      RDF_LITERAL_NATIVE_TYPES = Set.new([RDF::XSD.boolean, RDF::XSD.integer]).freeze
 
       def resource_representation(resource, useNativeTypes, extendedRepresentation)
         case resource
         when RDF::Statement
           # Note, if either subject or object are a BNode which is used elsewhere,
           # this might not work will with the BNode accounting from above.
-          rep = { '@id' => resource_representation(resource.subject, false, extendedRepresentation) }
+          rep = { '@triple' => resource_representation(resource.subject, false, extendedRepresentation) }
           if resource.predicate == RDF.type
-            rep['@id']['@type'] = resource.object.to_s
+            rep['@triple']['@type'] = resource.object.to_s
           else
-            rep['@id'][resource.predicate.to_s] =
+            rep['@triple'][resource.predicate.to_s] =
               as_array(resource_representation(resource.object, useNativeTypes, extendedRepresentation))
           end
           rep
@@ -233,10 +229,19 @@ module JSON
               res['@language'] = lang
             end
             res['@direction'] = dir
-          elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(resource.datatype) && resource.valid?
+          elsif useNativeTypes &&
+                resource.is_a?(RDF::Literal::Double) &&
+                resource.valid? &&
+                !(resource.nan? || resource.infinite?)
+            res['@value'] = resource.object
+          elsif useNativeTypes &&
+                RDF_LITERAL_NATIVE_TYPES.include?(resource.datatype) &&
+                resource.valid?
             res['@value'] = resource.object
           else
-            resource.canonicalize! if resource.valid? && resource.datatype == RDF::XSD.double
+            resource.canonicalize! if resource.valid? &&
+                                      resource.datatype == RDF::XSD.double &&
+                                      !(resource.nan? || resource.infinite?)
             if resource.datatype?
               res['@type'] = resource.datatype.to_s
             elsif resource.language?

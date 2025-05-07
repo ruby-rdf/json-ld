@@ -41,19 +41,69 @@ The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing an
 
 The {JSON::LD::API.expand}, {JSON::LD::API.compact}, {JSON::LD::API.toRdf}, and {JSON::LD::API.fromRdf} API methods, along with the {JSON::LD::Reader} and {JSON::LD::Writer}, include provisional support for [JSON-LD-star][JSON-LD-star].
 
-Internally, an `RDF::Statement` is treated as another resource, along with `RDF::URI` and `RDF::Node`, which allows an `RDF::Statement` to have a `#subject` or `#object` which is also an `RDF::Statement`.
+Internally, an `RDF::Statement` is treated as another resource, along with `RDF::URI` and `RDF::Node`, which allows an `RDF::Statement` to have an `#object` which is also an `RDF::Statement`.
 
-In JSON-LD, with the `rdfstar` option set, the value of `@id`, in addition to an IRI or Blank Node Identifier, can be a JSON-LD node object having exactly one property with an optional `@id`, which may also be an embedded object. (It may also have `@context` and `@index` values).
+#### Triple Terms
+
+In JSON-LD, with the `rdfstar` option set, a node object have an `@triple` property (or alias)  instead of `@id`, identifies the value of `@triple` as a [Triple Term](https://www.w3.org/TR/rdf12-concepts/#dfn-triple-term). The constraint on the value of `@triple` can be a JSON-LD node object having exactly one property with an optional `@id`, which may also be an triple term. (It may also have `@context` and `@index` values).
 
     {
-      "@id": {
+      "@triple": {
         "@context": {"foaf": "http://xmlns.com/foaf/0.1/"},
         "@index": "ignored",
+        "@id": "bob",
+        "foaf:age" 23
+      }
+    }
+
+The equivalent turtle would be the following:
+
+    <<( :bob <http://xmlns.com/foaf/0.1/age> 21 )>>
+
+An object including `@triple` **MUST NOT** define any extra properties for which that triple term would be used as the subject.
+
+#### Reifying Triples
+
+As RDF-star prefers the use of [reifiers](https://www.w3.org/TR/rdf12-concepts/#dfn-reifier) as a way to use a triple term. In this case the property `@refies` (or alias)  defines one (or more) triples which are _reified_ by the subject of the containing _node object_. The interpretation of a node object including `@reifies` creates a triple term for the triple(s) defined by the content of the block. The subject of that node object (`@id` or a default blank node) becomes the _reifier_ of the associated triple term(s).
+
+    {
+      "@context": {"foaf": "http://xmlns.com/foaf/0.1/", "ex": "http://example.com/"},
+      "@id": "_:reif",
+      "@reifies": {
         "@id": "bob",
         "foaf:age" 23
       },
       "ex:certainty": 0.9
     }
+
+This is equivalent to the following JSON-LD using `@triple`:
+
+    {
+      "@context": {
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "ex": "http://example.com/",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      },
+      "@id": "_:reif",
+      "rdf:reifies": {
+        "@triple": {
+          "@id": "bob",
+          "foaf:age" 23
+        }
+      }
+      "ex:certainty": 0.9
+    }
+
+Or, in Turtle:
+
+    _:reif rdf:reifies <<( :bob <http://xmlns.com/foaf/0.1/age> 21 )>>;
+           ex:certainty 0.9 .
+
+Or, equivalently, using the Turtle [`reifiedTriple`](https://www.w3.org/TR/rdf12-turtle/#grammar-production-reifiedTriple) syntax:
+
+    << :bob <http://xmlns.com/foaf/0.1/age> 21 ~ _:reif>> ex:certainty 0.9 .
+
+#### Annotation
 
 Additionally, the `@annotation` property (or alias) may be used on a node object or value object to annotate the statement for which the associated node is the object of a triple.
 
@@ -66,42 +116,46 @@ Additionally, the `@annotation` property (or alias) may be used on a node object
       }
     }
 
-In the first case, the embedded node is not asserted, and only appears as the subject of a triple. In the second case, the triple is asserted and used as the subject in another statement which annotates it.
+In the case of Reifying Triples, the embedded triple term is not asserted, and only appears as the subject of a triple. In the second case, the triple is asserted and used as the subject in another statement which annotates it.
 
 **Note: This feature is subject to change or elimination as the standards process progresses.**
 
-#### Serializing a Graph containing embedded statements
+#### Serializing a Graph containing triple terms
 
     require 'json/ld'
-    statement = RDF::Statement(RDF::URI('bob'), RDF::Vocab::FOAF.age, RDF::Literal(23))
-    graph = RDF::Graph.new << [statement, RDF::URI("ex:certainty"), RDF::Literal(0.9)]
+    statement = RDF::Statement(RDF::URI('bob'), RDF::Vocab::FOAF.age, RDF::Literal(23), tripleTerm: true)
+    reif = RDF::Node.new("reif")
+    graph = RDF::Graph.new do |g|
+      g << [reif, RDF.reifies, statement]
+      g << [reif, RDF::URI("ex:certainty"), RDF::Literal(0.9)]
+    end
     graph.dump(:jsonld, validate: false, standard_prefixes: true)
-    # => {"@id": {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
+    # => {"@id": "_:reif", @reifies: {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
 
 Alternatively, using the {JSON::LD::API.fromRdf} method:
 
     JSON::LD::API::fromRdf(graph)
-    # => {"@id": {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
+    # => {"@id": "_:reif", @reifies: {"@id": "bob", "foaf:age" 23}, "ex:certainty": 0.9}
 
-#### Reading a Graph containing embedded statements
+#### Reading a Graph containing triple terms
 
-By default, {JSON::LD::API.toRdf} (and {JSON::LD::Reader}) will reject a document containing a subject resource.
+By default, {JSON::LD::API.toRdf} (and {JSON::LD::Reader}) will reject a document containing a triple term.
 
     jsonld = %({
-      "@id": {
+      "@reifies": {
         "@id": "bob", "foaf:age" 23
       },
       "ex:certainty": 0.9
     })
     graph = RDF::Graph.new << JSON::LD::API.toRdf(input)
-    # => JSON::LD::JsonLdError::InvalidIdValue
+    # => JSON::LD::JsonLdError::InvalidReifier
 
 {JSON::LD::API.toRdf} (and {JSON::LD::Reader}) support a boolean valued `rdfstar` option; only one statement is asserted, although the reified statement is contained within the graph.
 
     graph = RDF::Graph.new do |graph|
       JSON::LD::Reader.new(jsonld, rdfstar: true) {|reader| graph << reader}
     end
-    graph.count #=> 1
+    graph.count #=> 3
 
 ## Examples
 

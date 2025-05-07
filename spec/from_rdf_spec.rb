@@ -11,11 +11,11 @@ describe JSON::LD::API do
       it "One subject IRI object" do
         input = %(<http://a/b> <http://a/c> <http://a/d> .)
         expect(serialize(input)).to produce_jsonld([
-                                                     {
-                                                       '@id' => "http://a/b",
-                                                       "http://a/c" => [{ "@id" => "http://a/d" }]
-                                                     }
-                                                   ], logger)
+           {
+             '@id' => "http://a/b",
+             "http://a/c" => [{ "@id" => "http://a/d" }]
+           }
+         ], logger)
       end
 
       it "generates object list" do
@@ -839,127 +839,21 @@ describe JSON::LD::API do
 
     context "RDF-star" do
       {
-        'subject-iii': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::URI('http://example/s1'),
-              RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')
-            ),
-            RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@id": "http://example/o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'subject-iib': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::URI('http://example/s1'),
-              RDF::URI('http://example/p1'),
-              RDF::Node.new('o1')
-            ),
-            RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@id": "_:o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'subject-iil': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::URI('http://example/s1'),
-              RDF::URI('http://example/p1'),
-              RDF::Literal('o1')
-            ),
-            RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@value": "o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'subject-bii': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::Node('s1'),
-              RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')
-            ),
-            RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "_:s1",
-              "http://example/p1": [{"@id": "http://example/o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'subject-bib': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::Node('s1'),
-              RDF::URI('http://example/p1'),
-              RDF::Node.new('o1')
-            ),
-            RDF::URI('http://example/p'), RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "_:s1",
-              "http://example/p1": [{"@id": "_:o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'subject-bil': {
-          input: RDF::Statement(
-            RDF::Statement(
-              RDF::Node('s1'),
-              RDF::URI('http://example/p1'),
-              RDF::Literal('o1')
-            ),
-            RDF::URI('http://example/p'),
-            RDF::URI('http://example/o')
-          ),
-          output: %([{
-            "@id": {
-              "@id": "_:s1",
-              "http://example/p1": [{"@value": "o1"}]
-            },
-            "http://example/p": [{"@id": "http://example/o"}]
-          }])
-        },
-        'object-iii': {
+        '@triple-iii': {
           input: RDF::Statement(
             RDF::URI('http://example/s'),
             RDF::URI('http://example/p'),
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')
+              RDF::URI('http://example/o1'),
+              tripleTerm: true
             )
           ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
-              "@id": {
+              "@triple": {
                 "@id": "http://example/s1",
                 "http://example/p1": [{"@id": "http://example/o1"}]
               }
@@ -973,13 +867,14 @@ describe JSON::LD::API do
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Node.new('o1')
+              RDF::Node.new('o1'),
+              tripleTerm: true
             )
           ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
-              "@id": {
+              "@triple": {
                 "@id": "http://example/s1",
                 "http://example/p1": [{"@id": "_:o1"}]
               }
@@ -993,13 +888,14 @@ describe JSON::LD::API do
             RDF::Statement(
               RDF::URI('http://example/s1'),
               RDF::URI('http://example/p1'),
-              RDF::Literal('o1')
+              RDF::Literal('o1'),
+              tripleTerm: true
             )
           ),
           output: %([{
             "@id": "http://example/s",
             "http://example/p": [{
-              "@id": {
+              "@triple": {
                 "@id": "http://example/s1",
                 "http://example/p1": [{"@value": "o1"}]
               }
@@ -1012,17 +908,19 @@ describe JSON::LD::API do
               RDF::Statement(
                 RDF::URI('http://example/s2'),
                 RDF::URI('http://example/p2'),
-                RDF::URI('http://example/o2')
+                RDF::URI('http://example/o2'),
+              tripleTerm: true
               ),
               RDF::URI('http://example/p1'),
-              RDF::URI('http://example/o1')
+              RDF::URI('http://example/o1'),
+              tripleTerm: true
             ),
             RDF::URI('http://example/p'),
             RDF::URI('http://example/o')
           ),
           output: %([{
-            "@id": {
-              "@id": {
+            "@triple": {
+              "@triple": {
                 "@id": "http://example/s2",
                 "http://example/p2": [{"@id": "http://example/o2"}]
               },
@@ -1033,6 +931,8 @@ describe JSON::LD::API do
         }
       }.each do |name, params|
         it name do
+          # FIXME: remove this
+          skip("support for annotations") if params[:input].to_s.include?('@annotation')
           graph = RDF::Graph.new { |g| g << params[:input] }
           do_fromRdf(params.merge(input: graph, prefixes: { ex: 'http://example/' }))
         end

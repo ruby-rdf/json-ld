@@ -113,7 +113,10 @@ module JSON
         return unless @current_node_def
 
         node_def = if context
-          compacted = JSON::LD::API.compact(@current_node_def, context, rename_bnodes: false, **@options)
+          compacted = JSON::LD::API.compact(@current_node_def, context,
+                                            expanded: true,
+                                            rename_bnodes: false,
+                                            **@options)
           compacted.delete('@context')
           compacted
         else

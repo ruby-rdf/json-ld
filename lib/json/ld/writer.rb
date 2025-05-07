@@ -354,7 +354,7 @@ module JSON
           elsif context
             # Perform compaction, if we have a context
             # log_debug("writer") { "compact result"}
-            result = API.compact(result, context, **@options.merge(serializer: nil))
+            result = API.compact(result, context, expanded: true, **@options.merge(serializer: nil))
           end
 
           @output.write(@serializer.call(result, **@options))

@@ -189,6 +189,13 @@ module JSON
 
             # If result contains the key @set, then set result to the key's associated value.
             return output_object['@set'] if output_object.key?('@set')
+          elsif triple_term?(output_object)
+            keys = output_object.keys
+            unless (keys - %w(@triple)).empty?
+              # The result must not contain any keys other than @triple. Otherwise, an invalid triplt term error has been detected and processing is aborted.
+              raise JsonLdError::InvalidTripleTerm,
+                "triple term has unknown keys: #{output_object.inspect}"
+            end
           elsif output_object['@annotation']
             # Otherwise, if result contains the key @annotation,
             # the array value must all be node objects without an @id property, otherwise, an invalid annotation error has been detected and processing is aborted.
@@ -292,13 +299,50 @@ module JSON
             end
 
             expanded_value = case expanded_property
-            when '@id'
-              # If expanded active property is `@annotation`, an invalid annotation error has been found and processing is aborted.
-              if expanded_active_property == '@annotation' && @options[:rdfstar]
-                raise JsonLdError::InvalidAnnotation,
-                  "an annotation must not contain a property expanding to @id"
-              end
+            when '@annotation', '@reifies'
+              # Skip unless rdfstar option is set
+              next unless @options[:rdfstar]
 
+              as_array(expand(value, '@annotation', context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1))
+            when '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
+              next unless framing
+
+              # Framing keywords
+              [expand(value, expanded_property, context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1)].flatten
+            when '@direction'
+              # If expanded property is @direction and value is not either 'ltr' or 'rtl', an invalid base direction error has been detected and processing is aborted. Otherwise, set expanded value to value.
+              # If framing, always use array form, unless null
+              case value
+              when 'ltr', 'rtl' then (framing ? [value] : value)
+              when Array
+                unless framing
+                  raise JsonLdError::InvalidBaseDirection,
+                    "@direction value may not be an array unless framing: #{value.inspect}"
+                end
+                unless value.all? do |v|
+                         %w[
+                           ltr rtl
+                         ].include?(v) || (v.is_a?(Hash) && v.empty?)
+                       end
+                  raise JsonLdError::InvalidBaseDirection,
+                    "@direction must be one of 'ltr', 'rtl', or an array of those if framing #{value.inspect}"
+                end
+                value
+              when Hash
+                unless value.empty? && framing
+                  raise JsonLdError::InvalidBaseDirection,
+                    "@direction value must be a an empty object for framing: #{value.inspect}"
+                end
+                [value]
+              else
+                raise JsonLdError::InvalidBaseDirection,
+                  "Value of #{expanded_property} must be one of 'ltr' or 'rtl': #{value.inspect}"
+              end
+            when '@id'
               # If expanded property is @id and value is not a string, an invalid @id value error has been detected and processing is aborted
               e_id = case value
               when String
@@ -319,31 +363,13 @@ module JSON
                 end
               when Hash
                 if framing
-                  unless value.empty?
-                    raise JsonLdError::InvalidTypeValue,
-                      "value of @id must be a an empty object for framing: #{value.inspect}"
-                  end
+                  raise JsonLdError::InvalidTypeValue,
+                        "value of @id must be a an empty object for framing: #{value.inspect}" unless
+                        value.empty?
                   [{}]
-                elsif @options[:rdfstar]
-                  # Result must have just a single statement
-                  rei_node = expand(value, nil, context, log_depth: log_depth.to_i + 1)
-
-                  # Node must not contain @reverse
-                  if rei_node&.key?('@reverse')
-                    raise JsonLdError::InvalidEmbeddedNode,
-                      "Embedded node with @reverse"
-                  end
-                  statements = to_enum(:item_to_rdf, rei_node)
-                  unless statements.count == 1
-                    raise JsonLdError::InvalidEmbeddedNode,
-                      "Embedded node with #{statements.size} statements"
-                  end
-                  rei_node
                 else
-                  unless framing
-                    raise JsonLdError::InvalidIdValue,
-                      "value of @id must be a string unless framing: #{value.inspect}"
-                  end
+                  raise JsonLdError::InvalidIdValue,
+                    "value of @id must be a string unless framing: #{value.inspect}"
                 end
               else
                 raise JsonLdError::InvalidIdValue,
@@ -374,6 +400,158 @@ module JSON
 
               # As other properties may alias to @included, add this to any other previously expanded values
               Array(output_object['@included']) + included_result
+            when '@index'
+              # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
+              unless value.is_a?(String)
+                raise JsonLdError::InvalidIndexValue,
+                  "Value of @index is not a string: #{value.inspect}"
+              end
+              value
+            when '@graph'
+              # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
+              value = expand(value, '@graph', context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1)
+              as_array(value)
+            when '@language'
+              # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
+              # If framing, always use array form, unless null
+              case value
+              when String
+                unless /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.match?(value)
+                  warn "@language must be valid BCP47: #{value.inspect}"
+                end
+                if @options[:lowercaseLanguage]
+                  (framing ? [value.downcase] : value.downcase)
+                else
+                  (framing ? [value] : value)
+                end
+              when Array
+                unless framing
+                  raise JsonLdError::InvalidLanguageTaggedString,
+                    "@language value may not be an array unless framing: #{value.inspect}"
+                end
+                value.each do |v|
+                  unless /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.match?(v)
+                    warn "@language must be valid BCP47: #{v.inspect}"
+                  end
+                end
+                @options[:lowercaseLanguage] ? value.map(&:downcase) : value
+              when Hash
+                unless value.empty? && framing
+                  raise JsonLdError::InvalidLanguageTaggedString,
+                    "@language value must be a an empty object for framing: #{value.inspect}"
+                end
+                [value]
+              else
+                raise JsonLdError::InvalidLanguageTaggedString,
+                  "Value of #{expanded_property} must be a string: #{value.inspect}"
+              end
+            when '@list'
+              # If expanded property is @list:
+
+              # If active property is null or @graph, continue with the next key from element to remove the free-floating list.
+              next if (expanded_active_property || '@graph') == '@graph'
+
+              # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
+              value = expand(value, active_property, context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1)
+
+              # Spec FIXME: need to be sure that result is an array
+              value = as_array(value)
+
+              # Make sure that no member of value contains an annotation object
+              if value.any? { |n| n.is_a?(Hash) && n.key?('@annotation') }
+                raise JsonLdError::InvalidAnnotation,
+                  "A list element must not contain @annotation."
+              end
+
+              value
+            when '@nest'
+              # Add key to nests
+              nests << key
+              # Continue with the next key from element
+              next
+            when '@reifies'
+              # Skip unless rdfstar option is set
+              next unless @options[:rdfstar]
+
+              as_array(expand(value, '@reifies', context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1))
+            when '@reverse'
+              # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
+              unless value.is_a?(Hash)
+                raise JsonLdError::InvalidReverseValue,
+                  "@reverse value must be an object: #{value.inspect}"
+              end
+
+              # Otherwise
+              # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
+              value = expand(value, '@reverse', context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1)
+
+              # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
+              if value.key?('@reverse')
+                # log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
+                value['@reverse'].each do |property, item|
+                  # If result does not have a property member, create one and set its value to an empty array.
+                  # Append item to the value of the property member of result.
+                  (output_object[property] ||= []).concat([item].flatten.compact)
+                end
+              end
+
+              # If expanded value contains members other than @reverse:
+              if !value.key?('@reverse') || value.length > 1
+                # If result does not have an @reverse member, create one and set its value to an empty JSON object.
+                reverse_map = output_object['@reverse'] ||= {}
+                value.each do |property, items|
+                  next if property == '@reverse'
+
+                  items.each do |item|
+                    if value?(item) || list?(item)
+                      raise JsonLdError::InvalidReversePropertyValue,
+                        item.inspect
+                    end
+                    merge_value(reverse_map, property, item)
+                  end
+                end
+              end
+
+              # Continue with the next key from element
+              next
+            when '@set'
+              # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
+              expand(value, active_property, context,
+                framing: framing,
+                log_depth: log_depth.to_i + 1)
+            when '@triple'
+              # Skip unless rdfstar option is set
+              next unless @options[:rdfstar]
+
+              # Result must have just a single statement
+              tt_node = expand(value, nil, context, log_depth: log_depth.to_i + 1)
+              statements = to_enum(:item_to_rdf, tt_node)
+              unless statements.count == 1
+                raise JsonLdError::InvalidTripleTerm,
+                  "Triple term with #{statements.size.to_i} statements"
+              end
+
+              # Node must not contain @reverse
+              if tt_node&.key?('@reverse')
+                raise JsonLdError::InvalidTripleTerm,
+                  "Triple term with @reverse"
+              end
+
+              # Node must not directly contain @triple
+              if tt_node&.key?('@triple')
+                raise JsonLdError::InvalidTripleTerm,
+                  "Triple term with directly embedded @triple"
+              end
+
+              tt_node
             when '@type'
               # If expanded property is @type and value is neither a string nor an array of strings, an invalid type value error has been detected and processing is aborted. Otherwise, set expanded value to the result of using the IRI Expansion algorithm, passing active context, true for vocab, and true for document relative to expand the value or each of its items.
               # log_debug("@type", depth: log_depth.to_i) {"value: #{value.inspect}"}
@@ -428,12 +606,6 @@ module JSON
               e_type = Array(output_object['@type']) + Array(e_type)
               # Use array form if framing
               framing || e_type.length > 1 ? e_type : e_type.first
-            when '@graph'
-              # If expanded property is @graph, set expanded value to the result of using this algorithm recursively passing active context, @graph for active property, and value for element.
-              value = expand(value, '@graph', context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1)
-              as_array(value)
             when '@value'
               # If expanded property is @value and input contains @type: json, accept any value.
               # If expanded property is @value and value is not a scalar or null, an invalid value object value error has been detected and processing is aborted. (In 1.1, @value can have any JSON value of @type is @json or the property coerces to @json).
@@ -464,163 +636,6 @@ module JSON
                     "Value of #{expanded_property} must be a scalar or null: #{value.inspect}"
                 end
               end
-            when '@language'
-              # If expanded property is @language and value is not a string, an invalid language-tagged string error has been detected and processing is aborted. Otherwise, set expanded value to lowercased value.
-              # If framing, always use array form, unless null
-              case value
-              when String
-                unless /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.match?(value)
-                  warn "@language must be valid BCP47: #{value.inspect}"
-                end
-                if @options[:lowercaseLanguage]
-                  (framing ? [value.downcase] : value.downcase)
-                else
-                  (framing ? [value] : value)
-                end
-              when Array
-                unless framing
-                  raise JsonLdError::InvalidLanguageTaggedString,
-                    "@language value may not be an array unless framing: #{value.inspect}"
-                end
-                value.each do |v|
-                  unless /^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$/.match?(v)
-                    warn "@language must be valid BCP47: #{v.inspect}"
-                  end
-                end
-                @options[:lowercaseLanguage] ? value.map(&:downcase) : value
-              when Hash
-                unless value.empty? && framing
-                  raise JsonLdError::InvalidLanguageTaggedString,
-                    "@language value must be a an empty object for framing: #{value.inspect}"
-                end
-                [value]
-              else
-                raise JsonLdError::InvalidLanguageTaggedString,
-                  "Value of #{expanded_property} must be a string: #{value.inspect}"
-              end
-            when '@direction'
-              # If expanded property is @direction and value is not either 'ltr' or 'rtl', an invalid base direction error has been detected and processing is aborted. Otherwise, set expanded value to value.
-              # If framing, always use array form, unless null
-              case value
-              when 'ltr', 'rtl' then (framing ? [value] : value)
-              when Array
-                unless framing
-                  raise JsonLdError::InvalidBaseDirection,
-                    "@direction value may not be an array unless framing: #{value.inspect}"
-                end
-                unless value.all? do |v|
-                         %w[
-                           ltr rtl
-                         ].include?(v) || (v.is_a?(Hash) && v.empty?)
-                       end
-                  raise JsonLdError::InvalidBaseDirection,
-                    "@direction must be one of 'ltr', 'rtl', or an array of those if framing #{value.inspect}"
-                end
-                value
-              when Hash
-                unless value.empty? && framing
-                  raise JsonLdError::InvalidBaseDirection,
-                    "@direction value must be a an empty object for framing: #{value.inspect}"
-                end
-                [value]
-              else
-                raise JsonLdError::InvalidBaseDirection,
-                  "Value of #{expanded_property} must be one of 'ltr' or 'rtl': #{value.inspect}"
-              end
-            when '@index'
-              # If expanded property is @index and value is not a string, an invalid @index value error has been detected and processing is aborted. Otherwise, set expanded value to value.
-              unless value.is_a?(String)
-                raise JsonLdError::InvalidIndexValue,
-                  "Value of @index is not a string: #{value.inspect}"
-              end
-              value
-            when '@list'
-              # If expanded property is @graph:
-
-              # If active property is null or @graph, continue with the next key from element to remove the free-floating list.
-              next if (expanded_active_property || '@graph') == '@graph'
-
-              # Otherwise, initialize expanded value to the result of using this algorithm recursively passing active context, active property, and value for element.
-              value = expand(value, active_property, context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1)
-
-              # Spec FIXME: need to be sure that result is an array
-              value = as_array(value)
-
-              # Make sure that no member of value contains an annotation object
-              if value.any? { |n| n.is_a?(Hash) && n.key?('@annotation') }
-                raise JsonLdError::InvalidAnnotation,
-                  "A list element must not contain @annotation."
-              end
-
-              value
-            when '@set'
-              # If expanded property is @set, set expanded value to the result of using this algorithm recursively, passing active context, active property, and value for element.
-              expand(value, active_property, context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1)
-            when '@reverse'
-              # If expanded property is @reverse and value is not a JSON object, an invalid @reverse value error has been detected and processing is aborted.
-              unless value.is_a?(Hash)
-                raise JsonLdError::InvalidReverseValue,
-                  "@reverse value must be an object: #{value.inspect}"
-              end
-
-              # Otherwise
-              # Initialize expanded value to the result of using this algorithm recursively, passing active context, @reverse as active property, and value as element.
-              value = expand(value, '@reverse', context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1)
-
-              # If expanded value contains an @reverse member, i.e., properties that are reversed twice, execute for each of its property and item the following steps:
-              if value.key?('@reverse')
-                # log_debug("@reverse", depth: log_depth.to_i) {"double reverse: #{value.inspect}"}
-                value['@reverse'].each do |property, item|
-                  # If result does not have a property member, create one and set its value to an empty array.
-                  # Append item to the value of the property member of result.
-                  (output_object[property] ||= []).concat([item].flatten.compact)
-                end
-              end
-
-              # If expanded value contains members other than @reverse:
-              if !value.key?('@reverse') || value.length > 1
-                # If result does not have an @reverse member, create one and set its value to an empty JSON object.
-                reverse_map = output_object['@reverse'] ||= {}
-                value.each do |property, items|
-                  next if property == '@reverse'
-
-                  items.each do |item|
-                    if value?(item) || list?(item)
-                      raise JsonLdError::InvalidReversePropertyValue,
-                        item.inspect
-                    end
-                    merge_value(reverse_map, property, item)
-                  end
-                end
-              end
-
-              # Continue with the next key from element
-              next
-            when '@default', '@embed', '@explicit', '@omitDefault', '@preserve', '@requireAll'
-              next unless framing
-
-              # Framing keywords
-              [expand(value, expanded_property, context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1)].flatten
-            when '@nest'
-              # Add key to nests
-              nests << key
-              # Continue with the next key from element
-              next
-            when '@annotation'
-              # Skip unless rdfstar option is set
-              next unless @options[:rdfstar]
-
-              as_array(expand(value, '@annotation', context,
-                framing: framing,
-                log_depth: log_depth.to_i + 1))
             else
               # Skip unknown keyword
               next
@@ -809,6 +824,12 @@ module JSON
               end
             end
           end
+        end
+
+        # If result includes @triple, it MUST NOT include any other properties
+        if output_object.key?('@triple') && output_object.keys.length != 1
+          raise JsonLdError::InvalidTripleTerm,
+            "Triple Term includes extra properties: #{output_object.keys}"
         end
 
         # For each key in nests, recusively expand content

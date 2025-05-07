@@ -4,6 +4,7 @@ require_relative 'spec_helper'
 
 describe JSON::LD::API do
   let(:logger) { RDF::Spec.logger }
+  before { logger.level = Logger::DEBUG }
 
   describe ".compact" do
     {
@@ -3188,207 +3189,109 @@ describe JSON::LD::API do
   end
 
   context "JSON-LD-star" do
-    {
-      'subject-iii': {
-        input: %([{
-          "@id": {
-            "@id": "http://example/s1",
-            "http://example/p1": [{"@id": "http://example/o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-         "@context": {"ex": "http://example/"},
-         "@id": {
-           "@id": "ex:s1",
-           "ex:p1": {"@id": "ex:o1"}
-         },
-         "ex:p": {"@id": "ex:o"}
-       })
-      },
-      'subject-iib': {
-        input: %([{
-          "@id": {
-            "@id": "http://example/s1",
-            "http://example/p1": [{"@id": "_:o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "ex:s1",
-            "ex:p1": {"@id": "_:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-iil': {
-        input: %([{
-          "@id": {
-            "@id": "http://example/s1",
-            "http://example/p1": [{"@value": "o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "ex:s1",
-            "ex:p1": "o1"
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bii': {
-        input: %([{
-          "@id": {
-            "@id": "_:s1",
-            "http://example/p1": [{"@id": "http://example/o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": {"@id": "ex:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bib': {
-        input: %([{
-          "@id": {
-            "@id": "_:s1",
-            "http://example/p1": [{"@id": "_:o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": {"@id": "_:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bil': {
-        input: %([{
-          "@id": {
-            "@id": "_:s1",
-            "http://example/p1": [{"@value": "o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": "o1"
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'object-iii': {
-        input: %([{
-          "@id": "http://example/s",
-          "http://example/p": [{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@id": "http://example/o1"}]
+    context "@triple" do
+      {
+        'object-iii': {
+          input: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@triple": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@id": "http://example/o1"}]
+              }
+            }]
+          }]),
+          context: %({"ex": "http://example/"}),
+          output: %({
+            "@context": {"ex": "http://example/"},
+            "@id": "ex:s",
+            "ex:p": {
+              "@triple": {
+                "@id": "ex:s1",
+                "ex:p1": {"@id": "ex:o1"}
+              }
             }
-          }]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": "ex:s",
-          "ex:p": {
-            "@id": {
-              "@id": "ex:s1",
-              "ex:p1": {"@id": "ex:o1"}
+          })
+        },
+        'object-iib': {
+          input: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@triple": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@id": "_:o1"}]
+              }
+            }]
+          }]),
+          context: %({"ex": "http://example/"}),
+          output: %({
+            "@context": {"ex": "http://example/"},
+            "@id": "ex:s",
+            "ex:p": {
+              "@triple": {
+                "@id": "ex:s1",
+                "ex:p1": {"@id": "_:o1"}
+              }
             }
-          }
-        })
-      },
-      'object-iib': {
-        input: %([{
-          "@id": "http://example/s",
-          "http://example/p": [{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@id": "_:o1"}]
+          })
+        },
+        'object-iil': {
+          input: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@triple": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{"@value": "o1"}]
+              }
+            }]
+          }]),
+          context: %({"ex": "http://example/"}),
+          output: %({
+            "@context": {"ex": "http://example/"},
+            "@id": "ex:s",
+            "ex:p": {
+              "@triple": {
+                "@id": "ex:s1",
+                "ex:p1": "o1"
+              }
             }
-          }]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": "ex:s",
-          "ex:p": {
-            "@id": {
-              "@id": "ex:s1",
-              "ex:p1": {"@id": "_:o1"}
+          })
+        },
+        'recursive-object': {
+          input: %([{
+            "@id": "http://example/s",
+            "http://example/p": [{
+              "@triple": {
+                "@id": "http://example/s1",
+                "http://example/p1": [{
+                  "@triple": {
+                    "@id": "http://example/s2",
+                    "http://example/p2": [{"@id": "http://example/o2"}]
+                  }
+                }]
+              }
+            }]
+          }]),
+          context: %({"ex": "http://example/"}),
+          output: %({
+            "@context": {"ex": "http://example/"},
+            "@id": "ex:s",
+            "ex:p": {
+              "@triple": {
+                "@id": "ex:s1",
+                "ex:p1": {
+                  "@triple": {
+                    "@id": "ex:s2",
+                    "ex:p2": {"@id": "ex:o2"}
+                  }
+                }
+              }
             }
-          }
-        })
-      },
-      'object-iil': {
-        input: %([{
-          "@id": "http://example/s",
-          "http://example/p": [{
-            "@id": {
-              "@id": "http://example/s1",
-              "http://example/p1": [{"@value": "o1"}]
-            }
-          }]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": "ex:s",
-          "ex:p": {
-            "@id": {
-              "@id": "ex:s1",
-              "ex:p1": "o1"
-            }
-          }
-        })
-      },
-      'recursive-subject': {
-        input: %([{
-          "@id": {
-            "@id": {
-              "@id": "http://example/s2",
-              "http://example/p2": [{"@id": "http://example/o2"}]
-            },
-            "http://example/p1": [{"@id": "http://example/o1"}]
-          },
-          "http://example/p": [{"@id": "http://example/o"}]
-        }]),
-        context: %({"ex": "http://example/"}),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": {
-              "@id": "ex:s2",
-              "ex:p2": {"@id": "ex:o2"}
-            },
-            "ex:p1": {"@id": "ex:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      }
-    }.each do |name, params|
-      it(name) { run_compact(params.merge(rdfstar: true)) }
+          })
+        }
+      }.each do |name, params|
+        it(name) { run_compact({rdfstar: true}.merge(params)) }
+      end
     end
   end
 

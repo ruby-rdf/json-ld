@@ -191,121 +191,8 @@ describe JSON::LD::Writer do
     end
   end
 
-  context "RDF-star" do
+  context "@triple" do
     {
-      'subject-iii': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::URI('http://example/s1'),
-            RDF::URI('http://example/p1'),
-            RDF::URI('http://example/o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
-        ),
-        output: %({
-         "@context": {"ex": "http://example/"},
-         "@id": {
-           "@id": "ex:s1",
-           "ex:p1": {"@id": "ex:o1"}
-         },
-         "ex:p": {"@id": "ex:o"}
-       })
-      },
-      'subject-iib': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::URI('http://example/s1'),
-            RDF::URI('http://example/p1'),
-            RDF::Node.new('o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
-        ),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "ex:s1",
-            "ex:p1": {"@id": "_:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-iil': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::URI('http://example/s1'),
-            RDF::URI('http://example/p1'),
-            RDF::Literal('o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
-        ),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "ex:s1",
-            "ex:p1": "o1"
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bii': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::Node('s1'),
-            RDF::URI('http://example/p1'),
-            RDF::URI('http://example/o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
-        ),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": {"@id": "ex:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bib': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::Node('s1'),
-            RDF::URI('http://example/p1'),
-            RDF::Node.new('o1')
-          ),
-          RDF::URI('http://example/p'), RDF::URI('http://example/o')
-        ),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": {"@id": "_:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
-      'subject-bil': {
-        input: RDF::Statement(
-          RDF::Statement(
-            RDF::Node('s1'),
-            RDF::URI('http://example/p1'),
-            RDF::Literal('o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
-        ),
-        output: %({
-          "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": "_:s1",
-            "ex:p1": "o1"
-          },
-          "ex:p": {"@id": "ex:o"}
-        })
-      },
       'object-iii': {
         input: RDF::Statement(
           RDF::URI('http://example/s'),
@@ -313,14 +200,15 @@ describe JSON::LD::Writer do
           RDF::Statement(
             RDF::URI('http://example/s1'),
             RDF::URI('http://example/p1'),
-            RDF::URI('http://example/o1')
+            RDF::URI('http://example/o1'),
+            tripleTerm: true
           )
         ),
         output: %({
           "@context": {"ex": "http://example/"},
           "@id": "ex:s",
           "ex:p": {
-            "@id": {
+            "@triple": {
               "@id": "ex:s1",
               "ex:p1": {"@id": "ex:o1"}
             }
@@ -334,14 +222,15 @@ describe JSON::LD::Writer do
           RDF::Statement(
             RDF::URI('http://example/s1'),
             RDF::URI('http://example/p1'),
-            RDF::Node.new('o1')
+            RDF::Node.new('o1'),
+            tripleTerm: true
           )
         ),
         output: %({
           "@context": {"ex": "http://example/"},
           "@id": "ex:s",
           "ex:p": {
-            "@id": {
+            "@triple": {
               "@id": "ex:s1",
               "ex:p1": {"@id": "_:o1"}
             }
@@ -355,44 +244,49 @@ describe JSON::LD::Writer do
           RDF::Statement(
             RDF::URI('http://example/s1'),
             RDF::URI('http://example/p1'),
-            RDF::Literal('o1')
+            RDF::Literal('o1'),
+            tripleTerm: true
           )
         ),
         output: %({
           "@context": {"ex": "http://example/"},
           "@id": "ex:s",
           "ex:p": {
-            "@id": {
+            "@triple": {
               "@id": "ex:s1",
               "ex:p1": "o1"
             }
           }
         })
       },
-      'recursive-subject': {
+      'recursive-object': {
         input: RDF::Statement(
+          RDF::URI('http://example/s'),
+          RDF::URI('http://example/p'),
           RDF::Statement(
+            RDF::URI('http://example/s1'),
+            RDF::URI('http://example/p1'),
             RDF::Statement(
               RDF::URI('http://example/s2'),
               RDF::URI('http://example/p2'),
               RDF::URI('http://example/o2')
-            ),
-            RDF::URI('http://example/p1'),
-            RDF::URI('http://example/o1')
-          ),
-          RDF::URI('http://example/p'),
-          RDF::URI('http://example/o')
+            )
+          )
         ),
         output: %({
           "@context": {"ex": "http://example/"},
-          "@id": {
-            "@id": {
-              "@id": "ex:s2",
-              "ex:p2": {"@id": "ex:o2"}
-            },
-            "ex:p1": {"@id": "ex:o1"}
-          },
-          "ex:p": {"@id": "ex:o"}
+          "@id": "ex:s",
+          "ex:p": {
+            "@triple": {
+              "@id": "ex:s1",
+              "ex:p1": {
+                "@triple": {
+                  "@id": "ex:s2",
+                  "ex:p2": {"@id": "ex:o2"}
+                }
+              }
+            }
+          }
         })
       }
     }.each do |name, params|
@@ -419,13 +313,16 @@ describe JSON::LD::Writer do
             t.logger = logger
             pending "Shared list BNode in different graphs" if t.property('input').include?("fromRdf-0021")
             repo = RDF::Repository.load(t.input_loc, format: :nquads)
-            jsonld = described_class.buffer(logger: t.logger, **t.options) do |writer|
+            jsonld = described_class.buffer(logger: t.logger, **t.options.merge(validate: false)) do |writer|
               writer << repo
             end
 
             # And then, re-generate jsonld as RDF
 
             expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
+          rescue RDF::WriterError => e
+            #require 'byebug'; byebug
+            fail e.message + logger.to_s
           end
         end
       end

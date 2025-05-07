@@ -3,6 +3,7 @@ require 'rubygems'
 $:.unshift(File.expand_path("../../lib", __FILE__))
 require "bundler/setup"
 require 'logger'
+require 'amazing_print'
 require 'json/ld'
 #require 'linkeddata'
 require 'rdf/isomorphic'
@@ -215,6 +216,7 @@ opts = GetoptLong.new(
   ["--earl", GetoptLong::NO_ARGUMENT],
   ["--quiet", "-q", GetoptLong::NO_ARGUMENT],
   ["--output", "-o", GetoptLong::REQUIRED_ARGUMENT],
+  ["--rdfstar",   GetoptLong::NO_ARGUMENT],
   ["--stream",   GetoptLong::NO_ARGUMENT],
   ["--verbose", "-v", GetoptLong::NO_ARGUMENT]
 )
@@ -226,6 +228,7 @@ def help(options)
   puts "      --earl:               Generate EARL report"
   puts "      --quiet:              Minimal output"
   puts "      --output:             Output to specified file"
+  puts "      --rdfstar:            Parse as RDF-star"
   puts "      --stream:             Use streaming RDF reader/writer"
   puts "      --verbose:            Verbose processing"
   puts "      --help,-?:            This message"
@@ -243,6 +246,7 @@ opts.each do |opt, arg|
   when '--quiet'
     options[:quiet] = true
     logger.level = Logger::FATAL
+  when '--rdfstar'          then options[:rdfstar] = true
   when '--stream'           then options[:stream] = true
   when '--verbose'          then options[:verbose] = true
   end
@@ -250,14 +254,15 @@ end
 
 manifests = if options[:stream]
   ["#{Fixtures::SuiteTest::STREAM_SUITE}stream-toRdf-manifest.jsonld"]
+elsif options[:rdfstar]
+  %w{expand compact flatten fromRdf toRdf}.map do |man|
+    "#{Fixtures::SuiteTest::STAR_SUITE}#{man}-manifest.jsonld"
+  end
 else
   %w(expand compact flatten fromRdf html remote-doc toRdf).map do |man|
     "#{Fixtures::SuiteTest::SUITE}#{man}-manifest.jsonld"
   end +
-  ["#{Fixtures::SuiteTest::FRAME_SUITE}frame-manifest.jsonld"] +
-  %w{expand compact flatten fromRdf toRdf}.map do |man|
-    "#{Fixtures::SuiteTest::STAR_SUITE}#{man}-manifest.jsonld"
-  end
+  ["#{Fixtures::SuiteTest::FRAME_SUITE}frame-manifest.jsonld"]
 end
 
 earl_preamble(options) if options[:earl]

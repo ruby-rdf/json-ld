@@ -20,6 +20,8 @@ end
 group :development, :test do
   gem 'benchmark-ips'
   gem 'fasterer'
+  gem 'readline'
+  gem 'irb'
   gem 'psych', platforms: %i[mri rbx]
   gem 'rake'
   gem 'rubocop'

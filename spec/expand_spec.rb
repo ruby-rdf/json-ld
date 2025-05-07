@@ -3416,15 +3416,18 @@ describe JSON::LD::API do
 
     context "JSON-LD-star" do
       {
-        'node with embedded subject without rdfstar option': {
+        'node with triple term without rdfstar option': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:rei",
+                "ex:prop": "value"
+              }
+            }
           }),
-          exception: JSON::LD::JsonLdError::InvalidIdValue
+          output: %([{"@id": "ex:bob", "ex:value": [{}]}]),
+          rdfstar: false
         },
         'node object with @annotation property is ignored without rdfstar option': {
           input: %({
@@ -3439,254 +3442,281 @@ describe JSON::LD::API do
           output: %([{
             "@id": "ex:bob",
             "ex:knows": [{"@id": "ex:fred"}]
-          }])
+          }]),
+          rdfstar: false
         },
         'value object with @annotation property is ignored without rdfstar option': {
           input: %({
             "@id": "ex:bob",
             "ex:age": {
               "@value": 23,
-              "@annotation": {
-                "ex:certainty": 0.8
-              }
+              "@annotation": {"ex:certainty": 0.8}
             }
           }),
           output: %([{
             "@id": "ex:bob",
             "ex:age": [{"@value": 23}]
-          }])
-        }
-      }.each do |title, params|
-        it(title) { run_expand params }
-      end
-
-      {
-        'node with embedded subject having no @id': {
+          }]),
+          rdfstar: false
+        },
+        'node with triple term having no @id': {
           input: %({
-            "@id": {
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "ex:prop": "value"
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "ex:prop": [{"@value": "value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "ex:prop": [{"@value": "value"}]
+              }
+            }]
           }])
         },
-        'node with embedded subject having IRI @id': {
+        'node with triple term having IRI @id': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": "value"
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": [{"@value": "value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop":  [{"@value": "value"}]
+              }
+            }]
           }])
         },
-        'node with embedded subject having BNode @id': {
+        'node with triple term having BNode @id': {
           input: %({
-            "@id": {
-              "@id": "_:rei",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "_:tt",
+                "ex:prop": "value"
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "@id": "_:rei",
-              "ex:prop": [{"@value": "value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "_:tt",
+                "ex:prop":  [{"@value": "value"}]
+              }
+            }]
           }])
         },
-        'node with embedded subject having a type': {
+        'node with triple term having a type': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": "ex:Type"
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "@type": "ex:Type"
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "@type": ["ex:Type"]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "ex:tt",
+                "@type": ["ex:Type"]
+              }
+            }]
           }])
         },
-        'node with embedded subject having an IRI value': {
+        'node with triple term having an IRI value': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "ex:value"}
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": {"@id": "ex:value"}
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": [{"@id": "ex:value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": [{"@id": "ex:value"}]
+              }
+            }]
           }])
         },
-        'node with embedded subject having an BNode value': {
+        'node with triple term having an BNode value': {
           input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "_:value"}
-            },
-            "ex:prop": "value2"
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": {"@id": "_:value"}
+              }
+            }
           }),
           output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": [{"@id": "_:value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": [{"@id": "_:value"}]
+              }
+            }]
           }])
         },
-        'node with recursive embedded subject': {
+        'node context enclosing triple term': {
           input: %({
-            "@id": {
-              "@id": {
-                "@id": "ex:rei",
+            "@id": "ex:bob",
+            "ex:value": {
+              "@context": {"ex": "http://example.org/"},
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": "value"
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "http://example.org/tt",
+                "http://example.org/prop":  [{"@value": "value"}]
+              }
+            }]
+          }])
+        },
+        'node with triple term including @context': {
+          input: %({
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@context": {"ex": "http://example.org/"},
+                "@id": "ex:tt",
+                "ex:prop": "value"
+              }
+            }
+          }),
+          output: %([{
+            "@id": "ex:bob",
+            "ex:value": [{
+              "@triple": {
+                "@id": "http://example.org/tt",
+                "http://example.org/prop":  [{"@value": "value"}]
+              }
+            }]
+          }])
+        },
+        'illegal triple term extra properties': {
+          input: %({
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
                 "ex:prop": "value3"
               },
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          output: %([{
-            "@id": {
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": [{"@value": "value3"}]
-              },
-              "ex:prop": [{"@value": "value"}]
-            },
-            "ex:prop": [{"@value": "value2"}]
-          }])
-        },
-        'illegal node with subject having no property': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei"
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having multiple properties': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": ["value1", "value2"]
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having multiple types': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": ["ex:Type1", "ex:Type2"]
-            },
-            "ex:prop": "value3"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'illegal node with subject having type and property': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "@type": "ex:Type",
-              "ex:prop": "value"
-            },
-            "ex:prop": "value2"
-          }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
-        },
-        'node with embedded object': {
-          input: %({
-            "@id": "ex:subj",
-            "ex:value": {
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": "value"
-              }
-            }
-          }),
-          output: %([{
-            "@id": "ex:subj",
-            "ex:value": [{
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": [{"@value": "value"}]
-              }
-            }]
-          }])
-        },
-        'node with embedded object having properties': {
-          input: %({
-            "@id": "ex:subj",
-            "ex:value": {
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": "value"
-              },
               "ex:prop": "value2"
-            }
+            },
+            "ex:prop": "value1"
           }),
-          output: %([{
-            "@id": "ex:subj",
-            "ex:value": [{
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": [{"@value": "value"}]
-              },
-              "ex:prop": [{"@value": "value2"}]
-            }]
-          }])
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
-        'node with recursive embedded object': {
+        'illegal triple term with recursive triple term': {
           input: %({
-            "@id": "ex:subj",
+            "@id": "ex:bob",
             "ex:value": {
-              "@id": {
-                "@id": {
-                  "@id": "ex:rei",
+              "@triple": {
+                "@triple": {
+                  "@id": "ex:tt",
                   "ex:prop": "value3"
                 },
                 "ex:prop": "value"
-              },
-              "ex:prop": "value2"
+              }
+            },
+            "ex:prop": "value2"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal triple term having no property': {
+          input: %({
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {"@id": "ex:tt"}
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal triple term having multiple types': {
+          input: %({
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "@type": ["ex:Type1", "ex:Type2"]
+              }
+            },
+            "ex:prop": "value3"
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'illegal triple term having type and property': {
+          input: %({
+            "@id": "ex:bob",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "@type": "ex:Type",
+                "ex:prop": "value"
+              }
+            }
+          }),
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+        },
+        'triple term with embedded triple term': {
+          input: %({
+            "@id": "ex:subj",
+            "ex:value": {
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": {
+                  "@triple": {
+                    "@id": "ex:tt2",
+                    "ex:prop": "value2"
+                  }
+                }
+              }
             }
           }),
           output: %([{
             "@id": "ex:subj",
             "ex:value": [{
-              "@id": {
-                "@id": {
-                  "@id": "ex:rei",
-                  "ex:prop": [{"@value": "value3"}]
-                },
-                "ex:prop":[{"@value": "value"}]
-              },
-              "ex:prop": [{"@value": "value2"}]
+              "@triple": {
+                "@id": "ex:tt",
+                "ex:prop": [{
+                  "@triple": {
+                    "@id": "ex:tt2",
+                    "ex:prop": [{"@value": "value2"}]
+                  }
+                }]
+              }
             }]
           }])
         },
+
+        # Annotations
         'node with @annotation property on value object': {
           input: %({
             "@id": "ex:bob",
@@ -3830,70 +3860,34 @@ describe JSON::LD::API do
           }),
           exception: JSON::LD::JsonLdError::InvalidAnnotation
         },
-        'node with @annotation property on embedded subject': {
-          input: %({
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": {"@id": "_:value"}
-            },
-            "ex:prop": {
-              "@value": "value2",
-              "@annotation": {"ex:certainty": 0.8}
-            }
-          }),
-          output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": [{"@id": "_:value"}]
-            },
-            "ex:prop": [{
-              "@value": "value2",
-              "@annotation": [{
-                "ex:certainty": [{"@value": 0.8}]
-              }]
-            }]
-          }])
-        },
-        'node with @annotation property on embedded object': {
+        'node with @annotation property on triple term': {
           input: %({
             "@id": "ex:subj",
             "ex:value": {
-              "@id": {
+              "@triple": {
                 "@id": "ex:rei",
                 "ex:prop": "value"
               },
               "@annotation": {"ex:certainty": 0.8}
             }
           }),
-          output: %([{
-            "@id": "ex:subj",
-            "ex:value": [{
-              "@id": {
-                "@id": "ex:rei",
-                "ex:prop": [{"@value": "value"}]
-              },
-              "@annotation": [{
-                "ex:certainty": [{"@value": 0.8}]
-              }]
-            }]
-          }])
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
-        'embedded node with reverse relationship': {
+        'triple term with reverse relationship': {
           input: %({
             "@context": {
               "rel": {"@reverse": "ex:rel"}
             },
-            "@id": {
+            "@triple": {
               "@id": "ex:rei",
               "rel": {"@id": "ex:value"}
-            },
-            "ex:prop": "value2"
+            }
           }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
         'embedded node with expanded reverse relationship': {
           input: %({
-            "@id": {
+            "@triple": {
               "@id": "ex:rei",
               "@reverse": {
                 "ex:rel": {"@id": "ex:value"}
@@ -3901,28 +3895,20 @@ describe JSON::LD::API do
             },
             "ex:prop": "value2"
           }),
-          exception: JSON::LD::JsonLdError::InvalidEmbeddedNode
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
-        'embedded node used as subject in reverse relationship': {
+        'triple term in reverse relationship': {
           input: %({
             "@context": {
               "rel": {"@reverse": "ex:rel"}
             },
-            "@id": {
+            "@triple": {
               "@id": "ex:rei",
               "ex:prop": {"@id": "ex:value"}
             },
             "rel": {"@id": "ex:value2"}
           }),
-          output: %([{
-            "@id": {
-              "@id": "ex:rei",
-              "ex:prop": [{"@id": "ex:value"}]
-            },
-            "@reverse": {
-              "ex:rel": [{"@id": "ex:value2"}]
-            }
-          }])
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
         'embedded node used as object in reverse relationship': {
           input: %({
@@ -3931,25 +3917,14 @@ describe JSON::LD::API do
             },
             "@id": "ex:subj",
             "rel": {
-              "@id": {
+              "@triple": {
                 "@id": "ex:rei",
                 "ex:prop": {"@id": "ex:value"}
               },
               "ex:prop": {"@id": "ex:value2"}
             }
           }),
-          output: %([{
-            "@id": "ex:subj",
-            "@reverse": {
-              "ex:rel": [{
-                "@id": {
-                  "@id": "ex:rei",
-                  "ex:prop": [{"@id": "ex:value"}]
-                },
-                "ex:prop": [{"@id": "ex:value2"}]
-              }]
-            }
-          }])
+          exception: JSON::LD::JsonLdError::InvalidTripleTerm
         },
         'node with @annotation property on node object with reverse relationship': {
           input: %({
@@ -4004,7 +3979,7 @@ describe JSON::LD::API do
           }])
         }
       }.each do |title, params|
-        it(title) { run_expand params.merge(rdfstar: true) }
+        it(title) { run_expand({rdfstar: true}.merge(params)) }
       end
     end
 
