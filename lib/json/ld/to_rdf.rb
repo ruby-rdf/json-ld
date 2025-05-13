@@ -94,6 +94,15 @@ module JSON
         # log_debug("item_to_rdf")  {"subject: #{subject.to_ntriples rescue 'malformed rdf'}"}
         item.each do |property, values|
           case property
+          when '@reifies'
+            next unless @options[:rdfstar]
+
+            # Each value of @reifies returns a single triple
+            as_array(item['@reifies']).each do |rei|
+              item_to_rdf(rei, graph_name: graph_name, tripleTerm: true) do |rei|
+                yield RDF::Statement(subject, RDF.reifies, rei, graph_name: graph_name, tripleTerm: tripleTerm)
+              end
+            end
           when '@type'
             # If property is @type, construct triple as an RDF Triple composed of id, rdf:type, and object from values where id and object are represented either as IRIs or Blank Nodes
             values.each do |v|

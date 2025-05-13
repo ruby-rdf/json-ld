@@ -46,7 +46,7 @@ module JSON
           raise "Expected hash or array to create_node_map, got #{element.inspect}"
         else
           graph = (graph_map[active_graph] ||= {})
-          subject_node = !reverse && graph[active_subject.is_a?(Hash) ? active_subject.to_json_c14n : active_subject]
+          subject_node = graph[active_subject]
 
           # Transform BNode types
           if element.key?('@type')
@@ -57,27 +57,26 @@ module JSON
             element['@type'] = element['@type'].first if element['@type']
 
             # For rdfstar, if value contains an `@annotation` member ...
-            # note: active_subject will not be nil, and may be an object itself.
-            if element.key?('@annotation')
+            # note: active_subject will not be nil.
+            if annotation = element.delete('@annotation')
               # rdfstar being true is implicit, as it is checked in expansion
               as = if node_reference?(active_subject)
                 active_subject['@id']
               else
                 active_subject
               end
-              star_subject = {
-                "@id" => as,
-                active_property => [element]
-              }
+
+              reification = {'@id' => as, active_property => [element]}
 
               # Note that annotation is an array, make the reified subject the id of each member of that array.
-              annotation = element.delete('@annotation').map do |a|
-                a.merge('@id' => star_subject)
-              end
+              annotation.each do |a|
+                # XXX may be zero or more reifiers; use bnode for now.
+                reifier = namer.get_name
+                a = a.merge('@id' => reifier, '@reifies' => reification)
 
-              # Invoke recursively using annotation.
-              create_node_map(annotation, graph_map,
-                active_graph: active_graph)
+                # Invoke recursively using annotation.
+                create_node_map(a, graph_map, active_graph: active_graph, active_subject: reifier)
+              end
             end
 
             if list.nil?
@@ -106,20 +105,13 @@ module JSON
             end
           else
             # Element is a node object
-            ser_id = id = element.delete('@id')
-            if id.is_a?(Hash)
-              # Index graph using serialized id
-              ser_id = id.to_json_c14n
-              raise "Can't happen"
-            elsif id.nil?
-              ser_id = id = namer.get_name
-            end
+            id = element.delete('@id')
+            id = namer.get_name(id) if blank_node?(id)
 
-            node = graph[ser_id] ||= { '@id' => id }
+            node = graph[id] ||= {'@id' => id}
 
-            if reverse
-              # NOTE: active_subject is a Hash
-              # We're processing a reverse-property relationship.
+            if active_subject.is_a?(Hash)
+              # If subject is a hash, then we're processing a reverse-property relationship.
               add_value(node, active_property, active_subject, property_is_array: true, allow_duplicate: false)
             elsif active_property
               reference = { '@id' => id }
@@ -131,30 +123,31 @@ module JSON
             end
 
             # For rdfstar, if node contains an `@annotation` member ...
-            # note: active_subject will not be nil, and may be an object itself.
+            # note: active_subject will not be nil
             # XXX: what if we're reversing an annotation?
-            if element.key?('@annotation')
+            if annotation = element.delete('@annotation')
               # rdfstar being true is implicit, as it is checked in expansion
               as = if node_reference?(active_subject)
                 active_subject['@id']
               else
                 active_subject
               end
-              star_subject = if reverse
-                { "@id" => node['@id'], active_property => [{ '@id' => as }] }
-              else
-                { "@id" => as, active_property => [{ '@id' => node['@id'] }] }
-              end
+
+              reification = {'@id' => as, active_property => [{ '@id' => node['@id'] }]}
 
               # Note that annotation is an array, make the reified subject the id of each member of that array.
-              annotation = element.delete('@annotation').map do |a|
-                a.merge('@id' => star_subject)
-              end
+              annotation.each do |a|
+                # XXX may be zero or more reifiers; use bnode for now.
+                reifier = namer.get_name
+                a = a.merge('@id' => reifier, '@reifies' => reification)
 
-              # Invoke recursively using annotation.
-              create_node_map(annotation, graph_map,
-                active_graph: active_graph,
-                active_subject: star_subject)
+                # Invoke recursively using annotation.
+                create_node_map(a, graph_map, active_graph: active_graph, active_subject: reifier)
+              end
+            end
+
+            if element.key?('@reifies')
+              add_value(node, '@reifies', element.delete('@reifies'), property_is_array: true, allow_duplicate: false)
             end
 
             if element.key?('@type')
@@ -210,45 +203,68 @@ module JSON
       ##
       # Create annotations
       #
-      # Updates a node map from which annotations have been folded into embedded triples to re-extract the annotations.
+      # Updates a node map from which annotations have been folded into reified triples to re-extract the annotations.
       #
-      # Map entries where the key is of the form of a canonicalized JSON object are used to find keys with the `@id` and property components. If found, the original map entry is removed and entries added to an `@annotation` property of the associated value.
+      # Map entries having an `@reifies` key are used to find map entries that have a key based on the reification `@id` and a matching value. If found, the original map entry is removed and entries added to an `@annotation` property of the associated value.
       #
-      # * Keys which are of the form of a canonicalized JSON object are examined in inverse order of length.
-      # * Deserialize the key into a map, and re-serialize the value of `@id`.
-      # * If the map contains an entry with that value (after re-canonicalizing, as appropriate), and the associated antry has a item which matches the non-`@id` item from the map, the node is used to create an `@annotation` entry within that value.
+      # * If the map contains an entry with that value, and the associated antry has a item which matches the non-`@id` item from the map, the node is used to create an `@annotation` entry within that value.
       #
       # @param [Hash{String => Hash}] node_map
       # @return [Hash{String => Hash}]
       def create_annotations(node_map)
-        node_map.keys
-          .select { |k| k.start_with?('{') }
-          .sort_by(&:length)
-          .reverse_each do |key|
-          annotation = node_map[key]
-          # Deserialize key, and re-serialize the `@id` value.
-          emb = annotation['@id'].dup
-          id = emb.delete('@id')
-          property, value = emb.to_a.first
+        node_map
+          .select {|_, node| node.key?('@reifies')}
+          .each do |key, node|
 
-          # If id is a map, set it to the result of canonicalizing that value, otherwise to itself.
-          id = id.to_json_c14n if id.is_a?(Hash)
+          reif_id = node['@id']
+          reifs = node['@reifies']
+          raise "expected the value of `@reifies` to be an array: #{reifs.inspect}" unless
+            reifs.is_a?(Array)
 
-          next unless node_map.key?(id)
+          # The node has properties other than `@id` and `@reifies`
+          annotation = node.dup.delete_if {|k, _| %w(@id @reifies).include?(k)}
 
-          # If node map has an entry for id and that entry contains the same property and value from entry:
-          node = node_map[id]
+          reifs.each do |reif|
+            # node is a reification which _may_ relate to a value elsewhere in node_map
+            raise "expected the value of `@reifies` to be an array: #{reifs.inspect}" unless
+              reifs.is_a?(Array)
+            target_id = reif['@id']
+            target_node = node_map[target_id]
+            next unless target_node
 
-          next unless node.key?(property)
+            # The reification should have just `@id` and an additional property
+            reif_prop = (reif.keys - %w(@id)).first
+            raise "expected reification to have a non-id key: #{node.keys.inspect}" unless
+              reif_prop
+            reif_values = reif[reif_prop]
+            # There should be only a single value
+            raise "expected a single reifiation property value: #{reif}" unless
+              reif_values.length == 1
 
-          node[property].each do |emb_value|
-            next unless emb_value == value.first
+            reif_value = reif_values.first
 
-            node_map.delete(key)
-            annotation.delete('@id')
-            add_value(emb_value, '@annotation', annotation, property_is_array: true) unless
-              annotation.empty?
+            # If target_node has the matching property and a matching value
+            target_values = target_node[reif_prop]
+            next unless target_values
+
+            # target_values must be an array
+            raise "expected target propery value to have an array value: #{target_values.inspect}" unless
+              target_values.is_a?(Array)
+
+            target_values.each do |t_value|
+              next unless t_value == reif_value
+
+              # Add annotation to the identified value
+              t_value['@annotation'] ||= []
+              t_value['@annotation'] << {'@id' => reif_id}.merge(annotation)
+
+              # This consumes the reification
+              node['@reifies'] = node['@reifies'] - [reif]
+            end
           end
+
+          # If all reifications are consumed, remove the reification
+          node_map.delete(reif_id) if node['@reifies'].empty?
         end
       end
 

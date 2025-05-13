@@ -299,7 +299,7 @@ module JSON
             end
 
             expanded_value = case expanded_property
-            when '@annotation', '@reifies'
+            when '@annotation'
               # Skip unless rdfstar option is set
               next unless @options[:rdfstar]
 
@@ -476,6 +476,16 @@ module JSON
             when '@reifies'
               # Skip unless rdfstar option is set
               next unless @options[:rdfstar]
+
+              # Result may have multiple reifications.
+              rei_nodes = as_array(expand(value, nil, context, log_depth: log_depth.to_i + 1))
+              rei_nodes.each do |rei_node|
+                statements = to_enum(:item_to_rdf, rei_node)
+                unless statements.count >= 1
+                  raise JsonLdError::InvalidReification,
+                    "Reification with #{statements.size.to_i} statements"
+                end
+              end
 
               as_array(expand(value, '@reifies', context,
                 framing: framing,

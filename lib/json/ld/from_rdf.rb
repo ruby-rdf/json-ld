@@ -74,6 +74,13 @@ module JSON
             next
           end
 
+          # If predicate equals rdf:reifies and object is a triple term, append the @reifies of that triple term.
+          if statement.predicate == RDF.reifies && statement.object.tripleTerm?
+            reification = resource_representation(statement.object, useNativeTypes, extendedRepresentation)
+            merge_value(node, '@reifies', reification['@triple'])
+            next
+          end
+
           # Set value to the result of using the RDF to Object Conversion algorithm, passing object, rdfDirection, and use native types.
           value = resource_representation(statement.object, useNativeTypes, extendedRepresentation)
 

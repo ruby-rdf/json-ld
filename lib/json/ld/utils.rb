@@ -98,6 +98,15 @@ module JSON
       end
 
       ##
+      # Is value a reification?
+      #
+      # @param [Object] value
+      # @return [Boolean]
+      def reification?(value)
+        value.is_a?(Hash) && value.key?('@reifies')
+      end
+
+      ##
       # Is value a literal?
       #
       # @param [Object] value

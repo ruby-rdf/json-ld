@@ -321,7 +321,6 @@ describe JSON::LD::Writer do
 
             expect(parse(jsonld, format: :jsonld, **t.options)).to be_equivalent_graph(repo, t)
           rescue RDF::WriterError => e
-            #require 'byebug'; byebug
             fail e.message + logger.to_s
           end
         end

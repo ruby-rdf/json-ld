@@ -73,7 +73,7 @@ module JSON
                          @propagate
                          @protected
                          @preserve
-                         @reifier
+                         @reifies
                          @requireAll
                          @reverse
                          @set
@@ -163,6 +163,7 @@ module JSON
       class InvalidStreamingKeyOrder < JsonLdError; @code = 'invalid streaming key order' end
       class InvalidTermDefinition < JsonLdError; @code = 'invalid term definition'; end
       class InvalidTripleTerm < JsonLdError; @code = 'invalid triple term'; end
+      class InvalidReification < JsonLdError; @code = 'invalid reification'; end
       class InvalidTypedValue < JsonLdError; @code = 'invalid typed value'; end
       class InvalidTypeMapping < JsonLdError; @code = 'invalid type mapping'; end
       class InvalidTypeValue < JsonLdError; @code = 'invalid type value'; end
