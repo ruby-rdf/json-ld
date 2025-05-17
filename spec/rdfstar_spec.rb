@@ -17,7 +17,6 @@ unless ENV['CI']
         describe m.name do
           m.entries.each do |t|
             specify "#{t.property('@id')}: #{t.name}#{' (negative test)' unless t.positiveTest?}" do
-              pending "annotation folding" if t.name.include?("(with @annotation)")
               t.options[:ordered] = false
               expect { t.run self }.not_to write.to(:error)
             end

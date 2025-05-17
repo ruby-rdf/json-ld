@@ -124,21 +124,21 @@ module JSON
 
             # For rdfstar, if node contains an `@annotation` member ...
             # note: active_subject will not be nil
-            # XXX: what if we're reversing an annotation?
             if annotation = element.delete('@annotation')
               # rdfstar being true is implicit, as it is checked in expansion
-              as = if node_reference?(active_subject)
-                active_subject['@id']
+              if node_reference?(active_subject)
+                # If this is a node reference, then we're processing a revers relationship
+                as = active_subject['@id']
+                reification = {'@id' => node['@id'], active_property => [{ '@id' => as }]}
               else
-                active_subject
+                as = active_subject
+                reification = {'@id' => as, active_property => [{ '@id' => node['@id'] }]}
               end
-
-              reification = {'@id' => as, active_property => [{ '@id' => node['@id'] }]}
 
               # Note that annotation is an array, make the reified subject the id of each member of that array.
               annotation.each do |a|
-                # XXX may be zero or more reifiers; use bnode for now.
-                reifier = namer.get_name
+                # Use an provided reifier before allocating a fresh blank node
+                reifier = a.fetch('@id', namer.get_name)
                 a = a.merge('@id' => reifier, '@reifies' => reification)
 
                 # Invoke recursively using annotation.
@@ -252,7 +252,8 @@ module JSON
               target_values.is_a?(Array)
 
             target_values.each do |t_value|
-              next unless t_value == reif_value
+              # See if target value matches the reification value (other than a potential `@annotation`).
+              next unless t_value.dup.delete_if {|k, _| %w(@annotation).include?(k)} == reif_value
 
               # Add annotation to the identified value
               t_value['@annotation'] ||= []
