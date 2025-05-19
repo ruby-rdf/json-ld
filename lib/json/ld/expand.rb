@@ -191,8 +191,8 @@ module JSON
             return output_object['@set'] if output_object.key?('@set')
           elsif triple_term?(output_object)
             keys = output_object.keys
-            unless (keys - %w(@triple)).empty?
-              # The result must not contain any keys other than @triple. Otherwise, an invalid triplt term error has been detected and processing is aborted.
+            unless (keys - %w(@triple @annotation)).empty?
+              # The result must not contain any keys other than @triple or @annotation. Otherwise, an invalid triple term error has been detected and processing is aborted.
               raise JsonLdError::InvalidTripleTerm,
                 "triple term has unknown keys: #{output_object.inspect}"
             end
@@ -836,8 +836,8 @@ module JSON
           end
         end
 
-        # If result includes @triple, it MUST NOT include any other properties
-        if output_object.key?('@triple') && output_object.keys.length != 1
+        # If result includes @triple, it MUST NOT include any properties other than @annotation
+        if output_object.key?('@triple') && !(output_object.keys - %w(@triple @annotation)).empty?
           raise JsonLdError::InvalidTripleTerm,
             "Triple Term includes extra properties: #{output_object.keys}"
         end

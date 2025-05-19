@@ -60,18 +60,12 @@ module JSON
             # note: active_subject will not be nil.
             if annotation = element.delete('@annotation')
               # rdfstar being true is implicit, as it is checked in expansion
-              as = if node_reference?(active_subject)
-                active_subject['@id']
-              else
-                active_subject
-              end
-
-              reification = {'@id' => as, active_property => [element]}
+              reification = {'@id' => active_subject, active_property => [element]}
 
               # Note that annotation is an array, make the reified subject the id of each member of that array.
               annotation.each do |a|
-                # XXX may be zero or more reifiers; use bnode for now.
-                reifier = namer.get_name
+                # Use an provided reifier before allocating a fresh blank node
+                reifier = a.fetch('@id', namer.get_name)
                 a = a.merge('@id' => reifier, '@reifies' => reification)
 
                 # Invoke recursively using annotation.
@@ -97,13 +91,28 @@ module JSON
               list['@list'] << result
             end
           elsif triple_term?(element)
-            # Add just the @triple member from element as the value of the property in the subject node.
-            # FIXME: if a triple term can have other properties, the triple term would need to be its own entry in the node mode.
-            add_value(subject_node, active_property, element.dup.delete_if {|k,v| k != '@triple'}, allow_duplicate: false)
-            if element.keys.length != 1
+            unless (element.keys - %w(@triple @annotation)).empty?
               raise "Expected triple term to not have other properties, got #{element.inspect}"
             end
-          else
+
+            if annotation = element.delete('@annotation')
+              # rdfstar being true is implicit, as it is checked in expansion
+              reification = {'@id' => active_subject, active_property => [element]}
+
+              # Note that annotation is an array, make the reified subject the id of each member of that array.
+              annotation.each do |a|
+                # Use an provided reifier before allocating a fresh blank node
+                reifier = a.fetch('@id', namer.get_name)
+                a = a.merge('@id' => reifier, '@reifies' => reification)
+
+                # Invoke recursively using annotation.
+                create_node_map(a, graph_map, active_graph: active_graph, active_subject: reifier)
+              end
+            end
+
+            # Add just the @triple member from element as the value of the property in the subject node.
+            add_value(subject_node, active_property, element.dup.delete_if {|k,v| k != '@triple'}, allow_duplicate: false)
+         else
             # Element is a node object
             id = element.delete('@id')
             id = namer.get_name(id) if blank_node?(id)
@@ -127,7 +136,7 @@ module JSON
             if annotation = element.delete('@annotation')
               # rdfstar being true is implicit, as it is checked in expansion
               if node_reference?(active_subject)
-                # If this is a node reference, then we're processing a revers relationship
+                # If this is a node reference, then we're processing a reverse relationship
                 as = active_subject['@id']
                 reification = {'@id' => node['@id'], active_property => [{ '@id' => as }]}
               else

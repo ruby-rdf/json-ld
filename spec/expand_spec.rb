@@ -3871,7 +3871,16 @@ describe JSON::LD::API do
               "@annotation": {"ex:certainty": 0.8}
             }
           }),
-          exception: JSON::LD::JsonLdError::InvalidTripleTerm
+          output: %([{
+            "@id": "ex:subj",
+            "ex:value": [{
+              "@triple": {
+                "@id": "ex:rei",
+                "ex:prop": [{"@value": "value"}]
+              },
+              "@annotation": [{"ex:certainty": [{"@value": 0.8}]}]
+            }]
+          }])
         },
         'triple term with reverse relationship': {
           input: %({
