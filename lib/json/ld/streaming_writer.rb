@@ -61,7 +61,7 @@ module JSON
           pd << if statement.object.resource?
             { '@id' => statement.object.to_s }
           elsif statement.object.datatype == RDF_JSON
-            { "@value" => MultiJson.load(statement.object.to_s), "@type" => "@json" }
+            { "@value" => JSON.parse(statement.object.to_s), "@type" => "@json" }
           else
             lit = { "@value" => statement.object.to_s }
             lit["@type"] = statement.object.datatype.to_s if statement.object.datatype?

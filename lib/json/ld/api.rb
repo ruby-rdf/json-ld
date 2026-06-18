@@ -69,7 +69,6 @@ module JSON
       # @param [String, #read, Hash, Array, JSON::LD::Context] context
       #   An external context to use additionally to the context embedded in input when expanding the input.
       # @param  [Hash{Symbol => Object}] options
-      # @option options [Symbol] :adapter used with MultiJson
       # @option options [RDF::URI, String, #to_s] :base
       #   The Base IRI to use when expanding the document. This overrides the value of `input` if it is a _IRI_. If not specified and `input` is not an _IRI_, the base IRI defaults to the current document IRI if in a browser context, or the empty string if there is no document context. If not specified, and a base IRI is found from `input`, options[:base] will be modified with this value.
       # @option options [Boolean] :compactArrays (true)
@@ -135,8 +134,7 @@ module JSON
 
           case remote_doc.document
           when String
-            mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-            MultiJson.load(remote_doc.document, **mj_opts)
+            JSON.parse(remote_doc.document)
           else
             # Already parsed
             remote_doc.document
@@ -408,8 +406,7 @@ module JSON
             requestProfile: 'http://www.w3.org/ns/json-ld#frame',
                                           **options)
           if remote_doc.document.is_a?(String)
-            mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-            MultiJson.load(remote_doc.document, **mj_opts)
+            JSON.parse(remote_doc.document)
           else
             remote_doc.document
           end
@@ -702,8 +699,7 @@ module JSON
               end
             else
               validate_input(remote_doc.document, url: remote_doc.documentUrl) if validate
-              mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-              MultiJson.load(remote_doc.document, **mj_opts)
+              JSON.parse(remote_doc.document)
             end
           end
 
@@ -714,7 +710,7 @@ module JSON
 
           block_given? ? yield(remote_doc) : remote_doc
         end
-      rescue IOError, MultiJson::ParseError => e
+      rescue IOError, JSON::ParserError => e
         raise JSON::LD::JsonLdError::LoadingDocumentFailed, e.message
       end
 
@@ -767,8 +763,7 @@ module JSON
       SCRIPT_LOADERS = {
         'application/ld+json' => ->(content, url:, **options) do
             validate_input(content, url: url) if options[:validate]
-            mj_opts = options.keep_if { |k, v| k != :adapter || MUTLI_JSON_ADAPTERS.include?(v) }
-            MultiJson.load(content, **mj_opts)
+            JSON.parse(content)
           end
       }
 
@@ -882,14 +877,14 @@ module JSON
           content = element.inner_html
           SCRIPT_LOADERS[script_type].call(content, url: url, **options)
         end
-      rescue MultiJson::ParseError => e
+      rescue JSON::ParserError => e
         raise JSON::LD::JsonLdError::InvalidScriptElement, e.message
       end
 
       ##
       # The default serializer for serialzing Ruby Objects to JSON.
       #
-      # Defaults to `MultiJson.dump`
+      # Defaults to `JSON.generate`
       #
       # @param [Object] object
       # @param [Array<Object>] args
@@ -899,7 +894,7 @@ module JSON
       # @option options [Object] :serializer_opts (JSON_STATE)
       def self.serializer(object, *_args, **options)
         serializer_opts = options.fetch(:serializer_opts, JSON_STATE)
-        MultiJson.dump(object, serializer_opts)
+        JSON.generate(object, serializer_opts)
       end
 
       ##
