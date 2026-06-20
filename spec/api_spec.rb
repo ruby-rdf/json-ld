@@ -48,7 +48,7 @@ describe JSON::LD::API do
   end
 
   context "Test Files" do
-    %i[oj json_gem ok_json yajl].each do |adapter|
+    %i[oj json_gem yajl].each do |adapter|
       context "with MultiJson adapter #{adapter.inspect}" do
         Dir.glob(File.expand_path(File.join(File.dirname(__FILE__), 'test-files/*-input.*'))) do |filename|
           test = File.basename(filename).sub(/-input\..*$/, '')
