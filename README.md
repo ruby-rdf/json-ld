@@ -34,8 +34,8 @@ This gem also implements an optimized streaming writer used for generating JSON-
 
 The order of triples retrieved from the `RDF::Enumerable` dataset determines the way that JSON-LD node objects are written; for best results, statements should be ordered by _graph name_, _subject_, _predicate_ and _object_.
 
-### MultiJson parser
-The [MultiJson](https://rubygems.org/gems/multi_json) gem is used for parsing and serializing JSON; this defaults to the native JSON parser/serializer, but will use a more performant parser if one is available. A specific parser can be specified by adding the `:adapter` option to any API call. Additionally, a custom serialilzer may be specified by passing the `:serializer` option to {JSON::LD::Writer} or methods of {JSON::LD::API}. See [MultiJson](https://rubygems.org/gems/multi_json) for more information.
+### JSON parser
+The standard Ruby `json` gem is used for parsing and serializing JSON. A custom serializer may be specified by passing the `:serializer` option to {JSON::LD::Writer} or methods of {JSON::LD::API}.
 
 ### JSON-LD-star (RDFStar)
 

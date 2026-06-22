@@ -1817,7 +1817,7 @@ module JSON
         io.rewind
         remote_doc = API.loadRemoteDocument(io, **options)
         if remote_doc.document.is_a?(String)
-          MultiJson.load(remote_doc.document)
+          JSON.parse(remote_doc.document)
         else
           remote_doc.document
         end

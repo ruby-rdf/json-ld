@@ -2,7 +2,6 @@
 
 $LOAD_PATH.unshift(File.expand_path('ld', __dir__))
 require 'rdf' # @see https://rubygems.org/gems/rdf
-require 'multi_json'
 require 'set'
 
 module JSON
@@ -46,8 +45,6 @@ module JSON
     # Default context when compacting without one being specified
     DEFAULT_CONTEXT = 'http://schema.org'
 
-    # Acceptable MultiJson adapters
-    MUTLI_JSON_ADAPTERS = %i[oj json_gem json_pure ok_json yajl nsjsonseerialization]
 
     KEYWORDS = Set.new(%w[
                          @annotation

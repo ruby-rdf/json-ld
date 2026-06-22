@@ -234,7 +234,12 @@ module JSON
             end
             res['@direction'] = dir
           elsif useNativeTypes && RDF_LITERAL_NATIVE_TYPES.include?(resource.datatype) && resource.valid?
-            res['@value'] = resource.object
+            if resource.datatype == RDF::XSD.double && (resource.object.is_a?(Numeric) && (resource.object.infinite? || resource.object.nan?))
+              res['@type'] = resource.datatype.to_s
+              res['@value'] = resource.to_s
+            else
+              res['@value'] = resource.object
+            end
           else
             resource.canonicalize! if resource.valid? && resource.datatype == RDF::XSD.double
             if resource.datatype?

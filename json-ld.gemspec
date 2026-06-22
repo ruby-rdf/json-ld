@@ -34,13 +34,12 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency     'htmlentities', '~> 4.3'
   gem.add_runtime_dependency     'json-canonicalization', '~> 1.0'
   gem.add_runtime_dependency     'link_header', '~> 0.0', '>= 0.0.8'
-  gem.add_runtime_dependency     'multi_json',      '~> 1.15'
+  gem.add_runtime_dependency     'json',            '~> 2.19'
   gem.add_runtime_dependency     "rack",            '>= 2.2', '< 4'
   gem.add_runtime_dependency     'rdf',             '~> 3.3'
   gem.add_runtime_dependency     'rexml',           '~> 3.4'
   gem.add_development_dependency 'getoptlong',      '~> 0.2'
   gem.add_development_dependency 'jsonlint',        '~> 0.4'  unless is_java
-  gem.add_development_dependency 'oj',              '~> 3.15' unless is_java
   gem.add_development_dependency 'rack-test',       '~> 2.1'
   gem.add_development_dependency 'rdf-isomorphic',  '~> 3.3'
   gem.add_development_dependency 'rdf-spec',        '~> 3.3'
