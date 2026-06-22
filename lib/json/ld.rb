@@ -47,7 +47,7 @@ module JSON
     DEFAULT_CONTEXT = 'http://schema.org'
 
     # Acceptable MultiJson adapters
-    MUTLI_JSON_ADAPTERS = %i[oj json_gem json_pure ok_json yajl nsjsonseerialization]
+    MUTLI_JSON_ADAPTERS = %i[oj json_gem yajl nsjsonseerialization]
 
     KEYWORDS = Set.new(%w[
                          @annotation
